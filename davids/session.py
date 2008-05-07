@@ -21,7 +21,7 @@ widgets_table = sa.Table("widgets", metadata,
                          sa.Column("widgetType", sa.types.String(100), nullable=False),
                          sa.Column("relatedTo", sa.Integer, sa.ForeignKey("formType.id")))
 
-widgetsFormType_table = sa.table("widgetsFormType", metadata,
+widgetsFormType_table = sa.Table("widgetsFormType", metadata,
                          sa.Column( 'id' ,   sa.Integer,    primary_key=True),     
                          sa.Column('formType_id', sa.Integer, sa.ForeignKey("formType.id")),
                          sa.Column("widgets_id", sa.Integer, sa.ForeignKey("widgets.id")))                          

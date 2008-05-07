@@ -2,12 +2,11 @@
 import widgets
 import session
 
+widgetdict ={}
+
 allwidgets = session.session.query(session.Widgets)
-
 for widget in allwidgets:
-    exec(widget.name + "=" + "widgets."+ widget.widgetType + "('" + widget.name + "')" )
-
-
+      widgetdict[str(widget.name)] = getattr(widgets,widget.widgetType)(str(widget.name))  
 
 
 
