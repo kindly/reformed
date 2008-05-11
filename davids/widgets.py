@@ -30,7 +30,7 @@ class WidgetTemplate(object):
     def __getattr__(self,name):
         return getattr(self, name + self.table)
 
-        
+    
 class Dropdownbox3(WidgetTemplate):
 
     
