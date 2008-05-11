@@ -1,0 +1,50 @@
+User wants to make a contact database starts by declaring.
+
+
+contact_info =   Table ( "contact_info",  key = "contact_id",
+                            DropdownSingle ( "contact_type" ,  lookup = "contact_type",  mandatory = True )
+                            Text       ( "name" , length = 30, mandatory = true)
+                            Text       ( "email" , length = 100, validation = Validation( email_dns, regexp ("^.*\.org.uk$", "need org.uk email"  ))
+                            Addresss ( "contact_address",  mandatory = [first_line, postcode], validation = Validation(postcode)  )
+                            OneToMany ( "transaction",  join = "contact_id" , integrety = "ifexist"
+                                                                                                Table("transaction", key= "transaction_id",
+                                                                                                        Money( "amount", mandatory = True)
+                                                                                                        )
+                            index =  ["name", ["email","name"] , "address.postcode"])
+
+contact_info.add_field( Text ( "title", length(3), mandatory = True)
+
+
+This will make the two tables contact_info and transactions and will persist the parameters in system tables.
+
+MakeDatabase()
+
+
+This will look at the sysdtem tables and create classes for these tables who have parameters for each coloumn in the table. It will also create objects for each field.
+
+Boot(contact_info)
+
+
+To add a row to the table(s) this would be run.
+
+bob = contact_info(contact_type = u"member", name = u"bob", email = u"bob@poop.org", first_line = u"59 albert", postcode = u"se220yt" ,  [transaction(amount =10), transaction(amount=20)]   )
+
+This will do the integrity checking
+
+checkadd(bob)
+
+{"email" : u"need org.uk email", "Title" : u"field is mandatory"}
+
+if there are no integrity issues the following will run
+
+save(bob)
+
+if bob was called to deleted
+
+del(bob)
+
+the following would be returned
+
+{"transaction": u"can not delete as has a transaction"}
+
+
