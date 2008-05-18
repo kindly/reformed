@@ -107,7 +107,7 @@ class Table(object):
         )
         
     def create_mappings(self):
-        orm.mapper(getattr(self, self.name), self.table())
+        orm.mapper(getattr(self, self.name), self.table)
     
     def create_table(self):
         self.create_table_def()
