@@ -1,0 +1,10 @@
+python-sqlalchemy
+python-wsgiref
+#python-II-core
+
+selector - built
+resolver - built dep of selector
+
+formencode
+pkg_resources dep of formencode
+
