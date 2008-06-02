@@ -83,7 +83,7 @@ class Table(object):
         columns = []
         
         for column in self.arg:
-            columns.append(column.paramset())
+            columns.append(column.paramset(self.name))
         
         session.save(Tables(self.name,columns))
         session.commit()
@@ -93,7 +93,8 @@ class Table(object):
         columns = []
         
         for column in self.arg:
-            columns.append(column.columns())
+		if hasattr(column,"columns"):
+            		columns.append(column.columns())
         
         self.table = sa.Table(self.name, metadata,
                               sa.Column( self.name + '_id' ,   sa.Integer,    primary_key=True),
@@ -105,14 +106,28 @@ class Table(object):
         type(self.name, (object,), {"__init__": lambda self, **kw: attributesfromdictkw(locals())})
         )
         
-    def create_mappings(self):
-        orm.mapper(getattr(self, self.name), self.table)
+    def create_mappings(self,database,table_name):
+	
+	prop = {}
+        for column in self.arg:
+		if hasattr(column,"parameters"):
+			mapped_class = getattr(database.tbls[column.many], column.many) 
+			prop[column.many]=column.parameters(table_name,mapped_class)
+
+        orm.mapper(getattr(self, self.name), self.table, properties = prop)
     
-    def create_table(self):
-        self.create_table_def()
-        self.create_class()
-        self.create_mappings()
-        
+    def add_external_columns(self,database, table_name):
+	
+        for column in self.arg:
+		if hasattr(column,"external_column"):
+			database.tbls[column.many].table.append_column( column.external_column(table_name))
+
+    def add_external_tables(self,database, table_name):
+	
+        for column in self.arg:
+		if hasattr(column,"external_table"):
+			column.external_table(table_name)
+
 
 class TextBox(object):
     
@@ -124,7 +139,7 @@ class TextBox(object):
         
         return sa.Column(self.name,sa.String(self.length), nullable = not self.mandatory)
     
-    def paramset (self):
+    def paramset (self,table_name):
         
         params = [Field_param(  "length" , self.length),
                       Field_param(  "mandatory" , repr(self.mandatory))]
@@ -135,6 +150,57 @@ class TextBox(object):
         return Field(self.name,self.__class__.__name__,
                      params
                     )
+
+
+class OneToMany(object):
+	
+	def __init__(self,name,many, **kw):
+		attributesfromdict(locals())
+	
+	def external_column (self,table_name):
+		return  sa.Column(table_name+"_id", sa.Integer, sa.ForeignKey("%s.%s_id"%(table_name,table_name)))
+	
+	def parameters (self, table_name, mapped_class):
+		kw = self.kw
+		return orm.relation(mapped_class,**kw) 
+		
+
+
+	def paramset (self,table_name):
+
+		params = [Field_param(  "many" , self.many)]
+		
+		for n,v in self.kw.iteritems():
+		    params.append(Field_param(n,repr(v)))
+		       
+		return Field(self.name,self.__class__.__name__,
+			     params)
+
+class ManyToMany(object):
+
+
+	def __init__(self,name,other, **kw):
+		attributesfromdict(locals())
+
+	def external_table(self, table_name):
+
+		self.table= sa.Table(table_name+"_manytomany_"+self.other, metadata,
+				table_name+"_id", sa.Integer, sa.ForeignKey("%s.%s_id"%(table_name,table_name)),
+				self.other+"_id", sa.Integer, sa.ForeignKey("%s.%s_id"%(self.other,self.other)))
+
+	def parameters (self, table_name, mapped_class):
+		kw = self.kw
+		return orm.relation(mapped_class,secondary=self.table,**kw) 
+	
+	def paramset (self,table_name):
+
+		params = [Field_param(  "other", self.other)]
+		
+		for n,v in self.kw.iteritems():
+		    params.append(Field_param(n,repr(v)))
+		       
+		return Field(self.name,self.__class__.__name__,
+			     params)
 
 
 class Database(object):
@@ -167,9 +233,29 @@ class Database(object):
         
         for v in self.tbls.itervalues():
             
-            v.create_table()
-        
+            v.create_table_def()
+	
+	
+	for v in self.tbls.itervalues():
+            
+            v.add_external_tables(self,v.name)
+	 
+
+        for v in self.tbls.itervalues():
+
+            v.add_external_columns(self,v.name)
+
         metadata.create_all(engine)
+
+        for v in self.tbls.itervalues():
+
+            v.create_class()
+
+
+        for v in self.tbls.itervalues():
+            v.create_mappings( self,v.name)
+            
+   
         
             
 
@@ -181,10 +267,20 @@ class Database(object):
     
 if __name__ == "__main__":
     
-    aa= Table("aa", TextBox("bb"), TextBox("cc"))
-    bb= Table("dd", TextBox("ee"), TextBox("ff"))
+    aa= Table("main_table",
+		    TextBox("main_text_1"),
+		    OneToMany("join_one_many","one_many"),
+		    ManyToMany("join_many_many","many_many"))
+    bb= Table("one_many", TextBox("one_many_text_1"))
+    cc= Table("many_many",TextBox("many_many_text_1"))
     aa.paramset()
     bb.paramset()
     data=Database()
+    data.create_tables()
+    nn = data.tbls["main_table"].aa(main_text_1="text1",
+		    one_many = [data.tbls["one_many"].one_many( one_many_text_1= "I love"),
+			   	data.tbls["one_many"].one_many( one_many_text_1= "Jo")])
+    session.save(nn)
+    session.commit()
     
-    
+
