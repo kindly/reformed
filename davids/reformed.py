@@ -111,8 +111,8 @@ class Table(object):
 	prop = {}
         for column in self.arg:
 		if hasattr(column,"parameters"):
-			mapped_class = getattr(database.tbls[column.many], column.many) 
-			prop[column.many]=column.parameters(table_name,mapped_class)
+			mapped_class = getattr(database.tbls[column.other], column.other) 
+			prop[column.other]=column.parameters(table_name,mapped_class)
 
         orm.mapper(getattr(self, self.name), self.table, properties = prop)
     
@@ -120,13 +120,35 @@ class Table(object):
 	
         for column in self.arg:
 		if hasattr(column,"external_column"):
-			database.tbls[column.many].table.append_column( column.external_column(table_name))
+			database.tbls[column.other].table.append_column( column.external_column(table_name))
 
     def add_external_tables(self,database, table_name):
 	
         for column in self.arg:
 		if hasattr(column,"external_table"):
 			column.external_table(table_name)
+
+
+class Integer(object):
+   
+    def __init__(self,name, mandatory = True, **kw):
+        
+        attributesfromdict(locals())
+
+    def columns (self):
+        
+        return sa.Column(self.name,sa.Integer, nullable = not self.mandatory)
+    
+    def paramset (self,table_name):
+        
+        params = [Field_param(  "mandatory" , repr(self.mandatory)),]
+        
+        for n,v in self.kw.iteritems():
+            params.append(Field_param(n,v))
+               
+        return Field(self.name,self.__class__.__name__,
+                     params
+                    )
 
 
 class TextBox(object):
@@ -145,7 +167,7 @@ class TextBox(object):
                       Field_param(  "mandatory" , repr(self.mandatory))]
         
         for n,v in self.kw.iteritems():
-            params.append(Field_param(n,repr(v)))
+            params.append(Field_param(n,v))
                
         return Field(self.name,self.__class__.__name__,
                      params
@@ -154,7 +176,7 @@ class TextBox(object):
 
 class OneToMany(object):
 	
-	def __init__(self,name,many, **kw):
+	def __init__(self,name,other, **kw):
 		attributesfromdict(locals())
 	
 	def external_column (self,table_name):
@@ -168,10 +190,10 @@ class OneToMany(object):
 
 	def paramset (self,table_name):
 
-		params = [Field_param(  "many" , self.many)]
+		params = [Field_param(  "other" , self.other)]
 		
 		for n,v in self.kw.iteritems():
-		    params.append(Field_param(n,repr(v)))
+		    params.append(Field_param(n,v))
 		       
 		return Field(self.name,self.__class__.__name__,
 			     params)
@@ -185,9 +207,9 @@ class ManyToMany(object):
 	def external_table(self, table_name):
 
 		self.table= sa.Table(table_name+"_manytomany_"+self.other, metadata,
-				table_name+"_id", sa.Integer, sa.ForeignKey("%s.%s_id"%(table_name,table_name)),
-				self.other+"_id", sa.Integer, sa.ForeignKey("%s.%s_id"%(self.other,self.other)))
-
+				sa.Column(table_name+"_id", sa.Integer, sa.ForeignKey("%s.%s_id"%(table_name,table_name))),
+				sa.Column(self.other+"_id", sa.Integer, sa.ForeignKey("%s.%s_id"%(self.other,self.other))))
+		
 	def parameters (self, table_name, mapped_class):
 		kw = self.kw
 		return orm.relation(mapped_class,secondary=self.table,**kw) 
@@ -197,14 +219,14 @@ class ManyToMany(object):
 		params = [Field_param(  "other", self.other)]
 		
 		for n,v in self.kw.iteritems():
-		    params.append(Field_param(n,repr(v)))
+		    params.append(Field_param(n,v))
 		       
 		return Field(self.name,self.__class__.__name__,
 			     params)
 
 
 class Database(object):
-    
+	
     def __init__ (self):
         
         self.tbls = {}
@@ -229,6 +251,10 @@ class Database(object):
             
             self.tbls[tab.name] = Table(str(tab.name), *flds)
     
+    def __getattr__(self, table):
+
+	    return getattr(self.tbls[table],table)
+
     def create_tables(self):
         
         for v in self.tbls.itervalues():
@@ -255,31 +281,27 @@ class Database(object):
         for v in self.tbls.itervalues():
             v.create_mappings( self,v.name)
             
-   
-        
-            
-
-
-    
-    
-    
-    
-    
+      
 if __name__ == "__main__":
     
     aa= Table("main_table",
 		    TextBox("main_text_1"),
-		    OneToMany("join_one_many","one_many"),
+		    Integer("main_int"),
+		    OneToMany("join_one_many","one_many", cascade='all,delete-orphan'),
 		    ManyToMany("join_many_many","many_many"))
     bb= Table("one_many", TextBox("one_many_text_1"))
     cc= Table("many_many",TextBox("many_many_text_1"))
     aa.paramset()
     bb.paramset()
+    cc.paramset()
     data=Database()
     data.create_tables()
-    nn = data.tbls["main_table"].aa(main_text_1="text1",
-		    one_many = [data.tbls["one_many"].one_many( one_many_text_1= "I love"),
-			   	data.tbls["one_many"].one_many( one_many_text_1= "Jo")])
+    nn = data.main_table(main_text_1="text1",main_int = 6,
+		    one_many = [data.one_many( one_many_text_1= "one"),
+			    data.one_many( one_many_text_1= "many")],
+		    many_many = [data.many_many( many_many_text_1= "many"),
+			   	data.many_many( many_many_text_1= "many")]
+		    e
     session.save(nn)
     session.commit()
     
