@@ -247,8 +247,6 @@ class Database(object):
             
                 flds.append(globals()[fld.field_type](fld.name, **params))
             
-##          setattr(self, tab.name, Table(str(tab.name), *flds))
-            
             self.tbls[tab.name] = Table(str(tab.name), *flds)
     
     def __getattr__(self, table):
@@ -284,6 +282,8 @@ class Database(object):
       
 if __name__ == "__main__":
     
+
+    
     aa= Table("main_table",
 		    TextBox("main_text_1"),
 		    Integer("main_int"),
@@ -291,6 +291,7 @@ if __name__ == "__main__":
 		    ManyToMany("join_many_many","many_many"))
     bb= Table("one_many", TextBox("one_many_text_1"))
     cc= Table("many_many",TextBox("many_many_text_1"))
+
     aa.paramset()
     bb.paramset()
     cc.paramset()
@@ -300,8 +301,8 @@ if __name__ == "__main__":
 		    one_many = [data.one_many( one_many_text_1= "one"),
 			    data.one_many( one_many_text_1= "many")],
 		    many_many = [data.many_many( many_many_text_1= "many"),
-			   	data.many_many( many_many_text_1= "many")]
-		    e
+			   	data.many_many( many_many_text_1= "many")])
+
     session.save(nn)
     session.commit()
     
