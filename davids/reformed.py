@@ -121,12 +121,20 @@ class Table(object):
                               sa.Column('id' ,   sa.Integer,    primary_key=True),
                               *columns )
     
-    def create_class(self):
+    def create_class(self,database, table_name):
         
 	class table_class(object):
 		
 	    def __init__(self,**kw):
 		attributesfromkw(locals())
+	    
+	    def validate(self):
+		val= {}
+		for column in database.tables[table_name].arg:
+		    if hasattr(column,"validator"):
+			for n,v in column.validator(table_name, database).iteritems():
+			    val[n]=v    
+	        return val 
 
         setattr(self, self.name,table_class)
         
@@ -144,7 +152,7 @@ class Table(object):
 	
         for column in self.arg:
 	    if hasattr(column,"external_column"):
-			database.tables[column.other].table.append_column( column.external_column(table_name))
+		database.tables[column.other].table.append_column(column.external_column(table_name))
 
     def add_external_tables(self,database, table_name):
 	
@@ -162,6 +170,7 @@ class Integer(object):
     def columns (self):
         
         return sa.Column(self.name,sa.Integer, nullable = not self.mandatory)
+
     
     def paramset (self,table_name):
         
@@ -206,6 +215,9 @@ class TextBox(object):
         
         return sa.Column(self.name,sa.String(self.length), nullable = not self.mandatory)
 
+    def validator (self,table_name, database):
+	return {self.name: "ok"}
+
     def paramset (self,table_name):
         
         params = [Field_param(  "length" , repr(self.length)),
@@ -232,7 +244,7 @@ class OneToMany(object):
 	params = {}
 	mapped_class = getattr(database.tables[self.other], self.other) 
 
-	params[self.other]=orm.relation(mapped_class,**kw)
+	params[self.name]=orm.relation(mapped_class,**kw)
 	return params
 
 
@@ -262,7 +274,7 @@ class ManyToMany(object):
 	params = {}
 	mapped_class = getattr(database.tables[self.other], self.other) 
 	kw = self.kw
-	params[self.other]=orm.relation(mapped_class,secondary=self.table,backref = table_name,**kw) 
+	params[self.name]=orm.relation(mapped_class,secondary=self.table,backref = table_name,**kw) 
 	return params
 
     def paramset (self,table_name):
@@ -294,7 +306,7 @@ class Database(object):
                 
                 for param in fld.field_param:
                     
-			params[param.field_param_type.encode("ascii")] = param.field_param_value.encode("ascii")
+		    params[param.field_param_type.encode("ascii")] = param.field_param_value.encode("ascii")
             
                 flds.append(globals()[fld.field_type.encode("ascii")](fld.name, **params))
             
@@ -328,8 +340,7 @@ class Database(object):
 
         for v in self.tables.itervalues():
 
-            v.create_class()
-
+            v.create_class(self,v.name)
 
         for v in self.tables.itervalues():
             v.create_mappings( self,v.name)
@@ -368,9 +379,9 @@ if __name__ == "__main__":
     data.create_tables()
 
     nn = data.main_table(main_text_1="text1",main_int = 6,
-		    one_many = [data.one_many( one_many_text_1= "one"),
+		    join_one_many = [data.one_many( one_many_text_1= "one"),
 	     		    data.one_many( one_many_text_1= "many")],
-		    many_many = [data.many_many( many_many_text_1= "many"),
+		    join_many_many = [data.many_many( many_many_text_1= "many"),
 			   	data.many_many( many_many_text_1= "many")])
 
     session.save(nn)
