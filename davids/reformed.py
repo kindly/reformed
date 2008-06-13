@@ -3,7 +3,8 @@
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import sessionmaker
-
+from formencode import validators
+import formencode
 
 engine = sa.create_engine('sqlite:///:memory:', echo=True)
 
@@ -88,6 +89,23 @@ orm.mapper(Field, field, properties={
 orm.mapper(Field_param,field_param)
 
 
+def Validate(value, validation,name):
+
+    exec ("valid = validators.%s" %(validation))
+
+    try:
+        valid.to_python(value)
+    except formencode.Invalid,e :
+	return {name:e.msg}
+    else:
+	return {} 
+
+
+
+
+
+
+
 class Table(object):
     
     def __init__(self, name, *arg, **kw):
@@ -132,7 +150,7 @@ class Table(object):
 		val= {}
 		for column in database.tables[table_name].arg:
 		    if hasattr(column,"validator"):
-			for n,v in column.validator(table_name, database).iteritems():
+			for n,v in column.validator(self).iteritems():
 			    val[n]=v    
 	        return val 
 
@@ -215,8 +233,13 @@ class TextBox(object):
         
         return sa.Column(self.name,sa.String(self.length), nullable = not self.mandatory)
 
-    def validator (self,table_name, database):
-	return {self.name: "ok"}
+    def validator (self,object):
+	try:
+	    validation = self.kw["validation"]
+	except KeyError:
+	    return {}
+	else:
+	    return Validate(getattr(object,self.name),validation,self.name)
 
     def paramset (self,table_name):
         
@@ -349,7 +372,7 @@ class Database(object):
 if __name__ == "__main__":
     
     aa= Table("main_table",
-		    TextBox("main_text_1"),
+		    TextBox("main_text_1", validation = "MaxLength(5)"),
 		    Integer("main_int"),
 		    OneToMany("join_one_many","one_many", cascade='all,delete-orphan'),
 		    ManyToMany("join_many_many","many_many"),
@@ -378,7 +401,7 @@ if __name__ == "__main__":
     data=Database()
     data.create_tables()
 
-    nn = data.main_table(main_text_1="text1",main_int = 6,
+    nn = data.main_table(main_text_1="teaxt1",main_int = 6,
 		    join_one_many = [data.one_many( one_many_text_1= "one"),
 	     		    data.one_many( one_many_text_1= "many")],
 		    join_many_many = [data.many_many( many_many_text_1= "many"),
