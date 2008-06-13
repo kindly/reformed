@@ -5,9 +5,7 @@ import os, sys
 
 def create():
 
-    import model
-    import dbconfig
-    dbconfig.metadata.create_all() 
+    import boot_toby
 
 def run():
     import http

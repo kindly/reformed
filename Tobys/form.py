@@ -1,4 +1,6 @@
-import model
+#/usr/bin/python
+
+#import reformed.data as data
 import http
 from sqlalchemy.orm import eagerload
 import formencode
@@ -7,8 +9,8 @@ from formencode import validators
 import cgi
 import form_items
 import re
-
-
+import dbconfig
+import reformed as r
 
 # basic form cache start
 
@@ -26,10 +28,10 @@ def get_form_schema(form_id):
 		print "@@ using CACHE form(%s)" % form_id
 	else:
 		# we need to get the data
-		session = model.Session()
+		session = dbconfig.Session()
 		form_cache[form_id] = {}
 		try:
-			form_cache[form_id]['form'] = session.query(model.Form).options(eagerload('form_param'), eagerload('form_item'), eagerload('form_item.form_item_param')).filter_by(id=form_id).one() 
+			form_cache[form_id]['form'] = session.query(r.data.Form).options(eagerload('form_param'), eagerload('form_item'), eagerload('form_item.form_item_param')).filter_by(id=form_id).one() 
 
 			# params (form)
 			form_cache[form_id]['form_params'] = get_params( form_cache[form_id]['form'] )
@@ -59,9 +61,14 @@ def get_params(form):
 
 def list():
 	body=''
-	for form in model.session.query(model.Form):
+	session = dbconfig.Session()
+	obj = r.data.tables['form'].form
+#	obj = obj.table_class
+	data = session.query(obj).all()
+	for form in data:
 		body += "<a href='/view/1/%s'>%s</a><br />" % (str(form.id), str(form.name) )
 	body += "<a href='/view/1/0'>new</a><br />"
+	session.Close
 	return '<b>Forms</b><br />' + body 
 
 
@@ -88,7 +95,7 @@ def save_form(formdata, form_id, table_id, field_prefix=''):
 
 	print "SAVING FORM DATA"
 	saved_id = 0
-	session = model.Session()
+	session = dbconfig.Session()
 
 	# get the form data	
 	form = get_form_schema(form_id)
@@ -313,7 +320,7 @@ def create_form(environ, form_render_data, defaults):
 						else:
 							sub_form_render_data['form_type'] = 'continuous'
 						print "<p>####</p>"
-						session = model.Session()
+						session = dbconfig.Session()
 						if p.has_key('parent_id'): # some subforms are not connected ie 'cheap datasheets'
 							data = session.query(my_obj).filter_by(**{p['child_id']:table_id}).all()
 						else:
@@ -349,7 +356,7 @@ def create_form(environ, form_render_data, defaults):
 				try:	
 					#print 	'looking for %s' % table_id
 					#print repr(my_obj)
-					session = model.Session()
+					session = dbconfig.Session()
 					form_data = model.session.query(my_obj).filter_by(id=table_id).one()
 					session.close()
 				except: #FIXME better handeling of this as save buggered by this i imagine

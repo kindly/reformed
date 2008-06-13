@@ -3,8 +3,14 @@ import wsgiref.util
 import form
 import string
 import time, datetime
-import model
+#import model
 import cgi
+import reformed
+
+
+# get our data up
+reformed.data = reformed.Database()
+reformed.data.create_tables()
 
 uptime = datetime.datetime.now()
 
