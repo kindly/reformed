@@ -1,9 +1,0 @@
-python-sqlalchemy
-python-wsgiref
-#python-II-core
-
-
-wsgistate via easy_install
-formencode
-pkg_resources dep of formencode
-
