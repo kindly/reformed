@@ -30,7 +30,7 @@ def get_form_schema(form_id):
 		session = dbconfig.Session()
 		form_cache[form_id] = {}
 		try:
-			form_cache[form_id]['form'] = session.query(r.data.Form).options(eagerload('form_param'), eagerload('form_item'), eagerload('form_item.form_item_param')).filter_by(id=form_id).one() 
+			form_cache[form_id]['form'] = session.query(r.data.form).options(eagerload('form_param'), eagerload('form_item'), eagerload('form_item.form_item_param')).filter_by(id=form_id).one() 
 
 			# params (form)
 			form_cache[form_id]['form_params'] = get_params( form_cache[form_id]['form'] )
@@ -61,13 +61,12 @@ def get_params(form):
 def list():
 	body=''
 	session = dbconfig.Session()
-	obj = r.data.tables['form'].form
-#	obj = obj.table_class
+	obj = r.data.form
 	data = session.query(obj).all()
 	for form in data:
 		body += "<a href='/view/1/%s'>%s</a><br />" % (str(form.id), str(form.name) )
 	body += "<a href='/view/1/0'>new</a><br />"
-	session.Close
+	session.close()
 	return '<b>Forms</b><br />' + body 
 
 
@@ -107,8 +106,8 @@ def save_form(formdata, form_id, table_id, field_prefix=''):
 	print "prefix", field_prefix
 	# save data
 	if tmp_objname and formdata.has_key(field_prefix + 'save'):
-		if (model.__dict__.has_key(tmp_objname)):
-			my_obj = model.__dict__[tmp_objname]
+		if (r.data.tables.has_key(tmp_objname)):
+			my_obj = getattr(r.data, tmp_objname)
 			print "table_id: %s" % table_id
 			if table_id != 0:
 				# get object
@@ -135,7 +134,7 @@ def save_form(formdata, form_id, table_id, field_prefix=''):
 				name = str(form_item.name)
 				if name.count('.'):
 					(table, field) = name.split('.')
-					if  form_item.active and data.__dict__.has_key(field): #FIXME need to test if the does protect inactive fields from a hack
+					if  form_item.active and hasattr(data, field): #FIXME need to test if the does protect inactive fields from a hack
 						# update object
 						if form_item.name:
 							name = field_prefix + name
@@ -152,8 +151,8 @@ def save_form(formdata, form_id, table_id, field_prefix=''):
 			
 	# delete record
 	if formdata.getvalue(field_prefix + 'delete'):
-		if (model.__dict__.has_key(tmp_objname)):
-			my_obj = model.__dict__[tmp_objname]
+		if (r.data.tables.has_key(tmp_objname)):
+			my_obj = getattr(r.data, tmp_objname)
 			# create object to delete it
 			print 'DELETE'
 			data = session.query(my_obj).filter_by(id=table_id).one()
@@ -166,8 +165,8 @@ def save_form(formdata, form_id, table_id, field_prefix=''):
 		if str(form_item.item) == 'subform':
 			# subform
 			p = form['item_params'][form_item.id] 
-			if (model.__dict__.has_key(p['child_object'])):
-				my_obj = model.__dict__[p['child_object']]  #FIXME if not found
+			if (r.data.tables.has_key(p['child_object'])):
+				my_obj = getattr(r.data, p['child_object'])  #FIXME if not found
 	
 			if p.has_key('parent_id'): # some subforms are not connected ie 'cheap datasheets'
 				data = session.query(my_obj).filter_by(**{p['child_id']:table_id}).all()
@@ -186,13 +185,7 @@ def save_form(formdata, form_id, table_id, field_prefix=''):
 
 def view(environ):
 	tab_id = int(environ['selector.vars']['table_id'])
-#	formdata = cgi.FieldStorage(fp=environ['wsgi.input'],
- #                           	environ=environ,
- #                           	keep_blank_values=1)
 
-	# save data if there is some form data
-#	if formdata.keys():
-#		save_form(formdata, environ['selector.vars']['form_id'], tab_id )
 
 	# initiation
 	form_render_data = {}
@@ -295,8 +288,9 @@ def create_form(environ, form_render_data, defaults):
 						body += form_items.__dict__[str(form_item.item)](form_item, field_prefix)
 				
 				elif  form_item.active and str(form_item.item) == 'subform':
+					print "WTF WTF WTF"
 					body += "<p>%s</p>" % form_item.label
-					print "SUBFORM" , form_item
+					print "SUBFORM" , form_item, form_item.id
 					# subform
 					p = form['item_params'][form_item.id]
 					print p
@@ -305,8 +299,12 @@ def create_form(environ, form_render_data, defaults):
 					sub_form_render_data['form_id'] = p['subformID']
 					#sub_form_render_data['formdata'] = form_render_data['formdata']
 			
-					if (model.__dict__.has_key(p['child_object'])):
-						my_obj = model.__dict__[p['child_object']]
+					if (r.data.tables.has_key(p['child_object'])):
+						my_obj = getattr(r.data, p['child_object'])
+						print "#### %s found" % p['child_object']
+					else:
+						print "#### %s NOT found" % p['child_object']
+					
 					#print "~~", tmp_objname
 					#print p['child_id']
 					if table_id or ( p.has_key('show') and p['show'] == "true" ):  # we don't want child forms that have no immediate parent
@@ -321,6 +319,7 @@ def create_form(environ, form_render_data, defaults):
 						print "<p>####</p>"
 						session = dbconfig.Session()
 						if p.has_key('parent_id'): # some subforms are not connected ie 'cheap datasheets'
+							print "MOOOOOOOO %s" % p['child_id'],form_id,p['parent_id']
 							data = session.query(my_obj).filter_by(**{p['child_id']:table_id}).all()
 						else:
 							data = session.query(my_obj).all()
@@ -349,14 +348,14 @@ def create_form(environ, form_render_data, defaults):
 
 		# get data or defaults
 		form_data = None
-		if (model.__dict__.has_key(tmp_objname)):
-			my_obj = model.__dict__[tmp_objname]
+		if (r.data.tables.has_key(tmp_objname)):
+			my_obj = getattr(r.data, tmp_objname)
 			if table_id != 0:
 				try:	
 					#print 	'looking for %s' % table_id
 					#print repr(my_obj)
 					session = dbconfig.Session()
-					form_data = model.session.query(my_obj).filter_by(id=table_id).one()
+					form_data = session.query(my_obj).filter_by(id=table_id).one()
 					session.close()
 				except: #FIXME better handeling of this as save buggered by this i imagine
 					print "## ERROR ## record not found or something"
