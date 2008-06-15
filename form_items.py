@@ -1,4 +1,4 @@
-#import model
+import dbconfig
 
 
 # FIXME I want to combine the controls but have some way to suppress ones used in the wrong context
@@ -40,7 +40,7 @@ def dropdown(form_item, field_prefix):
 			else:
 				options = ('',)
 		elif p['type'] == 'sql':
-			session = model.Session()
+			session = dbconfig.Session()
 	#		try:
 			out = session.execute(p['sql']) # FIXME we trust anything what madness you could put a DROP DATABASE here
 			pairs = []
