@@ -5,38 +5,42 @@ from sqlalchemy import orm
 from sqlalchemy.orm import sessionmaker
 from formencode import validators
 import formencode
+import dbconfig
 
-engine = sa.create_engine('sqlite:///:memory:', echo=True)
+session =dbconfig.Session()
 
-metadata = sa.MetaData()
-Session = sessionmaker(bind=engine, autoflush=True, transactional=True)
-session = Session()
+if "table" not in dbconfig.metadata.tables:
+    tables = sa.Table("table", dbconfig.metadata,
+		    sa.Column('id', sa.Integer, primary_key=True),
+		    sa.Column("name", sa.types.String(100), nullable=False, unique= True)
+		    )
 
-tables = sa.Table("table", metadata,
-                sa.Column('id', sa.Integer, primary_key=True),
-                sa.Column("name", sa.types.String(100), nullable=False, unique= True)
-                )
-
-table_param = sa.Table("table_param", metadata,
-                sa.Column( 'id' ,   sa.Integer,    primary_key=True),     
-                sa.Column('table_id', sa.Integer, sa.ForeignKey("table.id")),
-                sa.Column('table_param_type', sa.String(100), nullable = False),
-                sa.Column('table_param_value', sa.String(100), nullable = False))
+    table_param = sa.Table("table_param", dbconfig.metadata,
+		    sa.Column( 'id' ,   sa.Integer,    primary_key=True),     
+		    sa.Column('table_id', sa.Integer, sa.ForeignKey("table.id")),
+		    sa.Column('table_param_type', sa.String(100), nullable = False),
+		    sa.Column('table_param_value', sa.String(100), nullable = False))
 
 
-field  = sa.Table("field", metadata,
-                sa.Column('id', sa.Integer, primary_key=True),
-                sa.Column("name", sa.types.String(100), nullable=False),
-                sa.Column("field_type", sa.types.String(100), nullable =False),
-                sa.Column("table_id", sa.Integer, sa.ForeignKey("table.id")))
+    field  = sa.Table("field", dbconfig.metadata,
+		    sa.Column('id', sa.Integer, primary_key=True),
+		    sa.Column("name", sa.types.String(100), nullable=False),
+		    sa.Column("field_type", sa.types.String(100), nullable =False),
+		    sa.Column("table_id", sa.Integer, sa.ForeignKey("table.id")))
 
-field_param = sa.Table("field_param", metadata,
-                sa.Column( 'id' ,   sa.Integer,    primary_key=True),     
-                sa.Column('field_id', sa.Integer, sa.ForeignKey("field.id")),
-                sa.Column('field_param_type', sa.String(100), nullable = False),
-                sa.Column('field_param_value', sa.String(100), nullable = False))
+    field_param = sa.Table("field_param", dbconfig.metadata,
+		    sa.Column( 'id' ,   sa.Integer,    primary_key=True),     
+		    sa.Column('field_id', sa.Integer, sa.ForeignKey("field.id")),
+		    sa.Column('field_param_type', sa.String(100), nullable = False),
+		    sa.Column('field_param_value', sa.String(100), nullable = False))
 
-metadata.create_all(engine)
+else:
+    tables = dbconfig.metadata.tables["table"]
+    table_param = dbconfig.metadata.tables["table_param"]
+    field = dbconfig.metadata.tables["field"]
+    field_param = dbconfig.metadata.tables["field_param"]
+
+dbconfig.metadata.create_all(dbconfig.engine)
 
 def attributesfromdict(d):
     self = d.pop('self')
@@ -135,7 +139,7 @@ class Table(object):
 	    if hasattr(column,"columns"):
 		columns.append(column.columns())
         
-        self.table = sa.Table(self.name, metadata,
+        self.table = sa.Table(self.name, dbconfig.metadata,
                               sa.Column('id' ,   sa.Integer,    primary_key=True),
                               *columns )
     
@@ -221,6 +225,27 @@ class Date(object):
 		     params
 		    )
 
+class Boolean(object):
+ 
+   def __init__(self,name, mandatory = True, **kw):
+       
+       attributesfromdict(locals())
+
+   def columns (self):
+       
+       return sa.Column(self.name,sa.Boolean, nullable = not self.mandatory)
+
+   
+   def paramset (self,table_name):
+       
+       params = [Field_param(  "mandatory" , repr(self.mandatory)),]
+       
+       for n,v in self.kw.iteritems():
+           params.append(Field_param(n,v))
+             
+       return Field(self.name,self.__class__.__name__,
+                    params
+                   )
 
 
 class TextBox(object):
@@ -289,7 +314,7 @@ class ManyToMany(object):
 
     def external_table(self, table_name):
 
-	self.table= sa.Table(table_name+"_manytomany_"+self.other, metadata,
+	self.table= sa.Table(table_name+"_manytomany_"+self.other, dbconfig.metadata,
 			sa.Column(table_name+"_id", sa.Integer, sa.ForeignKey("%s.id"%(table_name))),
 			sa.Column(self.other+"_id", sa.Integer, sa.ForeignKey("%s.id"%(self.other))))
 	
@@ -359,7 +384,7 @@ class Database(object):
 
             v.add_external_columns(self,v.name)
 
-        metadata.create_all(engine)
+        dbconfig.metadata.create_all(dbconfig.engine)
 
         for v in self.tables.itervalues():
 

@@ -1,7 +1,6 @@
 #/usr/bin/python
 
 #import reformed.data as data
-import http
 from sqlalchemy.orm import eagerload
 import formencode
 from formencode.htmlfill import FillingParser
