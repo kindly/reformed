@@ -118,10 +118,11 @@ def save_form(formdata, form_id, table_id, field_prefix=''):
 				print 'NEW'
 				data = my_obj()
 				# set the link data
-				m = re.match(r'^.*:(?=[^:]*:$)', field_prefix)
-				if m:
-					id_field = str(formdata.getfirst(m.group(0) + '_::_id_field'))
-					id_value = str(formdata.getfirst(m.group(0) + '_::_id_value'))
+
+				if field_prefix:
+					print "llll"
+					id_field = str(formdata.getfirst(field_prefix + '_::_id_field'))
+					id_value = str(formdata.getfirst(field_prefix + '_::_id_value'))
 				else:
 					id_field = str(formdata.getfirst('_::_id_field'))
 					id_value = str(formdata.getfirst('_::_id_value'))
@@ -219,16 +220,85 @@ def view(environ):
 	body = '\n<form action="%s" method="post">%s\n</form>' % (form_action, body)
 	return '%s' % body
 
-def datasheet_header(form_id):
+def datasheet(form_id, parent_id = None, child_field = None, field_prefix = '', defaults = {}):
+
+	print "@@@@",  parent_id, child_field
+	form = get_form_schema(form_id)
+		# datasheet header
+	body = "\n<table border='1'>"
+	# header row
+	body += datasheet_header(form_id, form)
+
+	# ok get the data to spit out
+	session = dbconfig.Session()
+	
+	p = form['form_params']
+	print repr(p)
+	if (r.data.tables.has_key(p['form_object'])):
+		my_obj = getattr(r.data, p['form_object'])
+	#my_obj = r.data.user_group
+	if parent_id and child_field: # some subforms are not connected ie 'cheap datasheets'
+		data = session.query(my_obj).filter_by(**{child_field:parent_id}).all()
+	else:
+		data = session.query(my_obj).all()	
+	for row in data:
+		(html, defaults) = datasheet_row(row, field_prefix, 'id', form, defaults) #FIXME assumed always 'id' that is the key
+		body += html
+	# extra row
+	# need to get the parent joining info
+	body += "\n<input name='%s0:_::_id_field' type='hidden' value='%s'/><input name='%s0:_::_id_value' type='hidden' value='%s'/>" % (field_prefix, child_field, field_prefix, parent_id)
+	(html, defaults) = datasheet_row(None, field_prefix, 'id', form, defaults) #FIXME assumed always 'id' that is the key
+	body += html		
+	body += "\n</table>\n"
+	
+	return (body, defaults)
+
+def datasheet_row(row, field_prefix, child_field, form, defaults):	
+		
+		if row:
+			record_id = str(getattr(row, child_field))
+		else:
+			record_id = "0" # new row
+
+		my_field_prefix = field_prefix + record_id + ":"
+		body = "\n<tr>"
+		if record_id != "0": # FIXMEtable_id:
+			body += "\n<td>%s</td>" % record_id
+		else:
+			body += "\n<td>+</td>"
+		
+		for form_item in form['form'].form_item:
+			if form_item.active and hasattr(form_items, str(form_item.item) + "_datasheet"): #FIXME str
+				# normal controls
+				if form_item.name:
+					print form_item.item
+					my_form_item = getattr(form_items, str(form_item.item) + "_datasheet") #FIXME str
+					body += my_form_item(form_item, my_field_prefix) 
+		body += "\n</tr>"
+
+		# get data
+		for form_item in form['form'].form_item:
+			if str(form_item.name).count('.'):
+				(table, field) = form_item.name.split('.')
+			else:
+				table = field = None
+			if row and field and hasattr(row, field):
+				defaults[my_field_prefix + str(form_item.name)] = str(getattr(row, field))
+			else:
+				defaults[my_field_prefix + str(form_item.name)] = ""
+				
+		return (body, defaults)
+			
+def datasheet_header(form_id, form):
 
 	tmp_objname = 'Form_item'	
 	body = "\n<tr>"
 
 	# get the form data	
-	form = get_form_schema(form_id)
+	
 	body += "\n<td>id</td>"  # FIXME i18n
 	for form_item in form['form'].form_item:
-		if form_items.__dict__.has_key(str(form_item.item)): #FIXME not needed visibility param?
+		if hasattr(form_items, str(form_item.item)): #FIXME not needed visibility param?
 			if form_item.label:
 				body += "\n<td>%s</td>" % form_item.label
 	body += "\n</tr>"
@@ -261,87 +331,69 @@ def create_form(environ, form_render_data, defaults):
 
 		# create the form
 
-		if form_type == "datasheet":
-			# datasheets are simple no subforms etc ;)
-			body += "\n<tr>"
-			if table_id:
-				body += "\n<td>%s</td>" % table_id
-			else:
-				body += "\n<td>+</td>"
-			for form_item in form['form'].form_item:
-				# see if we know this form item eg dropdown
-				# if we do then call it passing the form_item
-				if form_item.active and form_items.__dict__.has_key(str(form_item.item) + "_datasheet"):
-					# normal controls
-					if form_item.name:
-						body += form_items.__dict__[str(form_item.item) + "_datasheet"](form_item, field_prefix)
-			body += "\n</tr>"
 
-		else:
-			body += "<div style='border:1px solid #F00;margin:3px 10px;'>"
-			for form_item in form['form'].form_item:
-				# see if we know this form item eg dropdown
-				# if we do then call it passing the form_item
-				if  form_item.active and form_items.__dict__.has_key(str(form_item.item)):
-					# normal controls
-					if form_item.name:
-						body += form_items.__dict__[str(form_item.item)](form_item, field_prefix)
-				
-				elif  form_item.active and str(form_item.item) == 'subform':
-					print "WTF WTF WTF"
-					body += "<p>%s</p>" % form_item.label
-					print "SUBFORM" , form_item, form_item.id
-					# subform
-					p = form['item_params'][form_item.id]
-					print p
-					sub_form_render_data = {}
-				
-					sub_form_render_data['form_id'] = p['subformID']
-					#sub_form_render_data['formdata'] = form_render_data['formdata']
+		body += "<div style='border:1px solid #F00;margin:3px 10px;'>"
+		for form_item in form['form'].form_item:
+			# see if we know this form item eg dropdown
+			# if we do then call it passing the form_item
+			if  form_item.active and hasattr(form_items, str(form_item.item)):
+				# normal controls
+				if form_item.name:
+					my_form_item = getattr(form_items, str(form_item.item)) #FIXME str
+					body += my_form_item(form_item, field_prefix)
 			
-					if (r.data.tables.has_key(p['child_object'])):
-						my_obj = getattr(r.data, p['child_object'])
-						print "#### %s found" % p['child_object']
-					else:
-						print "#### %s NOT found" % p['child_object']
+			elif  form_item.active and str(form_item.item) == 'subform':
+				p = form['item_params'][form_item.id]
+				if table_id or ( p.has_key('show') and p['show'] == "true" ):  # we don't want child forms that have no immediate parent
+					if p.has_key('form_type') and p['form_type'] == 'datasheet':
 					
-					#print "~~", tmp_objname
-					#print p['child_id']
-					if table_id or ( p.has_key('show') and p['show'] == "true" ):  # we don't want child forms that have no immediate parent
-						if p.has_key('form_type') and p['form_type'] == 'datasheet':
-							# datasheet header
-							body += "\n<table border='1'>"
-							# header row
-							body += datasheet_header(p['subformID'])
-							sub_form_render_data['form_type'] = 'datasheet'
+						# DATASHEET
+						my_field_prefix =  "%s%s_" % (form_render_data['field_prefix'], form_item.name)
+						
+						(form_html, defaults) = datasheet(p['subformID'], table_id, p['child_id'], my_field_prefix, defaults)
+						#, parent_id = None, child_field = None, field_prefix = '', defaults = {}
+						body += form_html
+						pass
+						#  data sheet
+					else:				
+						# contiuous
+						body += "<p>%s</p>" % form_item.label
+						print "SUBFORM" , form_item, form_item.id
+						# subform
+						
+						sub_form_render_data = {}
+						sub_form_render_data['form_id'] = p['subformID']
+		
+						if (r.data.tables.has_key(p['child_object'])):
+							my_obj = getattr(r.data, p['child_object'])
+							print "#### %s found" % p['child_object']
 						else:
+							print "#### %s NOT found" % p['child_object']
+				
+						if table_id or ( p.has_key('show') and p['show'] == "true" ):  # we don't want child forms that have no immediate parent
 							sub_form_render_data['form_type'] = 'continuous'
-						print "<p>####</p>"
-						session = dbconfig.Session()
-						if p.has_key('parent_id'): # some subforms are not connected ie 'cheap datasheets'
-							print "MOOOOOOOO %s" % p['child_id'],form_id,p['parent_id']
-							data = session.query(my_obj).filter_by(**{p['child_id']:table_id}).all()
-						else:
-							data = session.query(my_obj).all()
-						session.close()
-						for obj in data:
-							sub_form_render_data['table_id'] = obj.id
-							sub_form_render_data['field_prefix'] = "%s%s_%s:" % (form_render_data['field_prefix'], form_item.name, obj.id)
-							(form_html, defaults) = create_form(environ, sub_form_render_data, defaults)
-							body += form_html
-						if p.has_key('child_id'):
-							sub_form_render_data['table_id']= 0
-							sub_form_render_data['field_prefix'] = "%s%s_%s:" % (form_render_data['field_prefix'], form_item.name, 0)
-							body += "\n<input name='%s_::_id_field' type='hidden' value='%s'/><input name='%s_::_id_value' type='hidden' value='%s'/>" % (form_render_data['field_prefix'], p['child_id'], form_render_data['field_prefix'], form_render_data['table_id'])
-							(form_html, defaults) = create_form(environ, sub_form_render_data, defaults)
-							body += form_html
 
-						if p.has_key('form_type') and p['form_type'] == 'datasheet':
-							# datasheet footer
-							body += "\n</table>\n"
-				elif  form_item.active:
-					# unknown
-					body += form_items.unknown(form_item, field_prefix)
+							session = dbconfig.Session()
+							if p.has_key('parent_id'): # some subforms are not connected ie 'cheap datasheets'
+								data = session.query(my_obj).filter_by(**{p['child_id']:table_id}).all()
+							else:
+								data = session.query(my_obj).all()
+							session.close()
+							for obj in data:
+								sub_form_render_data['table_id'] = obj.id
+								sub_form_render_data['field_prefix'] = "%s%s_%s:" % (form_render_data['field_prefix'], form_item.name, obj.id)
+								(form_html, defaults) = create_form(environ, sub_form_render_data, defaults)
+								body += form_html
+							if p.has_key('child_id'):
+								sub_form_render_data['table_id']= 0
+								sub_form_render_data['field_prefix'] = "%s%s_%s:" % (form_render_data['field_prefix'], form_item.name, 0)
+								body += "\n<input name='%s_::_id_field' type='hidden' value='%s'/><input name='%s_::_id_value' type='hidden' value='%s'/>" % (sub_form_render_data['field_prefix'], p['child_id'], sub_form_render_data['field_prefix'], form_render_data['table_id'])
+								(form_html, defaults) = create_form(environ, sub_form_render_data, defaults)
+								body += form_html
+
+			elif  form_item.active:
+				# unknown
+				body += form_items.unknown(form_item, field_prefix)
 
 		body += "</div>"
 
@@ -367,8 +419,8 @@ def create_form(environ, form_render_data, defaults):
 			else:
 				table = field = None
 			
-			if form_data and form_data.__dict__.has_key(field):
-				defaults[field_prefix + str(form_item.name)] = str(form_data.__dict__[field])
+			if form_data and field and hasattr(form_data, field):
+				defaults[field_prefix + str(form_item.name)] = str(getattr(form_data, field))
 			else:
 				defaults[field_prefix + str(form_item.name)] = ""
 		
