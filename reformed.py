@@ -1,113 +1,14 @@
- #!/usr/bin/env python
+#!/usr/bin/env python
 
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import sessionmaker
-from formencode import validators
-import formencode
 import dbconfig
+from fields import *
+from util import *
+from boot_tables import *
 
 session =dbconfig.Session()
-
-if "table" not in dbconfig.metadata.tables:
-    tables = sa.Table("table", dbconfig.metadata,
-		    sa.Column('id', sa.Integer, primary_key=True),
-		    sa.Column("name", sa.types.String(100), nullable=False, unique= True)
-		    )
-
-    table_param = sa.Table("table_param", dbconfig.metadata,
-		    sa.Column( 'id' ,   sa.Integer,    primary_key=True),     
-		    sa.Column('table_id', sa.Integer, sa.ForeignKey("table.id")),
-		    sa.Column('table_param_type', sa.String(100), nullable = False),
-		    sa.Column('table_param_value', sa.String(100), nullable = False))
-
-
-    field  = sa.Table("field", dbconfig.metadata,
-		    sa.Column('id', sa.Integer, primary_key=True),
-		    sa.Column("name", sa.types.String(100), nullable=False),
-		    sa.Column("field_type", sa.types.String(100), nullable =False),
-		    sa.Column("table_id", sa.Integer, sa.ForeignKey("table.id")))
-
-    field_param = sa.Table("field_param", dbconfig.metadata,
-		    sa.Column( 'id' ,   sa.Integer,    primary_key=True),     
-		    sa.Column('field_id', sa.Integer, sa.ForeignKey("field.id")),
-		    sa.Column('field_param_type', sa.String(100), nullable = False),
-		    sa.Column('field_param_value', sa.String(100), nullable = False))
-
-else:
-    tables = dbconfig.metadata.tables["table"]
-    table_param = dbconfig.metadata.tables["table_param"]
-    field = dbconfig.metadata.tables["field"]
-    field_param = dbconfig.metadata.tables["field_param"]
-
-dbconfig.metadata.create_all(dbconfig.engine)
-
-def attributesfromdict(d):
-    self = d.pop('self')
-    for n,v in d.iteritems():
-        setattr(self,n,v)
-        
-def attributesfromkw(d):
-    self = d.pop('self')
-    kw = d.pop('kw')
-    for p,q in kw.iteritems():
-        setattr(self,p,q)        
-
-class Tables(object):
-    def __init__(self,name, field,table_param):
-        attributesfromdict(locals())
-    def __repr__(self):
-        return repr(self.__class__) + self.name
-    
-class Table_param(object):
-    def __init__(self,table_param_type,table_param_value):
-        attributesfromdict(locals())
-    def __repr__(self):
-        return repr(self.__class__) + self.name
-    
-class Field(object):
-    def __init__(self,name,field_type, field_param):
-        attributesfromdict(locals())
-    def __repr__(self):
-        return repr(self.__class__) + self.name +self.field_type
-
-class Field_param(object):
-    def __init__(self,field_param_type,field_param_value):
-        attributesfromdict(locals())
-    def __repr__(self):
-        return repr(self.__class__) +   self.field_param_type + self.field_param_value   
-    
-    
-orm.mapper(Tables, tables, properties={
-        'field':orm.relation(Field),
-        'table_param':orm.relation(Table_param)
-	})
-
-orm.mapper(Table_param, table_param)
-
-
-orm.mapper(Field, field, properties={
-        'field_param':orm.relation(Field_param)
-          })
-
-orm.mapper(Field_param,field_param)
-
-
-def Validate(value, validation,name):
-
-    exec ("valid = validators.%s" %(validation))
-
-    try:
-        valid.to_python(value)
-    except formencode.Invalid,e :
-	return {name:e.msg}
-    else:
-	return {} 
-
-
-
-
-
 
 
 class Table(object):
@@ -183,159 +84,6 @@ class Table(object):
 			column.external_table(table_name)
 
 
-class Integer(object):
-   
-    def __init__(self,name, mandatory = True, **kw):
-        
-        attributesfromdict(locals())
-
-    def columns (self):
-        
-        return sa.Column(self.name,sa.Integer, nullable = not self.mandatory)
-
-    
-    def paramset (self,table_name):
-        
-        params = [Field_param(  "mandatory" , repr(self.mandatory)),]
-        
-        for n,v in self.kw.iteritems():
-            params.append(Field_param(n,v))
-               
-        return Field(self.name,self.__class__.__name__,
-                     params
-                    )
-
-class Date(object):
-    def __init__(self,name, mandatory = True, **kw):
-	
-	attributesfromdict(locals())
-
-    def columns (self):
-	    
-	return sa.Column(self.name,sa.Date, nullable = not self.mandatory)
-	
-    def paramset (self,table_name):
-	    
-	params = [Field_param(  "mandatory" , repr(self.mandatory)),]
-	
-	for n,v in self.kw.iteritems():
-	    params.append(Field_param(n,v))
-	       
-	return Field(self.name,self.__class__.__name__,
-		     params
-		    )
-
-class Boolean(object):
- 
-   def __init__(self,name, mandatory = True, **kw):
-       
-       attributesfromdict(locals())
-
-   def columns (self):
-       
-       return sa.Column(self.name,sa.Boolean, nullable = not self.mandatory)
-
-   
-   def paramset (self,table_name):
-       
-       params = [Field_param(  "mandatory" , repr(self.mandatory)),]
-       
-       for n,v in self.kw.iteritems():
-           params.append(Field_param(n,v))
-             
-       return Field(self.name,self.__class__.__name__,
-                    params
-                   )
-
-
-class TextBox(object):
-    
-    def __init__(self,name,length =100, mandatory = True, **kw):
-        
-        attributesfromdict(locals())
-    
-    def columns (self):
-        
-        return sa.Column(self.name,sa.String(self.length), nullable = not self.mandatory)
-
-    def validator (self,object):
-	try:
-	    validation = self.kw["validation"]
-	except KeyError:
-	    return {}
-	else:
-	    return Validate(getattr(object,self.name),validation,self.name)
-
-    def paramset (self,table_name):
-        
-        params = [Field_param(  "length" , repr(self.length)),
-                      Field_param(  "mandatory" , repr(self.mandatory))]
-        
-        for n,v in self.kw.iteritems():
-            params.append(Field_param(n,v))
-               
-        return Field(self.name,self.__class__.__name__,
-                     params
-                    )
-
-
-class OneToMany(object):
-	
-    def __init__(self,name,other, **kw):
-	    attributesfromdict(locals())
-    
-    def external_column (self,table_name):
-	    return  sa.Column(table_name+"_id", sa.Integer, sa.ForeignKey("%s.id"%(table_name)))
-    
-    def parameters (self, table_name, database):
-	kw = self.kw
-	params = {}
-	mapped_class = getattr(database.tables[self.other], self.other) 
-
-	params[self.name]=orm.relation(mapped_class,**kw)
-	return params
-
-
-    def paramset (self,table_name):
-
-	params = [Field_param(  "other" , self.other)]
-	
-	for n,v in self.kw.iteritems():
-	    params.append(Field_param(n,v))
-	       
-	return Field(self.name,self.__class__.__name__,
-		     params)
-
-class ManyToMany(object):
-
-
-    def __init__(self,name,other, **kw):
-	    attributesfromdict(locals())
-
-    def external_table(self, table_name):
-
-	self.table= sa.Table(table_name+"_manytomany_"+self.other, dbconfig.metadata,
-			sa.Column(table_name+"_id", sa.Integer, sa.ForeignKey("%s.id"%(table_name))),
-			sa.Column(self.other+"_id", sa.Integer, sa.ForeignKey("%s.id"%(self.other))))
-	
-    def parameters (self, table_name, database):
-	params = {}
-	mapped_class = getattr(database.tables[self.other], self.other) 
-	kw = self.kw
-	params[self.name]=orm.relation(mapped_class,secondary=self.table,backref = table_name,**kw) 
-	return params
-
-    def paramset (self,table_name):
-
-	params = [Field_param(  "other", self.other)]
-	
-	for n,v in self.kw.iteritems():
-	    params.append(Field_param(n,v))
-	       
-	return Field(self.name,self.__class__.__name__,
-		     params)
-
-
 class Database(object):
 	
     def __init__ (self):
@@ -397,8 +145,8 @@ class Database(object):
 if __name__ == "__main__":
     
     aa= Table("main_table",
-		    TextBox("main_text_1", validation = "MaxLength(5)"),
-		    Integer("main_int"),
+		    TextBox("main_text_1", validation = "MaxLength(5)||MaxLength(4)"),
+		    Integer("main_int",validation = "MaxLength(1)"),
 		    OneToMany("join_one_many","one_many", cascade='all,delete-orphan'),
 		    ManyToMany("join_many_many","many_many"),
 		    Index = 'main_text_1')
@@ -426,7 +174,7 @@ if __name__ == "__main__":
     data=Database()
     data.create_tables()
 
-    nn = data.main_table(main_text_1="teaxt1",main_int = 6,
+    nn = data.main_table(main_text_1="teaxt1",main_int = 16,
 		    join_one_many = [data.one_many( one_many_text_1= "one"),
 	     		    data.one_many( one_many_text_1= "many")],
 		    join_many_many = [data.many_many( many_many_text_1= "many"),
