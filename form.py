@@ -242,18 +242,18 @@ def datasheet(form_id, parent_id = None, child_field = None, field_prefix = '', 
 	else:
 		data = session.query(my_obj).all()	
 	for row in data:
-		(html, defaults) = datasheet_row(row, field_prefix, 'id', form, defaults) #FIXME assumed always 'id' that is the key
+		(html, defaults) = datasheet_row(row, field_prefix, 'id', form, defaults, parent_id, child_field) #FIXME assumed always 'id' that is the key
 		body += html
 	# extra row
 	# need to get the parent joining info
-	body += "\n<input name='%s0:_::_id_field' type='hidden' value='%s'/><input name='%s0:_::_id_value' type='hidden' value='%s'/>" % (field_prefix, child_field, field_prefix, parent_id)
-	(html, defaults) = datasheet_row(None, field_prefix, 'id', form, defaults) #FIXME assumed always 'id' that is the key
+	#body += "\n<input name='%s0:_::_id_field' type='hidden' value='%s'/><input name='%s0:_::_id_value' type='hidden' value='%s'/>" % (field_prefix, child_field, field_prefix, parent_id)
+	(html, defaults) = datasheet_row(None, field_prefix, 'id', form, defaults, parent_id, child_field) #FIXME assumed always 'id' that is the key
 	body += html		
 	body += "\n</table>\n"
 	
 	return (body, defaults)
 
-def datasheet_row(row, field_prefix, child_field, form, defaults):	
+def datasheet_row(row, field_prefix, child_field, form, defaults, parent_id, parent_field):	
 		
 		if row:
 			record_id = str(getattr(row, child_field))
@@ -265,7 +265,10 @@ def datasheet_row(row, field_prefix, child_field, form, defaults):
 		if record_id != "0": # FIXMEtable_id:
 			body += "\n<td>%s</td>" % record_id
 		else:
-			body += "\n<td>+</td>"
+			body += "\n<td>+"
+			# need to get the parent joining info
+			body += "\n<input name='%s_::_id_field' type='hidden' value='%s'/><input name='%s_::_id_value' type='hidden' value='%s'/>" % (my_field_prefix, parent_field, my_field_prefix, parent_id)
+			body += "\n</td>"
 		
 		for form_item in form['form'].form_item:
 			if form_item.active and hasattr(form_items, str(form_item.item) + "_datasheet"): #FIXME str
@@ -395,7 +398,7 @@ def create_form(environ, form_render_data, defaults):
 				# unknown
 				body += form_items.unknown(form_item, field_prefix)
 
-		body += "</div>"
+		body += "\n</div> "
 
 
 		# get data or defaults
