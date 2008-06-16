@@ -74,7 +74,7 @@ def app(environ, start_response):
 	elif redirect:
 		# HTTP header
 		start_response('200 OK', [('Content-Type', 'text/html')])
-		return ["<a href='%s'>%s</a>"] % (redirect, redirect)
+		return ["<a href='%s'>%s</a>" % (redirect, redirect)]
 	else:
 		print "nothing to do" # FIXME we want to throw an error here
 
