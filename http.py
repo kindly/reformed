@@ -12,6 +12,8 @@ import posixpath
 import mimetypes
 from wsgiref.util import FileWrapper
 
+import dataexport
+
 # get our data up
 reformed.data = reformed.Database()
 reformed.data.create_tables()
@@ -56,6 +58,11 @@ def app(environ, start_response):
 		# static content
 		path = path[8:]
 		return(static(environ, start_response, path))
+	elif cmd == 'export':
+		# static content
+		path = path[8:]
+		body = dataexport.export(path)
+
 	else:
 		body = 'lost'
 

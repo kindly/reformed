@@ -1,14 +1,18 @@
 #!/usr/bin/python
 import dbconfig
-import model
+import reformed as r
 
 def export(table):
+	print "export", table
+	if not hasattr(r.data, table):
+		return "no such object"
+		
+	obj = getattr(r.data, table)
 	session = dbconfig.Session()
-
-	obj = model.__dict__[table]
 	data = session.query(obj).all()
 
 	print "\n# %s\n" % table
+	out_total = ''
 	for record in data:
 		out = ""
 		for col in record.__dict__.keys():
@@ -22,16 +26,12 @@ def export(table):
 						out += ", %s=%s" % (col, int(value))
 					except ValueError:
 						out += ", %s='%s'" % (col, value)
-				
+			
 		if out:
-			out = "dataloader.put('%s', %s)" % (table.lower(), out[2:])
-			print out
-	session.close()
-	
-export('Form')
-export('Form_param')
-export('Form_item')
-export('Form_item_param')
-
+			out_total += "dataloader.put('%s', %s)\n" % (table.lower(), out[2:])
+			
+	session.close()	
+	print out_total
+	return str("<pre># %s\n\n%s</pre>" % (table, out_total) )
 
 
