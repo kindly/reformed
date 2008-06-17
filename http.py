@@ -7,7 +7,7 @@ import cgi
 import reformed
 
 # for static
-import os, os.path
+import os, os.path, sys
 import posixpath
 import mimetypes
 from wsgiref.util import FileWrapper
@@ -54,7 +54,7 @@ def app(environ, start_response):
 		body = "logged out"
 	elif cmd == 'content':
 		# static content
-		path = path_info[2]
+		path = path[8:]
 		return(static(environ, start_response, path))
 	else:
 		body = 'lost'
@@ -107,7 +107,7 @@ def clear_authentication(http_session):
 
 
 def static(environ, start_response, path):
-	path="/home/toby/reformed/content/%s" % path
+	path = '%s/content%s' % (sys.path[0], path) # does this work in windows?
 	print path
 	if os.path.isfile(path):
 		stat = os.stat(path)
