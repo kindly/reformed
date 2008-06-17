@@ -207,7 +207,8 @@ def view(environ):
 		form_action = "/save/%s/%s"  % (form_render_data['form_id'], tab_id)
 	# create the form 
 	(form_html, form_data) = create_form(environ, form_render_data, defaults)
-	body += form_html
+	body += form_html 
+	body += " " # need this to stop parser removing final tag
 	
 
 	# fill out form
@@ -398,7 +399,7 @@ def create_form(environ, form_render_data, defaults):
 				# unknown
 				body += form_items.unknown(form_item, field_prefix)
 
-		body += "\n</div> "
+		body += "\n</div>"
 
 
 		# get data or defaults
