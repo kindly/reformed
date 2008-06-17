@@ -61,15 +61,10 @@ def app(environ, start_response):
 
 	
 	if body: # we have a html resonse
-		# footers
-		if session.get('user_id'):
-			body += "\n\n<p><small>user: %s <a href='/logout'>log out</a></small></p>" % (session.get('username') )
-		else:
-			body += "\n\n<p><small><a href='/view/5/0'>log in</a></small></p>" #FIXME bad url
-		body += "\n\n<p><small>page created in %s seconds - uptime %s</small></p>" % (time.clock() - start_time, datetime.datetime.now() - uptime)
+
 		# HTTP header
 		start_response('200 OK', [('Content-Type', 'text/html')])
-		return [html_header + body + html_footer]
+		return [html_header() + body + html_footer(session, start_time)]
 		
 	elif redirect:
 		# HTTP header
@@ -145,14 +140,24 @@ def static(environ, start_response, path):
 		return []
 
 # dirty old hack
-html_header = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
-<html xmlns='http://www.w3.org/1999/xhtml'>
-<head>
-<title>Reformed - what a horrid name</title>
-<meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1' />
-<link href='/content/default.css' rel='stylesheet' type='text/css' />
-</head>
-<body>
-<h1><img src="/content/reformed.png" title="cool" alt="reformed" /></h1>\n"""
+def html_header():
 
-html_footer = "\n</body>\n</html>"
+	return """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
+	<html xmlns='http://www.w3.org/1999/xhtml'>
+	<head>
+	<title>Reformed - what a horrid name</title>
+	<meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1' />
+	<link href='/content/default.css' rel='stylesheet' type='text/css' />
+	</head>
+	<body>
+	<h1><img src="/content/reformed.png" title="cool" alt="reformed" /></h1>\n"""
+
+def html_footer(http_session, start_time): 
+	# footers
+	if http_session.get('user_id'):
+		body = "\n\n<p><small>user: %s <a href='/logout'>log out</a></small></p>" % (http_session.get('username') )
+	else:
+		body = "\n\n<p><small><a href='/view/5/0'>log in</a></small></p>" #FIXME bad url
+	body += "\n\n<p><small>page created in %s seconds - uptime %s</small></p>" % (time.clock() - start_time, datetime.datetime.now() - uptime)
+	body += "\n</body>\n</html>"
+	return body
