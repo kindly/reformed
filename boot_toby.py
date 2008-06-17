@@ -24,6 +24,9 @@ r.Table("user", r.TextBox("username"),r.TextBox("password"),r.Boolean('active'),
 r.Table("user_group", r.TextBox("name"),r.TextBox("description")).paramset()
 
 
+# code
+r.Table("code", r.TextBox("name"),r.TextBox("description")).paramset()
+
 r.data=r.Database()
 r.data.create_tables()
 
