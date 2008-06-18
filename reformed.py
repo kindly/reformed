@@ -146,7 +146,7 @@ if __name__ == "__main__":
     
     aa= Table("main_table",
 		    TextBox("main_text_1", validation = "MaxLength(5)||MaxLength(4)"),
-		    Integer("main_int",validation = "MaxLength(1)"),
+		    Integer("main_int"),
 		    OneToMany("join_one_many","one_many", cascade='all,delete-orphan'),
 		    ManyToMany("join_many_many","many_many"),
 		    Index = 'main_text_1')
@@ -174,12 +174,12 @@ if __name__ == "__main__":
     data=Database()
     data.create_tables()
 
-    nn = data.main_table(main_text_1="teaxt1",main_int = 16,
+    nn = data.main_table(main_text_1="t1",main_int = 16,
 		    join_one_many = [data.one_many( one_many_text_1= "one"),
 	     		    data.one_many( one_many_text_1= "many")],
 		    join_many_many = [data.many_many( many_many_text_1= "many"),
 			   	data.many_many( many_many_text_1= "many")])
 
-    session.save(nn)
+    session.save_or_update(nn)
     session.commit()
     
