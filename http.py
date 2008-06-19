@@ -36,11 +36,11 @@ def app(environ, start_response):
 	
 	if cmd == 'view':
 		environ['selector.vars']= {'form_id' : path_info[2], #FIXME check if these exist durr
-					   'table_id' : path_info[3] }
+					   'record_id' : path_info[3] }
 		body = form.view(environ)
 	elif cmd == 'save':
 		environ['selector.vars']= {'form_id' : path_info[2], #FIXME check if these exist durr
-					   'table_id' : path_info[3] }
+					   'record_id' : path_info[3] }
 		redirect = form.save(environ)
 
 	elif cmd == 'list':

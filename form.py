@@ -47,6 +47,8 @@ def get_form_schema(form_id):
 
 def get_form_param(form_id, param):
 
+	"""helper function to return form_param value or None if no such param"""
+	
 	# do we have the data in the cache if not get it?
 	if not form_cache.has_key(form_id):
 		get_form_schema(form_id)
@@ -86,7 +88,7 @@ class Form_Schema(formencode.Schema):
 	name = validators.String(not_empty=True)
 
 def save(environ):
-	record_id = int(environ['selector.vars']['table_id'])
+	record_id = int(environ['selector.vars']['record_id'])
 	form_id = environ['selector.vars']['form_id']
 	formdata = cgi.FieldStorage(fp=environ['wsgi.input'],
                             	environ=environ,
@@ -104,98 +106,66 @@ def save(environ):
 
 
 
-def save_form(formdata, form_id, table_id, field_prefix=''):
+def save_form(formdata, form_id, record_id, field_prefix=''):
 
-	print "SAVING FORM DATA datasheet"
 	saved_id = 0
 	session = dbconfig.Session()
 
 	# get the form data	
 	form = get_form_schema(form_id)
 
-	if form['form_params'].has_key('form_object'):
-		tmp_objname = form['form_params']['form_object']
+	tmp_objname = get_form_param(form_id, 'form_object')
+
+	# my_field_prefix allows different prefixes, grids on their own (not subforms) having a 'special' prefix
+	m =	re.search(r'^(.*_)0:',field_prefix)
+	if m and m.group(1):
+		my_field_prefix = m.group(1)
 	else:
-		tmp_objname = None
-
-	print "prefix", field_prefix
-	print "object", tmp_objname
-
+		my_field_prefix = field_prefix
+		
 	# datagrid
 	# see if a save button has been pressed and force that record
 	formdata_linear = ','.join(formdata)
-	print formdata_linear
-	m = re.search(r'$|,(\d+):save', formdata_linear )
-	if m.group(1):
-		print m.group(1)
-		table_id = int(m.group(1))
-		field_prefix = `table_id` + ':'
+#	print formdata_linear
+	m = re.search(r'(^|,)(\d+):save', formdata_linear )
+	if m:
+		print m.group(2)
+		record_id = int(m.group(2))
+		field_prefix = `record_id` + ':'
 	# save data
-	if tmp_objname and (m.group(1) or formdata.has_key(field_prefix + 'save')):
-		print "gg"
-		if (r.data.tables.has_key(tmp_objname)):
-			my_obj = getattr(r.data, tmp_objname)
-			print "table_id: %s" % table_id
-			if table_id != 0:
-				# get object
-				print 'SAVE'
-				data = session.query(my_obj).filter_by(id=table_id).one()
-			else:
-				# create object
-				print 'NEW'
-				data = my_obj()
-				# set the link data
+	if tmp_objname and (m or formdata.has_key(field_prefix + 'save')):
+		saved_id = save_record(session, tmp_objname, record_id, field_prefix, bool(m), form, formdata)
 
-				if field_prefix:
-					id_field = str(formdata.getfirst(field_prefix + '_::_id_field'))
-					id_value = str(formdata.getfirst(field_prefix + '_::_id_value'))
-				else:
-					id_field = str(formdata.getfirst('_::_id_field'))
-					id_value = str(formdata.getfirst('_::_id_value'))
-				if id_value != "0": # FIXME this is a quick hack for none linked forms like the user groups it may come back to haunt me ;p
-					print data, ':', id_field, '=', id_value
-					setattr(data, id_field, id_value )
-				else:
-					print "suppressed id writing"
-			for form_item in form['form'].form_item:
-				name = str(form_item.name)
-				if name.count('.'):
-					(table, field) = name.split('.')
-					if  form_item.active and hasattr(data, field): #FIXME need to test if the does protect inactive fields from a hack
-						# update object
-						if form_item.name:
-							name = field_prefix + name
-						value = str(formdata.getvalue(name))
-						# checkboxes are a pain ;)
-						if form_item.item == 'checkbox' and value != "True":
-							value = False
-							
-						print "update: %s=%s" % (field, value)
-						setattr(data, field, value )
-			session.save_or_update(data)
-			session.commit()
-			if m:
-				saved_id = 0
-			else:
-				saved_id = data.id
+	
+	if formdata.has_key(my_field_prefix + '_::_save_selected'):
+		print "moo"
+		matches = re.findall(r'(^|,|_)(\d+):_::_selected', formdata_linear )
+		if matches:	
+			for	m in matches:
+				print "save selected", int(m[1])
+				save_record(session, tmp_objname, int(m[1]), my_field_prefix + str(m[1]) + ":", True, form, formdata)
 
+					
+					
+					
 	# datagrid
 	# see if a delete button has been pressed and force that record
-	m = re.search(r'$|,(\d+):delete', formdata_linear )
-	if m.group(1):
-		print "kkkkkk", m.group(1), m
-		table_id = int(m.group(1))
-		field_prefix = `table_id` + ':'			
+	m = re.search(r'(^|,)(\d+):delete', formdata_linear )
+	if m:
+		record_id = int(m.group(2))
+		field_prefix = `record_id` + ':'		
 	# delete record
-	if tmp_objname and (m.group(1) or formdata.has_key(field_prefix + 'delete')):
-		if (r.data.tables.has_key(tmp_objname)):
-			my_obj = getattr(r.data, tmp_objname)
-			# create object to delete it
-			print 'DELETE'
-			data = session.query(my_obj).filter_by(id=table_id).one()
-			session.delete(data)
-			session.commit()
+	if tmp_objname and (m or formdata.has_key(field_prefix + 'delete')):
+		delete_record(session, tmp_objname, record_id)
 
+	# grid delete selected
+	if formdata.has_key(my_field_prefix + '_::_delete_selected'):
+		matches = re.findall(r'(^|,)' + my_field_prefix + '(\d+):_::_selected', formdata_linear )
+		if matches:	
+			for	m in matches:
+				if int(m[1]) != 0:
+					print "delete selected", int(m[1])
+					delete_record(session, tmp_objname, int(m[1]) )
 
 	# look for subforms
 	for form_item in form['form'].form_item:
@@ -206,7 +176,7 @@ def save_form(formdata, form_id, table_id, field_prefix=''):
 				my_obj = getattr(r.data, p['child_object'])  #FIXME if not found
 	
 			if p.has_key('parent_id'): # some subforms are not connected ie 'cheap datasheets'
-				data = session.query(my_obj).filter_by(**{p['child_id']:table_id}).all()
+				data = session.query(my_obj).filter_by(**{p['child_id']:record_id}).all()
 			else:
 				data = session.query(my_obj).all()
 								
@@ -221,17 +191,75 @@ def save_form(formdata, form_id, table_id, field_prefix=''):
 	return saved_id
 
 
+def save_record(session, obj, record_id, field_prefix, return_zero, form, formdata):
+	if (r.data.tables.has_key(obj)):
+		my_obj = getattr(r.data, obj)
+		print "record_id: %s" % record_id
+		if record_id != 0:
+			# get object
+			print 'SAVE'
+			data = session.query(my_obj).filter_by(id=record_id).one()
+		else:
+			# create object
+			print 'NEW'
+			data = my_obj()
+			# set the link data
+
+			if field_prefix:
+				id_field = str(formdata.getfirst(field_prefix + '_::_id_field'))
+				id_value = str(formdata.getfirst(field_prefix + '_::_id_value'))
+			else:
+				id_field = str(formdata.getfirst('_::_id_field'))
+				id_value = str(formdata.getfirst('_::_id_value'))
+			if id_value != "0": # FIXME this is a quick hack for none linked forms like the user groups it may come back to haunt me ;p
+				print data, ':', id_field, '=', id_value
+				setattr(data, id_field, id_value )
+			else:
+				print "suppressed id writing"
+		for form_item in form['form'].form_item:
+			name = str(form_item.name)
+			if name.count('.'):
+				(table, field) = name.split('.')
+				if  form_item.active and hasattr(data, field): #FIXME need to test if the does protect inactive fields from a hack
+					# update object
+					if form_item.name:
+						name = field_prefix + name
+					value = str(formdata.getvalue(name))
+					# checkboxes are a pain ;)
+					if form_item.item == 'checkbox' and value != "True":
+						value = False
+						
+					print "update: %s=%s" % (field, value)
+					setattr(data, field, value )
+		session.save_or_update(data)
+		session.commit()
+		if return_zero:
+			saved_id = 0
+		else:
+			saved_id = data.id
+		return saved_id
+				
+				
+				
+def delete_record(session, obj, record_id):
+	if (r.data.tables.has_key(obj)):
+		my_obj = getattr(r.data, obj)
+		# create object to delete it
+		print 'DELETE'
+		data = session.query(my_obj).filter_by(id=record_id).one()
+		session.delete(data)
+		session.commit()
 
 
 
 def view(environ):
-	tab_id = int(environ['selector.vars']['table_id'])
+	record_id = int(environ['selector.vars']['record_id'])
 
 
 	# initiation
 	form_render_data = {}
 	form_render_data['form_type'] = 'normal'
-	form_render_data['table_id']  = tab_id
+	form_render_data['record_id']  = record_id
 	form_render_data['form_id'] = environ['selector.vars']['form_id']
 	form_render_data['field_prefix'] = ''
 	form_render_data['form_type'] = ''
@@ -244,10 +272,10 @@ def view(environ):
 	if form_render_data['form_id'] == "5":
 		form_action  = "/login"
 	else:
-		form_action = "/save/%s/%s"  % (form_render_data['form_id'], tab_id)
+		form_action = "/save/%s/%s"  % (form_render_data['form_id'], record_id)
 	# create the form 
 	if get_form_param(form_render_data['form_id'], 'form_view') == 'grid':
-		(form_html, form_data) = datasheet(form_render_data['form_id'], tab_id, 'id', '', defaults) #FIXME want to have 'straight' datasets
+		(form_html, form_data) = datasheet(form_render_data['form_id'], record_id, 'id', '', defaults) #FIXME want to have 'straight' datasets
 	else:
 		(form_html, form_data) = create_form(environ, form_render_data, defaults)
 	
@@ -291,11 +319,11 @@ def datasheet(form_id, parent_id = None, child_field = None, field_prefix = '', 
 		body += html
 	# extra row
 	# need to get the parent joining info
-	#body += "\n<input name='%s0:_::_id_field' type='hidden' value='%s'/><input name='%s0:_::_id_value' type='hidden' value='%s'/>" % (field_prefix, child_field, field_prefix, parent_id)
 	(html, defaults) = datasheet_row(None, field_prefix, 'id', form, defaults, parent_id, child_field) #FIXME assumed always 'id' that is the key
 	body += html		
 	body += "\n</table>\n"
-	
+	# add the buttons
+	body += form_items.save_delete_datasheet(None, field_prefix)
 	return (body, defaults)
 
 def datasheet_row(row, field_prefix, child_field, form, defaults, parent_id, parent_field):	
@@ -307,13 +335,20 @@ def datasheet_row(row, field_prefix, child_field, form, defaults, parent_id, par
 
 		my_field_prefix = field_prefix + record_id + ":"
 		body = "\n<tr>"
-		if record_id != "0": # FIXMEtable_id:
+		if record_id != "0": # FIXME record_id:
 			body += "\n<td>%s</td>" % record_id
 		else:
 			body += "\n<td>+"
 			# need to get the parent joining info
-			body += "\n<input name='%s_::_id_field' type='hidden' value='%s'/><input name='%s_::_id_value' type='hidden' value='%s'/>" % (my_field_prefix, parent_field, my_field_prefix, parent_id)
-			body += "\n</td>"
+			body += "\n<input name='%s_::_id_field' type='hidden' value='%s'/><input name='%s_::_id_value' type='hidden' value='%s'/>\n" % (my_field_prefix, parent_field, my_field_prefix, parent_id)
+			body += "</td>"
+			
+		#if get_form_param(form_id, param)
+		body += "<td>"
+		body += "<input type='checkbox' name='%s_::_selected' value='True' />" % my_field_prefix
+		
+		body += "</td>"
+		
 		
 		for form_item in form['form'].form_item:
 			if form_item.active and hasattr(form_items, str(form_item.item) + "_datasheet"): #FIXME str
@@ -344,7 +379,7 @@ def datasheet_header(form_id, form):
 
 	# get the form data	
 	
-	body += "\n<td>id</td>"  # FIXME i18n
+	body += "\n<td>id</td>\n<td>select</td>"  # FIXME i18n
 	for form_item in form['form'].form_item:
 		if hasattr(form_items, str(form_item.item)): #FIXME not needed visibility param?
 			if form_item.label:
@@ -360,13 +395,13 @@ def create_form(environ, form_render_data, defaults):
 	body = ""
 
 	#formdata = form_render_data['formdata']
-	table_id = form_render_data['table_id']
+	record_id = form_render_data['record_id']
 	form_id = form_render_data['form_id']
 	field_prefix = form_render_data['field_prefix']
 	form_type = form_render_data['form_type']
 
 	print "###### NEW FORM"
-	print table_id, form_id 
+	print record_id, form_id 
 
 
 	# get the form data	
@@ -392,13 +427,13 @@ def create_form(environ, form_render_data, defaults):
 			
 			elif  form_item.active and str(form_item.item) == 'subform':
 				p = form['item_params'][form_item.id]
-				if table_id or ( p.has_key('show') and p['show'] == "true" ):  # we don't want child forms that have no immediate parent
+				if record_id or ( p.has_key('show') and p['show'] == "true" ):  # we don't want child forms that have no immediate parent
 					if p.has_key('form_type') and p['form_type'] == 'datasheet':
 					
 						# DATASHEET
 						my_field_prefix =  "%s%s_" % (form_render_data['field_prefix'], form_item.name)
 						
-						(form_html, defaults) = datasheet(p['subformID'], table_id, p['child_id'], my_field_prefix, defaults)
+						(form_html, defaults) = datasheet(p['subformID'], record_id, p['child_id'], my_field_prefix, defaults)
 						#, parent_id = None, child_field = None, field_prefix = '', defaults = {}
 						body += form_html
 						pass
@@ -418,24 +453,24 @@ def create_form(environ, form_render_data, defaults):
 						else:
 							print "#### %s NOT found" % p['child_object']
 				
-						if table_id or ( p.has_key('show') and p['show'] == "true" ):  # we don't want child forms that have no immediate parent
+						if record_id or ( p.has_key('show') and p['show'] == "true" ):  # we don't want child forms that have no immediate parent
 							sub_form_render_data['form_type'] = 'continuous'
 
 							session = dbconfig.Session()
 							if p.has_key('parent_id'): # some subforms are not connected ie 'cheap datasheets'
-								data = session.query(my_obj).filter_by(**{p['child_id']:table_id}).all()
+								data = session.query(my_obj).filter_by(**{p['child_id']:record_id}).all()
 							else:
 								data = session.query(my_obj).all()
 							session.close()
 							for obj in data:
-								sub_form_render_data['table_id'] = obj.id
+								sub_form_render_data['record_id'] = obj.id
 								sub_form_render_data['field_prefix'] = "%s%s_%s:" % (form_render_data['field_prefix'], form_item.name, obj.id)
 								(form_html, defaults) = create_form(environ, sub_form_render_data, defaults)
 								body += form_html
 							if p.has_key('child_id'):
-								sub_form_render_data['table_id']= 0
+								sub_form_render_data['record_id']= 0
 								sub_form_render_data['field_prefix'] = "%s%s_%s:" % (form_render_data['field_prefix'], form_item.name, 0)
-								body += "\n<input name='%s_::_id_field' type='hidden' value='%s'/><input name='%s_::_id_value' type='hidden' value='%s'/>" % (sub_form_render_data['field_prefix'], p['child_id'], sub_form_render_data['field_prefix'], form_render_data['table_id'])
+								body += "\n<input name='%s_::_id_field' type='hidden' value='%s'/><input name='%s_::_id_value' type='hidden' value='%s'/>" % (sub_form_render_data['field_prefix'], p['child_id'], sub_form_render_data['field_prefix'], form_render_data['record_id'])
 								(form_html, defaults) = create_form(environ, sub_form_render_data, defaults)
 								body += form_html
 
@@ -450,12 +485,12 @@ def create_form(environ, form_render_data, defaults):
 		form_data = None
 		if (r.data.tables.has_key(tmp_objname)):
 			my_obj = getattr(r.data, tmp_objname)
-			if table_id != 0:
+			if record_id != 0:
 				try:	
-					#print 	'looking for %s' % table_id
+					#print 	'looking for %s' % record_id
 					#print repr(my_obj)
 					session = dbconfig.Session()
-					form_data = session.query(my_obj).filter_by(id=table_id).one()
+					form_data = session.query(my_obj).filter_by(id=record_id).one()
 					session.close()
 				except: #FIXME better handeling of this as save buggered by this i imagine
 					print "## ERROR ## record not found or something"

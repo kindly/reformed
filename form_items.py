@@ -70,7 +70,8 @@ def textbox_datasheet(form_item, field_prefix):
 def submit_datasheet(form_item, field_prefix):
 	return ("\n<td><input name='%s%s' type='submit' value='%s'/></td>" % (field_prefix, str(form_item.name), str(form_item.label)) )
 
-
+def save_delete_datasheet(form_item, field_prefix):
+	return ("\n<p> <input name='%s_::_save_selected' type='submit' value='save selected'/> <input name='%s_::_delete_selected' type='submit' value='delete selected'/></p>" % (field_prefix, field_prefix ))
 
 # utils
 def get_params(form_item):
