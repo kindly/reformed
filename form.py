@@ -45,6 +45,18 @@ def get_form_schema(form_id):
 		session.close()	
 	return form_cache[form_id]
 
+def get_form_param(form_id, param):
+
+	# do we have the data in the cache if not get it?
+	if not form_cache.has_key(form_id):
+		get_form_schema(form_id)
+	
+	if form_cache[form_id]['form_params'].has_key(param):
+		return form_cache[form_id]['form_params'][param]
+	else:
+		return None
+		
+		
 
 def get_params(form):
 	print "GETTING FORM PARAMS - %s" % form
@@ -82,16 +94,19 @@ def save(environ):
 
 	# save data if there is some form data
 	if formdata.keys():
-		saved_id = save_form(formdata, form_id, record_id )
+		saved_id = save_form(formdata, form_id, record_id)
+		
 	# our redirect
 	if record_id == 0 and saved_id:
 		record_id = saved_id
 	print "@@@@@@@@ ",record_id , saved_id
 	return "/view/%s/%s" % ( form_id, record_id )
 
+
+
 def save_form(formdata, form_id, table_id, field_prefix=''):
 
-	print "SAVING FORM DATA"
+	print "SAVING FORM DATA datasheet"
 	saved_id = 0
 	session = dbconfig.Session()
 
@@ -104,8 +119,20 @@ def save_form(formdata, form_id, table_id, field_prefix=''):
 		tmp_objname = None
 
 	print "prefix", field_prefix
+	print "object", tmp_objname
+
+	# datagrid
+	# see if a save button has been pressed and force that record
+	formdata_linear = ','.join(formdata)
+	print formdata_linear
+	m = re.search(r'$|,(\d+):save', formdata_linear )
+	if m.group(1):
+		print m.group(1)
+		table_id = int(m.group(1))
+		field_prefix = `table_id` + ':'
 	# save data
-	if tmp_objname and formdata.has_key(field_prefix + 'save'):
+	if tmp_objname and (m.group(1) or formdata.has_key(field_prefix + 'save')):
+		print "gg"
 		if (r.data.tables.has_key(tmp_objname)):
 			my_obj = getattr(r.data, tmp_objname)
 			print "table_id: %s" % table_id
@@ -120,7 +147,6 @@ def save_form(formdata, form_id, table_id, field_prefix=''):
 				# set the link data
 
 				if field_prefix:
-					print "llll"
 					id_field = str(formdata.getfirst(field_prefix + '_::_id_field'))
 					id_value = str(formdata.getfirst(field_prefix + '_::_id_value'))
 				else:
@@ -148,10 +174,20 @@ def save_form(formdata, form_id, table_id, field_prefix=''):
 						setattr(data, field, value )
 			session.save_or_update(data)
 			session.commit()
-			saved_id = data.id
-			
+			if m:
+				saved_id = 0
+			else:
+				saved_id = data.id
+
+	# datagrid
+	# see if a delete button has been pressed and force that record
+	m = re.search(r'$|,(\d+):delete', formdata_linear )
+	if m.group(1):
+		print "kkkkkk", m.group(1), m
+		table_id = int(m.group(1))
+		field_prefix = `table_id` + ':'			
 	# delete record
-	if formdata.getvalue(field_prefix + 'delete'):
+	if tmp_objname and (m.group(1) or formdata.has_key(field_prefix + 'delete')):
 		if (r.data.tables.has_key(tmp_objname)):
 			my_obj = getattr(r.data, tmp_objname)
 			# create object to delete it
@@ -184,6 +220,10 @@ def save_form(formdata, form_id, table_id, field_prefix=''):
 
 	return saved_id
 
+
+
+
+
 def view(environ):
 	tab_id = int(environ['selector.vars']['table_id'])
 
@@ -206,7 +246,11 @@ def view(environ):
 	else:
 		form_action = "/save/%s/%s"  % (form_render_data['form_id'], tab_id)
 	# create the form 
-	(form_html, form_data) = create_form(environ, form_render_data, defaults)
+	if get_form_param(form_render_data['form_id'], 'form_view') == 'grid':
+		(form_html, form_data) = datasheet(form_render_data['form_id'], tab_id, 'id', '', defaults) #FIXME want to have 'straight' datasets
+	else:
+		(form_html, form_data) = create_form(environ, form_render_data, defaults)
+	
 	body += form_html 
 	body += " " # need this to stop parser removing final tag
 	
