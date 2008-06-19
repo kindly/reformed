@@ -65,7 +65,7 @@ def dropdown(form_item, field_prefix):
 # datasheet
 
 def textbox_datasheet(form_item, field_prefix):
-	return ("\n<td><input name='%s%s' type='text'  value='fill'/></td>" % (field_prefix, str(form_item.name)) )
+	return ("\n<td><input name='%s%s' type='text' onkeyup=\"select_box('%s')\" value='fill'/></td>" % (field_prefix, str(form_item.name), field_prefix) )
 
 def submit_datasheet(form_item, field_prefix):
 	return ("\n<td><input name='%s%s' type='submit' value='%s'/></td>" % (field_prefix, str(form_item.name), str(form_item.label)) )

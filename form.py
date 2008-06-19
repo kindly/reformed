@@ -345,7 +345,7 @@ def datasheet_row(row, field_prefix, child_field, form, defaults, parent_id, par
 			
 		#if get_form_param(form_id, param)
 		body += "<td>"
-		body += "<input type='checkbox' name='%s_::_selected' value='True' />" % my_field_prefix
+		body += "<input type='checkbox' name='%s_::_selected' id='%s_::_selected' value='True' />" % (my_field_prefix, my_field_prefix)
 		
 		body += "</td>"
 		

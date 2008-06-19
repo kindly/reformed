@@ -155,6 +155,7 @@ def html_header():
 	<title>Reformed - what a horrid name</title>
 	<meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1' />
 	<link href='/content/default.css' rel='stylesheet' type='text/css' />
+	<script type='text/javascript' src='/content/default.js'></script>
 	</head>
 	<body>
 	<h1><img src="/content/reformed.png" title="cool" alt="reformed" /></h1>\n"""
