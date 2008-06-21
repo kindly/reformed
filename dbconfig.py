@@ -8,13 +8,13 @@ metadata.bind = engine
 
 class ValidatedSession(Session):
 
-    def save_or_update(self, instance, entity_name=None):
-
-	if instance.validate():
-	    return instance.validate()
-	else:
-	    super(ValidatedSession,self).save_or_update(instance, entity_name)
-
+	def save_or_update(self, instance, entity_name=None):
+	
+		if instance.validate():
+			return instance.validate()
+		else:
+			super(ValidatedSession,self).save_or_update(instance, entity_name)
+			return {}
 
 Session = sessionmaker(class_=ValidatedSession, bind=engine, autoflush=True, transactional=True)
 Session()
