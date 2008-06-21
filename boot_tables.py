@@ -6,7 +6,7 @@ from util import *
 if "table" not in dbconfig.metadata.tables:
 	tables = sa.Table("tables", dbconfig.metadata,
 			sa.Column('id', sa.Integer, primary_key=True),
-			sa.Column("name", sa.types.String(100), nullable=False)
+			sa.Column("name", sa.types.String(100), nullable=False, unique = True)
 			)
 
 	table_param = sa.Table("table_param", dbconfig.metadata,
