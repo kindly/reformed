@@ -19,13 +19,20 @@ r.Table("form_item_param", r.TextBox("key"),r.TextBox("value")).paramset()
 
 # User
 
-r.Table("user", r.TextBox("username"),r.TextBox("password"),r.Boolean('active'), r.OneToMany("user_group","user_group")).paramset()
+r.Table("user", r.TextBox("username"),r.TextBox("password"),r.Boolean('active'),r.Integer('user_group')).paramset()
 
 r.Table("user_group", r.TextBox("name"),r.TextBox("description")).paramset()
 
 
 # code
-r.Table("code", r.TextBox("name"),r.TextBox("description")).paramset()
+r.Table("code", r.TextBox("name"),r.TextBox("description"), r.OneToMany("code_group_code","code_group_code")).paramset()
+r.Table("code_group", r.TextBox("name"),r.TextBox("description"), r.OneToMany("code_group_code","code_group_code")).paramset()
+r.Table("code_group_code", r.Boolean("active"), r.Integer("sort_order")).paramset()
+
+#code2
+r.Table("code2", r.TextBox("name"),r.TextBox("description"), r.OneToMany("code2_group_code","code2_group_code")).paramset()
+r.Table("code2_group", r.TextBox("name"),r.TextBox("description"), r.OneToMany("code2","code2"), r.OneToMany("code2_group_code","code2_group_code")).paramset()
+r.Table("code2_group_code").paramset()
 
 r.data=r.Database()
 r.data.create_tables()
@@ -33,96 +40,184 @@ r.data.create_tables()
 
 # dataloader
 
-# Form
-
-dataloader.put('form', name='form', id=1)
-dataloader.put('form', name='form_item', id=2)
-dataloader.put('form', name='form_item_param', id=3)
-dataloader.put('form', name='test parent', id=4)
-dataloader.put('form', name='Login', id=5)
-dataloader.put('form', name='User', id=6)
-dataloader.put('form', name='User Group', id=7)
-dataloader.put('form', name='Form_param', id=8)
-dataloader.put('form', name='Permission Group list', id=9)
-
-# Form_param
-
-dataloader.put('form_param', form_id=1, value='form', key='form_object', id=1)
-dataloader.put('form_param', form_id=2, value='form_item', key='form_object', id=2)
-dataloader.put('form_param', form_id=3, value='form_item_param', key='form_object', id=3)
-dataloader.put('form_param', form_id=6, value='user', key='form_object', id=4)
-dataloader.put('form_param', form_id=8, value='form_param', key='form_object', id=5)
-dataloader.put('form_param', form_id=7, value='user_group', key='form_object', id=6)
-
-# Form_item
-
-dataloader.put('form_item', name='form.name', form_id=1, label='form name:', item='textbox', sort_order=1, active=True, id=1)
-dataloader.put('form_item', name='save', form_id=1, label='save', item='submit', sort_order=3, active=True, id=2)
-dataloader.put('form_item', name='form_item.name', form_id=2, label='name:', item='textbox', sort_order=1, active=True, id=3)
-dataloader.put('form_item', name='form_item.label', form_id=2, label='label:', item='textbox', sort_order=2, active=True, id=4)
-dataloader.put('form_item', name='form_item.item', form_id=2, label='item:', item='dropdown', sort_order=3, active=True, id=5)
-dataloader.put('form_item', name='save', form_id=2, label='save', item='submit', sort_order=6, active=True, id=7)
-dataloader.put('form_item', name='form_item_param.key', form_id=3, label='key', item='textbox', sort_order=1, active=True, id=8)
-dataloader.put('form_item', name='form_item_param.value', form_id=3, label='value', item='textbox', sort_order=2, active=True, id=9)
-dataloader.put('form_item', name='save', form_id=3, label='save', item='submit', sort_order=3, active=True, id=10)
-dataloader.put('form_item', name='form.name', form_id=4, label='name', item='textbox', sort_order=0, active=True, id=11)
-dataloader.put('form_item', name='sub1', form_id=1, label='subform', item='subform', sort_order=4, active=True, id=12)
-dataloader.put('form_item', name='sub2', form_id=2, label='subform', item='subform', sort_order=7, active=True, id=13)
-dataloader.put('form_item', name='delete', form_id=3, label='delete', item='submit', sort_order=4, active=True, id=15)
-dataloader.put('form_item', name='username', form_id=5, label='name', item='textbox', sort_order=1, active=True, id=16)
-dataloader.put('form_item', name='password', form_id=5, label='password', item='password', sort_order=2, active=True, id=17)
-dataloader.put('form_item', name='login', form_id=5, label='login', item='submit', sort_order=3, active=True, id=18)
-dataloader.put('form_item', name='user.username', form_id=6, label='user:', item='textbox', sort_order=1, active=True, id=19)
-dataloader.put('form_item', name='user.password', form_id=6, label='password', item='password', sort_order=2, active=True, id=20)
-dataloader.put('form_item', name='save', form_id=6, label='save', item='submit', sort_order=5, active=True, id=21)
-dataloader.put('form_item', name='user.active', form_id=6, label='active', item='checkbox', sort_order=3, active=True, id=22)
-dataloader.put('form_item', name='user.last_login', form_id=6, label='last login', item='textbox', sort_order=0, active=False, id=23)
-dataloader.put('form_item', name='form_item.sort_order', form_id=2, label='sort order:', item='textbox', sort_order=4, active=True, id=24)
-dataloader.put('form_item', name='form_item.active', form_id=2, label='active', item='checkbox', sort_order=5, active=True, id=25)
-dataloader.put('form_item', name='user_group.name', form_id=7, label='name', item='textbox', sort_order=1, active=True, id=26)
-dataloader.put('form_item', name='user_group.description', form_id=7, label='description', item='textbox', sort_order=2, active=True, id=27)
-dataloader.put('form_item', name='save', form_id=7, label='save', item='submit', sort_order=3, active=True, id=28)
-dataloader.put('form_item', name='form_param.key', form_id=8, label='key:', item='textbox', sort_order=1, active=True, id=29)
-dataloader.put('form_item', name='form_param.value', form_id=8, label='value', item='textbox', sort_order=2, active=True, id=30)
-dataloader.put('form_item', name='save', form_id=8, label='save', item='submit', sort_order=3, active=True, id=31)
-dataloader.put('form_item', name='delete', form_id=8, label='delete', item='submit', sort_order=4, active=True, id=32)
-dataloader.put('form_item', name='sub3', form_id=1, label='form parameters', item='subform', sort_order=3, active=True, id=33)
-dataloader.put('form_item', name='sub1', form_id=9, label='permission groups', item='subform', sort_order=1, active=True, id=34)
-dataloader.put('form_item', name='delete', form_id=7, label='delete', item='submit', sort_order=4, active=True, id=35)
-dataloader.put('form_item', name='user.user_group_id', form_id=6, label='group', item='dropdown', sort_order=4, active=True, id=36)
-
-# Form_item_param
-
-dataloader.put('form_item_param', form_item_id=8, value='red|blue|green', key='values', id=1)
-dataloader.put('form_item_param', form_item_id=8, value='sql', key='type', id=2)
-dataloader.put('form_item_param', form_item_id=12, value=2, key='subformID', id=3)
-dataloader.put('form_item_param', form_item_id=12, value='form_id', key='child_id', id=4)
-dataloader.put('form_item_param', form_item_id=12, value='id', key='parent_id', id=5)
-dataloader.put('form_item_param', form_item_id=13, value='form_item_id', key='child_id', id=6)
-dataloader.put('form_item_param', form_item_id=13, value='id', key='parent_id', id=7)
-dataloader.put('form_item_param', form_item_id=13, value=3, key='subformID', id=8)
-dataloader.put('form_item_param', form_item_id=12, value='form_item', key='child_object', id=9)
-dataloader.put('form_item_param', form_item_id=13, value='form_item_param', key='child_object', id=10)
-dataloader.put('form_item_param', form_item_id=13, value='datasheet', key='form_type', id=12)
-dataloader.put('form_item_param', form_item_id=6, value='parent', key='subform_value', id=13)
-dataloader.put('form_item_param', form_item_id=5, value='list', key='type', id=14)
-dataloader.put('form_item_param', form_item_id=5, value='textbox|dropdown|password|submit|subform|checkbox', key='values', id=15)
-dataloader.put('form_item_param', form_item_id=33, value=8, key='subformID', id=16)
-dataloader.put('form_item_param', form_item_id=33, value='form_id', key='child_id', id=17)
-dataloader.put('form_item_param', form_item_id=33, value='id', key='parent_id', id=18)
-dataloader.put('form_item_param', form_item_id=33, value='form_param', key='child_object', id=19)
-dataloader.put('form_item_param', form_item_id=33, value='datasheet', key='form_type', id=20)
-dataloader.put('form_item_param', form_item_id=34, value=7, key='subformID', id=21)
-dataloader.put('form_item_param', form_item_id=34, value='user_group', key='child_object', id=23)
-dataloader.put('form_item_param', form_item_id=34, value='true', key='show', id=24)
-dataloader.put('form_item_param', form_item_id=34, value='datasheet', key='form_type', id=26)
-dataloader.put('form_item_param', form_item_id=34, value='id', key='child_id', id=27)
-dataloader.put('form_item_param', form_item_id=36, value='sql', key='type', id=28)
-dataloader.put('form_item_param', form_item_id=36, value='SELECT id, name FROM user_group', key='sql', id=29)
 
 
 
+# forms
+dataloader.put(
+[
+{'form':{ 'name':'form' }, 
+'_data_': [
+	{'form_param':{ 'value':'form', 'key':'form_object' } }
+	,
+	{'form_item':{ 'name':'form.name', 'label':'form name:', 'item':'textbox', 'sort_order':1, 'active':1 } },
+	{'form_item':{ 'name':'save', 'label':'save', 'item':'submit', 'sort_order':3, 'active':1 } },
+	{'form_item':{ 'name':'sub1', 'label':'subform', 'item':'subform', 'sort_order':4, 'active':1 }, 
+	'_data_': [
+		{'form_item_param':{ 'value':'form_item', 'key':'subform_name' } },
+		{'form_item_param':{ 'value':'form_id', 'key':'child_id' } },
+		{'form_item_param':{ 'value':'id', 'key':'parent_id' } },
+		{'form_item_param':{ 'value':'form_item', 'key':'child_object' } }
+		]},
+	{'form_item':{ 'name':'sub3', 'label':'form parameters', 'item':'subform', 'sort_order':3, 'active':1 }, 
+	'_data_': [
+		{'form_item_param':{ 'value':'form_param', 'key':'subform_name' } },
+		{'form_item_param':{ 'value':'form_id', 'key':'child_id' } },
+		{'form_item_param':{ 'value':'id', 'key':'parent_id' } },
+		{'form_item_param':{ 'value':'form_param', 'key':'child_object' } },
+		{'form_item_param':{ 'value':'grid', 'key':'form_type' } }
+		]}
+	]},
+{'form':{ 'name':'form_item' }, 
+'_data_': [
+	{'form_param':{ 'value':'form_item', 'key':'form_object' } }
+	,
+	{'form_item':{ 'name':'form_item.name', 'label':'name:', 'item':'textbox', 'sort_order':1, 'active':1 } },
+	{'form_item':{ 'name':'form_item.label', 'label':'label:', 'item':'textbox', 'sort_order':2, 'active':1 } },
+	{'form_item':{ 'name':'form_item.item', 'label':'item:', 'item':'dropdown', 'sort_order':3, 'active':1 }, 
+	'_data_': [
+		{'form_item_param':{ 'value':'list', 'key':'type' } },
+		{'form_item_param':{ 'value':'textbox|dropdown|password|submit|subform|checkbox|codelist', 'key':'values' } }
+		]},
+	{'form_item':{ 'name':'save', 'label':'save', 'item':'submit', 'sort_order':6, 'active':1 } },
+	{'form_item':{ 'name':'sub2', 'label':'subform', 'item':'subform', 'sort_order':7, 'active':1 }, 
+	'_data_': [
+		{'form_item_param':{ 'value':'form_item_id', 'key':'child_id' } },
+		{'form_item_param':{ 'value':'id', 'key':'parent_id' } },
+		{'form_item_param':{ 'value':'form_item_param', 'key':'subform_name' } },
+		{'form_item_param':{ 'value':'form_item_param', 'key':'child_object' } },
+		{'form_item_param':{ 'value':'grid', 'key':'form_type' } }
+		]},
+	{'form_item':{ 'name':'form_item.sort_order', 'label':'sort order:', 'item':'textbox', 'sort_order':4, 'active':1 } },
+	{'form_item':{ 'name':'form_item.active', 'label':'active', 'item':'checkbox', 'sort_order':5, 'active':1 } }
+	]},
+{'form':{ 'name':'form_item_param' }, 
+'_data_': [
+	{'form_param':{ 'value':'form_item_param', 'key':'form_object' } }
+	,
+	{'form_item':{ 'name':'form_item_param.key', 'label':'key', 'item':'textbox', 'sort_order':1, 'active':1 }, 
+	'_data_': [
+		{'form_item_param':{ 'value':'red|blue|green', 'key':'values' } },
+		{'form_item_param':{ 'value':'sql', 'key':'type' } }
+		]},
+	{'form_item':{ 'name':'form_item_param.value', 'label':'value', 'item':'textbox', 'sort_order':2, 'active':1 } },
+	{'form_item':{ 'name':'save', 'label':'save', 'item':'submit', 'sort_order':3, 'active':1 } },
+	{'form_item':{ 'name':'delete', 'label':'delete', 'item':'submit', 'sort_order':4, 'active':1 } }
+	]},
+{'form':{ 'name':'test parent' } },
+{'form':{ 'name':'Login' }, 
+'_data_': [
+	{'form_item':{ 'name':'username', 'label':'name', 'item':'textbox', 'sort_order':1, 'active':1 } },
+	{'form_item':{ 'name':'password', 'label':'password', 'item':'password', 'sort_order':2, 'active':1 } },
+	{'form_item':{ 'name':'login', 'label':'login', 'item':'submit', 'sort_order':3, 'active':1 } }
+	]},
+{'form':{ 'name':'User' }, 
+'_data_': [
+	{'form_param':{ 'value':'user', 'key':'form_object' } },
+	{'form_param':{ 'value':'grid', 'key':'form_view' } }
+	,
+	{'form_item':{ 'name':'user.username', 'label':'user:', 'item':'textbox', 'sort_order':1, 'active':1 } },
+	{'form_item':{ 'name':'user.password', 'label':'password', 'item':'password', 'sort_order':2, 'active':1 } },
+	{'form_item':{ 'name':'save', 'label':'save', 'item':'submit', 'sort_order':5, 'active':1 } },
+	{'form_item':{ 'name':'user.active', 'label':'active', 'item':'checkbox', 'sort_order':3, 'active':1 } },
+	{'form_item':{ 'name':'user.user_group', 'label':'group', 'item':'dropdown', 'sort_order':4, 'active':1 }, 
+	'_data_': [
+		{'form_item_param':{ 'value':'sql', 'key':'type' } },
+		{'form_item_param':{ 'value':'SELECT code2.id, code2.name FROM code2 JOIN code2_group ON code2.code2_group_id =  code2_group.id WHERE code2_group.name = \'user group\'', 'key':'sql' } }
+		]}
+	]},
+{'form':{ 'name':'User Group' }, 
+'_data_': [
+	{'form_param':{ 'value':'user_group', 'key':'form_object' } }
+	,
+	{'form_item':{ 'name':'user_group.name', 'label':'name', 'item':'textbox', 'sort_order':1, 'active':1 } },
+	{'form_item':{ 'name':'user_group.description', 'label':'description', 'item':'textbox', 'sort_order':2, 'active':1 } },
+	{'form_item':{ 'name':'save', 'label':'save', 'item':'submit', 'sort_order':3, 'active':1 } },
+	{'form_item':{ 'name':'delete', 'label':'delete', 'item':'submit', 'sort_order':4, 'active':1 } },
+	{'form_item':{ 'name':'code2_group_code.code2_id', 'label':'permissions', 'item':'codelist', 'sort_order':5, 'active':1 }, 
+	'_data_': [
+		{'form_item_param':{ 'value':'code2', 'key':'code_table' } },
+		{'form_item_param':{ 'value':'code2_group_code', 'key':'flag_table' } },
+		{'form_item_param':{ 'value':'code2_group_id', 'key':'flag_table_id_field' } },
+		{'form_item_param':{ 'value':'code2_id', 'key':'code_table_id_field' } }
+		]}
+	]},
+{'form':{ 'name':'form_param' }, 
+'_data_': [
+	{'form_param':{ 'value':'form_param', 'key':'form_object' } }
+	,
+	{'form_item':{ 'name':'form_param.key', 'label':'key:', 'item':'textbox', 'sort_order':1, 'active':1 } },
+	{'form_item':{ 'name':'form_param.value', 'label':'value', 'item':'textbox', 'sort_order':2, 'active':1 } },
+	{'form_item':{ 'name':'save', 'label':'save', 'item':'submit', 'sort_order':3, 'active':1 } },
+	{'form_item':{ 'name':'delete', 'label':'delete', 'item':'submit', 'sort_order':4, 'active':1 } }
+	]},
+{'form':{ 'name':'Permission Group list' }, 
+'_data_': [
+	{'form_item':{ 'name':'sub1', 'label':'permission groups', 'item':'subform', 'sort_order':1, 'active':1 }, 
+	'_data_': [
+		{'form_item_param':{ 'value':'user_group', 'key':'subform_name' } },
+		{'form_item_param':{ 'value':'user_group', 'key':'child_object' } },
+		{'form_item_param':{ 'value':'true', 'key':'show' } },
+		{'form_item_param':{ 'value':'grid', 'key':'form_type' } },
+		{'form_item_param':{ 'value':'id', 'key':'child_id' } }
+		]}
+	]},
+{'form':{ 'name':'Codes' }, 
+'_data_': [
+	{'form_param':{ 'value':'grid', 'key':'form_view' } },
+	{'form_param':{ 'value':'code', 'key':'form_object' } }
+	,
+	{'form_item':{ 'name':'code.name', 'label':'code', 'item':'textbox', 'sort_order':1, 'active':1 } },
+	{'form_item':{ 'name':'code.description', 'label':'description', 'item':'textbox', 'sort_order':2, 'active':1 } }
+	]},
+{'form':{ 'name':'Code Group' }, 
+'_data_': [
+	{'form_param':{ 'value':'grid', 'key':'form_view' } },
+	{'form_param':{ 'value':'code_group', 'key':'form_object' } }
+	,
+	{'form_item':{ 'name':'code_group.name', 'label':'name', 'item':'textbox', 'sort_order':1, 'active':1 } },
+	{'form_item':{ 'name':'code_group.description', 'label':'description', 'item':'textbox', 'sort_order':2, 'active':1 } }
+	]},
+{'form':{ 'name':'Grouped Codes' }, 
+'_data_': [
+	{'form_param':{ 'value':'code2_group', 'key':'form_object' } }
+	,
+	{'form_item':{ 'name':'code2_group_code.code2_id', 'label':'code list', 'item':'codelist', 'sort_order':2, 'active':1 }, 
+	'_data_': [
+		{'form_item_param':{ 'value':'true', 'key':'code_list' } },
+		{'form_item_param':{ 'value':'code', 'key':'code_table' } },
+		{'form_item_param':{ 'value':'code2_group_code', 'key':'flag_table' } },
+		{'form_item_param':{ 'value':'code2_group_id', 'key':'flag_table_id_field' } },
+		{'form_item_param':{ 'value':'code2_id', 'key':'code_table_id_field' } }
+		]},
+	{'form_item':{ 'name':'save', 'label':'save', 'item':'submit', 'sort_order':3, 'active':1 } },
+	{'form_item':{ 'name':'code2_group.name', 'label':'name', 'item':'textbox', 'sort_order':1, 'active':1 } },
+	{'form_item':{ 'name':'code2_group.description', 'label':'description', 'item':'textbox', 'sort_order':1, 'active':1 } }
+	]},
+{'form':{ 'name':'Code2 Group' }, 
+'_data_': [
+	{'form_param':{ 'value':'code2_group', 'key':'form_object' } }
+	,
+	{'form_item':{ 'name':'code2_group.name', 'label':'name', 'item':'textbox', 'sort_order':1, 'active':1 } },
+	{'form_item':{ 'name':'save', 'label':'save', 'item':'submit', 'sort_order':2, 'active':1 } },
+	{'form_item':{ 'name':'sub', 'label':'x', 'item':'subform', 'sort_order':3, 'active':1 }, 
+	'_data_': [
+		{'form_item_param':{ 'value':'code2', 'key':'subform_name' } },
+		{'form_item_param':{ 'value':'code2_group_id', 'key':'child_id' } },
+		{'form_item_param':{ 'value':'id', 'key':'parent_id' } },
+		{'form_item_param':{ 'value':'code2', 'key':'child_object' } },
+		{'form_item_param':{ 'value':'grid', 'key':'form_type' } }
+		]},
+	{'form_item':{ 'name':'code2_group.description', 'label':'description', 'item':'textbox', 'sort_order':4, 'active':1 } }
+	]},
+{'form':{ 'name':'Code2' }, 
+'_data_': [
+	{'form_param':{ 'value':'code2', 'key':'form_object' } },
+	{'form_param':{ 'value':'grid', 'key':'form_view' } }
+	,
+	{'form_item':{ 'name':'code2.name', 'label':'name', 'item':'textbox', 'sort_order':1, 'active':1 } },
+	{'form_item':{ 'name':'code2.description', 'label':'description', 'item':'textbox', 'sort_order':2, 'active':1 } }
+	]}
 
-
-
-
+]
+)

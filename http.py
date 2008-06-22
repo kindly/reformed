@@ -35,11 +35,11 @@ def app(environ, start_response):
 	body = redirect = None # our outcomes
 	
 	if cmd == 'view':
-		environ['selector.vars']= {'form_id' : path_info[2], #FIXME check if these exist durr
+		environ['selector.vars']= {'form_name' : path_info[2], #FIXME check if these exist durr
 					   'record_id' : path_info[3] }
 		body = form.view(environ)
 	elif cmd == 'save':
-		environ['selector.vars']= {'form_id' : path_info[2], #FIXME check if these exist durr
+		environ['selector.vars']= {'form_name' : path_info[2], #FIXME check if these exist durr
 					   'record_id' : path_info[3] }
 		redirect = form.save(environ)
 
@@ -50,6 +50,7 @@ def app(environ, start_response):
 	elif cmd == 'reset_cache':
 		# reset form cache
 		form.form_cache = {}
+		form.form_cache['form_items'] = {}
 		body = "cache reset"
 	elif cmd == 'logout':
 		clear_authentication(session)
@@ -61,7 +62,7 @@ def app(environ, start_response):
 	elif cmd == 'export':
 		# static content
 		path = path[8:]
-		body = dataexport.export(path)
+		body = "<pre>dataloader.put(\n[%s]\n)</pre>" % dataexport.export(path)
 
 	else:
 		body = 'lost'
@@ -76,7 +77,7 @@ def app(environ, start_response):
 	elif redirect:
 		# HTTP header
 		start_response('200 OK', [('Content-Type', 'text/html')])
-		return ["<a href='%s'>%s</a>" % (redirect, redirect)]
+		return [html_header() + "<a href='%s'>%s</a>" % (redirect, redirect) + html_footer(session, start_time)]
 	else:
 		print "nothing to do" # FIXME we want to throw an error here
 
@@ -163,9 +164,9 @@ def html_header():
 def html_footer(http_session, start_time): 
 	# footers
 	if http_session.get('user_id'):
-		body = "\n\n<p><small>user: %s <a href='/logout'>log out</a></small></p>" % (http_session.get('username') )
+		body = "\n\n<p><small>user: %s <a href='/logout'>log out</a> <a href='/reset_cache'>refresh cache</a></small></p>" % (http_session.get('username') )
 	else:
-		body = "\n\n<p><small><a href='/view/5/0'>log in</a></small></p>" #FIXME bad url
+		body = "\n\n<p><small><a href='/view/5/0'>log in</a> <a href='/reset_cache'>refresh cache</a></small></p>" #FIXME bad url
 	body += "\n\n<p><small>page created in %s seconds - uptime %s</small></p>" % (time.clock() - start_time, datetime.datetime.now() - uptime)
 	body += "\n</body>\n</html>"
 	return body
