@@ -2,3 +2,12 @@ body{
 	font-family:sans-serif;
 	background:#FDFDFD;
 }
+
+.x{
+	color:#222;
+
+}
+
+label{
+	font-weight:bold;
+	}
