@@ -125,7 +125,6 @@ def save(environ):
 		record_id = saved_id
 	print "@@@@@@@@ ",record_id , saved_id
 	return "/view/%s/%s" % ( form_name, record_id )
-formencode
 
 
 def save_form(formdata, form_name, record_id, field_prefix=''):
