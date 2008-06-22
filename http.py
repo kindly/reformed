@@ -8,7 +8,6 @@ import reformed
 
 # for static
 import os, os.path, sys
-import posixpath
 import mimetypes
 from wsgiref.util import FileWrapper
 
@@ -142,7 +141,7 @@ def static(environ, start_response, path):
 			print path
 			start_response('200 OK', headers)
 			f = open(path, 'rb')
-			return FileWrapper(f)
+			return wsgiref.util.FileWrapper(f)
 	else:
 		start_response('404 Not Found', [])
 		return []

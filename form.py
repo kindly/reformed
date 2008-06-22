@@ -1,9 +1,8 @@
 #/usr/bin/python
 
-#import reformed.data as data
 from sqlalchemy.orm import eagerload
 import formencode
-from formencode.htmlfill import FillingParser
+from formencode.htmlfill import FillingParser 
 from formencode import validators
 import cgi
 import form_items
@@ -12,7 +11,6 @@ import dbconfig
 import reformed as r
 
 # basic form cache start
-
 form_cache = {}
 form_cache['form_items'] = {}
 
@@ -39,8 +37,8 @@ def get_form_schema(form_name):
 		form_cache[form_name]['item_params'] = {}
 		for form_item in form_cache[form_name]['form'].form_item:
 			# FORM_ITEM PARAM
-			form_cache[form_name]['item_params'][int(form_item.id)] = form_items.get_params(form_item)
-			form_cache['form_items'][int(form_item.id)] = {'item_params': form_items.get_params(form_item)}
+			form_cache[form_name]['item_params'][int(form_item.id)] = get_form_item_params(form_item)
+			form_cache['form_items'][int(form_item.id)] = {'item_params': get_form_item_params(form_item)}
 		print "@@ CACHE form(%s)" % form_name
 
 		session.close()	
@@ -76,6 +74,16 @@ def get_params(form):
 	print "GETTING FORM PARAMS - %s" % form
 	params = {}
 	for p in form.form_param:
+		if p.key:
+			print "%s = '%s'" % (p.key, p.value)
+			params[str(p.key)] = str(p.value)
+	return params
+
+# utils
+def get_form_item_params(form_item):
+	print "GETTING PARAMS - %s" % form_item
+	params = {}
+	for p in form_item.form_item_param:
 		if p.key:
 			print "%s = '%s'" % (p.key, p.value)
 			params[str(p.key)] = str(p.value)
@@ -117,7 +125,7 @@ def save(environ):
 		record_id = saved_id
 	print "@@@@@@@@ ",record_id , saved_id
 	return "/view/%s/%s" % ( form_name, record_id )
-
+formencode
 
 
 def save_form(formdata, form_name, record_id, field_prefix=''):
@@ -329,15 +337,20 @@ def view(environ):
 	
 	body += form_html 
 	body += " " # need this to stop parser removing final tag
-	
 
 	# fill out form
-	parser = FillingParser(form_data)
-	parser.feed(str(body))
-	parser.close()
-	body = parser.text()
-	
-	body = '\n<form action="%s" method="post">%s\n</form>' % (form_action, body)
+	# if the HTML is broken an error is thrown
+	# we'll display the broken HTML to aid debugging
+	try:
+		parser = FillingParser(form_data)
+		parser.feed(str(body))
+		parser.close()
+		body = parser.text()
+		body = '\n<form action="%s" method="post">%s\n</form>' % (form_action, body)
+	except:
+		print "PARSER ERROR:"
+		body = str(body)
+		body = '\n<h1>Parser error encountered</h1><p>html that triggered error is...</p><pre>%s</pre>' % cgi.escape(body)
 	return '%s' % body
 
 def grid(form_name, parent_id = None, child_field = None, field_prefix = '', defaults = {}):
@@ -370,7 +383,7 @@ def grid(form_name, parent_id = None, child_field = None, field_prefix = '', def
 	body += html		
 	body += "\n</table>\n"
 	# add the buttons
-	body += form_items.save_delete_grid(None, field_prefix)
+	body += form_items.make_item(template_name = 'save_delete', data = {'name':field_prefix}, form_type = 'normal') 
 	return (body, defaults)
 
 def grid_row(row, field_prefix, child_field, form, defaults, parent_id, parent_field):	
@@ -397,12 +410,11 @@ def grid_row(row, field_prefix, child_field, form, defaults, parent_id, parent_f
 		
 		
 		for form_item in form['form'].form_item:
-			if form_item.active and hasattr(form_items, str(form_item.item) + "_grid"): #FIXME str
+			if form_item.active:
 				# normal controls
 				if form_item.name:
 					print form_item.item
-					my_form_item = getattr(form_items, str(form_item.item) + "_grid") #FIXME str
-					body += my_form_item(form_item, my_field_prefix) 
+					body += form_items.make_item(form_item = form_item, prefix = my_field_prefix, form_type = 'grid')
 		body += "\n</tr>"
 
 		# get data
@@ -427,7 +439,7 @@ def grid_header(form_name, form):
 	#code_table_id_field
 	body += "\n<td>id</td>\n<td>select</td>"  # FIXME i18n
 	for form_item in form['form'].form_item:
-		if form_item.active and hasattr(form_items, str(form_item.item)): #FIXME not needed visibility param?
+		if form_item.active:# FIXME not needed visibility param?
 			if form_item.label:
 				body += "\n<td>%s</td>" % form_item.label
 	body += "\n</tr>"
@@ -461,15 +473,8 @@ def create_form(environ, form_render_data, defaults):
 
 		body += "<div style='border:1px solid #F00;margin:3px 10px;'>"
 		for form_item in form['form'].form_item:
-			# see if we know this form item eg dropdown
-			# if we do then call it passing the form_item
-			if  form_item.active and hasattr(form_items, str(form_item.item)):
-				# normal controls
-				if form_item.name:
-					my_form_item = getattr(form_items, str(form_item.item)) #FIXME str
-					body += my_form_item(form_item, field_prefix)
-			
-			elif  form_item.active and str(form_item.item) == 'subform':
+
+			if  form_item.active and str(form_item.item) == 'subform':
 				p = form['item_params'][form_item.id]
 				if record_id or ( p.has_key('show') and p['show'] == "true" ):  # we don't want child forms that have no immediate parent
 					if p.has_key('form_type') and p['form_type'] == 'grid':
@@ -516,7 +521,13 @@ def create_form(environ, form_render_data, defaults):
 								body += "\n<input name='%s_::_id_field' type='hidden' value='%s'/><input name='%s_::_id_value' type='hidden' value='%s'/>" % (sub_form_render_data['field_prefix'], p['child_id'], sub_form_render_data['field_prefix'], form_render_data['record_id'])
 								(form_html, defaults) = create_form(environ, sub_form_render_data, defaults)
 								body += form_html
-
+			# see if we know this form item eg dropdown
+			# if we do then call it passing the form_item
+			elif  form_item.active:
+				# normal controls
+				if form_item.name:
+					body += form_items.make_item(form_item = form_item, prefix = field_prefix, form_type = 'normal')
+			
 			elif  form_item.active:
 				# unknown
 				body += form_items.unknown(form_item, field_prefix)
