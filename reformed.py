@@ -31,7 +31,12 @@ class Table(object):
 
 		session =dbconfig.Session()
 		
-		session.save(Tables(self.name,columns,table_params))
+		try :
+			params = session.query(Tables).filter_by(name =self.name).one()
+		except sa.exceptions.InvalidRequestError:
+			params =Tables(self.name,columns,table_params)
+			
+		session.save_or_update(params)
 		session.commit()
 		
 		session.close()
@@ -59,7 +64,7 @@ class Table(object):
 				val= {}
 				for column in database.tables[table_name].arg:
 					if hasattr(column,"validator"):
-						for n,v in column.validator(self).iteritems():
+						for n,v in column.validator(self, table_name, database).iteritems():
 							val[n]=v    
 				return val 
 
@@ -149,7 +154,7 @@ class Database(object):
 		for v in self.tables.itervalues():
 			v.create_mappings( self,v.name)
 			
-	  
+	
 if __name__ == "__main__":
 	
 	aa= Table("main_table",
@@ -182,7 +187,7 @@ if __name__ == "__main__":
 	data=Database()
 	data.create_tables()
 
-	nn = data.main_table(main_text_1="t1",main_int = 16,
+	nn = data.main_table(main_text_1="t14324",main_int = 16,
 			join_one_many = [data.one_many( one_many_text_1= "one"),
 					data.one_many( one_many_text_1= "many")],
 			join_many_many = [data.many_many( many_many_text_1= "many"),

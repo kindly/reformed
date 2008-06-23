@@ -6,13 +6,13 @@ from boot_tables import *
 
 class Fields(object):
 
-	def validator (self,object):
+	def validator (self,object, table_name, database):
 		try:
 			validation = self.kw["validation"]
 		except KeyError:
 			return {}
 		else:
-			return Validate(getattr(object,self.name),validation,self.name)
+			return Validate(getattr(object,self.name),validation,self.name, table_name, database)
 
 
 

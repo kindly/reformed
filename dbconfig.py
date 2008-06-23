@@ -10,8 +10,12 @@ class ValidatedSession(Session):
 
 	def save_or_update(self, instance, entity_name=None):
 	
-		if instance.validate():
-			return instance.validate()
+		if hasattr(instance,"validate"):
+			if instance.validate():
+				return instance.validate()
+			else:
+				super(ValidatedSession,self).save_or_update(instance, entity_name)
+				return {}
 		else:
 			super(ValidatedSession,self).save_or_update(instance, entity_name)
 			return {}
