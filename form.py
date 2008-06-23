@@ -5,7 +5,7 @@ import formencode
 from formencode.htmlfill import FillingParser 
 from formencode import validators
 import cgi
-import form_items
+from form_items import Form_Item_Maker
 import re
 import dbconfig
 import reformed as r
@@ -13,6 +13,9 @@ import reformed as r
 # basic form cache start
 form_cache = {}
 form_cache['form_items'] = {}
+
+form_item_maker = Form_Item_Maker()
+
 
 def get_form_schema(form_name):
 
@@ -382,7 +385,7 @@ def grid(form_name, parent_id = None, child_field = None, field_prefix = '', def
 	body += html		
 	body += "\n</table>\n"
 	# add the buttons
-	body += form_items.make_item(template_name = 'save_delete', data = {'name':field_prefix}, form_type = 'normal') 
+	body += form_item_maker.make_item(template_name = 'save_delete', data = {'name':field_prefix}, form_type = 'normal') 
 	return (body, defaults)
 
 def grid_row(row, field_prefix, child_field, form, defaults, parent_id, parent_field):	
@@ -413,7 +416,7 @@ def grid_row(row, field_prefix, child_field, form, defaults, parent_id, parent_f
 				# normal controls
 				if form_item.name:
 					print form_item.item
-					body += form_items.make_item(form_item = form_item, prefix = my_field_prefix, form_type = 'grid')
+					body += form_item_maker.make_item(form_item = form_item, prefix = my_field_prefix, form_type = 'grid')
 		body += "\n</tr>"
 
 		# get data
@@ -525,7 +528,7 @@ def create_form(environ, form_render_data, defaults):
 			elif  form_item.active:
 				# normal controls
 				if form_item.name:
-					body += form_items.make_item(form_item = form_item, prefix = field_prefix, form_type = 'normal')
+					body += form_item_maker.make_item(form_item = form_item, prefix = field_prefix, form_type = 'normal')
 			
 			elif  form_item.active:
 				# unknown
