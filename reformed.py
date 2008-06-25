@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 import dbconfig
 from fields import *
 from util import *
-from boot_tables import *
+import boot_tables
 
 
 
@@ -99,6 +99,11 @@ class Database(object):
 		
 		session =dbconfig.Session()
 		
+		self.Tables = boot_tables.Tables
+		self.Table_param = boot_tables.Table_param
+		self.Field = boot_tables.Field
+		self.Field_param = boot_tables.Field_param
+		
 		self.tables = {}
 		
 		systables = session.query(Tables)
@@ -165,10 +170,12 @@ if __name__ == "__main__":
 			Index = 'main_text_1')
 	bb= Table("one_many", TextBox("one_many_text_1"))
 	cc= Table("many_many",TextBox("many_many_text_1"))
+	dd= Table("many_one", TextBox("many_one_text_1",validation="Unique()"), ManyToOne("main_table", "main_table"))
 
 	aa.paramset()
 	bb.paramset()
 	cc.paramset()
+	dd.paramset()
 
 	form = Table("form", TextBox("name"),
 			OneToMany("form_param","form_param"), OneToMany("form_item","form_item"))
@@ -187,14 +194,16 @@ if __name__ == "__main__":
 	data=Database()
 	data.create_tables()
 
-	nn = data.main_table(main_text_1="t14324",main_int = 16,
+	nn = data.main_table(main_text_1="t",main_int = 16,
 			join_one_many = [data.one_many( one_many_text_1= "one"),
 					data.one_many( one_many_text_1= "many")],
 			join_many_many = [data.many_many( many_many_text_1= "many"),
 				data.many_many( many_many_text_1= "many")])
-
+	
+	ll = data.many_one(many_one_text_1= "poop1",  main_table = nn )
 	session =dbconfig.Session()
 	session.save_or_update(nn)
+	session.save_or_update(ll)
 	session.commit()
 	session.close()
 	

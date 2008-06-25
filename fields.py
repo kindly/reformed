@@ -59,7 +59,7 @@ class Date(Fields):
 				)
 
 class Boolean(Fields):
- 
+
 	def __init__(self,name, mandatory = True, **kw):
 		
 		attributesfromdict(locals())
@@ -160,3 +160,29 @@ class ManyToMany(Fields):
 				 params)
 	
 	
+class ManyToOne(Fields):
+	
+	def __init__(self,name,other, **kw):
+		attributesfromdict(locals())
+	
+	def columns (self):
+		return  sa.Column(self.other+"_id", sa.Integer, sa.ForeignKey("%s.id"%(self.other)))
+	
+	def parameters (self, table_name, database):
+		kw = self.kw
+		params = {}
+		mapped_class = getattr(database.tables[self.other], self.other) 
+
+		params[self.other]=orm.relation(mapped_class,**kw)
+		return params
+
+
+	def paramset (self,table_name):
+
+		params = [Field_param(  "other" , self.other)]
+		
+		for n,v in self.kw.iteritems():
+			params.append(Field_param(n,v))
+			   
+		return Field(self.name,self.__class__.__name__,
+				 params)

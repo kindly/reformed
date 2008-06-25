@@ -1,6 +1,7 @@
 from formencode.validators import *
 import formencode
 import dbconfig
+import sqlalchemy as sa
 
 def Validate(value, validation,name, table_name, database):
 	
@@ -25,8 +26,19 @@ def Validate(value, validation,name, table_name, database):
 		return {}
 
 
-
-
+class Unique(FancyValidator):
+	
+	def _to_python(self, value, state):
+		
+		session =dbconfig.Session()
+		object_class = getattr(state["database"],state["table_name"])
+		try:
+			query = session.query(object_class).filter("%s=='%s'"%( state["name"],value)).one()
+		except sa.exceptions.InvalidRequestError:
+			return value
+		
+		raise formencode.Invalid("value not unique", value, state)
+			
 
 
 
