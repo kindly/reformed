@@ -12,7 +12,14 @@ class Fields(object):
 		except KeyError:
 			return {}
 		else:
-			return Validate(getattr(object,self.name),validation,self.name, table_name, database)
+			if len(self.columns()) == 1:
+				return Validate(getattr(object,self.name),validation,self.name, table_name, database)
+			else:
+				colnames = {}
+				for col in self.columns():
+					colnames[col.name] = getattr(object,col.name)
+					
+				return Validate(colnames,validation,self.name,table_name,database)
 
 
 
@@ -25,7 +32,7 @@ class Integer(Fields):
 
 	def columns (self):
 		
-		return sa.Column(self.name,sa.Integer, nullable = not self.mandatory)
+		return [sa.Column(self.name,sa.Integer, nullable = not self.mandatory),]
 
 	
 	def paramset (self,table_name):
@@ -45,7 +52,7 @@ class Date(Fields):
 
 	def columns (self):
 		
-		return sa.Column(self.name,sa.Date, nullable = not self.mandatory)
+		return [sa.Column(self.name,sa.Date, nullable = not self.mandatory),]
 	
 	def paramset (self,table_name):
 		
@@ -66,7 +73,7 @@ class Boolean(Fields):
 
 	def columns (self):
 	
-		return sa.Column(self.name,sa.Boolean, nullable = not self.mandatory)
+		return [sa.Column(self.name,sa.Boolean, nullable = not self.mandatory),]
 
 	def paramset (self,table_name):
 		
@@ -88,7 +95,7 @@ class TextBox(Fields):
 	
 	def columns (self):
 		
-		return sa.Column(self.name,sa.String(self.length), nullable = not self.mandatory)
+		return [sa.Column(self.name,sa.String(self.length), nullable = not self.mandatory),]
 
 	def paramset (self,table_name):
 		
@@ -166,7 +173,7 @@ class ManyToOne(Fields):
 		attributesfromdict(locals())
 	
 	def columns (self):
-		return  sa.Column(self.other+"_id", sa.Integer, sa.ForeignKey("%s.id"%(self.other)))
+		return  [sa.Column(self.other+"_id", sa.Integer, sa.ForeignKey("%s.id"%(self.other))),]
 	
 	def parameters (self, table_name, database):
 		kw = self.kw
@@ -186,3 +193,30 @@ class ManyToOne(Fields):
 			   
 		return Field(self.name,self.__class__.__name__,
 				 params)
+
+class Address(Fields):
+	
+	def __init__(self,name, **kw):
+		attributesfromdict(locals())
+		
+	def columns (self):
+		return [sa.Column("Address_line_1" ,sa.String(100)),
+			sa.Column("Address_line_2" ,sa.String(100)),
+			sa.Column("Address_line_3" ,sa.String(100))
+			]
+	
+
+		
+		
+		
+	def paramset (self,table_name):
+		
+		params = []
+		
+		for n,v in self.kw.iteritems():
+			params.append(Field_param(n,v))
+			   
+		return Field(self.name,self.__class__.__name__,
+					 params
+					)
+	
