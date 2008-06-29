@@ -1,26 +1,29 @@
 import dbconfig
 from string import Template
-import form #FIXME want to remove this dependancy on forms should be in cache_util or something
+from form_cache import FormCache
 
+#FIXME want to remove this dependancy on forms should be in cache_util or something
+
+form_cache = FormCache()
 
 def dropdown(form_item, data):
 	
 	options = pairs = None
-	p = form.get_form_item_params(form_item) #FIXME want to remove this dependancy on forms
-	print p
-	if p.has_key('type'):
-		if p['type'] == 'list':
-			if p.has_key('values'):
-				options = p['values'].split('|')
-			else:
-				options = ('',)
-		elif p['type'] == 'sql':
-			session = dbconfig.Session()
-			out = session.execute(p['sql']) # FIXME we trust anything what madness you could put a DROP DATABASE here
-			pairs = []
-			for row in out.fetchall():
-				pairs.append( ( str(row[0]), str(row[1]) ) )
-			session.close()
+
+	if form_item.params("type") == 'list':
+		if form_item.params("values"):
+			options = form_item.params("values").split('|')
+		else:
+			options = ('',)
+	elif form_item.params("type") == 'sql':
+		session = dbconfig.Session()
+		sql = form_item.params("sql")
+		out = session.execute(sql) # FIXME we trust anything what madness you could put a DROP DATABASE here
+		pairs = []
+		for row in out.fetchall():
+			pairs.append( ( str(row[0]), str(row[1]) ) )
+		session.close()
+		
 	tmp = Template("<select onchange='select_box(this)' $class name='$name' id='$name'>").safe_substitute(data)
 	if options:
 		for option in options:

@@ -1,6 +1,7 @@
 from wsgistate.memory import session
 import wsgiref.util
 import form
+from form_cache import FormCache
 import string
 import time, datetime
 import cgi
@@ -9,13 +10,14 @@ import reformed
 # for static
 import os, os.path, sys
 import mimetypes
-from wsgiref.util import FileWrapper
-
 import dataexport
 
 # get our data up
 reformed.data = reformed.Database()
 reformed.data.create_tables()
+
+form_cache = FormCache()
+form_cache.reset()
 
 uptime = datetime.datetime.now()
 
@@ -34,13 +36,13 @@ def app(environ, start_response):
 	body = redirect = None # our outcomes
 	
 	if cmd == 'view':
-		environ['selector.vars']= {'form_name' : path_info[2], #FIXME check if these exist durr
+		environ['selector.vars']= {'form_id' : int(path_info[2]), #FIXME check if these exist durr
 					   'record_id' : path_info[3] }
 		body = form.view(environ)
 	elif cmd == 'save':
-		environ['selector.vars']= {'form_name' : path_info[2], #FIXME check if these exist durr
+		environ['selector.vars']= {'form_id' : int(path_info[2]), #FIXME check if these exist durr
 					   'record_id' : path_info[3] }
-		redirect = form.save(environ)
+		body = form.save(environ)
 
 	elif cmd == 'list':
 		body = form.list()
@@ -48,8 +50,7 @@ def app(environ, start_response):
 		body = check_login(environ, session)
 	elif cmd == 'reset_cache':
 		# reset form cache
-		form.form_cache = {}
-		form.form_cache['form_items'] = {}
+		form_cache.reset()
 		body = "cache reset"
 	elif cmd == 'logout':
 		clear_authentication(session)
