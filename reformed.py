@@ -8,16 +8,13 @@ from fields import *
 from util import *
 import boot_tables
 
-
-
-
 class Table(object):
 	
 	def __init__(self, name, *arg, **kw):
 		
 		attributesfromdict(locals())  ## args need instance checking
 		
-	def paramset(self):
+	def paramset(self,session=dbconfig.Session()):
 		
 		columns = []
 		
@@ -29,8 +26,6 @@ class Table(object):
 		for n,v in self.kw.iteritems():
 			table_params.append(Table_param(n,v))
 
-		session =dbconfig.Session()
-		
 		try :
 			params = session.query(Tables).filter_by(name =self.name).one()
 		except sa.exceptions.InvalidRequestError:
@@ -45,13 +40,26 @@ class Table(object):
 		
 		columns = []
 		
+			
+		
 		for column in self.arg:
 			if hasattr(column,"columns"):
 				columns = columns+column.columns()
-		self.table = sa.Table(self.name, dbconfig.metadata,
-							  sa.Column('id' ,   sa.Integer,    primary_key=True),
+		
+		
+		if self.kw.has_key("primary_key"):
+			self.primary_key = self.kw["primary_key"].split(",")
+			for col in columns:
+				for key in self.primary_key:
+					if key == col.name:
+						col.primary_key = True
+			self.table = sa.Table(self.name, dbconfig.metadata,
 							  *columns )
-	
+		else:			
+			self.table = sa.Table(self.name, dbconfig.metadata,
+								  sa.Column('id' ,   sa.Integer,    primary_key=True),
+								  *columns )
+		
 	def create_class(self,database, table_name):
 		
 		class table_class(object):
@@ -83,7 +91,17 @@ class Table(object):
 	
 		for column in self.arg:
 			if hasattr(column,"external_column"):
-				database.tables[column.other].table.append_column(column.external_column(table_name))
+				for col in column.external_column(table_name,database):
+					database.tables[column.other].table.append_column(col)
+					
+	def add_external_constraints(self,database, table_name):
+		for column in self.arg:
+			if hasattr(column,"external_constraints"):
+				if column.external_constraints(table_name,database):
+					for con in column.external_constraints(table_name,database):
+						database.tables[column.other].table.append_constraint(con)
+				
+	
 
 	def add_external_tables(self,database, table_name):
 	
@@ -149,6 +167,10 @@ class Database(object):
 
 			v.add_external_columns(self,v.name)
 
+		for v in self.tables.itervalues():
+
+			v.add_external_constraints(self,v.name)
+			
 		dbconfig.metadata.create_all(dbconfig.engine)
 
 		for v in self.tables.itervalues():
@@ -163,7 +185,7 @@ if __name__ == "__main__":
 	
 	aa= Table("main_table",
 			TextBox("main_text_1", validation = "MaxLength(5)||MaxLength(4)"),
-			Address("Address", validation = "Address_valid()"),
+			Address("Address", validation = "Address_valid()||Address_valid()"),
 			Integer("main_int"),
 			OneToMany("join_one_many","one_many", cascade='all,delete-orphan'),
 			ManyToMany("join_many_many","many_many"),
@@ -171,25 +193,18 @@ if __name__ == "__main__":
 	bb= Table("one_many", TextBox("one_many_text_1"))
 	cc= Table("many_many",TextBox("many_many_text_1"))
 	dd= Table("many_one", TextBox("many_one_text_1",validation="Unique()"), ManyToOne("main_table", "main_table"))
+	ee= Table("primary", TextBox("primary_text_1"),TextBox("primary_text_2"),OneToMany("composite","composite"),
+			  primary_key = "primary_text_1,primary_text_2"
+			  )
+	ff= Table("composite", TextBox("composite_1"))
 
 	aa.paramset()
 	bb.paramset()
 	cc.paramset()
 	dd.paramset()
+	ee.paramset()
+	ff.paramset()
 
-	form = Table("form", TextBox("name"),
-			OneToMany("form_param","form_param"), OneToMany("form_item","form_item"))
-	fromparam = Table("form_param", TextBox("key"), TextBox("value"))
-	formitem = Table("form_item" ,TextBox("name") ,
-			TextBox("label"),TextBox("item"),
-						OneToMany("form_item_param","form_item_param"))
-
-	formitemparam = Table("form_item_param", TextBox("key"),TextBox("value"))
-
-	form.paramset()
-	fromparam.paramset()
-	formitem.paramset()
-	formitemparam.paramset()
 	
 	data=Database()
 	data.create_tables()
@@ -204,9 +219,11 @@ if __name__ == "__main__":
 				data.many_many( many_many_text_1= "many")])
 	
 	ll = data.many_one(many_one_text_1= "poop1",  main_table = nn )
+	po = data.primary(primary_text_1= "a", primary_text_2 = "b", composite = [data.composite( composite_1 = "poop")])
 	session =dbconfig.Session()
 	session.save_or_update(nn)
 	session.save_or_update(ll)
+	session.save_or_update(po)
 	session.commit()
 	session.close()
 	

@@ -1,9 +1,18 @@
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
+import logging
+
+logging.basicConfig(level=logging.DEBUG,
+				filename='myapp.log',
+				filemode='w')
+
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+
 
 metadata = MetaData()
 engine = create_engine('sqlite:///test4.db', echo = False)
+testengine = create_engine('sqlite:///:memory:', echo = False)
 metadata.bind = engine
 
 class ValidatedSession(Session):
@@ -21,5 +30,6 @@ class ValidatedSession(Session):
 			return {}
 
 Session = sessionmaker(class_=ValidatedSession, bind=engine, autoflush=True, transactional=True)
+SessionTest = sessionmaker(class_=ValidatedSession, bind=engine, autoflush=True, transactional=True)
 Session()
-
+SessionTest()

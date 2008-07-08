@@ -115,9 +115,28 @@ class OneToMany(Fields):
 	def __init__(self,name,other, **kw):
 		attributesfromdict(locals())
 	
-	def external_column (self,table_name):
-		return  sa.Column(table_name+"_id", sa.Integer, sa.ForeignKey("%s.id"%(table_name)))
+	def external_column (self,table_name,database):
+		
+		if database.tables[table_name].kw.has_key("primary_key"):
+			columns = []
+			for col in database.tables[table_name].table.columns:
+				if col.primary_key == True:
+					columns.append(sa.Column(col.name, col.type))
+			return columns
+				
+		return  [sa.Column(table_name+"_id", sa.Integer, sa.ForeignKey("%s.id"%(table_name))),]
 	
+	def external_constraints(self,table_name,database):
+		
+		if database.tables[table_name].kw.has_key("primary_key"):
+			primary_keys = database.tables[table_name].kw["primary_key"].split(",")
+			return [sa.ForeignKeyConstraint(primary_keys,
+										["%s.%s" % (table_name,a) for a in primary_keys])
+					]
+			
+		
+		
+		
 	def parameters (self, table_name, database):
 		kw = self.kw
 		params = {}
