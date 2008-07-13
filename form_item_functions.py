@@ -6,6 +6,12 @@ from form_cache import FormCache
 
 form_cache = FormCache()
 
+def record_navigation(form_item, data):
+	data['href'] = int(form_item.id) + 1
+	tmp = Template("<a $class href='/view/1/$href'>next</a>").safe_substitute(data)
+	return (tmp)
+
+
 def dropdown(form_item, data):
 	
 	options = pairs = None

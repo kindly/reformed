@@ -1,8 +1,20 @@
 #!/usr/bin/python
 import dbconfig
 import reformed as r
+from html import html_wrapper
+from wsgistate.memory import session	
 
-def export(table, parent = None, parent_id = None):
+@session()
+@html_wrapper
+def export(environ, start_response):
+
+	table = environ['selector.vars']['form']
+	environ['reformed']['body'] = '<pre>%s</pre>' % process(table)
+	return (environ, start_response)
+		
+		
+
+def process(table, parent = None, parent_id = None):
 
 	"""export data from table and subtables
 	does not export the id for the table
@@ -54,7 +66,7 @@ def export(table, parent = None, parent_id = None):
 		if sub_tables:
 			for sub in sub_tables:
 				print sub,int(record.__dict__['id'])
-				out_sub_tmp =  export(sub, table, int(record.__dict__['id'])).replace('\n', '\n\t')
+				out_sub_tmp =  process(sub, table, int(record.__dict__['id'])).replace('\n', '\n\t')
 				if out_sub_tmp:
 					out_sub += out_sub_tmp + ','
 		if out:

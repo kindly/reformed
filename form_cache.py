@@ -23,7 +23,7 @@ class FormCache(object):
 
 		form_names = {}
 		session = dbconfig.Session()
-		data = session.query(r.data.form).options().all()
+		data = session.query(r.data.form).options()
 		for row in data:
 			self.form_names[row.name] = int(row.id)
 		session.close()
@@ -60,17 +60,21 @@ class FormCache(object):
 		def __init__(self, form_id):
 
 			self.form_items = []
+			self.subforms = {}
 			session = dbconfig.Session()
 			self.form = session.query(r.data.form).options(eagerload('form_param')).filter_by(id=form_id).one()
 			
 			# params (form)
 			self.form_params = self._get_params( self.form.form_param )
 			
-			form_items = session.query(r.data.form_item).options(eagerload('form_item_param')).filter_by(form_id=form_id, active=True).all()
+			form_items = session.query(r.data.form_item).options(eagerload('form_item_param')).filter_by(form_id=form_id, active=True).order_by(r.data.form_item.sort_order)
 			# params (form_item)
 			for form_item in form_items:
 				item = self.FormItem(form_item, self._get_params(form_item.form_item_param))
 				self.form_items.append(item)
+				if form_item.item == 'subform':
+					if item.params('subform_name'):
+						self.subforms[form_item.name] = item.params('subform_name')
 			session.close()
 			
 

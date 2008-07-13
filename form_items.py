@@ -30,12 +30,15 @@ class Form_Item_Maker(object):
 
 	'label' : "<label $class for='$name'>$label</label> ",
 
-	'save_delete' : "<input $class name='${name}_::_save_selected' type='submit' value='save selected' /> <input $class name='${name}_::_delete_selected' type='submit' value='delete selected' />"
+	'save_delete' : "<input $class name='${name}_::_save_selected' type='submit' value='save selected' /> <input $class name='${name}_::_delete_selected' type='submit' value='delete selected' />",
+
+	'link' : "<a $class href='$href'>$link</a> "
 
 	}
 
 	# functions are more complicated they will get passed (form_item, data)
 	functions = { 'dropdown' : dropdown,
+				  'record_navigation' : record_navigation,
 				  'codelist' : codelist }
 
 	# these are used to set defaults for form item rendering
@@ -74,7 +77,7 @@ class Form_Item_Maker(object):
 		if form_type == "grid":
 			return "\n<td>%s</td>" % out
 		else:
-			if data.has_key('label'):
+			if data.has_key('label') and data['label']:
 				label = Template(self.templates['label']).safe_substitute(data)
 				return "\n<p>%s%s</p>" % (label, out)
 			else:
