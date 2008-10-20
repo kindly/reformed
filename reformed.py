@@ -47,18 +47,19 @@ class Table(object):
 				columns = columns+column.columns()
 		
 		
-		if self.kw.has_key("primary_key"):
-			self.primary_key = self.kw["primary_key"].split(",")
-			for col in columns:
-				for key in self.primary_key:
-					if key == col.name:
-						col.primary_key = True
-			self.table = sa.Table(self.name, dbconfig.metadata,
+		#if self.kw.has_key("primary_key"):
+		#	self.primary_key = self.kw["primary_key"].split(",")
+		#	for col in columns:
+		#		for key in self.primary_key:
+		#			if key == col.name:
+		#				col.primary_key = True
+		#	self.table = sa.Table(self.name, dbconfig.metadata,
+		#						  sa.Column('id' ,   sa.Integer,    autoincrement = True),
+		#						*columns )
+		#else:			
+		self.table = sa.Table(self.name, dbconfig.metadata,
+							  sa.Column('id' ,   sa.Integer,    primary_key=True),
 							  *columns )
-		else:			
-			self.table = sa.Table(self.name, dbconfig.metadata,
-								  sa.Column('id' ,   sa.Integer,    primary_key=True),
-								  *columns )
 		
 	def create_class(self,database, table_name):
 		
@@ -107,15 +108,16 @@ class Table(object):
 	
 		for column in self.arg:
 			if hasattr(column,"external_table"):
-				column.external_table(table_name)
+				column.external_table(table_name,database)
 
 
 class Database(object):
 	
-	def __init__ (self):
+	def __init__ (self,session =dbconfig.Session(), engine =dbconfig.engine):
+		self.tables = {}
 		
-		session =dbconfig.Session()
-		
+		self.engine =engine
+		self.session = session
 		self.Tables = boot_tables.Tables
 		self.Table_param = boot_tables.Table_param
 		self.Field = boot_tables.Field
@@ -171,7 +173,7 @@ class Database(object):
 
 			v.add_external_constraints(self,v.name)
 			
-		dbconfig.metadata.create_all(dbconfig.engine)
+		dbconfig.metadata.create_all(self.engine)
 
 		for v in self.tables.itervalues():
 

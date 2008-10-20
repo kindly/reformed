@@ -119,9 +119,11 @@ class OneToMany(Fields):
 		
 		if database.tables[table_name].kw.has_key("primary_key"):
 			columns = []
-			for col in database.tables[table_name].table.columns:
-				if col.primary_key == True:
-					columns.append(sa.Column(col.name, col.type))
+			primary_keys = database.tables[table_name].kw["primary_key"].split(",")
+			for col in primary_keys:
+				name = database.tables[table_name].table.columns[col].name
+				type =database.tables[table_name].table.columns[col].type
+				columns.append(sa.Column(name, type))
 			return columns
 				
 		return  [sa.Column(table_name+"_id", sa.Integer, sa.ForeignKey("%s.id"%(table_name))),]
@@ -159,15 +161,18 @@ class OneToMany(Fields):
 class ManyToMany(Fields):
 
 
-	def __init__(self,name,other, **kw):
+	def __init__(self,name,other,middle =None, **kw):
 		attributesfromdict(locals())
 
-	def external_table(self, table_name):
-	
-		self.table= sa.Table(table_name+"_manytomany_"+self.other, dbconfig.metadata,
-				sa.Column(table_name+"_id", sa.Integer, sa.ForeignKey("%s.id"%(table_name))),
-				sa.Column(self.other+"_id", sa.Integer, sa.ForeignKey("%s.id"%(self.other))))
+	def external_table(self, table_name, database):
 		
+		if self.middle is None:
+		
+			self.table= sa.Table(table_name+"_manytomany_"+self.other, dbconfig.metadata,
+					sa.Column(table_name+"_id", sa.Integer, sa.ForeignKey("%s.id"%(table_name))),
+					sa.Column(self.other+"_id", sa.Integer, sa.ForeignKey("%s.id"%(self.other))))
+	
+						
 	def parameters (self, table_name, database):
 		params = {}
 		mapped_class = getattr(database.tables[self.other], self.other) 

@@ -3,6 +3,7 @@ from sqlalchemy import orm
 import dbconfig
 from util import *
 
+
 if "tables" not in dbconfig.metadata.tables:
 	tables = sa.Table("tables", dbconfig.metadata,
 			sa.Column('id', sa.Integer, primary_key=True),
