@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sqlalchemy as sa
 
+
 class BaseSchema(object):
 	
 	
