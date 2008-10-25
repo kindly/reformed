@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from unittest import TestCase
-from Columns import *
-from Tables import *
+from columns import *
+from tables import *
 
 class test_table(TestCase):
     
