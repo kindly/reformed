@@ -1,40 +1,44 @@
 #!/usr/bin/env python
+from unittest import TestCase
 from Columns import *
 
-class test_fields(object):
-	
-	def setUp(self):
-		
-		self.a = Text("col")
-		
-		class Text2(Fields):
-		
-			text = Columns(sa.Unicode)
-		
-		self.b = Text2("col")
-		
-		self.c = ManyToOne("many")
-			
-	def test_text_field_fieldname(self):
-		
-		assert self.a.columns["col"].name == "col"
-		
-	def test_text_filed_no_field_name(self):
-		
-		assert self.b.columns["text"].name == "text"
-	
-	def test_many_to_one(self):
-	
-		assert self.c.relations["many"].name == "many"
+class test_fields(TestCase):
+    
+    def setUp(self):
+        
+        self.a = Text("col")
+        
+        class Text2(Fields):
+        
+            text = Columns(sa.Unicode)
+        
+        self.b = Text2("col")
+        
+        self.c = ManyToOne("many")
+            
+    def test_text_field_fieldname(self):
+        
+        assert self.a.columns["col"].name == "col"
+        
+    def test_text_filed_no_field_name(self):
+        
+        assert self.b.columns["text"].name == "text"
+    
+    def test_many_to_one(self):
+    
+        assert self.c.relations["many"].name == "many"
 
-class test_table(object):
-	
-	def setup(self):
-		
-		self.a = Table("poo", Text("col"))
-		
-	def test_table(self):
-		
-		assert self.a.items["col"].name == "col"
-	
-	
+    def test_duplicate_col_names(self):
+
+        text = Columns(sa.Unicode)
+        self.assertRaises(AttributeError,text._set_parent,self.b,"text") 
+        
+    def test_col_names_added_to_items(self):
+
+        text = Columns(sa.Unicode)
+        text._set_parent(self.b,"text2")
+        
+        assert "text2" in self.b.items.iterkeys()
+        assert "text" in self.b.items.iterkeys()
+        
+
