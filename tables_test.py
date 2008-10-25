@@ -12,6 +12,6 @@ class test_table(TestCase):
     def test_table(self):
         
         assert self.a.items["col"].name == "col"
-#        assert self.a.columns["col"].name == "col"
+        assert self.a.columns["col"].name == "col"
     
     
