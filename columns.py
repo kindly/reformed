@@ -17,7 +17,7 @@ class BaseSchema(object):
             self.name = Field.name
         else:
             self.name = name
-        
+
 
 
 class Columns(BaseSchema):
@@ -49,20 +49,22 @@ class Relations(BaseSchema):
         
 
 
+
 class Fields(object):
+
     
-    def __init__(self, name, other = None, secondary =None, *args, **kw):
+    def __init__(self, name, *args, **kw):
         """ the base class of all Fields.  A field is a composite of many real
         database columns"""
         
         self.name = name
         self.columns = {}
         self.relations = {}
-        
-        for n,v in self.__class__.__dict__.iteritems():
-            if not n.startswith("_"):
+
+        for n,v in self.__dict__.iteritems():
+            if hasattr(v,"_set_parent"):
                 v._set_parent(self,n)
-   
+
     @property
     def items(self):
         items = {}
@@ -83,10 +85,17 @@ class Fields(object):
     
 class Text(Fields):
     
-    text = Columns(sa.Unicode, use_field_name = True)
+    def __init__(self, name, *args, **kw):
+        
+        self.text = Columns(sa.Unicode, use_field_name = True)
+
+        super(Text,self).__init__(name, *args, **kw)
     
 class ManyToOne(Fields):
     
-    manytoone = Relations("manytoone",use_field_name = True)
+    def __init__(self, name, other = None, secondary =None, *args, **kw):
+
+        self.manytoone = Relations("manytoone",use_field_name = True)
     
+        super(ManyToOne,self).__init__(name, *args, **kw)
 

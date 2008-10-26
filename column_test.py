@@ -10,7 +10,12 @@ class test_fields(TestCase):
         
         class Text2(Fields):
         
-            text = Columns(sa.Unicode)
+            def __init__(self, name, *args, **kw):
+                
+                self.text = Columns(sa.Unicode)
+                self.text3 = Columns(sa.Unicode)
+
+                super(Text2,self).__init__(name, *args, **kw)
         
         self.b = Text2("col")
         
@@ -23,6 +28,7 @@ class test_fields(TestCase):
     def test_text_filed_no_field_name(self):
         
         assert self.b.columns["text"].name == "text"
+        assert self.b.columns["text3"].name == "text3"
     
     def test_many_to_one(self):
     
