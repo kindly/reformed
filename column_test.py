@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-from unittest import TestCase
 from columns import *
+from nose.tools import assert_raises
 
-class test_fields(TestCase):
+class test_fields():
     
     def setUp(self):
         
@@ -19,7 +19,7 @@ class test_fields(TestCase):
         
         self.b = Text2("col")
         
-        self.c = ManyToOne("many")
+        self.c = ManyToOne("many","table2")
             
     def test_text_field_fieldname(self):
         
@@ -37,7 +37,7 @@ class test_fields(TestCase):
     def test_duplicate_col_names(self):
 
         text = Columns(sa.Unicode)
-        self.assertRaises(AttributeError,text._set_parent,self.b,"text") 
+        assert_raises(AttributeError,text._set_parent,self.b,"text") 
         
     def test_col_names_added_to_items(self):
 
