@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sqlalchemy as sa
+from columns import Columns
 
 class Table(object):
     
@@ -32,6 +33,14 @@ class Table(object):
         return items
 
     @property    
+    def defined_columns(self):
+        columns = {}
+        for n,v in self.fields.iteritems():
+            for n,v in v.columns.iteritems():
+                columns[n]=v
+        return columns
+
+    @property    
     def columns(self):
         columns = {}
         for n,v in self.fields.iteritems():
@@ -47,36 +56,80 @@ class Table(object):
                 relations[n]=v
         return relations
 
-    def _set_parent(self,Database):
+    @property
+    def primary_key_columns(self):
+        columns = {}
+        if self.primary_key:
+            for n, v in self.defined_columns.iteritems():
+                if n in self.primary_key_list:
+                    columns[n] = v
+        else:
+            columns["id"] = Columns(sa.Integer, name = "id")
+        return columns
 
+    @property
+    def defined_non_primary_key_columns(self):
+        columns = {}
+        for n, v in self.defined_columns.iteritems():
+            if n not in self.primary_key_list:
+                columns[n] = v
+        return columns
+
+    def check_database(self):
+        if not hasattr(self,"database"):
+            raise AttributeError,\
+                  "Table %s has not been assigned a database" % self.name
+
+    def _set_parent(self,Database):
         Database.tables[self.name]=self
         self.database = Database
 
     @property    
-    def sa_defined_columns(self):
-        columns = []
-        for n, v in self.columns.iteritems():
-            columns.append(sa.Column(v.name,
-                                     v.type))
+    def related_tables(self):
+        self.check_database()
+        return self.database.related_tables(self)
+
+    @property    
+    def foriegn_key_columns(self):
+        self.check_database()
+        d = self.database
+        columns={}
+        for table, rel in self.related_tables.iteritems():
+            if rel == "manytoone":
+                for n, v in d.tables[table].primary_key_columns.iteritems():
+                    if n == 'id':
+                        columns[table+'_id'] =\
+                                Columns(v.type,
+                                        name = table+'_id',
+                                        original_table= table)
+                    else:
+                        columns[n] = Columns(v.type,
+                                             name=n,
+                                             original_table= table)
         return columns
 
     @property
-    def sa_defined_primary_keys(self):
-        columns = []
-        if not self.primary_key:
-            columns.append(sa.Column("id", 
-                                     sa.Integer,
-                                     primary_key = True))
-        else:
-            for n, v in self.columns.iteritems():
-                if n in self.primary_key_list:
-                    columns.append(sa.Column(v.name,
-                                             v.type,
-                                             primary_key = True))
-        return columns
+    def sa_table(self):
+        self.check_database()
+        if not self.database.metadata:
+            raise AttributeError("table not assigned a metadata")
+        sa_table = sa.Table(self.name, self.database.metadata)
+        for n,v in self.primary_key_columns.iteritems():
+            sa_table.append_column(sa.Column(n, v.type, primary_key = True))
+        for n,v in self.defined_non_primary_key_columns.iteritems():
+            sa_table.append_column(sa.Column(n, v.type))
+        foriegn_key_columns = []
+        related_primary_key_columns =[]
+        for n,v in self.foriegn_key_columns.iteritems():
+            sa_table.append_column(sa.Column(n, v.type))
+            foriegn_key_columns.append(n)
+            other_name = "id" if n.endswith("_id") else n
+            related_primary_key_columns.append("%s.%s" % (v.original_table,
+                                                          other_name)) 
+        if foriegn_key_columns:
+            sa_table.append_constraint(
+                                sa.ForeignKeyConstraint(foriegn_key_columns,
+                                   related_primary_key_columns))
+        return sa_table
 
-    def sa_extra_columns(self):
-        columns = []
-        if not hasattr(self,"database"):
-            raise AttributeError,\
-                    "Table %s has not been assigned a datatabase" % self.name
+   
