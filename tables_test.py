@@ -4,6 +4,7 @@ from tables import *
 from database import *
 from nose.tools import assert_raises,raises
 import sqlalchemy as sa
+from sqlalchemy import create_engine
 
 class test_table_basic():
     
@@ -41,19 +42,6 @@ class test_table_basic():
         assert self.a.defined_non_primary_key_columns.has_key("col")
         assert self.a.defined_non_primary_key_columns.has_key("col2")
 
-    def test_defined_columns(self):
-
-        assert "col" in [a.name for a in self.a.sa_defined_columns]
-        assert "col2" in [a.name for a in self.a.sa_defined_columns]
-
-    def test_defined_primary_keys(self):
-
-        assert "id" in [a.name for a in self.a.sa_defined_primary_keys]
-
-    def test_check_database(self):
-
-        assert_raises(AttributeError,self.a.sa_extra_columns)
-
 
 class test_table_primary_key():
     
@@ -74,11 +62,6 @@ class test_table_primary_key():
     def test_defined_non_primary_key(self):
         
         assert self.a.defined_non_primary_key_columns.has_key("col3")
-
-    def test_defined_primary_keys(self):
-
-        assert "col" in [a.name for a in self.a.sa_defined_primary_keys]
-        assert "col2" in [a.name for a in self.a.sa_defined_primary_keys]
 
     @raises(AttributeError)
     def test_defined_primary_keyssetUp(self):
@@ -111,7 +94,7 @@ class test_database_default_primary_key(object):
                 foriegn_key_columns.has_key("people_id")
 
 
-class test_database_default_primary_key(object):
+class test_database_primary_key(object):
 
     def setUp(self):
         
@@ -135,11 +118,30 @@ class test_database_default_primary_key(object):
         assert self.Donkey.tables["email"].\
                 foriegn_key_columns.has_key("name")
 
+    def test_sa_table(self):
+
+#        self.Donkey.tables["people"].sa_table()
+#        self.Donkey.tables["email"].sa_table()
+        people = self.Donkey.tables["people"].sa_table
+        email = self.Donkey.tables["email"].sa_table
+
+        assert people.columns.has_key("name")
+        assert people.columns.has_key("name2")
+        assert people.columns["name"].primary_key is True
+        assert people.columns["name2"].primary_key is True
+        assert email.columns.has_key("name")
+        assert email.columns.has_key("name2")
+        assert email.columns.has_key("email")
+        assert email.columns["id"].primary_key is True
+        name2 = email.columns["name2"].foreign_keys.pop()
+        name = email.columns["name"].foreign_keys.pop()
+        assert name.target_fullname == "people.name"
+        assert name2.target_fullname == "people.name2"
+
+
 
 if __name__ == '__main__':
         
-    from sqlalchemy import create_engine
-    import copy
     engine = create_engine('sqlite:///:memory:', echo=True)
 
     
@@ -157,6 +159,5 @@ if __name__ == '__main__':
                     metadata = meta
                     )
     
-    Donkey.tables["people"].sa_table
-    Donkey.tables["email"].sa_table
-    meta.create_all(engine) 
+    a = Donkey.tables["people"].sa_table
+    b = Donkey.tables["email"].sa_table

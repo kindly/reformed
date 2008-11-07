@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from sqlalchemy.orm import mapper
 import sqlalchemy as sa
 from columns import Columns
 
@@ -133,3 +134,19 @@ class Table(object):
         return sa_table
 
    
+    @property
+    def sa_class(self):
+        class sa_class(object):
+            pass
+        return sa_class
+
+    def sa_mapper(self):
+        self.properties ={}
+        
+        
+
+
+
+
+
+
