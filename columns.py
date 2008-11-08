@@ -80,7 +80,7 @@ class Fields(object):
             if n in Table.items.iterkeys():
                 raise AtributeError("already an item named %s" % n)
                 
-        Table.fields[self.name] = self
+        Table.add_field(self)
         self.table = Table
     
 class Text(Fields):

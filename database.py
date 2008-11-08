@@ -1,4 +1,5 @@
 import sqlalchemy as sa
+import custom_exceptions
 
 class Database(object):
     
@@ -20,8 +21,18 @@ class Database(object):
     def checkrelations(self):
         for relation in self.relations:
             if relation.other not in self.tables.iterkeys():
-                raise AttributeError,\
+                raise custom_exceptions.RelationError,\
                         "table %s does not exits" % relation.other
+ 
+    def update_sa(self):
+        for table in self.tables.itervalues():
+            try:
+                table.make_sa_table()
+                table.make_sa_class()
+            except (custom_exceptions.NoDatabaseError,\
+                    custom_exceptions.RelationError):
+                pass
+
 
     def related_tables(self, Table):
         self.checkrelations()

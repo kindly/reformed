@@ -120,8 +120,6 @@ class test_database_primary_key(object):
 
     def test_sa_table(self):
 
-#        self.Donkey.tables["people"].sa_table()
-#        self.Donkey.tables["email"].sa_table()
         people = self.Donkey.tables["people"].sa_table
         email = self.Donkey.tables["email"].sa_table
 
@@ -159,5 +157,5 @@ if __name__ == '__main__':
                     metadata = meta
                     )
     
-    a = Donkey.tables["people"].sa_table
-    b = Donkey.tables["email"].sa_table
+    a = Donkey.tables["people"]
+    b = Donkey.tables["email"]

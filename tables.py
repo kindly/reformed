@@ -2,6 +2,7 @@
 from sqlalchemy.orm import mapper
 import sqlalchemy as sa
 from columns import Columns
+import custom_exceptions
 
 class Table(object):
     
@@ -24,7 +25,18 @@ class Table(object):
 
         for fields in args:
             fields._set_parent(self)
+
+    def add_field(self,field):
+        self.fields[field.name] = field
+        self.update_sa()
     
+    def update_sa(self):
+        try:
+            self.check_database()
+            self.database.update_sa()
+        except custom_exceptions.NoDatabaseError:
+            pass
+
     @property    
     def items(self):
         items = {}
@@ -78,12 +90,13 @@ class Table(object):
 
     def check_database(self):
         if not hasattr(self,"database"):
-            raise AttributeError,\
+            raise custom_exceptions.NoDatabaseError,\
                   "Table %s has not been assigned a database" % self.name
 
     def _set_parent(self,Database):
         Database.tables[self.name]=self
         self.database = Database
+        self.update_sa()
 
     @property    
     def related_tables(self):
@@ -109,11 +122,10 @@ class Table(object):
                                              original_table= table)
         return columns
 
-    @property
-    def sa_table(self):
+    def make_sa_table(self):
         self.check_database()
         if not self.database.metadata:
-            raise AttributeError("table not assigned a metadata")
+            raise NoMetadataError("table not assigned a metadata")
         sa_table = sa.Table(self.name, self.database.metadata)
         for n,v in self.primary_key_columns.iteritems():
             sa_table.append_column(sa.Column(n, v.type, primary_key = True))
@@ -131,14 +143,12 @@ class Table(object):
             sa_table.append_constraint(
                                 sa.ForeignKeyConstraint(foriegn_key_columns,
                                    related_primary_key_columns))
-        return sa_table
-
+        self.sa_table = sa_table
    
-    @property
-    def sa_class(self):
+    def make_sa_class(self):
         class sa_class(object):
             pass
-        return sa_class
+        self.sa_class = sa_class
 
     def sa_mapper(self):
         self.properties ={}
