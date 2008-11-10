@@ -151,12 +151,9 @@ class Table(object):
         self.sa_class = sa_class
 
     def sa_mapper(self):
-        self.properties ={}
+        properties ={}
+        for relation in self.relations.itervalues():
+            other_class = sa.relation(self.database.tables["other"].sa_class)
+            properties[relation.name] = sa.relation(other_class)
+                
         
-        
-
-
-
-
-
-
