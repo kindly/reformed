@@ -88,6 +88,10 @@ class test_database_default_primary_key(object):
                         metadata = self.meta
                         )
 
+    def tearDown(self):
+        del self.meta
+        del self.Donkey
+
     def test_foriegn_key_columns(self):
         
         assert self.Donkey.tables["email"].\
@@ -100,22 +104,33 @@ class test_database_primary_key(object):
         
         self.meta = sa.MetaData()
         self.Donkey = Database("Donkey",
-                         Table("people",
-                              Text("name"),
-                              Text("name2"),
-                              OneToMany("Email","email"),
-                              primary_key = "name,name2"),
-                         Table("email",
-                               Text("email")
-                              ),
+                            Table("people",
+                                  Text("name"),
+                                  Text("name2"),
+                                  OneToOne("address","address"),
+                                  OneToMany("Email","email"),
+                                  primary_key = "name,name2"
+                                 ),
+                            Table("email",
+                                  Text("email")
+                                 ),
+                            Table("address",
+                                  Text("address_line1"),
+                                  Text("address_line2")
+                                 ),
                         metadata = self.meta
                         )
+
 
     def test_foriegn_key_columns(self):
         
         assert self.Donkey.tables["email"].\
                 foriegn_key_columns.has_key("name2")
         assert self.Donkey.tables["email"].\
+                foriegn_key_columns.has_key("name")
+        assert self.Donkey.tables["address"].\
+                foriegn_key_columns.has_key("name2")
+        assert self.Donkey.tables["address"].\
                 foriegn_key_columns.has_key("name")
 
     def test_sa_table(self):
@@ -136,13 +151,24 @@ class test_database_primary_key(object):
         assert name.target_fullname == "people.name"
         assert name2.target_fullname == "people.name2"
 
+    def test_class_and_mapper(self):
+
+        people = self.Donkey.tables["people"].sa_class()
+        email = self.Donkey.tables["email"].sa_class()
+        
+        assert hasattr(people,"name")
+        assert hasattr(people,"name2")
+        assert hasattr(email,"name")
+        assert hasattr(email,"name2")
+        assert hasattr(email,"email")
+        assert hasattr(email,"id")
+        assert hasattr(people,"Email")
+        assert hasattr(email,"people")
 
 
 if __name__ == '__main__':
         
     engine = create_engine('sqlite:///:memory:', echo=True)
-
-    
 
     meta = sa.MetaData()
     Donkey = Database("Donkey",
@@ -152,10 +178,13 @@ if __name__ == '__main__':
                           OneToMany("Email","email"),
                           primary_key = "name,name2"),
                      Table("email",
-                           Text("email")
+                           Text("email"),
+                           Text("email2")
+
                           ),
                     metadata = meta
                     )
     
     a = Donkey.tables["people"]
     b = Donkey.tables["email"]
+

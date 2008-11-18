@@ -10,6 +10,8 @@ class Table(object):
         self.name =name
         self.fields = {}
         self.primary_key = kw.pop("primary_key", None)
+        self.entity = kw.pop("entity", False)
+        self.entity_relationship = kw.pop("entity_relationship", False)
         if self.primary_key:
             self.primary_key_list = self.primary_key.split(",")
         else:
@@ -104,12 +106,19 @@ class Table(object):
         return self.database.related_tables(self)
 
     @property    
+    def tables_with_relations(self):
+        self.check_database()
+        return self.database.tables_with_relations(self)
+
+    @property    
     def foriegn_key_columns(self):
         self.check_database()
         d = self.database
         columns={}
-        for table, rel in self.related_tables.iteritems():
-            if rel == "manytoone":
+        for table, rel in self.tables_with_relations.iteritems():
+            if (rel.type == "onetomany" and self.name == rel.other) or\
+              (rel.type == "onetoone" and self.name == rel.other) or\
+              (rel.type == "manytoone" and self.name == rel.table.name):
                 for n, v in d.tables[table].primary_key_columns.iteritems():
                     if n == 'id':
                         columns[table+'_id'] =\
@@ -121,6 +130,32 @@ class Table(object):
                                              name=n,
                                              original_table= table)
         return columns
+
+    def join_conditions(self):
+
+        join_conditions = {}
+        self.check_database()
+        d = self.database
+        for n, v in self.relations.iteritems():
+            this_table_columns =[]
+            other_table_columns=[]
+            if v.type = 'onetomany':
+
+
+            
+            
+
+
+            
+            
+
+        foriegn_key_columns = []
+        related_primary_key_columns =[]
+        for n,v in self.foriegn_key_columns.iteritems():
+            foriegn_key_columns.append(n)
+            other_name = "id" if n.endswith("_id") else n
+            related_primary_key_columns.append("%s.%s" % (v.original_table,
+                                                          other_name)) 
 
     def make_sa_table(self):
         self.check_database()
@@ -143,17 +178,20 @@ class Table(object):
             sa_table.append_constraint(
                                 sa.ForeignKeyConstraint(foriegn_key_columns,
                                    related_primary_key_columns))
+        print foriegn_key_columns, related_primary_key_columns
         self.sa_table = sa_table
    
     def make_sa_class(self):
+        
         class sa_class(object):
             pass
+        sa_class.__name__ = self.name
         self.sa_class = sa_class
 
     def sa_mapper(self):
         properties ={}
         for relation in self.relations.itervalues():
-            other_class = sa.relation(self.database.tables["other"].sa_class)
-            properties[relation.name] = sa.relation(other_class)
-                
-        
+            other_class = self.database.tables[relation.other].sa_class
+            properties[relation.name] = sa.orm.relation(other_class,
+                                                    backref = self.name)
+        mapper(self.sa_class, self.sa_table, properties = properties)

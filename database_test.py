@@ -19,6 +19,8 @@ class test_database(object):
                                Text("email")
                               ),
                         metadata = self.meta)
+    
+
 
     def test_basic(self):
 
@@ -45,7 +47,18 @@ class test_database(object):
                                          ["people"] == "manytoone"
 
 
+    def test_table_with_relations(self):
 
+        d = self.Donkey
+
+        assert d.tables_with_relations(self.Donkey.tables["people"])\
+                                             ["email"].table.name == "people"
+        assert d.tables_with_relations(self.Donkey.tables["email"])\
+                                             ["people"].table.name == "people"
+        assert d.tables_with_relations(self.Donkey.tables["people"])\
+                                             ["email"].type == "onetomany"
+        assert d.tables_with_relations(self.Donkey.tables["email"])\
+                                             ["people"].type == "onetomany"
 
 if __name__ == '__main__':
 
