@@ -9,6 +9,7 @@ class BaseSchema(object):
         self.type = type
         self.name = kw.pop("name", None)
         self.original_table = kw.pop("original_table", None)
+        self.original_column = kw.pop("original_column", None)
         self.use_parent_name=kw.pop("use_parent_name", False)
         self.args = args
         self.kw = kw
@@ -55,6 +56,14 @@ class Relations(BaseSchema):
         else:
             parent._add_relation(self.name, self)
             self.parent = parent
+
+    @property
+    def other_table(self):
+        
+        try:
+            return self.parent.table.database.tables[self.other]
+        except AttributeError:
+            return None
         
 class Fields(object):
     

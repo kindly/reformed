@@ -124,38 +124,39 @@ class Table(object):
                         columns[table+'_id'] =\
                                 Columns(v.type,
                                         name = table+'_id',
-                                        original_table= table)
+                                        original_table= table,
+                                        original_column= n)
                     else:
                         columns[n] = Columns(v.type,
                                              name=n,
-                                             original_table= table)
+                                             original_table= table,
+                                             original_column= n)
         return columns
 
-    def join_conditions(self):
+    @property
+    def join_conditions_from_this_table(self):
 
         join_conditions = {}
         self.check_database()
         d = self.database
-        for n, v in self.relations.iteritems():
-            this_table_columns =[]
+        for table, rel in self.tables_with_relations.iteritems():
             other_table_columns=[]
-            if v.type = 'onetomany':
+            this_table_columns=[]
+            if rel.type.startswith('oneto') and rel.table is self:
+                for n, v in rel.other_table.foriegn_key_columns.iteritems():
+                    if v.original_table == self.name:
+                        other_table_columns.append(n)
+                        this_table_columns.append(v.original_column)
+            if rel.type == "manytoone" and rel.table is self:
+                for n,v in self.foriegn_key_columns.iteritems():
+                    if v.original_table.name == rel.other:
+                        this_table_columns.append(n)
+                        other_table_columns.append(v.original_column)
+            if other_table_columns:
+                join_conditions[table] = [this_table_columns,
+                                          other_table_columns] 
+        return join_conditions
 
-
-            
-            
-
-
-            
-            
-
-        foriegn_key_columns = []
-        related_primary_key_columns =[]
-        for n,v in self.foriegn_key_columns.iteritems():
-            foriegn_key_columns.append(n)
-            other_name = "id" if n.endswith("_id") else n
-            related_primary_key_columns.append("%s.%s" % (v.original_table,
-                                                          other_name)) 
 
     def make_sa_table(self):
         self.check_database()
@@ -178,7 +179,6 @@ class Table(object):
             sa_table.append_constraint(
                                 sa.ForeignKeyConstraint(foriegn_key_columns,
                                    related_primary_key_columns))
-        print foriegn_key_columns, related_primary_key_columns
         self.sa_table = sa_table
    
     def make_sa_class(self):

@@ -165,6 +165,20 @@ class test_database_primary_key(object):
         assert hasattr(people,"Email")
         assert hasattr(email,"people")
 
+    def test_join_conditiontions_from_this_table(self):
+
+
+        people = self.Donkey.tables["people"]
+
+        assert people.join_conditions_from_this_table["email"] in\
+               ([["name" ,"name2"],["name" ,"name2"]],
+                [["name2" ,"name"],["name2" ,"name"]])
+
+        
+        assert people.join_conditions_from_this_table["address"] in\
+               ([["name" ,"name2"],["name" ,"name2"]],
+                [["name2" ,"name"],["name2" ,"name"]])
+
 
 if __name__ == '__main__':
         
