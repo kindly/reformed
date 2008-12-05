@@ -2,14 +2,13 @@
 from columns import *
 from tables import *
 from database import *
-import sqlalchemy as sa
 
 class test_database(object):
-    
+     
     def setUp(self):
 
+        self.engine = sa.create_engine('sqlite:///:memory:', echo=True)
         self.meta = sa.MetaData()
-        
         self.Donkey = Database("Donkey",
                          Table("people",
                               Text("name"),
@@ -18,9 +17,12 @@ class test_database(object):
                          Table("email",
                                Text("email")
                               ),
-                        metadata = self.meta)
+                               metadata = self.meta)
+        self.Donkey.update_sa()
     
-
+    
+ #   def tearDown(self):
+ #       self.meta.clear()
 
     def test_basic(self):
 
@@ -29,6 +31,7 @@ class test_database(object):
         assert "email" in  self.Donkey.tables
         assert len(self.Donkey.tables["people"].fields) == 2
         assert len(self.Donkey.tables["email"].fields) == 1
+
 
     def test_relations(self):
 
@@ -59,22 +62,3 @@ class test_database(object):
                                              ["email"].type == "onetomany"
         assert d.tables_with_relations(self.Donkey.tables["email"])\
                                              ["people"].type == "onetomany"
-
-if __name__ == '__main__':
-
-     Donkey = Database("Donkey",
-                         Table("people",
-                              Text("name"),
-                              OneToMany("Email","email")
-                              ),
-                         Table("email",
-                               Text("email")
-                              )
-                        )
-     print Donkey.related_tables(Donkey.tables["people"]) 
-     print Donkey.related_tables(Donkey.tables["email"]) 
-
-
- 
-
-

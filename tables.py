@@ -30,7 +30,7 @@ class Table(object):
 
     def add_field(self,field):
         self.fields[field.name] = field
-        self.update_sa()
+#        self.update_sa()
     
     def update_sa(self):
         try:
@@ -98,7 +98,7 @@ class Table(object):
     def _set_parent(self,Database):
         Database.tables[self.name]=self
         self.database = Database
-        self.update_sa()
+#        self.update_sa()
 
     @property    
     def related_tables(self):
@@ -133,13 +133,14 @@ class Table(object):
                                              original_column= n)
         return columns
 
+
     @property
     def join_conditions_from_this_table(self):
 
         join_conditions = {}
         self.check_database()
         d = self.database
-        for table, rel in self.tables_with_relations.iteritems():
+        for table, rel in self.relations.iteritems():
             other_table_columns=[]
             this_table_columns=[]
             if rel.type.startswith('oneto') and rel.table is self:
@@ -149,7 +150,7 @@ class Table(object):
                         this_table_columns.append(v.original_column)
             if rel.type == "manytoone" and rel.table is self:
                 for n,v in self.foriegn_key_columns.iteritems():
-                    if v.original_table.name == rel.other:
+                    if v.original_table == rel.other:
                         this_table_columns.append(n)
                         other_table_columns.append(v.original_column)
             if other_table_columns:
@@ -157,6 +158,24 @@ class Table(object):
                                           other_table_columns] 
         return join_conditions
 
+    @property
+    def foreign_key_constraints(self):
+
+        foreign_key_constraints = {}
+        self.check_database()
+        d = self.database
+        for table, rel in self.tables_with_relations.iteritems():
+            other_table_columns=[]
+            this_table_columns=[]
+            for n, v in self.foriegn_key_columns.iteritems():
+                if v.original_table == table:
+                    other_table_columns.append("%s.%s"%\
+                                               (table,v.original_column))
+                    this_table_columns.append(n)
+            if other_table_columns:
+                foreign_key_constraints[table] = [this_table_columns,
+                                                  other_table_columns]
+        return foreign_key_constraints
 
     def make_sa_table(self):
         self.check_database()
@@ -167,18 +186,12 @@ class Table(object):
             sa_table.append_column(sa.Column(n, v.type, primary_key = True))
         for n,v in self.defined_non_primary_key_columns.iteritems():
             sa_table.append_column(sa.Column(n, v.type))
-        foriegn_key_columns = []
-        related_primary_key_columns =[]
         for n,v in self.foriegn_key_columns.iteritems():
             sa_table.append_column(sa.Column(n, v.type))
-            foriegn_key_columns.append(n)
-            other_name = "id" if n.endswith("_id") else n
-            related_primary_key_columns.append("%s.%s" % (v.original_table,
-                                                          other_name)) 
-        if foriegn_key_columns:
-            sa_table.append_constraint(
-                                sa.ForeignKeyConstraint(foriegn_key_columns,
-                                   related_primary_key_columns))
+        if self.foreign_key_constraints:
+            for n,v in self.foreign_key_constraints.iteritems():
+                sa_table.append_constraint(sa.ForeignKeyConstraint(v[0],
+                                                                   v[1]))
         self.sa_table = sa_table
    
     def make_sa_class(self):

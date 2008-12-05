@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 
 class test_basic_input(object):
 
-    def sjkletUp(self):
+    def setUp(self):
         self.engine = create_engine('sqlite:///:memory:', echo=True)
         self.meta = sa.MetaData()
         self.Donkey = Database("Donkey", 
@@ -44,24 +44,28 @@ class test_basic_input(object):
                                  ),
                         metadata = self.meta
                         )
-        self.meta.create_all(self.engine)
 
+        self.Donkey.update_sa()
+
+        self.meta.create_all(self.engine)
         self.Session = sa.orm.sessionmaker(bind =self.engine)
 
+    def tearDown(self):
+        self.meta.clear()
 
-    def teihjkst_donkey_input(self):
+    def test_donkey_input(self):
 
         session = self.Session()
 
         fred = self.Donkey.tables["donkey"].sa_class()
-        fred.name = "fred"
+        fred.name = u"fred"
         fred.age = 13
 
         session.add(fred)
         session.commit()
 
         assert "fred" in [a.name for a in\
-                          session.query(Database("donkey").sa_class()).all()]
+                          session.query(self.Donkey.tables["donkey"].sa_class).all()]
 
         session.close()
 
@@ -109,6 +113,7 @@ if __name__ == '__main__':
                     metadata = meta
                     )
     
+    Donkey.update_sa()
     meta.create_all(engine)
 
     Session = sa.orm.sessionmaker(bind =engine)
@@ -118,11 +123,13 @@ if __name__ == '__main__':
     fred = Donkey.tables["people"].sa_class()
     fred.name = "fred"
 #    fred.age = 13
+#
 
     session.add(fred)
     session.commit()
 
     assert "fred" in [a.name for a in\
-                      session.query(Database("donkey").sa_class()).all()]
+                      session.query(Donkey.tables["people"].sa_class).all()]
 
+    session.close()
 

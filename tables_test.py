@@ -3,10 +3,8 @@ from columns import *
 from tables import *
 from database import *
 from nose.tools import assert_raises,raises
-import sqlalchemy as sa
-from sqlalchemy import create_engine
 
-class test_table_basic():
+class test_table_basic(object):
     
     def setUp(self):
         
@@ -43,7 +41,7 @@ class test_table_basic():
         assert self.a.defined_non_primary_key_columns.has_key("col2")
 
 
-class test_table_primary_key():
+class test_table_primary_key(object):
     
     def setUp(self):
         
@@ -66,16 +64,17 @@ class test_table_primary_key():
     @raises(AttributeError)
     def test_defined_primary_keyssetUp(self):
         
-        self.b = Table("poo",
-                       Text("col"),
-                       Text("col2"),
-                       ManyToOne("rel1","table2"),
-                       primary_key="col,col1")
+        a= Table("poo",
+            Text("col"),
+            Text("col2"),
+            ManyToOne("rel1","table2"),
+            primary_key="col,col1")
 
 class test_database_default_primary_key(object):
     
     def setUp(self):
         
+        self.engine = sa.create_engine('sqlite:///:memory:', echo=True)
         self.meta = sa.MetaData()
         self.Donkey = Database("Donkey",
                          Table("people",
@@ -89,8 +88,7 @@ class test_database_default_primary_key(object):
                         )
 
     def tearDown(self):
-        del self.meta
-        del self.Donkey
+        self.meta.clear()
 
     def test_foriegn_key_columns(self):
         
@@ -101,8 +99,10 @@ class test_database_default_primary_key(object):
 class test_database_primary_key(object):
 
     def setUp(self):
-        
+
+        self.engine = sa.create_engine('sqlite:///:memory:', echo=True)
         self.meta = sa.MetaData()
+        
         self.Donkey = Database("Donkey",
                             Table("people",
                                   Text("name"),
@@ -121,6 +121,17 @@ class test_database_primary_key(object):
                         metadata = self.meta
                         )
 
+        self.Donkey.update_sa()
+
+        self.peopletable = self.Donkey.tables["people"].sa_table
+        self.emailtable = self.Donkey.tables["email"].sa_table
+        self.name2 = self.emailtable.columns["name2"].foreign_keys.pop()
+        self.name = self.emailtable.columns["name"].foreign_keys.pop()
+        self.people = self.Donkey.tables["people"].sa_class()
+        self.email = self.Donkey.tables["email"].sa_class()
+
+#    def tearDown(self):
+#        self.meta.clear()
 
     def test_foriegn_key_columns(self):
         
@@ -135,70 +146,67 @@ class test_database_primary_key(object):
 
     def test_sa_table(self):
 
-        people = self.Donkey.tables["people"].sa_table
-        email = self.Donkey.tables["email"].sa_table
 
-        assert people.columns.has_key("name")
-        assert people.columns.has_key("name2")
-        assert people.columns["name"].primary_key is True
-        assert people.columns["name2"].primary_key is True
-        assert email.columns.has_key("name")
-        assert email.columns.has_key("name2")
-        assert email.columns.has_key("email")
-        assert email.columns["id"].primary_key is True
-        name2 = email.columns["name2"].foreign_keys.pop()
-        name = email.columns["name"].foreign_keys.pop()
-        assert name.target_fullname == "people.name"
-        assert name2.target_fullname == "people.name2"
+        assert self.peopletable.columns.has_key("name")
+        assert self.peopletable.columns.has_key("name2")
+        assert self.peopletable.columns["name"].primary_key is True
+        assert self.peopletable.columns["name2"].primary_key is True
+        assert self.emailtable.columns.has_key("name")
+        assert self.emailtable.columns.has_key("name2")
+        assert self.emailtable.columns.has_key("email")
+        assert self.emailtable.columns["id"].primary_key is True
+        assert self.name.target_fullname == "people.name"
+        assert self.name2.target_fullname == "people.name2"
 
     def test_class_and_mapper(self):
-
-        people = self.Donkey.tables["people"].sa_class()
-        email = self.Donkey.tables["email"].sa_class()
         
-        assert hasattr(people,"name")
-        assert hasattr(people,"name2")
-        assert hasattr(email,"name")
-        assert hasattr(email,"name2")
-        assert hasattr(email,"email")
-        assert hasattr(email,"id")
-        assert hasattr(people,"Email")
-        assert hasattr(email,"people")
+        assert hasattr(self.people,"name")
+        assert hasattr(self.people,"name2")
+        assert hasattr(self.email,"name")
+        assert hasattr(self.email,"name2")
+        assert hasattr(self.email,"email")
+        assert hasattr(self.email,"id")
+        assert hasattr(self.people,"Email")
+        assert hasattr(self.email,"people")
 
-    def test_join_conditiontions_from_this_table(self):
+    def test_foreign_key_constraints(self):
 
-
-        people = self.Donkey.tables["people"]
-
-        assert people.join_conditions_from_this_table["email"] in\
-               ([["name" ,"name2"],["name" ,"name2"]],
-                [["name2" ,"name"],["name2" ,"name"]])
+        assert self.Donkey.tables["email"].\
+                foreign_key_constraints["people"] in\
+               ([["name" ,"name2"],["people.name" ,"people.name2"]],
+                [["name2" ,"name"],["people.name2" ,"people.name"]])
 
         
-        assert people.join_conditions_from_this_table["address"] in\
-               ([["name" ,"name2"],["name" ,"name2"]],
-                [["name2" ,"name"],["name2" ,"name"]])
-
+        assert self.Donkey.tables["address"].\
+                foreign_key_constraints["people"] in\
+               ([["name" ,"name2"],["people.name" ,"people.name2"]],
+                [["name2" ,"name"],["people.name2" ,"people.name"]])
 
 if __name__ == '__main__':
-        
-    engine = create_engine('sqlite:///:memory:', echo=True)
-
-    meta = sa.MetaData()
+    
     Donkey = Database("Donkey",
-                     Table("people",
-                          Text("name"),
-                          Text("name2"),
-                          OneToMany("Email","email"),
-                          primary_key = "name,name2"),
-                     Table("email",
-                           Text("email"),
-                           Text("email2")
-
-                          ),
+                        Table("people",
+                              Text("name"),
+                              Text("name2"),
+                              OneToOne("address","address"),
+                              OneToMany("Email","email"),
+                              primary_key = "name,name2"
+                             ),
+                        Table("email",
+                              Text("email")
+                             ),
+                        Table("address",
+                             Text("address_line1"),
+                             Text("address_line2")
+                             ),
                     metadata = meta
                     )
-    
+
+    Donkey.update_sa()
+
     a = Donkey.tables["people"]
     b = Donkey.tables["email"]
+    c = Donkey.tables["address"]
 
+    meta.create_all(engine)
+    people = Donkey.tables["people"].sa_class()
