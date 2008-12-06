@@ -1,0 +1,12 @@
+- change joint promary key columns to have an id column as well but, so they become unique constraints
+- add table that joins back to an entity table
+- add unique constraints
+- add nullable,sequences and any other sqlalchemy column lever parameters
+- add validation
+- sort out order of field, but adding counter to columns and fields using setattr
+- do checks to see if defined table reflects table underneath
+- persist database information
+- create object for getting sa_objects
+- give all relevent tables locking information
+- give all tables potential to log information
+
