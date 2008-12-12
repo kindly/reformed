@@ -4,6 +4,10 @@ from database import *
 from nose.tools import assert_raises,raises
 import sqlalchemy as sa
 from sqlalchemy import create_engine
+import logging
+
+logging.basicConfig(filename = "sql.txt")
+logging.getLogger('sqlalchemy.engine').setLevel(logging.info)
 
 class test_basic_input(object):
 
@@ -50,22 +54,46 @@ class test_basic_input(object):
         self.meta.create_all(self.engine)
         self.Session = sa.orm.sessionmaker(bind =self.engine)
 
-    def tearDown(self):
-        self.meta.clear()
 
     def test_donkey_input(self):
 
         session = self.Session()
 
-        fred = self.Donkey.tables["donkey"].sa_class()
-        fred.name = u"fred"
-        fred.age = 13
+        jim = self.Donkey.tables["donkey"].sa_class()
+        jim.name = u"jim"
+        jim.age = 13
+        david = self.Donkey.tables["people"].sa_class()
+        david.name = u"david"
+        david.address_line_1 = u"43 union street"
+        davidsjim = self.Donkey.tables["donkey_sponsership"].sa_class()
+        davidsjim.people = david
+        davidsjim.donkey = jim
+        davidsjim.amount = 50
+        
+        jimpic = file("jim.xcf", mode = "rb").read()
+        
 
-        session.add(fred)
+
+        jimimage = self.Donkey.tables["donkey_pics"].sa_class()
+        jimimage.pic = jimpic
+
+        session.add(david)
+        session.add(jim)
+        session.add(davidsjim)
+        session.add(jimimage)
         session.commit()
 
-        assert "fred" in [a.name for a in\
+        assert u"jim" in [a.name for a in\
                           session.query(self.Donkey.tables["donkey"].sa_class).all()]
+
+        assert david in [ds for ds in\
+                         [a.people for a in\
+                          session.query(self.Donkey.tables["donkey_sponsership"].sa_class).all()]]
+
+        assert jim in [ds for ds in\
+                         [a.donkey for a in\
+                          session.query(self.Donkey.tables["donkey_sponsership"].sa_class).all()]]
+                          
 
         session.close()
 

@@ -87,8 +87,6 @@ class test_database_default_primary_key(object):
                         metadata = self.meta
                         )
 
-    def tearDown(self):
-        self.meta.clear()
 
     def test_foriegn_key_columns(self):
         
