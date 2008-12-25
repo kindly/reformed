@@ -9,7 +9,7 @@ import logging
 logging.basicConfig(filename = "sql.txt")
 logging.getLogger('sqlalchemy.engine').setLevel(logging.info)
 
-class test_basic_input(object):
+class test_result_set_basic(object):
 
     def setUp(self):
         self.engine = create_engine('sqlite:///:memory:', echo=True)
@@ -124,82 +124,70 @@ class test_basic_input(object):
 
         self.session.close()
 
-    def test_donkey_input(self):
+    def test_get_first_last_row(self):
 
-        assert u"jim" in [a.name for a in\
-                          self.session.query(self.Donkey.tables["donkey"].sa_class).all()]
+        results = self.Donkey.query(self.session, "donkey")
+        first = results.first()
+        assert first.name == "jim"
 
-        assert self.david in [ds for ds in\
-                         [a.people for a in\
-                          self.session.query(self.Donkey.tables["donkey_sponsership"].sa_class).all()]]
+        results = self.Donkey.query(self.session, "donkey")
+        last = results.last()
+        assert last.name == "jim0"
 
-        assert self.jim in [ds for ds in\
-                         [a.donkey for a in\
-                          self.session.query(self.Donkey.tables["donkey_sponsership"].sa_class).all()]]
-                          
+    def test_get_first_last_set(self):
 
-
-
-
-
-
+        results = self.Donkey.query(self.session, "donkey")
+        first_set = results.first_set()
+        assert [donkey.name for donkey in first_set] == [u'jim',
+                                                         u'jim1',
+                                                         u'jim2',
+                                                         u'jim3',
+                                                         u'jim4']
         
+        results = self.Donkey.query(self.session, "donkey")
+        last_set = results.last_set()
+        assert [donkey.name for donkey in last_set] == [u'jim6',
+                                                        u'jim7',
+                                                        u'jim8',
+                                                        u'jim9',
+                                                        u'jim0']
+
+    def test_get_next_prev_item(self):
+
+        results = self.Donkey.query(self.session, "donkey")
+        first = results.first()
+        next = results.next()
+        assert next.name== u"jim1"
+        next2 = results.next()
+        assert next2.name== u"jim2"
+        prev = results.prev()
+        assert prev.name== u"jim1"
+        prev2 = results.prev()
+        assert prev2.name== u"jim"
+        prev3 = results.prev()
+        assert prev3.name== u"jim"
+
+        last = results.last()
+        assert last.name== u"jim0"
+        lastprev = results.prev()
+        assert lastprev.name == u"jim9"
+        last2 = results.next()
+        assert last2.name == u"jim0"
+        last3 = results.next()
+        assert last3.name == u"jim0"
 
 
-if __name__ == '__main__':
 
-    engine = create_engine('sqlite:///:memory:', echo=True)
-    meta = sa.MetaData()
-    Donkey = Database("Donkey", 
-                        Table("people",
-                              Text("name"),
-                              Address("supporter_address"),
-                              OneToMany("email","email"),
-                              OneToMany("donkey_sponsership","donkey_sponsership"),
-                              entity = True),
-                        Table("email",
-                              Email("email")
-                             ),
-                        Table("donkey", 
-                              Text("name"),
-                              Integer("age"),
-                              OneToOne("donkey_pics","donkey_pics"),
-                              OneToMany("donkey_sponsership","donkey_sponsership"),
-                              entity = True
-                             ),
-                        Table("donkey_pics",
-                              Binary("pic")
-                             ),
-                        Table("donkey_sponsership",
-                              Money("amount"),
-                              Date("giving_date"),
-                              entity_relationship = True
-                             ),
-                        Table("payments",
-                              Date("giving_date"),
-                              Money("amount"),
-                              Text("source")
-                             ),
-                    metadata = meta
-                    )
-    
-    Donkey.update_sa()
-    meta.create_all(engine)
+    def test_get_next_prev_set(self):
 
-    Session = sa.orm.sessionmaker(bind =engine)
+        results = self.Donkey.query(self.session, "donkey")
+        firstset = results.first_set()
+        nextset = results.next_set()
 
-    session = Session()
-
-    fred = Donkey.tables["people"].sa_class()
-    fred.name = "fred"
-#    fred.age = 13
-#
-
-    session.add(fred)
-    session.commit()
-
-    assert "fred" in [a.name for a in\
-                      session.query(Donkey.tables["people"].sa_class).all()]
-
-    session.close()
+        assert [donkey.name for donkey in nextset] == [u'jim5',
+                                                        u'jim6',
+                                                        u'jim7',
+                                                        u'jim8',
+                                                        u'jim9']
+        
 

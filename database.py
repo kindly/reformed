@@ -1,5 +1,6 @@
 import sqlalchemy as sa
 import custom_exceptions
+import resultset
 
 class Database(object):
     
@@ -65,7 +66,9 @@ class Database(object):
                 related_tables[v.parent.table.name] = relation
         return related_tables
 
+    def query(self, session, queryset):
 
+        return resultset.ResultSet(self, session, queryset)
                         
             
             
