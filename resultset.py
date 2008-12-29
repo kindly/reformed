@@ -13,74 +13,83 @@ class ResultSet(object):
                 order_by(self.ordered)
         
 
+    def get_start_range(self, current_row):
+        return current_row - current_row % self.result_num
+
     def first(self):        
 
-        self.range = [0,1]
+        self.current_row = 0
         return self.selection_set[0]
     
     def last(self):
 
         last = self.selection_set.count()
-        self.range = [last -1, last]
+        self.current_row = last -1
         return self.selection_set[last - 1]
     
     def first_set(self):
 
-        self.range = [0, self.result_num]
+        self.current_row = 0
         return self.selection_set[0:self.result_num]
 
     def last_set(self):
         
         last = self.selection_set.count()
-        self.range = [last - self.result_num, last]
-        return self.selection_set[last  - self.result_num: last]
+        self.current_row = self.get_start_range(last-1)
+        return self.selection_set[self.current_row:
+                                  self.current_row + self.result_num]
 
     def next(self):
 
         try:
-            range = [self.range[1], self.range[1] +1] 
-            return self.selection_set[range[0]]
+            current_row = self.current_row + 1
+            return self.selection_set[current_row]
         except IndexError:
-            range = self.range[:]
-            return self.selection_set[range[0]]
+            current_row = self.current_row
+            return self.selection_set[current_row]
+        except Exception:
+            current_row = self.current_row
+            raise
         finally:
-            self.range = range[:]
+            self.current_row = current_row
         
     def prev(self):
 
         try:
-            range = [self.range[0] - 1 , self.range[0]] 
-            return self.selection_set[range[0]]
+            current_row = self.current_row - 1 
+            return self.selection_set[current_row]
         except IndexError:
-            range = self.range[:]
-            return self.selection_set[range[0]]
+            current_row = self.current_row
+            return self.selection_set[current_row]
+        except Exception:
+            current_row = self.current_row
+            raise
         finally:
-            self.range = range[:]
+            self.current_row = current_row
 
     def next_set(self):
 
-        try:
-            range = [self.range[1], self.range[1] + self.result_num]
-            return self.selection_set[range[0]:range[1]]
-        except IndexError:
-            range = self.range[:]
-            return self.selection_set[range[0]:range[1]]
-        except Exception:
-            range = self.range[:]
-            raise
-        finally:
-            self.range = range[:]
+        current_row = self.get_start_range(self.current_row +
+                                               self.result_num)
+        result = self.selection_set[current_row:
+                                      current_row+self.result_num]
+        if result:
+            self.current_row = current_row
+            return result
+        return self.selection_set[self.current_row:
+                                      self.current_row+self.result_num] 
 
+            
     def prev_set(self):
 
         try:
-            range = [self.range[1], self.range[1] + 1 + self.result_num()]
-            return self.selection_set[range[0],range[1]]
+            current_row = [self.range[1], self.range[1] + 1 + self.result_num()]
+            return self.selection_set[current_row[0],range[1]]
         except IndexError:
-            range = self.range[:]
-            return self.selection_set[range[0], range[1]]
+            current_row = self.range[:]
+            return self.selection_set[current_row[0], range[1]]
         finally:
-            self.range = range[:]
+            self.current_row = range[:]
 
 
 

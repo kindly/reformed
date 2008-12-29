@@ -146,11 +146,7 @@ class test_result_set_basic(object):
         
         results = self.Donkey.query(self.session, "donkey")
         last_set = results.last_set()
-        assert [donkey.name for donkey in last_set] == [u'jim6',
-                                                        u'jim7',
-                                                        u'jim8',
-                                                        u'jim9',
-                                                        u'jim0']
+        assert [donkey.name for donkey in last_set] == [u'jim0']
 
     def test_get_next_prev_item(self):
 
@@ -189,5 +185,11 @@ class test_result_set_basic(object):
                                                         u'jim7',
                                                         u'jim8',
                                                         u'jim9']
+        nextset2 = results.next_set()
+        assert [donkey.name for donkey in nextset2] == [u'jim0']
+
+        nextset3 = results.next_set()
+        print [donkey.name for donkey in nextset3]
+        assert [donkey.name for donkey in nextset3] == [u'jim0']
         
 
