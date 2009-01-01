@@ -189,7 +189,19 @@ class test_result_set_basic(object):
         assert [donkey.name for donkey in nextset2] == [u'jim0']
 
         nextset3 = results.next_set()
-        print [donkey.name for donkey in nextset3]
         assert [donkey.name for donkey in nextset3] == [u'jim0']
-        
 
+        prevset = results.prev_set()
+        assert [donkey.name for donkey in prevset] == [u'jim5',
+                                                        u'jim6',
+                                                        u'jim7',
+                                                        u'jim8',
+                                                        u'jim9']
+        prevset2 = results.prev_set()
+        prevset3 = results.prev_set()
+        
+        assert [donkey.name for donkey in prevset3] == [u'jim',
+                                                         u'jim1',
+                                                         u'jim2',
+                                                         u'jim3',
+                                                         u'jim4']

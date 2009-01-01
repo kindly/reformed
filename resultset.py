@@ -79,26 +79,14 @@ class ResultSet(object):
         return self.selection_set[self.current_row:
                                       self.current_row+self.result_num] 
 
-            
     def prev_set(self):
 
-        try:
-            current_row = [self.range[1], self.range[1] + 1 + self.result_num()]
-            return self.selection_set[current_row[0],range[1]]
-        except IndexError:
-            current_row = self.range[:]
-            return self.selection_set[current_row[0], range[1]]
-        finally:
-            self.current_row = range[:]
-
-
-
-
-
-        
-
-
-        
-        
-
-
+        current_row = self.get_start_range(self.current_row -
+                                               self.result_num)
+        result = self.selection_set[current_row:
+                                      current_row+self.result_num]
+        if result and current_row >= 0:
+            self.current_row = current_row
+            return result
+        return self.selection_set[self.current_row:
+                                      self.current_row+self.result_num] 
