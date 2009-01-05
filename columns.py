@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import sqlalchemy as sa
 import custom_exceptions 
+import formencode
+from formencode import validators
 
 class BaseSchema(object):
     
@@ -144,6 +146,7 @@ class Email(Fields):
     
     def __init__(self, name, *args, **kw):
         self.email = Columns(sa.Unicode)
+        self.validation = {"email" : validators.Email()}
 
         super(Email, self).__init__(name, *args, **kw)
 
