@@ -196,8 +196,10 @@ class Table(object):
    
     def make_sa_class(self):
         
+        table = self
         class sa_class(object):
-            pass
+            def __init__(self):
+                self._table = table 
         sa_class.__name__ = self.name
         self.sa_class = sa_class
 

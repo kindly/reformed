@@ -9,7 +9,7 @@ import logging
 logging.basicConfig(filename = "sql.txt")
 logging.getLogger('sqlalchemy.engine').setLevel(logging.info)
 
-class test_basic_input(object):
+class test_donkey(object):
 
     def setUp(self):
         self.engine = create_engine('sqlite:///:memory:', echo=True)
@@ -34,7 +34,8 @@ class test_basic_input(object):
                                   entity = True
                                  ),
                             Table("donkey_pics",
-                                  Binary("pic")
+                                  Binary("pic"),
+                                  Text("pic_name")
                                  ),
                             Table("donkey_sponsership",
                                   Money("amount"),
@@ -59,9 +60,9 @@ class test_basic_input(object):
         self.jim = self.Donkey.tables["donkey"].sa_class()
         self.jim.name = u"jim"
         self.jim.age = 13
-        jim1 = self.Donkey.tables["donkey"].sa_class()
-        jim1.name = u"jim1"
-        jim1.age = 131
+        self.jim1 = self.Donkey.tables["donkey"].sa_class()
+        self.jim1.name = u"jim1"
+        self.jim1.age = 131
         jim2 = self.Donkey.tables["donkey"].sa_class()
         jim2.name = u"jim2"
         jim2.age = 132
@@ -99,14 +100,13 @@ class test_basic_input(object):
         
         jimpic = file("jim.xcf", mode = "rb").read()
         
-
-
         jimimage = self.Donkey.tables["donkey_pics"].sa_class()
+        jimimage.donkey = self.jim
         jimimage.pic = jimpic
 
         self.session.add(self.david)
         self.session.add(self.jim)
-        self.session.add(jim1)
+        self.session.add(self.jim1)
         self.session.add(jim2)
         self.session.add(jim3)
         self.session.add(jim4)
@@ -124,6 +124,9 @@ class test_basic_input(object):
 
         self.session.close()
 
+
+class test_basic_input(test_donkey):
+
     def test_donkey_input(self):
 
         assert u"jim" in [a.name for a in\
@@ -137,14 +140,6 @@ class test_basic_input(object):
                          [a.donkey for a in\
                           self.session.query(self.Donkey.tables["donkey_sponsership"].sa_class).all()]]
                           
-
-
-
-
-
-
-        
-
 
 if __name__ == '__main__':
 

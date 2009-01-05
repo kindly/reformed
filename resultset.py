@@ -47,8 +47,8 @@ class ResultSet(object):
         except IndexError:
             current_row = self.current_row
             return self.selection_set[current_row]
-        except Exception:
-            current_row = self.current_row
+        except:
+            current_row = 1 
             raise
         finally:
             self.current_row = current_row
@@ -61,8 +61,8 @@ class ResultSet(object):
         except IndexError:
             current_row = self.current_row
             return self.selection_set[current_row]
-        except Exception:
-            current_row = self.current_row
+        except:
+            current_row = 1
             raise
         finally:
             self.current_row = current_row
