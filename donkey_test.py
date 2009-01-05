@@ -1,4 +1,4 @@
-from columns import *
+from fields import *
 from tables import *
 from database import *
 from nose.tools import assert_raises,raises

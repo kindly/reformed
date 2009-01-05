@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from columns import *
+from fields import *
 from tables import *
 from database import *
 

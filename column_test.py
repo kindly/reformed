@@ -7,8 +7,6 @@ class test_fields():
     
     def setUp(self):
         
-        self.a = Text("col")
-        
         class Text2(Fields):
         
             def __init__(self, name, *args, **kw):
@@ -20,21 +18,11 @@ class test_fields():
         
         self.b = Text2("col")
         
-        self.c = ManyToOne("many","table2")
-            
-    def test_text_field_fieldname(self):
-        
-        assert self.a.columns["col"].name == "col"
-        
     def test_text_filed_no_field_name(self):
         
         assert self.b.columns["text"].name == "text"
         assert self.b.columns["text3"].name == "text3"
     
-    def test_many_to_one(self):
-    
-        assert self.c.relations["many"].name == "many"
-
     def test_duplicate_col_names(self):
 
         text = Columns(sa.Unicode)
@@ -47,29 +35,4 @@ class test_fields():
         
         assert "text2" in self.b.items.iterkeys()
         assert "text" in self.b.items.iterkeys()
-        
-class test_validation(object):
-    
-    def setUp(self):
 
-        self.a = Text("col")
-        self.b = Email("email")
-        
-        kwemail = self.b.validation
-        self.email_val_schema = formencode.Schema(**kwemail)
-        
-
-    def test_email_validation(self):
-
-        assert self.email_val_schema.to_python(
-                                          {"email" :"kindly@gmail.com"}) ==\
-                                          {"email" :"kindly@gmail.com"}
-        assert_raises(formencode.Invalid, self.email_val_schema.to_python,
-                                          {"email" :"kindlygmail.com"}) 
-
-
-         
-
-
-
- 
