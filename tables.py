@@ -3,6 +3,7 @@ from sqlalchemy.orm import mapper
 import sqlalchemy as sa
 from columns import Columns
 import custom_exceptions
+import formencode
 
 class Table(object):
     
@@ -210,3 +211,16 @@ class Table(object):
             properties[relation.name] = sa.orm.relation(other_class,
                                                     backref = self.name)
         mapper(self.sa_class, self.sa_table, properties = properties)
+
+    @property
+    def validation_schema(self):
+
+        schema_dict = {}
+        for n,v in self.fields.iteritems():
+            if hasattr(v,"validation"):
+                schema_dict.update(v.validation)
+        return formencode.Schema(allow_extra_fields =True, **schema_dict)
+    
+    
+        
+        

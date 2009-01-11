@@ -24,6 +24,11 @@ class Address(Fields):
         self.town = Columns(sa.Unicode)
         self.country = Columns(sa.Unicode)
 
+        self.validation = {"address_line_1": validators.String(
+                                                        not_empty = True),
+                           "postcode": validators.String(not_empty =True)
+                          }
+
         super(Address, self).__init__(name, *args, **kw)
 
 class Binary(Fields):

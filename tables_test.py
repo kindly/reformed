@@ -110,11 +110,10 @@ class test_database_primary_key(object):
                                   primary_key = "name,name2"
                                  ),
                             Table("email",
-                                  Text("email")
+                                  Email("email")
                                  ),
                             Table("address",
-                                  Text("address_line1"),
-                                  Text("address_line2")
+                                  Address("address")
                                  ),
                         metadata = self.meta
                         )
@@ -127,6 +126,8 @@ class test_database_primary_key(object):
         self.name = self.emailtable.columns["name"].foreign_keys.pop()
         self.people = self.Donkey.tables["people"].sa_class()
         self.email = self.Donkey.tables["email"].sa_class()
+        
+        self.email.email = "david@raz.nick"
 
 #    def tearDown(self):
 #        self.meta.clear()
@@ -179,6 +180,33 @@ class test_database_primary_key(object):
                 foreign_key_constraints["people"] in\
                ([["name" ,"name2"],["people.name" ,"people.name2"]],
                 [["name2" ,"name"],["people.name2" ,"people.name"]])
+
+    def test_validation_schemas(self):
+
+        validation_schema = self.Donkey.tables["email"].validation_schema
+
+        assert self.Donkey.tables["email"].validation_schema.to_python(
+                                             {"email": "pop@david.com"})==\
+                                             {"email": "pop@david.com"}
+                                                
+        assert_raises(formencode.Invalid,
+                      self.Donkey.tables["email"].validation_schema.to_python,
+                                             {"email": "popdavid.com"})
+
+        assert self.Donkey.tables["address"].validation_schema.to_python(
+                                          {"address_line_1": "56 moreland",
+                                           "address_line_2": "essex",
+                                           "postcode" : "IG5 0dp"})==\
+                                          {"address_line_1": "56 moreland",
+                                           "address_line_2": "essex",
+                                           "postcode" : "IG5 0dp"}
+        
+        assert_raises(formencode.Invalid,
+                    self.Donkey.tables["address"].validation_schema.to_python,
+                                          {"address_line_1": "56 moreland",
+                                           "address_line_2": "essex"
+                                           })
+        
 
 if __name__ == '__main__':
     
