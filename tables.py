@@ -240,7 +240,12 @@ class Table(object):
         return formencode.Schema(allow_extra_fields =True, **schema_dict)
     
     def validate(self, instance):
+        
+        validation_dict = {}
+        for n,v in self.columns.iteritems():
+            validation_dict[n] = getattr(instance, n)
 
-        return validation_schema.to_python(instance.__dict__)
+        return self.validation_schema.to_python(validation_dict)
         
-        
+
+

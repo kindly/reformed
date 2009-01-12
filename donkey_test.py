@@ -93,6 +93,7 @@ class test_donkey(object):
         self.david = self.Donkey.tables["people"].sa_class()
         self.david.name = u"david"
         self.david.address_line_1 = u"43 union street"
+        self.david.postcode = "es388"
         davidsjim = self.Donkey.tables["donkey_sponsership"].sa_class()
         davidsjim.people = self.david
         davidsjim.donkey = self.jim
@@ -120,6 +121,10 @@ class test_donkey(object):
         self.session.add(jimimage)
         self.session.commit()
 
+        self.david2 = self.Donkey.tables["people"].sa_class()
+        self.david2.name = u"david"
+        self.david2.address_line_1 = u""
+
     def tearDown(self):
 
         self.session.close()
@@ -139,8 +144,15 @@ class test_basic_input(test_donkey):
         assert self.jim in [ds for ds in\
                          [a.donkey for a in\
                           self.session.query(self.Donkey.tables["donkey_sponsership"].sa_class).all()]]
-                          
 
+    def test_address_validation(self):
+
+        assert len(self.david._table.validate(self.david)) > 3
+        
+        assert_raises(formencode.Invalid,
+                      self.david2._table.validate,self.david2)
+
+        
 if __name__ == '__main__':
 
     engine = create_engine('sqlite:///:memory:', echo=True)

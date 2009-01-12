@@ -42,7 +42,6 @@ class test_object_wrapper_basic(test_donkey):
     def test_getting_setting_one_to_one(self):
 
         assert self.jim100wrapped.name == u"jim100"
-        print self.jim100wrapped.pic_name
         assert self.jim100wrapped.pic_name == u"jimmi"
 
         
