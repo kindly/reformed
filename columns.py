@@ -35,6 +35,13 @@ class Columns(BaseSchema):
     def __init__(self, type,*args, **kw):
         super(Columns,self).__init__(type ,*args, **kw)
         self.original_column = kw.pop("original_column", None)
+        self.sa_options ={}
+        default = kw.pop("default", None)
+        if default:
+            self.sa_options["default"] = default
+        onupdate = kw.pop("onupdate", None)
+        if default:
+            self.sa_options["onupdate"] = onupdate
 
     def _set_parent(self, parent, name):
         

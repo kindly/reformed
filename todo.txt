@@ -1,4 +1,5 @@
-- change joint primary key columns to have an id column as well but, so they become unique constraints
+- change joint primary key columns to have an id column as well but, so they become unique constraints - DONE
+- modify the add table and add field so as to go through set parent
 - add table that joins back to an entity table
 - add unique constraints
 - add nullable,sequences and any other sqlalchemy column level parameters

@@ -4,6 +4,7 @@ import sqlalchemy as sa
 from columns import Columns
 import custom_exceptions
 import formencode
+from fields import Modified
 
 class Table(object):
     
@@ -28,6 +29,10 @@ class Table(object):
 
         for fields in args:
             fields._set_parent(self)
+
+        Modified("modified_date")._set_parent(self)
+        
+
         
         self.sa_table = None
         self.sa_class = None
@@ -65,6 +70,11 @@ class Table(object):
         for n,v in self.fields.iteritems():
             for n,v in v.columns.iteritems():
                 columns[n]=v
+        try:
+            for n,v in self.foriegn_key_columns.iteritems():
+                columns[n] = v
+        except custom_exceptions.NoDatabaseError:
+            pass
         return columns
 
     @property    
@@ -190,7 +200,8 @@ class Table(object):
 #            sa_table.append_column(sa.Column(n, v.type))
         sa_table.append_column(sa.Column("id", sa.Integer, primary_key = True))
         for n,v in self.defined_columns.iteritems():
-            sa_table.append_column(sa.Column(n, v.type))
+            sa_options = v.sa_options
+            sa_table.append_column(sa.Column(n, v.type, **sa_options))
         if self.primary_key_list:
             primary_keys = tuple(self.primary_key_list)
             sa_table.append_constraint(sa.UniqueConstraint(*primary_keys))
@@ -228,6 +239,8 @@ class Table(object):
                 schema_dict.update(v.validation)
         return formencode.Schema(allow_extra_fields =True, **schema_dict)
     
-    
+    def validate(self, instance):
+
+        return validation_schema.to_python(instance.__dict__)
         
         

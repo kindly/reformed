@@ -1,4 +1,5 @@
 from columns import *
+import datetime
 
 class Text(Fields):
     
@@ -6,6 +7,15 @@ class Text(Fields):
         self.text = Columns(sa.Unicode, use_parent_name = True)
 
         super(Text,self).__init__(name, *args, **kw)
+
+class Modified(Fields):
+    
+    def __init__(self, name, *args, **kw):
+        self.modified_date = Columns(sa.DateTime,
+                                     onupdate=datetime.datetime.now,
+                                     default =datetime.datetime.now)
+
+        super(Modified,self).__init__(name, *args, **kw)
 
 class Integer(Fields):
     
