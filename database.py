@@ -28,7 +28,7 @@ class Database(object):
     def update_sa(self):
         try:
             for table in self.tables.itervalues():
-                if hasattr(table,"sa_table"):
+                if table.sa_table:
                     self.metadata.remove(table.sa_table)
                 table.make_sa_table()
                 table.make_sa_class()

@@ -28,6 +28,9 @@ class Table(object):
 
         for fields in args:
             fields._set_parent(self)
+        
+        self.sa_table = None
+        self.sa_class = None
 
     def add_field(self,field):
         self.fields[field.name] = field
@@ -79,8 +82,8 @@ class Table(object):
             for n, v in self.defined_columns.iteritems():
                 if n in self.primary_key_list:
                     columns[n] = v
-        else:
-            columns["id"] = Columns(sa.Integer, name = "id")
+#        else:
+#            columns["id"] = Columns(sa.Integer, name = "id")
         return columns
 
     @property
@@ -120,20 +123,18 @@ class Table(object):
             if (rel.type == "onetomany" and self.name == rel.other) or\
               (rel.type == "onetoone" and self.name == rel.other) or\
               (rel.type == "manytoone" and self.name == rel.table.name):
-                for n, v in d.tables[table].primary_key_columns.iteritems():
-                    if n == 'id':
-                        columns[table+'_id'] =\
-                                Columns(v.type,
-                                        name = table+'_id',
-                                        original_table= table,
-                                        original_column= n)
-                    else:
+                if d.tables[table].primary_key_columns:
+                    for n, v in d.tables[table].primary_key_columns.items():
                         columns[n] = Columns(v.type,
                                              name=n,
                                              original_table= table,
                                              original_column= n)
+                else:
+                    columns[table+'_id'] = Columns(sa.Integer,
+                                                   name = table+'_id',
+                                                   original_table= table,
+                                                   original_column= "id")
         return columns
-
 
     @property
     def join_conditions_from_this_table(self):
@@ -183,10 +184,16 @@ class Table(object):
         if not self.database.metadata:
             raise NoMetadataError("table not assigned a metadata")
         sa_table = sa.Table(self.name, self.database.metadata)
-        for n,v in self.primary_key_columns.iteritems():
-            sa_table.append_column(sa.Column(n, v.type, primary_key = True))
-        for n,v in self.defined_non_primary_key_columns.iteritems():
+#        for n,v in self.primary_key_columns.iteritems():
+#            sa_table.append_column(sa.Column(n, v.type, primary_key = True))
+#        for n,v in self.defined_non_primary_key_columns.iteritems():
+#            sa_table.append_column(sa.Column(n, v.type))
+        sa_table.append_column(sa.Column("id", sa.Integer, primary_key = True))
+        for n,v in self.defined_columns.iteritems():
             sa_table.append_column(sa.Column(n, v.type))
+        if self.primary_key_list:
+            primary_keys = tuple(self.primary_key_list)
+            sa_table.append_constraint(sa.UniqueConstraint(*primary_keys))
         for n,v in self.foriegn_key_columns.iteritems():
             sa_table.append_column(sa.Column(n, v.type))
         if self.foreign_key_constraints:

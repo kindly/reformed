@@ -56,7 +56,7 @@ class Email(Fields):
 class Date(Fields):
     
     def __init__(self, name, *args, **kw):
-        self.email = Columns(sa.Date)
+        self.date = Columns(sa.Date)
 
         super(Date, self).__init__(name, *args, **kw)
 

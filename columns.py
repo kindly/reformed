@@ -10,11 +10,10 @@ class BaseSchema(object):
         """ Defines the information needed to make an actual database field """
         self.type = type
         self.name = kw.pop("name", None)
-        self.original_table = kw.pop("original_table", None)
-        self.original_column = kw.pop("original_column", None)
         self.use_parent_name=kw.pop("use_parent_name", False)
         self.args = args
         self.kw = kw
+        self.original_table = kw.pop("original_table", None)
     
     def _set_name(self, Field, name):
         if self.use_parent_name:
@@ -31,7 +30,12 @@ class BaseSchema(object):
         return self.parent.table                                         
 
 class Columns(BaseSchema):
+
     
+    def __init__(self, type,*args, **kw):
+        super(Columns,self).__init__(type ,*args, **kw)
+        self.original_column = kw.pop("original_column", None)
+
     def _set_parent(self, parent, name):
         
         self._set_name(parent ,name)
