@@ -205,6 +205,10 @@ if __name__ == '__main__':
     session.add(fred)
     session.commit()
 
+    new = session.query(Donkey.tables["people"].sa_class).one()
+
+    
+
     assert "fred" in [a.name for a in\
                       session.query(Donkey.tables["people"].sa_class).all()]
 
