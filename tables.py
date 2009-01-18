@@ -8,9 +8,11 @@ from fields import Modified
 
 class Table(object):
     
-    def __init__(self,name,*args,**kw):
+    def __init__(self, name, *args , **kw):
         self.name =name
+        self.field_list = args
         self.fields = {}
+        self.additional_columns = {}
         self.primary_key = kw.pop("primary_key", None)
         self.entity = kw.pop("entity", False)
         self.entity_relationship = kw.pop("entity_relationship", False)
@@ -36,6 +38,11 @@ class Table(object):
         
         self.sa_table = None
         self.sa_class = None
+
+    def add_addittional_column(self, column):
+        self.additional_columns[column.name] = column
+
+        
 
     def add_field(self,field):
         self.fields[field.name] = field
@@ -70,6 +77,8 @@ class Table(object):
         for n,v in self.fields.iteritems():
             for n,v in v.columns.iteritems():
                 columns[n]=v
+        for n,v in self.additional_columns.iteritems():
+            columns[n]=v
         try:
             for n,v in self.foriegn_key_columns.iteritems():
                 columns[n] = v
@@ -192,7 +201,7 @@ class Table(object):
     def make_sa_table(self):
         self.check_database()
         if not self.database.metadata:
-            raise NoMetadataError("table not assigned a metadata")
+            raise custom_exceptions.NoMetadataError("table not assigned a metadata")
         sa_table = sa.Table(self.name, self.database.metadata)
 #        for n,v in self.primary_key_columns.iteritems():
 #            sa_table.append_column(sa.Column(n, v.type, primary_key = True))
@@ -206,6 +215,8 @@ class Table(object):
             primary_keys = tuple(self.primary_key_list)
             sa_table.append_constraint(sa.UniqueConstraint(*primary_keys))
         for n,v in self.foriegn_key_columns.iteritems():
+            sa_table.append_column(sa.Column(n, v.type))
+        for n,v in self.additional_columns.iteritems():
             sa_table.append_column(sa.Column(n, v.type))
         if self.foreign_key_constraints:
             for n,v in self.foreign_key_constraints.iteritems():

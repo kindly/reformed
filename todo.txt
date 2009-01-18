@@ -5,7 +5,7 @@
 - add table that joins back to an entity table
 - add unique constraints
 - add nullable,sequences and any other sqlalchemy column level parameters
-- add validation
+- add validation - basicly DONE
 - sort out order of field, by adding counter to columns and fields using setattr
 - do checks to see if defined table reflects table underneath
 - persist database information

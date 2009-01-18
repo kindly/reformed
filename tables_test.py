@@ -128,7 +128,7 @@ class test_database_primary_key(object):
         self.people = self.Donkey.tables["people"].sa_class()
         self.email = self.Donkey.tables["email"].sa_class()
         
-        self.email.email = "david@raz.nick"
+        self.email.email = u"david@raz.nick"
 
 #    def tearDown(self):
 #        self.meta.clear()

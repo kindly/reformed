@@ -1,6 +1,8 @@
 import sqlalchemy as sa
 import custom_exceptions
 import resultset
+import tables
+from fields import ManyToOne
 
 class Database(object):
     
@@ -8,8 +10,8 @@ class Database(object):
         self.name =name
         self.tables = {}
         self.metadata = kw.pop("metadata",None)
-        for tables in args:
-            tables._set_parent(self)
+        for table in args:
+            table._set_parent(self)
 
     @property
     def relations(self):
@@ -69,7 +71,34 @@ class Database(object):
     def query(self, session, queryset):
 
         return resultset.ResultSet(self, session, queryset)
+
+    def logged_table(self, table):
+
+        logging_table = table.Table(self.name + "_log")
+
+        for columns in table.columns.intervalues():
+            logging_table.add_addtional_column(columns)
+
+        logging_table.add_field(ManyToOne(table.name,table.name))
+
+        return logging_table
+
+
+
+
+
+
+        
+
+
+
+
+            
+
+
+
                         
+
             
             
     

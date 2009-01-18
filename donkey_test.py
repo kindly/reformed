@@ -93,7 +93,7 @@ class test_donkey(object):
         self.david = self.Donkey.tables["people"].sa_class()
         self.david.name = u"david"
         self.david.address_line_1 = u"43 union street"
-        self.david.postcode = "es388"
+        self.david.postcode = u"es388"
         davidsjim = self.Donkey.tables["donkey_sponsership"].sa_class()
         davidsjim.people = self.david
         davidsjim.donkey = self.jim
