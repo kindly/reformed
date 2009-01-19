@@ -12,6 +12,7 @@ class Database(object):
         self.metadata = kw.pop("metadata",None)
         for table in args:
             table._set_parent(self)
+        self.update_tables()
 
     @property
     def relations(self):
@@ -72,41 +73,21 @@ class Database(object):
 
         return resultset.ResultSet(self, session, queryset)
 
-    def logged_table(self, table):
+    def logged_table(self, logged_table):
 
-        logging_table = table.Table(self.name + "_log")
+        logging_table = tables.Table(logged_table.name + "_log")
 
-        for columns in table.columns.intervalues():
-            logging_table.add_addtional_column(columns)
+        for columns in logged_table.columns.itervalues():
+            logging_table.add_additional_column(columns)
 
-        logging_table.add_field(ManyToOne(table.name,table.name))
+        logging_table.add_field(ManyToOne(logged_table.name+"_logged" 
+                                         ,logged_table.name ))
 
         return logging_table
 
+    def update_tables(self):
 
-
-
-
-
-        
-
-
-
-
-            
-
-
-
-                        
-
-            
-            
-    
-            
-
-            
-            
-            
-
-
+        for table in self.tables.values():
+            if table.logged:
+                self.logged_table(table)._set_parent(self)
 

@@ -20,6 +20,10 @@ class BaseSchema(object):
             self.name = Field.decendants_name
         else:
             self.name = name
+
+    def __repr__(self):
+        return "<class = %s , name = %s , type = %s>" % ( self.__class__.__name__, self.name
+                                           ,self.type ) 
     
     @property
     def table(self):
@@ -110,6 +114,6 @@ class Fields(object):
             if n in Table.items.iterkeys():
                 raise AtributeError("already an item named %s" % n)
                 
-        Table.add_field(self)
+        Table.fields[self.name] = self
         self.table = Table
-    
+   

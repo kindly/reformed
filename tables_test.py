@@ -130,6 +130,9 @@ class test_database_primary_key(object):
         
         self.email.email = u"david@raz.nick"
 
+        print self.Donkey.tables
+        self.peoplelogged = self.Donkey.tables["people_log"].sa_table
+
 #    def tearDown(self):
 #        self.meta.clear()
 
@@ -146,7 +149,6 @@ class test_database_primary_key(object):
 
     def test_sa_table(self):
 
-
         assert self.peopletable.columns.has_key("name")
         assert self.peopletable.columns.has_key("name2")
 #        assert self.peopletable.columns["name"].primary_key is True
@@ -157,6 +159,9 @@ class test_database_primary_key(object):
         assert self.emailtable.columns["id"].primary_key is True
         assert self.name.target_fullname == "people.name"
         assert self.name2.target_fullname == "people.name2"
+
+    def test_sa_table_logged(self):
+        assert self.peoplelogged.columns.has_key("name")
 
     def test_class_and_mapper(self):
         

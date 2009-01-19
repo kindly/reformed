@@ -15,6 +15,7 @@ class Table(object):
         self.additional_columns = {}
         self.primary_key = kw.pop("primary_key", None)
         self.entity = kw.pop("entity", False)
+        self.logged = kw.pop("logged", True)
         self.entity_relationship = kw.pop("entity_relationship", False)
         if self.primary_key:
             self.primary_key_list = self.primary_key.split(",")
@@ -33,19 +34,14 @@ class Table(object):
             fields._set_parent(self)
 
         Modified("modified_date")._set_parent(self)
-        
-
-        
         self.sa_table = None
         self.sa_class = None
 
-    def add_addittional_column(self, column):
+    def add_additional_column(self, column):
         self.additional_columns[column.name] = column
 
-        
-
     def add_field(self,field):
-        self.fields[field.name] = field
+        field._set_parent(self)
 #        self.update_sa()
     
     def update_sa(self):

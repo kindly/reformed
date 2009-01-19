@@ -35,7 +35,8 @@ class test_database(object):
 
     def test_relations(self):
 
-        assert self.Donkey.relations[0].name == "Email" 
+        print self.Donkey.relations
+        assert self.Donkey.relations[2].name == "Email" 
 
     def test_checkrelations(self):
 
