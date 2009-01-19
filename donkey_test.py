@@ -11,7 +11,8 @@ logging.getLogger('sqlalchemy.engine').setLevel(logging.info)
 
 class test_donkey(object):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
         self.engine = create_engine('sqlite:///:memory:', echo=True)
         self.meta = sa.MetaData()
         self.Donkey = Database("Donkey", 
@@ -124,8 +125,12 @@ class test_donkey(object):
         self.david2 = self.Donkey.tables["people"].sa_class()
         self.david2.name = u"david"
         self.david2.address_line_1 = u""
-
-    def tearDown(self):
+        self.david_logged = self.david._table.logged_instance(self.david)
+        self.session.add(self.david_logged)
+        self.session.commit()
+        
+    @classmethod
+    def tearDownClass(self):
 
         self.session.close()
 
@@ -152,6 +157,12 @@ class test_basic_input(test_donkey):
         assert_raises(formencode.Invalid,
                       self.david2._table.validate,self.david2)
 
+    def test_logged_attribute(self):
+
+
+        assert self.david_logged.name == u"david"
+        assert self.david_logged.address_line_1 == u"43 union street"
+        assert self.david_logged.postcode == u"es388"
         
 if __name__ == '__main__':
 

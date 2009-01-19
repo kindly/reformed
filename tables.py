@@ -256,6 +256,11 @@ class Table(object):
             validation_dict[n] = getattr(instance, n)
 
         return self.validation_schema.to_python(validation_dict)
-        
+    
+    def logged_instance(self, instance):
 
+        logged_instance = self.database.tables[self.name + '_log'].sa_class()
+        for n,v in self.columns.iteritems():
+            setattr(logged_instance, n, getattr(instance,n))
+        return logged_instance
 

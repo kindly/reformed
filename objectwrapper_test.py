@@ -14,9 +14,10 @@ logging.getLogger('sqlalchemy.engine').setLevel(logging.info)
 
 class test_object_wrapper_basic(test_donkey):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
 
-        super(test_object_wrapper_basic,self).setUp()
+        super(test_object_wrapper_basic,self).setUpClass()
         paul = self.Donkey.tables["people"].sa_class()
         self.paulwrapped = ObjectWrapper(paul, self.session)
         self.paulwrapped.name = u"paul"
