@@ -8,3 +8,5 @@ class NoFieldError(AttributeError):
     pass
 class DuplicateTableError(AttributeError):
     pass
+class NoTableAddError(AttributeError):
+    pass

@@ -73,6 +73,7 @@ class Date(Fields):
 class ManyToOne(Fields):
     
     def __init__(self, name, other, *args, **kw):
+        self.other = other
         self.manytoone = Relations("manytoone", other, use_parent_name = True)
     
         super(ManyToOne,self).__init__(name, *args, **kw)
@@ -80,6 +81,7 @@ class ManyToOne(Fields):
 class OneToMany(Fields):
     
     def __init__(self, name, other, *args, **kw):
+        self.other = other
         self.onetomany = Relations("onetomany", other, use_parent_name = True)
     
         super(OneToMany,self).__init__(name, *args, **kw)
@@ -87,6 +89,7 @@ class OneToMany(Fields):
 class OneToOne(Fields):
     
     def __init__(self, name, other, *args, **kw):
+        self.other = other
         self.onetoone = Relations("onetoone",other,use_parent_name = True)
     
         super(OneToOne,self).__init__(name, *args, **kw)

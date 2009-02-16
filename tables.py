@@ -35,7 +35,8 @@ class Table(object):
         for fields in args:
             fields._set_parent(self)
 
-        Modified("modified_date")._set_parent(self)
+        if "modified_date" not in self.fields.keys():
+            self.add_field(Modified("modified_date"))
         self.sa_table = None
         self.sa_class = None
 
@@ -48,12 +49,13 @@ class Table(object):
         for n, v in self.kw.iteritems():
             __table_param = self.database.tables["__table_params"].sa_class()
             __table_param.item = u"%s" % n
-            __table_param.value = u"%s" % repr(v) 
+            __table_param.value = u"%s" % str(v) 
             __table.table_params.append(__table_param)
 
         for n, v in self.fields.iteritems():
             __field = self.database.tables["__field"].sa_class()
             __field.name = u"%s" % n
+            __field.type = u"%s" % v.__class__.__name__
             if hasattr(v, "other"):
                 __field.other = u"%s" % v.other
             __table.field.append(__field)

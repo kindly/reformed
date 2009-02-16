@@ -3,6 +3,7 @@ import custom_exceptions
 import resultset
 import tables
 from fields import ManyToOne
+import fields as field_types
 import boot_tables
 
 class Database(object):
@@ -13,27 +14,37 @@ class Database(object):
         self.metadata = kw.pop("metadata",None)
         self.engine = kw.pop("engine",None)
         self.Session = kw.pop("session",None)
+        self.persisted = False
         for table in args:
             self.add_table(table)
 
 
     def add_table(self, table):
 
- #       if table.name in self.tables.keys():
-  #          raise custom_exceptions.DuplicateTableError("already a table named %s" 
-   #                                                     % table.name)
+        if table.name in self.tables.keys():
+            raise custom_exceptions.DuplicateTableError("already a table named %s" 
+                                                        % table.name)
+        for field in table.fields.values():
+            if not hasattr(field, "other") or field.other not in self.tables.keys():
+                continue
+            if (hasattr(field, "onetoone") or hasattr(field, "onetomany")) and \
+               self.tables[field.other].persisted is True:
+                raise custom_exceptions.NoTableAddError("table %s cannot be added"
+                                                        % table.name)
 
         table._set_parent(self)
 
-#   def __getattr__(self, name):
-#       
-#       if name not in self.tables.keys():
-#           raise AttributeError("Table %s does not exist" % name)
-#       return self.tables["name"].sa_class
+    def __getattr__(self, name):
+      
+      if name not in self.tables.keys():
+          raise AttributeError("Table %s does not exist" % name)
+      return self.tables[name].sa_class
 
     def persist(self):
 
         for table in boot_tables.boot_tables:
+            if table.name in self.tables.keys():
+                break
             self.add_table(table)
         self.update_sa()
         self.metadata.create_all(self.engine)
@@ -41,7 +52,42 @@ class Database(object):
         for table in self.tables.values():
             if not table.persisted:
                 table.persist()
+        self.persisted = True
+
+    def load_from_persist(self):
+
+        session = self.Session()
         
+        for table in boot_tables.boot_tables:
+            self.add_table(table)
+        self.update_sa()
+            
+        all_tables = session.query(self.tables["__table"].sa_class).all()
+
+
+        for row in all_tables:
+            if row.table_name.startswith("__"):
+                continue
+            fields = []
+            for field in row.field:
+                fields.append(getattr(field_types, field.type)( field.name,
+                                                             field.other))
+            kw = {}
+            for table_param in row.table_params:
+                if table_param.value == u"True":
+                    value = True
+                elif table_param.value == u"False":
+                    value = False
+                else:
+                    value = table_param.value 
+                kw[table_param.item.encode("ascii")] = value
+
+            self.add_table(tables.Table( row.table_name.encode("ascii"), *fields, **kw))
+
+        for table in self.tables.values():
+            table.persisted = True
+            
+        self.update_sa()
 
     @property
     def relations(self):
@@ -118,5 +164,6 @@ class Database(object):
     def update_tables(self):
 
        for table in self.tables.values():
-           if table.logged:
+           
+           if table.logged and "%s_log" % table.name not in self.tables.keys() :
                self.add_table(self.logged_table(table))

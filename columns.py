@@ -112,7 +112,7 @@ class Fields(object):
     def _set_parent(self, Table):
         for n,v in self.items.iteritems():
             if n in Table.items.iterkeys():
-                raise AtributeError("already an item named %s" % n)
+                raise AttributeError("already an item named %s" % n)
                 
         Table.fields[self.name] = self
         self.table = Table

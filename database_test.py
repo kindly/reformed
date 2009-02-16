@@ -2,6 +2,8 @@
 from fields import *
 from tables import *
 from database import *
+from nose.tools import assert_raises,raises
+
 
 class test_database(object):
      
@@ -14,8 +16,8 @@ class test_database(object):
         self.Donkey = Database("Donkey",
                          Table("people",
                               Text("name"),
-                              OneToMany("Email","email")
-                              ),
+                              OneToMany("Email","email"),
+                              entity = True),
                          Table("email",
                                Text("email")
                               ),
@@ -74,12 +76,32 @@ class test_database(object):
         assert "__table_params" in self.Donkey.tables.keys()
         assert "__field" in self.Donkey.tables.keys()
 
-#   def test_database_persist_data(self):
+    def test_database_persist_data(self):
 
-#       session = self.Session()
-#       session.query(self.Donkey.__table)
-        
+        session = self.Session()
+        all = session.query(self.Donkey.tables["__table_params"].sa_class).all()
+        allfields = session.query(self.Donkey.tables["__field"].sa_class).all()
+           
+        assert (u"people",u"entity", u"True") in [(a.table_name, a.item,
+                                                   a.value) for a in all]
+                                                    
+        assert (u"people",u"name", u"Text") in [(a.table_name, a.name,
+                                                   a.type) for a in allfields]
 
+        assert (u"email",u"email", u"Text", None) in [(a.table_name, a.name,
+                                                   a.type,
+                                                   a.other) for a in allfields]
 
+    def test_add_table_after_persist(self):
 
+        self.Donkey.add_table(Table("New" , Text("new")))
+        self.Donkey.persist()
+
+        assert "New" in self.Donkey.tables
+
+    @raises(custom_exceptions.NoTableAddError)
+    def test_add_bad_table_after_persist(self):
+
+        self.Donkey.add_table(Table("New2" , Text("new2"),
+                              OneToMany("email","email")))
 

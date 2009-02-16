@@ -15,6 +15,7 @@ class test_donkey(object):
     def setUpClass(self):
         self.engine = create_engine('sqlite:///:memory:', echo=True)
         self.meta = sa.MetaData()
+        self.Session = sa.orm.sessionmaker(bind =self.engine)
         self.Donkey = Database("Donkey", 
                             Table("people",
                                   Text("name"),
@@ -48,17 +49,16 @@ class test_donkey(object):
                                   Money("amount"),
                                   Text("source")
                                  ),
-                        metadata = self.meta
+                        metadata = self.meta,
+                        engine = self.engine,
+                        session = self.Session
                         )
 
-        self.Donkey.update_sa()
-
-        self.meta.create_all(self.engine)
-        self.Session = sa.orm.sessionmaker(bind =self.engine)
+        self.Donkey.persist()
 
         self.session = self.Session()
 
-        self.jim = self.Donkey.tables["donkey"].sa_class()
+        self.jim = self.Donkey.donkey()
         self.jim.name = u"jim"
         self.jim.age = 13
         self.jim1 = self.Donkey.tables["donkey"].sa_class()
