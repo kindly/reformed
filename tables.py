@@ -10,13 +10,15 @@ class Table(object):
     
     def __init__(self, name, *args , **kw):
         self.name =name
+        self.kw = kw
         self.field_list = args
         self.fields = {}
         self.additional_columns = {}
-        self.primary_key = kw.pop("primary_key", None)
-        self.entity = kw.pop("entity", False)
-        self.logged = kw.pop("logged", True)
-        self.entity_relationship = kw.pop("entity_relationship", False)
+        self.primary_key = kw.get("primary_key", None)
+        self.persisted = kw.get("persisted", False)
+        self.entity = kw.get("entity", False)
+        self.logged = kw.get("logged", True)
+        self.entity_relationship = kw.get("entity_relationship", False)
         if self.primary_key:
             self.primary_key_list = self.primary_key.split(",")
         else:
@@ -36,6 +38,30 @@ class Table(object):
         Modified("modified_date")._set_parent(self)
         self.sa_table = None
         self.sa_class = None
+
+    def persist(self):
+                
+        session = self.database.Session()
+        __table = self.database.tables["__table"].sa_class()
+        __table.table_name = u"%s" % self.name
+
+        for n, v in self.kw.iteritems():
+            __table_param = self.database.tables["__table_params"].sa_class()
+            __table_param.item = u"%s" % n
+            __table_param.value = u"%s" % repr(v) 
+            __table.table_params.append(__table_param)
+
+        for n, v in self.fields.iteritems():
+            __field = self.database.tables["__field"].sa_class()
+            __field.name = u"%s" % n
+            if hasattr(v, "other"):
+                __field.other = u"%s" % v.other
+            __table.field.append(__field)
+
+        session.save(__table)
+        session.commit()
+        self.persisted = True
+        session.close()
 
     def add_additional_column(self, column):
         self.additional_columns[column.name] = column

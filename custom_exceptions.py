@@ -6,3 +6,5 @@ class NoMetadataError(AttributeError):
     pass
 class NoFieldError(AttributeError):
     pass
+class DuplicateTableError(AttributeError):
+    pass

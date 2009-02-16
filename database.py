@@ -3,6 +3,7 @@ import custom_exceptions
 import resultset
 import tables
 from fields import ManyToOne
+import boot_tables
 
 class Database(object):
     
@@ -10,9 +11,37 @@ class Database(object):
         self.name =name
         self.tables = {}
         self.metadata = kw.pop("metadata",None)
+        self.engine = kw.pop("engine",None)
+        self.Session = kw.pop("session",None)
         for table in args:
-            table._set_parent(self)
-        self.update_tables()
+            self.add_table(table)
+
+
+    def add_table(self, table):
+
+ #       if table.name in self.tables.keys():
+  #          raise custom_exceptions.DuplicateTableError("already a table named %s" 
+   #                                                     % table.name)
+
+        table._set_parent(self)
+
+#   def __getattr__(self, name):
+#       
+#       if name not in self.tables.keys():
+#           raise AttributeError("Table %s does not exist" % name)
+#       return self.tables["name"].sa_class
+
+    def persist(self):
+
+        for table in boot_tables.boot_tables:
+            self.add_table(table)
+        self.update_sa()
+        self.metadata.create_all(self.engine)
+
+        for table in self.tables.values():
+            if not table.persisted:
+                table.persist()
+        
 
     @property
     def relations(self):
@@ -29,10 +58,11 @@ class Database(object):
                         "table %s does not exits" % relation.other
  
     def update_sa(self):
+        self.update_tables()
         try:
             for table in self.tables.itervalues():
-                if table.sa_table:
-                    self.metadata.remove(table.sa_table)
+#               if table.sa_table:
+#                   self.metadata.remove(table.sa_table)
                 table.make_sa_table()
                 table.make_sa_class()
             for table in self.tables.itervalues():
@@ -75,7 +105,7 @@ class Database(object):
 
     def logged_table(self, logged_table):
 
-        logging_table = tables.Table(logged_table.name + "_log")
+        logging_table = tables.Table(logged_table.name + "_log", logged = False)
 
         for columns in logged_table.columns.itervalues():
             logging_table.add_additional_column(columns)
@@ -87,7 +117,6 @@ class Database(object):
 
     def update_tables(self):
 
-        for table in self.tables.values():
-            if table.logged:
-                self.logged_table(table)._set_parent(self)
-
+       for table in self.tables.values():
+           if table.logged:
+               self.add_table(self.logged_table(table))

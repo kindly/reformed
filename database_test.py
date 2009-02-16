@@ -5,10 +5,12 @@ from database import *
 
 class test_database(object):
      
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
 
         self.engine = sa.create_engine('sqlite:///:memory:', echo=True)
         self.meta = sa.MetaData()
+        self.Session = sa.orm.sessionmaker(bind =self.engine)
         self.Donkey = Database("Donkey",
                          Table("people",
                               Text("name"),
@@ -17,9 +19,11 @@ class test_database(object):
                          Table("email",
                                Text("email")
                               ),
-                               metadata = self.meta)
-        self.Donkey.update_sa()
-    
+                               metadata = self.meta,
+                               engine = self.engine,
+                               session = self.Session)
+        #self.Donkey.update_sa()
+        self.Donkey.persist()
     
  #   def tearDown(self):
  #       self.meta.clear()
@@ -63,3 +67,19 @@ class test_database(object):
                                              ["email"].type == "onetomany"
         assert d.tables_with_relations(self.Donkey.tables["email"])\
                                              ["people"].type == "onetomany"
+
+    def test_database_persist_tables(self):
+
+        assert "__table" in self.Donkey.tables.keys()
+        assert "__table_params" in self.Donkey.tables.keys()
+        assert "__field" in self.Donkey.tables.keys()
+
+#   def test_database_persist_data(self):
+
+#       session = self.Session()
+#       session.query(self.Donkey.__table)
+        
+
+
+
+

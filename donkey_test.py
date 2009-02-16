@@ -220,8 +220,5 @@ if __name__ == '__main__':
 
     
 
-    assert "fred" in [a.name for a in\
-                      session.query(Donkey.tables["people"].sa_class).all()]
 
-    session.close()
 

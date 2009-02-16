@@ -45,7 +45,6 @@ class test_object_wrapper_basic(test_donkey):
         assert self.jim100wrapped.name == u"jim100"
         assert self.jim100wrapped.pic_name == u"jimmi"
 
-        
         assert "jim100" in [donkey.name for donkey in
                             self.session.query(self.Donkey.tables["donkey"].sa_class).all()]
 
