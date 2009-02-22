@@ -297,7 +297,7 @@ class Table(object):
     
     def logged_instance(self, instance):
 
-        logged_instance = self.database.tables[self.name + '_log'].sa_class()
+        logged_instance = self.database.tables["_log_" + self.name].sa_class()
         for n,v in self.columns.iteritems():
             setattr(logged_instance, n, getattr(instance,n))
         return logged_instance

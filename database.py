@@ -150,7 +150,7 @@ class Database(object):
 
     def logged_table(self, logged_table):
 
-        logging_table = tables.Table(logged_table.name + "_log", logged = False)
+        logging_table = tables.Table("_log_"+ logged_table.name , logged = False)
 
         for columns in logged_table.columns.itervalues():
             logging_table.add_additional_column(columns)
@@ -164,5 +164,5 @@ class Database(object):
 
        for table in self.tables.values():
            
-           if table.logged and "%s_log" % table.name not in self.tables.keys() :
+           if table.logged and "_log_%s" % table.name not in self.tables.keys() :
                self.add_table(self.logged_table(table))

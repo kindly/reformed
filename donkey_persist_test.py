@@ -11,7 +11,7 @@ class test_donkey_persist(object):
 
     @classmethod
     def setUpClass(self):
-        self.engine = create_engine('sqlite:///donkey.db')
+        self.engine = create_engine('sqlite:///donkey.sqlite')
         self.meta = sa.MetaData()
         self.Session = sa.orm.sessionmaker(bind =self.engine)
         self.Donkey = Database("Donkey", 

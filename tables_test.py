@@ -146,8 +146,7 @@ class test_database_primary_key(object):
         
         self.email.email = u"david@raz.nick"
 
-        print self.Donkey.tables
-        self.peoplelogged = self.Donkey.tables["people_log"].sa_table
+        self.peoplelogged = self.Donkey.tables["_log_people"].sa_table
 
 #    def tearDown(self):
 #        self.meta.clear()
