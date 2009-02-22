@@ -48,6 +48,13 @@ class Binary(Fields):
         
         super(Binary, self).__init__(name, *args, **kw)
         
+class Boolean(Fields):
+
+    def __init__(self, name, *args, **kw):
+        self.money = Columns(sa.Boolean, use_parent_name = True)
+        
+        super(Boolean, self).__init__(name, *args, **kw)
+        
 class Money(Fields):
 
     def __init__(self, name, *args, **kw):

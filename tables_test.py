@@ -73,11 +73,13 @@ class test_table_primary_key(object):
 
 class test_database_default_primary_key(object):
     
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
         
         self.engine = sa.create_engine('sqlite:///:memory:', echo=True)
-        self.meta = sa.MetaData()
-        self.Donkey = Database("Donkey",
+        self.meta1 = sa.MetaData()
+        self.Session = sa.orm.sessionmaker(bind =self.engine)
+        self.Donkey1= Database("Donkey1",
                          Table("people",
                               Text("name"),
                               OneToMany("Email","email")
@@ -85,24 +87,36 @@ class test_database_default_primary_key(object):
                          Table("email",
                                Text("email")
                               ),
-                        metadata = self.meta
-                        )
+                           metadata = self.meta1,
+                           engine = self.engine,
+                           session = self.Session)
 
+        self.Donkey1.persist()
+                        
+
+    @classmethod
+    def tearDownClass(self):
+        del self.Donkey1
+        del self.meta1
+        del self.engine
+        del self.Session
 
     def test_foriegn_key_columns(self):
         
-        assert self.Donkey.tables["email"].\
+        assert self.Donkey1.tables["email"].\
                 foriegn_key_columns.has_key("people_id")
 
 
 class test_database_primary_key(object):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
 
         self.engine = sa.create_engine('sqlite:///:memory:', echo=True)
         self.meta = sa.MetaData()
+        self.Session = sa.orm.sessionmaker(bind =self.engine)
         
-        self.Donkey = Database("Donkey",
+        self.Donkey = Database("Donkey2",
                             Table("people",
                                   Text("name"),
                                   Text("name2"),
@@ -116,10 +130,12 @@ class test_database_primary_key(object):
                             Table("address",
                                   Address("address")
                                  ),
-                        metadata = self.meta
-                        )
+                           metadata = self.meta,
+                           engine = self.engine,
+                           session = self.Session)
+                        
 
-        self.Donkey.update_sa()
+        self.Donkey.persist()
 
         self.peopletable = self.Donkey.tables["people"].sa_table
         self.emailtable = self.Donkey.tables["email"].sa_table
@@ -135,8 +151,14 @@ class test_database_primary_key(object):
 
 #    def tearDown(self):
 #        self.meta.clear()
+    @classmethod
+    def tearDownClass(self):
+        del self.Donkey
+        del self.meta
+        del self.engine
+        del self.Session
 
-    def test_foriegn_key_columns(self):
+    def test_foriegn_key_columns2(self):
         
         assert self.Donkey.tables["email"].\
                 foriegn_key_columns.has_key("name2")

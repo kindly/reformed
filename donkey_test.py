@@ -58,7 +58,7 @@ class test_donkey(object):
 
         self.session = self.Session()
 
-        self.jim = self.Donkey.donkey()
+        self.jim = self.Donkey.tables["donkey"].sa_class()
         self.jim.name = u"jim"
         self.jim.age = 13
         self.jim1 = self.Donkey.tables["donkey"].sa_class()

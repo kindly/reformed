@@ -1,14 +1,16 @@
 - change joint primary key columns to have an id column as well but, so they become unique constraints - DONE
 - make formencode validators or updated existing ones when field layout sugests
+- add validation column to persisted field table for basic field validation or potentially a validation table
 - add default not nulls for joint columns
-- modify the add table and add field so as to go through set parent
+- modify the add table and add field so as to go through set parent - Done
+- sort out test coverage for database especially looking at all join conditions
 - add table that joins back to an entity table
 - add unique constraints
 - add nullable,sequences and any other sqlalchemy column level parameters
 - add validation - basicly DONE
 - sort out order of field, by adding counter to columns and fields using setattr
 - do checks to see if defined table reflects table underneath
-- persist database information
+- persist database information - Done
 - create object for getting sa_objects
 - give all relevent tables locking information
 - give all tables potential to log information

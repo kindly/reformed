@@ -39,6 +39,9 @@ class Table(object):
             self.add_field(Modified("modified_date"))
         self.sa_table = None
         self.sa_class = None
+        self.mapper = None
+        self.data = ''
+        self.prop = {}
 
     def persist(self):
                 
@@ -223,6 +226,8 @@ class Table(object):
         return foreign_key_constraints
 
     def make_sa_table(self):
+        if self.sa_table:
+            return
         self.check_database()
         if not self.database.metadata:
             raise custom_exceptions.NoMetadataError("table not assigned a metadata")
@@ -249,7 +254,9 @@ class Table(object):
         self.sa_table = sa_table
    
     def make_sa_class(self):
-        
+
+        if self.sa_class:
+            return
         table = self
         class sa_class(object):
             def __init__(self):
@@ -261,12 +268,15 @@ class Table(object):
         self.sa_class = sa_class
 
     def sa_mapper(self):
-        properties ={}
-        for relation in self.relations.itervalues():
-            other_class = self.database.tables[relation.other].sa_class
-            properties[relation.name] = sa.orm.relation(other_class,
-                                                    backref = self.name)
-        mapper(self.sa_class, self.sa_table, properties = properties)
+        if self.mapper is None:
+#           return
+            properties ={}
+            for relation in self.relations.itervalues():
+                other_class = self.database.tables[relation.other].sa_class
+                properties[relation.name] = sa.orm.relation(other_class,
+                                                        backref = self.name)
+            self.mapper = mapper(self.sa_class, self.sa_table, properties = properties)
+            self.data = self.data + self.database.name
 
     @property
     def validation_schema(self):

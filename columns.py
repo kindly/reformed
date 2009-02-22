@@ -7,7 +7,16 @@ from formencode import validators
 class BaseSchema(object):
     
     def __init__(self, type,*args, **kw):
-        """ Defines the information needed to make an actual database field """
+        """Base class of everthing that turn into a real database coulumn
+        constraint or index. 
+
+        Type :  mandatory this is either a sqlalchemy type or a string 
+                with onetomany, manytoone or onetoone to define join types.
+
+        use_parent_name :  if True will use its parents name (field name) 
+                           to define its name. 
+                     
+        """
         self.type = type
         self.name = kw.pop("name", None)
         self.use_parent_name=kw.pop("use_parent_name", False)
@@ -37,6 +46,14 @@ class Columns(BaseSchema):
 
     
     def __init__(self, type,*args, **kw):
+
+        """This will be used to make a real database column
+        
+        default : default value for the column
+        onupdate : value whenever the accosiated row is updated
+        """
+
+
         super(Columns,self).__init__(type ,*args, **kw)
         self.original_column = kw.pop("original_column", None)
         self.sa_options ={}
@@ -44,7 +61,7 @@ class Columns(BaseSchema):
         if default:
             self.sa_options["default"] = default
         onupdate = kw.pop("onupdate", None)
-        if default:
+        if onupdate:
             self.sa_options["onupdate"] = onupdate
 
     def _set_parent(self, parent, name):
@@ -61,6 +78,11 @@ class Relations(BaseSchema):
 
     def __init__(self, type, *args, **kw):
 
+        """specifies a relationship between the table where this relation
+        is defined and another table.
+
+        type AND other are mandatory for relations"""
+
         super(Relations,self).__init__(type ,*args, **kw)
         self.other = args[0]
         
@@ -76,6 +98,8 @@ class Relations(BaseSchema):
 
     @property
     def other_table(self):
+
+        """Table of related table"""
         
         try:
             return self.parent.table.database.tables[self.other]
@@ -85,8 +109,13 @@ class Relations(BaseSchema):
 class Fields(object):
     
     def __init__(self, name, *args, **kw):
-        """ the base class of all Fields.  A field is a composite of many real
-        database columns"""
+        """ The base class of all Fields.  A field is a composite of many real
+        database columns
+        
+        name:  field name will be used as column name if use parent name is 
+               used
+        
+        """
         self.name = name
         self.decendants_name=name
         self.columns = {}

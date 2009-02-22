@@ -15,9 +15,12 @@ class Database(object):
         self.engine = kw.pop("engine",None)
         self.Session = kw.pop("session",None)
         self.persisted = False
+        boots = boot_tables.boot_tables()
+        self.boot_tables =boots.boot_tables
+        self.load_from_persist()
         for table in args:
             self.add_table(table)
-
+        self.persist()
 
     def add_table(self, table):
 
@@ -34,21 +37,16 @@ class Database(object):
 
         table._set_parent(self)
 
-    def __getattr__(self, name):
-      
-      if name not in self.tables.keys():
-          raise AttributeError("Table %s does not exist" % name)
-      return self.tables[name].sa_class
 
     def persist(self):
 
-        for table in boot_tables.boot_tables:
-            if table.name in self.tables.keys():
-                break
-            self.add_table(table)
+        if not self.persisted:
+            for table in self.boot_tables:
+                if table.name in self.tables.keys():
+                    break
+                self.add_table(table)
         self.update_sa()
         self.metadata.create_all(self.engine)
-
         for table in self.tables.values():
             if not table.persisted:
                 table.persist()
@@ -58,12 +56,12 @@ class Database(object):
 
         session = self.Session()
         
-        for table in boot_tables.boot_tables:
+        for table in self.boot_tables:
             self.add_table(table)
         self.update_sa()
+        self.metadata.create_all(self.engine)
             
         all_tables = session.query(self.tables["__table"].sa_class).all()
-
 
         for row in all_tables:
             if row.table_name.startswith("__"):
@@ -88,6 +86,7 @@ class Database(object):
             table.persisted = True
             
         self.update_sa()
+        self.persisted = True
 
     @property
     def relations(self):
