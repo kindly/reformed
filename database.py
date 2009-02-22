@@ -166,3 +166,19 @@ class Database(object):
            
            if table.logged and "_log_%s" % table.name not in self.tables.keys() :
                self.add_table(self.logged_table(table))
+
+    def get_class(self, table):
+
+        if table not in self.tables.iterkeys():
+            raise custom_exceptions.NoTableError("table %s does not exist" % table)
+
+        return self.tables[table].sa_class
+
+    def get_instance(self, table):
+
+        if table not in self.tables.iterkeys():
+            raise custom_exceptions.NoTableError("table %s does not exist" % table)
+
+        return self.tables[table].sa_class()
+
+    

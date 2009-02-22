@@ -97,7 +97,7 @@ class test_database(object):
                                                    a.type,
                                                    a.other) for a in allfields]
 
-    def ttst_add_table_after_persist(self):
+    def test_add_table_after_persist(self):
 
         self.Donkey.add_table(Table("New" , Text("new")))
         self.Donkey.persist()
@@ -109,4 +109,20 @@ class test_database(object):
 
         self.Donkey.add_table(Table("New2" , Text("new2"),
                               OneToMany("email","email")))
+    
+    def test_get_class(self):
 
+            assert self.Donkey.get_class("people") is \
+                    self.Donkey.tables["people"].sa_class
+
+            assert_raises(custom_exceptions.NoTableError,
+                          self.Donkey.get_class,"peopley")
+    
+    def test_get_class(self):
+
+            assert isinstance(self.Donkey.get_instance("people"), 
+                    self.Donkey.tables["people"].sa_class)
+
+            assert_raises(custom_exceptions.NoTableError,
+                          self.Donkey.get_class,"peopley")
+    

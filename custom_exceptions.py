@@ -10,3 +10,5 @@ class DuplicateTableError(AttributeError):
     pass
 class NoTableAddError(AttributeError):
     pass
+class NoTableError(AttributeError):
+    pass
