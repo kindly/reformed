@@ -182,29 +182,6 @@ class Table(object):
                                                    original_column= "id")
         return columns
 
-    @property
-    def join_conditions_from_this_table(self):
-
-        join_conditions = {}
-        self.check_database()
-        d = self.database
-        for table, rel in self.relations.iteritems():
-            other_table_columns=[]
-            this_table_columns=[]
-            if rel.type.startswith('oneto') and rel.table is self:
-                for n, v in rel.other_table.foriegn_key_columns.iteritems():
-                    if v.original_table == self.name:
-                        other_table_columns.append(n)
-                        this_table_columns.append(v.original_column)
-            if rel.type == "manytoone" and rel.table is self:
-                for n,v in self.foriegn_key_columns.iteritems():
-                    if v.original_table == rel.other:
-                        this_table_columns.append(n)
-                        other_table_columns.append(v.original_column)
-            if other_table_columns:
-                join_conditions[table] = [this_table_columns,
-                                          other_table_columns] 
-        return join_conditions
 
     @property
     def foreign_key_constraints(self):
