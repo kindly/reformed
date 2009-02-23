@@ -78,7 +78,7 @@ class test_database_default_primary_key(object):
         
         self.engine = sa.create_engine('sqlite:///:memory:', echo=True)
         self.meta1 = sa.MetaData()
-        self.Session = sa.orm.sessionmaker(bind =self.engine)
+        self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
         self.Donkey1= Database("Donkey1",
                          Table("people",
                               Text("name"),
@@ -114,7 +114,7 @@ class test_database_primary_key(object):
 
         self.engine = sa.create_engine('sqlite:///:memory:', echo=True)
         self.meta = sa.MetaData()
-        self.Session = sa.orm.sessionmaker(bind =self.engine)
+        self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
         
         self.Donkey = Database("Donkey2",
                             Table("people",

@@ -34,7 +34,7 @@ class test_donkey_persist(object):
 #      p = random.randrange(1,10000)
 #       self.Donkey.add_table(tables.Table("moo%s" % p, Text("moo")))
     
-        self.session = self.Session()
+        self.session = self.Donkey.Session()
 
         self.jim = self.Donkey.tables["donkey"].sa_class()
         self.jim.name = u"jim"

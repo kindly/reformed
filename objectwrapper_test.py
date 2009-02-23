@@ -21,6 +21,8 @@ class test_object_wrapper_basic(test_donkey):
         paul = self.Donkey.tables["people"].sa_class()
         self.paulwrapped = ObjectWrapper(paul, self.session)
         self.paulwrapped.name = u"paul"
+        self.paulwrapped.address_line_1 = u"43 union street"
+        self.paulwrapped.postcode = u"es388"
         self.paulwrapped.save()
 
         paul = self.Donkey.tables["people"].sa_class()

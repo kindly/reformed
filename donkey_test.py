@@ -15,7 +15,7 @@ class test_donkey(object):
     def setUpClass(self):
         self.engine = create_engine('sqlite:///:memory:', echo=True)
         self.meta = sa.MetaData()
-        self.Session = sa.orm.sessionmaker(bind =self.engine)
+        self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
         self.Donkey = Database("Donkey", 
                             Table("people",
                                   Text("name"),
@@ -56,7 +56,7 @@ class test_donkey(object):
 
         self.Donkey.persist()
 
-        self.session = self.Session()
+        self.session = self.Donkey.Session()
 
         self.jim = self.Donkey.tables["donkey"].sa_class()
         self.jim.name = u"jim"

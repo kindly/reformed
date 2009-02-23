@@ -12,7 +12,7 @@ class test_database(object):
 
         self.engine = sa.create_engine('sqlite:///:memory:', echo=True)
         self.meta = sa.MetaData()
-        self.Session = sa.orm.sessionmaker(bind =self.engine)
+        self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
         self.Donkey = Database("Donkey",
                          Table("people",
                               Text("name"),
