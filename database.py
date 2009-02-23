@@ -5,6 +5,7 @@ import tables
 from fields import ManyToOne
 import fields as field_types
 import boot_tables
+import sessionwrapper
 
 class Database(object):
     
@@ -13,7 +14,8 @@ class Database(object):
         self.tables = {}
         self.metadata = kw.pop("metadata",None)
         self.engine = kw.pop("engine",None)
-        self.Session = kw.pop("session",None)
+        self._Session = kw.pop("session",None)
+        self.Session = sessionwrapper.SessionClass(self._Session)
         self.persisted = False
         boots = boot_tables.boot_tables()
         self.boot_tables =boots.boot_tables
@@ -81,6 +83,8 @@ class Database(object):
                 kw[table_param.item.encode("ascii")] = value
 
             self.add_table(tables.Table( row.table_name.encode("ascii"), *fields, **kw))
+
+        session.close()
 
         for table in self.tables.values():
             table.persisted = True
@@ -180,5 +184,7 @@ class Database(object):
             raise custom_exceptions.NoTableError("table %s does not exist" % table)
 
         return self.tables[table].sa_class()
+
+
 
     

@@ -63,7 +63,7 @@ class Table(object):
                 __field.other = u"%s" % v.other
             __table.field.append(__field)
 
-        session.save(__table)
+        session.add(__table)
         session.commit()
         self.persisted = True
         session.close()
