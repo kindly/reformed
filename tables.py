@@ -25,6 +25,7 @@
 ##  table.
 
 import sqlalchemy as sa
+from sqlalchemy.orm import mapper
 from sqlalchemy.orm import column_property
 from columns import Columns
 import custom_exceptions
