@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 from sqlalchemy.orm import mapper
 import sqlalchemy as sa
+from sqlalchemy.orm import column_property
 from columns import Columns
 import custom_exceptions
 import formencode
 from fields import Modified
+from sqlalchemy.orm.interfaces import AttributeExtension
 
 class Table(object):
     
@@ -40,8 +42,6 @@ class Table(object):
         self.sa_table = None
         self.sa_class = None
         self.mapper = None
-        self.data = ''
-        self.prop = {}
 
     def persist(self):
                 
@@ -246,14 +246,21 @@ class Table(object):
 
     def sa_mapper(self):
         if self.mapper is None:
-#           return
             properties ={}
+            for column in self.columns:
+                properties[column] = column_property( getattr(self.sa_table.c,column),
+                                                     extension = AttributeExtension())
             for relation in self.relations.itervalues():
                 other_class = self.database.tables[relation.other].sa_class
                 properties[relation.name] = sa.orm.relation(other_class,
                                                         backref = self.name)
             self.mapper = mapper(self.sa_class, self.sa_table, properties = properties)
-            self.data = self.data + self.database.name
+#           self.mapper.compile()
+            #sa.orm.compile_mappers()
+#           for column in self.columns.keys():
+#               print getattr(self.sa_class, column).impl.active_history
+#               getattr(self.sa_class, column).impl.active_history = True
+#               print getattr(self.sa_class, column).impl.active_history
 
     @property
     def validation_schema(self):
@@ -278,4 +285,5 @@ class Table(object):
         for n,v in self.columns.iteritems():
             setattr(logged_instance, n, getattr(instance,n))
         return logged_instance
+
 
