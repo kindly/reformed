@@ -1,4 +1,5 @@
 - change joint primary key columns to have an id column as well but, so they become unique constraints - DONE
+- set up logging
 - make formencode validators or updated existing ones when field layout sugests
 - add validation column to persisted field table for basic field validation or potentially a validation table
 - add default not nulls for joint columns
