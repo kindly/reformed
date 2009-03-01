@@ -1,12 +1,12 @@
-from fields import *
-from tables import *
-from database import *
+from reformed.fields import *
+from reformed.tables import *
+from reformed.database import *
 from nose.tools import assert_raises,raises
 import sqlalchemy as sa
 from sqlalchemy import create_engine
 import logging
 from donkey_test import test_donkey
-from objectwrapper import * 
+from reformed.objectwrapper import * 
 
 logging.basicConfig(filename = "sql.txt")
 logging.getLogger('sqlalchemy.engine').setLevel(logging.info)

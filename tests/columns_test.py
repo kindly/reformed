@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from columns import *
+from reformed.columns import *
 from nose.tools import assert_raises
 
 

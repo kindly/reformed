@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-from fields import *
-from tables import *
-from database import *
+from reformed.fields import *
+from reformed.tables import *
+from reformed.database import *
 from nose.tools import assert_raises,raises
 
 

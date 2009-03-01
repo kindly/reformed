@@ -1,4 +1,4 @@
-from fields import *
+from reformed.fields import *
 from nose.tools import assert_raises
 
 class test_fields():

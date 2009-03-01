@@ -1,6 +1,6 @@
-from fields import *
-from tables import *
-from database import *
+from reformed.fields import *
+from reformed.tables import *
+from reformed.database import *
 from nose.tools import assert_raises,raises
 import sqlalchemy as sa
 from sqlalchemy import create_engine
@@ -100,7 +100,7 @@ class test_donkey(object):
         davidsjim.donkey = self.jim
         davidsjim.amount = 50
         
-        jimpic = file("jim.xcf", mode = "rb").read()
+        jimpic = file("tests/jim.xcf", mode = "rb").read()
         
         jimimage = self.Donkey.tables["donkey_pics"].sa_class()
         jimimage.donkey = self.jim
