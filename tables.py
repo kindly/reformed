@@ -21,14 +21,14 @@
 ##	======
 ##	
 ##	This file contains the reformed Table class. A Table is 
-##  collection of Fields objects and the Table objects uses these to make
+##  collection of Feild objects and the Table objects uses these to make
 ##  make a real database table and store the metadata in private tables in
 ##  the database.
 
 import sqlalchemy as sa
 from sqlalchemy.orm import mapper
 from sqlalchemy.orm import column_property
-from columns import Columns
+from columns import Column
 import custom_exceptions
 import formencode
 from fields import Modified
@@ -178,7 +178,7 @@ class Table(object):
                 if n in self.primary_key_list:
                     columns[n] = v
 #        else:
-#            columns["id"] = Columns(sa.Integer, name = "id")
+#            columns["id"] = Column(sa.Integer, name = "id")
         return columns
 
     @property
@@ -234,12 +234,12 @@ class Table(object):
               (rel.type == "manytoone" and self.name == rel.table.name):
                 if d.tables[table].primary_key_columns:
                     for n, v in d.tables[table].primary_key_columns.items():
-                        columns[n] = Columns(v.type,
+                        columns[n] = Column(v.type,
                                              name=n,
                                              original_table= table,
                                              original_column= n)
                 else:
-                    columns[table+'_id'] = Columns(sa.Integer,
+                    columns[table+'_id'] = Column(sa.Integer,
                                                    name = table+'_id',
                                                    original_table= table,
                                                    original_column= "id")
@@ -352,7 +352,7 @@ class Table(object):
     
     def validate(self, instance):
         """this validates an instance of sa_class with the schema defined
-        by this tables Fields objects"""
+        by this tables Feild objects"""
         
         validation_dict = {}
         for n,v in self.columns.iteritems():

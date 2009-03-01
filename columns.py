@@ -68,7 +68,7 @@ class BaseSchema(object):
             raise custom_exceptions.NoFieldError("no field defined for column")
         return self.parent.table                                         
 
-class Columns(BaseSchema):
+class Column(BaseSchema):
     
     def __init__(self, type,*args, **kw):
 
@@ -80,7 +80,7 @@ class Columns(BaseSchema):
         """
 
 
-        super(Columns,self).__init__(type ,*args, **kw)
+        super(Column,self).__init__(type ,*args, **kw)
         ##original column should be made private. 
         self.original_column = kw.pop("original_column", None)
         self.sa_options ={}
@@ -101,7 +101,7 @@ class Columns(BaseSchema):
             parent._add_column(self.name, self)
             self.parent = parent
         
-class Relations(BaseSchema):
+class Relation(BaseSchema):
 
     def __init__(self, type, *args, **kw):
 
@@ -114,7 +114,7 @@ class Relations(BaseSchema):
         
         """
 
-        super(Relations,self).__init__(type ,*args, **kw)
+        super(Relation,self).__init__(type ,*args, **kw)
         self.other = args[0]
         
     def _set_parent(self, parent, name):
@@ -137,12 +137,12 @@ class Relations(BaseSchema):
         except AttributeError:
             return None
         
-class Fields(object):
+class Feild(object):
     """ This is intended to be sublassed and should be the only way
     a database field or relation can be made.  This object can contain
     one or more column object (representing a database field) or one
     relation object (representing a database relataion with a foreign key).
-    Examples are in Fields.py"""
+    Examples are in fields.py"""
 
     
     def __init__(self, name, *args, **kw):
@@ -150,7 +150,7 @@ class Fields(object):
         This gathers metadata from the subclassed objects and stores the columns
         and relations information.
         
-        name:  field name will be used as column name if use parent name is 
+        name:  field name will be used as column name if use_parent_name is 
                used
         
         """

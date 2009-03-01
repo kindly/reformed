@@ -25,38 +25,38 @@
 from columns import *
 import datetime
 
-class Text(Fields):
+class Text(Feild):
     
     def __init__(self, name, *args, **kw):
-        self.text = Columns(sa.Unicode, use_parent_name = True)
+        self.text = Column(sa.Unicode, use_parent_name = True)
 
         super(Text,self).__init__(name, *args, **kw)
 
-class Modified(Fields):
+class Modified(Feild):
     
     def __init__(self, name, *args, **kw):
-        self.modified_date = Columns(sa.DateTime,
+        self.modified_date = Column(sa.DateTime,
                                      onupdate=datetime.datetime.now,
                                      default =datetime.datetime.now)
 
         super(Modified,self).__init__(name, *args, **kw)
 
-class Integer(Fields):
+class Integer(Feild):
     
     def __init__(self, name, *args, **kw):
-        self.text = Columns(sa.Integer, use_parent_name = True)
+        self.text = Column(sa.Integer, use_parent_name = True)
 
         super(Integer, self).__init__(name, *args, **kw)
     
-class Address(Fields):
+class Address(Feild):
     
     def __init__(self, name, *args, **kw):
-        self.address_line_1 = Columns(sa.Unicode)
-        self.address_line_2 = Columns(sa.Unicode)
-        self.address_line_3 = Columns(sa.Unicode)
-        self.postcode = Columns(sa.Unicode)
-        self.town = Columns(sa.Unicode)
-        self.country = Columns(sa.Unicode)
+        self.address_line_1 = Column(sa.Unicode)
+        self.address_line_2 = Column(sa.Unicode)
+        self.address_line_3 = Column(sa.Unicode)
+        self.postcode = Column(sa.Unicode)
+        self.town = Column(sa.Unicode)
+        self.country = Column(sa.Unicode)
 
         self.validation = {"address_line_1": validators.String(
                                                         not_empty = True),
@@ -65,62 +65,62 @@ class Address(Fields):
 
         super(Address, self).__init__(name, *args, **kw)
 
-class Binary(Fields):
+class Binary(Feild):
 
     def __init__(self, name, *args, **kw):
-        self.money = Columns(sa.Binary, use_parent_name = True)
+        self.money = Column(sa.Binary, use_parent_name = True)
         
         super(Binary, self).__init__(name, *args, **kw)
         
-class Boolean(Fields):
+class Boolean(Feild):
 
     def __init__(self, name, *args, **kw):
-        self.money = Columns(sa.Boolean, use_parent_name = True)
+        self.money = Column(sa.Boolean, use_parent_name = True)
         
         super(Boolean, self).__init__(name, *args, **kw)
         
-class Money(Fields):
+class Money(Feild):
 
     def __init__(self, name, *args, **kw):
-        self.money = Columns(sa.Numeric, use_parent_name = True)
+        self.money = Column(sa.Numeric, use_parent_name = True)
         
         super(Money, self).__init__(name, *args, **kw)
 
-class Email(Fields):
+class Email(Feild):
     
     def __init__(self, name, *args, **kw):
-        self.email = Columns(sa.Unicode)
+        self.email = Column(sa.Unicode)
         self.validation = {"email" : validators.Email()}
 
         super(Email, self).__init__(name, *args, **kw)
 
-class Date(Fields):
+class Date(Feild):
     
     def __init__(self, name, *args, **kw):
-        self.date = Columns(sa.Date)
+        self.date = Column(sa.Date)
 
         super(Date, self).__init__(name, *args, **kw)
 
-class ManyToOne(Fields):
+class ManyToOne(Feild):
     
     def __init__(self, name, other, *args, **kw):
         self.other = other
-        self.manytoone = Relations("manytoone", other, use_parent_name = True)
+        self.manytoone = Relation("manytoone", other, use_parent_name = True)
     
         super(ManyToOne,self).__init__(name, *args, **kw)
 
-class OneToMany(Fields):
+class OneToMany(Feild):
     
     def __init__(self, name, other, *args, **kw):
         self.other = other
-        self.onetomany = Relations("onetomany", other, use_parent_name = True)
+        self.onetomany = Relation("onetomany", other, use_parent_name = True)
     
         super(OneToMany,self).__init__(name, *args, **kw)
 
-class OneToOne(Fields):
+class OneToOne(Feild):
     
     def __init__(self, name, other, *args, **kw):
         self.other = other
-        self.onetoone = Relations("onetoone",other,use_parent_name = True)
+        self.onetoone = Relation("onetoone",other,use_parent_name = True)
     
         super(OneToOne,self).__init__(name, *args, **kw)

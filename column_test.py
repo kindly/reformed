@@ -7,12 +7,12 @@ class test_fields():
     
     def setUp(self):
         
-        class Text2(Fields):
+        class Text2(Feild):
         
             def __init__(self, name, *args, **kw):
                 
-                self.text = Columns(sa.Unicode)
-                self.text3 = Columns(sa.Unicode)
+                self.text = Column(sa.Unicode)
+                self.text3 = Column(sa.Unicode)
 
                 super(Text2,self).__init__(name, *args, **kw)
         
@@ -25,12 +25,12 @@ class test_fields():
     
     def test_duplicate_col_names(self):
 
-        text = Columns(sa.Unicode)
+        text = Column(sa.Unicode)
         assert_raises(AttributeError,text._set_parent,self.b,"text") 
         
     def test_col_names_added_to_items(self):
 
-        text = Columns(sa.Unicode)
+        text = Column(sa.Unicode)
         text._set_parent(self.b,"text2")
         
         assert "text2" in self.b.items.iterkeys()
