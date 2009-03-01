@@ -142,6 +142,10 @@ class Database(object):
                 table.make_sa_class()
             for table in self.tables.itervalues():
                 table.sa_mapper()
+            sa.orm.compile_mappers()
+            for table in self.tables.itervalues():
+                for column in table.columns.keys():
+                    getattr(table.sa_class, column).impl.active_history = True
         except (custom_exceptions.NoDatabaseError,\
                 custom_exceptions.RelationError):
             pass

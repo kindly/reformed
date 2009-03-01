@@ -13,7 +13,7 @@
 - persist database information - Done
 - create object for getting sa_objects
 - give all relevent tables locking information
-- give all tables potential to log information
+- give all tables potential to log information - Done
 - make sure namespaces for objects are unique, looking at especially backreferences
 - make sure field definition namespaces are unique
 - searching

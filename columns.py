@@ -20,8 +20,8 @@
 ##	columns.py
 ##	======
 ##	
-##	This file contains the base classes for all reformed fields. Fields
-##  are composites of many real database columns.
+##	This file contains the classes that hold information about database
+##  fields such as name,type, indexes and constraints. 
 
 import sqlalchemy as sa
 import custom_exceptions 
@@ -31,13 +31,14 @@ from formencode import validators
 class BaseSchema(object):
     
     def __init__(self, type,*args, **kw):
-        """Base class of everthing that turn into a real database coulumn
-        constraint or index. 
+        """Base class of everthing that turn into a database field,
+        constraint or index. Its only use is to gather the type and name
+        of the field, constraint or index.
 
         Type :  mandatory this is either a sqlalchemy type or a string 
                 with onetomany, manytoone or onetoone to define join types.
 
-        use_parent_name :  if True will use its parents name (field name) 
+        use_parent_name :  if True will use its parents name (Field name) 
                            to define its name. 
                      
         """
@@ -60,6 +61,7 @@ class BaseSchema(object):
     
     @property
     def table(self):
+        """The table object accociated with this object"""
         if self.original_table:
             return self.original_table
         if not hasattr(self,"parent"):
@@ -67,11 +69,11 @@ class BaseSchema(object):
         return self.parent.table                                         
 
 class Columns(BaseSchema):
-
     
     def __init__(self, type,*args, **kw):
 
-        """This will be used to make a real database column
+        """This gathers parameters to be given to a sqlalchemy Column object. It 
+        defines a database field.
         
         default : default value for the column
         onupdate : value whenever the accosiated row is updated
@@ -79,6 +81,7 @@ class Columns(BaseSchema):
 
 
         super(Columns,self).__init__(type ,*args, **kw)
+        ##original column should be made private. 
         self.original_column = kw.pop("original_column", None)
         self.sa_options ={}
         default = kw.pop("default", None)
@@ -105,12 +108,17 @@ class Relations(BaseSchema):
         """specifies a relationship between the table where this relation
         is defined and another table.
 
-        type AND other are mandatory for relations"""
+        type AND other are mandatory for relations
+        
+        other: The name of the table where this reltaion will join to.
+        
+        """
 
         super(Relations,self).__init__(type ,*args, **kw)
         self.other = args[0]
         
     def _set_parent(self, parent, name):
+        """adds this relation to a field object"""
         
         self._set_name(parent, name)
             
@@ -122,8 +130,7 @@ class Relations(BaseSchema):
 
     @property
     def other_table(self):
-
-        """Table of related table"""
+        """Table object of related table"""
         
         try:
             return self.parent.table.database.tables[self.other]
@@ -131,15 +138,23 @@ class Relations(BaseSchema):
             return None
         
 class Fields(object):
+    """ This is intended to be sublassed and should be the only way
+    a database field or relation can be made.  This object can contain
+    one or more column object (representing a database field) or one
+    relation object (representing a database relataion with a foreign key).
+    Examples are in Fields.py"""
+
     
     def __init__(self, name, *args, **kw):
-        """ The base class of all Fields.  A field is a composite of many real
-        database columns
+        """ 
+        This gathers metadata from the subclassed objects and stores the columns
+        and relations information.
         
         name:  field name will be used as column name if use parent name is 
                used
         
         """
+        #TODO namespace issues need to be sorted out
         self.name = name
         self.decendants_name=name
         self.columns = {}
