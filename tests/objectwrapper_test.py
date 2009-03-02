@@ -4,12 +4,8 @@ from reformed.database import *
 from nose.tools import assert_raises,raises
 import sqlalchemy as sa
 from sqlalchemy import create_engine
-import logging
 from donkey_test import test_donkey
 from reformed.objectwrapper import * 
-
-logging.basicConfig(filename = "sql.txt")
-logging.getLogger('sqlalchemy.engine').setLevel(logging.info)
 
 
 class test_object_wrapper_basic(test_donkey):

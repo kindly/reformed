@@ -6,8 +6,10 @@ import sqlalchemy as sa
 from sqlalchemy import create_engine
 import logging
 
-logging.basicConfig(filename = "sql.txt")
-logging.getLogger('sqlalchemy.engine').setLevel(logging.info)
+sqlhandler = logging.FileHandler("sql.txt")
+sqllogger = logging.getLogger('sqlalchemy.engine')
+sqllogger.setLevel(logging.info)
+sqllogger.addHandler(sqlhandler)
 
 class test_donkey(object):
 

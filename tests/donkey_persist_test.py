@@ -4,7 +4,6 @@ from reformed.database import *
 from nose.tools import assert_raises,raises
 import sqlalchemy as sa
 from sqlalchemy import create_engine
-import logging
 import random
 
 class test_donkey_persist(object):
