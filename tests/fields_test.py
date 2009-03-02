@@ -6,6 +6,10 @@ class test_fields():
     def setUp(self):
         
         self.a = Text("col")
+        self.b = Text("pop" , 
+                      nullable = True, 
+                      default = "pop" ,
+                      onupdate = "pop") 
         
         self.c = ManyToOne("many","table2")
             
@@ -16,6 +20,12 @@ class test_fields():
     def test_many_to_one(self):
     
         assert self.c.relations["many"].name == "many"
+
+    def test_use_parent(self):
+
+        assert ("nullable", True) in self.b.columns["pop"].sa_options.items()
+        assert ("default", "pop") in self.b.columns["pop"].sa_options.items()
+        assert ("onupdate", "pop") in self.b.columns["pop"].sa_options.items()
         
 class test_validation(object):
     

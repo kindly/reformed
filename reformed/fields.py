@@ -28,7 +28,7 @@ import datetime
 class Text(Feild):
     
     def __init__(self, name, *args, **kw):
-        self.text = Column(sa.Unicode, use_parent_name = True)
+        self.text = Column(sa.Unicode, use_parent = True)
 
         super(Text,self).__init__(name, *args, **kw)
 
@@ -44,7 +44,7 @@ class Modified(Feild):
 class Integer(Feild):
     
     def __init__(self, name, *args, **kw):
-        self.text = Column(sa.Integer, use_parent_name = True)
+        self.text = Column(sa.Integer, use_parent = True)
 
         super(Integer, self).__init__(name, *args, **kw)
     
@@ -68,21 +68,21 @@ class Address(Feild):
 class Binary(Feild):
 
     def __init__(self, name, *args, **kw):
-        self.money = Column(sa.Binary, use_parent_name = True)
+        self.money = Column(sa.Binary, use_parent = True)
         
         super(Binary, self).__init__(name, *args, **kw)
         
 class Boolean(Feild):
 
     def __init__(self, name, *args, **kw):
-        self.money = Column(sa.Boolean, use_parent_name = True)
+        self.money = Column(sa.Boolean, use_parent = True)
         
         super(Boolean, self).__init__(name, *args, **kw)
         
 class Money(Feild):
 
     def __init__(self, name, *args, **kw):
-        self.money = Column(sa.Numeric, use_parent_name = True)
+        self.money = Column(sa.Numeric, use_parent = True)
         
         super(Money, self).__init__(name, *args, **kw)
 
@@ -105,7 +105,7 @@ class ManyToOne(Feild):
     
     def __init__(self, name, other, *args, **kw):
         self.other = other
-        self.manytoone = Relation("manytoone", other, use_parent_name = True)
+        self.manytoone = Relation("manytoone", other, use_parent = True)
     
         super(ManyToOne,self).__init__(name, *args, **kw)
 
@@ -113,7 +113,7 @@ class OneToMany(Feild):
     
     def __init__(self, name, other, *args, **kw):
         self.other = other
-        self.onetomany = Relation("onetomany", other, use_parent_name = True)
+        self.onetomany = Relation("onetomany", other, use_parent = True)
     
         super(OneToMany,self).__init__(name, *args, **kw)
 
@@ -121,6 +121,6 @@ class OneToOne(Feild):
     
     def __init__(self, name, other, *args, **kw):
         self.other = other
-        self.onetoone = Relation("onetoone",other,use_parent_name = True)
+        self.onetoone = Relation("onetoone",other,use_parent = True)
     
         super(OneToOne,self).__init__(name, *args, **kw)

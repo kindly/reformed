@@ -38,22 +38,28 @@ class BaseSchema(object):
         Type :  mandatory this is either a sqlalchemy type or a string 
                 with onetomany, manytoone or onetoone to define join types.
 
-        use_parent_name :  if True will use its parents name (Field name) 
-                           to define its name. 
+        use_parent :  if True will use its parents (Field) column parameters
+                      instead.
                      
         """
         self.type = type
         self.name = kw.pop("name", None)
-        self.use_parent_name=kw.pop("use_parent_name", False)
+        self.use_parent=kw.pop("use_parent", False)
         self.args = args
         self.kw = kw
         self.original_table = kw.pop("original_table", None)
+        self.sa_options ={}
     
     def _set_name(self, Field, name):
-        if self.use_parent_name:
+        if self.use_parent:
             self.name = Field.decendants_name
         else:
             self.name = name
+
+    def _set_sa_options(self, Field):
+
+        if self.use_parent:
+            self.sa_options.update(Field._sa_options)
 
     def __repr__(self):
         return "<class = %s , name = %s , type = %s>" % ( self.__class__.__name__, self.name
@@ -79,21 +85,23 @@ class Column(BaseSchema):
         onupdate : value whenever the accosiated row is updated
         """
 
-
         super(Column,self).__init__(type ,*args, **kw)
         ##original column should be made private. 
         self.original_column = kw.pop("original_column", None)
-        self.sa_options ={}
         default = kw.pop("default", None)
         if default:
             self.sa_options["default"] = default
         onupdate = kw.pop("onupdate", None)
         if onupdate:
             self.sa_options["onupdate"] = onupdate
+        nullable = kw.pop("nullable", False)
+        if nullable:
+            self.sa_options["nullable"] = nullable
 
     def _set_parent(self, parent, name):
         
         self._set_name(parent ,name)
+        self._set_sa_options(parent)
             
         if self.name in parent.items.iterkeys():
             raise AttributeError("column already in field definition")
@@ -119,9 +127,9 @@ class Relation(BaseSchema):
         
     def _set_parent(self, parent, name):
         """adds this relation to a field object"""
-        
-        self._set_name(parent, name)
-            
+        self._set_name(parent ,name)
+        self._set_sa_options(parent)
+
         if self.name in parent.items.iterkeys():
             raise AttributeError("column already in field definition")
         else:
@@ -150,7 +158,7 @@ class Feild(object):
         This gathers metadata from the subclassed objects and stores the columns
         and relations information.
         
-        name:  field name will be used as column name if use_parent_name is 
+        name:  field name will be used as column name if use_parent is 
                used
         
         """
@@ -159,6 +167,16 @@ class Feild(object):
         self.decendants_name=name
         self.columns = {}
         self.relations = {}
+        self._sa_options = {}
+        _default = kw.pop("default", None)
+        if _default:
+            self._sa_options["default"] = _default
+        _onupdate = kw.pop("onupdate", None)
+        if _onupdate:
+            self._sa_options["onupdate"] = _onupdate
+        _nullable = kw.pop("nullable", False)
+        if _nullable:
+            self._sa_options["nullable"] = _nullable
 
         for n,v in self.__dict__.iteritems():
             if hasattr(v,"_set_parent"):
