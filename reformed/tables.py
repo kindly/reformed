@@ -45,6 +45,9 @@ class Table(object):
         primary_key:   a comma delimited string stating what field
                        should act as a primary key.
         logged: Boolean stating if the table should be logged
+        index:  a semicolon (;) delimited list of the columns to be indexed
+        unique_constraint : a semicolon delimeited list of colums with a 
+                           unique constraint
         *args :  All the Field objects this table has.
         """
         self.name =name
@@ -57,11 +60,21 @@ class Table(object):
         self.persisted = kw.get("persisted", False)
         self.entity = kw.get("entity", False)
         self.logged = kw.get("logged", True)
+        self.index = kw.get("index",None)
+        self.unique_constraint = kw.get("unique_constraint", None)
         self.entity_relationship = kw.get("entity_relationship", False)
+        self.primary_key_list = []
         if self.primary_key:
             self.primary_key_list = self.primary_key.split(",")
-        else:
-            self.primary_key_list = []
+        self.index_list  = []
+        if self.index:
+            self.index_list = [column_list.split(",") for column_list in
+                               self.index.split(";")]
+        self.unique_constraint_list  = []
+        if self.unique_constraint:
+            self.unique_constraint_list = [column_list.split(",") for column_list in
+                               self.unique_constraint.split(";")]
+
 
         for key in self.primary_key_list:
             column_names = []
@@ -301,6 +314,14 @@ class Table(object):
             for n,v in self.foreign_key_constraints.iteritems():
                 sa_table.append_constraint(sa.ForeignKeyConstraint(v[0],
                                                                    v[1]))
+        if self.index_list:
+            for index in self.index_list:
+                ind = [sa_table.columns[col] for col in index]
+                name = "_".join(index)
+                sa_table.append_constraint(sa.Index(name,*ind))
+        if self.unique_constraint_list:
+            for constraint in self.unique_constraint_list:
+                sa_table.append_constraint(sa.UniqueConstraint(*constraint))
         self.sa_table = sa_table
    
     def make_sa_class(self):

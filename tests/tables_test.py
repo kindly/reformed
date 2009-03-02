@@ -3,6 +3,13 @@ from reformed.fields import *
 from reformed.tables import *
 from reformed.database import *
 from nose.tools import assert_raises,raises
+import logging
+
+sqlhandler = logging.FileHandler("sql.txt")
+sqllogger = logging.getLogger('sqlalchemy.engine')
+sqllogger.setLevel(logging.info)
+sqllogger.addHandler(sqlhandler)
+
 
 class test_table_basic(object):
     
@@ -51,12 +58,24 @@ class test_table_primary_key(object):
                        Text("col2"),
                        Text("col3"),
                        ManyToOne("rel1","table2"),
-                       primary_key="col,col2")
+                       primary_key="col,col2",
+                       index= "col3;col2,col3",
+                       unique_constraint= "col3,col;col2,col3,col")
         
     def test_primary_key_columns(self):
         
         assert self.a.primary_key_columns.has_key("col")
         assert self.a.primary_key_columns.has_key("col2")
+
+    def test_index_columns(self):
+        
+        assert ['col3'] in self.a.index_list
+        assert ['col2','col3'] in self.a.index_list
+
+    def test_unique_constraint_columns(self):
+        
+        assert ['col3','col'] in self.a.unique_constraint_list
+        assert ['col2','col3','col'] in self.a.unique_constraint_list
 
     def test_defined_non_primary_key(self):
         
@@ -120,9 +139,17 @@ class test_database_primary_key(object):
                             Table("people",
                                   Text("name"),
                                   Text("name2"),
+                                  Text("name3"),
+                                  Text("name4"),
+                                  Text("name5"),
+                                  Text("name6"),
+                                  Text("name7"),
+                                  Text("name8"),
                                   OneToOne("address","address"),
                                   OneToMany("Email","email"),
-                                  primary_key = "name,name2"
+                                  primary_key = "name,name2",
+                                  index = "name3,name4;name5",
+                                  unique_constraint = "name6,name7;name8"
                                  ),
                             Table("email",
                                   Email("email")
@@ -180,6 +207,24 @@ class test_database_primary_key(object):
         assert self.emailtable.columns["id"].primary_key is True
         assert self.name.target_fullname == "people.name"
         assert self.name2.target_fullname == "people.name2"
+
+    def test_index(self):
+
+        assert "name3_name4" in [a.name for a in self.peopletable.indexes] 
+        assert "name5" in [a.name for a in self.peopletable.indexes] 
+        
+    def test_unique_constraints(self):
+
+
+        constraint_columns = []
+        for constraint in self.peopletable.constraints:
+            d= set()
+            for columns in constraint.columns:
+                d.add(columns.name)
+            constraint_columns.append(d)
+        assert set(["name6","name7"]) in constraint_columns
+        assert set(["name8"]) in constraint_columns
+
 
     def test_sa_table_logged(self):
         assert self.peoplelogged.columns.has_key("name")
