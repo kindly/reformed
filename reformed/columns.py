@@ -145,7 +145,7 @@ class Relation(BaseSchema):
         except AttributeError:
             return None
         
-class Feild(object):
+class Field(object):
     """ This is intended to be sublassed and should be the only way
     a database field or relation can be made.  This object can contain
     one or more column object (representing a database field) or one

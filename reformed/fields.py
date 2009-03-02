@@ -25,14 +25,14 @@
 from columns import *
 import datetime
 
-class Text(Feild):
+class Text(Field):
     
     def __init__(self, name, *args, **kw):
         self.text = Column(sa.Unicode, use_parent = True)
 
         super(Text,self).__init__(name, *args, **kw)
 
-class Modified(Feild):
+class Modified(Field):
     
     def __init__(self, name, *args, **kw):
         self.modified_date = Column(sa.DateTime,
@@ -41,14 +41,14 @@ class Modified(Feild):
 
         super(Modified,self).__init__(name, *args, **kw)
 
-class Integer(Feild):
+class Integer(Field):
     
     def __init__(self, name, *args, **kw):
         self.text = Column(sa.Integer, use_parent = True)
 
         super(Integer, self).__init__(name, *args, **kw)
     
-class Address(Feild):
+class Address(Field):
     
     def __init__(self, name, *args, **kw):
         self.address_line_1 = Column(sa.Unicode)
@@ -65,28 +65,28 @@ class Address(Feild):
 
         super(Address, self).__init__(name, *args, **kw)
 
-class Binary(Feild):
+class Binary(Field):
 
     def __init__(self, name, *args, **kw):
         self.money = Column(sa.Binary, use_parent = True)
         
         super(Binary, self).__init__(name, *args, **kw)
         
-class Boolean(Feild):
+class Boolean(Field):
 
     def __init__(self, name, *args, **kw):
         self.money = Column(sa.Boolean, use_parent = True)
         
         super(Boolean, self).__init__(name, *args, **kw)
         
-class Money(Feild):
+class Money(Field):
 
     def __init__(self, name, *args, **kw):
         self.money = Column(sa.Numeric, use_parent = True)
         
         super(Money, self).__init__(name, *args, **kw)
 
-class Email(Feild):
+class Email(Field):
     
     def __init__(self, name, *args, **kw):
         self.email = Column(sa.Unicode)
@@ -94,14 +94,14 @@ class Email(Feild):
 
         super(Email, self).__init__(name, *args, **kw)
 
-class Date(Feild):
+class Date(Field):
     
     def __init__(self, name, *args, **kw):
         self.date = Column(sa.Date)
 
         super(Date, self).__init__(name, *args, **kw)
 
-class ManyToOne(Feild):
+class ManyToOne(Field):
     
     def __init__(self, name, other, *args, **kw):
         self.other = other
@@ -109,7 +109,7 @@ class ManyToOne(Feild):
     
         super(ManyToOne,self).__init__(name, *args, **kw)
 
-class OneToMany(Feild):
+class OneToMany(Field):
     
     def __init__(self, name, other, *args, **kw):
         self.other = other
@@ -117,7 +117,7 @@ class OneToMany(Feild):
     
         super(OneToMany,self).__init__(name, *args, **kw)
 
-class OneToOne(Feild):
+class OneToOne(Field):
     
     def __init__(self, name, other, *args, **kw):
         self.other = other

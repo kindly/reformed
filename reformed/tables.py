@@ -21,7 +21,7 @@
 ##	======
 ##	
 ##	This file contains the reformed Table class. A Table is 
-##  collection of Feild objects and the Table objects uses these to make
+##  collection of Field objects and the Table objects uses these to make
 ##  make a real database table and store the metadata in private tables in
 ##  the database.
 
@@ -114,7 +114,7 @@ class Table(object):
         self.additional_columns[column.name] = column
 
     def add_field(self,field):
-        "add a Feild object to this Table"
+        "add a Field object to this Table"
         field._set_parent(self)
     
     def update_sa(self):
@@ -352,7 +352,7 @@ class Table(object):
     
     def validate(self, instance):
         """this validates an instance of sa_class with the schema defined
-        by this tables Feild objects"""
+        by this tables Field objects"""
         
         validation_dict = {}
         for n,v in self.columns.iteritems():

@@ -7,7 +7,7 @@ class test_fields():
     
     def setUp(self):
         
-        class Text2(Feild):
+        class Text2(Field):
         
             def __init__(self, name, *args, **kw):
                 
