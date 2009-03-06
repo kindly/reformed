@@ -71,6 +71,7 @@ class SessionWrapper(object):
                 else:
                     setattr(logged_instance, column, getattr(obj,column))
             if changed:
+                setattr(logged_instance, table.name , obj )
                 self.session.add(logged_instance)
 
 #       print "finished first"

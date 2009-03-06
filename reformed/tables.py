@@ -33,6 +33,9 @@ import custom_exceptions
 import formencode
 from fields import Modified
 from sqlalchemy.orm.interfaces import AttributeExtension
+import logging
+
+logger = logging.getLogger('reformed')
 
 class Table(object):
     """ this holds metadata relating to a database table.  It also
@@ -102,6 +105,7 @@ class Table(object):
         session = self.database.Session()
         __table = self.database.tables["__table"].sa_class()
         __table.table_name = u"%s" % self.name
+
 
         for n, v in self.kw.iteritems():
             __table_param = self.database.tables["__table_params"].sa_class()

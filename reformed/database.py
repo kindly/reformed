@@ -32,6 +32,13 @@ from fields import ManyToOne
 import fields as field_types
 import boot_tables
 import sessionwrapper
+import logging
+
+logger = logging.getLogger('reformed')
+logger.setLevel(logging.INFO)
+reformedhandler = logging.FileHandler("log.txt")
+logger.addHandler(reformedhandler)
+
 
 class Database(object):
     
@@ -90,9 +97,13 @@ class Database(object):
         self.metadata.create_all(self.engine)
             
         all_tables = session.query(self.tables["__table"].sa_class).all()
+        ## only persist boot tables if first time
+        if not all_tables:
+            
+            self.persist()
 
         for row in all_tables:
-            if row.table_name.startswith("__"):
+            if row.table_name.count(u"__") > 0:
                 continue
             fields = []
             for field in row.field:
