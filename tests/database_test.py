@@ -26,7 +26,12 @@ class test_database(object):
                                session = self.Session)
         #self.Donkey.update_sa()
         self.Donkey.persist()
+
+        self.session = self.Donkey.Session()
+
+        self.list_of_tables = self.session.query(self.Donkey.get_class("__table")).all()
     
+        self.list_of_fields = self.session.query(self.Donkey.get_class("__field")).all()
 #   @classmethod
 #   def tearDownClass(self):
 #       del self.Donkey
@@ -125,4 +130,13 @@ class test_database(object):
 
             assert_raises(custom_exceptions.NoTableError,
                           self.Donkey.get_class,"peopley")
-    
+
+    def test_boot_tables_persisted(self):
+
+        assert u"__table" in [a.table_name for a in self.list_of_tables]
+        assert u"__table_params" in [a.table_name for a in self.list_of_tables]
+        assert u"__field" in [a.table_name for a in self.list_of_tables]
+
+    def test_log_tables_persisted(self):
+        assert (u"_log_people", u"name") in [(a.table_name,a.name) for a in self.list_of_fields]
+        

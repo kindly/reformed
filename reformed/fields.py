@@ -32,6 +32,13 @@ class Text(Field):
 
         super(Text,self).__init__(name, *args, **kw)
 
+class Unicode(Field):
+    
+    def __init__(self, name, *args, **kw):
+        self.text = Column(sa.Unicode, use_parent = True)
+
+        super(Unicode,self).__init__(name, *args, **kw)
+
 class Modified(Field):
     
     def __init__(self, name, *args, **kw):
@@ -40,6 +47,13 @@ class Modified(Field):
                                      default =datetime.datetime.now)
 
         super(Modified,self).__init__(name, *args, **kw)
+
+class DateTime(Field):
+    
+    def __init__(self, name, *args, **kw):
+        self.text = Column(sa.DateTime, use_parent = True)
+
+        super(DateTime, self).__init__(name, *args, **kw)
 
 class Integer(Field):
     
@@ -85,6 +99,13 @@ class Money(Field):
         self.money = Column(sa.Numeric, use_parent = True)
         
         super(Money, self).__init__(name, *args, **kw)
+
+class Numeric(Field):
+
+    def __init__(self, name, *args, **kw):
+        self.money = Column(sa.Numeric, use_parent = True)
+        
+        super(Numeric, self).__init__(name, *args, **kw)
 
 class Email(Field):
     

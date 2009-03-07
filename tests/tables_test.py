@@ -238,7 +238,7 @@ class test_database_primary_key(object):
         assert hasattr(self.email,"email")
         assert hasattr(self.email,"id")
         assert hasattr(self.people,"Email")
-        assert hasattr(self.email,"people")
+        assert hasattr(self.email,"_people")
 
     def test_foreign_key_constraints(self):
 

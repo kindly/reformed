@@ -24,6 +24,13 @@
 ##  funtionality such a as logging and validataion.
 
 from sqlalchemy.orm import attributes 
+import logging
+
+logger = logging.getLogger('reformed.session')
+logger.setLevel(logging.INFO)
+sessionhandler = logging.FileHandler("session.log")
+logger.addHandler(sessionhandler)
+
 class SessionWrapper(object):
             
     def __init__(self, Session):
@@ -36,7 +43,6 @@ class SessionWrapper(object):
         self.session.close()
 
     def add(self, obj):
-            
         obj._table.validate(obj)
         self.session.add(obj)
     
@@ -54,6 +60,7 @@ class SessionWrapper(object):
 
     def add_logged_instances(self):
 
+
         for obj in self.session.dirty:
             database = obj._table.database
             table = obj._table
@@ -64,14 +71,14 @@ class SessionWrapper(object):
             for column in table.columns.keys():
                 a,b,c = attributes.get_history(attributes.instance_state(obj), column,
                                               passive = False)
-                print a,b,c
+                logger.info (repr(a)+repr(b)+repr(c))
                 if c:
                     setattr(logged_instance, column, c[0])
                     changed = True
                 else:
                     setattr(logged_instance, column, getattr(obj,column))
             if changed:
-                setattr(logged_instance, table.name , obj )
+                setattr(logged_instance, table.name + "_logged" , obj )
                 self.session.add(logged_instance)
 
 #       print "finished first"

@@ -35,7 +35,7 @@ from fields import Modified
 from sqlalchemy.orm.interfaces import AttributeExtension
 import logging
 
-logger = logging.getLogger('reformed')
+logger = logging.getLogger('reformed.main')
 
 class Table(object):
     """ this holds metadata relating to a database table.  It also
@@ -48,6 +48,8 @@ class Table(object):
         primary_key:   a comma delimited string stating what field
                        should act as a primary key.
         logged: Boolean stating if the table should be logged
+        modified_date: Boolean stating if the table should have a last 
+                       modified date
         index:  a semicolon (;) delimited list of the columns to be indexed
         unique_constraint : a semicolon delimeited list of colums with a 
                            unique constraint
@@ -63,6 +65,7 @@ class Table(object):
         self.persisted = kw.get("persisted", False)
         self.entity = kw.get("entity", False)
         self.logged = kw.get("logged", True)
+        self.modified_date = kw.get("modified_date", True)
         self.index = kw.get("index",None)
         self.unique_constraint = kw.get("unique_constraint", None)
         self.entity_relationship = kw.get("entity_relationship", False)
@@ -90,7 +93,7 @@ class Table(object):
         for fields in args:
             fields._set_parent(self)
 
-        if "modified_date" not in self.fields.keys():
+        if "modified_date" not in self.fields.keys() and self.modified_date:
             self.add_field(Modified("modified_date"))
         #sqlalchemy objects
         self.sa_table = None
@@ -355,7 +358,7 @@ class Table(object):
             for relation in self.relations.itervalues():
                 other_class = self.database.tables[relation.other].sa_class
                 properties[relation.name] = sa.orm.relation(other_class,
-                                                        backref = self.name)
+                                                        backref = "_" + self.name)
             self.mapper = mapper(self.sa_class, self.sa_table, properties = properties)
 #           self.mapper.compile()
             #sa.orm.compile_mappers()

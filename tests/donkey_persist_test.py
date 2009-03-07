@@ -5,22 +5,28 @@ from nose.tools import assert_raises,raises
 import sqlalchemy as sa
 from sqlalchemy import create_engine
 import random
+import logging
+
+sqlhandler = logging.FileHandler("sql.log")
+sqllogger = logging.getLogger('sqlalchemy.engine')
+sqllogger.setLevel(logging.info)
+sqllogger.addHandler(sqlhandler)
 
 class test_donkey_persist(object):
 
     @classmethod
     def setUpClass(self):
-        self.engine = create_engine('sqlite:///tests/test_donkey.sqlite')
+        self.engine = create_engine('sqlite:///tests/test_donkey.sqlite',echo = True)
         self.meta = sa.MetaData()
-        self.Session = sa.orm.sessionmaker(bind =self.engine)
+        self.Session = sa.orm.sessionmaker(bind =self.engine , autoflush = False)
         self.Donkey = Database("Donkey", 
                         metadata = self.meta,
                         engine = self.engine,
                         session = self.Session)
 
 #       self.Donkey.load_from_persist()
-        p = random.randrange(1,10000)
-        self.Donkey.add_table(tables.Table("moo%s" % p, Text("moo")))
+        self.p = random.randrange(1,10000)
+        self.Donkey.add_table(tables.Table("moo%s" % self.p, Text("moo")))
         self.Donkey.persist()
 
 #       self.jim = self.Donkey.donkey()
@@ -105,6 +111,18 @@ class test_donkey_persist(object):
         self.david_logged = self.david._table.logged_instance(self.david)
         self.session.add(self.david_logged)
         self.session.commit()
+
+        donk = self.session.query(self.Donkey.get_class("donkey")).first()
+        donk.name = u"jimmii%s" % self.p
+        self.session.add(donk)
+        self.session.commit()
+        self.jimmi_id = donk.id
+
+        donk2 = self.session.query(self.Donkey.get_class("donkey")).filter_by(name=donk.name).first()
+        donk2.name = u"jimmii"
+        self.session.add(donk2)
+        self.session.commit()
+
         
     @classmethod
     def tearDownClass(self):
@@ -152,11 +170,14 @@ class test_donkey_persist(object):
         self.session.add(self.jim)
         self.session.commit()
 
+    def test_log_tables_loaded(self):
 
-        
+        assert hasattr(self.Donkey.get_class("_log_people"), "name")
 
+    def test_automatic_logging(self):
 
-
+        all_logs = self.session.query(self.Donkey.get_class("_log_donkey")).all()
+        assert (self.jimmi_id, u"jimmii%s" % self.p) in [(a.donkey_id,a.name) for a in all_logs]
 
 if __name__ == '__main__':
     

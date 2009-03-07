@@ -4,6 +4,7 @@ from reformed.database import *
 from nose.tools import assert_raises,raises
 import sqlalchemy as sa
 from sqlalchemy import create_engine
+import os
 import logging
 
 sqlhandler = logging.FileHandler("sql.txt")
@@ -16,6 +17,8 @@ class test_donkey(object):
     @classmethod
     def setUpClass(self):
         self.engine = create_engine('sqlite:///:memory:', echo=True)
+#       os.system("rm tests/test_donkey.sqlite")
+#       self.engine = create_engine('sqlite:///tests/test_donkey.sqlite',echo = True)
         self.meta = sa.MetaData()
         self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
         self.Donkey = Database("Donkey", 
@@ -98,8 +101,8 @@ class test_donkey(object):
         self.david.address_line_1 = u"43 union street"
         self.david.postcode = u"es388"
         davidsjim = self.Donkey.tables["donkey_sponsership"].sa_class()
-        davidsjim.people = self.david
-        davidsjim.donkey = self.jim
+        davidsjim._people = self.david
+        davidsjim._donkey = self.jim
         davidsjim.amount = 50
         
         jimpic = file("tests/jim.xcf", mode = "rb").read()
@@ -145,11 +148,11 @@ class test_basic_input(test_donkey):
                           self.session.query(self.Donkey.tables["donkey"].sa_class).all()]
 
         assert self.david in [ds for ds in\
-                         [a.people for a in\
+                         [a._people for a in\
                           self.session.query(self.Donkey.tables["donkey_sponsership"].sa_class).all()]]
 
         assert self.jim in [ds for ds in\
-                         [a.donkey for a in\
+                         [a._donkey for a in\
                           self.session.query(self.Donkey.tables["donkey_sponsership"].sa_class).all()]]
 
     def test_address_validation(self):

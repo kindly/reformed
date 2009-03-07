@@ -34,9 +34,9 @@ import boot_tables
 import sessionwrapper
 import logging
 
-logger = logging.getLogger('reformed')
+logger = logging.getLogger('reformed.main')
 logger.setLevel(logging.INFO)
-reformedhandler = logging.FileHandler("log.txt")
+reformedhandler = logging.FileHandler("log.log")
 logger.addHandler(reformedhandler)
 
 
@@ -195,10 +195,15 @@ class Database(object):
 
     def logged_table(self, logged_table):
 
-        logging_table = tables.Table("_log_"+ logged_table.name , logged = False)
+        logging_table = tables.Table("_log_"+ logged_table.name,
+                                     logged = False,
+                                     modified_date = False)
 
-        for columns in logged_table.columns.itervalues():
-            logging_table.add_additional_column(columns)
+        for column in logged_table.columns.itervalues():
+            logger.info(column.type.__class__.__name__)
+            logging_table.add_field( getattr(field_types, 
+                                             column.type.__name__)
+                                                (column.name))
 
         logging_table.add_field(ManyToOne(logged_table.name+"_logged" 
                                          ,logged_table.name ))
@@ -207,10 +212,10 @@ class Database(object):
 
     def update_tables(self):
 
-       for table in self.tables.values():
-           
-           if table.logged and "_log_%s" % table.name not in self.tables.keys() :
-               self.add_table(self.logged_table(table))
+        for table in self.tables.values():
+                              
+            if table.logged and "_log_%s" % table.name not in self.tables.keys() :
+                self.add_table(self.logged_table(table))
 
     def get_class(self, table):
 
