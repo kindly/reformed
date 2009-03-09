@@ -18,18 +18,10 @@ class test_session_wrapper(donkey_test.test_donkey):
         session.add(obj)
         session.commit()
 
-        poo = self.Donkey.get_instance("__table_params")
-        poo.key = u'plop'
-        session.add(poo)
-        session.commit()
         allpeople = session.query(self.Donkey.get_class("_log_people")).all()
         allspon = session.query(self.Donkey.get_class("_log_donkey_sponsership")).all()
 
-        for a in allpeople:
-            print a.name
         
-        for a in allspon:
-            print a.amount
 
         assert u"david%s" % p in [people.name for people in allpeople]
         assert u"david"  in [people.name for people in allpeople]

@@ -36,7 +36,10 @@ import logging
 
 logger = logging.getLogger('reformed.main')
 logger.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s - %(message)s")
 reformedhandler = logging.FileHandler("log.log")
+reformedhandler.setFormatter(formatter)
+
 logger.addHandler(reformedhandler)
 
 
@@ -75,6 +78,7 @@ class Database(object):
 
     def persist(self):
 
+
         if not self.persisted:
             for table in self.boot_tables:
                 if table.name in self.tables.keys():
@@ -86,6 +90,7 @@ class Database(object):
             if not table.persisted:
                 table.persist()
         self.persisted = True
+
 
     def load_from_persist(self):
 
@@ -142,9 +147,25 @@ class Database(object):
             if relation.other not in self.tables.iterkeys():
                 raise custom_exceptions.RelationError,\
                         "table %s does not exits" % relation.other
+
+    def check_related_order_by(self):
+        for relation in self.relations:
+            if relation.order_by_list:
+                logger.info(relation.order_by_list)
+                logger.info(self.tables[relation.other].columns.keys())
+                for col in relation.order_by_list:
+                    logger.info(col[0])
+                    if col[0] != 'id' \
+                       and col[0] not in self.tables[relation.other].columns.keys():
+                        raise custom_exceptions.RelationError,\
+                              "ordered column %s does not exits in %s" \
+                                % (col[0], relation.other)
+
  
     def update_sa(self):
         self.update_tables()
+        self.checkrelations()
+        self.check_related_order_by()
         try:
             for table in self.tables.itervalues():
 #               if table.sa_table:
@@ -200,7 +221,6 @@ class Database(object):
                                      modified_date = False)
 
         for column in logged_table.columns.itervalues():
-            logger.info(column.type.__class__.__name__)
             logging_table.add_field( getattr(field_types, 
                                              column.type.__name__)
                                                 (column.name))

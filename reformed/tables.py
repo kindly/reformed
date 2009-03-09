@@ -356,9 +356,17 @@ class Table(object):
 #               properties[column] = column_property( getattr(self.sa_table.c,column),
 #                                                    extension = AttributeExtension())
             for relation in self.relations.itervalues():
+                sa_options = relation.sa_options
+                other_table = self.database.tables[relation.other].sa_table
                 other_class = self.database.tables[relation.other].sa_class
+                order_by_statement = self._make_sa_order_by_list(relation, other_table)
+                if order_by_statement:
+                    sa_options["order_by"] = order_by_statement
+                logger.info(sa_options)
+
                 properties[relation.name] = sa.orm.relation(other_class,
-                                                        backref = "_" + self.name)
+                                                        backref = "_" + self.name,
+                                                        **sa_options)
             self.mapper = mapper(self.sa_class, self.sa_table, properties = properties)
 #           self.mapper.compile()
             #sa.orm.compile_mappers()
@@ -366,6 +374,18 @@ class Table(object):
 #               print getattr(self.sa_class, column).impl.active_history
 #               getattr(self.sa_class, column).impl.active_history = True
 #               print getattr(self.sa_class, column).impl.active_history
+    
+    def _make_sa_order_by_list(self, relation, other_table):
+
+        order_by_statement = [] 
+        if relation.order_by_list:
+            for col in relation.order_by_list:
+                if col[1] == 'desc':
+                    order_by_statement.append(getattr(other_table.c, col[0]).desc())
+                else:
+                    order_by_statement.append(getattr(other_table.c, col[0]))
+        return order_by_statement
+ 
 
     @property
     def validation_schema(self):

@@ -138,6 +138,14 @@ class OneToMany(Field):
     
         super(OneToMany,self).__init__(name, *args, **kw)
 
+class OneToManyEager(Field):
+    
+    def __init__(self, name, other, *args, **kw):
+        self.other = other
+        self.onetomany = Relation("onetomany", other, eager = True, cascade="all, delete-orphan",  use_parent = True)
+    
+        super(OneToManyEager,self).__init__(name, *args, **kw)
+
 class OneToOne(Field):
     
     def __init__(self, name, other, *args, **kw):

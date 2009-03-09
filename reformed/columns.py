@@ -60,6 +60,7 @@ class BaseSchema(object):
 
         if self.use_parent:
             self.sa_options.update(Field._sa_options)
+            
 
     def __repr__(self):
         return "<class = %s , name = %s , type = %s>" % ( self.__class__.__name__, self.name
@@ -102,6 +103,7 @@ class Column(BaseSchema):
         
         self._set_name(parent ,name)
         self._set_sa_options(parent)
+        
             
         if self.name in parent.items.iterkeys():
             raise AttributeError("column already in field definition")
@@ -124,11 +126,34 @@ class Relation(BaseSchema):
 
         super(Relation,self).__init__(type ,*args, **kw)
         self.other = args[0]
+        self.order_by = kw.pop("order_by", None)
+
+        eager = kw.pop("eager", None)
+        if eager:
+            self.sa_options["lazy"] = not eager
+        cascade = kw.pop("cascade", None)
+        if cascade:
+            self.sa_options["cascade"] = cascade
+
+    @property
+    def order_by_list(self):
+        if self.order_by:
+            columns_split = self.order_by.split(",")
+            order_by = [a.split() for a in columns_split] 
+            for col in order_by:
+                if len(col) == 1:
+                    col.append("")
+            return order_by
+        else:
+            return []
         
     def _set_parent(self, parent, name):
         """adds this relation to a field object"""
         self._set_name(parent ,name)
         self._set_sa_options(parent)
+
+        if parent._order_by:
+            self.order_by = parent._order_by
 
         if self.name in parent.items.iterkeys():
             raise AttributeError("column already in field definition")
@@ -177,6 +202,13 @@ class Field(object):
         _nullable = kw.pop("nullable", False)
         if _nullable:
             self._sa_options["nullable"] = _nullable
+        _eager = kw.pop("eager", None)
+        if _eager:
+            self.sa_options["lazy"] = not _eager
+        _cascade = kw.pop("cascade", None)
+        if _cascade:
+            self.sa_options["cascade"] = _cascade
+        self._order_by = kw.pop("order_by", None)
 
         for n,v in self.__dict__.iteritems():
             if hasattr(v,"_set_parent"):

@@ -17,6 +17,8 @@ class test_fields():
                 super(Text2,self).__init__(name, *args, **kw)
         
         self.b = Text2("col")
+
+        self.ord_relation = Relation("ord", "other", order_by = "a1 desc,a2 asc, a3,a4 desc")
         
     def test_text_filed_no_field_name(self):
         
@@ -35,4 +37,9 @@ class test_fields():
         
         assert "text2" in self.b.items.iterkeys()
         assert "text" in self.b.items.iterkeys()
+    
+    def test_split_order_by(self):
+
+        assert self.ord_relation.order_by_list == [["a1","desc"], ["a2", "asc"],
+                                                      ["a3",""], ["a4", "desc"]] 
 

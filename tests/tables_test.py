@@ -5,7 +5,7 @@ from reformed.database import *
 from nose.tools import assert_raises,raises
 import logging
 
-sqlhandler = logging.FileHandler("sql.txt")
+sqlhandler = logging.FileHandler("sql.log")
 sqllogger = logging.getLogger('sqlalchemy.engine')
 sqllogger.setLevel(logging.info)
 sqllogger.addHandler(sqlhandler)
@@ -146,13 +146,15 @@ class test_database_primary_key(object):
                                   Text("name7"),
                                   Text("name8"),
                                   OneToOne("address","address"),
-                                  OneToMany("Email","email"),
+                                  OneToMany("Email","email", 
+                                           order_by = 'email desc,name2, email_type'),
                                   primary_key = "name,name2",
                                   index = "name3,name4;name5",
                                   unique_constraint = "name6,name7;name8"
                                  ),
                             Table("email",
-                                  Email("email")
+                                  Email("email"),
+                                  Text("email_type")
                                  ),
                             Table("address",
                                   Address("address")
@@ -163,17 +165,38 @@ class test_database_primary_key(object):
                         
 
         self.Donkey.persist()
+        session = self.Donkey.Session()
 
         self.peopletable = self.Donkey.tables["people"].sa_table
         self.emailtable = self.Donkey.tables["email"].sa_table
         self.name2 = self.emailtable.columns["name2"].foreign_keys.pop()
         self.name = self.emailtable.columns["name"].foreign_keys.pop()
-        self.people = self.Donkey.tables["people"].sa_class()
         self.email = self.Donkey.tables["email"].sa_class()
+        self.email2 = self.Donkey.tables["email"].sa_class()
+        self.email3 = self.Donkey.tables["email"].sa_class()
         
-        self.email.email = u"david@raz.nick"
+        self.people = self.Donkey.tables["people"].sa_class()
+        self.people.name = u"david"
+        self.people.name2 = u"david"
+        self.email.email = u"aavid@raz.nick"
+        self.email2.email = u"david@raz.nick"
+        self.email3.email = u"david@raz.nick"
+        self.email.email_type = u"a"
+        self.email2.email_type = u"b"
+        self.email3.email_type = u"a"
 
+
+        self.people.Email.append(self.email)
+        self.people.Email.append(self.email2)
+        self.people.Email.append(self.email3)
+        
+        session.add(self.people)
+        session.commit()
+
+        self.all = session.query(self.Donkey.tables["people"].sa_class).first()
         self.peoplelogged = self.Donkey.tables["_log_people"].sa_table
+        
+
 
 #    def tearDown(self):
 #        self.meta.clear()
@@ -278,6 +301,17 @@ class test_database_primary_key(object):
                                           {"address_line_1": "56 moreland",
                                            "address_line_2": "essex"
                                            })
+
+    def test_order(self):
+
+        assert self.all.Email[0].email == u"david@raz.nick"
+        assert self.all.Email[1].email == u"david@raz.nick"
+        assert self.all.Email[2].email == u"aavid@raz.nick"
+        assert self.all.Email[0].email_type == u"a"
+        assert self.all.Email[1].email_type == u"b"
+        assert self.all.Email[2].email_type == u"a"
+
+
         
 
 if __name__ == '__main__':
