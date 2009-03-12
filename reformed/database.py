@@ -186,10 +186,10 @@ class Database(object):
         self.checkrelations()
         relations = {}
         for n, v in Table.relations.iteritems():
-            relations[v.other] = v
+            relations[(v.other,"this")] = v
         for v in self.relations:
             if v.other == Table.name:
-                relations[v.table.name] = v
+                relations[(v.table.name,"other")] = v
         return relations
 
     def related_tables(self, Table):

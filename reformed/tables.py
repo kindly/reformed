@@ -248,7 +248,9 @@ class Table(object):
         d = self.database
         columns={}
         ##  could be made simpler
-        for table, rel in self.tables_with_relations.iteritems():
+        for tab, rel in self.tables_with_relations.iteritems():
+            table, pos = tab
+            #use pos
             if (rel.type == "onetomany" and self.name == rel.other) or\
               (rel.type == "onetoone" and self.name == rel.other) or\
               (rel.type == "manytoone" and self.name == rel.table.name):
@@ -279,7 +281,8 @@ class Table(object):
         self.check_database()
         d = self.database
         ##  could be made simpler
-        for table, rel in self.tables_with_relations.iteritems():
+        for tab, rel in self.tables_with_relations.iteritems():
+            table, pos = tab
             other_table_columns=[]
             this_table_columns=[]
             for n, v in self.foriegn_key_columns.iteritems():

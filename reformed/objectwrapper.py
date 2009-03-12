@@ -60,7 +60,7 @@ class ObjectWrapper(object):
         self._other_objs = []
         for t,v in self._table.tables_with_relations.items():
             if v.type == "onetoone":
-                self._other_objs.append(self._database.tables[t].sa_class())
+                self._other_objs.append(self._database.tables[t[0]].sa_class())
 
     def get_onetoone(self,name):
 
