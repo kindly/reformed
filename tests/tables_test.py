@@ -139,7 +139,7 @@ class test_database_primary_key(object):
                             Table("people",
                                   Text("name"),
                                   Text("name2"),
-                                  Text("name3"),
+                                  Text("name3", length = 10),
                                   Text("name4"),
                                   Text("name5"),
                                   Text("name6"),
@@ -310,6 +310,21 @@ class test_database_primary_key(object):
         assert self.all.Email[0].email_type == u"a"
         assert self.all.Email[1].email_type == u"b"
         assert self.all.Email[2].email_type == u"a"
+
+    def test_length(self):
+        
+        assert self.peopletable.columns['name3'].type.length == 10
+
+        session = self.Donkey.Session()
+        long_person = self.Donkey.tables["people"].sa_class()
+        long_person.name3 = u"davidfdsafsdasffdsas"
+        session.save(long_person)
+        session.flush()
+        session.commit()
+
+        a = session.query(self.Donkey.tables["people"].sa_class).filter_by(name3=u"davidfdsafsdasffdsas").first()
+        assert a.name3 == u"davidfdsafsdasffdsas"
+        
 
 
         

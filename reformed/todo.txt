@@ -1,6 +1,6 @@
 - change joint primary key columns to have an id column as well but, so they become unique constraints - DONE
 - set up logging - Done
-- make formencode validators or updated existing ones when field layout sugests
+- make formencode validators or update existing ones when field layout sugests
 - add validation column to persisted field table for basic field validation or potentially a validation table
 - add default not nulls for joint columns
 - modify the add table and add field so as to go through set parent - Done
@@ -21,3 +21,4 @@
 - optimise make sa_table
 - make sure indexs and unique constraints are remade
 - add ordering list implementation
+- make sure sa type class/object distinction works

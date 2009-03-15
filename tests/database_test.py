@@ -16,6 +16,7 @@ class test_database(object):
         self.Donkey = Database("Donkey",
                          Table("people",
                               Text("name"),
+                              Text("name2", length = 10),
                               OneToMany("Email","email"),
                               entity = True),
                          Table("email",
@@ -44,7 +45,7 @@ class test_database(object):
         assert self.Donkey.name == "Donkey"
         assert "people" in self.Donkey.tables
         assert "email" in  self.Donkey.tables
-        assert len(self.Donkey.tables["people"].fields) == 3 # modified field
+        assert len(self.Donkey.tables["people"].fields) == 4 # modified field
         assert len(self.Donkey.tables["email"].fields) == 2
 
 

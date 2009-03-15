@@ -393,7 +393,7 @@ class Table(object):
     @property
     def validation_schema(self):
         """Gathers all the validation dictionarys from all the Field Objects
-        and a makes a formencode Schema out o them"""
+        and a makes a formencode Schema out of them"""
 
         schema_dict = {}
         for n,v in self.fields.iteritems():

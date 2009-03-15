@@ -151,10 +151,7 @@ class Database(object):
     def check_related_order_by(self):
         for relation in self.relations:
             if relation.order_by_list:
-                logger.info(relation.order_by_list)
-                logger.info(self.tables[relation.other].columns.keys())
                 for col in relation.order_by_list:
-                    logger.info(col[0])
                     if col[0] != 'id' \
                        and col[0] not in self.tables[relation.other].columns.keys():
                         raise custom_exceptions.RelationError,\
@@ -221,9 +218,16 @@ class Database(object):
                                      modified_date = False)
 
         for column in logged_table.columns.itervalues():
-            logging_table.add_field( getattr(field_types, 
-                                             column.type.__name__)
-                                                (column.name))
+            
+            ##FIXME if type is an object (not a class) need different rules
+            if hasattr(column.type,"length"):
+                length = column.type.length
+                field =getattr(field_types, column.type.__class__.__name__)\
+                              (column.name, length = length)
+            else:
+                field =getattr(field_types, column.type.__name__)(column.name)
+            
+            logging_table.add_field(field)
 
         logging_table.add_field(ManyToOne(logged_table.name+"_logged" 
                                          ,logged_table.name ))

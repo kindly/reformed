@@ -104,6 +104,8 @@ class Column(BaseSchema):
         self._set_name(parent ,name)
         self._set_sa_options(parent)
         
+        if parent._length:
+            self.type = self.type(parent._length)
             
         if self.name in parent.items.iterkeys():
             raise AttributeError("column already in field definition")
@@ -209,6 +211,7 @@ class Field(object):
         if _cascade:
             self.sa_options["cascade"] = _cascade
         self._order_by = kw.pop("order_by", None)
+        self._length = kw.pop("length", None)
 
         for n,v in self.__dict__.iteritems():
             if hasattr(v,"_set_parent"):
