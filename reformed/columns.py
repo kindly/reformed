@@ -45,6 +45,7 @@ class BaseSchema(object):
         self.type = type
         self.name = kw.pop("name", None)
         self.use_parent=kw.pop("use_parent", False)
+        self.use_parent_options= kw.pop("use_parent_options", False)
         self.args = args
         self.kw = kw
         self.original_table = kw.pop("original_table", None)
@@ -58,7 +59,7 @@ class BaseSchema(object):
 
     def _set_sa_options(self, Field):
 
-        if self.use_parent:
+        if self.use_parent or self.use_parent_options:
             self.sa_options.update(Field._sa_options)
             
 
@@ -97,7 +98,7 @@ class Column(BaseSchema):
             self.sa_options["onupdate"] = onupdate
         mandatory = kw.pop("mandatory", False)
         if mandatory:
-            self.sa_options["nullable"] = not mandatory
+            self.sa_options["nullable"] = False
 
     def _set_parent(self, parent, name):
         
@@ -203,7 +204,7 @@ class Field(object):
             self._sa_options["onupdate"] = _onupdate
         _mandatory = kw.pop("mandatory", False)
         if _mandatory:
-            self._sa_options["nullable"] = not _mandatory
+            self._sa_options["nullable"] = False
         _eager = kw.pop("eager", None)
         if _eager:
             self.sa_options["lazy"] = not _eager

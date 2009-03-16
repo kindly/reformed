@@ -4,7 +4,7 @@
 - add validation column to persisted field table for basic field validation or potentially a validation table
 - add default not nulls for joint columns
 - modify the add table and add field so as to go through set parent - Done
-- sort out test coverage for database especially looking at all join conditions
+- sort out test coverage for database especially looking at all join conditions - Done
 - add table that joins back to an entity table - can be done by making join from both tables
 - add unique constraints - Done
 - add nullable,sequences and any other sqlalchemy column level parameters -Done

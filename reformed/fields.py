@@ -110,7 +110,7 @@ class Numeric(Field):
 class Email(Field):
     
     def __init__(self, name, *args, **kw):
-        self.email = Column(sa.Unicode)
+        self.email = Column(sa.Unicode, use_parent_options = True)
         self.validation = {"email" : validators.Email()}
 
         super(Email, self).__init__(name, *args, **kw)

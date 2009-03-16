@@ -5,6 +5,7 @@ from reformed.database import *
 from nose.tools import assert_raises,raises
 import formencode as fe
 import logging
+import datetime
 
 sqlhandler = logging.FileHandler("sql.log")
 sqllogger = logging.getLogger('sqlalchemy.engine')
@@ -333,9 +334,64 @@ class test_database_primary_key(object):
         assert_raises(fe.Invalid, session.add, long_person)
 
         
+class test_database_primary_key(object):
 
+    @classmethod
+    def setUpClass(self):
 
+        self.engine = sa.create_engine('sqlite:///:memory:', echo=True)
+        self.meta = sa.MetaData()
+        self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
         
+        self.Donkey = Database("Donkey",
+                            Table("people",
+                                  Email("name1", length = 10, mandatory = True),
+                                  Money("name2", mandatory = True),
+                                  Integer("name3", mandatory = True),
+                                  DateTime("name4", mandatory = True),
+                                  Boolean("name5", mandatory = True),
+                                  Binary("name6", mandatory = True),
+                                 ),
+                           metadata = self.meta,
+                           engine = self.engine,
+                           session = self.Session)
+                        
+
+        self.Donkey.persist()
+        self.session = self.Donkey.Session()
+
+    def test_all_fields(self):
+
+        person = self.Donkey.tables["people"].sa_class()
+        person.name2 = 10.2
+        person.name3 = 7
+        person.name4 = datetime.datetime.now()
+        person.name5 = True
+        pic = file("tests/jim.xcf", mode = "rb").read()
+        person.name6 = pic
+        
+        assert_raises(fe.Invalid, self.session.add, person)
+
+        person.email = "p@pl.com"
+        self.session.add(person)
+        person.email = 'pop'
+        assert_raises(fe.Invalid, self.session.add, person)
+        person.email = "p@pl.com"
+        person.name2 = "plop"
+        assert_raises(fe.Invalid, self.session.add, person)
+        person.name2 = 10.2
+        person.name3 =  "plop"
+        assert_raises(fe.Invalid, self.session.add, person)
+        person.name3 = 7
+        person.name4 = ''
+        assert_raises(fe.Invalid, self.session.add, person)
+        person.name4 = datetime.datetime.now()
+        person.name5 = ''
+        assert_raises(fe.Invalid, self.session.add, person)
+        person.name5 = True
+        person.name6 = None
+        assert_raises(fe.Invalid, self.session.add, person)
+
 
 if __name__ == '__main__':
     engine = sa.create_engine('sqlite:///:memory:', echo=True)
