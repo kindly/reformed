@@ -333,8 +333,17 @@ class test_database_primary_key(object):
         long_person.name3 = u"davidfdsafsdasffdsas"
         assert_raises(fe.Invalid, session.add, long_person)
 
+    def test_many_side_mandatory(self):
+
+        session = self.Donkey.Session()
+        email = self.Donkey.tables["email"].sa_class()
+        email.email = u"po@po.com"
+        assert_raises(fe.Invalid, session.add, email)
+
+
+
         
-class test_database_primary_key(object):
+class test_field_type_validation(object):
 
     @classmethod
     def setUpClass(self):

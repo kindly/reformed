@@ -137,6 +137,7 @@ class Relation(BaseSchema):
         cascade = kw.pop("cascade", None)
         if cascade:
             self.sa_options["cascade"] = cascade
+        self.many_side_mandatory = kw.pop("many_side_mandatory", True)
 
     @property
     def order_by_list(self):
@@ -155,8 +156,11 @@ class Relation(BaseSchema):
         self._set_name(parent ,name)
         self._set_sa_options(parent)
 
-        if parent._order_by:
-            self.order_by = parent._order_by
+        if self.use_parent:
+            if parent._order_by:
+                self.order_by = parent._order_by
+            if parent._many_side_mandatory is False:
+                self.many_side_mandatory = parent._many_side_mandatory 
 
         if self.name in parent.items.iterkeys():
             raise AttributeError("column already in field definition")
@@ -213,6 +217,7 @@ class Field(object):
             self.sa_options["cascade"] = _cascade
         self._order_by = kw.pop("order_by", None)
         self._length = kw.pop("length", None)
+        self._many_side_mandatory = kw.pop("many_side_mandatory", True)
 
         for n,v in self.__dict__.iteritems():
             if hasattr(v,"_set_parent"):

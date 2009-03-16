@@ -243,9 +243,10 @@ class Table(object):
                 if d.tables[table].primary_key_columns:
                     for n, v in d.tables[table].primary_key_columns.items():
                         columns[n] = Column(v.type,
-                                             name=n,
-                                             original_table= table,
-                                             original_column= n)
+                                            name=n,
+                                            mandatory = rel.many_side_mandatory,
+                                            original_table= table,
+                                            original_column= n)
                 else:
                     columns[table+'_id'] = Column(sa.Integer,
                                                    name = table+'_id',
@@ -303,7 +304,8 @@ class Table(object):
             primary_keys = tuple(self.primary_key_list)
             sa_table.append_constraint(sa.UniqueConstraint(*primary_keys))
         for n,v in self.foriegn_key_columns.iteritems():
-            sa_table.append_column(sa.Column(n, v.type))
+            sa_options = v.sa_options
+            sa_table.append_column(sa.Column(n, v.type, **sa_options))
         if self.foreign_key_constraints:
             for n,v in self.foreign_key_constraints.iteritems():
                 sa_table.append_constraint(sa.ForeignKeyConstraint(v[0],
