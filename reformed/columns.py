@@ -95,9 +95,9 @@ class Column(BaseSchema):
         onupdate = kw.pop("onupdate", None)
         if onupdate:
             self.sa_options["onupdate"] = onupdate
-        nullable = kw.pop("nullable", False)
-        if nullable:
-            self.sa_options["nullable"] = nullable
+        mandatory = kw.pop("mandatory", False)
+        if mandatory:
+            self.sa_options["nullable"] = not mandatory
 
     def _set_parent(self, parent, name):
         
@@ -201,9 +201,9 @@ class Field(object):
         _onupdate = kw.pop("onupdate", None)
         if _onupdate:
             self._sa_options["onupdate"] = _onupdate
-        _nullable = kw.pop("nullable", False)
-        if _nullable:
-            self._sa_options["nullable"] = _nullable
+        _mandatory = kw.pop("mandatory", False)
+        if _mandatory:
+            self._sa_options["nullable"] = not _mandatory
         _eager = kw.pop("eager", None)
         if _eager:
             self.sa_options["lazy"] = not _eager

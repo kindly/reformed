@@ -58,14 +58,6 @@ class test_database(object):
 
         assert self.Donkey.checkrelations() is None
 
-    def test_related_tables(self):
-
-        
-        assert self.Donkey.related_tables(self.Donkey.tables["people"])\
-                                         ["email"] == "onetomany"
-        assert self.Donkey.related_tables(self.Donkey.tables["email"])\
-                                         ["people"] == "manytoone"
-
 
     def test_table_with_relations(self):
 

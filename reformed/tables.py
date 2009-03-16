@@ -59,7 +59,6 @@ class Table(object):
         self.kw = kw
         self.field_list = args
         self.fields = {}
-        self.additional_columns = {}
         self.primary_key = kw.get("primary_key", None)
         #persisted should be private
         self.persisted = kw.get("persisted", False)
@@ -129,10 +128,6 @@ class Table(object):
         self.persisted = True
         session.close()
 
-    def add_additional_column(self, column):
-        "add special column objects that do not belong to a Field object"
-        self.additional_columns[column.name] = column
-
     def add_field(self,field):
         "add a Field object to this Table"
         field._set_parent(self)
@@ -171,8 +166,6 @@ class Table(object):
         for n,v in self.fields.iteritems():
             for n,v in v.columns.iteritems():
                 columns[n]=v
-        for n,v in self.additional_columns.iteritems():
-            columns[n]=v
         try:
             for n,v in self.foriegn_key_columns.iteritems():
                 columns[n] = v
@@ -221,13 +214,6 @@ class Table(object):
         Database.tables[self.name]=self
         self.database = Database
 #        self.update_sa()
-
-    @property    
-    def related_tables(self):
-        """returns a dictionary of all related tables and what foriegn key
-        relationship they have"""
-        self.check_database()
-        return self.database.related_tables(self)
 
     @property    
     def tables_with_relations(self):
@@ -318,8 +304,6 @@ class Table(object):
             sa_table.append_constraint(sa.UniqueConstraint(*primary_keys))
         for n,v in self.foriegn_key_columns.iteritems():
             sa_table.append_column(sa.Column(n, v.type))
-        for n,v in self.additional_columns.iteritems():
-            sa_table.append_column(sa.Column(n, v.type))
         if self.foreign_key_constraints:
             for n,v in self.foreign_key_constraints.iteritems():
                 sa_table.append_constraint(sa.ForeignKeyConstraint(v[0],
@@ -365,7 +349,6 @@ class Table(object):
                 order_by_statement = self._make_sa_order_by_list(relation, other_table)
                 if order_by_statement:
                     sa_options["order_by"] = order_by_statement
-                logger.info(sa_options)
 
                 properties[relation.name] = sa.orm.relation(other_class,
                                                         backref = "_" + self.name,
@@ -389,17 +372,52 @@ class Table(object):
                     order_by_statement.append(getattr(other_table.c, col[0]))
         return order_by_statement
  
+    def validation_from_field_types(self, column):
+        formencode_all = formencode.All()
+        validators = formencode_all.validators
+        ct = column.type
+        mand = not column.sa_options.get("nullable", True)
+        val = formencode.validators
+        if ct is sa.Unicode or isinstance(ct, sa.Unicode):
+            if hasattr(ct, 'length'):
+                if ct.length:
+                    max = ct.length
+                else:
+                    max = 100
+            else:
+                max = 100
+            formencode_all.validators.append(val.UnicodeString(max = max,
+                                                               not_empty = mand))
+        elif ct is sa.Integer or isinstance(ct, sa.Integer):
+            validators.append(val.Int(not_empty = mand))
+        elif ct is sa.Numeric or isinstance(ct, sa.Numeric):
+            validators.append(val.Number(not_empty = mand))
+        elif ct is sa.DateTime or isinstance(ct, sa.DateTime):
+            validators.append(val.DateValidator(not_empty = mand))
+        elif ct is sa.Boolean or isinstance(ct, sa.Boolean):
+            validators.append(val.Bool(not_empty = mand))
+        elif ct is sa.Binary or isinstance(ct, sa.Binary):
+            validators.append(val.FancyValidator(not_empty = mand))
+        logger.info(column.name)
+        logger.info(formencode_all)
+        return formencode_all
 
     @property
     def validation_schema(self):
         """Gathers all the validation dictionarys from all the Field Objects
         and a makes a formencode Schema out of them"""
-
         schema_dict = {}
+
+        for column in self.columns.itervalues():
+            schema_dict[column.name] = self.validation_from_field_types(column)
+
+        logger.info(schema_dict)
         for n,v in self.fields.iteritems():
             if hasattr(v,"validation"):
-                schema_dict.update(v.validation)
-        return formencode.Schema(allow_extra_fields =True, **schema_dict)
+                for n,v in v.validation.iteritems():
+                    schema_dict[n].validators.append(v)
+        logger.info(schema_dict)
+        return formencode.Schema(allow_extra_fields =True, ignore_key_missing = True, **schema_dict)
     
     def validate(self, instance):
         """this validates an instance of sa_class with the schema defined
@@ -409,6 +427,7 @@ class Table(object):
         for n,v in self.columns.iteritems():
             validation_dict[n] = getattr(instance, n)
 
+        logger.info(validation_dict)
         return self.validation_schema.to_python(validation_dict)
     
     def logged_instance(self, instance):

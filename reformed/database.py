@@ -112,8 +112,13 @@ class Database(object):
                 continue
             fields = []
             for field in row.field:
-                fields.append(getattr(field_types, field.type)( field.name,
-                                                             field.other))
+                field_name = field.name.encode("ascii")
+                if field.other:
+                    field_other = field.other.encode("ascii") 
+                else:
+                    field_other = field.other
+                fields.append(getattr(field_types, field.type)( field_name,
+                                                             field_other))
             kw = {}
             for table_param in row.table_params:
                 if table_param.value == u"True":
@@ -188,24 +193,6 @@ class Database(object):
             if v.other == Table.name:
                 relations[(v.table.name,"other")] = v
         return relations
-
-    def related_tables(self, Table):
-        self.checkrelations()
-        related_tables = {}
-        for n, v in Table.relations.iteritems():
-            related_tables[v.other] = v.type
-        for v in self.relations:
-            if v.other == Table.name:
-                if v.type == 'manytoone':
-                    relation = 'onetomany'
-                elif v.type == 'onetomany':
-                    relation = 'manytoone'
-                elif v.type == 'onetoone':
-                    relation = 'onetooneother'
-                else:
-                    relation = v.type
-                related_tables[v.parent.table.name] = relation
-        return related_tables
 
     def query(self, session, queryset):
 

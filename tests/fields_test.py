@@ -7,7 +7,7 @@ class test_fields():
         
         self.a = Text("col")
         self.b = Text("pop" , 
-                      nullable = True, 
+                      mandatory = True, 
                       default = "pop" ,
                       onupdate = "pop") 
         
@@ -23,7 +23,7 @@ class test_fields():
 
     def test_use_parent(self):
 
-        assert ("nullable", True) in self.b.columns["pop"].sa_options.items()
+        assert ("nullable", False) in self.b.columns["pop"].sa_options.items()
         assert ("default", "pop") in self.b.columns["pop"].sa_options.items()
         assert ("onupdate", "pop") in self.b.columns["pop"].sa_options.items()
         

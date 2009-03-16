@@ -3,6 +3,7 @@ from reformed.fields import *
 from reformed.tables import *
 from reformed.database import *
 from nose.tools import assert_raises,raises
+import formencode as fe
 import logging
 
 sqlhandler = logging.FileHandler("sql.log")
@@ -276,10 +277,21 @@ class test_database_primary_key(object):
                ([["name" ,"name2"],["people.name" ,"people.name2"]],
                 [["name2" ,"name"],["people.name2" ,"people.name"]])
 
+    def test_validation_from_field_types(self):
+
+        email = self.Donkey.tables["email"].columns["email"] 
+        email_table = self.Donkey.tables["email"] 
+        assert isinstance(email_table.validation_from_field_types(email)\
+                          .validators[0], fe.validators.UnicodeString)
+                
+        
+
     def test_validation_schemas(self):
 
         validation_schema = self.Donkey.tables["email"].validation_schema
 
+        print validation_schema
+        
         assert self.Donkey.tables["email"].validation_schema.to_python(
                                              {"email": "pop@david.com"})==\
                                              {"email": "pop@david.com"}
@@ -299,8 +311,8 @@ class test_database_primary_key(object):
         assert_raises(formencode.Invalid,
                     self.Donkey.tables["address"].validation_schema.to_python,
                                           {"address_line_1": "56 moreland",
-                                           "address_line_2": "essex"
-                                           })
+                                           "address_line_2": "essex",
+                                           "postcode" : None})
 
     def test_order(self):
 
@@ -318,12 +330,8 @@ class test_database_primary_key(object):
         session = self.Donkey.Session()
         long_person = self.Donkey.tables["people"].sa_class()
         long_person.name3 = u"davidfdsafsdasffdsas"
-        session.save(long_person)
-        session.flush()
-        session.commit()
+        assert_raises(fe.Invalid, session.add, long_person)
 
-        a = session.query(self.Donkey.tables["people"].sa_class).filter_by(name3=u"davidfdsafsdasffdsas").first()
-        assert a.name3 == u"davidfdsafsdasffdsas"
         
 
 
