@@ -404,8 +404,6 @@ class Table(object):
             validators.append(val.Bool(not_empty = mand))
         elif ct is sa.Binary or isinstance(ct, sa.Binary):
             validators.append(val.FancyValidator(not_empty = mand))
-        logger.info(column.name)
-        logger.info(formencode_all)
         return formencode_all
 
     @property
@@ -437,7 +435,6 @@ class Table(object):
         for n,v in self.columns.iteritems():
             validation_dict[n] = getattr(instance, n)
 
-        logger.info(validation_dict)
         return self.validation_schema.to_python(validation_dict)
     
     def logged_instance(self, instance):

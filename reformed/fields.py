@@ -30,14 +30,12 @@ class Text(Field):
     def __init__(self, name, *args, **kw):
         self.text = Column(sa.Unicode, use_parent = True)
 
-        super(Text,self).__init__(name, *args, **kw)
 
 class Unicode(Field):
     
     def __init__(self, name, *args, **kw):
         self.text = Column(sa.Unicode, use_parent = True)
 
-        super(Unicode,self).__init__(name, *args, **kw)
 
 class Modified(Field):
     
@@ -46,21 +44,18 @@ class Modified(Field):
                                      onupdate=datetime.datetime.now,
                                      default =datetime.datetime.now)
 
-        super(Modified,self).__init__(name, *args, **kw)
 
 class DateTime(Field):
     
     def __init__(self, name, *args, **kw):
         self.text = Column(sa.DateTime, use_parent = True)
 
-        super(DateTime, self).__init__(name, *args, **kw)
 
 class Integer(Field):
     
     def __init__(self, name, *args, **kw):
         self.text = Column(sa.Integer, use_parent = True)
 
-        super(Integer, self).__init__(name, *args, **kw)
     
 class Address(Field):
     
@@ -77,35 +72,30 @@ class Address(Field):
                            "postcode": validators.String(not_empty =True)
                           }
 
-        super(Address, self).__init__(name, *args, **kw)
 
 class Binary(Field):
 
     def __init__(self, name, *args, **kw):
         self.money = Column(sa.Binary, use_parent = True)
         
-        super(Binary, self).__init__(name, *args, **kw)
         
 class Boolean(Field):
 
     def __init__(self, name, *args, **kw):
         self.money = Column(sa.Boolean, use_parent = True)
         
-        super(Boolean, self).__init__(name, *args, **kw)
         
 class Money(Field):
 
     def __init__(self, name, *args, **kw):
         self.money = Column(sa.Numeric, use_parent = True)
         
-        super(Money, self).__init__(name, *args, **kw)
 
 class Numeric(Field):
 
     def __init__(self, name, *args, **kw):
         self.money = Column(sa.Numeric, use_parent = True)
         
-        super(Numeric, self).__init__(name, *args, **kw)
 
 class Email(Field):
     
@@ -113,14 +103,12 @@ class Email(Field):
         self.email = Column(sa.Unicode, use_parent_options = True)
         self.validation = {"email" : validators.Email()}
 
-        super(Email, self).__init__(name, *args, **kw)
 
 class Date(Field):
     
     def __init__(self, name, *args, **kw):
         self.date = Column(sa.Date)
 
-        super(Date, self).__init__(name, *args, **kw)
 
 class ManyToOne(Field):
     
@@ -128,7 +116,6 @@ class ManyToOne(Field):
         self.other = other
         self.manytoone = Relation("manytoone", other, use_parent = True)
     
-        super(ManyToOne,self).__init__(name, *args, **kw)
 
 class OneToMany(Field):
     
@@ -136,7 +123,6 @@ class OneToMany(Field):
         self.other = other
         self.onetomany = Relation("onetomany", other, use_parent = True)
     
-        super(OneToMany,self).__init__(name, *args, **kw)
 
 class OneToManyEager(Field):
     
@@ -144,7 +130,6 @@ class OneToManyEager(Field):
         self.other = other
         self.onetomany = Relation("onetomany", other, eager = True, cascade="all, delete-orphan",  use_parent = True)
     
-        super(OneToManyEager,self).__init__(name, *args, **kw)
 
 class OneToOne(Field):
     
@@ -152,4 +137,3 @@ class OneToOne(Field):
         self.other = other
         self.onetoone = Relation("onetoone",other,use_parent = True)
     
-        super(OneToOne,self).__init__(name, *args, **kw)

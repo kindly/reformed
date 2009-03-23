@@ -189,7 +189,7 @@ class Field(object):
     Examples are in fields.py"""
 
     
-    def __init__(self, name, *args, **kw):
+    def __new__(cls, name, *args, **kw):
         """ 
         This gathers metadata from the subclassed objects and stores the columns
         and relations information.
@@ -199,35 +199,49 @@ class Field(object):
         
         """
         #TODO namespace issues need to be sorted out
-        self.name = name
-        self.decendants_name=name
-        self.columns = {}
-        self.relations = {}
-        self._sa_options = {}
-        self._column_order = []
+        obj = object.__new__(cls)
+        obj.name = name
+        obj.decendants_name=name
+        obj.columns = {}
+        obj.relations = {}
+        obj._sa_options = {}
+        obj._column_order = []
         _default = kw.pop("default", None)
         if _default:
-            self._sa_options["default"] = _default
+            obj._sa_options["default"] = _default
         _onupdate = kw.pop("onupdate", None)
         if _onupdate:
-            self._sa_options["onupdate"] = _onupdate
+            obj._sa_options["onupdate"] = _onupdate
         _mandatory = kw.pop("mandatory", False)
         if _mandatory:
-            self._sa_options["nullable"] = False
+            obj._sa_options["nullable"] = False
         _eager = kw.pop("eager", None)
         if _eager:
-            self.sa_options["lazy"] = not _eager
+            obj.sa_options["lazy"] = not _eager
         _cascade = kw.pop("cascade", None)
         if _cascade:
-            self.sa_options["cascade"] = _cascade
-        self._validation = kw.pop("validation",None)
-        self._order_by = kw.pop("order_by", None)
-        self._length = kw.pop("length", None)
-        self._many_side_mandatory = kw.pop("many_side_mandatory", True)
+            obj.sa_options["cascade"] = _cascade
+        obj._validation = kw.pop("validation",None)
+        obj._order_by = kw.pop("order_by", None)
+        obj._length = kw.pop("length", None)
+        obj._many_side_mandatory = kw.pop("many_side_mandatory", True)
+        return obj
 
-        for n,v in self.__dict__.iteritems():
-            if hasattr(v,"_set_parent"):
-                v._set_parent(self,n)
+    def __init__(self, name, *args, **kw):
+        pass
+#      for n,v in self.__dict__.iteritems():
+#          if hasattr(v,"_set_parent"):
+#              v._set_parent(self,n)
+
+    def __repr__(self):
+        return "<%s - %s>" % (self.name, self._column_order)
+
+    def __setattr__(self, name, value):
+
+        if isinstance(value, BaseSchema):
+            value._set_parent(self, name)
+        else:
+            object.__setattr__(self, name, value)
 
     @property
     def items(self):

@@ -68,7 +68,10 @@ class Database(object):
         for field in table.fields.values():
             if not hasattr(field, "other") or field.other not in self.tables.keys():
                 continue
-            if (hasattr(field, "onetoone") or hasattr(field, "onetomany")) and \
+            ##TODO Horrible mess, need to do much better checking of relations and
+            ##need to sort out field column divide for relations
+            relation_types= [relation.type for relation in field.relations.values()]
+            if ("onetoone" in relation_types or "onetomany" in relation_types) and \
                self.tables[field.other].persisted is True:
                 raise custom_exceptions.NoTableAddError("table %s cannot be added"
                                                         % table.name)
