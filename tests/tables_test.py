@@ -421,8 +421,6 @@ class test_field_type_validation(object):
         person.name7 = "poop@poop.com"
         person.name8 = "pop"
         assert_raises(fe.Invalid, self.session.add, person)
-        person.name8 = "pop"
-        self.session.add(person)
 
 
 if __name__ == '__main__':

@@ -60,6 +60,7 @@ class Table(object):
         self.kw = kw
         self.field_list = args
         self.fields = {}
+        self.field_order = []
         self.primary_key = kw.get("primary_key", None)
         #persisted should be private
         self.persisted = kw.get("persisted", False)
@@ -150,6 +151,14 @@ class Table(object):
             for n,v in v.columns.iteritems():
                 columns[n]=v
         return columns
+
+    @property
+    def defined_columns_order(self):
+        column_order = []
+        for field in self.field_order:
+            for column in self.fields[field]._column_order:
+                column_order.append(column)
+        return column_order
 
     @property    
     def columns(self):
@@ -285,20 +294,21 @@ class Table(object):
         if not self.database.metadata:
             raise custom_exceptions.NoMetadataError("table not assigned a metadata")
         sa_table = sa.Table(self.name, self.database.metadata)
-#        for n,v in self.primary_key_columns.iteritems():
-#            sa_table.append_column(sa.Column(n, v.type, primary_key = True))
-#        for n,v in self.defined_non_primary_key_columns.iteritems():
-#            sa_table.append_column(sa.Column(n, v.type))
         sa_table.append_column(sa.Column("id", sa.Integer, primary_key = True))
-        for n,v in self.defined_columns.iteritems():
-            sa_options = v.sa_options
-            sa_table.append_column(sa.Column(n, v.type, **sa_options))
-        if self.primary_key_list:
-            primary_keys = tuple(self.primary_key_list)
-            sa_table.append_constraint(sa.UniqueConstraint(*primary_keys))
         for n,v in self.foriegn_key_columns.iteritems():
             sa_options = v.sa_options
             sa_table.append_column(sa.Column(n, v.type, **sa_options))
+        defined_columns = self.defined_columns
+        for column in self.defined_columns_order:
+            v = defined_columns[column]
+            sa_options = v.sa_options
+            sa_table.append_column(sa.Column(column, v.type, **sa_options))
+#       for n,v in self.defined_columns.iteritems():
+#           sa_options = v.sa_options
+#           sa_table.append_column(sa.Column(n, v.type, **sa_options))
+        if self.primary_key_list:
+            primary_keys = tuple(self.primary_key_list)
+            sa_table.append_constraint(sa.UniqueConstraint(*primary_keys))
         if self.foreign_key_constraints:
             for n,v in self.foreign_key_constraints.iteritems():
                 sa_table.append_constraint(sa.ForeignKeyConstraint(v[0],

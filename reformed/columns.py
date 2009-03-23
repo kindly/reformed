@@ -204,6 +204,7 @@ class Field(object):
         self.columns = {}
         self.relations = {}
         self._sa_options = {}
+        self._column_order = []
         _default = kw.pop("default", None)
         if _default:
             self._sa_options["default"] = _default
@@ -237,6 +238,7 @@ class Field(object):
 
     def _add_column(self, name, column):
         self.columns[name] = column
+        self._column_order.append(name)
 
     def _add_relation(self, name, relation):
         self.relations[name] = relation
@@ -247,5 +249,6 @@ class Field(object):
                 raise AttributeError("already an item named %s" % n)
                 
         Table.fields[self.name] = self
+        Table.field_order.append(self.name)
         self.table = Table
    
