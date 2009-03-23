@@ -360,6 +360,8 @@ class test_field_type_validation(object):
                                   DateTime("name4", mandatory = True),
                                   Boolean("name5", mandatory = True),
                                   Binary("name6", mandatory = True),
+                                  Text("name7", validation = r"Email"),
+                                  Text("name8", validation = r"poo.*")
                                  ),
                            metadata = self.meta,
                            engine = self.engine,
@@ -400,6 +402,27 @@ class test_field_type_validation(object):
         person.name5 = True
         person.name6 = None
         assert_raises(fe.Invalid, self.session.add, person)
+
+    def test_field_validation(self):
+
+        person = self.Donkey.tables["people"].sa_class()
+        person.email = "pop@pop.com"
+        person.name2 = 10.2
+        person.name3 = 7
+        person.name4 = datetime.datetime.now()
+        person.name5 = True
+        pic = file("tests/jim.xcf", mode = "rb").read()
+        person.name6 = pic
+        person.name7 = "poop@poop.com"
+        person.name8 = "poop"
+        self.session.add(person)
+        person.name7 = "plop"
+        assert_raises(fe.Invalid, self.session.add, person)
+        person.name7 = "poop@poop.com"
+        person.name8 = "pop"
+        assert_raises(fe.Invalid, self.session.add, person)
+        person.name8 = "pop"
+        self.session.add(person)
 
 
 if __name__ == '__main__':

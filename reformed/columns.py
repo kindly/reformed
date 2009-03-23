@@ -99,14 +99,18 @@ class Column(BaseSchema):
         mandatory = kw.pop("mandatory", False)
         if mandatory:
             self.sa_options["nullable"] = False
+        self.validation = kw.pop("validation", None)
 
     def _set_parent(self, parent, name):
         
         self._set_name(parent ,name)
         self._set_sa_options(parent)
         
-        if parent._length:
-            self.type = self.type(parent._length)
+        if self.use_parent:
+            if parent._length:
+                self.type = self.type(parent._length)
+            if parent._validation:
+                self.validation = parent._validation
             
         if self.name in parent.items.iterkeys():
             raise AttributeError("column already in field definition")
@@ -215,6 +219,7 @@ class Field(object):
         _cascade = kw.pop("cascade", None)
         if _cascade:
             self.sa_options["cascade"] = _cascade
+        self._validation = kw.pop("validation",None)
         self._order_by = kw.pop("order_by", None)
         self._length = kw.pop("length", None)
         self._many_side_mandatory = kw.pop("many_side_mandatory", True)

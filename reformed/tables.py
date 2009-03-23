@@ -31,6 +31,7 @@ from sqlalchemy.orm import column_property
 from columns import Column
 import custom_exceptions
 import formencode
+from formencode import validators
 from fields import Modified
 from sqlalchemy.orm.interfaces import AttributeExtension
 import logging
@@ -132,14 +133,6 @@ class Table(object):
         "add a Field object to this Table"
         field._set_parent(self)
     
-    def update_sa(self):
-        """updates all tables sqlalchemy objects"""
-        try:
-            self.check_database()
-            self.database.update_sa()
-        except custom_exceptions.NoDatabaseError:
-            pass
-
     @property    
     def items(self):
         """gathers all columns and relations defined in this table"""
@@ -378,6 +371,7 @@ class Table(object):
         formencode_all = formencode.All()
         validators = formencode_all.validators
         ct = column.type
+        #TODO do not make mand when forighn key column
         mand = not column.sa_options.get("nullable", True)
         val = formencode.validators
         if ct is sa.Unicode or isinstance(ct, sa.Unicode):
@@ -412,13 +406,17 @@ class Table(object):
 
         for column in self.columns.itervalues():
             schema_dict[column.name] = self.validation_from_field_types(column)
+            if column.validation:
+                if hasattr(validators, column.validation):
+                    validator = getattr(validators, column.validation)()
+                else:
+                    validator = validators.Regex(column.validation)
+                schema_dict[column.name].validators.append(validator)
 
-        logger.info(schema_dict)
         for n,v in self.fields.iteritems():
             if hasattr(v,"validation"):
                 for n,v in v.validation.iteritems():
                     schema_dict[n].validators.append(v)
-        logger.info(schema_dict)
         return formencode.Schema(allow_extra_fields =True, ignore_key_missing = True, **schema_dict)
     
     def validate(self, instance):
