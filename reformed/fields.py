@@ -20,7 +20,7 @@
 ##	fields.py
 ##	======
 ##	
-##	This file contains all the standard reformed field sublesse
+##	This file contains all the standard reformed field subclasses
 
 from columns import *
 import datetime

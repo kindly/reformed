@@ -14,6 +14,8 @@ sqllogger.addHandler(sqlhandler)
 
 class test_donkey_persist(object):
 
+    persist = True
+
     @classmethod
     def setUpClass(self):
         self.engine = create_engine('sqlite:///tests/test_donkey.sqlite',echo = True)

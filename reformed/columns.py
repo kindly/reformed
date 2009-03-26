@@ -227,12 +227,6 @@ class Field(object):
         obj._many_side_mandatory = kw.pop("many_side_mandatory", True)
         return obj
 
-    def __init__(self, name, *args, **kw):
-        pass
-#      for n,v in self.__dict__.iteritems():
-#          if hasattr(v,"_set_parent"):
-#              v._set_parent(self,n)
-
     def __repr__(self):
         return "<%s - %s>" % (self.name, self._column_order)
 
