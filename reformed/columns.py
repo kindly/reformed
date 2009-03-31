@@ -256,12 +256,15 @@ class Field(object):
     def _add_relation(self, name, relation):
         self.relations[name] = relation
 
-    def _set_parent(self, Table):
+    def _set_parent(self, table):
         for n,v in self.items.iteritems():
-            if n in Table.items.iterkeys():
+            if n in table.items.iterkeys():
                 raise AttributeError("already an item named %s" % n)
                 
-        Table.fields[self.name] = self
-        Table.field_order.append(self.name)
-        self.table = Table
+        table.fields[self.name] = self
+        table.field_order.append(self.name)
+        table.add_relations()
+        if hasattr(table, "database"):
+            table.database.add_relations()
+        self.table = table
    

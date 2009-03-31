@@ -94,7 +94,7 @@ class Table(object):
         for fields in args:
             fields._set_parent(self)
 
-        if "modified_date" not in self.fields.keys() and self.modified_date:
+        if "modified_date" not in self.fields.iterkeys() and self.modified_date:
             self.add_field(Modified("modified_date"))
         #sqlalchemy objects
         self.sa_table = None
@@ -182,14 +182,14 @@ class Table(object):
             pass
         return columns
 
-    @property    
-    def relations(self):
+  
+    def add_relations(self):   # this is not a property for an optimisations
         """gathers all relations defined in this table"""
         relations = {}
         for n,v in self.fields.iteritems():
             for n,v in v.relations.iteritems():
                 relations[n]=v
-        return relations
+        self.relations = relations
 
     @property
     def primary_key_columns(self):
@@ -221,6 +221,7 @@ class Table(object):
     def _set_parent(self,Database):
         """adds this table to a database object"""
         Database.tables[self.name]=self
+        Database.add_relations()
         self.database = Database
 #        self.update_sa()
 

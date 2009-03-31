@@ -62,15 +62,15 @@ class Database(object):
 
     def add_table(self, table):
 
-        if table.name in self.tables.keys():
+        if table.name in self.tables.iterkeys():
             raise custom_exceptions.DuplicateTableError("already a table named %s" 
                                                         % table.name)
-        for field in table.fields.values():
-            if not hasattr(field, "other") or field.other not in self.tables.keys():
+        for field in table.fields.itervalues():
+            if not hasattr(field, "other") or field.other not in self.tables.iterkeys():
                 continue
             ##TODO Horrible mess, need to do much better checking of relations and
             ##need to sort out field column divide for relations
-            relation_types= [relation.type for relation in field.relations.values()]
+            relation_types= [relation.type for relation in field.relations.itervalues()]
             if ("onetoone" in relation_types or "onetomany" in relation_types) and \
                self.tables[field.other].persisted is True:
                 raise custom_exceptions.NoTableAddError("table %s cannot be added"
@@ -84,12 +84,12 @@ class Database(object):
 
         if not self.persisted:
             for table in self.boot_tables:
-                if table.name in self.tables.keys():
+                if table.name in self.tables.iterkeys():
                     break
                 self.add_table(table)
         self.update_sa()
         self.metadata.create_all(self.engine)
-        for table in self.tables.values():
+        for table in self.tables.itervalues():
             if not table.persisted:
                 table.persist()
         self.persisted = True
@@ -147,19 +147,17 @@ class Database(object):
 
         session.close()
 
-        for table in self.tables.values():
+        for table in self.tables.itervalues():
             table.persisted = True
             
         self.update_sa()
         self.persisted = True
 
-    @property
-    def relations(self):
-        relations = []
+    def add_relations(self):     #not property for optimisation
+        self.relations = []
         for table_name,table_value in self.tables.iteritems():
             for rel_name,rel_value in table_value.relations.iteritems():
-                relations.append(rel_value)
-        return relations                
+                self.relations.append(rel_value)
 
     def checkrelations(self):
         for relation in self.relations:
@@ -172,7 +170,7 @@ class Database(object):
             if relation.order_by_list:
                 for col in relation.order_by_list:
                     if col[0] != 'id' \
-                       and col[0] not in self.tables[relation.other].columns.keys():
+                       and col[0] not in self.tables[relation.other].columns.iterkeys():
                         raise custom_exceptions.RelationError,\
                               "ordered column %s does not exits in %s" \
                                 % (col[0], relation.other)
@@ -192,14 +190,14 @@ class Database(object):
                 table.sa_mapper()
             sa.orm.compile_mappers()
             for table in self.tables.itervalues():
-                for column in table.columns.keys():
+                for column in table.columns.iterkeys():
                     getattr(table.sa_class, column).impl.active_history = True
         except (custom_exceptions.NoDatabaseError,\
                 custom_exceptions.RelationError):
             pass
 
     def tables_with_relations(self,Table):
-        self.checkrelations()
+        #self.checkrelations()      not run as optimisation
         relations = {}
         for n, v in Table.relations.iteritems():
             relations[(v.other,"this")] = v
@@ -239,7 +237,7 @@ class Database(object):
 
         for table in self.tables.values():
                               
-            if table.logged and "_log_%s" % table.name not in self.tables.keys() :
+            if table.logged and "_log_%s" % table.name not in self.tables.iterkeys() :
                 self.add_table(self.logged_table(table))
 
     def get_class(self, table):
