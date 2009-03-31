@@ -23,9 +23,12 @@ class test_donkey(object):
         self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
         self.Donkey = Database("Donkey", 
                             Table("people",
-                                  Text("name"),
+                                  Text("name", mandatory = True, length = 30),
                                   Address("supporter_address"),
-                                  OneToMany("email","email"),
+                                  OneToMany("email","email", 
+                                            order_by = "email",
+                                            eager = True, 
+                                            cascade = "all, delete-orphan"),
                                   OneToMany("donkey_sponsership",
                                             "donkey_sponsership"),
                                   entity = True),
@@ -33,9 +36,11 @@ class test_donkey(object):
                                   Email("email")
                                  ),
                             Table("donkey", 
-                                  Text("name"),
-                                  Integer("age"),
-                                  OneToOne("donkey_pics","donkey_pics"),
+                                  Text("name", validation = '__^[a-zA-Z0-9]*$'),
+                                  Integer("age", validation = 'Int'),
+                                  OneToOne("donkey_pics","donkey_pics",
+                                           many_side_mandatory = False,
+                                           ),
                                   OneToMany("donkey_sponsership",
                                             "donkey_sponsership"),
                                   entity = True
@@ -164,10 +169,17 @@ class test_basic_input(test_donkey):
 
     def test_logged_attribute(self):
 
-
         assert self.david_logged.name == u"david"
         assert self.david_logged.address_line_1 == u"43 union street"
         assert self.david_logged.postcode == u"es388"
+
+    def test_regex_validation(self):
+
+        poo = self.Donkey.tables["donkey"].sa_class()
+        poo.name = "don_keyfasf"
+        print self.Donkey.tables["donkey"].fields["name"]._validation
+        assert_raises(formencode.Invalid,self.session.add, poo)
+
         
 if __name__ == '__main__':
 

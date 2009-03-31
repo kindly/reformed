@@ -206,25 +206,30 @@ class Field(object):
         obj.relations = {}
         obj._sa_options = {}
         obj._column_order = []
-        _default = kw.pop("default", None)
-        if _default:
-            obj._sa_options["default"] = _default
-        _onupdate = kw.pop("onupdate", None)
-        if _onupdate:
-            obj._sa_options["onupdate"] = _onupdate
-        _mandatory = kw.pop("mandatory", False)
-        if _mandatory:
+        obj._kw = kw
+        obj._default = kw.get("default", None)
+        if obj._default:
+            obj._sa_options["default"] = obj._default
+        obj._onupdate = kw.get("onupdate", None)
+        if obj._onupdate:
+            obj._sa_options["onupdate"] = obj._onupdate
+        obj._mandatory = kw.get("mandatory", False)
+        if obj._mandatory:
             obj._sa_options["nullable"] = False
-        _eager = kw.pop("eager", None)
-        if _eager:
-            obj.sa_options["lazy"] = not _eager
-        _cascade = kw.pop("cascade", None)
-        if _cascade:
-            obj.sa_options["cascade"] = _cascade
-        obj._validation = kw.pop("validation",None)
-        obj._order_by = kw.pop("order_by", None)
-        obj._length = kw.pop("length", None)
-        obj._many_side_mandatory = kw.pop("many_side_mandatory", True)
+        obj._eager = kw.get("eager", None)
+        if obj._eager:
+            obj._sa_options["lazy"] = not obj._eager
+        obj._cascade = kw.get("cascade", None)
+        if obj._cascade:
+            obj._sa_options["cascade"] = obj._cascade
+        obj._validation = kw.get("validation",None)
+        if obj._validation:
+            obj._validation = r"%s" % obj._validation.encode("ascii")
+        obj._order_by = kw.get("order_by", None)
+        obj._length = kw.get("length", None)
+        if obj._length:
+            obj._length = int(obj._length)
+        obj._many_side_mandatory = kw.get("many_side_mandatory", True)
         return obj
 
     def __repr__(self):

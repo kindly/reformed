@@ -52,7 +52,7 @@ class test_database(object):
     def test_relations(self):
 
         print self.Donkey.relations
-        assert self.Donkey.relations[2].name == "Email" 
+        assert self.Donkey.relations[3].name == "Email" 
 
     def test_checkrelations(self):
 
@@ -78,22 +78,27 @@ class test_database(object):
         assert "__table" in self.Donkey.tables.keys()
         assert "__table_params" in self.Donkey.tables.keys()
         assert "__field" in self.Donkey.tables.keys()
+        assert "__field_params" in self.Donkey.tables.keys()
 
     def test_database_persist_data(self):
 
         session = self.Session()
         all = session.query(self.Donkey.tables["__table_params"].sa_class).all()
         allfields = session.query(self.Donkey.tables["__field"].sa_class).all()
+        allfield_param = session.query(self.Donkey.tables["__field_params"].sa_class).all()
            
         assert (u"people",u"entity", u"True") in [(a.table_name, a.item,
                                                    a.value) for a in all]
                                                     
-        assert (u"people",u"name", u"Text") in [(a.table_name, a.name,
+        assert (u"people",u"name", u"Text") in [(a.table_name, a.field_name,
                                                    a.type) for a in allfields]
 
-        assert (u"email",u"email", u"Text", None) in [(a.table_name, a.name,
+        assert (u"email",u"email", u"Text", None) in [(a.table_name, a.field_name,
                                                    a.type,
                                                    a.other) for a in allfields]
+
+        assert (u"people",u"name2",u"length", u"10") in [(a.table_name, a.field_name, a.item,
+                                                     a.value) for a in allfield_param]
 
     def test_add_table_after_persist(self):
 
@@ -131,5 +136,5 @@ class test_database(object):
         assert u"__field" in [a.table_name for a in self.list_of_tables]
 
     def test_log_tables_persisted(self):
-        assert (u"_log_people", u"name") in [(a.table_name,a.name) for a in self.list_of_fields]
+        assert (u"_log_people", u"name") in [(a.table_name,a.field_name) for a in self.list_of_fields]
         

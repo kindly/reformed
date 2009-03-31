@@ -83,14 +83,14 @@ class test_table_primary_key(object):
         
         assert self.a.defined_non_primary_key_columns.has_key("col3")
 
-    @raises(AttributeError)
-    def test_defined_primary_keyssetUp(self):
-        
-        a= Table("poo",
-            Text("col"),
-            Text("col2"),
-            ManyToOne("rel1","table2"),
-            primary_key="col,col1")
+#    @raises(AttributeError)
+#    def test_defined_primary_keyssetUp(self):
+#        
+#        a= Table("poo",
+#            Text("col"),
+#            Text("col2"),
+#            ManyToOne("rel1","table2"),
+#            primary_key="col,col1")
 
 class test_database_default_primary_key(object):
     
@@ -361,7 +361,7 @@ class test_field_type_validation(object):
                                   Boolean("name5", mandatory = True),
                                   Binary("name6", mandatory = True),
                                   Text("name7", validation = r"Email"),
-                                  Text("name8", validation = r"poo.*")
+                                  Text("name8", validation = r"__poo.*")
                                  ),
                            metadata = self.meta,
                            engine = self.engine,

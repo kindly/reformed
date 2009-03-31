@@ -181,6 +181,23 @@ class test_donkey_persist(object):
         all_logs = self.session.query(self.Donkey.get_class("_log_donkey")).all()
         assert (self.jimmi_id, u"jimmii%s" % self.p) in [(a.donkey_id,a.name) for a in all_logs]
 
+    def test_params_load(self):
+
+        assert self.Donkey.tables["donkey"].fields["name"]._validation == "__^[a-zA-Z0-9]*$"
+        assert self.Donkey.tables["donkey"].fields["donkey_pics"]._many_side_mandatory == False 
+        assert self.Donkey.tables["donkey"].fields["age"]._validation == "Int"
+        assert self.Donkey.tables["people"].fields["name"]._length == 30
+        assert self.Donkey.tables["people"].fields["name"]._mandatory == True
+        assert self.Donkey.tables["people"].fields["email"]._cascade == "all, delete-orphan"
+        assert self.Donkey.tables["people"].fields["email"]._order_by == "email"
+        assert self.Donkey.tables["people"].fields["email"]._eager == True
+
+    def test_regex_validation(self):
+
+        poo = self.Donkey.tables["donkey"].sa_class()
+        poo.name = "don_keyfasf"
+        assert_raises(formencode.Invalid, self.session.add, poo)
+
 if __name__ == '__main__':
     
         engine = create_engine('sqlite:///donkey.db', echo=True)

@@ -88,8 +88,8 @@ class Table(object):
             for fields in args:
                 for column in fields.columns.itervalues():
                     column_names.append(column.name)
-            if key not in column_names:
-                raise AttributeError("%s is not a column" % key)
+#            if key not in column_names:
+#                raise AttributeError("%s is not a column" % key)
 
         for fields in args:
             fields._set_parent(self)
@@ -117,12 +117,19 @@ class Table(object):
             __table_param.value = u"%s" % str(v) 
             __table.table_params.append(__table_param)
 
-        for n, v in self.fields.iteritems():
+        for field_name, field  in self.fields.iteritems():
             __field = self.database.tables["__field"].sa_class()
-            __field.name = u"%s" % n
-            __field.type = u"%s" % v.__class__.__name__
-            if hasattr(v, "other"):
-                __field.other = u"%s" % v.other
+            __field.field_name = u"%s" % field_name
+            __field.type = u"%s" % field.__class__.__name__
+            if hasattr(field, "other"):
+                __field.other = u"%s" % field.other
+            
+            for n,v in field._kw.iteritems():
+                __field_param = self.database.tables["__field_params"].sa_class()
+                __field_param.item = u"%s" % n
+                __field_param.value = u"%s" % str(v) 
+                __field.field_params.append(__field_param)
+
             __table.field.append(__field)
 
         session.add(__table)
@@ -189,7 +196,7 @@ class Table(object):
         """gathers all primary key columns in this table"""
         columns = {}
         if self.primary_key:
-            for n, v in self.defined_columns.iteritems():
+            for n, v in self.columns.iteritems():
                 if n in self.primary_key_list:
                     columns[n] = v
 #        else:
@@ -415,10 +422,10 @@ class Table(object):
         for column in self.columns.itervalues():
             schema_dict[column.name] = self.validation_from_field_types(column)
             if column.validation:
-                if hasattr(validators, column.validation):
-                    validator = getattr(validators, column.validation)()
+                if column.validation.startswith("__"):
+                    validator = validators.Regex(column.validation[2:])
                 else:
-                    validator = validators.Regex(column.validation)
+                    validator = getattr(validators, column.validation)()
                 schema_dict[column.name].validators.append(validator)
 
         for n,v in self.fields.iteritems():

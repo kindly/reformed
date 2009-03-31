@@ -22,3 +22,4 @@
 - make sure indexs and unique constraints are remade
 - add ordering list implementation
 - make sure sa type class/object distinction works
+- make sure primary key columns are present 

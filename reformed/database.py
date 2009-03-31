@@ -115,13 +115,24 @@ class Database(object):
                 continue
             fields = []
             for field in row.field:
-                field_name = field.name.encode("ascii")
+                field_name = field.field_name.encode("ascii")
                 if field.other:
                     field_other = field.other.encode("ascii") 
                 else:
                     field_other = field.other
+                field_kw = {}
+                for field_param in field.field_params:
+                    if field_param.value == u"True":
+                        value = True
+                    elif field_param.value == u"False":
+                        value = False
+                    else:
+                        value = field_param.value 
+                    field_kw[field_param.item.encode("ascii")] = value
+
                 fields.append(getattr(field_types, field.type)( field_name,
-                                                             field_other))
+                                                             field_other,
+                                                              **field_kw))
             kw = {}
             for table_param in row.table_params:
                 if table_param.value == u"True":

@@ -36,9 +36,15 @@ class boot_tables(object):
                                 fields.OneToManyEager("field","__field"),
                                 primary_key = "table_name"
                                ),
-                   Table("__table_params", fields.Text("item"),
+                            Table("__table_params", fields.Text("item"),
                                 fields.Text("value")),
-                   Table("__field", fields.Text("name"),
+                            Table("__field", fields.Text("field_name"),
                                 fields.Text("type"),
-                                fields.Text("other"))
+                                fields.Text("other"),
+                                fields.OneToManyEager("field_params","__field_params"),
+                                primary_key = "field_name,table_name"),
+                            Table("__field_params", fields.Text("item"),
+                                fields.Text("value"))
+
+
                   ]
