@@ -1,25 +1,26 @@
 - change joint primary key columns to have an id column as well but, so they become unique constraints - DONE
 - set up logging - Done
-- make formencode validators or update existing ones when field layout sugests
-- add validation column to persisted field table for basic field validation or potentially a validation table
-- add default not nulls for joint columns
+- make formencode validators or update existing ones when field layout sugests - Done
+- add validation column to persisted field table for basic field validation or potentially a validation table -Done
+- add default not nulls for joint columns -Done
 - modify the add table and add field so as to go through set parent - Done
 - sort out test coverage for database especially looking at all join conditions - Done
 - add table that joins back to an entity table - can be done by making join from both tables
 - add unique constraints - Done
 - add nullable,sequences and any other sqlalchemy column level parameters -Done
 - add validation - basicly DONE
-- sort out order of field, by adding counter to columns and fields using setattr
+- sort out order of field, by adding counter to columns and fields using setattr - Done
 - do checks to see if defined table reflects table underneath
 - persist database information - Done
 - create object for getting sa_objects
 - give all relevent tables locking information
 - give all tables potential to log information - Done
 - make sure namespaces for objects are unique, looking at especially backreferences need to check relations forien keyclashed 
-- make sure field definition namespaces are unique
+- make sure field definition namespaces are unique - Done
 - searching
-- optimise make sa_table
+- optimise make sa_table - Done
 - make sure indexs and unique constraints are remade
 - add ordering list implementation
 - make sure sa type class/object distinction works
-- make sure primary key columns are present 
+- make sure primary key columns are present once they are defined in check_relations or similar
+- seperate out logging

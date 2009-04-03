@@ -29,19 +29,19 @@ import formencode
 from formencode import validators
 
 class BaseSchema(object):
-    
+    """Base class of everthing that turn into a database field or 
+    constraint or index. Its only use is to gather the type and name
+    of the field, constraint or index.
+
+    :param type: This is either a sqlalchemy type or a string 
+            with onetomany, manytoone or onetoone to define join types.
+
+    :param use_parent:  if True will use its parents (Field) column parameters
+                  instead.
+    """
+
     def __init__(self, type,*args, **kw):
-        """Base class of everthing that turn into a database field,
-        constraint or index. Its only use is to gather the type and name
-        of the field, constraint or index.
 
-        Type :  mandatory this is either a sqlalchemy type or a string 
-                with onetomany, manytoone or onetoone to define join types.
-
-        use_parent :  if True will use its parents (Field) column parameters
-                      instead.
-                     
-        """
         self.type = type
         self.name = kw.pop("name", None)
         self.use_parent=kw.pop("use_parent", False)
@@ -77,15 +77,11 @@ class BaseSchema(object):
         return self.parent.table                                         
 
 class Column(BaseSchema):
-    
-    def __init__(self, type,*args, **kw):
+    """Contains information to make a database field.
+    :param default: default value for the column
+    :param onupdate: value whenever the accosiated row is updated"""
 
-        """This gathers parameters to be given to a sqlalchemy Column object. It 
-        defines a database field.
-        
-        default : default value for the column
-        onupdate : value whenever the accosiated row is updated
-        """
+    def __init__(self, type,*args, **kw):
 
         super(Column,self).__init__(type ,*args, **kw)
         ##original column should be made private. 
@@ -119,20 +115,20 @@ class Column(BaseSchema):
             self.parent = parent
         
 class Relation(BaseSchema):
+    """Specifies a relationship between the table where this relation
+    is defined and another table.
 
-    def __init__(self, type, *args, **kw):
+    type AND other are mandatory for relations
 
-        """specifies a relationship between the table where this relation
-        is defined and another table.
+    :param other: The name of the table where this reltaion will
+      join to.
 
-        type AND other are mandatory for relations
-        
-        other: The name of the table where this reltaion will join to.
-        
-        """
+    """
+
+    def __init__(self, type, other, *args, **kw):
 
         super(Relation,self).__init__(type ,*args, **kw)
-        self.other = args[0]
+        self.other = other 
         self.order_by = kw.pop("order_by", None)
 
         eager = kw.pop("eager", None)
@@ -186,18 +182,14 @@ class Field(object):
     a database field or relation can be made.  This object can contain
     one or more column object (representing a database field) or one
     relation object (representing a database relataion with a foreign key).
-    Examples are in fields.py"""
+    Examples are in fields.py
+
+    :param name:  field name will be used as column name if use_parent is 
+           used"""
 
     
     def __new__(cls, name, *args, **kw):
-        """ 
-        This gathers metadata from the subclassed objects and stores the columns
-        and relations information.
-        
-        name:  field name will be used as column name if use_parent is 
-               used
-        
-        """
+
         #TODO namespace issues need to be sorted out
         obj = object.__new__(cls)
         obj.name = name

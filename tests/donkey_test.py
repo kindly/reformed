@@ -18,7 +18,7 @@ class test_donkey(object):
     def setUpClass(self):
         self.engine = create_engine('sqlite:///:memory:', echo=True)
 #       os.system("rm tests/test_donkey.sqlite")
-#       self.engine = create_engine('sqlite:///tests/test_donkey.sqlite',echo = True)
+#       self.engine = create_engine('sqlite:///reformed/reformed.sqlite',echo = True)
         self.meta = sa.MetaData()
         self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
         self.Donkey = Database("Donkey", 

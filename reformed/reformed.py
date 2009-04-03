@@ -27,9 +27,13 @@ from fields import *
 from tables import *
 from database import *
 import dbconfig
+import migrate.versioning
+from migrate.versioning import schemadiff
 
 reformed = Database("reformed", 
                 metadata = dbconfig.metadata,
                 engine = dbconfig.engine,
                 session = dbconfig.Session
                 )
+
+a = schemadiff.getDiffOfModelAgainstDatabase(dbconfig.metadata, dbconfig.engine) 

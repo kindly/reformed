@@ -32,6 +32,7 @@ sessionhandler = logging.FileHandler("session.log")
 logger.addHandler(sessionhandler)
 
 class SessionWrapper(object):
+    """add hooks and overides sqlalchemy session"""
             
     def __init__(self, Session):
         self.session = Session()
@@ -43,6 +44,7 @@ class SessionWrapper(object):
         self.session.close()
 
     def add(self, obj):
+        """save or update and validate a sqlalchemy object"""
         obj._table.validate(obj)
         self.session.add(obj)
     
