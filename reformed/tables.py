@@ -35,6 +35,7 @@ from formencode import validators
 from fields import Modified
 from sqlalchemy.orm.interfaces import AttributeExtension
 import logging
+import migrate.changeset
 
 logger = logging.getLogger('reformed.main')
 
@@ -453,5 +454,9 @@ class Table(object):
         for n,v in self.columns.iteritems():
             setattr(logged_instance, n, getattr(instance,n))
         return logged_instance
-
+    
+    def _add_field_by_alter_table(self, field):
+        for n,v in field.columns.iteritems():
+            col = sa.Column(name, v.type, **v.sa_options)
+            col.create(self.sa_table)
 

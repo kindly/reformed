@@ -175,10 +175,12 @@ class Database(object):
                                 % (col[0], relation.other)
 
  
-    def update_sa(self):
+    def update_sa(self, reload = False):
         self.update_tables()
         self.checkrelations()
         self.check_related_order_by()
+        if reload:
+            self.clear_sa()
         try:
             for table in self.tables.itervalues():
 #               if table.sa_table:
@@ -194,6 +196,15 @@ class Database(object):
         except (custom_exceptions.NoDatabaseError,\
                 custom_exceptions.RelationError):
             pass
+
+    def clear_sa(self):
+        sa.orm.clear_mappers()
+        self.metadata.clear()
+        for table in self.tables.itervalues():
+            table.mapper = None
+            table.sa_class = None
+            table.sa_table = None
+            
 
     def tables_with_relations(self,Table):
         #self.checkrelations()      not run as optimisation

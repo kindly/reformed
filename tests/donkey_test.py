@@ -15,14 +15,14 @@ sqllogger.addHandler(sqlhandler)
 class test_donkey(object):
 
     @classmethod
-    def setUpClass(self):
-        if not hasattr(self, "engine"):
-            self.engine = create_engine('sqlite:///:memory:', echo=True)
+    def setUpClass(cls):
+        if not hasattr(cls, "engine"):
+            cls.engine = create_engine('sqlite:///:memory:', echo=True)
         
-#        self.engine = create_engine('mysql://localhost/test_donkey', echo = True)
-        self.meta = sa.MetaData()
-        self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
-        self.Donkey = Database("Donkey", 
+#        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
+        cls.meta = sa.MetaData()
+        cls.Session = sa.orm.sessionmaker(bind =cls.engine, autoflush = False)
+        cls.Donkey = Database("Donkey", 
                             Table("people",
                                   Text("name", mandatory = True, length = 30),
                                   Address("supporter_address"),
@@ -60,90 +60,94 @@ class test_donkey(object):
                                   Money("amount"),
                                   Text("source")
                                  ),
-                        metadata = self.meta,
-                        engine = self.engine,
-                        session = self.Session
+                        metadata = cls.meta,
+                        engine = cls.engine,
+                        session = cls.Session
                         )
 
-        self.Donkey.persist()
+        cls.Donkey.persist()
 
-        self.session = self.Donkey.Session()
+        cls.set_up_inserts()
 
-        self.jim = self.Donkey.tables["donkey"].sa_class()
-        self.jim.name = u"jim"
-        self.jim.age = 13
-        self.jim1 = self.Donkey.tables["donkey"].sa_class()
-        self.jim1.name = u"jim1"
-        self.jim1.age = 131
-        jim2 = self.Donkey.tables["donkey"].sa_class()
+    @classmethod
+    def set_up_inserts(cls):
+
+        cls.session = cls.Donkey.Session()
+        cls.jim = cls.Donkey.tables["donkey"].sa_class()
+        cls.jim.name = u"jim"
+        cls.jim.age = 13
+        cls.jim1 = cls.Donkey.tables["donkey"].sa_class()
+        cls.jim1.name = u"jim1"
+        cls.jim1.age = 131
+        jim2 = cls.Donkey.tables["donkey"].sa_class()
         jim2.name = u"jim2"
         jim2.age = 132
-        jim3 = self.Donkey.tables["donkey"].sa_class()
+        jim3 = cls.Donkey.tables["donkey"].sa_class()
         jim3.name = u"jim3"
         jim3.age = 133
-        jim4 = self.Donkey.tables["donkey"].sa_class()
+        jim4 = cls.Donkey.tables["donkey"].sa_class()
         jim4.name = u"jim4"
         jim4.age = 142
-        jim5 = self.Donkey.tables["donkey"].sa_class()
+        jim5 = cls.Donkey.tables["donkey"].sa_class()
         jim5.name = u"jim5"
         jim5.age = 135
-        jim6 = self.Donkey.tables["donkey"].sa_class()
+        jim6 = cls.Donkey.tables["donkey"].sa_class()
         jim6.name = u"jim6"
         jim6.age = 136
-        jim7 = self.Donkey.tables["donkey"].sa_class()
+        jim7 = cls.Donkey.tables["donkey"].sa_class()
         jim7.name = u"jim7"
         jim7.age = 137
-        jim8 = self.Donkey.tables["donkey"].sa_class()
+        jim8 = cls.Donkey.tables["donkey"].sa_class()
         jim8.name = u"jim8"
         jim8.age = 138
-        jim9 = self.Donkey.tables["donkey"].sa_class()
+        jim9 = cls.Donkey.tables["donkey"].sa_class()
         jim9.name = u"jim9"
         jim9.age = 132
-        jim0 = self.Donkey.tables["donkey"].sa_class()
+        jim0 = cls.Donkey.tables["donkey"].sa_class()
         jim0.name = u"jim0"
         jim0.age = 102
-        self.david = self.Donkey.tables["people"].sa_class()
-        self.david.name = u"david"
-        self.david.address_line_1 = u"43 union street"
-        self.david.postcode = u"es388"
-        davidsjim = self.Donkey.tables["donkey_sponsership"].sa_class()
-        davidsjim._people = self.david
-        davidsjim._donkey = self.jim
+        cls.david = cls.Donkey.tables["people"].sa_class()
+        cls.david.name = u"david"
+        cls.david.address_line_1 = u"43 union street"
+        cls.david.postcode = u"es388"
+        davidsjim = cls.Donkey.tables["donkey_sponsership"].sa_class()
+        davidsjim._people = cls.david
+        davidsjim._donkey = cls.jim
         davidsjim.amount = 50
         
         jimpic = file("tests/jim.xcf", mode = "rb").read()
         
-        jimimage = self.Donkey.tables["donkey_pics"].sa_class()
-        jimimage.donkey = self.jim
+        jimimage = cls.Donkey.tables["donkey_pics"].sa_class()
+        jimimage.donkey = cls.jim
         jimimage.pic = jimpic
 
-        self.session.add(self.david)
-        self.session.add(self.jim)
-        self.session.add(self.jim1)
-        self.session.add(jim2)
-        self.session.add(jim3)
-        self.session.add(jim4)
-        self.session.add(jim5)
-        self.session.add(jim6)
-        self.session.add(jim7)
-        self.session.add(jim8)
-        self.session.add(jim9)
-        self.session.add(jim0)
-        self.session.add(davidsjim)
-        self.session.add(jimimage)
-        self.session.commit()
+        cls.session.add(cls.david)
+        cls.session.add(cls.jim)
+        cls.session.add(cls.jim1)
+        cls.session.add(jim2)
+        cls.session.add(jim3)
+        cls.session.add(jim4)
+        cls.session.add(jim5)
+        cls.session.add(jim6)
+        cls.session.add(jim7)
+        cls.session.add(jim8)
+        cls.session.add(jim9)
+        cls.session.add(jim0)
+        cls.session.add(davidsjim)
+        cls.session.add(jimimage)
+        cls.session.commit()
 
-        self.david2 = self.Donkey.tables["people"].sa_class()
-        self.david2.name = u"david"
-        self.david2.address_line_1 = u""
-        self.david_logged = self.david._table.logged_instance(self.david)
-        self.session.add(self.david_logged)
-        self.session.commit()
+        cls.david2 = cls.Donkey.tables["people"].sa_class()
+        cls.david2.name = u"david"
+        cls.david2.address_line_1 = u""
+        cls.david_logged = cls.david._table.logged_instance(cls.david)
+        cls.session.add(cls.david_logged)
+        cls.session.commit()
         
     @classmethod
-    def tearDownClass(self):
+    def tearDownClass(cls):
 
-        self.session.close()
+        cls.session.close()
 
 
 class test_basic_input(test_donkey):
@@ -180,4 +184,15 @@ class test_basic_input(test_donkey):
         poo.name = "don_keyfasf"
         assert_raises(formencode.Invalid,self.session.add, poo)
 
+class test_after_reload(test_basic_input):
+    
+    @classmethod
+    def setUpClass(cls):
+        super(test_after_reload, cls).setUpClass()
+        cls.Donkey.update_sa(reload = True)
+        super(test_after_reload, cls).set_up_inserts()
+        
+    @classmethod
+    def set_up_inserts(cls):
+        pass
         
