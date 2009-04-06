@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 import os
 import logging
 
-sqlhandler = logging.FileHandler("sql.txt")
+sqlhandler = logging.FileHandler("sql.log")
 sqllogger = logging.getLogger('sqlalchemy.engine')
 sqllogger.setLevel(logging.info)
 sqllogger.addHandler(sqlhandler)

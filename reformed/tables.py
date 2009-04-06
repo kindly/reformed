@@ -457,6 +457,6 @@ class Table(object):
     
     def _add_field_by_alter_table(self, field):
         for n,v in field.columns.iteritems():
-            col = sa.Column(name, v.type, **v.sa_options)
+            col = sa.Column(n, v.type, **v.sa_options)
             col.create(self.sa_table)
 

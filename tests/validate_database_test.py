@@ -7,6 +7,12 @@ from sqlalchemy import create_engine
 import random
 import logging
 import reformed.validate_database
+import migrate.changeset
+
+sqlhandler = logging.FileHandler("sql.log")
+sqllogger = logging.getLogger('sqlalchemy.engine')
+sqllogger.setLevel(logging.info)
+sqllogger.addHandler(sqlhandler)
 
 class test_donkey_validate_sqlite(object):
 
@@ -16,7 +22,7 @@ class test_donkey_validate_sqlite(object):
     def setUpClass(cls):
         if not hasattr(cls, "engine"):
             cls.engine = create_engine('sqlite:///tests/test_donkey.sqlite',echo = True)
-        cls.meta = sa.MetaData()
+        cls.meta = sa.MetaData(cls.engine)
         cls.Session = sa.orm.sessionmaker(bind =cls.engine , autoflush = False)
         cls.Donkey = Database("Donkey", 
                         metadata = cls.meta,
@@ -25,18 +31,40 @@ class test_donkey_validate_sqlite(object):
 
     def test_validate_database(self):
 
-        assert reformed.validate_database.validate_database(self.Donkey) is None
+        tab_def, tab_dat, col_def, col_dat, col_dif = reformed.validate_database.validate_database(self.Donkey) 
+        assert tab_def == []
+        assert col_def == []
 
     def test_validate_after_add_table(self):
+
+        rand = random.randrange(1,10000)
         
-        self.Donkey.add_table(tables.Table("woo%s" % random.randrange(1,10000) , Text("woo")))
+        self.Donkey.add_table(tables.Table("woo%s" % rand , Text("woo")))
         self.Donkey.update_sa()
 
         assert_raises(custom_exceptions.DatabaseInvalid, 
                       reformed.validate_database.validate_database, self.Donkey)
-
+        try:
+            reformed.validate_database.validate_database(self.Donkey)
+        except custom_exceptions.DatabaseInvalid, e:
+            assert "woo%s" % rand in e.list
 
         self.Donkey.persist()
+
+    def test_validate_after_wronly_add_field(self):
+
+        rand = random.randrange(1,10000)
+
+        self.Donkey.tables["people"].add_field( Text("wrong%s" % rand))
+        self.Donkey.update_sa(reload = True)
+        self.Donkey.metadata.create_all(self.Donkey.engine)
+
+        assert_raises(custom_exceptions.DatabaseInvalid,
+                      reformed.validate_database.validate_database, self.Donkey)
+
+        self.Donkey.tables["people"]._add_field_by_alter_table(Text("wrong%s" % rand))
+
+        
 
 
 

@@ -37,4 +37,12 @@ class NoTableAddError(AttributeError):
 class NoTableError(AttributeError):
     pass
 class DatabaseInvalid(AttributeError):
-    pass
+    def __init__(self, msg, list):
+        self.msg = msg
+        self.list = list
+
+    def __str__(self):
+        return str(self.msg) 
+
+    def __repr__(self):
+        return str(self.msg) 
