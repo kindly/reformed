@@ -36,4 +36,3 @@ reformed = Database("reformed",
                 session = dbconfig.Session
                 )
 
-a = schemadiff.getDiffOfModelAgainstDatabase(dbconfig.metadata, dbconfig.engine) 

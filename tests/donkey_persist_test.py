@@ -12,124 +12,114 @@ sqllogger = logging.getLogger('sqlalchemy.engine')
 sqllogger.setLevel(logging.info)
 sqllogger.addHandler(sqlhandler)
 
-class test_donkey_persist(object):
+class test_donkey_persist_sqlite(object):
 
     persist = True
 
     @classmethod
-    def setUpClass(self):
-        self.engine = create_engine('sqlite:///tests/test_donkey.sqlite',echo = True)
-        self.meta = sa.MetaData()
-        self.Session = sa.orm.sessionmaker(bind =self.engine , autoflush = False)
-        self.Donkey = Database("Donkey", 
-                        metadata = self.meta,
-                        engine = self.engine,
-                        session = self.Session)
+    def setUpClass(cls):
+        if not hasattr(cls, "engine"):
+            cls.engine = create_engine('sqlite:///tests/test_donkey.sqlite',echo = True)
+        cls.meta = sa.MetaData()
+        cls.Session = sa.orm.sessionmaker(bind =cls.engine , autoflush = False)
+        cls.Donkey = Database("Donkey", 
+                        metadata = cls.meta,
+                        engine = cls.engine,
+                        session = cls.Session)
 
-#       self.Donkey.load_from_persist()
-        self.p = random.randrange(1,10000)
-        self.Donkey.add_table(tables.Table("moo%s" % self.p, Text("moo")))
-        self.Donkey.persist()
+        cls.p = random.randrange(1,10000)
+        cls.Donkey.add_table(tables.Table("moo%s" % cls.p, Text("moo")))
+        cls.Donkey.persist()
 
-#       self.jim = self.Donkey.donkey()
-#       self.jim.name = u"zjimbobidoobo"
-#       self.session.add(self.jim)
-#       self.session.commit()
+        cls.session = cls.Donkey.Session()
 
-#        self.Donkey.persist()
-#       self.Donkey.add_table(tables.Table("moofds", Text("moo")))
-#      p = random.randrange(1,10000)
-#       self.Donkey.add_table(tables.Table("moo%s" % p, Text("moo")))
-    
-        self.session = self.Donkey.Session()
-
-        self.jim = self.Donkey.tables["donkey"].sa_class()
-        self.jim.name = u"jim"
-        self.jim.age = 13
-        self.jim1 = self.Donkey.tables["donkey"].sa_class()
-        self.jim1.name = u"jim1"
-        self.jim1.age = 131
-        jim2 = self.Donkey.tables["donkey"].sa_class()
+        cls.jim = cls.Donkey.tables["donkey"].sa_class()
+        cls.jim.name = u"jim"
+        cls.jim.age = 13
+        cls.jim1 = cls.Donkey.tables["donkey"].sa_class()
+        cls.jim1.name = u"jim1"
+        cls.jim1.age = 131
+        jim2 = cls.Donkey.tables["donkey"].sa_class()
         jim2.name = u"jim2"
         jim2.age = 132
-        jim3 = self.Donkey.tables["donkey"].sa_class()
+        jim3 = cls.Donkey.tables["donkey"].sa_class()
         jim3.name = u"jim3"
         jim3.age = 133
-        jim4 = self.Donkey.tables["donkey"].sa_class()
+        jim4 = cls.Donkey.tables["donkey"].sa_class()
         jim4.name = u"jim4"
         jim4.age = 142
-        jim5 = self.Donkey.tables["donkey"].sa_class()
+        jim5 = cls.Donkey.tables["donkey"].sa_class()
         jim5.name = u"jim5"
         jim5.age = 135
-        jim6 = self.Donkey.tables["donkey"].sa_class()
+        jim6 = cls.Donkey.tables["donkey"].sa_class()
         jim6.name = u"jim6"
         jim6.age = 136
-        jim7 = self.Donkey.tables["donkey"].sa_class()
+        jim7 = cls.Donkey.tables["donkey"].sa_class()
         jim7.name = u"jim7"
         jim7.age = 137
-        jim8 = self.Donkey.tables["donkey"].sa_class()
+        jim8 = cls.Donkey.tables["donkey"].sa_class()
         jim8.name = u"jim8"
         jim8.age = 138
-        jim9 = self.Donkey.tables["donkey"].sa_class()
+        jim9 = cls.Donkey.tables["donkey"].sa_class()
         jim9.name = u"jim9"
         jim9.age = 132
-        jim0 = self.Donkey.tables["donkey"].sa_class()
+        jim0 = cls.Donkey.tables["donkey"].sa_class()
         jim0.name = u"jim0"
         jim0.age = 102
-        self.david = self.Donkey.tables["people"].sa_class()
-        self.david.name = u"david"
-        self.david.address_line_1 = u"43 union street"
-        self.david.postcode = u"es388"
-        davidsjim = self.Donkey.tables["donkey_sponsership"].sa_class()
-        davidsjim.people = self.david
-        davidsjim.donkey = self.jim
+        cls.david = cls.Donkey.tables["people"].sa_class()
+        cls.david.name = u"david"
+        cls.david.address_line_1 = u"43 union street"
+        cls.david.postcode = u"es388"
+        davidsjim = cls.Donkey.tables["donkey_sponsership"].sa_class()
+        davidsjim.people = cls.david
+        davidsjim.donkey = cls.jim
         davidsjim.amount = 50
         
         jimpic = file("tests/jim.xcf", mode = "rb").read()
         
-        jimimage = self.Donkey.tables["donkey_pics"].sa_class()
-        jimimage.donkey = self.jim
+        jimimage = cls.Donkey.tables["donkey_pics"].sa_class()
+        jimimage.donkey = cls.jim
         jimimage.pic = jimpic
 
-        self.session.add(self.david)
-        self.session.add(self.jim)
-        self.session.add(self.jim1)
-        self.session.add(jim2)
-        self.session.add(jim3)
-        self.session.add(jim4)
-        self.session.add(jim5)
-        self.session.add(jim6)
-        self.session.add(jim7)
-        self.session.add(jim8)
-        self.session.add(jim9)
-        self.session.add(jim0)
-        self.session.add(davidsjim)
-        self.session.add(jimimage)
-        self.session.commit()
+        cls.session.add(cls.david)
+        cls.session.add(cls.jim)
+        cls.session.add(cls.jim1)
+        cls.session.add(jim2)
+        cls.session.add(jim3)
+        cls.session.add(jim4)
+        cls.session.add(jim5)
+        cls.session.add(jim6)
+        cls.session.add(jim7)
+        cls.session.add(jim8)
+        cls.session.add(jim9)
+        cls.session.add(jim0)
+        cls.session.add(davidsjim)
+        cls.session.add(jimimage)
+        cls.session.commit()
 
-        self.david2 = self.Donkey.tables["people"].sa_class()
-        self.david2.name = u"david"
-        self.david2.address_line_1 = u""
-        self.david_logged = self.david._table.logged_instance(self.david)
-        self.session.add(self.david_logged)
-        self.session.commit()
+        cls.david2 = cls.Donkey.tables["people"].sa_class()
+        cls.david2.name = u"david"
+        cls.david2.address_line_1 = u""
+        cls.david_logged = cls.david._table.logged_instance(cls.david)
+        cls.session.add(cls.david_logged)
+        cls.session.commit()
 
-        donk = self.session.query(self.Donkey.get_class("donkey")).first()
-        donk.name = u"jimmii%s" % self.p
-        self.session.add(donk)
-        self.session.commit()
-        self.jimmi_id = donk.id
+        donk = cls.session.query(cls.Donkey.get_class("donkey")).first()
+        donk.name = u"jimmii%s" % cls.p
+        cls.session.add(donk)
+        cls.session.commit()
+        cls.jimmi_id = donk.id
 
-        donk2 = self.session.query(self.Donkey.get_class("donkey")).filter_by(name=donk.name).first()
+        donk2 = cls.session.query(cls.Donkey.get_class("donkey")).filter_by(name=donk.name).first()
         donk2.name = u"jimmii"
-        self.session.add(donk2)
-        self.session.commit()
+        cls.session.add(donk2)
+        cls.session.commit()
 
         
     @classmethod
-    def tearDownClass(self):
+    def tearDownClass(cls):
 
-        self.session.close()
+        cls.session.close()
 
 
 #class test_basic_input(test_donkey_persist):
@@ -198,13 +188,17 @@ class test_donkey_persist(object):
         poo.name = "don_keyfasf"
         assert_raises(formencode.Invalid, self.session.add, poo)
 
-if __name__ == '__main__':
     
-        engine = create_engine('sqlite:///donkey.db', echo=True)
-        meta = sa.MetaData()
-        Session = sa.orm.sessionmaker(bind =engine)
-        Donkey = Database("Donkey", 
-                        metadata = meta,
-                        engine = engine,
-                        session = Session)
+class test_donkey_persist_mysql(test_donkey_persist_sqlite):
 
+    @classmethod
+    def setUpClass(cls):
+        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
+        super(test_donkey_persist_mysql, cls).setUpClass()
+
+class test_donkey_persist_post(test_donkey_persist_sqlite):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.engine = create_engine('postgres://david:@:5432/test_donkey', echo = True)
+        super(test_donkey_persist_post, cls).setUpClass()

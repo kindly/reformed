@@ -36,3 +36,5 @@ class NoTableAddError(AttributeError):
     pass
 class NoTableError(AttributeError):
     pass
+class DatabaseInvalid(AttributeError):
+    pass
