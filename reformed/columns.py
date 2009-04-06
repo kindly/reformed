@@ -104,7 +104,7 @@ class Column(BaseSchema):
         
         if self.use_parent:
             if parent._length:
-                self.type = self.type(parent._length)
+                self.type.length = parent._length
             if parent._validation:
                 self.validation = parent._validation
             

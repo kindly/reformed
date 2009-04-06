@@ -16,9 +16,10 @@ class test_donkey(object):
 
     @classmethod
     def setUpClass(self):
-        self.engine = create_engine('sqlite:///:memory:', echo=True)
-#       os.system("rm tests/test_donkey.sqlite")
-#       self.engine = create_engine('sqlite:///reformed/reformed.sqlite',echo = True)
+        if not hasattr(self, "engine"):
+            self.engine = create_engine('sqlite:///:memory:', echo=True)
+        
+#        self.engine = create_engine('mysql://localhost/test_donkey', echo = True)
         self.meta = sa.MetaData()
         self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
         self.Donkey = Database("Donkey", 
@@ -177,65 +178,6 @@ class test_basic_input(test_donkey):
 
         poo = self.Donkey.tables["donkey"].sa_class()
         poo.name = "don_keyfasf"
-        print self.Donkey.tables["donkey"].fields["name"]._validation
         assert_raises(formencode.Invalid,self.session.add, poo)
 
         
-if __name__ == '__main__':
-
-    engine = create_engine('sqlite:///:memory:', echo=True)
-    meta = sa.MetaData()
-    Donkey = Database("Donkey", 
-                        Table("people",
-                              Text("name"),
-                              Address("supporter_address"),
-                              OneToMany("email","email"),
-                              OneToMany("donkey_sponsership","donkey_sponsership"),
-                              entity = True),
-                        Table("email",
-                              Email("email")
-                             ),
-                        Table("donkey", 
-                              Text("name"),
-                              Integer("age"),
-                              OneToOne("donkey_pics","donkey_pics"),
-                              OneToMany("donkey_sponsership","donkey_sponsership"),
-                              entity = True
-                             ),
-                        Table("donkey_pics",
-                              Binary("pic")
-                             ),
-                        Table("donkey_sponsership",
-                              Money("amount"),
-                              Date("giving_date"),
-                              entity_relationship = True
-                             ),
-                        Table("payments",
-                              Date("giving_date"),
-                              Money("amount"),
-                              Text("source")
-                             ),
-                    metadata = meta
-                    )
-    
-    Donkey.update_sa()
-    meta.create_all(engine)
-
-    Session = sa.orm.sessionmaker(bind =engine)
-
-    session = Session()
-
-    fred = Donkey.tables["people"].sa_class()
-    fred.name = "fred"
-#    fred.age = 13
-#
-
-    session.add(fred)
-    session.commit()
-
-    new = session.query(Donkey.tables["people"].sa_class).one()
-
-    
-
-
-

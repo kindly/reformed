@@ -42,7 +42,6 @@ reformedhandler.setFormatter(formatter)
 
 logger.addHandler(reformedhandler)
 
-
 class Database(object):
     
     def __init__(self,name,*args,**kw):

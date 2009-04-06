@@ -28,13 +28,13 @@ import datetime
 class Text(Field):
     
     def __init__(self, name, *args, **kw):
-        self.text = Column(sa.Unicode, use_parent = True)
+        self.text = Column(sa.Unicode(100),  use_parent = True)
 
 
 class Unicode(Field):
     
     def __init__(self, name, *args, **kw):
-        self.text = Column(sa.Unicode, use_parent = True)
+        self.text = Column(sa.Unicode(100), use_parent = True)
 
 
 class Modified(Field):
@@ -60,12 +60,12 @@ class Integer(Field):
 class Address(Field):
     
     def __init__(self, name, *args, **kw):
-        self.address_line_1 = Column(sa.Unicode)
-        self.address_line_2 = Column(sa.Unicode)
-        self.address_line_3 = Column(sa.Unicode)
-        self.postcode = Column(sa.Unicode)
-        self.town = Column(sa.Unicode)
-        self.country = Column(sa.Unicode)
+        self.address_line_1 = Column(sa.Unicode(100))
+        self.address_line_2 = Column(sa.Unicode(100))
+        self.address_line_3 = Column(sa.Unicode(100))
+        self.postcode = Column(sa.Unicode(100))
+        self.town = Column(sa.Unicode(100))
+        self.country = Column(sa.Unicode(100))
 
         self.validation = {"address_line_1": validators.String(
                                                         not_empty = True),
@@ -100,7 +100,7 @@ class Numeric(Field):
 class Email(Field):
     
     def __init__(self, name, *args, **kw):
-        self.email = Column(sa.Unicode, use_parent_options = True)
+        self.email = Column(sa.Unicode(100), use_parent_options = True)
         self.validation = {"email" : validators.Email()}
 
 
