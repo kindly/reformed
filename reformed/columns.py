@@ -249,14 +249,17 @@ class Field(object):
         self.relations[name] = relation
 
     def _set_parent(self, table):
-        for n,v in self.items.iteritems():
-            if n in table.items.iterkeys():
-                raise AttributeError("already an item named %s" % n)
                 
+        self.check_table(table)
         table.fields[self.name] = self
         table.field_order.append(self.name)
         table.add_relations()
         if hasattr(table, "database"):
             table.database.add_relations()
         self.table = table
-   
+
+    def check_table(self,table):
+        for n,v in self.items.iteritems():
+            if n in table.items.iterkeys():
+                raise AttributeError("already an item named %s" % n)
+                

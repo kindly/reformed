@@ -53,21 +53,48 @@ class test_donkey_validate_sqlite(object):
 
     def test_validate_after_wronly_add_field(self):
 
-        rand = random.randrange(1,10000)
+        rand = random.randrange(1,100000)
 
-        self.Donkey.tables["people"].add_field( Text("wrong%s" % rand))
+        self.Donkey.tables["people"]._add_field_no_persist( Text("wrong%s" % rand))
         self.Donkey.update_sa(reload = True)
         self.Donkey.metadata.create_all(self.Donkey.engine)
 
         assert_raises(custom_exceptions.DatabaseInvalid,
                       reformed.validate_database.validate_database, self.Donkey)
+        try:
+            reformed.validate_database.validate_database(self.Donkey)
+        except custom_exceptions.DatabaseInvalid, e:
+            assert u"people.wrong%s" % rand in e.list
+
 
         self.Donkey.tables["people"]._add_field_by_alter_table(Text("wrong%s" % rand))
 
+    def test_validate_after_added_column(self):
+
+        rand = random.randrange(1,100000)
+
+        self.Donkey.tables["people"]._add_field_by_alter_table(Text("wrong%s" % rand))
+
+        self.Donkey.update_sa(reload = True)
+
+        tab_def, tab_dat, col_def, col_dat, col_dif = reformed.validate_database.validate_database(self.Donkey) 
+
+        assert u"people.wrong%s" % rand in col_dat
+
+    def test_validate_after_difference(self):
+
+        rand = random.randrange(1,100000)
+
+        self.Donkey.tables["people"]._add_field_by_alter_table(Text("wrong%s" % rand))
+
+        self.Donkey.tables["people"]._add_field_no_persist( Money("wrong%s" % rand))
+
+        self.Donkey.update_sa(reload = True)
+
+        tab_def, tab_dat, col_def, col_dat, col_dif = reformed.validate_database.validate_database(self.Donkey) 
         
-
-
-
+        assert u"people.wrong%s" % rand in col_dif
+        
 
 
 class test_donkey_validate_mysql(test_donkey_validate_sqlite):

@@ -32,6 +32,7 @@ from fields import ManyToOne
 import fields as field_types
 import boot_tables
 import sessionwrapper
+import validate_database
 import logging
 
 logger = logging.getLogger('reformed.main')
@@ -50,6 +51,7 @@ class Database(object):
         self.metadata = kw.pop("metadata",None)
         self.engine = kw.pop("engine",None)
         self._Session = kw.pop("session",None)
+        self.metadata.bind = self.engine
         self.Session = sessionwrapper.SessionClass(self._Session)
         self.persisted = False
         boots = boot_tables.boot_tables()
@@ -58,6 +60,7 @@ class Database(object):
         for table in args:
             self.add_table(table)
         self.persist()
+
 
     def add_table(self, table):
 
@@ -106,8 +109,10 @@ class Database(object):
         all_tables = session.query(self.tables["__table"].sa_class).all()
         ## only persist boot tables if first time
         if not all_tables:
-            
             self.persist()
+        # for first time do not say database is persisted
+        if all_tables:
+            self.persisted = True
 
         for row in all_tables:
             if row.table_name.count(u"__") > 0:
@@ -144,13 +149,11 @@ class Database(object):
 
             self.add_table(tables.Table( row.table_name.encode("ascii"), *fields, **kw))
 
-        session.close()
-
         for table in self.tables.itervalues():
             table.persisted = True
             
         self.update_sa()
-        self.persisted = True
+        session.close()
 
     def add_relations(self):     #not property for optimisation
         self.relations = []
@@ -263,6 +266,12 @@ class Database(object):
             raise custom_exceptions.NoTableError("table %s does not exist" % table)
 
         return self.tables[table].sa_class()
+
+    def validate_database(self):
+
+        return validate_database.validate_database(self)
+
+    
 
 
 

@@ -139,9 +139,51 @@ class Table(object):
         session.close()
 
     def add_field(self,field):
-        "add a Field object to this Table"
+        """add a Field object to this Table"""
+        if self.persisted == True:
+            field.check_table(self)
+            self._add_field_by_alter_table(field)
+            self._persist_extra_field(field)
+            self._add_field_no_persist(field)
+            self.database.update_sa(reload = True)
+
+        else:
+            self._add_field_no_persist(field)
+
+    def _add_field_no_persist(self,field):
+        """add a Field object to this Table"""
         field._set_parent(self)
-    
+
+    def _add_field_by_alter_table(self, field):
+        for n,v in field.columns.iteritems():
+            col = sa.Column(n, v.type, **v.sa_options)
+            col.create(self.sa_table)
+
+    def _persist_extra_field(self, field):
+
+        session = self.database.Session()
+        __table = session.query(self.database.tables["__table"].sa_class).filter_by(table_name = self.name).one()
+        logger.info(__table.table_name)
+        __field = self.database.tables["__field"].sa_class()
+        __field.field_name = u"%s" % field.name
+        __field.type = u"%s" % field.__class__.__name__
+        if hasattr(field, "other"):
+            __field.other = u"%s" % field.other
+        
+        for n,v in field._kw.iteritems():
+            __field_param = self.database.tables["__field_params"].sa_class()
+            __field_param.item = u"%s" % n
+            __field_param.value = u"%s" % str(v) 
+            __field.field_params.append(__field_param)
+            logger.info(__field_param.value)
+
+        logger.info(__field.field_name)
+        __table.field.append(__field)
+
+        session.add(__table)
+        session.commit()
+        session.close()
+
     @property    
     def items(self):
         """gathers all columns and relations defined in this table"""
@@ -455,8 +497,4 @@ class Table(object):
             setattr(logged_instance, n, getattr(instance,n))
         return logged_instance
     
-    def _add_field_by_alter_table(self, field):
-        for n,v in field.columns.iteritems():
-            col = sa.Column(n, v.type, **v.sa_options)
-            col.create(self.sa_table)
 

@@ -21,6 +21,6 @@
 - optimise make sa_table - Done
 - make sure indexs and unique constraints are remade
 - add ordering list implementation
-- make sure sa type class/object distinction works
+- make sure sa type class/object distinction works - Wontfix as all will be objects
 - make sure primary key columns are present once they are defined in check_relations or similar
 - seperate out logging

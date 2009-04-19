@@ -1,8 +1,6 @@
 from migrate.versioning import schemadiff
 from custom_exceptions import DatabaseInvalid
 
-import reformed
-
 def check_tables(database, diff):
     """ see if there is a difference beteen the defined tables and the 
     database"""
@@ -34,8 +32,8 @@ def check_fields(database, diff):
             missing_in_database.append("%s.%s" % (name, missing.name))
         for missing in table[1]:
             missing_in_definition.append("%s.%s" % (name, missing.name))
-        for diff in table[2]:
-            different.append("%s.%s" % (name, diff[0].name))
+        for difference in table[2]:
+            different.append("%s.%s" % (name, difference[0].name))
     pass
     
     if missing_in_database:
@@ -46,7 +44,7 @@ def check_fields(database, diff):
         print "Warning: Fields in database not used %s" % missing_in_definition
 
     if different:
-        print "Warning: These fields are different than the database %s" % diff
+        print "Warning: These fields are different than the database %s" % different
 
     return [missing_in_database, missing_in_definition, different]
 
@@ -64,5 +62,3 @@ def validate_database(database):
 
     return all_diff
 
-
-#['__class__', '__delattr__', '__dict__', '__doc__', '__getattribute__', '__hash__', '__init__', '__len__', '__module__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__str__', '__weakref__', 'colDiffs', 'compareModelToDatabase', 'conn', 'excludeTables', 'model', 'reflected_model', 'storeColumnDiff', 'storeColumnMissingInDatabase', 'storeColumnMissingInModel', 'tablesMissingInDatabase', 'tablesMissingInModel', 'tablesWithDiff']

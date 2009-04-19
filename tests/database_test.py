@@ -3,6 +3,12 @@ from reformed.fields import *
 from reformed.tables import *
 from reformed.database import *
 from nose.tools import assert_raises,raises
+import logging
+
+sqlhandler = logging.FileHandler("sql.log")
+sqllogger = logging.getLogger('sqlalchemy.engine')
+sqllogger.setLevel(logging.info)
+sqllogger.addHandler(sqlhandler)
 
 
 class test_database(object):
@@ -45,7 +51,7 @@ class test_database(object):
         assert self.Donkey.name == "Donkey"
         assert "people" in self.Donkey.tables
         assert "email" in  self.Donkey.tables
-        assert len(self.Donkey.tables["people"].fields) == 4 # modified field
+        assert len(self.Donkey.tables["people"].fields) == 5 # modified field
         assert len(self.Donkey.tables["email"].fields) == 2
 
 
@@ -107,6 +113,37 @@ class test_database(object):
 
         assert "New" in self.Donkey.tables
 
+    def test_persist_extra_field(self):
+
+        self.Donkey.tables["people"]._persist_extra_field(Text("name3", validation = "__^[a-zA-Z]*"))
+
+        session = self.Donkey.Session()
+
+        allfield_param = session.query(self.Donkey.tables["__field_params"].sa_class).all()
+
+        assert (u"people",u"name3",u"validation", u"__^[a-zA-Z]*") in [(a.table_name, a.field_name, a.item,
+                                                     a.value) for a in allfield_param]
+        session.close()
+
+    def test_add_field_after_persist(self):
+
+        self.Donkey.tables["people"].add_field(Address("add"))
+
+        session = self.Donkey.Session()
+
+        newperson = self.Donkey.tables["people"].sa_class()
+        newperson.address_line_1 = u"67 appplod street"
+        newperson.postcode = u"sdffas"
+        
+        session.add(newperson)
+        session.commit()
+
+        new = session.query(self.Donkey.tables["people"].sa_class).all()
+
+        assert (u"67 appplod street", "sdffas") in [(a.address_line_1,a.postcode) for a in new] 
+
+        assert self.Donkey.validate_database() == [[],[],[],[],[]]
+        
     @raises(custom_exceptions.NoTableAddError)
     def test_add_bad_table_after_persist(self):
 
@@ -115,19 +152,19 @@ class test_database(object):
     
     def test_get_class(self):
 
-            assert self.Donkey.get_class("people") is \
-                    self.Donkey.tables["people"].sa_class
+        assert self.Donkey.get_class("people") is \
+                self.Donkey.tables["people"].sa_class
 
-            assert_raises(custom_exceptions.NoTableError,
-                          self.Donkey.get_class,"peopley")
+        assert_raises(custom_exceptions.NoTableError,
+                      self.Donkey.get_class,"peopley")
     
-    def test_get_class(self):
+    def test_get_instance(self):
 
-            assert isinstance(self.Donkey.get_instance("people"), 
-                    self.Donkey.tables["people"].sa_class)
+        assert isinstance(self.Donkey.get_instance("people"), 
+                self.Donkey.tables["people"].sa_class)
 
-            assert_raises(custom_exceptions.NoTableError,
-                          self.Donkey.get_class,"peopley")
+        assert_raises(custom_exceptions.NoTableError,
+                      self.Donkey.get_class,"peopley")
 
     def test_boot_tables_persisted(self):
 
