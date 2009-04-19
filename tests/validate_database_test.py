@@ -39,8 +39,8 @@ class test_donkey_validate_sqlite(object):
 
         rand = random.randrange(1,10000)
         
-        self.Donkey.add_table(tables.Table("woo%s" % rand , Text("woo")))
-        self.Donkey.update_sa()
+        self.Donkey._add_table_no_persist(tables.Table("woo%s" % rand , Text("woo")))
+        self.Donkey.update_sa(update_tables = False)
 
         assert_raises(custom_exceptions.DatabaseInvalid, 
                       reformed.validate_database.validate_database, self.Donkey)

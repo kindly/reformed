@@ -77,12 +77,16 @@ class Database(object):
                self.tables[field.other].persisted is True:
                 raise custom_exceptions.NoTableAddError("table %s cannot be added"
                                                         % table.name)
+        self._add_table_no_persist(table)
+        
+        if self.persisted == True:
+            self.persist()
+    
+    def _add_table_no_persist(self, table):
 
         table._set_parent(self)
 
-
     def persist(self):
-
 
         if not self.persisted:
             for table in self.boot_tables:
@@ -107,12 +111,13 @@ class Database(object):
         self.metadata.create_all(self.engine)
             
         all_tables = session.query(self.tables["__table"].sa_class).all()
+        
+
+
         ## only persist boot tables if first time
         if not all_tables:
             self.persist()
-        # for first time do not say database is persisted
-        if all_tables:
-            self.persisted = True
+            self.persisted = False #make sure database is not seen as persisted
 
         for row in all_tables:
             if row.table_name.count(u"__") > 0:
@@ -151,6 +156,10 @@ class Database(object):
 
         for table in self.tables.itervalues():
             table.persisted = True
+
+        # for first time do not say database is persisted
+        if all_tables:
+            self.persisted = True
             
         self.update_sa()
         session.close()
@@ -178,8 +187,9 @@ class Database(object):
                                 % (col[0], relation.other)
 
  
-    def update_sa(self, reload = False):
-        self.update_tables()
+    def update_sa(self, reload = False, update_tables = True):
+        if update_tables:
+            self.update_tables()
         self.checkrelations()
         self.check_related_order_by()
         if reload:
