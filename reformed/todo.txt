@@ -10,7 +10,7 @@
 - add nullable,sequences and any other sqlalchemy column level parameters -Done
 - add validation - basicly DONE
 - sort out order of field, by adding counter to columns and fields using setattr - Done
-- do checks to see if defined table reflects table underneath
+- do checks to see if defined table reflects table underneath - Done
 - persist database information - Done
 - create object for getting sa_objects
 - give all relevent tables locking information
@@ -24,3 +24,6 @@
 - make sure sa type class/object distinction works - Wontfix as all will be objects
 - make sure primary key columns are present once they are defined in check_relations or similar
 - seperate out logging
+- make sure added fields is atomic and is logged somewhere
+- add fields add to logging instances also
+- table loading with yaml and csv

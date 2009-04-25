@@ -34,6 +34,7 @@ import boot_tables
 import sessionwrapper
 import validate_database
 import logging
+import networkx as nx
 
 logger = logging.getLogger('reformed.main')
 logger.setLevel(logging.INFO)
@@ -56,6 +57,7 @@ class Database(object):
         self.persisted = False
         boots = boot_tables.boot_tables()
         self.boot_tables =boots.boot_tables
+        self.graph = None
         self.load_from_persist()
         for table in args:
             self.add_table(table)
@@ -78,7 +80,7 @@ class Database(object):
                 raise custom_exceptions.NoTableAddError("table %s cannot be added"
                                                         % table.name)
         self._add_table_no_persist(table)
-        
+
         if self.persisted == True:
             self.persist()
     
@@ -194,12 +196,14 @@ class Database(object):
         self.check_related_order_by()
         if reload:
             self.clear_sa()
+        self.make_graph()
         try:
             for table in self.tables.itervalues():
 #               if table.sa_table:
 #                   self.metadata.remove(table.sa_table)
                 table.make_sa_table()
                 table.make_sa_class()
+                table.make_paths()
             for table in self.tables.itervalues():
                 table.sa_mapper()
             sa.orm.compile_mappers()
@@ -217,6 +221,8 @@ class Database(object):
             table.mapper = None
             table.sa_class = None
             table.sa_table = None
+            table.paths = None
+        self.graph = None
             
 
     def tables_with_relations(self,Table):
@@ -280,6 +286,24 @@ class Database(object):
     def validate_database(self):
 
         return validate_database.validate_database(self)
+
+    def make_graph(self):
+
+        if self.graph is not None and len(self.graph.nodes()) == len(self.tables):
+            return
+
+        gr = nx.DiGraph()
+
+        for table in self.tables.keys():
+            gr.add_node(table)
+
+        for rel in self.relations:
+            gr.add_edge(rel.table.name, rel.other, rel)
+
+        self.graph = gr
+
+
+
 
     
 

@@ -34,6 +34,7 @@ import formencode
 from formencode import validators
 from fields import Modified
 from sqlalchemy.orm.interfaces import AttributeExtension
+from util import get_paths 
 import logging
 import migrate.changeset
 
@@ -101,6 +102,7 @@ class Table(object):
         self.sa_table = None
         self.sa_class = None
         self.mapper = None
+        self.paths = None
 
     def persist(self):
         """This puts the information about the this objects parameters 
@@ -162,7 +164,7 @@ class Table(object):
     def _persist_extra_field(self, field):
 
         session = self.database.Session()
-        __table = session.query(self.database.tables["__table"].sa_class).filter_by(table_name = self.name).one()
+        __table = session.query(self.database.tables["__table"].sa_class).filter_by(table_name = u"%s" % self.name).one()
         logger.info(__table.table_name)
         __field = self.database.tables["__field"].sa_class()
         __field.field_name = u"%s" % field.name
@@ -226,7 +228,7 @@ class Table(object):
         return columns
 
   
-    def add_relations(self):   # this is not a property for an optimisations
+    def add_relations(self):   # this is not a property for an optimisation
         """gathers all relations defined in this table"""
         relations = {}
         for n,v in self.fields.iteritems():
@@ -416,6 +418,12 @@ class Table(object):
 #               print getattr(self.sa_class, column).impl.active_history
 #               getattr(self.sa_class, column).impl.active_history = True
 #               print getattr(self.sa_class, column).impl.active_history
+    
+    def make_paths(self):
+
+        if not self.paths:
+            self.paths = get_paths(self.database.graph, self.name)
+
     
     def _make_sa_order_by_list(self, relation, other_table):
 

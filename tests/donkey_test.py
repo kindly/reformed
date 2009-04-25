@@ -184,6 +184,12 @@ class test_basic_input(test_donkey):
         poo.name = "don_keyfasf"
         assert_raises(formencode.Invalid,self.session.add, poo)
 
+    def test_table_paths(self):
+
+        assert self.Donkey.tables["people"].paths[("donkey_sponsership", "onetomany", "_donkey", "manytoone")] == "donkey"
+        assert self.Donkey.tables["people"].paths[("donkey_sponsership", "onetomany", "_donkey", "manytoone", "donkey_pics", "onetoone")] == "donkey_pics"
+        assert self.Donkey.tables["donkey"].paths[("donkey_sponsership", "onetomany", "_people", "manytoone", "email", "onetomany")] == "email"
+
 class test_after_reload(test_basic_input):
     
     @classmethod
