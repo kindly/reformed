@@ -90,8 +90,6 @@ class Table(object):
             for fields in args:
                 for column in fields.columns.itervalues():
                     column_names.append(column.name)
-#            if key not in column_names:
-#                raise AttributeError("%s is not a column" % key)
 
         for fields in args:
             fields._set_parent(self)
@@ -165,7 +163,6 @@ class Table(object):
 
         session = self.database.Session()
         __table = session.query(self.database.tables["__table"].sa_class).filter_by(table_name = u"%s" % self.name).one()
-        logger.info(__table.table_name)
         __field = self.database.tables["__field"].sa_class()
         __field.field_name = u"%s" % field.name
         __field.type = u"%s" % field.__class__.__name__
@@ -177,9 +174,7 @@ class Table(object):
             __field_param.item = u"%s" % n
             __field_param.value = u"%s" % str(v) 
             __field.field_params.append(__field_param)
-            logger.info(__field_param.value)
 
-        logger.info(__field.field_name)
         __table.field.append(__field)
 
         session.add(__table)
@@ -244,8 +239,6 @@ class Table(object):
             for n, v in self.columns.iteritems():
                 if n in self.primary_key_list:
                     columns[n] = v
-#        else:
-#            columns["id"] = Column(sa.Integer, name = "id")
         return columns
 
     @property
@@ -268,7 +261,6 @@ class Table(object):
         Database.tables[self.name]=self
         Database.add_relations()
         self.database = Database
-#        self.update_sa()
 
     @property    
     def tables_with_relations(self):
@@ -356,9 +348,6 @@ class Table(object):
             v = defined_columns[column]
             sa_options = v.sa_options
             sa_table.append_column(sa.Column(column, v.type, **sa_options))
-#       for n,v in self.defined_columns.iteritems():
-#           sa_options = v.sa_options
-#           sa_table.append_column(sa.Column(n, v.type, **sa_options))
         if self.primary_key_list:
             primary_keys = tuple(self.primary_key_list)
             sa_table.append_constraint(sa.UniqueConstraint(*primary_keys))
@@ -397,9 +386,6 @@ class Table(object):
         #make sure mapping has not been done
         if self.mapper is None:
             properties ={}
-#           for column in self.columns:
-#               properties[column] = column_property( getattr(self.sa_table.c,column),
-#                                                    extension = AttributeExtension())
             for relation in self.relations.itervalues():
                 sa_options = relation.sa_options
                 other_table = self.database.tables[relation.other].sa_table
@@ -412,12 +398,6 @@ class Table(object):
                                                         backref = "_" + self.name,
                                                         **sa_options)
             self.mapper = mapper(self.sa_class, self.sa_table, properties = properties)
-#           self.mapper.compile()
-            #sa.orm.compile_mappers()
-#           for column in self.columns.keys():
-#               print getattr(self.sa_class, column).impl.active_history
-#               getattr(self.sa_class, column).impl.active_history = True
-#               print getattr(self.sa_class, column).impl.active_history
     
     def make_paths(self):
 

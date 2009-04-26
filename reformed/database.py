@@ -199,8 +199,6 @@ class Database(object):
         self.make_graph()
         try:
             for table in self.tables.itervalues():
-#               if table.sa_table:
-#                   self.metadata.remove(table.sa_table)
                 table.make_sa_table()
                 table.make_sa_class()
                 table.make_paths()
@@ -226,7 +224,6 @@ class Database(object):
             
 
     def tables_with_relations(self,Table):
-        #self.checkrelations()      not run as optimisation
         relations = {}
         for n, v in Table.relations.iteritems():
             relations[(v.other,"this")] = v
