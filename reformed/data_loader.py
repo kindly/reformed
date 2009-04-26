@@ -1,4 +1,5 @@
 import networkx as nx
+import custom_exceptions
 
 class SingleRecord(object):
 
@@ -7,20 +8,27 @@ class SingleRecord(object):
         self.data = data
         self.database = database
         self.table = table
-        
-        self.all_fields = {}
 
         self.all_obj = {}
 
-        self.key_info = {}
-
         self.process()
+
+        self.keys = self.all_obj.keys()
+
+        self.keys.sort(lambda a, b : len(a) - len(b))
+
+    def load(self):
+
+        session = database.Session()
+
+        for key in self.keys:
+            continue
+
 
     def process(self):
 
         for n, v in self.data.iteritems():
             if not isinstance(v, dict) and not isinstance(v, list):
-                self.all_fields[(n, )] = v
                 self.all_obj.setdefault("root", {})[n] = v
             if isinstance(v, list):
                 self.process_list([n], v)
@@ -38,10 +46,8 @@ class SingleRecord(object):
         for n, v in sub_dict.iteritems():
             if not isinstance(v, dict) and not isinstance(v, list):
                 if from_list:
-                    self.all_fields[tuple(names + [n])] = v
                     self.all_obj.setdefault(tuple(names), {})[n] = v
                 else:
-                    self.all_fields[tuple(names + [0,n])] = v
                     self.all_obj.setdefault(tuple(names + [0]), {})[n] = v
             if isinstance(v, list):
                 if from_list:
@@ -55,91 +61,52 @@ class SingleRecord(object):
                     self.process_dict(names + [0,n], v)
             
 
-def get_all_paths(database, table):
+def get_key_data(key, database, table):
 
-    graph = database.make_graph()
+    relations = key[::2]
+    paths = database.tables[table].paths
 
-    all_paths = []
+    try:
+        key_data = paths[relations]
+    except KeyError:
+        raise custom_exceptions.InvalidKey("key %s can not be used with %s table" , key, table)
 
-    for edge in graph.edges(table, Data = True):
-        node1, node2, relation = edge
-        if node1 == table:
-            if relation.type == "onetomany":
-                all_paths.append([[relation.name, "many"], node2])
-            if relation.type == "onetoone":
-                all_paths.append([[relation.name, "one"], node2])
-            if relation.type == "manytoone":
-                all_paths.append([[relation.name, "one"], node2])
-        if node2 == table:
-            if relation.type == "onetomany":
-                all_paths.append([["_%s" % node1, "one"], node1])
-            if relation.type == "onetoone":
-                all_paths.append([["_%s" % node1, "one"], node1])
-            if relation.type == "manytoone":
-                all_paths.append([["_%s" % node1, "many"], node1])
-            
-            
+    return key_data
+
+def validate_key_against_all_obj(key, all_obj):
+
+    if len(key) == 2:
+        return
+    try:
+        prev_len = len(key)-2
+        all_obj[key[0:prev_len]]
+    except KeyError:
+        raise custom_exceptions.InvalidKey("key %s does not have a parent key" , key)
+
+def check_correct_fields(obj, database, table):
+
+    for field in obj.iterkeys():
+        if not field.startswith("__") and\
+               field not in database.tables[table].columns.iterkeys() and\
+               field <> "id":
+            raise custom_exceptions.InvalidField("field %s not in table %s",
+                                                 field, table)
+                                                 
+
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     
-
-
-
-class KeyInfo(object):
-
-    def __init__(self, key, database, table):
-
-        self.key = key
-        self.database = record.database
-        self.table = record.table
-
-        #FIXME make sure graph only drawn once
-        self.graph = database.make_graph()
-
-        self.edges = []
-
-        self.get_edges()
-
-        self.table = self.edges[-1].table
-        self.parent_key = self.get_parent_key()
-
-    def get_edges(self):
-
-        for index, item in enumerate(self.key):
-            if index % 2 == 1:
-                continue
-            if index == 0:
-                for edge in self.graph.edges(self.table.name, Data = True):
-                    node1, node2, relation = edge
-                    if item == relation.name:
-                        self.edges.append(KeyEdge(edge, self.table.name))
-                        continue
-                raise BadKeyError("relation %s not found from table %s" %
-                                                            (item, self.key))
-            else:
-                for edge in self.graph.edges(self.edges[-1].table, Data = True):
-                    node1, node2, relation = edge
-                    if item == relation.name:
-                        self.edges.append(KeyEdge(edge, self.table.name))
-                        continue
-                raise BadKeyError("relation %s not found from table %s" %
-                                                            (item, self.key))
-
-class KeyEdge(object):
-
-    def __init__(self, edge, table_old):
-
-        self.edge = edge
-        self.table_old = table_old
-        self.node1, self.node2, self.relation = edge
-        self.table = self.other_node()
-        
-    def other_node(self):
-        if self.table_old == node1:
-            return node2
-        else:
-            return node1
-
-
-
-
-

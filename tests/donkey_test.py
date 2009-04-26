@@ -186,9 +186,9 @@ class test_basic_input(test_donkey):
 
     def test_table_paths(self):
 
-        assert self.Donkey.tables["people"].paths[("donkey_sponsership", "onetomany", "_donkey", "manytoone")] == "donkey"
-        assert self.Donkey.tables["people"].paths[("donkey_sponsership", "onetomany", "_donkey", "manytoone", "donkey_pics", "onetoone")] == "donkey_pics"
-        assert self.Donkey.tables["donkey"].paths[("donkey_sponsership", "onetomany", "_people", "manytoone", "email", "onetomany")] == "email"
+        assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey")] == ["donkey", "manytoone"]
+        assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey", "donkey_pics",)] == ["donkey_pics", "onetoone"]
+        assert self.Donkey.tables["donkey"].paths[("donkey_sponsership", "_people", "email")] == ["email", "onetomany"]
 
 class test_after_reload(test_basic_input):
     
