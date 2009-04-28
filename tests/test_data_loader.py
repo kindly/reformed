@@ -9,6 +9,8 @@ class donkey_test(donkey_test.test_donkey):
     @classmethod
     def set_up_inserts(cls):
 
+        super(cls, donkey_test).set_up_inserts()
+        
         david ="""
         id : 1
         address_line_1 : 16 blooey
@@ -19,6 +21,7 @@ class donkey_test(donkey_test.test_donkey):
             -
                 email : poo2@poo.com
         donkey_sponsership:
+            id : 1
             amount : 10
             _donkey : 
                 name : fred
@@ -47,6 +50,16 @@ class donkey_test(donkey_test.test_donkey):
 
         cls.existing_record = SingleRecord(cls.Donkey, "people", david)
         cls.new_record = SingleRecord(cls.Donkey, "people", peter)        
+        cls.existing_record.get_root_obj()
+        cls.new_record.get_root_obj()
+
+        cls.existing_record.get_obj(("email" , 0))
+        cls.existing_record.get_obj(("donkey_sponsership" , 0))
+        cls.existing_record.get_obj(("donkey_sponsership" , 0, "_donkey", 0))
+
+        cls.new_record.get_obj(("email" , 0))
+        cls.new_record.get_obj(("donkey_sponsership" , 0))
+        cls.new_record.get_obj(("donkey_sponsership" , 0, "_donkey", 0))
         
         #cls.new_record.load()
         cls.session = cls.Donkey.Session()
@@ -87,13 +100,45 @@ class donkey_test(donkey_test.test_donkey):
 
         assert check_correct_fields( {"name":  "peter", "id" : "bob"}, self.Donkey, "people") is None
 
-    def test_set_root_obj(self):
+    def test_get_root_obj(self):
 
-        self.new_record.set_root_obj()
-        assert self.new_record.all_obj["root"].id == ""
+        assert self.new_record.all_obj["root"].id is None
 
-        self.existing_record.set_root_obj()
         assert self.existing_record.all_obj["root"].name == u"david"
+
+    def test_get_obj_with_id(self):
+
+        obj = self.existing_record.get_obj_with_id( ("donkey_sponsership", 0) , dict(id = 1, amount = 20))
+
+        assert obj.amount == 50   #originally 50
+
+        assert_raises(InvalidData, self.existing_record.get_obj_with_id, ("donkey_sponsership", 0) , dict(id = 2, amount = 20))
+
+        assert_raises(InvalidData, self.existing_record.get_obj_with_id, ("email", 0) , dict(id = 1))
+
+    def test_get_obj_existing_one_to_many(self):
+
+        assert self.existing_record.all_obj[("donkey_sponsership" , 0)].amount == 50
+
+    def test_get_obj_new_one_to_many(self):
+
+        assert self.existing_record.all_obj[("email" , 0)].email is None
+
+    def test_get_obj_new_many_to_one(self):
+        
+        assert self.new_record.all_obj[("donkey_sponsership" , 0, "_donkey", 0)].age is None
+
+    def test_get_obj_existing_many_to_one(self):
+        
+        assert self.existing_record.all_obj[("donkey_sponsership" , 0, "_donkey", 0)].age == 13
+
+    def test_get_obj_new_from_key(self):
+        
+        pass
+
+
+
+
 
     def tstlater_load_record(self):
 
