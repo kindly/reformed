@@ -48,19 +48,67 @@ class donkey_test(donkey_test.test_donkey):
 
         peter = yaml.load(peter)
 
+        people_table ="""
+        table_name : people
+        table_params :
+            item : entity
+            value : True
+        field : 
+            - 
+                table_name : people
+                field_name : email
+                field_params :
+                    item : cascade
+                    value : all
+            -
+                table_name : people
+                field_name : name
+                field_params :
+                    item : length
+                    value : 50
+        """
+
+        existing_pk_record = yaml.load(people_table)
+
+        email_order ="""
+        table_name : people
+        field_name : email
+        item : order_by
+        ___field :
+            table_name : people
+            field_name : email
+        """
+        
+        existing_field_param = yaml.load(email_order)
+
+
+
+
         cls.existing_record = SingleRecord(cls.Donkey, "people", david)
         cls.new_record = SingleRecord(cls.Donkey, "people", peter)        
-        cls.existing_record.get_root_obj()
-        cls.new_record.get_root_obj()
+        cls.existing_pk = SingleRecord(cls.Donkey, "__table", existing_pk_record)
+        cls.existing_field_param = SingleRecord(cls.Donkey, "__field_params", existing_field_param)
 
-        cls.existing_record.get_obj(("email" , 0))
-        cls.existing_record.get_obj(("donkey_sponsership" , 0))
-        cls.existing_record.get_obj(("donkey_sponsership" , 0, "_donkey", 0))
+        #cls.existing_record.get_root_obj()
+        #cls.new_record.get_root_obj()
+        #cls.existing_pk.get_root_obj()
 
-        cls.new_record.get_obj(("email" , 0))
-        cls.new_record.get_obj(("donkey_sponsership" , 0))
-        cls.new_record.get_obj(("donkey_sponsership" , 0, "_donkey", 0))
-        
+        #cls.existing_record.get_obj(("email" , 0))
+        #cls.existing_record.get_obj(("donkey_sponsership" , 0))
+        #cls.existing_record.get_obj(("donkey_sponsership" , 0, "_donkey", 0))
+
+        #cls.new_record.get_obj(("email" , 0))
+        #cls.new_record.get_obj(("donkey_sponsership" , 0))
+        #cls.new_record.get_obj(("donkey_sponsership" , 0, "_donkey", 0))
+        #
+        #cls.existing_pk.get_obj(("field", 0))
+        #cls.existing_pk.get_obj(("field", 1))
+        #cls.existing_pk.get_obj(("field", 1, "field_params", 0))
+
+        cls.existing_pk.get_all_obj()
+        cls.new_record.get_all_obj()
+        cls.existing_record.get_all_obj()
+        cls.existing_field_param.get_all_obj()
         #cls.new_record.load()
         cls.session = cls.Donkey.Session()
 
@@ -132,12 +180,19 @@ class donkey_test(donkey_test.test_donkey):
         
         assert self.existing_record.all_obj[("donkey_sponsership" , 0, "_donkey", 0)].age == 13
 
+    def test_get_obj_existing_from_key(self):
+
+        assert self.existing_pk.all_obj[("field", 0)].other == "email" 
+
+        assert self.existing_pk.all_obj[("field", 1)].field_name == "name" 
+
     def test_get_obj_new_from_key(self):
-        
-        pass
 
+        assert self.existing_pk.all_obj[("field", 1, "field_params", 0)].item  is None
 
+    def test_get_existing_obj_from_key(self):
 
+        assert self.existing_field_param.all_obj[("___field", 0)].field_name == "email"
 
 
     def tstlater_load_record(self):

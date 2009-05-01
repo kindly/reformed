@@ -1,6 +1,9 @@
 import networkx as nx
 import custom_exceptions
 import sqlalchemy
+import logging
+
+logger = logging.getLogger('reformed.main')
 
 def get_key_data(key, database, table):
 
@@ -59,9 +62,17 @@ class SingleRecord(object):
 
         self.session = self.database.Session()
 
+    def get_all_obj(self):
+
+        self.get_root_obj()
+        for key in self.keys:
+            if key <> "root":
+                self.get_obj(key)
+
     def get_root_obj(self):
 
         self.session = self.database.Session()
+
 
         row = self.all_rows["root"]
 
@@ -71,14 +82,16 @@ class SingleRecord(object):
 
         if "id" in row.keys():
             obj = self.session.query(self.database.get_class(self.table)).filter_by( id = row["id"]).one()
+        ##TODO incorrect need to check even if just one key is specified and error otherwise
         elif set(pk_list).intersection(set(row.keys())) == set(pk_list) and pk_list:
             try:
                 pk_values = {}
                 pk_list = self.database.tables[self.table].primary_key_columns.keys()
-                for item in pklist:
+                for item in pk_list:
                     pk_values[item] = row[item]
-                obj = self.session.query(self.database.get_class(self.table)).filter_by(pk_values).one()
-            except sqlalchemy.orm.query.exc.NoResultFound:
+                print pk_values
+                obj = self.session.query(self.database.get_class(self.table)).filter_by(**pk_values).one()
+            except sqlalchemy.orm.exc.NoResultFound:
                 obj = self.database.get_instance(self.table)
         else:
             obj = self.database.get_instance(self.table)
@@ -103,8 +116,8 @@ class SingleRecord(object):
             self.all_obj[key] = obj
             return obj
 
-        ##TODO actually implent this
         pk_list = self.database.tables[table].primary_key_columns.keys()
+        ##TODO incorrect need to check even if just one key is specified and error otherwise
         if set(pk_list).intersection(set(row.keys())) == set(pk_list) and pk_list:
             obj = self.get_obj_with_pk(key, row)
             self.all_obj[key] = obj
@@ -128,34 +141,35 @@ class SingleRecord(object):
         return obj
 
     def get_obj_with_pk(self, key, row):
-        ##TODO
         table, join = get_key_data(key, self.database, self.table)
         row_number = key[-1]
         relation_name = key[-2]
         parent_key = get_parent_key(key, self.all_rows)
 
+
         pk_values = {}
         pk_list = self.database.tables[table].primary_key_columns.keys()
-        for item in pklist:
+        for item in pk_list:
             pk_values[item] = row[item]
 
         parents_obj_relation = getattr(self.all_obj[parent_key], relation_name)
 
         if join in ("onetoone", "manytoone"):
             pk_current_values = {}
-            for item in pklist:
+            for item in pk_list:
                 pk_current_values[item] = getattr(parents_obj_relation, item)
             if pk_current_values != pk_values:
                 raise custom_exceptions.InvalidData("""primary key value(s) %s in table %s
                                         either do(es) not exist or 
                                         is not associted with join"""
                                         % (pk_values, table))
-                return parents_obj_relation
-        if join in ("onetomaney"):
+            return parents_obj_relation
+
+        if join in ("onetomany"):
             for obj in parents_obj_relation:
                 pk_current_values = {}
-                for item in pklist:
-                    pk_current_values[item] = getattr(parents_obj_relation, item)
+                for item in pk_list:
+                    pk_current_values[item] = getattr(obj, item)
                 if pk_current_values == pk_values:
                     return obj
             raise custom_exceptions.InvalidData("""primary key value(s) %s in table %s
