@@ -157,8 +157,9 @@ class FlatFile(object):
 
         return first_line
 
-    def load(self):
+    def load(self, batch = 1000):
 
+        self.session = self.database.Session()
         flat_file = self.get_file()
 
         if not hasattr(self, "dialect"):
@@ -171,11 +172,22 @@ class FlatFile(object):
         if self.has_header:
             csv_file.next()
 
-        for line in csv_file:
-            record = SingleRecord(self.database, self.table, line, self)
-            record.load()
+        
+        line_number = 0
 
+        for line in csv_file:
+            line_number = line_number + 1
+            record = SingleRecord(self.database, self.table, line, self)
+            record.get_all_obj(self.session)
+            record.add_all_values_to_obj()
+            record.save_all_objs(self.session)
+            if line_number % batch == 0:
+                self.session.commit()
+        self.session.commit()
+                
         flat_file.close()
+
+        self.session.close()
 
     def make_parent_key_dict(self):
         for key in self.keys:
@@ -260,6 +272,7 @@ class SingleRecord(object):
         self.save_all_objs(self.session)
 
         self.session.commit()
+        self.session.close()
 
     def get_key_info(self, key):
 
