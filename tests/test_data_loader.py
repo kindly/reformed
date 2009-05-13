@@ -4,12 +4,12 @@ from nose.tools import assert_raises,raises
 from reformed.custom_exceptions import *
 import yaml
 
-class donkey_test(donkey_test.test_donkey):
+class test_record_loader(donkey_test.test_donkey):
 
     @classmethod
     def set_up_inserts(cls):
 
-        super(cls, donkey_test).set_up_inserts()
+        super(cls, test_record_loader).set_up_inserts()
         
         david ="""
         id : 1
@@ -89,22 +89,6 @@ class donkey_test(donkey_test.test_donkey):
         cls.existing_pk = SingleRecord(cls.Donkey, "__table", existing_pk_record)
         cls.existing_field_param = SingleRecord(cls.Donkey, "__field_params", existing_field_param)
 
-        #cls.existing_record.get_root_obj()
-        #cls.new_record.get_root_obj()
-        #cls.existing_pk.get_root_obj()
-
-        #cls.existing_record.get_obj(("email" , 0))
-        #cls.existing_record.get_obj(("donkey_sponsership" , 0))
-        #cls.existing_record.get_obj(("donkey_sponsership" , 0, "_donkey", 0))
-
-        #cls.new_record.get_obj(("email" , 0))
-        #cls.new_record.get_obj(("donkey_sponsership" , 0))
-        #cls.new_record.get_obj(("donkey_sponsership" , 0, "_donkey", 0))
-        #
-        #cls.existing_pk.get_obj(("field", 0))
-        #cls.existing_pk.get_obj(("field", 1))
-        #cls.existing_pk.get_obj(("field", 1, "field_params", 0))
-
         cls.existing_pk.get_all_obj()
         cls.new_record.get_all_obj()
         cls.existing_record.get_all_obj()
@@ -112,6 +96,7 @@ class donkey_test(donkey_test.test_donkey):
         #cls.new_record.load()
         cls.session = cls.Donkey.Session()
 
+    
     def test_single_record_process(self):
         
         assert ("donkey_sponsership", 0, "_donkey", 0) in self.new_record.all_rows.keys()
@@ -194,13 +179,50 @@ class donkey_test(donkey_test.test_donkey):
 
         assert self.existing_field_param.all_obj[("___field", 0)].field_name == "email"
 
+    def test_key_parser(self):
 
-    def tstlater_load_record(self):
+        assert string_key_parser("poo") == ["poo"]
+        assert string_key_parser("poo__24__weeee__2__plop") == ["poo", 24, "weeee", 2, "plop"]
+        assert string_key_parser("___field__0__field_name") == ["___field", 0, "field_name"]
+        
+    def test_get_keys_and_items_from_list(self):
 
-        people = self.session.query(self.Donkey.get_class("people")).all()
-        email = self.session.query(self.Donkey.get_class("email")).all()
-        donkey = self.session.query(self.Donkey.get_class("donkey")).all()
-        donkey_spon = self.session.query(self.Donkey.get_class("donkey_sponsership")).all()
+        assert get_keys_and_items_from_list(["poo__24__weeee__2__plop", "poo", "___field__0__field_name"]) ==\
+                [[("poo", 24, "weeee", 2), "plop"],["root","poo"],[("___field", 0),"field_name"]]
+
+    def test_get_keys_from_list(self):
+
+        assert get_keys_from_list([[["poo", 24, "weeee", 2], "plop"],["root","poo"],[["___field", 0],"field_name"]])==\
+                {"root":{}, ("poo", 24, "weeee", 2):{}, ("___field", 0):{}}
+    
+        
+
+    def test_z_add_values_to_obj(self):
+
+        self.existing_record.add_all_values_to_obj()
+        self.new_record.add_all_values_to_obj()
+        self.existing_pk.add_all_values_to_obj()
+
+        assert self.existing_record.all_obj[u"root"].address_line_1 == u"16 blooey"
+        assert self.existing_record.all_obj[(u"donkey_sponsership" , 0)].amount == 10
+        assert self.existing_record.all_obj[(u"email" , 0)].email == "poo@poo.com"
+
+        assert self.new_record.all_obj[(u"root")].name == "peter"
+        assert self.new_record.all_obj[(u"email" , 0)].email == "poo@poo.com"
+        assert self.new_record.all_obj[(u"donkey_sponsership", 0,)].amount == 10
+        assert self.new_record.all_obj[(u"donkey_sponsership", 0, "_donkey", 0)].age == 10
+        
+        assert self.existing_pk.all_obj[(u"table_params" , 0)].item == u"entity"
+        assert self.existing_pk.all_obj[(u"table_params" , 0)].value == True
+
+    def test_zz_load_record(self):
+
+        self.new_record.load()
+
+        people = self.session.query(self.Donkey.get_class(u"people")).all()
+        email = self.session.query(self.Donkey.get_class(u"email")).all()
+        donkey = self.session.query(self.Donkey.get_class(u"donkey")).all()
+        donkey_spon = self.session.query(self.Donkey.get_class(u"donkey_sponsership")).all()
         
 
         assert (u"peter", u"sewjfd") in [( a.name, a.postcode) for a in 
@@ -212,3 +234,121 @@ class donkey_test(donkey_test.test_donkey):
         assert  10  in [ a.amount for a in 
                                          donkey_spon]
 
+
+class test_flat_file(donkey_test.test_donkey):
+
+    @classmethod
+    def set_up_inserts(cls):
+
+        super(cls, test_flat_file).set_up_inserts()
+
+        cls.flatfile = FlatFile(cls.Donkey,
+                            "people",
+                            ["id",
+                            "name",
+                            "address_line_1",
+                            "postcode",
+                            "email__0__email",
+                            "email__1__email",
+                            "donkey_sponsership__0__amount",
+                            "donkey_sponsership__0__id",
+                            "donkey_sponsership__0___donkey__0__name"],
+                            None)
+
+        cls.flatfile_no_parent = FlatFile(cls.Donkey,
+                            "people",
+                            ["id",
+                            "name",
+                            "address_line_1",
+                            "postcode",
+                            "email__0__email",
+                            "email__1__email",
+                            "donkey_sponsership__0__amount",
+                            "donkey_sponsership__0__id",
+                            "donkey_sponsership__1___donkey__0__name"],
+                            None)
+
+
+    def test_parent_key(self):
+
+        assert self.flatfile.make_parent_key_dict() == {('donkey_sponsership', 0, '_donkey', 0): ('donkey_sponsership', 0),
+                                                   ('email', 1): 'root',
+                                                   ('email', 0): 'root',
+                                                   ('donkey_sponsership', 0): 'root'}
+
+        assert_raises(custom_exceptions.InvalidKey, self.flatfile_no_parent.make_parent_key_dict)
+
+    def test_get_key_info(self):
+
+        assert self.flatfile.key_data == {('donkey_sponsership', 0, '_donkey', 0): ['donkey', 'manytoone'],
+                                                      ('email', 1): ['email', 'onetomany'],
+                                                      ('email', 0): ['email', 'onetomany'],
+                                                      ('donkey_sponsership', 0): ['donkey_sponsership', 'onetomany']}
+
+        assert_raises(custom_exceptions.InvalidKey, FlatFile, self.Donkey,
+                            "people",
+                            ["id",
+                            "name",
+                            "address_line_1",
+                            "postcode",
+                            "email__0__email",
+                            "email__1__email",
+                            "donkey_sponsership__0__amount",
+                            "donkey_sponsership__0__id",
+                            "donkey_sponsership__0___donkeyy__0__name"],
+                            None)
+
+    def test_key_item_dict(self):
+
+        assert self.flatfile.key_item_dict == {('donkey_sponsership', 0, '_donkey', 0): {'name': None},
+                                               ('email', 1): {'email': None},
+                                               'root': {'address_line_1': None, 'postcode': None, 'id': None, 'name': None},
+                                               ('donkey_sponsership', 0): {'amount': None, 'id': None},
+                                               ('email', 0): {'email': None}}
+
+    def test_check_fields(self):
+
+        assert self.flatfile.check_fields() == None
+
+        assert_raises(custom_exceptions.InvalidField, FlatFile, self.Donkey,
+                            "people",
+                            ["id",
+                            "name",
+                            "address_line_1",
+                            "postcode",
+                            "email__0__email",
+                            "email__1__email",
+                            "donkey_sponsership__0__amount",
+                            "donkey_sponsership__0__id",
+                            "donkey_sponsership__0___donkey__0__namee"],
+                            None)
+
+    def test_get_descendants(self):
+
+        assert self.flatfile.key_decendants == {('donkey_sponsership', 0, '_donkey', 0): [],
+                                                ('email', 1): [],
+                                                'root': [('donkey_sponsership', 0, '_donkey', 0), ('email', 1), ('donkey_sponsership', 0), ('email', 0)],
+                                                ('email', 0): [],
+                                                ('donkey_sponsership', 0): [('donkey_sponsership', 0, '_donkey', 0)]}
+
+    def test_create_all_rows(self):
+
+        assert self.flatfile.create_all_rows(["", "peter", "16 blooey", "sewjfd", "poo@poo.com", "poo2@poo.com", 10, None, "fred"]) ==\
+                {('donkey_sponsership', 0, '_donkey', 0): {'name': 'fred'},
+                 ('email', 1): {'email': 'poo2@poo.com'},
+                 'root': {'postcode': 'sewjfd', 'name': 'peter', 'address_line_1': '16 blooey'},
+                 ('email', 0): {'email': 'poo@poo.com'},
+                 ('donkey_sponsership', 0): {'amount': 10}}
+
+        assert self.flatfile.create_all_rows(["", "peter", "16 blooey", "sewjfd", "poo@poo.com", "poo2@poo.com", None, None, None]) ==\
+                {('email', 1): {'email': 'poo2@poo.com'},
+                 'root': {'postcode': 'sewjfd', 'name': 'peter', 'address_line_1': '16 blooey'},
+                 ('email', 0): {'email': 'poo@poo.com'}}
+        
+        assert self.flatfile.create_all_rows(["", "peter", "16 blooey", "sewjfd", "poo@poo.com", "poo2@poo.com", None, None, "fred"]) ==\
+                {('donkey_sponsership', 0, '_donkey', 0): {'name': 'fred'},
+                 ('email', 1): {'email': 'poo2@poo.com'},
+                 'root': {'postcode': 'sewjfd', 'name': 'peter', 'address_line_1': '16 blooey'},
+                 ('email', 0): {'email': 'poo@poo.com'},
+                 ('donkey_sponsership', 0): {}}
+        

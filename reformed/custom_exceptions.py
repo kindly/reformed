@@ -38,6 +38,8 @@ class NoTableError(AttributeError):
     pass
 class InvalidKey(AttributeError):
     pass
+class InvalidRow(AttributeError):
+    pass
 class InvalidField(AttributeError):
     pass
 class InvalidData(AttributeError):
