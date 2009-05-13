@@ -1,6 +1,7 @@
 from reformed.fields import *
 from reformed.tables import *
 from reformed.database import *
+from reformed.data_loader import FlatFile
 from nose.tools import assert_raises,raises
 import sqlalchemy as sa
 from sqlalchemy import create_engine
@@ -188,6 +189,17 @@ class test_donkey_persist_sqlite(object):
         poo.name = "don_keyfasf"
         assert_raises(formencode.Invalid, self.session.add, poo)
 
+    def test_data_load_with_header(self):
+
+        flatfile = FlatFile(self.Donkey,
+                            "people",
+                            "tests/new_people_with_header.csv")    
+        flatfile.load()
+
+
+        result = self.session.query(self.Donkey.get_class("people")).filter_by(name = "popph15").first()
+
+        assert 1500 in [a.amount for a in result.donkey_sponsership]
     
 class test_donkey_persist_mysql(test_donkey_persist_sqlite):
 

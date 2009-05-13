@@ -83,18 +83,18 @@ class test_record_loader(donkey_test.test_donkey):
 
 
 
+        cls.session = cls.Donkey.Session()
 
         cls.existing_record = SingleRecord(cls.Donkey, "people", david)
         cls.new_record = SingleRecord(cls.Donkey, "people", peter)        
         cls.existing_pk = SingleRecord(cls.Donkey, "__table", existing_pk_record)
         cls.existing_field_param = SingleRecord(cls.Donkey, "__field_params", existing_field_param)
 
-        cls.existing_pk.get_all_obj()
-        cls.new_record.get_all_obj()
-        cls.existing_record.get_all_obj()
-        cls.existing_field_param.get_all_obj()
+        cls.existing_pk.get_all_obj(cls.session)
+        cls.new_record.get_all_obj(cls.session)
+        cls.existing_record.get_all_obj(cls.session)
+        cls.existing_field_param.get_all_obj(cls.session)
         #cls.new_record.load()
-        cls.session = cls.Donkey.Session()
 
     
     def test_single_record_process(self):
@@ -244,6 +244,7 @@ class test_flat_file(donkey_test.test_donkey):
 
         cls.flatfile = FlatFile(cls.Donkey,
                             "people",
+                            "tests/new_people.csv",    
                             ["id",
                             "name",
                             "address_line_1",
@@ -252,21 +253,9 @@ class test_flat_file(donkey_test.test_donkey):
                             "email__1__email",
                             "donkey_sponsership__0__amount",
                             "donkey_sponsership__0__id",
-                            "donkey_sponsership__0___donkey__0__name"],
-                            None)
+                            "donkey_sponsership__0___donkey__0__name"]
+                            )
 
-        cls.flatfile_no_parent = FlatFile(cls.Donkey,
-                            "people",
-                            ["id",
-                            "name",
-                            "address_line_1",
-                            "postcode",
-                            "email__0__email",
-                            "email__1__email",
-                            "donkey_sponsership__0__amount",
-                            "donkey_sponsership__0__id",
-                            "donkey_sponsership__1___donkey__0__name"],
-                            None)
 
 
     def test_parent_key(self):
@@ -276,7 +265,19 @@ class test_flat_file(donkey_test.test_donkey):
                                                    ('email', 0): 'root',
                                                    ('donkey_sponsership', 0): 'root'}
 
-        assert_raises(custom_exceptions.InvalidKey, self.flatfile_no_parent.make_parent_key_dict)
+        assert_raises(custom_exceptions.InvalidKey, FlatFile, self.Donkey,
+                                            "people",
+                                            None,
+                                            ["id",
+                                            "name",
+                                            "address_line_1",
+                                            "postcode",
+                                            "email__0__email",
+                                            "email__1__email",
+                                            "donkey_sponsership__0__amount",
+                                            "donkey_sponsership__0__id",
+                                            "donkey_sponsership__1___donkey__0__name"]
+                                            )
 
     def test_get_key_info(self):
 
@@ -287,6 +288,7 @@ class test_flat_file(donkey_test.test_donkey):
 
         assert_raises(custom_exceptions.InvalidKey, FlatFile, self.Donkey,
                             "people",
+                            None,
                             ["id",
                             "name",
                             "address_line_1",
@@ -295,8 +297,8 @@ class test_flat_file(donkey_test.test_donkey):
                             "email__1__email",
                             "donkey_sponsership__0__amount",
                             "donkey_sponsership__0__id",
-                            "donkey_sponsership__0___donkeyy__0__name"],
-                            None)
+                            "donkey_sponsership__0___donkeyy__0__name"]
+                            )
 
     def test_key_item_dict(self):
 
@@ -312,6 +314,7 @@ class test_flat_file(donkey_test.test_donkey):
 
         assert_raises(custom_exceptions.InvalidField, FlatFile, self.Donkey,
                             "people",
+                            None,
                             ["id",
                             "name",
                             "address_line_1",
@@ -320,8 +323,8 @@ class test_flat_file(donkey_test.test_donkey):
                             "email__1__email",
                             "donkey_sponsership__0__amount",
                             "donkey_sponsership__0__id",
-                            "donkey_sponsership__0___donkey__0__namee"],
-                            None)
+                            "donkey_sponsership__0___donkey__0__namee"]
+                            )
 
     def test_get_descendants(self):
 
@@ -351,4 +354,31 @@ class test_flat_file(donkey_test.test_donkey):
                  'root': {'postcode': 'sewjfd', 'name': 'peter', 'address_line_1': '16 blooey'},
                  ('email', 0): {'email': 'poo@poo.com'},
                  ('donkey_sponsership', 0): {}}
+
+    def tespot_data_load(self):
+
+        self.flatfile.load()
+
+        result = self.session.query(self.Donkey.get_class("people")).filter_by(name = "popp102").one()
+
+        assert 102 in [a.amount for a in result.donkey_sponsership]
+
+    def test_data_load_with_header(self):
+
+        flatfile = FlatFile(self.Donkey,
+                            "people",
+                            "tests/new_people_with_header.csv")    
+        flatfile.load()
+
+
+        result = self.session.query(self.Donkey.get_class("people")).filter_by(name = "popph15").one()
+
+        assert 1500 in [a.amount for a in result.donkey_sponsership]
+
         
+
+
+
+
+
+

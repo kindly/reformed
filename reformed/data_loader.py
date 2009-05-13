@@ -3,6 +3,7 @@ import custom_exceptions
 import sqlalchemy
 import logging
 import re
+import csv
 
 logger = logging.getLogger('reformed.main')
 
@@ -97,7 +98,7 @@ def get_keys_from_list(key_item_list):
 
 class FlatFile(object):
 
-    def __init__(self, database, table, headers, data):
+    def __init__(self, database, table, data, headers = None):
 
         self.data = data
         self.database = database
@@ -107,7 +108,14 @@ class FlatFile(object):
         self.key_data = {}
         self.key_decendants = {}
 
-        self.key_item_list = get_keys_and_items_from_list(headers)
+        if not headers:
+            self.headers = self.get_headers()
+            self.has_header = True
+        else:
+            self.has_header = False
+            self.headers = headers
+
+        self.key_item_list = get_keys_and_items_from_list(self.headers)
 
         self.all_rows_template = get_keys_from_list(self.key_item_list)
 
@@ -117,12 +125,57 @@ class FlatFile(object):
 
         self.key_data = self.make_key_data_dict()
 
+        self.make_parent_key_dict()
+
         self.check_fields()
 
         self.get_all_decendants()
         
         self.keys.sort(lambda a, b : len(a) - len(b))
+    
 
+    def get_file(self):
+
+        if isinstance(self.data, basestring):
+            flat_file = open(self.data, mode = "rb")
+        else:
+            flat_file = data
+
+        return flat_file
+
+    def get_headers(self):
+
+        flat_file = self.get_file()
+
+        self.dialect = csv.Sniffer().sniff(flat_file.read(10240))
+
+        flat_file.seek(0)
+
+        first_line = csv.reader(flat_file, self.dialect).next()
+
+        flat_file.close()
+
+        return first_line
+
+    def load(self):
+
+        flat_file = self.get_file()
+
+        if not hasattr(self, "dialect"):
+            self.dialect = csv.Sniffer().sniff(flat_file.read(10240))
+
+        flat_file.seek(0)
+
+        csv_file = csv.reader(flat_file, self.dialect)
+
+        if self.has_header:
+            csv_file.next()
+
+        for line in csv_file:
+            record = SingleRecord(self.database, self.table, line, self)
+            record.load()
+
+        flat_file.close()
 
     def make_parent_key_dict(self):
         for key in self.keys:
@@ -167,7 +220,7 @@ class FlatFile(object):
         for index, key_item in enumerate(self.key_item_list):
             key, item = key_item
             if row[index]:
-                all_rows[key][item] = row[index]
+                all_rows[key][item] = convert_unicode(row[index])
         for key in self.keys:
             if key == "root":
                 continue
@@ -176,45 +229,55 @@ class FlatFile(object):
                     all_rows.pop(key)
         return all_rows
 
-    
-                    
-
 class SingleRecord(object):
 
-    def __init__(self, database, table, data):
+    def __init__(self, database, table, data, flat_file = None):
 
         self.data = data
         self.database = database
         self.table = table
+        self.flat_file = flat_file
 
-        self.all_rows = {}
+        if flat_file:
+            self.all_rows = flat_file.create_all_rows(data)
+            self.keys = flat_file.keys
+        else:
+            self.all_rows = {}
+            self.process()
+            self.keys = self.all_rows.keys()
+            self.keys.sort(lambda a, b : len(a) - len(b))
+
         self.all_obj = {} 
-
-        self.process()
-
-        self.keys = self.all_rows.keys()
-
-        self.keys.sort(lambda a, b : len(a) - len(b))
-
 
     def load(self):
 
         self.session = self.database.Session()
 
-        self.get_all_obj()
+        self.get_all_obj(self.session)
 
         self.add_all_values_to_obj()
 
-        self.save_all_objs()
+        self.save_all_objs(self.session)
 
         self.session.commit()
 
+    def get_key_info(self, key):
 
-    def save_all_objs(self):
+        if self.flat_file:
+            table, join = self.flat_file.key_data[key]
+            parent_key = self.flat_file.parent_key[key]
+            relation_name = key[-2]
+        else:
+            table, join = get_key_data(key, self.database, self.table)
+            parent_key = get_parent_key(key, self.all_rows)
+            relation_name = key[-2]
+
+        return [table, join, parent_key, relation_name]
+
+    def save_all_objs(self, session):
         
         for key, obj in self.all_obj.iteritems():
-            self.session.add(obj)
-
+            session.add(obj)
 
     def add_values_to_obj(self, key):
 
@@ -229,19 +292,14 @@ class SingleRecord(object):
             if key <> "root":
                 self.add_values_to_obj(key)
 
+    def get_all_obj(self, session):
 
-    def get_all_obj(self):
-
-        self.get_root_obj()
+        self.get_root_obj(session)
         for key in self.keys:
             if key <> "root":
                 self.get_obj(key)
 
-    def get_root_obj(self):
-
-        if not hasattr(self, "session"):
-            self.session = self.database.Session()
-
+    def get_root_obj(self, session):
 
         row = self.all_rows["root"]
 
@@ -250,7 +308,7 @@ class SingleRecord(object):
         pk_list = self.database.tables[self.table].primary_key_columns.keys()
 
         if "id" in row.keys():
-            obj = self.session.query(self.database.get_class(self.table)).filter_by( id = row["id"]).one()
+            obj = session.query(self.database.get_class(self.table)).filter_by( id = row["id"]).one()
         ##TODO incorrect need to check even if just one key is specified and error otherwise
         elif set(pk_list).intersection(set(row.keys())) == set(pk_list) and pk_list:
             try:
@@ -258,7 +316,7 @@ class SingleRecord(object):
                 pk_list = self.database.tables[self.table].primary_key_columns.keys()
                 for item in pk_list:
                     pk_values[item] = row[item]
-                obj = self.session.query(self.database.get_class(self.table)).filter_by(**pk_values).one()
+                obj = session.query(self.database.get_class(self.table)).filter_by(**pk_values).one()
             except sqlalchemy.orm.exc.NoResultFound:
                 obj = self.database.get_instance(self.table)
         else:
@@ -271,9 +329,7 @@ class SingleRecord(object):
 
     def get_obj(self, key):
 
-        table, join = get_key_data(key, self.database, self.table)
-        parent_key = get_parent_key(key, self.all_rows)
-        relation_name = key[-2]
+        table, join, parent_key, relation_name  = self.get_key_info(key)
 
         row = self.all_rows[key]
 
@@ -309,11 +365,9 @@ class SingleRecord(object):
         return obj
 
     def get_obj_with_pk(self, key, row):
-        table, join = get_key_data(key, self.database, self.table)
-        row_number = key[-1]
-        relation_name = key[-2]
-        parent_key = get_parent_key(key, self.all_rows)
 
+        row_number = key[-1]
+        table, join, parent_key, relation_name  = self.get_key_info(key)
 
         pk_values = {}
         pk_list = self.database.tables[table].primary_key_columns.keys()
@@ -347,10 +401,8 @@ class SingleRecord(object):
 
     def get_obj_with_id(self, key, row):
 
-        table, join = get_key_data(key, self.database, self.table)
         row_number = key[-1]
-        relation_name = key[-2]
-        parent_key = get_parent_key(key, self.all_rows)
+        table, join, parent_key, relation_name  = self.get_key_info(key)
 
         id = row["id"]
 
