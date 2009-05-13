@@ -355,7 +355,7 @@ class test_flat_file(donkey_test.test_donkey):
                  ('email', 0): {'email': 'poo@poo.com'},
                  ('donkey_sponsership', 0): {}}
 
-    def tespot_data_load(self):
+    def test_data_load(self):
 
         self.flatfile.load()
 
