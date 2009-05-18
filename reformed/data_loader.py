@@ -316,8 +316,10 @@ class SingleRecord(object):
 
         row = self.all_rows["root"]
 
-        check_correct_fields(row, self.database, self.table)
+        if not self.flat_file:
+            check_correct_fields(row, self.database, self.table)
 
+        ##TODO cache pk_list for flat files
         pk_list = self.database.tables[self.table].primary_key_columns.keys()
 
         if "id" in row.keys():
@@ -346,13 +348,15 @@ class SingleRecord(object):
 
         row = self.all_rows[key]
 
-        check_correct_fields(row, self.database, table)
+        if not self.flat_file:
+            check_correct_fields(row, self.database, table)
 
         if "id" in row.keys():
             obj = self.get_obj_with_id(key, row)
             self.all_obj[key] = obj
             return obj
 
+        ##TODO cache pk_list for flat files
         pk_list = self.database.tables[table].primary_key_columns.keys()
         ##TODO incorrect need to check even if just one key is specified and error otherwise
         if set(pk_list).intersection(set(row.keys())) == set(pk_list) and pk_list:
