@@ -295,10 +295,16 @@ class Table(object):
                                             original_table= table,
                                             original_column= n)
                 else:
-                    columns[table+'_id'] = Column(sa.Integer,
-                                                   name = table+'_id',
-                                                   original_table= table,
-                                                   original_column= "id")
+                    if table+"_id" not in columns:
+                        columns[table+'_id'] = Column(sa.Integer,
+                                                       name = table+'_id',
+                                                       original_table= table,
+                                                       original_column= "id")
+                    else:
+                        columns[table+'_id2'] = Column(sa.Integer,
+                                                       name = table+'_id2',
+                                                       original_table= table,
+                                                       original_column= "id")
         return columns
 
 

@@ -252,7 +252,8 @@ class SingleRecord(object):
 
         if flat_file:
             self.all_rows = flat_file.create_all_rows(data)
-            self.keys = flat_file.keys
+            self.keys = self.all_rows.keys()
+            self.keys.sort(lambda a, b : len(a) - len(b))
         else:
             self.all_rows = {}
             self.process()
@@ -278,6 +279,7 @@ class SingleRecord(object):
 
         if self.flat_file:
             table, join = self.flat_file.key_data[key]
+            ##FIXME this will fail if the import file specifies a child key that has no parent
             parent_key = self.flat_file.parent_key[key]
             relation_name = key[-2]
         else:

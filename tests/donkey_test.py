@@ -32,6 +32,8 @@ class test_donkey(object):
                                             cascade = "all, delete-orphan"),
                                   OneToMany("donkey_sponsership",
                                             "donkey_sponsership"),
+                                  OneToMany("relation",
+                                            "relation"),
                                   entity = True),
                             Table("email",
                                   Email("email")
@@ -60,6 +62,10 @@ class test_donkey(object):
                                   Money("amount"),
                                   Text("source")
                                  ),
+                             Table("relation",
+                                   Text("relation_type"),
+                                   ManyToOne("people", "people")
+                                  ),
                         metadata = cls.meta,
                         engine = cls.engine,
                         session = cls.Session

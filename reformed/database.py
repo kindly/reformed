@@ -81,8 +81,8 @@ class Database(object):
                                                         % table.name)
         self._add_table_no_persist(table)
 
-        if self.persisted == True:
-            self.persist()
+        #if self.persisted == True:
+        #    self.persist()
     
     def _add_table_no_persist(self, table):
 
