@@ -122,7 +122,10 @@ class Database(object):
             self.persisted = False #make sure database is not seen as persisted
 
         for row in all_tables:
-            if row.table_name.count(u"__") > 0:
+            if row.table_name.endswith(u"__table")  or\
+               row.table_name.endswith(u"__table_params")  or\
+               row.table_name.endswith(u"__field")  or\
+               row.table_name.endswith(u"__field_params"):
                 continue
             fields = []
             for field in row.field:

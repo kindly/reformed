@@ -5,7 +5,7 @@
 - add default not nulls for joint columns -Done
 - modify the add table and add field so as to go through set parent - Done
 - sort out test coverage for database especially looking at all join conditions - Done
-- add table that joins back to an entity table - can be done by making join from both tables
+- add table that joins back to an entity table - can be done by making join from both tables - not working
 - add unique constraints - Done
 - add nullable,sequences and any other sqlalchemy column level parameters -Done
 - add validation - basicly DONE
@@ -17,13 +17,22 @@
 - give all tables potential to log information - Done
 - make sure namespaces for objects are unique, looking at especially backreferences need to check relations forien keyclashed 
 - make sure field definition namespaces are unique - Done
-- searching
+- searching including hierachical ones and nots across one to manys
+- google like search and indexing.
+- a way to casch certain bit of information
+- data export, way of defining fields needed after a search
 - optimise make sa_table - Done
-- make sure indexs and unique constraints are remade
+- make sure indexs and unique constraints are remade, and can be added and dropped
+- entity table configuration
+- seperate out indexs
 - add ordering list implementation
 - make sure sa type class/object distinction works - Wontfix as all will be objects
 - make sure primary key columns are present once they are defined in check_relations or similar
 - seperate out logging
+- seperate out validation
 - make sure added fields is atomic and is logged somewhere
 - add fields add to logging instances also
-- table loading with yaml and csv
+- table loading with yaml and csv - Done
+- give a way to log and record all validation errors on data loading by catching all exceptions.
+- validation accross rows
+- 2 joins between 2 tables needs to work, making sure it works for data_loader and searching

@@ -44,6 +44,10 @@ class InvalidField(AttributeError):
     pass
 class InvalidData(AttributeError):
     pass
+class InvalidData(AttributeError):
+    pass
+class SearchError(Exception):
+    pass
 class DatabaseInvalid(AttributeError):
     def __init__(self, msg, list):
         self.msg = msg
