@@ -1,0 +1,154 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="default.css" />
+<style>
+div {
+	border:0; /* 1px solid #000; */
+	background-color:#EEE;
+}
+body {
+	height:100%;
+	margin:0;
+	padding:0;
+	border:0;
+	overflow:hidden;/* prevent scrollbars */
+}
+#logo, #action, #status, #info {
+	overflow:hidden;
+}
+#main, #sidebar {
+	overflow:auto;
+}
+</style>
+<script src="jquery.js"></script>
+<script src="jquery.json.js"></script>
+<script src="reformed.js"></script>
+<script src="job.js" ></script>
+<script src="form.js"></script>
+<script src="form_control.js" ></script>
+<script src="info.js" ></script>
+
+<script> 
+
+// Constants
+SIDE_WIDTH = 150;
+LOGO_HEIGHT = 100;
+ACTION_HEIGHT = 50;
+INFO_HEIGHT = 30;
+STATUS_HEIGHT = 40;
+MIN_APP_WIDTH = 500;
+MAX_APP_WIDTH = 800;
+ACTION_PAD = 2;
+INFO_PAD = 3;
+MAIN_PAD = 5;
+STATUS_PAD = 3;
+SIDEBAR_PAD = 4;
+LOGO_PAD = 3;
+WORKSPACE_PAD = 4;
+LEFT_PAD = 2;
+BOTTOM_PAD = 1;
+
+$(document).ready(layout);
+$(window).resize(layout);
+
+function layout(){
+	app_width = $(window).width();
+	app_height = $(window).height();
+
+	layout_set('logo',
+		   LEFT_PAD,
+		   LOGO_PAD,
+		   LOGO_HEIGHT,
+		   SIDE_WIDTH);
+
+	y = LOGO_PAD + LOGO_HEIGHT + SIDEBAR_PAD;
+	layout_set('sidebar',
+		   LEFT_PAD,
+		   y,
+		   app_height - y - BOTTOM_PAD,
+		   SIDE_WIDTH);
+
+	workspace_start = LEFT_PAD + SIDE_WIDTH + WORKSPACE_PAD;
+	workspace_width = app_width - workspace_start;
+	layout_set('action',
+		   workspace_start,
+		   ACTION_PAD,
+		   ACTION_HEIGHT,
+		   workspace_width);
+
+	y = ACTION_PAD + ACTION_HEIGHT + INFO_PAD;
+	layout_set('info',
+		   workspace_start,
+		   y,
+		   INFO_HEIGHT,
+		   workspace_width);
+
+	main_height = app_height - y - INFO_HEIGHT - MAIN_PAD - STATUS_HEIGHT - STATUS_PAD - BOTTOM_PAD;
+	y += INFO_HEIGHT + MAIN_PAD;
+	layout_set('main',
+		   workspace_start,
+		   y,
+		   main_height,
+		   workspace_width);
+
+
+	y += main_height + STATUS_PAD;
+	layout_set('status',
+		   workspace_start,
+		   y,
+		   STATUS_HEIGHT,
+		   workspace_width);
+
+
+}
+
+function layout_set(id, x, y, height, width){
+
+	// we need to remove any 'extra' borders/padding etc
+	height -= parseInt($('#' + id).css('padding-top'), 10);
+	height -= parseInt($('#' + id).css('padding-bottom'), 10); 
+	height -= parseInt($('#' + id).css('border-top-width'), 10);
+	height -= parseInt($('#' + id).css('border-bottom-width'), 10); 
+	height -= parseInt($('#' + id).css('margin-top'), 10);
+	height -= parseInt($('#' + id).css('margin-bottom'), 10); 
+
+	width -= parseInt($('#' + id).css('padding-left'), 10);
+	width -= parseInt($('#' + id).css('padding-right'), 10); 
+	width -= parseInt($('#' + id).css('border-left-width'), 10);
+	width -= parseInt($('#' + id).css('border-right-width'), 10); 
+	width -= parseInt($('#' + id).css('margin-left'), 10);
+	width -= parseInt($('#' + id).css('margin-right'), 10); 
+
+	css = { 'top' : String(y) + 'px',
+		'left' : String(x) + 'px',
+		'height' : String(height) + 'px',
+		'width' : String(width) + 'px',
+		'position' : 'absolute' };
+	$('#' + id).css(css);
+
+
+}
+
+</script>
+
+</head>
+
+<body>
+
+<div id='logo'><img src="logo.png"  width="126" height="125" /></div>
+
+<div id='sidebar'><ul>
+<li><a href="javascript:$FORM.request('form', 'main', 'new')" >form</a></li>
+<li><a href="javascript:$FORM.request('form_item', 'main', 'first')" >form_item</a></li>
+<li><a href="javascript:$FORM.request('Codes', 'main', '')" >codes</a></li>
+<li><a href="javascript:$FORM.request('logon', 'main', '')" >log in</a></li>
+<li><a href="javascript:$FORM.request('donkey', 'main', 'first')" >donkey</a></li>
+</ul></div>
+
+<div id='action'>action</div>
+<div id='info'>info</div>
+<div id='main'></div>
+<div id='status'>status</div>
+
+</body>
+</html>
