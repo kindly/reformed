@@ -26,12 +26,37 @@ page();
 	$(window).resize($REFORMED.layout);
 
 	$('#main').dblclick(function(event) {
-	if (event.target != "[object HTMLInputElement]" &&
-	    event.target != "[object HTMLButtonElement]"){
-  alert( this.id );
-}
+		form_dblclick(event);
 	})
+	
+	// preload the donkey form
+	$FORM.request('donkey', 'main', 'first')
 }
+
+form_active = true;
+
+function form_dblclick(event){
+
+	if (event.target != "[object HTMLInputElement]" &&
+	  event.target != "[object HTMLButtonElement]"){
+		form_mode();
+	}
+}
+function form_mode(){
+
+	if(!form_active){
+		$('#main').find('.form,.subform,tr').addClass('active').removeClass('inactive');
+		$('#main').find('input,select').removeAttr("disabled");
+		form_active = true;
+	} else {
+		$('#main').find('.form,.subform,tr').removeClass('active').addClass('inactive');
+		$('#main').find('input,select').attr("disabled", "disabled");
+		form_active = false;
+	}
+
+}
+
+
 
 
 function page(){
@@ -360,7 +385,6 @@ var $REFORMED = {
 	}
 	
 }
-
 
 
 
