@@ -21,13 +21,42 @@ page();
 	$(window).keydown(function(event){
 	//alert(event.keyCode);
 });
+	// application layout on window load/resize
+	$(document).ready($REFORMED.layout);
+	$(window).resize($REFORMED.layout);
+
 	$('#main').dblclick(function(event) {
-	if (event.target != "[object HTMLInputElement]" &&
-	    event.target != "[object HTMLButtonElement]"){
-  alert( this.id );
-}
+		form_dblclick(event);
 	})
+	
+	// preload the donkey form
+	$FORM.request('donkey', 'main', 'first')
 }
+
+form_active = true;
+
+function form_dblclick(event){
+
+	if (event.target != "[object HTMLInputElement]" &&
+	  event.target != "[object HTMLButtonElement]"){
+		form_mode();
+	}
+}
+function form_mode(){
+
+	if(!form_active){
+		$('#main').find('.form,.subform,tr').addClass('active').removeClass('inactive');
+		$('#main').find('input,select').removeAttr("disabled");
+		form_active = true;
+	} else {
+		$('#main').find('.form,.subform,tr').removeClass('active').addClass('inactive');
+		$('#main').find('input,select').attr("disabled", "disabled");
+		form_active = false;
+	}
+
+}
+
+
 
 
 function page(){
@@ -130,6 +159,25 @@ function UTC2Date(UTC){
 
 var $REFORMED = {
 
+	// Constants for application layout
+	SIDE_WIDTH : 150,
+	LOGO_HEIGHT : 100,
+	ACTION_HEIGHT : 50,
+	INFO_HEIGHT : 30,
+	STATUS_HEIGHT : 40,
+	MIN_APP_WIDTH : 800,
+	MAX_APP_WIDTH : 1000,
+	ACTION_PAD : 2,
+	INFO_PAD : 3,
+	MAIN_PAD : 5,
+	STATUS_PAD : 3,
+	SIDEBAR_PAD : 4,
+	LOGO_PAD : 3,
+	WORKSPACE_PAD : 4,
+	LEFT_PAD : 2,
+	BOTTOM_PAD : 2,
+	RIGHT_PAD : 2,
+
 	_initialisation_list: [],
 /*	
 	registerInitFunction: function(initialtion_function){
@@ -229,10 +277,114 @@ var $REFORMED = {
 //			alert('init ' + module);
 			window['$' + module]._init();
 		}
+	},
+	
+	layout: function(){
+
+		var r = $REFORMED;
+		
+		var app_width = $(window).width();
+		var app_height = $(window).height();
+
+		var workspace_start = r.LEFT_PAD + r.SIDE_WIDTH + r.WORKSPACE_PAD;
+		var workspace_width = app_width - workspace_start - r.RIGHT_PAD;
+		var resize = false;
+		if (workspace_width + workspace_start + r.RIGHT_PAD > r.MAX_APP_WIDTH){
+			workspace_width = r.MAX_APP_WIDTH - workspace_start - r.RIGHT_PAD;
+			left_margin = (app_width - workspace_width - workspace_start)/2;
+			workspace_start = left_margin + r.SIDE_WIDTH + r.WORKSPACE_PAD;
+		} else {
+			left_margin = r.LEFT_PAD;
+			if (workspace_width + workspace_start + r.RIGHT_PAD < r.MIN_APP_WIDTH){
+				workspace_width = r.MIN_APP_WIDTH - workspace_start - r.RIGHT_PAD;
+				resize = true;
+			}
+		}
+	
+
+	
+		r.layout_set('logo',
+			   left_margin,
+			   r.LOGO_PAD,
+			   r.LOGO_HEIGHT,
+			   r.SIDE_WIDTH);
+
+		var used_height = r.LOGO_PAD + r.LOGO_HEIGHT + r.SIDEBAR_PAD;
+		r.layout_set('sidebar',
+			   left_margin,
+			   used_height,
+			   app_height - used_height - r.BOTTOM_PAD,
+			   r.SIDE_WIDTH);
+
+		r.layout_set('action',
+			   workspace_start,
+			   r.ACTION_PAD,
+			   r.ACTION_HEIGHT,
+			   workspace_width);
+
+		used_height = r.ACTION_PAD + r.ACTION_HEIGHT + r.INFO_PAD;
+		r.layout_set('info',
+			   workspace_start,
+			   used_height,
+			   r.INFO_HEIGHT,
+			   workspace_width);
+
+		var main_height = app_height - used_height - r.INFO_HEIGHT - 
+					r.MAIN_PAD - r.STATUS_HEIGHT - r.STATUS_PAD - r.BOTTOM_PAD;
+		used_height += r.INFO_HEIGHT + r.MAIN_PAD;
+		r.layout_set('main',
+			   workspace_start,
+			   used_height,
+			   main_height,
+			   workspace_width);
+
+		used_height += main_height + r.STATUS_PAD;
+		r.layout_set('status',
+			   workspace_start,
+			   used_height,
+			   r.STATUS_HEIGHT,
+			   workspace_width);
+
+		if (resize){
+			if ($('body').css('overflow') != 'auto'){
+				$('body').css('overflow','auto');
+				r.layout();
+			}
+		} else {
+			if ($('body').css('overflow') != 'hidden'){
+				$('body').css('overflow','hidden');
+				r.layout();
+			}
+		}
+		
+	},
+
+	layout_set: function(id, x, y, height, width){
+
+		// we need to remove any 'extra' borders/padding etc
+		height -= parseInt($('#' + id).css('padding-top'), 10);
+		height -= parseInt($('#' + id).css('padding-bottom'), 10); 
+		height -= parseInt($('#' + id).css('border-top-width'), 10);
+		height -= parseInt($('#' + id).css('border-bottom-width'), 10); 
+		height -= parseInt($('#' + id).css('margin-top'), 10);
+		height -= parseInt($('#' + id).css('margin-bottom'), 10); 
+
+		width -= parseInt($('#' + id).css('padding-left'), 10);
+		width -= parseInt($('#' + id).css('padding-right'), 10); 
+		width -= parseInt($('#' + id).css('border-left-width'), 10);
+		width -= parseInt($('#' + id).css('border-right-width'), 10); 
+		width -= parseInt($('#' + id).css('margin-left'), 10);
+		width -= parseInt($('#' + id).css('margin-right'), 10); 
+
+		css = { 'top' : String(y) + 'px',
+			'left' : String(x) + 'px',
+			'height' : String(height) + 'px',
+			'width' : String(width) + 'px',
+			'position' : 'absolute' };
+		$('#' + id).css(css);
 	}
 	
 }
-
 
 
 

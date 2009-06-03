@@ -47,16 +47,6 @@ div {
 	border-bottom:1px solid #DDF;
 }
 
-.dirtys >  div.form_body {
-	background-color:#CCF;
-	/* funny little hack */
-	border-top:1px solid #CCF;
-	border-bottom:1px solid #CCF;
-}
-
-.dirty >  div.form_body > p > input, .dirty >  div.form_body > p > select{
-	background-color:#FFD;
-}
 
 .form_body p{
 	margin:3px;
@@ -178,11 +168,45 @@ tr.dirty input{
 background-color:FFD;
 }
 
+tr.inactive input{
+	background-color:#FAFAFF;
+	border-color:#FAFAFF;
+}
+
+
+.dirtys >  div.form_body {
+	background-color:#CCF;
+	/* funny little hack */
+	border-top:1px solid #CCF;
+	border-bottom:1px solid #CCF;
+}
+
+.dirty >  div.form_body > p > input, .dirty >  div.form_body > p > select{
+	background-color:#FFD;
+}
+
+/*
+.active >  div.form_body > p > input, .active >  div.form_body > p > select{
+	background-color:#FFD; 
+}
+*/
+.inactive >  div.form_body {
+	bbbackground-color:#CCF;
+	/* funny little hack */
+	border-top:1px solid #CCF;
+	border-bottom:1px solid #CCF;
+}
+
+.inactive > div.form_body > p > input, .inactive >  div.form_body > p > select{
+	background-color:#FAFAFF;
+	border-color:#FAFAFF;
+}
+
+
 
 .hidden{
 	background-color:#AAA;
 	width:25px;
 	font-size:10px;
 }
-
 
