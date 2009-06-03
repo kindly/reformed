@@ -11,7 +11,7 @@ body {
 	margin:0;
 	padding:0;
 	border:0;
-	overflow:hidden;/* prevent scrollbars */
+	overflow:auto;/* prevent scrollbars */
 }
 #logo, #action, #status, #info {
 	overflow:hidden;
@@ -36,8 +36,8 @@ LOGO_HEIGHT = 100;
 ACTION_HEIGHT = 50;
 INFO_HEIGHT = 30;
 STATUS_HEIGHT = 40;
-MIN_APP_WIDTH = 500;
-MAX_APP_WIDTH = 800;
+MIN_APP_WIDTH = 800;
+MAX_APP_WIDTH = 1000;
 ACTION_PAD = 2;
 INFO_PAD = 3;
 MAIN_PAD = 5;
@@ -46,7 +46,8 @@ SIDEBAR_PAD = 4;
 LOGO_PAD = 3;
 WORKSPACE_PAD = 4;
 LEFT_PAD = 2;
-BOTTOM_PAD = 1;
+BOTTOM_PAD = 2;
+RIGHT_PAD = 2;
 
 $(document).ready(layout);
 $(window).resize(layout);
@@ -55,21 +56,47 @@ function layout(){
 	app_width = $(window).width();
 	app_height = $(window).height();
 
+	workspace_start = LEFT_PAD + SIDE_WIDTH + WORKSPACE_PAD;
+	workspace_width = app_width - workspace_start - RIGHT_PAD;
+	resize = false;
+	if (workspace_width + workspace_start + RIGHT_PAD > MAX_APP_WIDTH){
+		workspace_width = MAX_APP_WIDTH - workspace_start - RIGHT_PAD;
+		left_margin = (app_width - workspace_width - workspace_start)/2;
+		workspace_start = left_margin + SIDE_WIDTH + WORKSPACE_PAD;
+	} else {
+		left_margin = LEFT_PAD;
+		if (workspace_width + workspace_start + RIGHT_PAD < MIN_APP_WIDTH){
+			workspace_width = MIN_APP_WIDTH - workspace_start - RIGHT_PAD;
+			resize = true;
+		}
+	}
+	
+	if (resize){
+		if ($('body').css('overflow') != 'auto'){
+			$('body').css('overflow','auto');
+			layout();
+		}
+	} else {
+		if ($('body').css('overflow') != 'hidden'){
+			$('body').css('overflow','hidden');
+			layout();
+		}
+	}
+	
 	layout_set('logo',
-		   LEFT_PAD,
+		   left_margin,
 		   LOGO_PAD,
 		   LOGO_HEIGHT,
 		   SIDE_WIDTH);
 
 	y = LOGO_PAD + LOGO_HEIGHT + SIDEBAR_PAD;
 	layout_set('sidebar',
-		   LEFT_PAD,
+		   left_margin,
 		   y,
 		   app_height - y - BOTTOM_PAD,
 		   SIDE_WIDTH);
 
-	workspace_start = LEFT_PAD + SIDE_WIDTH + WORKSPACE_PAD;
-	workspace_width = app_width - workspace_start;
+
 	layout_set('action',
 		   workspace_start,
 		   ACTION_PAD,
