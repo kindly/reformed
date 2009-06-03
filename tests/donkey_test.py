@@ -28,7 +28,7 @@ class test_donkey(object):
                                   Address("supporter_address"),
                                   OneToMany("email","email", 
                                             order_by = "email",
-                                            eager = True, 
+ #                                           eager = True, 
                                             cascade = "all, delete-orphan"),
                                   OneToMany("donkey_sponsership",
                                             "donkey_sponsership"),

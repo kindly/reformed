@@ -78,8 +78,10 @@ class test_record_loader(donkey_test.test_donkey):
             table_name : people
             field_name : email
         """
-        
+
         existing_field_param = yaml.load(email_order)
+
+        
 
 
 
@@ -196,6 +198,34 @@ class test_record_loader(donkey_test.test_donkey):
                 {"root":{}, ("poo", 24, "weeee", 2):{}, ("___field", 0):{}}
     
         
+    def test_invalid(self):
+
+        peter_invalid ="""
+        name : peter
+        email :
+            -
+                email : poopoo.com
+            -
+                email : poo2@poo.com
+        donkey_sponsership:
+            amount : a
+            _donkey : 
+                name : fred
+                age : 90
+        """
+
+        peter_invalid = yaml.load(peter_invalid)
+
+        invalid_record = SingleRecord(self.Donkey, "people", peter_invalid)
+
+        assert_raises(custom_exceptions.Invalid, invalid_record.load)
+
+        try:
+            invalid_record.load()
+        except custom_exceptions.Invalid, e:
+            assert str(e) == """invalid object(s) are {'root': 'address_line_1: Please enter a value, postcode: Please enter a value', ('donkey_sponsership', 0): 'amount: Please enter a number', ('email', 0): 'email: An email address must contain a single @'}"""
+
+
 
     def test_z_add_values_to_obj(self):
 
@@ -375,10 +405,14 @@ class test_flat_file(donkey_test.test_donkey):
 
         assert 1500 in [a.amount for a in result.donkey_sponsership]
 
+    def test_data_load_with_header_error(self):
+
+        flatfile = FlatFile(self.Donkey,
+                            "people",
+                            "tests/new_people_with_header_errors.csv")    
+
         
-
-
-
+        assert flatfile.load() == [['name', 'address_line_1', 'postcode', 'email__0__email', 'email__1__email', 'donkey_sponsership__0__amount', 'donkey_sponsership__0___donkey__0__name', '__errors'], ['popph22', 'road22', 'post22', 'pop@pop.com', 'pop2@pop.com', 'poo', 'feddy2200', "{('donkey_sponsership', 0): 'amount: Please enter a number'}"], ['popph23', 'road23', 'post23', 'pop@pop.com', 'pop2@pop.com', '?', 'feddy2300', "{('donkey_sponsership', 0): 'amount: Please enter a number'}"], ['popph24', '', '', 'pop@pop.com', 'pop2@pop.com', '2400', 'feddy2400', "{'root': 'address_line_1: Please enter a value, postcode: Please enter a value'}"], ['popph27', '', '', 'pop@pop.com', 'pop2pop.com', '2700', 'feddy2700', "{('email', 1): 'email: An email address must contain a single @', 'root': 'address_line_1: Please enter a value, postcode: Please enter a value'}"], ['popph28', 'road28', 'post28', 'pop@pop.com', 'pop2pop.com', '2800', 'feddy2800', "{('email', 1): 'email: An email address must contain a single @'}"]]
 
 
 

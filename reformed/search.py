@@ -28,6 +28,8 @@ class Search(object):
 
         self.local_tables = {}
 
+        self.create_local_tables()
+
         self.search_base = self.session.query(self.database.get_class(self.table))
 
         self.queries = []
@@ -44,8 +46,15 @@ class Search(object):
 
     def search(self, exclude_mode = None):
 
+        first_query = self.queries[0][0]
+        print first_query.inner_joins.union(first_query.outer_joins)
+
         if len(self.queries) == 1:
-            return self.queries[0][0].add_conditions(self.search_base)
+            ## if query contains a onetomany make the whole query a distinct
+            for table in first_query.inner_joins.union(first_query.outer_joins):
+                if table != self.table and table not in self.local_tables[self.table]:
+                    return first_query.add_conditions(self.search_base).distinct()
+            return first_query.add_conditions(self.search_base)
 
         query_base = self.session.query(self.database.get_class(self.table).id)
 
@@ -84,6 +93,11 @@ class Search(object):
 
 
         main_subquery = main_subquery.subquery()
+
+        ### if first query has a one to many distict the query
+        for table in first_query.inner_joins.union(first_query.outer_joins):
+            if table != self.table and table not in self.local_tables[self.table]:
+                return self.search_base.join((main_subquery, main_subquery.c.id == self.database.get_class(self.table).id)).distinct()
         return self.search_base.join((main_subquery, main_subquery.c.id == self.database.get_class(self.table).id))
 
             
