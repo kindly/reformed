@@ -13,59 +13,59 @@ from form_cache import FormCache
 
 form_cache = FormCache()
 
-from html import html_wrapper
+#from html import html_wrapper
 #from wsgistate.memory import session
 
 
 #@session()
-@html_wrapper
-def reset_cache(environ, start_response):
-	# FIXME this needs to be done better as a general purpose function"""
-
-	form_cache.reset()
-	environ['reformed']['body'] = 'cache reset'	
-	return (environ, start_response)
-
-#@session()
-@html_wrapper
-def check_login(environ, start_response):
-	import hashlib
-
-	http_session = environ['com.saddi.service.session'].session
-	
-	formdata = cgi.FieldStorage(fp=environ['wsgi.input'],
-                    	environ=environ,
-                    	keep_blank_values=1)
-	username = str(formdata.getvalue('username'))
-	password = str(formdata.getvalue('password'))	
-	session = dbconfig.Session()
-	try:
-		user = session.query(model.User).options().filter_by(username=username).filter_by(password=password).one()  #eagerload('user_group_permission')
-		http_session['username'] = str(user.username)
-		http_session['user_id'] = int(user.id)
-		environ['reformed']['body'] = 'logged in'
-	except:
-		# you no good
-		clear_authentication_call(environ, start_response)
-		environ['reformed']['body'] = 'login fails'
-	return (environ, start_response)
-	
-	
-def clear_authentication_call(environ, start_response):
-
-	http_session = environ['com.saddi.service.session'].session
-	# clear all authentication stuff
-	http_session['username'] = None
-	http_session['user_id'] = None
-	#return (environ, start_response)
+#@html_wrapper
+#def reset_cache(environ, start_response):
+#	# FIXME this needs to be done better as a general purpose function"""
+#
+#	form_cache.reset()
+#	environ['reformed']['body'] = 'cache reset'	
+#	return (environ, start_response)
 
 #@session()
-@html_wrapper
-def clear_authentication(environ, start_response):
+#@html_wrapper
+#def check_login(environ, start_response):
+#	import hashlib
+#
+#	http_session = environ['com.saddi.service.session'].session
+#	
+#	formdata = cgi.FieldStorage(fp=environ['wsgi.input'],
+#                    	environ=environ,
+#                    	keep_blank_values=1)
+#	username = str(formdata.getvalue('username'))
+#	password = str(formdata.getvalue('password'))	
+#	session = dbconfig.Session()
+#	try:
+#		user = session.query(model.User).options().filter_by(username=username).filter_by(password=password).one()  #eagerload('user_group_permission')
+#		http_session['username'] = str(user.username)
+#		http_session['user_id'] = int(user.id)
+#		environ['reformed']['body'] = 'logged in'
+#	except:
+#		# you no good
+#		clear_authentication_call(environ, start_response)
+#		environ['reformed']['body'] = 'login fails'
+#	return (environ, start_response)
+	
+	
+#def clear_authentication_call(environ, start_response):
+#
+#	http_session = environ['com.saddi.service.session'].session
+#	# clear all authentication stuff
+#	http_session['username'] = None
+#	http_session['user_id'] = None
+#	#return (environ, start_response)
+#
+#@session()
+#@html_wrapper
+#def clear_authentication(environ, start_response):
 
-	clear_authentication_call(environ, start_response)
-	environ['reformed']['body'] = 'logged out'
-	return (environ, start_response)
+#	clear_authentication_call(environ, start_response)
+#	environ['reformed']['body'] = 'logged out'
+#	return (environ, start_response)
 
 
 def static(environ, start_response):
