@@ -162,8 +162,9 @@ window.$JOB = {
 	_packet_functions: {
 		// DEFAULT packet handlers
   		 'page': function(packet, job){
-  		 		var out = packet.data; 
-  				$('#root').html(out);
+  		 		var out = packet.data;
+  		 		var root = job.root;
+  				$('#' + root).html(out);
   				for (var i = 0; i < packet.items.length; i++){
   					var item = packet.items[i];
   					if (item.type == 'form'){

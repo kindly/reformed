@@ -1,3 +1,5 @@
+import sys
+import os.path
 import simplejson as json
 import cgi
 import reformed.dbconfig as dbconfig
@@ -45,7 +47,21 @@ class ajax_thing(object):
 				self.process_action(data)	
 			elif command == 'page':
 				self.process_page(data)	
-
+			elif command == 'html':
+				self.process_html(data)	
+	
+	def process_html(self, data):
+		file_name = data['file']
+		path = '%s/content/mockup/%s' % (sys.path[0], file_name) # does this work in windows?
+		print path
+		if os.path.isfile(path):
+			f = open(path, 'r')
+			html = f.read()
+		else:
+			html = 'ERROR NO FILE'
+		items = []		
+		self.output.append({'type':'page', 'data':html, 'items':items})
+					
 	def process_page(self, data):
 		if 'username' in self.http_session:
 			html = '<b>hello</b><br />%s' % self.http_session['username']
@@ -524,6 +540,8 @@ def process(environ, start_response):
 			moo.add_command("data", body)
 		elif head == "page":
 			moo.add_command("page", body)		
+		elif head == "html":
+			moo.add_command("html", body)
 		elif head == "edit":
 			moo.add_command("edit", body)
 		elif head == "action":

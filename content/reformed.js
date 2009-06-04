@@ -66,6 +66,12 @@ $JOB.add(request, data, 'page', true);
 //$FORM.request('form_item', 'moo', 'first');
 }
 
+function get_html(root, file){
+request = {type:'page', file:file};
+data = {root:root};
+$JOB.add(request, data, 'html', true);
+//$FORM.request('form_item', 'moo', 'first');
+}
 
 
 
