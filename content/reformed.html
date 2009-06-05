@@ -1,0 +1,51 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="default.css" />
+<style>
+div {
+	border:0; /* 1px solid #000; */
+	background-color:#EEE;
+}
+body {
+	height:100%;
+	margin:0;
+	padding:0;
+	border:0;
+}
+#logo, #action, #status, #info {
+	overflow:hidden;
+}
+#main, #sidebar {
+	overflow:auto;
+}
+</style>
+<script src="jquery.js"></script>
+<script src="jquery.json.js"></script>
+<script src="reformed.js"></script>
+<script src="job.js" ></script>
+<script src="form.js"></script>
+<script src="form_control.js" ></script>
+<script src="info.js" ></script>
+
+
+</head>
+
+<body>
+
+<div id='logo'><img src="logo.png"  width="126" height="125" /></div>
+
+<div id='sidebar'><ul>
+<li><a href="javascript:$FORM.request('form', 'main', 'new')" >form</a></li>
+<li><a href="javascript:$FORM.request('form_item', 'main', 'first')" >form_item</a></li>
+<li><a href="javascript:$FORM.request('Codes', 'main', '')" >codes</a></li>
+<li><a href="javascript:$FORM.request('logon', 'main', '')" >log in</a></li>
+<li><a href="javascript:$FORM.request('donkey', 'main', 'first')" >donkey</a></li>
+</ul></div>
+
+<div id='action'>action</div>
+<div id='info'>info</div>
+<div id='main'></div>
+<div id='status'>status</div>
+
+</body>
+</html>

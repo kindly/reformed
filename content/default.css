@@ -1,0 +1,212 @@
+
+
+.label {
+	color:blue;
+	padding:0 15px;
+}
+.error {
+	background-color:#FFEC8B;
+}
+
+
+
+/* GENERAL */
+
+div {
+	margin:0;
+
+}
+
+	
+	
+/* FORMS */
+
+.form {
+	border:1px solid #DDD;
+}
+
+.form div {
+	margin:0;
+	padding:2px 5px;
+
+}
+
+.error_single {
+	color:#D33;
+	font-weight:bold;
+	font-size:75%;
+}
+
+
+#page {height:100%;width:100%;}
+
+.form_body {
+	background-color:#FAFAFF;
+	/* funny little hack */
+	border-top:1px solid #DDF;
+	border-bottom:1px solid #DDF;
+}
+
+
+.form_body p{
+	margin:3px;
+}
+
+.form_body p label{
+	color:darkblue;
+	width:100px;
+	float:left;
+}
+
+.form_header, .form_footer {
+	background-color:#DDF;
+}
+
+.form_header > button {
+	font-size:50%;
+	margin-left:25px;
+}
+
+div.form_footer {
+	text-align:right;
+}
+
+button {
+	color:#666;
+	lborder-color:#DDD;
+}
+
+input, select{
+	border:1px solid #DDD;
+	color:#333;
+}
+
+.form_data{
+	font-size:75%;
+	margin-left:50px;
+}
+
+.form_data input {
+	background-color:#F08080;
+	width:50px;
+	font-size:75%;
+}
+
+.ctl {
+float:left;
+margin-right:50px;
+}
+.ctl input, .hidden{
+	background-color:#AAA;
+	width:25px;
+}
+
+
+
+/* TABLES */
+table {
+table-layout:fixed;
+border-spacing:0;
+background-color:#FAFAFF;
+border-width:1px 1px 1px 1px;
+border-style:solid;
+border-color:#DDD;
+}
+
+th{
+}
+
+thead tr th{
+color:#666;
+background-color:#EEF;
+border-right:1px solid #DDD;
+border-bottom:1px solid #DDD;
+border-left:0;
+border-top:0;
+}
+
+
+td {
+vertical-align:top;
+padding: 2px;;
+border-bottom:1px solid #DDD;
+border-left:0;
+border-right:0;
+border-top:0;
+font-size:12px;
+}
+
+tfoot tr td{
+background-color:#EEF;
+border-bottom:0;
+border-top:0;
+text-align:right;
+}
+
+tfoot tr td button{
+color:#666
+}
+
+.th_id{
+width:200px;
+}
+.t_id{
+width:200px;
+text-align:center;
+background-color:#EEF;
+border-right:1px solid #DDD;
+}
+td.t_id button{
+font-size:80%;
+}
+
+tr.dirtyv td{
+background-color:DDF;
+}
+
+tr.dirty input{
+background-color:FFD;
+}
+
+tr.inactive input{
+	background-color:#FAFAFF;
+	border-color:#FAFAFF;
+}
+
+
+.dirtys >  div.form_body {
+	background-color:#CCF;
+	/* funny little hack */
+	border-top:1px solid #CCF;
+	border-bottom:1px solid #CCF;
+}
+
+.dirty >  div.form_body > p > input, .dirty >  div.form_body > p > select{
+	background-color:#FFD;
+}
+
+/*
+.active >  div.form_body > p > input, .active >  div.form_body > p > select{
+	background-color:#FFD; 
+}
+*/
+.inactive >  div.form_body {
+	bbbackground-color:#CCF;
+	/* funny little hack */
+	border-top:1px solid #CCF;
+	border-bottom:1px solid #CCF;
+}
+
+.inactive > div.form_body > p > input, .inactive >  div.form_body > p > select{
+	background-color:#FAFAFF;
+	border-color:#FAFAFF;
+}
+
+
+
+.hidden{
+	background-color:#AAA;
+	width:25px;
+	font-size:10px;
+}
+

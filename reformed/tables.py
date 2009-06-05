@@ -379,10 +379,16 @@ class Table(object):
         table = self
         class sa_class(object):
             def __init__(self):
-                self._table = table 
-            @sa.orm.reconstructor
-            def _table(self):
                 self._table = table
+                
+            if sa.__version__ >= '0.5.0':
+            	@sa.orm.reconstructor
+            	def _table(self):
+            	    self._table = table
+            else:
+            	def _table(self):
+            	    self._table = table
+
         sa_class.__name__ = self.name
         self.sa_class = sa_class
 
