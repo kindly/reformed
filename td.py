@@ -52,6 +52,17 @@ d.add_table(r.Table("paymentdds",
                    )
            )
 
+ d.add_table(r.Table("entity",
+                     r.Integer("table"),
+                     r.Integer("table_id"),
+                     r.OneToOne("people","people"),
+                     r.OneToOne("donkey","donkey")
+                     )
+            )
+
+
+            
+
 d.add_table(r.Table("form", r.Text("name"),
                    r.OneToMany("form_param","form_param"), r.OneToMany("form_item","form_item")))
 

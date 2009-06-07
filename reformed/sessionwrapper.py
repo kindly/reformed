@@ -34,8 +34,10 @@ logger.addHandler(sessionhandler)
 class SessionWrapper(object):
     """add hooks and overides sqlalchemy session"""
             
-    def __init__(self, Session):
+    def __init__(self, Session, has_entity = False):
         self.session = Session()
+        self.has_entity = has_entity
+        self.new_entities = []
 
     def __getattr__(self, item):
         return getattr(self.session, item)
@@ -52,13 +54,26 @@ class SessionWrapper(object):
         return self.session.query(mapper)
 
     def flush(self):
+        if self.has_entity:
+            self.add_entity_instance()
         self.add_logged_instances()
         self.session.flush()
 
     def commit(self):
+        if self.has_entity:
+            self.add_entity_instance()
         self.add_logged_instances()
         self.session.flush()
         self.session.commit()
+
+        if self.new_entities:
+            for obj in self.new_entities:
+                obj._entity.table_id = obj.id
+                self.add(obj)
+            self.new_entities = []
+            self.commit()
+
+
 
     def add_logged_instances(self):
 
@@ -83,13 +98,28 @@ class SessionWrapper(object):
                 setattr(logged_instance, table.name + "_logged" , obj )
                 self.session.add(logged_instance)
 
+    def add_entity_instance(self):
+
+        for obj in self.session.new:
+            table = obj._table
+            database = table.database
+            if table.entity == True:
+                entity = database.get_instance("entity")
+                self.new_entities.append(obj)
+                entity.table = table.table_id
+                obj._entity = entity
+                self.add(obj)
+                
 #       print "finished first"
 
 class SessionClass(object):
 
-    def __init__(self, Session):
+    def __init__(self, Session, database):
         self.Session = Session
+        self.database = database
 
     def __call__(self):
+        if "entity" in self.database.tables:
+            return SessionWrapper(self.Session, has_entity = True)
         return SessionWrapper(self.Session)
        

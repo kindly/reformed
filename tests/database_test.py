@@ -51,8 +51,8 @@ class test_database(object):
         assert self.Donkey.name == "Donkey"
         assert "people" in self.Donkey.tables
         assert "email" in  self.Donkey.tables
-        assert len(self.Donkey.tables["people"].fields) == 5 # modified field
-        assert len(self.Donkey.tables["email"].fields) == 2
+        assert len(self.Donkey.tables["people"].fields) == 6 # modified field
+        assert len(self.Donkey.tables["email"].fields) == 3
 
 
     def test_relations(self):

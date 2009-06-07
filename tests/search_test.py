@@ -63,7 +63,6 @@ class test_search(donkey_test.test_donkey):
         search = Search(self.Donkey, "people", self.session)
         search.create_local_tables()
         #previous_relation_finder("_log_email", ['email', '__log_email'], "onetomany")
-        print search.table_path
         assert search.local_tables == {}
 
     def test_conjunctions(self):
@@ -183,7 +182,6 @@ class test_search(donkey_test.test_donkey):
         people_class = self.Donkey.get_class(u"people")
         email_class = self.Donkey.get_class(u"email")
 
-        print search.local_tables
         assert set(search.search().all()).symmetric_difference( 
                set(session.query(people_class).outerjoin(["email"]).\
                    filter(and_(people_class.name < u"popp02", or_(email_class.email == None, not_(email_class.email.like(u"popi%"))))).all())) == set()
@@ -203,7 +201,6 @@ class test_search(donkey_test.test_donkey):
 
         search3.add_query(SingleQuery(search, t.people.name < u"popp02", "not", t.email.email.like(u"popi%")))
 
-        print len(search3.search()[0:15]) 
         assert len(search3.search()[0:15]) == 15
 
 
@@ -217,8 +214,6 @@ class test_search(donkey_test.test_donkey):
 
         search.add_query(t.donkey.name.in_([u"poo", u"fine"]))
 
-        #for a in search.search().all():
-        #    print a.name
 
         assert len(search.search().all()) == 6
 
@@ -301,8 +296,6 @@ class test_search(donkey_test.test_donkey):
         search.add_query(t.email.email.like("popi%"))
         search.add_query(t.people.name ==  "david", exclude = "true")
 
-        for a in search.search().distinct()[0:2]:
-            print a.name
 
         assert len(search.search()[0:2]) == 2
         

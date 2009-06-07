@@ -32,7 +32,7 @@ from columns import Column
 import custom_exceptions
 import formencode
 from formencode import validators
-from fields import Modified
+from fields import Modified, Integer
 from sqlalchemy.orm.interfaces import AttributeExtension
 from util import get_paths 
 import logging
@@ -60,6 +60,7 @@ class Table(object):
         """
         self.name =name
         self.kw = kw
+        self.table_id = kw.get("table_id",None)
         self.field_list = args
         self.fields = {}
         self.field_order = []
@@ -96,6 +97,7 @@ class Table(object):
 
         if "modified_date" not in self.fields.iterkeys() and self.modified_date:
             self.add_field(Modified("modified_date"))
+            self.add_field(Integer("user_id" , default = 1))
         #sqlalchemy objects
         self.sa_table = None
         self.sa_class = None
@@ -135,6 +137,7 @@ class Table(object):
 
         session.add(__table)
         session.commit()
+        self.table_id = __table.id
         self.persisted = True
         session.close()
 
