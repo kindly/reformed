@@ -17,40 +17,14 @@ from paste.session import SessionMiddleware
 # i think this may be agood approach for the front end too ;)
 
 
-class ajax_thing(object):
+class AjaxThing(object):
 
 	 # FIXME hmm I don't really like the cache but we can see leave it for now
 	form_cache = FormCache()
 
 
-	def __init__(self, http_session):
-	
-		self.http_session = http_session
-		self.command_queue = [] 
-		self.output = [] # this will be returned
-	
-	def add_command(self, command, data):
-		self.command_queue.append((command, data))
-		
-	def process(self):
-		print "PROCESS"
-		while self.command_queue:
-			(command, data) = self.command_queue.pop()
-			print command, repr(data)
-			if command == 'form':
-				self.get_form(data['form']) # FIXME why is this special?	
-			elif command == 'data':
-				self.get_data(data)	
-			elif command == 'edit':
-				self.process_edit(data)	
-			elif command == 'action':
-				self.process_action(data)	
-			elif command == 'page':
-				self.process_page(data)	
-			elif command == 'html':
-				self.process_html(data)	
-	
-	def process_html(self, data):
+
+	def process_html(self, data, parent):
 		file_name = data['file']
 		path = '%s/content/mockup/%s' % (sys.path[0], file_name) # does this work in windows?
 		print path
@@ -60,11 +34,11 @@ class ajax_thing(object):
 		else:
 			html = 'ERROR NO FILE'
 		items = []		
-		self.output.append({'type':'page', 'data':html, 'items':items})
+		parent.output.append({'type':'page', 'data':html, 'items':items})
 					
-	def process_page(self, data):
-		if 'username' in self.http_session:
-			html = '<b>hello</b><br />%s' % self.http_session['username']
+	def process_page(self, data, parent):
+		if 'username' in parent.http_session:
+			html = '<b>hello</b><br />%s' % parent.http_session['username']
 			items = []		
 		else:
 			html = '<b>hello</b><br />you need to log in<div id = "moo"></div>'
@@ -72,11 +46,10 @@ class ajax_thing(object):
 					  'root':'moo',
 					  'form_id':'logon',
 					  'command':''}]
-		self.output.append({'type':'page', 'data':html, 'items':items})
-	#	self.output.append({'type':'page', 'data':html})
+		parent.output.append({'type':'page', 'data':html, 'items':items})
 	
 	
-	def process_action(self, data):
+	def process_action(self, data, parent):
 	
 		command = data['command']
 		my_object = data['object']
@@ -86,19 +59,32 @@ class ajax_thing(object):
 		print "%s - %s" % (my_object, command)
 		
 		if  data['data']['username'] == 'moo':
-			self.http_session['username'] = data['data']['username']
-			status = {'username': self.http_session['username']}
-			self.output.append({'type':'status', 'data':status})
+			parent.http_session['username'] = data['data']['username']
+			status = {'username': parent.http_session['username']}
+			parent.output.append({'type':'status', 'data':status})
 			action = {'showForm': 'Codes'}
-			self.output.append({'type':'action', 'data':action})
+			parent.output.append({'type':'action', 'data':action})
 		else:
 			error = {'@main': 'username and password no good :('}
-			self.output.append({'type':'error', 'data':error})
+			parent.output.append({'type':'error', 'data':error})
 		
 		
-	def get_form(self, form_name):
+	def get_form(self, data, parent):
 		
 		""" this function returns the structure of a given form """
+
+		if 'command' in data:
+			# we want to get the form data too
+			info = { 'form': data['form'],
+				 'field':'id',
+				 'value':'',
+				 'command': data['command'],
+				 'parent_id':'',
+				 'parent_field':'',
+				 'form_type': None}
+			parent.add_command('data', info)
+					
+		form_name = data['form']
 		
 		# FIXME does form_name want to be form_ref or something more like that.
 		
@@ -147,18 +133,19 @@ class ajax_thing(object):
 					# I think this may mess up some of the tables though.  
 					# will have to see plus push through the changes
 					print "add subform %s" % item_data['params']['subform_name']
-					self.get_form(item_data['params']['subform_name'])
+					my_data = {'form':item_data['params']['subform_name']}
+					self.get_form(my_data, parent, False)
 		else:
 			# we are no allowed to see this form
 			item_data = {}
 		session.close()
 		
-		self.output.append({'type':'form', 'id': form_name, 'data':form_data})
+		parent.output.append({'type':'form', 'id': form_name, 'data':form_data})
 
 
 
 	##  DATA
-	def get_data(self, data):
+	def get_data(self, data, parent):
 		""" retrieves data for a recordset """
 		# want to have a cleaner call
 	# need form, id (+ movement eg next prev record first/last/new)
@@ -264,7 +251,7 @@ class ajax_thing(object):
 							 'parent_id':data_row.id,
 							 'parent_field':params['child_id'],
 							 'form_type':params['form_type']}
-						self.add_command('data', info)
+						self.add_command('data', info, False)
 				data_out_array.append(data_out)
 				
 				
@@ -277,14 +264,14 @@ class ajax_thing(object):
 				value = 0
 			if rowcount == None:
 				rowcount = len(records)
-			self.output.append({'type':'data',
+			parent.output.append({'type':'data',
 								'form': form_name,
 								'data':data_out_array,
 								'data_id':value,
 								'records':records,
 								'rowcount':rowcount})
 
-	def process_edit(self, data):
+	def process_edit(self, data, parent):
 
 		""" processes a single form (delete or save) """
 
@@ -311,7 +298,7 @@ class ajax_thing(object):
 						 'parent_id': data['parent_id'],   #None,
 						 'parent_field': data['parent_field'],   #None,
 						 'form_type':data['form_type']}
-					self.add_command('data', info)
+					self.add_command('data', info, False)
 					# block the save_id data
 					result = {};
 								
@@ -326,14 +313,14 @@ class ajax_thing(object):
 					 'parent_id': data['parent_id'],   #None,
 					 'parent_field': data['parent_field'],   #None,
 					 'form_type':data['form_type']}
-				self.add_command('data', info)
+				self.add_command('data', info, False)
 
 		else:
 			print "NO OBJECT"
 			result = {}
 		
 		if result:
-			self.output.append(result)
+			parent.output.append(result)
 	
 	def delete_item(self, obj, record_id):
 	
@@ -487,5 +474,6 @@ def get_params(items):
 	return params
 
 
-
+# our object we can then use
+ajax = AjaxThing()
 
