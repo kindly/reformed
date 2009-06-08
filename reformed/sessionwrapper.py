@@ -69,7 +69,7 @@ class SessionWrapper(object):
         if self.new_entities:
             for obj in self.new_entities:
                 obj._entity.table_id = obj.id
-                self.add(obj)
+                self.session.add(obj)
             self.new_entities = []
             self.commit()
 

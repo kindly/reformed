@@ -22,15 +22,16 @@ class Search(object):
 
 
         self.table_paths_list.sort(self.sort_order)
+        for item in self.table_paths_list:
+            print item
 
         self.table_path = {}
         self.aliased_name_path = {} 
 
         self.create_path_and_holder()
-        print self.table_path
 
         self.local_tables = {}
-
+        
         self.create_local_tables()
 
         self.search_base = self.session.query(self.database.get_class(self.table))
@@ -42,18 +43,18 @@ class Search(object):
         ## This is to ensure most usable table is not numbered
 
         if "_entity" in a[0]:
-            asize = len(a[0]) - JOINS_DEEP*2  
+            asize = len(a[0]) + JOINS_DEEP  
         else:
             asize = len(a[0])
 
         if "_entity" in b[0]:
-            bsize = len(b[0]) - JOINS_DEEP*2
+            bsize = len(b[0]) + JOINS_DEEP
         else:
             bsize = len(b[0])
-        
-        return bsize-asize
-        
 
+        return asize - bsize
+
+        
     def add_query(self, *args, **kw):
 
         exclude = kw.pop("exclude", False)
