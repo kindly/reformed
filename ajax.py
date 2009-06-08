@@ -1,3 +1,5 @@
+import sys
+import os.path
 import simplejson as json
 import cgi
 import reformed.dbconfig as dbconfig
@@ -15,40 +17,28 @@ from paste.session import SessionMiddleware
 # i think this may be agood approach for the front end too ;)
 
 
-class ajax_thing(object):
+class AjaxThing(object):
 
 	 # FIXME hmm I don't really like the cache but we can see leave it for now
 	form_cache = FormCache()
 
 
-	def __init__(self, http_session):
-	
-		self.http_session = http_session
-		self.command_queue = [] 
-		self.output = [] # this will be returned
-	
-	def add_command(self, command, data):
-		self.command_queue.append((command, data))
-		
-	def process(self):
-		print "PROCESS"
-		while self.command_queue:
-			(command, data) = self.command_queue.pop()
-			print command, repr(data)
-			if command == 'form':
-				self.get_form(data['form']) # FIXME why is this special?	
-			elif command == 'data':
-				self.get_data(data)	
-			elif command == 'edit':
-				self.process_edit(data)	
-			elif command == 'action':
-				self.process_action(data)	
-			elif command == 'page':
-				self.process_page(data)	
 
-	def process_page(self, data):
-		if 'username' in self.http_session:
-			html = '<b>hello</b><br />%s' % self.http_session['username']
+	def process_html(self, data, parent):
+		file_name = data['file']
+		path = '%s/content/mockup/%s' % (sys.path[0], file_name) # does this work in windows?
+		print path
+		if os.path.isfile(path):
+			f = open(path, 'r')
+			html = f.read()
+		else:
+			html = 'ERROR NO FILE'
+		items = []		
+		parent.output.append({'type':'page', 'data':html, 'items':items})
+					
+	def process_page(self, data, parent):
+		if 'username' in parent.http_session:
+			html = '<b>hello</b><br />%s' % parent.http_session['username']
 			items = []		
 		else:
 			html = '<b>hello</b><br />you need to log in<div id = "moo"></div>'
@@ -56,11 +46,10 @@ class ajax_thing(object):
 					  'root':'moo',
 					  'form_id':'logon',
 					  'command':''}]
-		self.output.append({'type':'page', 'data':html, 'items':items})
-	#	self.output.append({'type':'page', 'data':html})
+		parent.output.append({'type':'page', 'data':html, 'items':items})
 	
 	
-	def process_action(self, data):
+	def process_action(self, data, parent):
 	
 		command = data['command']
 		my_object = data['object']
@@ -70,20 +59,33 @@ class ajax_thing(object):
 		print "%s - %s" % (my_object, command)
 		
 		if  data['data']['username'] == 'moo':
-			self.http_session['username'] = data['data']['username']
-			status = {'username': self.http_session['username']}
-			self.output.append({'type':'status', 'data':status})
+			parent.http_session['username'] = data['data']['username']
+			status = {'username': parent.http_session['username']}
+			parent.output.append({'type':'status', 'data':status})
 			action = {'showForm': 'Codes'}
-			self.output.append({'type':'action', 'data':action})
+			parent.output.append({'type':'action', 'data':action})
 		else:
 			error = {'@main': 'username and password no good :('}
-			self.output.append({'type':'error', 'data':error})
+			parent.output.append({'type':'error', 'data':error})
 		
 		
-	def get_form(self, form_name):
+	def get_form(self, data, parent):
 		
 		""" this function returns the structure of a given form """
-		
+
+		if 'command' in data:
+			# we want to get the form data too
+			info = { 'form': data['form'],
+				 'field':'id',
+				 'value':'',
+				 'command': data['command'],
+				 'parent_id':'',
+				 'parent_field':'',
+				 'form_type': None}
+			parent.add_command('data', info)
+					
+		form_name = data['form']
+		print "##### %s" % form_name
 		# FIXME does form_name want to be form_ref or something more like that.
 		
 		# FIXME I'd like this session to be repeatedly used
@@ -131,18 +133,19 @@ class ajax_thing(object):
 					# I think this may mess up some of the tables though.  
 					# will have to see plus push through the changes
 					print "add subform %s" % item_data['params']['subform_name']
-					self.get_form(item_data['params']['subform_name'])
+					my_data = {'form':item_data['params']['subform_name']}
+					self.get_form(my_data, parent)
 		else:
 			# we are no allowed to see this form
 			item_data = {}
 		session.close()
 		
-		self.output.append({'type':'form', 'id': form_name, 'data':form_data})
+		parent.output.append({'type':'form', 'id': form_name, 'data':form_data})
 
 
 
 	##  DATA
-	def get_data(self, data):
+	def get_data(self, data, parent):
 		""" retrieves data for a recordset """
 		# want to have a cleaner call
 	# need form, id (+ movement eg next prev record first/last/new)
@@ -248,7 +251,7 @@ class ajax_thing(object):
 							 'parent_id':data_row.id,
 							 'parent_field':params['child_id'],
 							 'form_type':params['form_type']}
-						self.add_command('data', info)
+						parent.add_command('data', info)
 				data_out_array.append(data_out)
 				
 				
@@ -261,14 +264,14 @@ class ajax_thing(object):
 				value = 0
 			if rowcount == None:
 				rowcount = len(records)
-			self.output.append({'type':'data',
+			parent.output.append({'type':'data',
 								'form': form_name,
 								'data':data_out_array,
 								'data_id':value,
 								'records':records,
 								'rowcount':rowcount})
 
-	def process_edit(self, data):
+	def process_edit(self, data, parent):
 
 		""" processes a single form (delete or save) """
 
@@ -281,6 +284,7 @@ class ajax_thing(object):
 		form_object = form.params('form_object')
 		print "## looking for %s ##" % form_object
 		if (True): ## FIXME botch r.data.tables.has_key(form_object)):
+			print '## %s' % form_object
 			obj = r.reformed.get_class(form_object)
 			if action == "save":
 				field_data = data['field_data']
@@ -295,7 +299,7 @@ class ajax_thing(object):
 						 'parent_id': data['parent_id'],   #None,
 						 'parent_field': data['parent_field'],   #None,
 						 'form_type':data['form_type']}
-					self.add_command('data', info)
+					self.add_command('data', info, False)
 					# block the save_id data
 					result = {};
 								
@@ -310,14 +314,14 @@ class ajax_thing(object):
 					 'parent_id': data['parent_id'],   #None,
 					 'parent_field': data['parent_field'],   #None,
 					 'form_type':data['form_type']}
-				self.add_command('data', info)
+				parent.add_command('data', info)
 
 		else:
 			print "NO OBJECT"
 			result = {}
 		
 		if result:
-			self.output.append(result)
+			parent.output.append(result)
 	
 	def delete_item(self, obj, record_id):
 	
@@ -470,76 +474,7 @@ def get_params(items):
 			params[str(p.key)] = str(p.value)
 	return params
 
-#@session()
-@SessionMiddleware
-def process(environ, start_response):
 
-	""" this gets the request data and starts any processing jobs
-	needs to be expanded to do multiple requests """
-	
-	http_session = environ['paste.session.factory']()
-
-	#http_session = environ['com.saddi.service.session'].session
-	
-	formdata = cgi.FieldStorage(fp=environ['wsgi.input'],
-                    	environ=environ,
-                    	keep_blank_values=1)
-                    	
-        # this can be put in a loop
-	head = str(formdata.getvalue('head'))
-	try:
-		body = json.loads(str(formdata.getvalue('body')))
-	except:
-		print "WHOOA that data you sent looks corrupt!"
-		print "*" * 40
-		print repr(formdata.getvalue('body'))
-		print "*" * 40
-		body = {};
-	moo = ajax_thing(http_session)
-
-	print repr(body)
-#	data = ''
-
-
-# FIXME we want this to be a bit cleaner
-# the request should be seen as a series of requests
-# plus I don't  like the splitting out by type done here
-# maybe just have a single object that will do this stuiff to take over?
-
-	
- 	if body:
-		if head == "form":
-			if body['stamp']:
-				moo.add_command("form", body)
-	
-			info = { 'form': body['form'],
-				 'field':'id',
-				 'value':'',
-				 'command': body['command'],
-				 'parent_id':'',
-				 'parent_field':'',
-				 'form_type': None}
-			moo.add_command('data', info)
-		elif head == "data":
-			moo.add_command("data", body)
-		elif head == "page":
-			moo.add_command("page", body)		
-		elif head == "edit":
-			moo.add_command("edit", body)
-		elif head == "action":
-			moo.add_command("action", body)
-		moo.process()
-		data = moo.output
-	else:
-		# a communication error occurred
-		error = {'@main': 'you sent bad data :('}
-		data = [{'type':'error', 'data':error}]
-
-	start_response('200 OK', [('Content-Type', 'text/html')])
-	print json.dumps(data, sort_keys=False, indent=4)
-	print 'length %s bytes' % len(json.dumps(data, sort_keys=True, indent=4))
-	print 'condenced length %s bytes' % len(json.dumps(data, separators=(',',':')))
-	print 'SESSION\n%s' % json.dumps(http_session, sort_keys=False, indent=4)
-	return json.dumps(data, separators=(',',':'))
-
+# our object we can then use
+ajax = AjaxThing()
 

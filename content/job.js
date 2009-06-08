@@ -130,6 +130,7 @@ window.$JOB = {
 			var job_number = this._queue[0].job_number;
 			// is it ready to complete
 			while (this._queue[0] && this._data[this._queue[0].job_number]){
+				
 				var job_number = this._queue[0].job_number;		
 				var job = this._queue.shift();
 				for (var i=0;i<this._data[job_number].length;i++){
@@ -162,8 +163,9 @@ window.$JOB = {
 	_packet_functions: {
 		// DEFAULT packet handlers
   		 'page': function(packet, job){
-  		 		var out = packet.data; 
-  				$('#root').html(out);
+  		 		var out = packet.data;
+  		 		var root = job.root;
+  				$('#' + root).html(out);
   				for (var i = 0; i < packet.items.length; i++){
   					var item = packet.items[i];
   					if (item.type == 'form'){
