@@ -8,7 +8,7 @@ import wsgiref.util
 from paste.session import SessionMiddleware
 import simplejson as json
 
-import ajax
+import interface
 
 
 
@@ -25,7 +25,7 @@ def process_ajax(environ, start_response):
 	                	environ=environ,
 	                	keep_blank_values=1)
 	                	
-	    # this can be put in a loop
+	# this can be put in a loop
 	head = str(formdata.getvalue('head'))
 	try:
 		body = json.loads(str(formdata.getvalue('body')))
@@ -35,40 +35,13 @@ def process_ajax(environ, start_response):
 		print repr(formdata.getvalue('body'))
 		print "*" * 40
 		body = {};
-	moo = ajax.ajax_thing(http_session)
+	moo = interface.Interface(http_session)
 
 	print repr(body)
 
-
-# FIXME we want this to be a bit cleaner
-# the request should be seen as a series of requests
-# plus I don't  like the splitting out by type done here
-# maybe just have a single object that will do this stuiff to take over?
-
-
  	if body:
-		if head == "form":
-			if body['stamp']:
-				moo.add_command("form", body)
-
-			info = { 'form': body['form'],
-				 'field':'id',
-				 'value':'',
-				 'command': body['command'],
-				 'parent_id':'',
-				 'parent_field':'',
-				 'form_type': None}
-			moo.add_command('data', info)
-		elif head == "data":
-			moo.add_command("data", body)
-		elif head == "page":
-			moo.add_command("page", body)		
-		elif head == "html":
-			moo.add_command("html", body)
-		elif head == "edit":
-			moo.add_command("edit", body)
-		elif head == "action":
-			moo.add_command("action", body)
+ 		if head in ("form", "data", "page", "html", "edit", "action"):
+			moo.add_command(head, body)
 		moo.process()
 		data = moo.output
 	else:
@@ -81,6 +54,8 @@ def process_ajax(environ, start_response):
 	print 'length %s bytes' % len(json.dumps(data, sort_keys=True, indent=4))
 	print 'condenced length %s bytes' % len(json.dumps(data, separators=(',',':')))
 	print 'SESSION\n%s' % json.dumps(http_session, sort_keys=False, indent=4)
+	# print json.dumps(data, separators=(',',':'))
+
 	return json.dumps(data, separators=(',',':'))
 
 

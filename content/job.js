@@ -130,6 +130,7 @@ window.$JOB = {
 			var job_number = this._queue[0].job_number;
 			// is it ready to complete
 			while (this._queue[0] && this._data[this._queue[0].job_number]){
+				
 				var job_number = this._queue[0].job_number;		
 				var job = this._queue.shift();
 				for (var i=0;i<this._data[job_number].length;i++){
