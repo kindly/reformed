@@ -97,7 +97,7 @@ class Table(object):
 
         if "modified_date" not in self.fields.iterkeys() and self.modified_date:
             self.add_field(Modified("modified_date"))
-            self.add_field(Integer("user_id" , default = 1))
+            self.add_field(Integer("modified_by" , default = 1))
         #sqlalchemy objects
         self.sa_table = None
         self.sa_class = None
