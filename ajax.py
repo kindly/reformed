@@ -85,7 +85,7 @@ class AjaxThing(object):
 			parent.add_command('data', info)
 					
 		form_name = data['form']
-		
+		print "##### %s" % form_name
 		# FIXME does form_name want to be form_ref or something more like that.
 		
 		# FIXME I'd like this session to be repeatedly used
@@ -134,7 +134,7 @@ class AjaxThing(object):
 					# will have to see plus push through the changes
 					print "add subform %s" % item_data['params']['subform_name']
 					my_data = {'form':item_data['params']['subform_name']}
-					self.get_form(my_data, parent, False)
+					self.get_form(my_data, parent)
 		else:
 			# we are no allowed to see this form
 			item_data = {}
@@ -251,7 +251,7 @@ class AjaxThing(object):
 							 'parent_id':data_row.id,
 							 'parent_field':params['child_id'],
 							 'form_type':params['form_type']}
-						self.add_command('data', info, False)
+						parent.add_command('data', info)
 				data_out_array.append(data_out)
 				
 				
@@ -284,6 +284,7 @@ class AjaxThing(object):
 		form_object = form.params('form_object')
 		print "## looking for %s ##" % form_object
 		if (True): ## FIXME botch r.data.tables.has_key(form_object)):
+			print '## %s' % form_object
 			obj = r.reformed.get_class(form_object)
 			if action == "save":
 				field_data = data['field_data']
@@ -313,7 +314,7 @@ class AjaxThing(object):
 					 'parent_id': data['parent_id'],   #None,
 					 'parent_field': data['parent_field'],   #None,
 					 'form_type':data['form_type']}
-				self.add_command('data', info, False)
+				parent.add_command('data', info)
 
 		else:
 			print "NO OBJECT"

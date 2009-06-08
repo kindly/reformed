@@ -52,7 +52,7 @@ d.add_table(r.Table("paymentdds",
                    )
            )
 
- d.add_table(r.Table("entity",
+d.add_table(r.Table("entity",
                      r.Integer("table"),
                      r.Integer("table_id"),
                      r.OneToOne("people","people"),
