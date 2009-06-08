@@ -1,4 +1,5 @@
 import sqlalchemy as sa
+from util import JOINS_DEEP
 import custom_exceptions
 from sqlalchemy.sql import not_, and_, or_
 
@@ -19,18 +20,39 @@ class Search(object):
         for k,v in table_paths.iteritems():
             self.table_paths_list.append([k, v[0], v[1]])
 
-        self.table_paths_list.sort(lambda a, b: len(a[0]) - len(b[0]))
+
+        self.table_paths_list.sort(self.sort_order)
 
         self.table_path = {}
         self.aliased_name_path = {} 
 
         self.create_path_and_holder()
+        print self.table_path
 
         self.local_tables = {}
+
+        self.create_local_tables()
 
         self.search_base = self.session.query(self.database.get_class(self.table))
 
         self.queries = []
+
+    def sort_order(self, a, b):
+        ## put relationships with entities in last then by depth. 
+        ## This is to ensure most usable table is not numbered
+
+        if "_entity" in a[0]:
+            asize = len(a[0]) - JOINS_DEEP*2  
+        else:
+            asize = len(a[0])
+
+        if "_entity" in b[0]:
+            bsize = len(b[0]) - JOINS_DEEP*2
+        else:
+            bsize = len(b[0])
+        
+        return bsize-asize
+        
 
     def add_query(self, *args, **kw):
 
@@ -44,8 +66,15 @@ class Search(object):
 
     def search(self, exclude_mode = None):
 
+        first_query = self.queries[0][0]
+        print first_query.inner_joins.union(first_query.outer_joins)
+
         if len(self.queries) == 1:
-            return self.queries[0][0].add_conditions(self.search_base)
+            ## if query contains a onetomany make the whole query a distinct
+            for table in first_query.inner_joins.union(first_query.outer_joins):
+                if table != self.table and table not in self.local_tables[self.table]:
+                    return first_query.add_conditions(self.search_base).distinct()
+            return first_query.add_conditions(self.search_base)
 
         query_base = self.session.query(self.database.get_class(self.table).id)
 
@@ -84,6 +113,11 @@ class Search(object):
 
 
         main_subquery = main_subquery.subquery()
+
+        ### if first query has a one to many distict the query
+        for table in first_query.inner_joins.union(first_query.outer_joins):
+            if table != self.table and table not in self.local_tables[self.table]:
+                return self.search_base.join((main_subquery, main_subquery.c.id == self.database.get_class(self.table).id)).distinct()
         return self.search_base.join((main_subquery, main_subquery.c.id == self.database.get_class(self.table).id))
 
             
@@ -135,7 +169,7 @@ class Search(object):
 
         for table, value in self.table_path.iteritems():
             if value == "root":
-                self.local_tables[self.table] = self.table
+                self.local_tables[self.table] = [self.table]
                 self.subsiquant_relation_finder(self.table, "root")
                 continue
 

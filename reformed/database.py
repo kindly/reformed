@@ -53,7 +53,7 @@ class Database(object):
         self.engine = kw.pop("engine",None)
         self._Session = kw.pop("session",None)
         self.metadata.bind = self.engine
-        self.Session = sessionwrapper.SessionClass(self._Session)
+        self.Session = sessionwrapper.SessionClass(self._Session, self)
         self.persisted = False
         boots = boot_tables.boot_tables()
         self.boot_tables =boots.boot_tables
@@ -156,6 +156,8 @@ class Database(object):
                 else:
                     value = table_param.value 
                 kw[table_param.item.encode("ascii")] = value
+
+            kw["table_id"] = row.id
 
             self.add_table(tables.Table( row.table_name.encode("ascii"), *fields, **kw))
 

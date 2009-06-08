@@ -17,11 +17,11 @@ class test_donkey(object):
     @classmethod
     def setUpClass(cls):
         if not hasattr(cls, "engine"):
-            cls.engine = create_engine('sqlite:///:memory:', echo=True)
+            cls.engine = create_engine('sqlite:///:memory:')
         
 #        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
         cls.meta = sa.MetaData()
-        cls.Session = sa.orm.sessionmaker(bind =cls.engine, autoflush = False)
+        cls.Sess = sa.orm.sessionmaker(bind =cls.engine, autoflush = False)
         cls.Donkey = Database("Donkey", 
                             Table("people",
                                   Text("name", mandatory = True, length = 30),
@@ -32,8 +32,8 @@ class test_donkey(object):
                                             cascade = "all, delete-orphan"),
                                   OneToMany("donkey_sponsership",
                                             "donkey_sponsership"),
-                             #     OneToMany("relation",
-                             #               "relation"),
+                              #    OneToMany("relation",
+                              #             "relation"),
                                   entity = True),
                             Table("email",
                                   Email("email")
@@ -62,16 +62,24 @@ class test_donkey(object):
                                   Money("amount"),
                                   Text("source")
                                  ),
+                            Table("entity",
+                                  Integer("table"),
+                                  Integer("table_id"),
+                                  OneToOne("people","people"),
+                                  OneToOne("donkey","donkey")
+                                 ),
                              #Table("relation",
                              #      Text("relation_type"),
                              #      ManyToOne("people", "people")
                              #     ),
                         metadata = cls.meta,
                         engine = cls.engine,
-                        session = cls.Session
+                        session = cls.Sess
                         )
 
         cls.Donkey.persist()
+
+        cls.session = cls.Donkey.Session()
 
         cls.set_up_inserts()
 

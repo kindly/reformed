@@ -4,6 +4,7 @@ import sqlalchemy
 import logging
 import re
 import csv
+import formencode as fe
 
 logger = logging.getLogger('reformed.main')
 
@@ -157,7 +158,7 @@ class FlatFile(object):
 
         return first_line
 
-    def load(self, batch = 1000):
+    def load(self, batch = 100000):
 
         self.session = self.database.Session()
         flat_file = self.get_file()
@@ -171,8 +172,9 @@ class FlatFile(object):
 
         if self.has_header:
             csv_file.next()
-
         
+        error_lines = []
+
         line_number = 0
 
         for line in csv_file:
@@ -180,10 +182,19 @@ class FlatFile(object):
             record = SingleRecord(self.database, self.table, line, self)
             record.get_all_obj(self.session)
             record.add_all_values_to_obj()
-            record.save_all_objs(self.session)
-            if line_number % batch == 0:
+            try:
+                record.save_all_objs(self.session)
+            except custom_exceptions.Invalid, e:
+                error_lines.append(line + [str(e.error_dict)])
+            if line_number % batch == 0 and not error_lines:
                 self.session.commit()
-        self.session.commit()
+        
+        if error_lines:
+            self.session.close()
+            error_lines.insert(0, self.headers + ["__errors"])
+            return error_lines
+        else:
+            self.session.commit()
                 
         flat_file.close()
 
@@ -290,9 +301,20 @@ class SingleRecord(object):
         return [table, join, parent_key, relation_name]
 
     def save_all_objs(self, session):
+
+        invalid_msg = {}
+        invalid_dict = {} 
         
         for key, obj in self.all_obj.iteritems():
-            session.add(obj)
+            try:
+                session.add(obj)
+            except fe.Invalid, e:
+                invalid_msg[key] = e.msg.replace("\n",", ")
+                invalid_dict[key] = e
+        if invalid_msg:
+            if not self.flat_file:
+                session.clear()
+            raise custom_exceptions.Invalid("invalid object(s) are %s" % invalid_msg, invalid_msg, invalid_dict) 
 
     def add_values_to_obj(self, key):
 

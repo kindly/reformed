@@ -63,7 +63,6 @@ class test_search(donkey_test.test_donkey):
         search = Search(self.Donkey, "people", self.session)
         search.create_local_tables()
         #previous_relation_finder("_log_email", ['email', '__log_email'], "onetomany")
-        print search.table_path
         assert search.local_tables == {}
 
     def test_conjunctions(self):
@@ -173,7 +172,7 @@ class test_search(donkey_test.test_donkey):
                set(session.query(people_class.id).outerjoin(["email"]).\
                    filter(not_(or_(people_class.name < u"popp02", or_(email_class.email == None, not_(email_class.email.like(u"popi%")))))).all())) == set()
 
-    def test_search_with_single_query(self):
+    def test_zzzz_search_with_single_query(self):
 
         search = Search(self.Donkey, "people", self.session)
         t = search.t
@@ -196,6 +195,15 @@ class test_search(donkey_test.test_donkey):
                set(session.query(people_class).outerjoin(["email"]).\
                    filter(and_(people_class.name < u"popp02", or_(email_class.email == None, not_(email_class.email.like(u"popi%"))))).all())) == set()
 
+
+        search3 = Search(self.Donkey, u"people", self.session)
+        t = search3.t
+
+        search3.add_query(SingleQuery(search, t.people.name < u"popp02", "not", t.email.email.like(u"popi%")))
+
+        assert len(search3.search()[0:15]) == 15
+
+
     def test_search_with_union(self):
 
         search = Search(self.Donkey, u"people", self.session)
@@ -206,8 +214,6 @@ class test_search(donkey_test.test_donkey):
 
         search.add_query(t.donkey.name.in_([u"poo", u"fine"]))
 
-        #for a in search.search().all():
-        #    print a.name
 
         assert len(search.search().all()) == 6
 
@@ -282,3 +288,14 @@ class test_search(donkey_test.test_donkey):
 
         assert len(search.search(exclude_mode = "except").all()) == 11
 
+    def test_zz_search_with_limit(self):
+
+        search = Search(self.Donkey, "people", self.session)
+        t = search.t
+
+        search.add_query(t.email.email.like("popi%"))
+        search.add_query(t.people.name ==  "david", exclude = "true")
+
+
+        assert len(search.search()[0:2]) == 2
+        
