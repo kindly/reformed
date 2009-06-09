@@ -175,3 +175,32 @@ class test_database(object):
     def test_log_tables_persisted(self):
         assert (u"_log_people", u"name") in [(a.table_name,a.field_name) for a in self.list_of_fields]
         
+    def test_add_entity(self):
+
+        assert_raises(custom_exceptions.NoTableAddError, self.Donkey.add_entity, 
+                      Table("address2",
+                            Address("address")
+                                 ))
+
+        self.Donkey.add_table(Table("entity",
+                             Integer("table"),
+                             Integer("table_id"),
+                             )
+                    )
+
+        self.Donkey.add_entity(Table("donkey", 
+                               Text("name", validation = '__^[a-zA-Z0-9]*$'),
+                               Integer("age", validation = 'Int')))
+
+        self.Donkey.persist()
+
+        assert "entity" in self.Donkey.tables
+        assert "donkey" in self.Donkey.tables
+        assert self.Donkey.tables["donkey"].entity is True
+        assert self.Donkey.tables["donkey"].kw["entity"] is True
+        session = self.Donkey.Session()
+        assert ("entity", "donkey", "donkey" , "OneToOne") in [(a.table_name, a.field_name, a.other, a.type) for a in session.query(self.Donkey.get_class("__field")).all()]
+
+
+
+

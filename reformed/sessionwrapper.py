@@ -73,10 +73,7 @@ class SessionWrapper(object):
             self.new_entities = []
             self.commit()
 
-
-
     def add_logged_instances(self):
-
 
         for obj in self.session.dirty:
             database = obj._table.database
@@ -88,7 +85,7 @@ class SessionWrapper(object):
             for column in table.columns.keys():
                 a,b,c = attributes.get_history(attributes.instance_state(obj), column,
                                               passive = False)
-                logger.info (repr(a)+repr(b)+repr(c))
+                #logger.info (repr(a)+repr(b)+repr(c))
                 if c:
                     setattr(logged_instance, column, c[0])
                     changed = True
@@ -109,8 +106,6 @@ class SessionWrapper(object):
                 entity.table = table.table_id
                 obj._entity = entity
                 self.add(obj)
-                
-#       print "finished first"
 
 class SessionClass(object):
 

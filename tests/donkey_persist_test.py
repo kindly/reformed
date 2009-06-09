@@ -152,16 +152,29 @@ class test_donkey_persist_sqlite(object):
         assert self.david_logged.address_line_1 == u"43 union street"
         assert self.david_logged.postcode == u"es388"
 
-    def test_add_table_after_loaded(self):
+    def test_z_add_table_after_loaded(self):
 
         p = random.randrange(1,10000)
         self.Donkey.add_table(tables.Table("moo%s" % p, Text("moo")))
         self.Donkey.persist()
 
-        self.jim = self.Donkey.tables["donkey"].sa_class()
-        self.jim.name = u"zjimbobidoobo"
+        self.jim = self.Donkey.tables["moo%s" % p].sa_class()
+        self.jim.moo = u"zjimbobidoobo"
         self.session.add(self.jim)
         self.session.commit()
+
+    def test_z_add_entity_after_loaded(self):
+
+        p = random.randrange(1,10000)
+        self.Donkey.add_entity(tables.Table("entity%s" % p, Text("moo")))
+        self.Donkey.persist()
+
+        self.jim = self.Donkey.tables["entity%s" % p].sa_class()
+        self.jim.moo = u"zjimbobidoobo"
+        self.session.add(self.jim)
+        self.session.commit()
+        print [a.entity_id for a in self.session.query(self.Donkey.get_class("entity%s" % p)).all()]
+        assert all([a.entity_id for a in self.session.query(self.Donkey.get_class("entity%s" % p)).all()])
 
     def test_log_tables_loaded(self):
 

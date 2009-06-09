@@ -28,7 +28,7 @@ import sqlalchemy as sa
 import custom_exceptions
 import resultset
 import tables
-from fields import ManyToOne
+from fields import ManyToOne, OneToOne
 import fields as field_types
 import boot_tables
 import sessionwrapper
@@ -58,6 +58,7 @@ class Database(object):
         boots = boot_tables.boot_tables()
         self.boot_tables =boots.boot_tables
         self.graph = None
+        self.fields_to_persist = [] 
         self.load_from_persist()
         for table in args:
             self.add_table(table)
@@ -81,8 +82,19 @@ class Database(object):
                                                         % table.name)
         self._add_table_no_persist(table)
 
-        #if self.persisted == True:
-        #    self.persist()
+    def add_entity(self, table):
+        if "entity" not in self.tables:
+            raise custom_exceptions.NoTableAddError("table %s cannot be added as there is"
+                                                    "no entity table in the database"
+                                                    % table.name)
+        table.entity = True
+        table.kw["entity"] = True
+        self.add_table(table)
+        relation = OneToOne(table.name,table.name)
+        self.tables["entity"]._add_field_no_persist(relation)
+        if self.tables["entity"].persisted:
+            self.fields_to_persist.append(relation)
+
     
     def _add_table_no_persist(self, table):
 
@@ -100,6 +112,12 @@ class Database(object):
         for table in self.tables.itervalues():
             if not table.persisted:
                 table.persist()
+        logger.info(self.fields_to_persist)
+        for field in self.fields_to_persist:
+            field.table._persist_extra_field(field)
+        if self.fields_to_persist:
+            self.update_sa(reload = True)
+        self.fields_to_persist = []
         self.persisted = True
 
 

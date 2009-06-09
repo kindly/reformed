@@ -1,8 +1,15 @@
 import reformed.reformed as r
 
+
 d = r.reformed
 
-d.add_table(r.Table("people",
+d.add_table(r.Table("entity",
+                     r.Integer("table"),
+                     r.Integer("table_id"),
+                     )
+            )
+
+d.add_entity(r.Table("people",
                     r.Text("name", mandatory = True, length = 30),
                     r.Address("supporter_address"),
                     r.OneToMany("email","email",
@@ -10,8 +17,7 @@ d.add_table(r.Table("people",
                               eager = True,
                               cascade = "all, delete-orphan"),
                     r.OneToMany("donkey_sponsership",
-                              "donkey_sponsership"),
-                    entity = True
+                              "donkey_sponsership")
                    )
            )
 
@@ -20,15 +26,14 @@ d.add_table(r.Table("email",
                    )
            )
 
-d.add_table(r.Table("donkey",
+d.add_entity(r.Table("donkey",
                     r.Text("name", validation = '__^[a-zA-Z0-9]*$'),
                     r.Integer("age", validation = 'Int'),
                     r.OneToOne("donkey_pics","donkey_pics",
                              many_side_mandatory = False,
                              ),
                     r.OneToMany("donkey_sponsership",
-                              "donkey_sponsership"),
-                    entity = True
+                              "donkey_sponsership")
                    )
            )
 
@@ -52,17 +57,6 @@ d.add_table(r.Table("paymentdds",
                    )
            )
 
-d.add_table(r.Table("entity",
-                     r.Integer("table"),
-                     r.Integer("table_id"),
-                     r.OneToOne("people","people"),
-                     r.OneToOne("donkey","donkey")
-                     )
-            )
-
-
-            
-
 d.add_table(r.Table("form", r.Text("name"),
                    r.OneToMany("form_param","form_param"), r.OneToMany("form_item","form_item")))
 
@@ -71,6 +65,7 @@ d.add_table(r.Table("form_param", r.Text("key", mandatory = True, length = 30), 
 d.add_table(r.Table("form_item" ,r.Text("name") ,
                    r.Text("label"),r.Text("item"),r.Boolean('active'),r.Integer('sort_order'),
                                   r.OneToMany("form_item_param","form_item_param")))
+
 
 
 d.add_table(r.Table("form_item_param", r.Text("key"),r.Text("value")))
