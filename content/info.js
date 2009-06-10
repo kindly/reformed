@@ -152,7 +152,7 @@ $INFO = {
 			this._data[data_obj] = {}
 		}
 		// set the value
-		this._data[data_obj][data_id] = data;	},
+		this._data[data_obj][data_id] = data;	},
 	
 	getRecords: function(obj, data_id){
 
@@ -220,7 +220,7 @@ $INFO = {
 		}
 		// set the value
 		this._id[id] = 'rfd_' + this._id_counter;
-		this._reverse_id[this._id_counter] = id;		this._id_counter++;
+		this._reverse_id[this._id_counter] = id;		this._id_counter++;
 		return this._id[id];
 	},
 
