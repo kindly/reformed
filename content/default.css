@@ -210,3 +210,44 @@ tr.inactive input{
 	font-size:10px;
 }
 
+.action{
+	border: 1px solid #999;
+	margin: 0 3px 2px 3px;
+	padding:0px;
+}
+.action > a {
+	padding: 1px;
+	background-color:#9A9;
+	text-decoration:none;
+}
+.action > a:hover {
+	background-color:#f9F;
+}
+.action > a.record {
+	background-color:#99A;
+}
+.action > a.record:hover {
+	background-color:#fF9;
+}
+.action > a > img{
+	border:0;
+}
+.action_hidden {
+	display: none;
+}
+
+.shortcut{
+	text-align:center;
+	margin:0px;
+	font-style:italic;
+	font-size:75%;
+}
+
+.command{
+	text-align: center;
+	xbackground-color:#FFF;
+	margin:2px;
+}
+.action > a > span.command:hover {
+	text-decoration:underline;
+}
