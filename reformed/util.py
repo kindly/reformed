@@ -22,7 +22,8 @@ def get_next_relation(gr, node, path_dict, current_path = [], last_edge = ()):
     for edge in gr.in_edges(node, data = True):
         node1, node2, relation = edge
         if (node1, node2) != last_edge:
-            new_path = current_path + ["_%s" % node1] 
+            backref = relation.sa_options.get("backref", "_%s" % node1)
+            new_path = current_path + [backref] 
             if len(new_path) > JOINS_DEEP*2:
                 continue
             path_dict[tuple(new_path)] = [node1, swap_relations(relation.type)]

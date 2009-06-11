@@ -18,12 +18,13 @@ class Search(object):
         self.table_paths_list = [] 
         
         for k,v in table_paths.iteritems():
+            print k,v
             self.table_paths_list.append([k, v[0], v[1]])
 
 
         self.table_paths_list.sort(self.sort_order)
-        for item in self.table_paths_list:
-            print item
+        #for item in self.table_paths_list:
+        #    print item
 
         self.table_path = {}
         self.aliased_name_path = {} 

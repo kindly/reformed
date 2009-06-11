@@ -408,9 +408,10 @@ class Table(object):
                 order_by_statement = self._make_sa_order_by_list(relation, other_table)
                 if order_by_statement:
                     sa_options["order_by"] = order_by_statement
+                if "backref" not in sa_options:
+                    sa_options["backref"] = "_%s"% self.name
 
                 properties[relation.name] = sa.orm.relation(other_class,
-                                                        backref = "_" + self.name,
                                                         **sa_options)
             self.mapper = mapper(self.sa_class, self.sa_table, properties = properties)
     
