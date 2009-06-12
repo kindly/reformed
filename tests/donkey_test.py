@@ -62,11 +62,11 @@ class test_donkey(object):
                                   Money("amount"),
                                   Text("source")
                                  ),
-                            Table("entity",
+                            Table("_core_entity",
                                   Integer("table"),
                                   Integer("table_id"),
-                                  OneToOne("people","people"),
-                                  OneToOne("donkey","donkey")
+                                  OneToOne("people","people", backref = "_entity"),
+                                  OneToOne("donkey","donkey", backref = "_entity")
                                  ),
                              #Table("relation",
                              #      Text("relation_type"),

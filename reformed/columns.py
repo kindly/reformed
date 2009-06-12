@@ -130,7 +130,8 @@ class Relation(BaseSchema):
         super(Relation,self).__init__(type ,*args, **kw)
         self.other = other 
         self.order_by = kw.pop("order_by", None)
-
+        if self.type == "onetoone":
+            self.sa_options["uselist"] = False
         eager = kw.pop("eager", None)
         if eager:
             self.sa_options["lazy"] = not eager
@@ -138,6 +139,9 @@ class Relation(BaseSchema):
         if cascade:
             self.sa_options["cascade"] = cascade
         self.many_side_mandatory = kw.pop("many_side_mandatory", True)
+        backref = kw.pop("backref", None)
+        if backref:
+            self.sa_options["backref"] = backref
 
     @property
     def order_by_list(self):
@@ -214,6 +218,9 @@ class Field(object):
         obj._cascade = kw.get("cascade", None)
         if obj._cascade:
             obj._sa_options["cascade"] = obj._cascade
+        obj._backref = kw.get("backref", None)
+        if obj._backref:
+            obj._sa_options["backref"] = obj._backref
         obj._validation = kw.get("validation",None)
         if obj._validation:
             obj._validation = r"%s" % obj._validation.encode("ascii")

@@ -101,10 +101,12 @@ class SessionWrapper(object):
             table = obj._table
             database = table.database
             if table.entity == True:
-                entity = database.get_instance("entity")
+                entity = database.get_instance("_core_entity")
                 self.new_entities.append(obj)
                 entity.table = table.table_id
+      #          logger.info(dir(obj))
                 obj._entity = entity
+      #          logger.info(dir(obj.__core_entity))
                 self.add(obj)
 
 class SessionClass(object):
@@ -114,7 +116,7 @@ class SessionClass(object):
         self.database = database
 
     def __call__(self):
-        if "entity" in self.database.tables:
+        if "_core_entity" in self.database.tables:
             return SessionWrapper(self.Session, has_entity = True)
         return SessionWrapper(self.Session)
        

@@ -3,7 +3,7 @@ import reformed.reformed as r
 
 d = r.reformed
 
-d.add_table(r.Table("entity",
+d.add_table(r.Table("_core_entity",
                      r.Integer("table"),
                      r.Integer("table_id"),
                      )
@@ -70,4 +70,12 @@ d.add_table(r.Table("_core_form_item" ,r.Text("name") ,
 
 d.add_table(r.Table("_core_form_item_param", r.Text("key"),r.Text("value")))
 
+
 d.persist()
+
+from reformed.data_loader import FlatFile
+flatfile = FlatFile(d,
+                    "people",
+                    "tests/new_people_with_header.csv")    
+flatfile.load()
+

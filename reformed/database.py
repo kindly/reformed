@@ -83,16 +83,16 @@ class Database(object):
         self._add_table_no_persist(table)
 
     def add_entity(self, table):
-        if "entity" not in self.tables:
+        if "_core_entity" not in self.tables:
             raise custom_exceptions.NoTableAddError("table %s cannot be added as there is"
                                                     "no entity table in the database"
                                                     % table.name)
         table.entity = True
         table.kw["entity"] = True
         self.add_table(table)
-        relation = OneToOne(table.name,table.name)
-        self.tables["entity"]._add_field_no_persist(relation)
-        if self.tables["entity"].persisted:
+        relation = OneToOne(table.name,table.name, backref = "_entity")
+        self.tables["_core_entity"]._add_field_no_persist(relation)
+        if self.tables["_core_entity"].persisted:
             self.fields_to_persist.append(relation)
 
     

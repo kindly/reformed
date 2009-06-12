@@ -173,8 +173,7 @@ class test_donkey_persist_sqlite(object):
         self.jim.moo = u"zjimbobidoobo"
         self.session.add(self.jim)
         self.session.commit()
-        print [a.entity_id for a in self.session.query(self.Donkey.get_class("entity%s" % p)).all()]
-        assert all([a.entity_id for a in self.session.query(self.Donkey.get_class("entity%s" % p)).all()])
+        assert all([a._core_entity_id for a in self.session.query(self.Donkey.get_class("entity%s" % p)).all()])
 
     def test_log_tables_loaded(self):
 
