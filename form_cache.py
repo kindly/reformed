@@ -23,7 +23,7 @@ class FormCache(object):
 
 		form_names = {}
 		session = dbconfig.Session()
-		data = session.query(r.reformed.get_class('form')).options()
+		data = session.query(r.reformed.get_class('_core_form')).options()
 		for row in data:
 			self.form_names[row.name] = int(row.id)
 		session.close()
@@ -62,15 +62,15 @@ class FormCache(object):
 			self.form_items = []
 			self.subforms = {}
 			session = dbconfig.Session()
-			self.form = session.query(r.reformed.get_class('form')).options(eagerload('form_param')).filter_by(name=form_name).one()
+			self.form = session.query(r.reformed.get_class('_core_form')).options(eagerload('_core_form_param')).filter_by(name=form_name).one()
 			form_id = self.form.id
 			# params (form)
-			self.form_params = self._get_params( self.form.form_param )
+			self.form_params = self._get_params( self.form._core_form_param )
 			
-			form_items = session.query(r.reformed.get_class('form_item')).options(eagerload('form_item_param')).filter_by(form_id=form_id, active=True).order_by(r.reformed.get_class('form_item').sort_order)
+			form_items = session.query(r.reformed.get_class('_core_form_item')).options(eagerload('_core_form_item_param')).filter_by(_core_form_id=form_id, active=True).order_by(r.reformed.get_class('_core_form_item').sort_order)
 			# params (form_item)
 			for form_item in form_items:
-				item = self.FormItem(form_item, self._get_params(form_item.form_item_param))
+				item = self.FormItem(form_item, self._get_params(form_item._core_form_item_param))
 				self.form_items.append(item)
 				if form_item.item == 'subform':
 					if item.params('subform_name'):

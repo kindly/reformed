@@ -314,7 +314,14 @@ $FORM = {
 		var root = $INFO.addId(location + '#')
 		var form = '<div id="' + root + '" class="form"></div>';
 		$("#" + location).html(form);
-		this._fetch(form_id, location + '#', null, command);
+		if (!$INFO.existsForm(form_id)){
+			// fetch the form
+			this._fetch(form_id, location + '#', null, command);
+		} else {
+			// used cached version
+			// FIXME defaulting to normal
+			this._generate(form_id, location + '#', 'normal');	
+		}
 	},
 
 	_fetch: function(form_id, location, form_type, command){
@@ -526,14 +533,14 @@ $FORM = {
 		formHTML += '</tbody></table>' 
 		}
 
+		formHTML += '<input type="text" id="' + id + '" class="hidden" /> ';
 		formHTML += '</div>';  // end of form body div
 
 		// FORM FOOTER
-		if (form_type=='normal' || form_type=='action'){
+		if (!is_top_level && (form_type=='normal' || form_type=='action')){
 			formHTML += '<div class="form_footer" >';
 			if (has_records){
 				formHTML += '<span class="ctl" >';
-				formHTML += '<input type="text" id="' + id + '" class="hidden" /> ';
 				var my_root_id = $INFO.getId(my_root);
 				formHTML += this._button("save record", 
 										'$FORM._save(\'' + record_id + '\',\'\')',
@@ -550,7 +557,8 @@ $FORM = {
 			}
 			formHTML += '</div>';
 		}
-		return formHTML;	},
+
+		return formHTML;	},
 
 
 	_wrap: function(arg, tag){

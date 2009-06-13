@@ -90,11 +90,13 @@ class AjaxThing(object):
 		
 		# FIXME I'd like this session to be repeatedly used
 		session = dbconfig.Session()
-		form = session.query(r.reformed.get_class('form')).options(eagerload('form_param')).filter_by(name=form_name).one()
-		form_params = get_params(form.form_param)
+		form = session.query(r.reformed.get_class('_core_form')).options(eagerload('_core_form_param')).filter_by(name=form_name).one()
+		print repr(form)
+		form_params = get_params(form._core_form_param)
+		print repr(form_params)
 		# FIXME not all items are wanted.  what bit field do we use for this (already have active)
 		# FIXME want working sort order do we have it??
-		form_items = session.query(r.reformed.get_class('form_item')).options(eagerload('form_item_param')).filter_by(form_id=form.id, active=True).order_by(r.reformed.get_class('form_item').sort_order)
+		form_items = session.query(r.reformed.get_class('_core_form_item')).options(eagerload('_core_form_item_param')).filter_by(_core_form_id=form.id, active=True).order_by(r.reformed.get_class('_core_form_item').sort_order)
 	
 		form_data = {}
 		
@@ -119,7 +121,8 @@ class AjaxThing(object):
 				item_data['name'] = form_item.name # FIXME name -> ref?
 				item_data['title'] = form_item.label
 				item_data['type'] = form_item.item
-				params = get_params(form_item.form_item_param)
+				print repr(form_item)
+				params = get_params(form_item._core_form_item_param)
 				if params:
 					item_data['params'] = params
 				form_data['fields'][form_item.name] = item_data
@@ -165,9 +168,9 @@ class AjaxThing(object):
 		# FIXME I'd like this session to be repeatedly used
 
 		session = dbconfig.Session()
-		form = session.query(r.reformed.get_class('form')).options(eagerload('form_param')).filter_by(name=form_name).one()
+		form = session.query(r.reformed.get_class('_core_form')).options(eagerload('_core_form_param')).filter_by(name=form_name).one()
 
-		params = get_params(form.form_param)
+		params = get_params(form._core_form_param)
 		
 		if form_type == None: # need to get it from the form
 			if 'form_type' in params:
@@ -220,7 +223,7 @@ class AjaxThing(object):
 				data = session.query(obj).all()
 
 			# items	
-			form_items = session.query(r.reformed.get_class('form_item')).options(eagerload('form_item_param')).filter_by(form_id=form.id, active=1).order_by(r.reformed.get_class('form_item').sort_order)
+			form_items = session.query(r.reformed.get_class('_core_form_item')).options(eagerload('_core_form_item_param')).filter_by(_core_form_id=form.id, active=1).order_by(r.reformed.get_class('_core_form_item').sort_order)
 
 			data_out_array = []
 			records = []
@@ -240,7 +243,7 @@ class AjaxThing(object):
 					if form_item.item == 'subform':
 						# force the subform to be see in form filling FIXME hack
 						data_out[form_item.name] = 0;
-						params = get_params(form_item.form_item_param)
+						params = get_params(form_item._core_form_item_param)
 					#	print "add data %s" % params['subform_name']
 				
 						# FIXME this data structure is horrid make this an object?

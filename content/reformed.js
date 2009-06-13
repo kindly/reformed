@@ -36,7 +36,7 @@
 $(init);
 
 function init(){
-
+	create_actions()
 	// FIXME the initialisations need to be automated.
 	// each module can add itself to a list of modules to be initialised
 //	$INFO._init();
@@ -134,7 +134,7 @@ function allowedKeys(key){
 		return true;
 	} else {
 		return false;
-	} 
+	}
 }
 
 function getItemFromObj(obj){
@@ -199,7 +199,7 @@ var $REFORMED = {
 	// Constants for application layout
 	SIDE_WIDTH : 150,
 	LOGO_HEIGHT : 100,
-	ACTION_HEIGHT : 50,
+	ACTION_HEIGHT : 100,
 	INFO_HEIGHT : 30,
 	STATUS_HEIGHT : 40,
 	MIN_APP_WIDTH : 800,
@@ -393,28 +393,41 @@ var $REFORMED = {
 				r.layout();
 			}
 		}
+
+		position_actions()
 		
 	},
 
-	layout_set: function(id, x, y, height, width){
+	layout_set: function(id, top_, left, height, width){
 
-		// we need to remove any 'extra' borders/padding etc
-		height -= parseInt($('#' + id).css('padding-top'), 10);
-		height -= parseInt($('#' + id).css('padding-bottom'), 10); 
-		height -= parseInt($('#' + id).css('border-top-width'), 10);
-		height -= parseInt($('#' + id).css('border-bottom-width'), 10); 
-		height -= parseInt($('#' + id).css('margin-top'), 10);
-		height -= parseInt($('#' + id).css('margin-bottom'), 10); 
+		// determine the amount of 'space' around the item
+		top_offset = 0;
+		bottom_offset = 0;
+		left_offset = 0;
+		right_offset = 0;
 
-		width -= parseInt($('#' + id).css('padding-left'), 10);
-		width -= parseInt($('#' + id).css('padding-right'), 10); 
-		width -= parseInt($('#' + id).css('border-left-width'), 10);
-		width -= parseInt($('#' + id).css('border-right-width'), 10); 
-		width -= parseInt($('#' + id).css('margin-left'), 10);
-		width -= parseInt($('#' + id).css('margin-right'), 10); 
+	//	top_offset += parseInt($('#' + id).css('padding-top'), 10);
+	//	bottom_offset += parseInt($('#' + id).css('padding-bottom'), 10); 
+		top_offset += parseInt($('#' + id).css('border-top-width'), 10);
+		bottom_offset += parseInt($('#' + id).css('border-bottom-width'), 10); 
+		top_offset += parseInt($('#' + id).css('margin-top'), 10);
+		bottom_offset += parseInt($('#' + id).css('margin-bottom'), 10); 
 
-		css = { 'top' : String(y) + 'px',
-			'left' : String(x) + 'px',
+	//	left_offset += parseInt($('#' + id).css('padding-left'), 10);
+	//	right_offset += parseInt($('#' + id).css('padding-right'), 10); 
+		left_offset += parseInt($('#' + id).css('border-left-width'), 10);
+		right_offset += parseInt($('#' + id).css('border-right-width'), 10); 
+		left_offset += parseInt($('#' + id).css('margin-left'), 10);
+		right_offset += parseInt($('#' + id).css('margin-right'), 10); 
+
+		// adjust the height, width, top and left
+		height = height - top_offset - bottom_offset;
+		width = width - left_offset - right_offset;
+	//	left += left_offset;
+	//	top_ += top_offset;
+
+		css = { 'top' : String(left) + 'px',
+			'left' : String(top_) + 'px',
 			'height' : String(height) + 'px',
 			'width' : String(width) + 'px',
 			'position' : 'absolute' };
@@ -422,8 +435,87 @@ var $REFORMED = {
 	}
 	
 }
+NUM_ACTION_BUTTONS = 20;
+NUM_ACTION_ROWS = 4;
+
+function create_actions(){
+
+	var html = '';
+	for (var i = 0; i < NUM_ACTION_BUTTONS; i++){
+		html += '<div id="action' + i + '" class="action"><a href="javascript:action_call(' + i + ')"><img src="icon/22x22/go-home.png" /><span class="command">moo ' + i + '</span><span class="shortcut">A</span></a></div>'
+	}
+	$('#action').html(html);
+}
+
+function position_actions(){
+	var action_m_width = $('#action').width();
+	var action_m_height = $('#action').height();
+
+	var cols = Math.ceil(NUM_ACTION_BUTTONS / NUM_ACTION_ROWS)
+	var action_width = parseInt(action_m_width/cols, 10);
+	var action_height = parseInt(action_m_height/NUM_ACTION_ROWS, 10);
+
+	for (var i = 0; i < NUM_ACTION_BUTTONS; i++){
+		var y = action_height * (i % NUM_ACTION_ROWS);
+		var x = action_width * (Math.floor(i/NUM_ACTION_ROWS));
+		$REFORMED.layout_set('action' + i, x, y, action_height, action_width);
+		action_a_width = $('#action' + i).width();
+		action_a_height = $('#action' + i).height();
+		$REFORMED.layout_set('action' + i + '>a>img', 0, 0,action_a_height, 22);
+		$REFORMED.layout_set('action' + i + '>a>.shortcut', action_a_width -22, 0, action_a_height, 22);
+		$REFORMED.layout_set('action' + i + '>a>.command', 22, 0, action_a_height, action_a_width - 22 * 2);
+		$REFORMED.layout_set('action' + i + '>a', 0, 0, action_a_height, action_a_width);
+	}
+	action_change()
+
+}
 
 
+function action_set(action_id, action_info){
+	var command = action_info[0];
+	var img = action_info[1];
+	var shortcut = action_info[2];
+	var type = action_info[3];
+	$('#action' + action_id + '>a>.command').text(command);
+	$('#action' + action_id + '>a>.shortcut').text(shortcut);
+	$('#action' + action_id + '>a>img').attr('src', 'icon/22x22/' + img);
+	$('#action' + action_id + '>a').attr('accesskey', shortcut);
+	$('#action' + action_id + '>a').attr('class', type);
+}
+function action_hide(action_id){
+	$('#action' + action_id + '').addClass('action_hidden');
+	$('#action' + action_id + '>a').attr('accesskey', '');
+}
 
+action_hash = {
+	previous: [['previous', 'go-previous.png', 'X', 'record'],[$FORM, $FORM._move, ['main#','prev']]],
+	next: [['next', 'go-next.png', 'Y', 'record'],[$FORM, $FORM._move, ['main#','next']]],
+	new: [['new', 'document-new.png', 'B', 'record'],[$FORM, $FORM._move, ['main#','new']]],
+	save: [['save', 'document-save.png', 'C', 'record'],[$FORM, $FORM._save, ['main#','']]],
+	delete:[['delete', 'edit-delete.png', 'D', 'record'],[$FORM, $FORM._delete, ['main#','']]],
+	home: [['home', 'go-home.png', 'H', 'general'],[document, get_html, ['main', 'frontpage']]],
+	donkey: [['donkey', 'go-home.png', 'I', 'general'],[$FORM, $FORM.request, ['donkey', 'main', 'first']]]
+};
 
+action_list = ['home', 'previous', 'next', 'new', 'save', null, 'delete', 'donkey']; 
+
+function action_change(){
+	for (var i=0; i<action_list.length; i++){
+		if(action_list[i]){ 
+			action_set(i, action_hash[action_list[i]][0]);
+		} else {
+			action_hide(i);
+		}
+	}
+	for ( ; i<NUM_ACTION_BUTTONS; i++){
+		action_hide(i);
+	}
+}
+function action_call(action_id){
+	// this function fires the event for action button clicks
+	// we get the base object, function to call and the args from the 
+	// array action_hash
+	var cmd_info = action_hash[action_list[action_id]][1];
+	cmd_info[1].apply(cmd_info[0], cmd_info[2]);
+}
 
