@@ -6,6 +6,7 @@ from nose.tools import assert_raises,raises
 import sqlalchemy as sa
 from sqlalchemy import create_engine
 import random
+from reformed.util import get_table_from_instance
 import logging
 
 sqlhandler = logging.FileHandler("sql.log")
@@ -101,7 +102,7 @@ class test_donkey_persist_sqlite(object):
         cls.david2 = cls.Donkey.tables["people"].sa_class()
         cls.david2.name = u"david"
         cls.david2.address_line_1 = u""
-        cls.david_logged = cls.david._table.logged_instance(cls.david)
+        cls.david_logged = get_table_from_instance(cls.david, cls.Donkey).logged_instance(cls.david)
         cls.session.add(cls.david_logged)
         cls.session.commit()
 
@@ -140,10 +141,10 @@ class test_donkey_persist_sqlite(object):
 
     def test_address_validation(self):
 
-        assert len(self.david._table.validate(self.david)) > 3
+        assert len(get_table_from_instance(self.david, self.Donkey).validate(self.david)) > 3
         
         assert_raises(formencode.Invalid,
-                      self.david2._table.validate,self.david2)
+                      get_table_from_instance(self.david2, self.Donkey).validate,self.david2)
 
     def test_logged_attribute(self):
 

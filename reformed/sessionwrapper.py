@@ -25,6 +25,7 @@
 
 from sqlalchemy.orm import attributes 
 import logging
+from util import get_table_from_instance
 
 logger = logging.getLogger('reformed.session')
 logger.setLevel(logging.INFO)
@@ -34,8 +35,9 @@ logger.addHandler(sessionhandler)
 class SessionWrapper(object):
     """add hooks and overides sqlalchemy session"""
             
-    def __init__(self, Session, has_entity = False):
+    def __init__(self, Session, database, has_entity = False):
         self.session = Session()
+        self.database = database
         self.has_entity = has_entity
         self.new_entities = []
 
@@ -45,9 +47,15 @@ class SessionWrapper(object):
     def close(self):
         self.session.close()
 
+    def save(self, obj):
+        self.add(obj)
+
+    def save_or_update(self, obj):
+        self.add(obj)
+
     def add(self, obj):
         """save or update and validate a sqlalchemy object"""
-        obj._table.validate(obj)
+        get_table_from_instance(obj, self.database).validate(obj)
         self.session.add(obj)
     
     def query(self, mapper):
@@ -76,11 +84,10 @@ class SessionWrapper(object):
     def add_logged_instances(self):
 
         for obj in self.session.dirty:
-            database = obj._table.database
-            table = obj._table
+            table = get_table_from_instance(obj, self.database)
             if not table.logged:
                 continue
-            logged_instance = database.get_instance("_log_%s"%table.name)
+            logged_instance = self.database.get_instance("_log_%s"%table.name)
             changed = False
             for column in table.columns.keys():
                 a,b,c = attributes.get_history(attributes.instance_state(obj), column,
@@ -98,10 +105,9 @@ class SessionWrapper(object):
     def add_entity_instance(self):
 
         for obj in self.session.new:
-            table = obj._table
-            database = table.database
+            table = get_table_from_instance(obj, self.database)
             if table.entity == True:
-                entity = database.get_instance("_core_entity")
+                entity = self.database.get_instance("_core_entity")
                 self.new_entities.append(obj)
                 entity.table = table.table_id
       #          logger.info(dir(obj))
@@ -117,6 +123,6 @@ class SessionClass(object):
 
     def __call__(self):
         if "_core_entity" in self.database.tables:
-            return SessionWrapper(self.Session, has_entity = True)
-        return SessionWrapper(self.Session)
+            return SessionWrapper(self.Session, self.database, has_entity = True)
+        return SessionWrapper(self.Session, self.database)
        

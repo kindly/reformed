@@ -1,6 +1,7 @@
 import sqlalchemy as sa
 from util import JOINS_DEEP
 import custom_exceptions
+import tables
 from sqlalchemy.sql import not_, and_, or_
 
 class Search(object):
@@ -14,11 +15,11 @@ class Search(object):
         self.session = session
 
         self.t = QueryTableHolder()
+        self.tables = {}
 
         self.table_paths_list = [] 
         
         for k,v in table_paths.iteritems():
-            print k,v
             self.table_paths_list.append([k, v[0], v[1]])
 
 
@@ -157,11 +158,13 @@ class Search(object):
 
             if table_count[table_name] == 1:
                 setattr(self.t, table_name, self.database.tables[table_name].sa_class)
+                self.tables[table_name] = self.database.tables[table_name].sa_class
                 self.table_path[table_name] = [list(key), relation]
                 self.aliased_name_path[table_name] = list(key)
             if table_count[table_name] != 1:
                 new_name = "%s_%s" % (table_name, str(table_count[table_name]))
                 aliased_table = sa.orm.aliased(self.database.tables[table_name].sa_class)
+                self.tables[new_name] = aliased_table
                 setattr(self.t, new_name, aliased_table)
                 self.table_path[new_name] = [list(key), relation]
                 aliased_name = (aliased_table.id == 1).get_children()[0].table.name
@@ -214,7 +217,7 @@ class SingleQuery(object):
         self.query = args[0]
 
         if not hasattr(self.query, "inner_joins"):
-            self.query = Conjunction(*args)
+            self.query = Conjunction(*args, search = self.search)
 
         self.inner_joins = self.query.inner_joins
         self.outer_joins = self.query.outer_joins
@@ -292,6 +295,7 @@ class Conjunction(object):
         else:
             self.covering_ors = covering_ors + []
         self.tables_covered_by_this = set()
+        self.search = kw.pop("search", None)
         self.inner_joins = kw.pop("inner_joins", set())
         self.outer_joins = kw.pop("outer_joins", set())
 
@@ -318,12 +322,13 @@ class Conjunction(object):
                                              type = type,
                                              notted = notted,
                                              ors = self.covering_ors,
+                                             search = self.search,
                                              inner_joins = self.inner_joins,
                                              outer_joins = self.outer_joins)
                 self.processed_propersitions.append(new_conjunction)
                 self.printable_propersitions.append(str(new_conjunction))
 
-            elif hasattr(prop, "_table"):
+            elif prop.__class__.__name__ == "type" and hasattr(prop, "id"): #only way to find out if its a sa_class
                 table = (prop.id == 1).get_children()[0].table.name
                 if enum <> 0 and str(self.propersitions[enum -1]) == "not":
                     notted = not self.notted

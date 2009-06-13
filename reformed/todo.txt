@@ -15,15 +15,15 @@
 - create object for getting sa_objects
 - give all relevent tables locking information
 - give all tables potential to log information - Done
-- make sure namespaces for objects are unique, looking at especially backreferences need to check relations forien keyclashed 
+- make sure namespaces for objects are unique, looking at especially backreferences need to check relations forien keyclashed- Wontfix just let you define own backref
 - make sure field definition namespaces are unique - Done
-- searching including hierachical ones and nots across one to manys
+- searching including hierachical ones and nots across one to manys -Done
 - google like search and indexing.
 - a way to casch certain bit of information
 - data export, way of defining fields needed after a search
 - optimise make sa_table - Done
 - make sure indexs and unique constraints are remade, and can be added and dropped
-- entity table configuration
+- entity table configuration - Done
 - seperate out indexs
 - add ordering list implementation
 - make sure sa type class/object distinction works - Wontfix as all will be objects

@@ -37,4 +37,8 @@ def get_paths(gr, table):
 
     return path_dict
 
+def get_table_from_instance(instance, database):
+
+    return database.tables[instance.__class__.__name__]
+
 

@@ -67,71 +67,77 @@ class test_search(donkey_test.test_donkey):
 
     def test_conjunctions(self):
 
-        t = Search(self.Donkey, "people", self.session).t
+        s = Search(self.Donkey, "people", self.session)
+        t = s.t
 
-        assert str(Conjunction("not", "or", [t.people.name <> "poo", [t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10]])) ==\
+        assert str(Conjunction("not", "or", [t.people.name <> "poo", [t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10]], search = s)) ==\
                 "and <and not <(True, 'name', 'ne'), or not <(True, 'email', 'like_op'), (True, 'amount', 'gt')>>>"
 
-        assert str(Conjunction("not", [t.people.name <> "poo", [t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10]])) ==\
+        assert str(Conjunction("not", [t.people.name <> "poo", [t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10]], search = s)) ==\
                 "and <or not <(True, 'name', 'ne'), or not <(True, 'email', 'like_op'), (True, 'amount', 'gt')>>>"
 
-        assert str(Conjunction("not", [t.people.name <> "poo", "not", [t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10]])) ==\
+        assert str(Conjunction("not", [t.people.name <> "poo", "not", [t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10]], search = s)) ==\
                 "and <or not <(True, 'name', 'ne'), and <(False, 'email', 'like_op'), (False, 'amount', 'gt')>>>"
 
-        assert str(Conjunction("not", [t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10]])) ==\
+        assert str(Conjunction("not", [t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10]], search = s)) ==\
                 "and <or not <(True, 'name', 'ne'), and <(True, 'email', 'like_op'), (False, 'amount', 'gt')>>>"
 
-        assert str(Conjunction("or", [t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10]])) ==\
+        assert str(Conjunction("or", [t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10]], search = s)) ==\
                 "and <or <(False, 'name', 'ne'), or not <(False, 'email', 'like_op'), (True, 'amount', 'gt')>>>"
 
-        assert str(Conjunction("or", [t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10, t.donkey]])) ==\
+        assert str(Conjunction("or", [t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10, t.donkey]], search = s)) ==\
                 "and <or <(False, 'name', 'ne'), or not <(False, 'email', 'like_op'), (True, 'amount', 'gt'), (True, 'donkey', 'eq')>>>"
 
-        assert str(Conjunction("or", [t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10, "not", t.donkey]])) ==\
+        assert str(Conjunction("or", [t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10, "not", t.donkey]], search = s)) ==\
                 "and <or <(False, 'name', 'ne'), or not <(False, 'email', 'like_op'), (True, 'amount', 'gt'), (False, 'donkey', 'ne')>>>"
         
-        assert Conjunction("or", [t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10]]).tables_covered_by_this ==\
+        assert Conjunction("or", [t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10]], search = s).tables_covered_by_this ==\
                 set([])
 
-        assert Conjunction(t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10], type ="or").tables_covered_by_this==\
+        assert Conjunction(t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10], type ="or", search = s).tables_covered_by_this==\
                 set(['donkey_sponsership', 'email', 'people'])
 
-        assert Conjunction(t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10], type ="or").inner_joins==\
+        assert Conjunction(t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10], type ="or", search = s).inner_joins==\
                 set(['email'])
 
-        assert Conjunction(t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10], type ="or").outer_joins==\
+        assert Conjunction(t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10], type ="or", search = s).outer_joins==\
                 set(['donkey_sponsership', 'people'])
 
-        assert Conjunction(t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount < 10], type ="or").inner_joins==\
+        assert Conjunction(t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount < 10], type ="or", search = s).inner_joins==\
                 set(['email', 'donkey_sponsership'])
 
-        assert Conjunction(t.people.name == "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount < 10], type ="or").inner_joins==\
+        assert Conjunction(t.people.name == "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount < 10], type ="or", search = s).inner_joins==\
                 set(['donkey_sponsership', 'email', 'people'])
 
 
-        assert Conjunction("or", [t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10, t.donkey]]).inner_joins ==\
+        assert Conjunction("or", [t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10, t.donkey]], search = s).inner_joins ==\
                 set(["email"])
 
-        assert Conjunction("or", [t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10, t.donkey]]).outer_joins ==\
+        assert Conjunction("or", [t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10, t.donkey]], search = s).outer_joins ==\
                 set(['donkey_sponsership', 'people', 'donkey'])
 
-        assert Conjunction("or", [t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10, "not", t.donkey]]).inner_joins ==\
+        assert Conjunction("or", [t.people.name <> "poo", "not", ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10, "not", t.donkey]], search = s).inner_joins ==\
                 set(["email", "donkey"])
     
     def test_where_clause(self):
 
-        search = Search(self.Donkey, "people", self.session)
-        t = search.t
+        s = Search(self.Donkey, "people", self.session)
+        t = s.t
 
-
-        assert str(SingleQuery(search,
+        print SingleQuery(s,
                                Conjunction("or", [t.people.name <> "poo", "not",
-                                              ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10, "not", t.donkey]])
+                                              ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10, "not", t.donkey]], search = s)
+                                               ).where.compile()
+
+
+        assert str(SingleQuery(s,
+                               Conjunction("or", [t.people.name <> "poo", "not",
+                                              ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10, "not", t.donkey]], search = s)
                                                ).where.compile()) == "people.name != ? OR people.name IS NULL OR email.email LIKE ? OR donkey_sponsership.amount <= ? OR donkey_sponsership.amount IS NULL OR donkey.id IS NOT NULL"
 
-        assert str(SingleQuery(search,
+        assert str(SingleQuery(s,
                                Conjunction("not" , "or", [t.people.name <> "poo", "not",
-                                              ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10, "not", t.donkey]])
+                                              ["not", t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10, "not", t.donkey]], search = s)
                                                ).where.compile()) == "people.name = ? AND (email.email NOT LIKE ? OR email.email IS NULL) AND donkey_sponsership.amount > ? AND donkey.id IS NULL"
 
     def test_single_query(self):
