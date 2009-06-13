@@ -65,11 +65,17 @@ class Database(object):
         self.persist()
 
 
-    def add_table(self, table):
+    def add_table(self, table, ignore = False, drop = False):
 
         if table.name in self.tables.iterkeys():
-            raise custom_exceptions.DuplicateTableError("already a table named %s" 
-                                                        % table.name)
+            if ignore:
+                return
+            elif drop:
+                self.drop_table(table.name)
+            else:
+                raise custom_exceptions.DuplicateTableError("already a table named %s" 
+                                                            % table.name)
+
         for field in table.fields.itervalues():
             if not hasattr(field, "other") or field.other not in self.tables.iterkeys():
                 continue
@@ -80,7 +86,33 @@ class Database(object):
                self.tables[field.other].persisted is True:
                 raise custom_exceptions.NoTableAddError("table %s cannot be added"
                                                         % table.name)
+
         self._add_table_no_persist(table)
+
+    def drop_table(self, table):
+
+        session = self.Session()
+
+        if isinstance(table, tables.Table):
+            table_to_drop = table
+        else:
+            table_to_drop = self.tables[table]
+
+        if table_to_drop.logged:
+            logger_instance = session.query(self.get_class("__table")).filter_by(table_name = "_log_" + table_to_drop.name).one()
+            session.delete(logger_instance)
+            self.tables["_log_" + table_to_drop.name].sa_table.drop() 
+            self.tables.pop("_log_" + table_to_drop.name)
+
+        instance = session.query(self.get_class("__table")).filter_by(table_name = table_to_drop.name).one()
+        session.delete(instance)
+        table_to_drop.sa_table.drop()
+        self.tables.pop(table_to_drop.name)
+
+        session.commit()
+        self.add_relations()
+        self.update_sa(reload = True)
+        session.close()
 
     def add_entity(self, table):
         if "_core_entity" not in self.tables:

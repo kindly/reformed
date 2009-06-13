@@ -7,6 +7,7 @@ import sqlalchemy as sa
 from sqlalchemy import create_engine
 import random
 from reformed.util import get_table_from_instance
+from reformed.validate_database import validate_database
 import logging
 
 sqlhandler = logging.FileHandler("sql.log")
@@ -163,7 +164,51 @@ class test_donkey_persist_sqlite(object):
         self.jim.moo = u"zjimbobidoobo"
         self.session.add(self.jim)
         self.session.commit()
+    
+    def test_zz_drop_table(self):
 
+        self.Donkey.drop_table("moo%s" % self.p)
+
+        assert "moo%s" % self.p not in self.Donkey.tables
+        assert "_log_moo%s" % self.p not in self.Donkey.tables
+
+        alltable = self.session.query(self.Donkey.get_class("__table")).all()
+        allfield = self.session.query(self.Donkey.get_class("__field")).all()
+
+        assert "moo%s" % self.p not in [a.table_name for a in alltable]
+        assert "_log_moo%s" % self.p not in [a.table_name for a in alltable]
+        assert "moo%s" % self.p not in [a.table_name for a in allfield]
+        assert "_log_moo%s" % self.p not in [a.table_name for a in allfield]
+
+        assert validate_database(self.Donkey) == [[], [], [], [], []]
+
+    def test_add_ignore_existing_table(self):
+
+        a = len(self.Donkey.tables)
+
+        self.Donkey.add_table(tables.Table("donkey", Text("moo")), ignore = True)
+
+        b = len(self.Donkey.tables)
+
+        assert a == b
+        
+    def test_z_add_drop_existing_table(self):
+
+        self.Donkey.add_table(tables.Table("moo%s" % self.p, Text("moo%s" % self.p)), drop = True)
+
+        self.Donkey.persist()
+
+        allfield = self.session.query(self.Donkey.get_class("__field")).all()
+
+        print [(a.table_name, a.field_name) for a in allfield if a.table_name.startswith("moo")]
+        print [(a.table_name, a.field_name) for a in allfield if a.table_name.startswith("_log_moo")]
+
+        assert ("moo%s" % self.p, "moo%s" % self.p)  in [(a.table_name, a.field_name) for a in allfield]
+        assert ("_log_moo%s" % self.p, "moo%s" % self.p)  in [(a.table_name, a.field_name) for a in allfield]
+
+        assert validate_database(self.Donkey) == [[], [], [], [], []]
+
+        
     def test_z_add_entity_after_loaded(self):
 
         p = random.randrange(1,10000)
