@@ -89,7 +89,7 @@ class AjaxThing(object):
 		# FIXME does form_name want to be form_ref or something more like that.
 		
 		# FIXME I'd like this session to be repeatedly used
-		session = dbconfig.Session()
+		session = r.reformed.Session()
 		form = session.query(r.reformed.get_class('_core_form')).options(eagerload('_core_form_param')).filter_by(name=form_name).one()
 		print repr(form)
 		form_params = get_params(form._core_form_param)
@@ -167,7 +167,7 @@ class AjaxThing(object):
 
 		# FIXME I'd like this session to be repeatedly used
 
-		session = dbconfig.Session()
+		session = r.reformed.Session()
 		form = session.query(r.reformed.get_class('_core_form')).options(eagerload('_core_form_param')).filter_by(name=form_name).one()
 
 		params = get_params(form._core_form_param)
@@ -330,7 +330,7 @@ class AjaxThing(object):
 	
 		"""this does the actual delete"""
 		print 'DELETE ', record_id
-		session = dbconfig.Session()
+		session = r.reformed.Session()
 		# FIXME check exists
 		data = session.query(obj).filter_by(id=record_id).one()
 		session.delete(data)
@@ -350,7 +350,7 @@ class AjaxThing(object):
 			parent_data['id'] = field_data['record']['parent_id']
 
 		
-		session = dbconfig.Session()
+		session = r.reformed.Session()
 		if record_id:
 			# existing record
 			# FIXME check exists
@@ -407,7 +407,7 @@ def record_movement(form_object, data):
 
 	print '@@ filter\n%s' % repr(obj_filter)
 	# get the recordset
-	session = dbconfig.Session()
+	session = r.reformed.Session()
 	obj = r.reformed.get_class(form_object)
 	if obj:
 		print "OBJECT FILTER", repr(obj_filter)
