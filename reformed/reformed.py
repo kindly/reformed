@@ -39,4 +39,3 @@ reformed = Database("reformed",
             session = dbconfig.Session
             )
 
-#reformed.drop_table("paymentdds")

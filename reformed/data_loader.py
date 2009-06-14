@@ -5,6 +5,7 @@ import logging
 import re
 import csv
 import formencode as fe
+import simplejson as json
 
 logger = logging.getLogger('reformed.main')
 
@@ -95,6 +96,17 @@ def get_keys_from_list(key_item_list):
             all_rows["root"] = {}
 
     return all_rows
+
+def load_json_from_file(file, database, table):
+
+    data = open(file, mode = "rb+").read()
+    json_file = json.loads(data)
+    for record in json_file:
+        SingleRecord(database, table, record).load()
+
+
+
+    
 
 
 class FlatFile(object):

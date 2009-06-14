@@ -1,7 +1,9 @@
 from reformed.fields import *
 from reformed.tables import *
 from reformed.database import *
-from reformed.data_loader import FlatFile
+from reformed.data_loader import FlatFile, SingleRecord, load_json_from_file
+from reformed.export import json_dump_all_from_table
+from reformed.export import multi_row_export
 from nose.tools import assert_raises,raises
 import sqlalchemy as sa
 from sqlalchemy import create_engine
@@ -200,9 +202,6 @@ class test_donkey_persist_sqlite(object):
 
         allfield = self.session.query(self.Donkey.get_class("__field")).all()
 
-        print [(a.table_name, a.field_name) for a in allfield if a.table_name.startswith("moo")]
-        print [(a.table_name, a.field_name) for a in allfield if a.table_name.startswith("_log_moo")]
-
         assert ("moo%s" % self.p, "moo%s" % self.p)  in [(a.table_name, a.field_name) for a in allfield]
         assert ("_log_moo%s" % self.p, "moo%s" % self.p)  in [(a.table_name, a.field_name) for a in allfield]
 
@@ -258,6 +257,27 @@ class test_donkey_persist_sqlite(object):
         result = self.session.query(self.Donkey.get_class("people")).filter_by(name = "popph15").first()
 
         assert 1500 in [a.amount for a in result.donkey_sponsership]
+
+    def test_z_after_export_then_import(self):
+
+        session = self.Donkey.Session()
+
+        donkey_spon = self.Donkey.get_class("donkey_sponsership")
+        countpeople = session.query(self.Donkey.get_class("people")).count()
+        countspone = session.query(self.Donkey.get_class("donkey_sponsership")).filter(donkey_spon.people_id != None).count()
+
+        json_dump_all_from_table(session, "people", self.Donkey, "tests/json_dump_persistant.json")
+
+        load_json_from_file("tests/json_dump_persistant.json", self.Donkey, "people")
+
+        countpeopleafter = session.query(self.Donkey.get_class("people")).count()
+        countsponeafter = session.query(self.Donkey.get_class("donkey_sponsership")).filter(donkey_spon.people_id != None).count()
+
+        assert countpeople*2  == countpeopleafter
+        assert countspone*2  == countsponeafter
+
+
+
     
 class test_donkey_persist_mysql(test_donkey_persist_sqlite):
 
