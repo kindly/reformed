@@ -36,7 +36,7 @@
 $(init);
 
 function init(){
-	create_actions()
+	create_actions();
 	// FIXME the initialisations need to be automated.
 	// each module can add itself to a list of modules to be initialised
 //	$INFO._init();
@@ -58,10 +58,10 @@ page();
 
 	$('#main').dblclick(function(event) {
 		form_dblclick(event);
-	})
+	});
 	
 	// preload the donkey form
-	$FORM.request('donkey', 'main', 'first')
+	$FORM.request('donkey', 'main', 'first');
 }
 
 form_active = true;
@@ -126,10 +126,10 @@ function allowedKeys(key){
 	// eg arrows cut/paste tab...
 
 	if (
-	    key.code == 0 // special key 
-	    || key.code == 8 // backspace
-	    || key.code == 9 // TAB
-	    || key.ctrl || key.alt // special?
+	    key.code === 0 || // special key 
+	    key.code == 8 || // backspace
+	    key.code == 9 || // TAB
+	    key.ctrl || key.alt // special?
 	   ){
 		return true;
 	} else {
@@ -298,7 +298,7 @@ var $REFORMED = {
 	},
 	
 	_checkModule: function(module){
-		var module = module.toUpperCase();
+		module = module.toUpperCase();
 		if(window['$' + module]){
 			return true;
 		} else {
@@ -308,9 +308,9 @@ var $REFORMED = {
 	},
 		
 	_initModule: function(module){
-		var module = module.toUpperCase();
+		module = module.toUpperCase();
 	//	alert('init ' + module);
-		if(window['$' + module] &&  window['$' + module]['_init']){
+		if(window['$' + module] &&  window['$' + module]._init){
 //			alert('init ' + module);
 			window['$' + module]._init();
 		}
@@ -394,7 +394,7 @@ var $REFORMED = {
 			}
 		}
 
-		position_actions()
+		position_actions();
 		
 	},
 
@@ -434,7 +434,7 @@ var $REFORMED = {
 		$('#' + id).css(css);
 	}
 	
-}
+};
 NUM_ACTION_BUTTONS = 20;
 NUM_ACTION_ROWS = 4;
 
@@ -442,7 +442,7 @@ function create_actions(){
 
 	var html = '';
 	for (var i = 0; i < NUM_ACTION_BUTTONS; i++){
-		html += '<div id="action' + i + '" class="action"><a href="javascript:action_call(' + i + ')"><img src="icon/22x22/go-home.png" /><span class="command">moo ' + i + '</span><span class="shortcut">A</span></a></div>'
+		html += '<div id="action' + i + '" class="action"><a href="javascript:action_call(' + i + ')"><img src="icon/22x22/go-home.png" /><span class="command">moo ' + i + '</span><span class="shortcut">A</span></a></div>';
 	}
 	$('#action').html(html);
 }
@@ -451,7 +451,7 @@ function position_actions(){
 	var action_m_width = $('#action').width();
 	var action_m_height = $('#action').height();
 
-	var cols = Math.ceil(NUM_ACTION_BUTTONS / NUM_ACTION_ROWS)
+	var cols = Math.ceil(NUM_ACTION_BUTTONS / NUM_ACTION_ROWS);
 	var action_width = parseInt(action_m_width/cols, 10);
 	var action_height = parseInt(action_m_height/NUM_ACTION_ROWS, 10);
 
@@ -466,10 +466,9 @@ function position_actions(){
 		$REFORMED.layout_set('action' + i + '>a>.command', 22, 0, action_a_height, action_a_width - 22 * 2);
 		$REFORMED.layout_set('action' + i + '>a', 0, 0, action_a_height, action_a_width);
 	}
-	action_change()
+	action_change();
 
 }
-
 
 function action_set(action_id, action_info){
 	var command = action_info[0];
@@ -482,6 +481,7 @@ function action_set(action_id, action_info){
 	$('#action' + action_id + '>a').attr('accesskey', shortcut);
 	$('#action' + action_id + '>a').attr('class', type);
 }
+
 function action_hide(action_id){
 	$('#action' + action_id + '').addClass('action_hidden');
 	$('#action' + action_id + '>a').attr('accesskey', '');
@@ -511,6 +511,7 @@ function action_change(){
 		action_hide(i);
 	}
 }
+
 function action_call(action_id){
 	// this function fires the event for action button clicks
 	// we get the base object, function to call and the args from the 

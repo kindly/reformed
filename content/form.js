@@ -73,32 +73,32 @@ $FORM = {
 		var record_data = $INFO.getState(form_root, 'records');
 	
 		var out = {};
-		out['form'] = form_id;
-		out['data'] = {};
+		out.form = form_id;
+		out.data = {};
 		var record = {};
 		// provide extra data
 		if (record_data){
-			if (row == null){
+			if (row === null){
 				// single form
-				record['id']=record_data[0];
+				record.id=record_data[0];
 			} else {
-				record['id']=record_data[row];
+				record.id=record_data[row];
 			}
 		}
 		if (!$INFO.getState(form_root, 'is_top_level')){
-			record['parent_field'] = $INFO.getState(form_root, 'parent_field');
-			record['parent_id'] = $INFO.getState(form_root, 'link_id');	
+			record.parent_field = $INFO.getState(form_root, 'parent_field');
+			record.parent_id = $INFO.getState(form_root, 'link_id');
 		}
-		out['record'] = record;
+		out.record = record;
 		// get the data from the form
 		var form = $INFO.getForm(form_id);
 		var fields = form.fields;
 
 		for (var field in fields){
 			var id = $INFO.getId(root + field);
-			var type = fields[field].type
+			var type = fields[field].type;
 			if ($FORM_CONTROL.exists(type)){
-				out['data'][field] = $FORM_CONTROL.get(id, type);
+				out.data[field] = $FORM_CONTROL.get(id, type);
 			}
 		}
 		return out;
@@ -117,37 +117,40 @@ $FORM = {
 			// we don't have this form so bale
 			return;
 		}
-		
+		var my_root;
 		if (root.substring(root.length - 1) == '#'){
-			var my_root = root;
+			my_root = root;
 		} else {
-			var my_root = root + '#';
+			my_root = root + '#';
 		}
 
 		var has_records = $INFO.getState(my_root, 'has_records');
 		if (has_records){
+			var records;
+			var rowcount;
 			if ($INFO.getState(my_root, 'is_top_level')){
 				if ($INFO.getState(my_root, 'form_type') == 'normal'){
-					var records = $INFO.getRecords(form_id, data_id);
-					var rowcount = $INFO.getRowcount(form_id, data_id);
+					records = $INFO.getRecords(form_id, data_id);
+					rowcount = $INFO.getRowcount(form_id, data_id);
 				//	var record_data_id  = data_id
 				} else {
-					var records = $INFO.getRecords(form_id, null);
-					var rowcount = $INFO.getRowcount(form_id, null);
+					records = $INFO.getRecords(form_id, null);
+					rowcount = $INFO.getRowcount(form_id, null);
 					
 				}
 			} else {
-				var records = $INFO.getRecords(form_id, link_id);
-				var rowcount = $INFO.getRowcount(form_id, link_id);
+				records = $INFO.getRecords(form_id, link_id);
+				rowcount = $INFO.getRowcount(form_id, link_id);
 			}
 			$INFO.setState(my_root, 'rowcount', rowcount);
 		}
 		
 		//alert($.toJSON(records));
 		var form_type = $INFO.getState(my_root, 'form_type');
+		var count;
 		switch (form_type){
 			case 'grid':
-				var count = this._subform_num_rows - 1;
+				count = this._subform_num_rows - 1;
 				// if it's top level we need to
 				// correct the root to remove the #
 				if (//$INFO.getState(my_root, 'is_top_level') ||
@@ -156,12 +159,12 @@ $FORM = {
 				}
 				break;
 			case 'continuous':
-				var count = this._subform_num_rows - 1;
+				count = this._subform_num_rows - 1;
 				break;
 			default:
-				var count = 0;
+				count = 0;
 		}
-		
+		var d;
 		if (has_records){
 			if (link_id && parent_field){
 				$INFO.setState(my_root, 'link_id', link_id);
@@ -170,9 +173,9 @@ $FORM = {
 				$INFO.setState(my_root, 'link_id', null);
 				$INFO.setState(my_root, 'parent_field', null);
 			}
-			var d = $INFO.getData(form_id, data_id);
+			d = $INFO.getData(form_id, data_id);
 			if (d){
-				$INFO.setState(my_root, 'recordset_id', d['__recordset_id']);
+				$INFO.setState(my_root, 'recordset_id', d.__recordset_id);
 			} else {
 				$INFO.setState(my_root, 'recordset_id', null);
 			}
@@ -183,32 +186,33 @@ $FORM = {
 			grid_record_offset = 0;
 		}
 	//	alert(grid_record_offset);
-		var records_data = []
+		var records_data = [];
 		//FIXME want to go through form setting data for each field
 		// for continuous forms need to regenerate them or hide unused ones 
 		// (generate for now)
 		for (var i = 0;i<=count;i++){
-		
+			var id;
+			var my_id;
 			if (records && records.length>=i){
-				var d = $INFO.getData(form_id, records[i + grid_record_offset]);
+				d = $INFO.getData(form_id, records[i + grid_record_offset]);
 			} else {
 				d = null;
 			}
 			// process the id
 			if (count){
-				var id = $INFO.getId(root + "(" + i + ")#*id");
+				id = $INFO.getId(root + "(" + i + ")#*id");
 			} else {
-				var id = $INFO.getId(my_root + "*id");			
+				id = $INFO.getId(my_root + "*id");
 			}
 			if (d){
-				var my_id = d['__id']
+				my_id = d.__id;
 			} else {
-				var my_id = 0
+				my_id = 0;
 			}		
 			// store it
 			records_data[i] = my_id;
 			// show it
-			$('#' + id).val(my_id)
+			$('#' + id).val(my_id);
 
 			// do the nav buttons
 			
@@ -216,15 +220,15 @@ $FORM = {
 				var my_recordset_id = $INFO.getState(my_root, 'recordset_id');
 				var my_root_id = '#' + $INFO.getId(my_root);
 
-				if (my_recordset_id == 0){
+				if (my_recordset_id === 0){
 					$(my_root_id + '__first').attr("disabled","disabled");
 					$(my_root_id + '__prev').attr("disabled","disabled");
 				} else {
-					$(my_root_id + '__first').removeAttr("disabled");data_id
+					$(my_root_id + '__first').removeAttr("disabled");
 					
 					$(my_root_id + '__prev').removeAttr("disabled");
 				}
-				if (my_recordset_id < rowcount - 1 || my_recordset_id == null){
+				if (my_recordset_id < rowcount - 1 || my_recordset_id === null){
 					$(my_root_id + '__next').removeAttr("disabled");
 					$(my_root_id + '__last').removeAttr("disabled");
 				} else {
@@ -233,38 +237,40 @@ $FORM = {
 				}
 
 			}
-			for (var form_item in f.fields){
 
+			for (var form_item in f.fields){
+				var value;
+				var full_id;
 				id = f.fields[form_item].name;
 
 				if (d && d[id]){
-					var value = d[id];
+					value = d[id];
 				} else {
-					var value = '';		
+					value = '';
 				}
 				if (!count){
 					if (root.substring(root.length - 1) == '#'){
-						var full_id = root + id;				
+						full_id = root + id;
 					} else {
-						var full_id = root + "#" + id;				
+						full_id = root + "#" + id;
 					}
 
 				} else {
-					var full_id = root + "(" + (i) + ")#" + id;
+					full_id = root + "(" + (i) + ")#" + id;
 				}
 
 				var coded_id = $INFO.getId(full_id);
-			
+				var my_records;
 				if (f.fields[form_item].type == "subform"){
 					// this is a subform so process it
 					var sub = f.fields[form_item].params.subform_name;
 					var records2 = $INFO.getRecords(sub, data_id);
 					if (records2 && records2.length>0){
 						// we have some data
-						var my_records = records2[0];
+						my_records = records2[0];
 					} else {
 						// we have no data
-						var my_records = null
+						my_records = null;
 					}
 					this.fill(my_records, 
 						 f.fields[form_item].params.subform_name, 
@@ -311,7 +317,7 @@ $FORM = {
 
 	request: function(form_id, location, command){
 		// add the div to hold the generated form;	
-		var root = $INFO.addId(location + '#')
+		var root = $INFO.addId(location + '#');
 		var form = '<div id="' + root + '" class="form"></div>';
 		$("#" + location).html(form);
 		if (!$INFO.existsForm(form_id)){
@@ -333,10 +339,11 @@ $FORM = {
 		// if false we'll trust what we have in the cache
 		
 		// FIXME this stamp needs to be versioned
+		var stamp;
 		if ($INFO.existsForm(form_id)){
-			var stamp = false;
+			stamp = false;
 		} else {
-			var stamp = true;
+			stamp = true;
 		}
 		var request = {form: form_id, stamp: stamp, command: command };
 		var data = {type: 'form', 
@@ -355,7 +362,7 @@ $FORM = {
 
 	_generate: function(form_id, root, form_type){
 
-		var form = this._generate_html(form_id, form_type, root)
+		var form = this._generate_html(form_id, form_type, root);
 		// place the generated form in the div
 		// FIXME we can cache the form html for future use 
 		// to make things snappier
@@ -375,15 +382,16 @@ $FORM = {
 		if (!fields){
 			return "FORM NO ENTRY";
 		}		
-		
+		var is_top_level;
+		var my_root;
 //		alert('generation root: ' + root);
 		// am I a top level form
 		if (root.substring(root.length - 1) == '#'){ 
-			var is_top_level = true;
-			var my_root = root;
+			is_top_level = true;
+			my_root = root;
 		} else {
-			var is_top_level = false;
-			var my_root = root + '#';
+			is_top_level = false;
+			my_root = root + '#';
 		}
 		// if form type not supplied use the one in the form parameters
 		if (!form_type){
@@ -394,10 +402,11 @@ $FORM = {
 				form_type = 'normal';
 			}
 		}
+		var has_records;
 		if (form_type == 'action') {
-			var has_records = false;
+			has_records = false;
 		} else {
-			var has_records = true;
+			has_records = true;
 		}		
 		// clear the state for my_root and set as form
 		$INFO.newState(my_root, 'form');
@@ -409,25 +418,28 @@ $FORM = {
 		$INFO.setState(my_root, 'form_type', form_type);
 		$INFO.setState(my_root, 'grid_record_offset', 0);
 		
+		var count;
+		var wrap_tag;
+		var show_label;
 		switch (form_type){
 			case 'grid':
-				var count = this._subform_num_rows - 1;
-				var wrap_tag = 'td';
-				var show_label = false;
+				count = this._subform_num_rows - 1;
+				wrap_tag = 'td';
+				show_label = false;
 				if (is_top_level){
 					root = root.substring(0,root.length - 1);
 			//		alert(root);
 				}
 				break;
 			case 'continuous':
-				var count = this._subform_num_rows - 1;
-				var wrap_tag = 'p';
-				var show_label = true;
+				count = this._subform_num_rows - 1;
+				wrap_tag = 'p';
+				show_label = true;
 				break;
 			default:
-				var count = 0;
-				var wrap_tag = 'p';
-				var show_label = true;
+				count = 0;
+				wrap_tag = 'p';
+				show_label = true;
 		}
 
 		var formHTML = '';
@@ -436,7 +448,7 @@ $FORM = {
 	
 		formHTML += '<div class="form_header" >';
 		formHTML += 'Form Name';
-		formHTML += '<button onclick="$FORM._info(\''
+		formHTML += '<button onclick="$FORM._info(\'';
 		formHTML += my_root + '\')">info</button>';
 		formHTML += '</div>';
 	
@@ -465,24 +477,26 @@ $FORM = {
 			formHTML += '<tbody>';
 		}
 	
+		var id;
 		for (var i = 0;i<=count;i++){
 			if (form_type == 'grid'){
-				var id = $INFO.addId(root + "(" + i + ")#");
+				id = $INFO.addId(root + "(" + i + ")#");
 				formHTML += '<tr id="' + id + '" >';
 			}
 		
+			var record_id;
 			// add the id field FIXME needs to be hidden
 			if (count){
-				var id = $INFO.addId(root + "(" + i + ")#*id");
-				var record_id = root + "(" + i +")" + "#";
+				id = $INFO.addId(root + "(" + i + ")#*id");
+				record_id = root + "(" + i +")" + "#";
 			} else {
 			
 				if (root.substring(root.length - 1) == '#'){
-					var record_id = root;
-					var id = $INFO.addId(root + "*id");
+					record_id = root;
+					id = $INFO.addId(root + "*id");
 				} else {
-					var record_id = root + '#';
-					var id = $INFO.addId(root + "#*id");
+					record_id = root + '#';
+					id = $INFO.addId(root + "#*id");
 				}
 			}
 			if (form_type == 'grid'){
@@ -499,17 +513,18 @@ $FORM = {
 				formHTML += this._wrap(temp, wrap_tag +  ' class="t_id" ');		
 			}
 		
+			var my_id;
 			for (var ordered_item in order){
 
 				var item = order[ordered_item];
 
 				if (count){
-				var my_id = root + "(" + i + ")#" + fields[item].name;
+				my_id = root + "(" + i + ")#" + fields[item].name;
 				} else {
 					if (root.substring(root.length - 1) == '#'){
-						var my_id = root + fields[item].name;
+						my_id = root + fields[item].name;
 					} else {
-						var my_id = root + "#" + fields[item].name;
+						my_id = root + "#" + fields[item].name;
 					}
 				}
 
@@ -523,14 +538,14 @@ $FORM = {
 					formHTML += this._wrap(temp, wrap_tag);
 				}
 			}
-		};
+		}
 		if (form_type == 'grid'){ 
 			if (has_records){
 				formHTML += '<tfoot>';
 				formHTML += '<tr><td>&nbsp</td><td colspan="' + order.length + '" >' + this._navigation(my_root) + '</td></tr>';
 				formHTML += '</tfoot>';	
 			}
-		formHTML += '</tbody></table>' 
+		formHTML += '</tbody></table>';
 		}
 
 		formHTML += '<input type="text" id="' + id + '" class="hidden" /> ';
@@ -553,7 +568,7 @@ $FORM = {
 				formHTML += '</span>';
 				formHTML += this._navigation(my_root);
 			} else {
-				formHTML += '&nbsp;'
+				formHTML += '&nbsp;';
 			}
 			formHTML += '</div>';
 		}
@@ -570,12 +585,12 @@ $FORM = {
 	_subform: function(item, id){
 		// we have a subform
 		// we want to get the subform
-		var id = $INFO.getReverseId(id);
-		var subForm = '<div id="' + $INFO.addId(id + '#')
+		var my_id = $INFO.getReverseId(id);
+		var subForm = '<div id="' + $INFO.addId(my_id + '#');
 		subForm += '" class="subform" >';
 		subForm += this._generate_html(item.params.subform_name,
 									  item.params.form_type, 
-									  id);
+									  my_id);
 		subForm += '</div>';
 		return subForm;
 	},
@@ -618,13 +633,13 @@ $FORM = {
 
 	buttonPress: function(item){
 
-		var m = this._parse_id(item)
+		var m = this._parse_id(item);
 		var form_id = $INFO.getState(m.root, 'form_id');
 		var control = $INFO.getForm(form_id).fields[m.control];
 		if (control.params && control.params.object && control.params.command){
 			var object = control.params.object;
 			var command = control.params.command;
-			var data = this._get_data(m.root, m.root, m.row).data
+			var data = this._get_data(m.root, m.root, m.row).data;
 			var request = {object:object, action:'action',
 						   command:command, data:data};
 			var job_data = {'form_root':m.root};
@@ -634,30 +649,30 @@ $FORM = {
 
 	_save: function(root, command){
 
-		var m = this._parse_item(root)
+		var m = this._parse_item(root);
 
 		var field_data = this._get_data(root, m.root, m.row);
 		var request = {action:'save', field_data : field_data, command:command};
 		var form_id = $INFO.getState(m.root, 'form_id');
 
-		var data = {form_id:form_id, root:root, form_root:m.root, row:m.row} 
+		var data = {form_id:form_id, root:root, form_root:m.root, row:m.row};
 
 		if (command){
 			// add extra record movement data
 			var current_id = $INFO.getState(root, 'recordset_id');
-			request['value'] = current_id;
+			request.value = current_id;
 			var link_id = $INFO.getState(m.root, 'link_id');
 			var parent_field = $INFO.getState(m.root, 'parent_field');
-			if (m.row != null){
-				request['parent_id'] = link_id;
-				request['parent_field'] = parent_field;
-				request['form_type'] = 'grid';
+			if (m.row !== null){
+				request.parent_id = link_id;
+				request.parent_field = parent_field;
+				request.form_type = 'grid';
 			} else {
-				request['parent_id'] = link_id;
-				request['parent_field'] = parent_field;
-				request['form_type'] = 'normal';
+				request.parent_id = link_id;
+				request.parent_field = parent_field;
+				request.form_type = 'normal';
 			}
-			data['type'] = 'data';
+			data.type = 'data';
 			
 		}
 
@@ -669,12 +684,13 @@ $FORM = {
 
 		var m = this._parse_item(root);
 	
+		var my_form_type;
 		var my_row = m.row;
-		if (m.grid == false){ 
+		if (m.grid === false){
 			my_row = 0;
-			var my_form_type = 'normal';
+			my_form_type = 'normal';
 		} else {
-			var my_form_type = 'grid';
+			my_form_type = 'grid';
 		}
 
 		var records = $INFO.getState(m.root, 'records');
@@ -685,14 +701,14 @@ $FORM = {
 		var link_id = $INFO.getState(m.root, 'link_id');
 		var parent_field = $INFO.getState(m.root, 'parent_field');
 	
-		if (m.row != null){
-			request['parent_id'] = link_id;
-			request['parent_field'] = parent_field;
-			request['form_type'] = 'grid';
+		if (m.row !== null){
+			request.parent_id = link_id;
+			request.parent_field = parent_field;
+			request.form_type = 'grid';
 		} else {
-			request['parent_id'] = link_id;
-			request['parent_field'] = parent_field;
-			request['form_type'] = 'normal';
+			request.parent_id = link_id;
+			request.parent_field = parent_field;
+			request.form_type = 'normal';
 		}
 
 		var data = {form_id: form_id,
@@ -701,7 +717,7 @@ $FORM = {
 					row: m.row, 
 					form_type: my_form_type,
 					parent_field: parent_field,
-					link_id: link_id} 
+					link_id: link_id};
 
 		$JOB.add(request, data, 'edit', true);
 	},
@@ -783,8 +799,8 @@ $FORM = {
 
 	_parse_id: function(item){
 
-		var item = $INFO.getReverseId(item.id);
-		return this._parse_item(item)
+		var item_id = $INFO.getReverseId(item.id);
+		return this._parse_item(item_id);
 	},
 
 	_parse_item: function(item){
@@ -792,20 +808,21 @@ $FORM = {
 		// or	  root(row)#control
 		var m = String(item).match(/^([^\(]*)(\((\d+)\))?#([^#]*)$/);
 		if(m){
+			var grid;
 			var root = m[1] ;
 			if (typeof(root) == "undefined"){
 				root = '';
 			}
 			var row = m[3];
-			if (typeof(row) != "undefined" && row != ''){
-				row = parseInt(row);
-				var grid = true;
+			if (typeof(row) != "undefined" && row !== ''){
+				row = parseInt(row, 10);
+				grid = true;
 			} else {
 				row = null;
-				var grid = false;
+				grid = false;
 			}
 			var control = m[4];
-			if (typeof(control) == "undefined" || control == ''){
+			if (typeof(control) == "undefined" || control === ''){
 				control = null;
 			}
 			return {root:root + '#',
@@ -824,9 +841,9 @@ $FORM = {
 
 	itemChanged: function(item){
 
-		var m = this._parse_id(item)
+		var m = this._parse_id(item);
 		if (m) {	
-			this.dirty(m.root, m.row, true)
+			this.dirty(m.root, m.row, true);
 		}
 	},
 
@@ -837,41 +854,43 @@ $FORM = {
 
 		// we don't dirty 'action' forms
 		if ($INFO.getState(root, 'form_type') != 'action'){
-			if (row == null){
+			var my_root;
+			if (row === null){
 				// single form
 				if (state){
 					// are we already dirty?
 					if($INFO.getState(root,'clean')){
 						$INFO.setState(root, 'clean', false);
-						var my_root = '#' + $INFO.getId(root);
-						$(my_root).addClass("dirty")
+						my_root = '#' + $INFO.getId(root);
+						$(my_root).addClass("dirty");
 						// buttons
 						$(my_root + '__save').removeAttr("disabled");
 					}
 				} else {
 					$INFO.setState(root, 'clean', true);
-					var my_root = '#' + $INFO.getId(root);
-					$(my_root).removeClass("dirty")
+					my_root = '#' + $INFO.getId(root);
+					$(my_root).removeClass("dirty");
 					// buttons
 					$(my_root + '__save').attr("disabled","disabled");
 				}
 			} else { 
 				// grid etc
-				var my_root = root.substring(0,root.length - 1) + '(' + row + ')#'
+				my_root = root.substring(0,root.length - 1) + '(' + row + ')#';
+				var my_root_id;
 				if (state){
 			
 					// are we already dirty?
 					if($INFO.getState(root, 'clean_rows')[row]){
 						$INFO.setStateArray(root, 'clean_rows',row, false);
-						var my_root_id = '#' + $INFO.getId(my_root);
-						$(my_root_id).addClass("dirty")
+						my_root_id = '#' + $INFO.getId(my_root);
+						$(my_root_id).addClass("dirty");
 						// buttons
 						$(my_root_id + '__save').removeAttr("disabled");
 					}
 				} else {
 					$INFO.setStateArray(root, 'clean_rows',row, true);
-					var my_root_id = '#' + $INFO.getId(my_root);
-					$(my_root_id).removeClass("dirty")
+					my_root_id = '#' + $INFO.getId(my_root);
+					$(my_root_id).removeClass("dirty");
 					// buttons
 				//	alert(my_root_id)
 					$(my_root_id + '__save').attr("disabled","disabled");
@@ -939,5 +958,5 @@ $FORM = {
 
 	} 
 
-}
+};
 
