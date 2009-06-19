@@ -48,7 +48,7 @@ class BaseSchema(object):
         self.use_parent_options= kw.pop("use_parent_options", False)
         self.args = args
         self.kw = kw
-        self.original_table = kw.pop("original_table", None)
+        self.defined_relation = kw.pop("defined_relation", None)
         self.sa_options ={}
     
     def _set_name(self, Field, name):
@@ -70,8 +70,8 @@ class BaseSchema(object):
     @property
     def table(self):
         """The table object accociated with this object"""
-        if self.original_table:
-            return self.original_table
+        if self.defined_relation:
+            return self.defined_relation.table
         if not hasattr(self,"parent"):
             raise custom_exceptions.NoFieldError("no field defined for column")
         return self.parent.table                                         

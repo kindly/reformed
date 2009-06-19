@@ -1,27 +1,25 @@
 from reformed.fields import *
 from reformed.tables import *
 from reformed.database import *
-from nose.tools import assert_raises,raises
-import sqlalchemy as sa
-from sqlalchemy import create_engine
 from donkey_test import test_donkey
-
+import reformed.resultset as resultset
+from reformed.search import Search
 
 class test_result_set_basic(test_donkey):
 
     def test_get_first_last_row(self):
 
-        results = self.Donkey.query(self.session, "donkey")
+        results = resultset.ResultSet(Search(self.Donkey, "donkey", self.session), order_by = "id")
         first = results.first()
         assert first.name == "jim"
 
-        results = self.Donkey.query(self.session, "donkey")
+        results = resultset.ResultSet(Search(self.Donkey, "donkey", self.session))
         last = results.last()
         assert last.name == "jim0"
 
     def test_get_first_last_set(self):
 
-        results = self.Donkey.query(self.session, "donkey")
+        results = resultset.ResultSet(Search(self.Donkey, "donkey", self.session))
         first_set = results.first_set()
         assert [donkey.name for donkey in first_set] == [u'jim',
                                                          u'jim1',
@@ -29,13 +27,13 @@ class test_result_set_basic(test_donkey):
                                                          u'jim3',
                                                          u'jim4']
         
-        results = self.Donkey.query(self.session, "donkey")
+        results = resultset.ResultSet(Search(self.Donkey, "donkey", self.session))
         last_set = results.last_set()
         assert [donkey.name for donkey in last_set] == [u'jim0']
 
     def test_get_next_prev_item(self):
 
-        results = self.Donkey.query(self.session, "donkey")
+        results = resultset.ResultSet(Search(self.Donkey, "donkey", self.session))
         first = results.first()
         next = results.next()
         assert next.name== u"jim1"
@@ -61,7 +59,7 @@ class test_result_set_basic(test_donkey):
 
     def test_get_next_prev_set(self):
 
-        results = self.Donkey.query(self.session, "donkey")
+        results = resultset.ResultSet(Search(self.Donkey, "donkey", self.session))
         firstset = results.first_set()
         nextset = results.next_set()
 

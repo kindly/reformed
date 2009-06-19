@@ -10,7 +10,7 @@ import logging
 
 sqlhandler = logging.FileHandler("sql.log")
 sqllogger = logging.getLogger('sqlalchemy.engine')
-sqllogger.setLevel(logging.info)
+sqllogger.setLevel(logging.debug)
 sqllogger.addHandler(sqlhandler)
 
 class test_donkey(object):
@@ -18,7 +18,7 @@ class test_donkey(object):
     @classmethod
     def setUpClass(cls):
         if not hasattr(cls, "engine"):
-            cls.engine = create_engine('sqlite:///:memory:')
+            cls.engine = create_engine('sqlite:///:memory:', echo = True)
         
 #        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
         cls.meta = sa.MetaData()
@@ -33,8 +33,6 @@ class test_donkey(object):
                                             cascade = "all, delete-orphan"),
                                   OneToMany("donkey_sponsership",
                                             "donkey_sponsership"),
-                              #    OneToMany("relation",
-                              #             "relation"),
                                   entity = True),
                             Table("email",
                                   Email("email")
@@ -67,12 +65,14 @@ class test_donkey(object):
                                   Integer("table"),
                                   Integer("table_id"),
                                   OneToOne("people","people", backref = "_entity"),
-                                  OneToOne("donkey","donkey", backref = "_entity")
+                                  OneToOne("donkey","donkey", backref = "_entity"),
+                                  OneToMany("relation",
+                                            "relation"),
                                  ),
-                             #Table("relation",
-                             #      Text("relation_type"),
-                             #      ManyToOne("people", "people")
-                             #     ),
+                             Table("relation",
+                                   Text("relation_type"),
+                                   ManyToOne("_core_entity", "_core_entity")
+                                  ),
                         metadata = cls.meta,
                         engine = cls.engine,
                         session = cls.Sess

@@ -24,21 +24,25 @@
 
 class ResultSet(object):
 
-    def __init__(self, database, session, queryset, *arg, **kw):
+    def __init__(self, search, *arg, **kw):
 
-        self.database = database
-        self.session = session
-        self.queryset = queryset
-        self.queryclass = self.database.tables[self.queryset].sa_class
-        self.order_by = kw.pop("order_by", 'id')
+        self.search = search
+        self.database = search.database
+        self.session = search.session
+        self.order_by = kw.pop("order_by", None)
         self.result_num = kw.pop("result_num", 5)
-        self.ordered = getattr(self.queryclass,self.order_by)
-        self.selection_set = self.session.query(self.queryclass).\
-                order_by(self.ordered)
-        
+        if self.order_by:
+            self.ordered = getattr(self.database.get_class(self.search.table), self.order_by)
+            self.selection_set = self.search.search().order_by(self.ordered)
+        else:
+            self.selection_set = self.search.search()
 
     def get_start_range(self, current_row):
         return current_row - current_row % self.result_num
+    
+    def all(self):
+
+        return self.selection_set.all()
 
     def first(self):        
 

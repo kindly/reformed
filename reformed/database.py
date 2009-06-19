@@ -34,6 +34,7 @@ import boot_tables
 import sessionwrapper
 import validate_database
 import logging
+import search
 import networkx as nx
 
 logger = logging.getLogger('reformed.main')
@@ -113,6 +114,15 @@ class Database(object):
         self.add_relations()
         self.update_sa(reload = True)
         session.close()
+
+    @property
+    def t(self):
+        class tables(object):
+            pass
+        tables = tables()
+        for name, table in self.tables.iteritems():
+            setattr(tables, name, table.sa_class) 
+        return tables
 
     def add_entity(self, table):
         if "_core_entity" not in self.tables:
@@ -287,9 +297,13 @@ class Database(object):
                 relations[(v.table.name,"other")] = v
         return relations
 
-    def query(self, session, queryset):
+    def result_set(self, search):
 
-        return resultset.ResultSet(self, session, queryset)
+        return resultset.ResultSet(search)
+    
+    def search(self, table_name, session, *args): 
+
+        return search.Search(self, table_name, session, *args)
 
     def logged_table(self, logged_table):
 
@@ -361,4 +375,4 @@ class Database(object):
 
 
 
-    
+

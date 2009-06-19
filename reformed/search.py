@@ -6,7 +6,7 @@ from sqlalchemy.sql import not_, and_, or_
 
 class Search(object):
 
-    def __init__(self, database, table, session):
+    def __init__(self, database, table, session, *args):
 
         table_paths = database.tables[table].paths
 
@@ -40,6 +40,10 @@ class Search(object):
 
         self.queries = []
 
+        if args:
+            self.add_query(*args)
+
+
     def sort_order(self, a, b):
         ## put relationships with entities in last then by depth. 
         ## This is to ensure most usable table is not numbered
@@ -69,8 +73,10 @@ class Search(object):
 
     def search(self, exclude_mode = None):
 
+        if len(self.queries) == 0:
+            return self.search_base
+
         first_query = self.queries[0][0]
-        print first_query.inner_joins.union(first_query.outer_joins)
 
         if len(self.queries) == 1:
             ## if query contains a onetomany make the whole query a distinct

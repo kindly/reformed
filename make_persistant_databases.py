@@ -4,13 +4,6 @@ from sqlalchemy import create_engine
 import sys
 import os
 
-class reformed_database(test_donkey):
-
-    @classmethod
-    def setUpClass(self):
-        os.system("rm reformed/reformed.sqlite")
-        self.engine = create_engine('sqlite:///reformed/reformed.sqlite',echo = True)
-        super(reformed_database, self).setUpClass()
 
 class sqlite_database(test_donkey):
 
@@ -40,7 +33,6 @@ class postgres_database(test_donkey):
 
 if __name__== "__main__":
 
-    reformed_database.setUpClass()
     sqlite_database.setUpClass()
     mysql_database.setUpClass()
     postgres_database.setUpClass()

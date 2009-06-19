@@ -268,13 +268,13 @@ class test_database_primary_key(object):
     def test_foreign_key_constraints(self):
 
         assert self.Donkey.tables["email"].\
-                foreign_key_constraints["people"] in\
+                foreign_key_constraints[("people", "Email")] in\
                ([["name" ,"name2"],["people.name" ,"people.name2"]],
                 [["name2" ,"name"],["people.name2" ,"people.name"]])
 
         
         assert self.Donkey.tables["address"].\
-                foreign_key_constraints["people"] in\
+                foreign_key_constraints[("people", "address")] in\
                ([["name" ,"name2"],["people.name" ,"people.name2"]],
                 [["name2" ,"name"],["people.name2" ,"people.name"]])
 

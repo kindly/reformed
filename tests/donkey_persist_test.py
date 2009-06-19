@@ -182,7 +182,10 @@ class test_donkey_persist_sqlite(object):
         assert "moo%s" % self.p not in [a.table_name for a in allfield]
         assert "_log_moo%s" % self.p not in [a.table_name for a in allfield]
 
-        assert validate_database(self.Donkey) == [[], [], [], [], []]
+        assert validate_database(self.Donkey)[0] == []
+        assert validate_database(self.Donkey)[1] == []
+        assert validate_database(self.Donkey)[2] == []
+        assert validate_database(self.Donkey)[4] == []
 
     def test_add_ignore_existing_table(self):
 
@@ -205,7 +208,11 @@ class test_donkey_persist_sqlite(object):
         assert ("moo%s" % self.p, "moo%s" % self.p)  in [(a.table_name, a.field_name) for a in allfield]
         assert ("_log_moo%s" % self.p, "moo%s" % self.p)  in [(a.table_name, a.field_name) for a in allfield]
 
-        assert validate_database(self.Donkey) == [[], [], [], [], []]
+        print validate_database(self.Donkey)
+        assert validate_database(self.Donkey)[0] == []
+        assert validate_database(self.Donkey)[1] == []
+        assert validate_database(self.Donkey)[2] == []
+        assert validate_database(self.Donkey)[4] == []
 
         
     def test_z_add_entity_after_loaded(self):

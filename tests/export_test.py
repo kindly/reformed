@@ -11,12 +11,9 @@ class test_export_database(test_donkey):
 
         payment = self.Donkey.get_instance("__table")
         singleobj = SingleObject(payment, self.Donkey)
-        print singleobj.paths
+        print singleobj.next_keys
 
-        assert singleobj.next_keys == {('field',): [('field', 'field_params'), ('field', '__log___field')],
-                                       'root': [('table_params',), ('field',), ('__log___table',)],
-                                       ('field', 'field_params'): [('field', 'field_params', '__log___field_params')],
-                                       ('table_params',): [('table_params', '__log___table_params')]}
+        assert singleobj.next_keys == {('field', 'field_params', '__log___field_params'): [], ('table_params',): [('table_params', '__log___table_params')], ('field', '__log___field'): [], ('table_params', '__log___table_params'): [], ('field', 'field_params'): [('field', 'field_params', '__log___field_params')], ('field',): [('field', 'field_params'), ('field', '__log___field')], 'root': [('table_params',), ('field',), ('__log___table',)], ('__log___table',): []}
 
     def test_single_object(self):
 

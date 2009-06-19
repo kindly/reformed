@@ -295,18 +295,18 @@ class Table(object):
                         columns[n] = Column(v.type,
                                             name=n,
                                             mandatory = rel.many_side_mandatory,
-                                            original_table= table,
+                                            defined_relation= rel,
                                             original_column= n)
                 else:
                     if table+"_id" not in columns:
                         columns[table+'_id'] = Column(sa.Integer,
                                                        name = table+'_id',
-                                                       original_table= table,
+                                                       defined_relation= rel,
                                                        original_column= "id")
                     else:
                         columns[table+'_id2'] = Column(sa.Integer,
                                                        name = table+'_id2',
-                                                       original_table= table,
+                                                       defined_relation= rel,
                                                        original_column= "id")
         return columns
 
@@ -329,13 +329,14 @@ class Table(object):
             other_table_columns=[]
             this_table_columns=[]
             for n, v in self.foriegn_key_columns.iteritems():
-                if v.original_table == table:
+                if v.defined_relation == rel:
                     other_table_columns.append("%s.%s"%\
                                                (table,v.original_column))
                     this_table_columns.append(n)
             if other_table_columns:
-                foreign_key_constraints[table] = [this_table_columns,
-                                                  other_table_columns]
+                foreign_key_constraints[(table, rel.name)] = [this_table_columns,
+                                                    other_table_columns]
+                logger.info(foreign_key_constraints)
         return foreign_key_constraints
 
     def make_sa_table(self):
@@ -395,7 +396,8 @@ class Table(object):
             properties ={}
             for relation in self.relations.itervalues():
                 sa_options = relation.sa_options
-                other_table = self.database.tables[relation.other].sa_table
+                other_rtable = self.database.tables[relation.other]
+                other_table = other_rtable.sa_table
                 other_class = self.database.tables[relation.other].sa_class
                 order_by_statement = self._make_sa_order_by_list(relation, other_table)
                 if order_by_statement:
@@ -403,6 +405,25 @@ class Table(object):
                 if "backref" not in sa_options:
                     sa_options["backref"] = "_%s"% self.name
 
+                joined_columns = []
+
+                for name, column in self.foriegn_key_columns.iteritems():
+                    if relation == column.defined_relation:
+                        joined_columns.append([name, column.original_column])
+                if not joined_columns:
+                    joined_columns.extend([[a,a] for a in self.primary_key_list])
+                if not joined_columns:
+                    for name, column in other_rtable.foriegn_key_columns.iteritems():
+                        if relation == column.defined_relation:
+                            joined_columns.append([column.original_column, name])
+
+                join_conditions = [] 
+                for col1, col2 in joined_columns:
+                    join_conditions.append(getattr(self.sa_table.c, col1) ==\
+                                           getattr(other_table.c, col2))
+
+                sa_options["primaryjoin"] = sa.sql.and_(*join_conditions)
+                
                 properties[relation.name] = sa.orm.relation(other_class,
                                                         **sa_options)
             self.mapper = mapper(self.sa_class, self.sa_table, properties = properties)
