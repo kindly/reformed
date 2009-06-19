@@ -18,7 +18,7 @@ def delete():
 def dump():
 
     session = reformed.Session()
-    json_dump_all_from_table(session, "_core_form", reformed, "form_dump.json")
+    json_dump_all_from_table(session, "_core_form", reformed, "form_dump.json", style='clear')
     session.close()
 
 def run():

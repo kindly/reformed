@@ -10,15 +10,18 @@ def multi_row_export(obj_list, database, log = False, id = False, modified = Fal
 
     return list
 
-def json_dump_all_from_table(session, table, database, file):
+def json_dump_all_from_table(session, table, database, file, style=None):
 
     dumpfile = open(file, mode= "w+")
 
     all_rows = session.query(database.get_class(table)).all()
     export = multi_row_export(all_rows, database)
-
-    dumpfile.write(json.dumps(export))
-
+    if style == 'compact':
+        dumpfile.write(json.dumps(export, separators=(',', ':')))
+    elif style == 'clear':
+        dumpfile.write(json.dumps(export, sort_keys=True, indent=4))
+    else:
+        dumpfile.write(json.dumps(export))
     dumpfile.close()
 
     

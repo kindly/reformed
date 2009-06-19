@@ -151,7 +151,7 @@ $FORM_CONTROL = {
 		submit: function(item, id, show_label){
 			// button
 			var x = '<button id="' + id + '" type="button" ';
-			x += 'onclick="$FORM.buttonPress(this)" >'
+			x += 'onclick="$FORM.buttonPress(this)" >';
 			x += item.title + '</button>';			
 			return x;
 		},
@@ -163,18 +163,19 @@ $FORM_CONTROL = {
 			x += '" onchange="$FORM.itemChanged(this)" >';
 			var type = item.params.type;
 			var items = item.params.values.split('|');
+			var i;
 			switch (type){
 				case 'list':
-					for (var i=0;i<items.length;i++){
+					for (i=0;i<items.length;i++){
 						x += '<option value="' +  items[i] + '">';
 						x += items[i] + '</option>';
-					};
+					}
 					break;
 				default:
-					for (var i=0;i<items.length;i++){
+					for (i=0;i<items.length;i++){
 						x += '<option value="' + i + '">';
 						x += items[i] + '</option>';
-					};
+					}
 					break;
 			}
 			x += '</select>';
@@ -197,7 +198,7 @@ $FORM_CONTROL = {
 	
 	_checkbox_set: function(id, value){
 		// sets value of checkbox
-		$("#" + id).attr("checked", value == true ? "checked" : "");
+		$("#" + id).attr("checked", value === true ? "checked" : "");
 	},
 	
 	_checkbox_get: function(id){
@@ -242,7 +243,7 @@ $FORM_CONTROL = {
 		}
 	}
 
-}
+};
 
 
 

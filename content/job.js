@@ -103,7 +103,7 @@ window.$JOB = {
 	_job_functions: {}, // where the job processing instructions live
 	
 	_timer_on: function (){
-	
+		// jslint does not like this line but we need it
 		this._timeout = setTimeout("$JOB._process()", this._process_wait_time);
 	},
 
@@ -130,8 +130,6 @@ window.$JOB = {
 			var job_number = this._queue[0].job_number;
 			// is it ready to complete
 			while (this._queue[0] && this._data[this._queue[0].job_number]){
-				
-				var job_number = this._queue[0].job_number;		
 				var job = this._queue.shift();
 				for (var i=0;i<this._data[job_number].length;i++){
 					var packet = this._data[job_number][i];
@@ -175,8 +173,6 @@ window.$JOB = {
 			},
 					  		
 		 'error': function(packet, job){
-	//	 alert($.toJSON(job));
-	  		//	alert(packet.data['@main'] + job.form_root);
 	  			var error_id = '#' + $INFO.getId(job.form_root) + '__error';
 	  			$(error_id).html(packet.data['@main']);
 			},
@@ -194,5 +190,5 @@ window.$JOB = {
 		  }, "json");
 	}
 
-}
+};
 
