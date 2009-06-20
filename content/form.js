@@ -70,31 +70,30 @@ $FORM = {
 		msg('_get_data');
 		// FIXME needs error trapping
 		var form_info = this._get_form_info(form_root);
-		var form_id = form_info.info.name;
 		var record_data = form_info.info.records;
 
 		var out = {};
-		out.form = form_id;
+		out.form = form_info.info.name;
 		out.data = {};
-		var record = {};
+		out.record = {};
 		// provide extra data
 		if (record_data){
 			if (row === null){
 				// single form
-				record.id=record_data[0];
+				out.record.id=record_data[0];
 			} else {
-				record.id=record_data[row];
+				out.record.id=record_data[row];
 			}
 		}
-		if (!form_info.info.top_level){
-			record.parent_field = form_info.info.parent_field;
-			record.parent_id = form_info.info.link_id;
-		}
-		out.record = record;
-		// get the data from the form
-		var form = this._get_form_info(form_root);
-		var fields = form.layout.fields;
 
+		// linking fields for subforms
+		if (!form_info.info.top_level){
+			out.record.parent_field = form_info.info.parent_field;
+			out.record.parent_id = form_info.info.link_id;
+		}
+
+		// get the data from the form
+		var fields = form_info.layout.fields;
 		for (var field in fields){
 			var id = $INFO.getId(root + field);
 			var type = fields[field].type;
@@ -676,7 +675,7 @@ $FORM = {
 	_save: function(root, command){
 		msg('_save');
 		var m = this._parse_item(root);
-
+msg('## root: ' + root + ', m.root: ' + m.root);
 		var field_data = this._get_data(root, m.root, m.row);
 		var request = {action:'save', field_data : field_data, command:command};
 		var form_info = this._get_form_info(m.root);
