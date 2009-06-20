@@ -201,7 +201,7 @@ var $REFORMED = {
 	LOGO_HEIGHT : 100,
 	ACTION_HEIGHT : 100,
 	INFO_HEIGHT : 30,
-	STATUS_HEIGHT : 40,
+	STATUS_HEIGHT : 80,
 	MIN_APP_WIDTH : 800,
 	MAX_APP_WIDTH : 1000,
 	ACTION_PAD : 2,
@@ -520,3 +520,9 @@ function action_call(action_id){
 	cmd_info[1].apply(cmd_info[0], cmd_info[2]);
 }
 
+
+status_message = '';
+function msg(arg){
+	status_message = arg + ' - ' + status_message;
+	$('#status').html(status_message);
+}

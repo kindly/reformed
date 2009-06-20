@@ -67,8 +67,9 @@ $FORM = {
 
 
 	_get_data: function(root, form_root, row){
+		msg('_get_data');
 		// FIXME needs error trapping
-		var form_info = this._get_form_info(form_root)
+		var form_info = this._get_form_info(form_root);
 		var form_id = form_info.info.name;
 		var record_data = form_info.info.records;
 
@@ -91,7 +92,7 @@ $FORM = {
 		}
 		out.record = record;
 		// get the data from the form
-		var form = this._get_form_info(form_root)
+		var form = this._get_form_info(form_root);
 		var fields = form.layout.fields;
 
 		for (var field in fields){
@@ -101,7 +102,7 @@ $FORM = {
 				out.data[field] = $FORM_CONTROL.get(id, type);
 			}
 		}
-		return out
+		return out;
 	},
 
 
@@ -109,6 +110,7 @@ $FORM = {
 	fill: function(data_id, form_id, root, link_id, parent_field){
 		// this fills outputs the form with the data
 		// data and form supplied by reference id
+		msg('fill');
 		var form_info;
 		form_info = this._get_form_info(root);
 
@@ -133,11 +135,9 @@ $FORM = {
 				if (form_type == 'normal'){
 					records = $INFO.getRecords(form_id, data_id);
 					rowcount = $INFO.getRowcount(form_id, data_id);
-				//	var record_data_id  = data_id
 				} else {
 					records = $INFO.getRecords(form_id, null);
 					rowcount = $INFO.getRowcount(form_id, null);
-					
 				}
 			} else {
 				records = $INFO.getRecords(form_id, link_id);
@@ -278,13 +278,11 @@ $FORM = {
 				} else {
 					$FORM_CONTROL.set(f.fields[form_item].type, coded_id, value);
 				}
-
-				if (count){
-					this.dirty(my_root, i, false);
-				} else {
-					this.dirty(my_root, null, false);
-				}		
-		
+			}
+			if (count){
+				this.dirty(my_root, i, false);
+			} else {
+				this.dirty(my_root, null, false);
 			}
 		}
 		form_info.info.records = records_data;
@@ -293,6 +291,7 @@ $FORM = {
 
 	_fill_request: function(data_id, form_id, command, link_id, 
 							parent_field, form_root){
+		msg('_fill_request');
 		var request = {data: data_id, 
 					   stamp : 12345, 
 					   form: form_id, 
@@ -314,6 +313,7 @@ $FORM = {
 
 
 	request: function(form_id, location, command){
+		msg('request');
 		// add the div to hold the generated form;	
 		var root = $INFO.addId(location + '#');
 		var form = '<div id="' + root + '" class="form"></div>';
@@ -329,7 +329,7 @@ $FORM = {
 	},
 
 	_fetch: function(form_id, location, form_type, command){
-	
+		msg('_fetch');
 		// we want to get this form
 		// and add it at the location in the page (id)
 		// we'll set the job up to do this
@@ -359,7 +359,7 @@ $FORM = {
 	},
 
 	_generate: function(form_id, root, form_type){
-
+		msg('_generate: ' + form_id);
 		// see if the form html is already generated
 		// if not then generate and store
 		var form = $INFO.getForm(form_id);
@@ -377,6 +377,7 @@ $FORM = {
 
 
 	_generate_html: function(form_id, form_type, root){
+		msg('_generate_html: ' + form_id);
 
 		// create the form and place in the div
 		var form_info = this._get_form_info(root);
@@ -576,7 +577,7 @@ $FORM = {
 	},
 
 	_get_form_info: function(root){
-
+		msg('*');
 		// add a final # if there isn't one
 		if (root.substring(root.length - 1) != '#'){
 			root += '#';
@@ -673,7 +674,7 @@ $FORM = {
 	},
 
 	_save: function(root, command){
-
+		msg('_save');
 		var m = this._parse_item(root);
 
 		var field_data = this._get_data(root, m.root, m.row);
@@ -706,7 +707,7 @@ $FORM = {
 	},
 
 	_delete: function(root){
-
+		msg('_delete');
 		var m = this._parse_item(root);
 	
 		var my_form_type;
@@ -825,6 +826,7 @@ $FORM = {
 	_parse_item: function(item){
 		// parse  root#control
 		// or	  root(row)#control
+		msg('_parse_item');
 		var m = String(item).match(/^([^\(]*)(\((\d+)\))?#([^#]*)$/);
 		if(m){
 			var grid;
@@ -860,6 +862,7 @@ $FORM = {
 
 	itemChanged: function(item){
 
+		msg('itemChanged');
 		var m = this._parse_id(item);
 		if (m) {
 			this.dirty(m.root, m.row, true);
@@ -867,7 +870,7 @@ $FORM = {
 	},
 
 	dirty: function(root, row, state){
-
+		msg('dirty');
 		// keeps track of form dirtyness
 		// use css to show user
 		// we don't dirty 'action' forms

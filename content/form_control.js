@@ -88,7 +88,11 @@ $FORM_CONTROL = {
 	set: function (type, id, value){
 		if (typeof(this['_' + type + '_set']) == "undefined"){
 			// default set method
-			$("#" + id).val([value]);
+			var item = $("#" + id);
+			msg('set');
+			item.val([value]);
+			item.attr('_value', value);
+
 		} else {
 			// use the special set method for this control
 			this['_' + type + '_set'](id, value);
@@ -106,7 +110,7 @@ $FORM_CONTROL = {
 	},
 	
 	_label: function(item, id){
-		var x = '<label id="' + id + '__label" for "' + id ;
+		var x = '<label id="' + id + '__label" for="' + id ;
 		x += '" class="label" >' + item.title + '</label>';
 		return x;
 	},
