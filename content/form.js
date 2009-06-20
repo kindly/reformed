@@ -381,73 +381,26 @@ $FORM = {
 		// create the form and place in the div
 		var form_info = this._get_form_info(root);
 		var form = form_info.layout;
-		var fields = form.fields;
-		var order = form.order;
 
-		if (!fields){
+		if (!form.fields){
 			return "FORM NO ENTRY";
-		}		
-		var is_top_level = form_info.info.top_level;
-		var my_root;
-		if (is_top_level){
-			my_root = root;
-		} else {
-			my_root = root + '#';
 		}
-
-		// if form type not supplied use the one in the form parameters
-		if (!form_type){
-			if (form.params && form.params.form_type){
-				form_type = form.params.form_type;
-			} else {
-				// default if not supplied
-				form_type = 'normal';
-			}
-		}
-		var has_records;
-		if (form_type == 'action') {
-			has_records = false;
-		} else {
-			has_records = true;
-		}		
+		var local_data = this._generate_process_vars(form_info, root, form_type);
 
 		form_info.info.clean = true;
 		form_info.info.clean_rows = [];
-		form_info.info.form_type = form_type;
+		form_info.info.form_type = local_data.form_type;
 		form_info.info.grid_record_offset = 0;
-		form_info.info.has_records = has_records;
-
-		var count;
-		var wrap_tag;
-		var show_label;
-		switch (form_type){
-			case 'grid':
-				count = this._subform_num_rows - 1;
-				wrap_tag = 'td';
-				show_label = false;
-				if (is_top_level){
-					root = root.substring(0,root.length - 1);
-				}
-				break;
-			case 'continuous':
-				count = this._subform_num_rows - 1;
-				wrap_tag = 'p';
-				show_label = true;
-				break;
-			default:
-				count = 0;
-				wrap_tag = 'p';
-				show_label = true;
-		}
+		form_info.info.has_records = local_data.has_records;
 
 		var formHTML = '';
 	
 		// FORM HEADER
 	
 		formHTML += '<div class="form_header" >';
-		formHTML += 'Form Name';
+		formHTML += form_info.info.name;
 		formHTML += '<button onclick="$FORM._info(\'';
-		formHTML += my_root + '\')">info</button>';
+		formHTML += local_data.my_root + '\')">info</button>';
 		formHTML += '</div>';
 	
 		// FORM BODY
@@ -458,120 +411,193 @@ $FORM = {
 		
 		if (form.params && form.params.form_error &&
 		form.params.form_error == 'single'){
-			error_id = $INFO.getId(root) + '__error';
+			error_id = $INFO.getId(local_data.root) + '__error';
 			formHTML += '<div id="' + error_id; 
 			formHTML += '" class="error_single">&nbsp;</div>';
 		}
 		
-		
-		if (form_type == 'grid'){
-			formHTML += '<table border="1" >';
-			formHTML += '<thead><tr><th class="th_id" >#</th>';
-			for (var ordered_item in order){
-				item = order[ordered_item];
-				formHTML += '<th>' + fields[item].title + '</th>';
-			}		
-			formHTML += '</tr></thead>';
-			formHTML += '<tbody>';
+		if (local_data.form_type == 'grid'){
+			formHTML += this._generate_grid_header(form);
 		}
 	
-		var id;
-		for (var i = 0;i<=count;i++){
-			if (form_type == 'grid'){
-				id = $INFO.addId(root + "(" + i + ")#");
-				formHTML += '<tr id="' + id + '" >';
+		for ( local_data.i = 0;local_data.i<=local_data.count;local_data.i++){
+			if (local_data.form_type == 'grid'){
+				local_data.id = $INFO.addId(local_data.root + "(" + local_data.i + ")#");
+				formHTML += '<tr id="' + local_data.id + '" >';
 			}
 		
-			var record_id;
-			// add the id field FIXME needs to be hidden
-			if (count){
-				id = $INFO.addId(root + "(" + i + ")#*id");
-				record_id = root + "(" + i +")" + "#";
+			if (local_data.count){
+				local_data.id = $INFO.addId(local_data.root + "(" + local_data.i + ")#*id");
+				local_data.record_id = local_data.root + "(" + local_data.i +")" + "#";
 			} else {
-			
-				if (root.substring(root.length - 1) == '#'){
-					record_id = root;
-					id = $INFO.addId(root + "*id");
+				if (local_data.root.substring(local_data.root.length - 1) == '#'){
+					local_data.record_id = local_data.root;
+					local_data.id = $INFO.addId(local_data.root + "*id");
 				} else {
-					record_id = root + '#';
-					id = $INFO.addId(root + "#*id");
+					local_data.record_id = local_data.root + '#';
+					local_data.id = $INFO.addId(local_data.root + "#*id");
 				}
 			}
-			if (form_type == 'grid'){
-				var temp = '<input type="text" id="' + id + '" class="hidden" />';
-				var my_root_id = $INFO.getId(root + "(" + i + ")#");
-				temp += this._button("save record", 
-									'$FORM._save(\'' + record_id + '\',\'\')',
-									'save',
-									my_root_id + '__save');
-				temp += this._button("delete record", 
-									'$FORM._delete(\'' + record_id + '\')',
-									'delete',
-									my_root_id + '__delete');	
-				formHTML += this._wrap(temp, wrap_tag +  ' class="t_id" ');		
+			if (local_data.form_type == 'grid'){
+				formHTML += this._generate_grid_row_prefix(local_data);
 			}
-		
-			var my_id;
-			for (var ordered_item in order){
-
-				var item = order[ordered_item];
-
-				if (count){
-				my_id = root + "(" + i + ")#" + fields[item].name;
-				} else {
-					if (root.substring(root.length - 1) == '#'){
-						my_id = root + fields[item].name;
-					} else {
-						my_id = root + "#" + fields[item].name;
-					}
-				}
-
-				my_id = $INFO.addId(my_id);			
-				if (fields[item].type == 'subform'){
-					// get HTML for subform
-					formHTML += this._subform(fields[item], my_id, form_info);
-				} else {
-					// add item
-					var temp = $FORM_CONTROL.html(fields[item], my_id, show_label);
-					formHTML += this._wrap(temp, wrap_tag);
-				}
+			formHTML += this._generate_fields_html(form_info, local_data);
+			if (local_data.form_type == 'grid'){
+				formHTML += '</tr>';
 			}
 		}
-		if (form_type == 'grid'){ 
-			if (has_records){
-				formHTML += '<tfoot>';
-				formHTML += '<tr><td>&nbsp</td><td colspan="' + order.length + '" >' + this._navigation(my_root) + '</td></tr>';
-				formHTML += '</tfoot>';	
-			}
-		formHTML += '</tbody></table>';
+
+		if (local_data.form_type == 'grid'){
+			formHTML += this._generate_grid_footer(local_data, form);
 		}
-		if (form_type=='normal'){
-			formHTML += '<input type="text" id="' + id + '" class="hidden" /> ';
+		if (local_data.form_type=='normal'){
+			formHTML += '<input type="text" id="' + local_data.id + '" class="hidden" /> ';
 		}
 		formHTML += '</div>';  // end of form body div
 
 		// FORM FOOTER
-		if (!is_top_level && (form_type=='normal' || form_type=='action')){
-			formHTML += '<div class="form_footer" >';
-			if (has_records){
-				formHTML += '<span class="ctl" >';
-				var my_root_id = $INFO.getId(my_root);
-				formHTML += this._button("save record", 
-										'$FORM._save(\'' + record_id + '\',\'\')',
-										'save',
-										my_root_id + '__save');
-				formHTML += this._button("delete record", 
-										'$FORM._delete(\'' + record_id + '\')',
-										'delete',
-										my_root_id + '__delete');	
-				formHTML += '</span>';
-				formHTML += this._navigation(my_root);
-			} else {
-				formHTML += '&nbsp;';
-			}
-			formHTML += '</div>';
+		if (!form_info.info.top_level && (local_data.form_type=='normal' || local_data.form_type=='action')){
+			formHTML += this._generate_footer_html(local_data);
 		}
 
+		return formHTML;
+	},
+
+	_generate_process_vars: function(form_info, root, form_type){
+		var local_data = {};
+		local_data.root = root;
+		if (form_info.info.top_level){
+			local_data.my_root = root;
+		} else {
+			local_data.my_root = root + '#';
+		}
+
+		// if form type not supplied use the one in the form parameters
+		if (!form_type){
+			if (form_info.layout.params && form_info.layout.params.form_type){
+				local_data.form_type = form_info.layout.params.form_type;
+			} else {
+				// default if not supplied
+				local_data.form_type = 'normal';
+			}
+		} else {
+			local_data.form_type = form_type;
+		}
+		if (local_data.form_type == 'action') {
+			local_data.has_records = false;
+		} else {
+			local_data.has_records = true;
+		}
+
+		switch (local_data.form_type){
+			case 'grid':
+				local_data.count = this._subform_num_rows - 1;
+				local_data.wrap_tag = 'td';
+				local_data.show_label = false;
+				if (form_info.info.top_level){
+					root = root.substring(0,root.length - 1);
+				}
+				break;
+			case 'continuous':
+				local_data.count = this._subform_num_rows - 1;
+				local_data.wrap_tag = 'p';
+				local_data.show_label = true;
+				break;
+			default:
+				local_data.count = 0;
+				local_data.wrap_tag = 'p';
+				local_data.show_label = true;
+		}
+		return local_data;
+	},
+
+	_generate_grid_row_prefix: function(local_data){
+		var temp = '<input type="text" id="' + local_data.id + '" class="hidden" />';
+		var my_root_id = $INFO.getId(local_data.root + "(" + local_data.i + ")#");
+		temp += this._button("save record",
+				'$FORM._save(\'' + local_data.record_id + '\',\'\')',
+				'save',
+				my_root_id + '__save');
+		temp += this._button("delete record",
+				'$FORM._delete(\'' + local_data.record_id + '\')',
+				'delete',
+				my_root_id + '__delete');
+		return this._wrap(temp, local_data.wrap_tag +  ' class="t_id" ');
+	},
+
+	_generate_grid_header: function(form){
+		var formHTML = '<table border="1" >';
+		formHTML += '<thead><tr><th class="th_id" >#</th>';
+		for (var ordered_item in form.order){
+			item = form.order[ordered_item];
+			formHTML += '<th>' + form.fields[item].title + '</th>';
+		}
+		formHTML += '</tr></thead>';
+		formHTML += '<tbody>';
+		return formHTML;
+	},
+
+	_generate_grid_footer: function(local_data, form){
+		var formHTML = '';
+		if (local_data.has_records){
+			formHTML += '<tfoot>';
+			formHTML += '<tr><td>&nbsp</td><td colspan="' + form.order.length + '" >' + this._navigation(local_data.my_root) + '</td></tr>';
+			formHTML += '</tfoot>';
+		}
+		formHTML += '</tbody></table>';
+		return formHTML;
+	},
+
+	_generate_footer_html: function(local_data){
+		var formHTML = '<div class="form_footer" >';
+		if (local_data.has_records){
+			formHTML += '<span class="ctl" >';
+			var my_root_id = $INFO.getId(local_data.my_root);
+			formHTML += this._button("save record",
+					'$FORM._save(\'' + local_data.record_id + '\',\'\')',
+					'save',
+					my_root_id + '__save');
+			formHTML += this._button("delete record",
+					'$FORM._delete(\'' + local_data.record_id + '\')',
+					'delete',
+					my_root_id + '__delete');
+			formHTML += '</span>';
+			formHTML += this._navigation(local_data.my_root);
+		} else {
+			formHTML += '&nbsp;';
+		}
+		formHTML += '</div>';
+		return formHTML;
+	},
+
+	_generate_fields_html: function(form_info, local_data){
+		var form = form_info.layout;
+		var formHTML = '';
+		var my_id;
+		for (var ordered_item in form.order){
+
+			var item = form.order[ordered_item];
+
+			if (local_data.count){
+			my_id = local_data.root + "(" + local_data.i + ")#" + form.fields[item].name;
+			} else {
+				if (local_data.root.substring(local_data.root.length - 1) == '#'){
+					my_id = local_data.root + form.fields[item].name;
+				} else {
+					my_id = local_data.root + "#" + form.fields[item].name;
+				}
+			}
+
+			my_id = $INFO.addId(my_id);
+			if (form.fields[item].type == 'subform'){
+				// get HTML for subform
+				formHTML += this._subform(form.fields[item], my_id, form_info);
+			} else {
+				// add item
+				var temp = $FORM_CONTROL.html(form.fields[item], my_id, local_data.show_label);
+				formHTML += this._wrap(temp, local_data.wrap_tag);
+			}
+		}
 		return formHTML;
 	},
 
@@ -675,7 +701,6 @@ $FORM = {
 	_save: function(root, command){
 		msg('_save');
 		var m = this._parse_item(root);
-msg('## root: ' + root + ', m.root: ' + m.root);
 		var field_data = this._get_data(root, m.root, m.row);
 		var request = {action:'save', field_data : field_data, command:command};
 		var form_info = this._get_form_info(m.root);
