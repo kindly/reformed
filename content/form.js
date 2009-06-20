@@ -68,10 +68,10 @@ $FORM = {
 
 	_get_data: function(root, form_root, row){
 		// FIXME needs error trapping
+		var form_info = this._get_form_info(form_root)
+		var form_id = form_info.info.name;
+		var record_data = form_info.info.records;
 
-		var form_id = $INFO.getState(form_root, 'form_id');
-		var record_data = $INFO.getState(form_root, 'records');
-	
 		var out = {};
 		out.form = form_id;
 		out.data = {};
@@ -85,14 +85,14 @@ $FORM = {
 				record.id=record_data[row];
 			}
 		}
-		if (!$INFO.getState(form_root, 'is_top_level')){
-			record.parent_field = $INFO.getState(form_root, 'parent_field');
-			record.parent_id = $INFO.getState(form_root, 'link_id');
+		if (!form_info.info.top_level){
+			record.parent_field = form_info.info.parent_field;
+			record.parent_id = form_info.info.link_id;
 		}
 		out.record = record;
 		// get the data from the form
-		var form = $INFO.getForm(form_id);
-		var fields = form.fields;
+		var form = this._get_form_info(form_root)
+		var fields = form.layout.fields;
 
 		for (var field in fields){
 			var id = $INFO.getId(root + field);
@@ -101,17 +101,18 @@ $FORM = {
 				out.data[field] = $FORM_CONTROL.get(id, type);
 			}
 		}
-		return out;
+		return out
 	},
 
 
 
 	fill: function(data_id, form_id, root, link_id, parent_field){
-	//	alert('fill data_id: ' + data_id);
 		// this fills outputs the form with the data
 		// data and form supplied by reference id
-		
-		var f = $INFO.getForm(form_id);
+		var form_info;
+		form_info = this._get_form_info(root);
+
+		var f = form_info.layout;
 		
 		if (!f.fields){
 			// we don't have this form so bale
@@ -123,13 +124,13 @@ $FORM = {
 		} else {
 			my_root = root + '#';
 		}
-
-		var has_records = $INFO.getState(my_root, 'has_records');
+		var form_type = form_info.info.form_type;
+		var has_records = form_info.info.has_records;
 		if (has_records){
 			var records;
 			var rowcount;
-			if ($INFO.getState(my_root, 'is_top_level')){
-				if ($INFO.getState(my_root, 'form_type') == 'normal'){
+			if (form_info.info.top_level){
+				if (form_type == 'normal'){
 					records = $INFO.getRecords(form_id, data_id);
 					rowcount = $INFO.getRowcount(form_id, data_id);
 				//	var record_data_id  = data_id
@@ -142,19 +143,16 @@ $FORM = {
 				records = $INFO.getRecords(form_id, link_id);
 				rowcount = $INFO.getRowcount(form_id, link_id);
 			}
-			$INFO.setState(my_root, 'rowcount', rowcount);
+			form_info.info.rowcount = rowcount;
 		}
 		
-		//alert($.toJSON(records));
-		var form_type = $INFO.getState(my_root, 'form_type');
 		var count;
 		switch (form_type){
 			case 'grid':
 				count = this._subform_num_rows - 1;
 				// if it's top level we need to
 				// correct the root to remove the #
-				if (//$INFO.getState(my_root, 'is_top_level') ||
-				root.substring(root.length - 1) == '#'){
+				if (root.substring(root.length - 1) == '#'){
 					root = root.substring(0, root.length - 1);
 				}
 				break;
@@ -167,25 +165,24 @@ $FORM = {
 		var d;
 		if (has_records){
 			if (link_id && parent_field){
-				$INFO.setState(my_root, 'link_id', link_id);
-				$INFO.setState(my_root, 'parent_field', parent_field);
+				form_info.info.link_id = link_id;
+				form_info.info.parent_field = parent_field;
 			} else {
-				$INFO.setState(my_root, 'link_id', null);
-				$INFO.setState(my_root, 'parent_field', null);
+				form_info.info.link_id = null;
+				form_info.info.parent_field = null;
 			}
 			d = $INFO.getData(form_id, data_id);
 			if (d){
-				$INFO.setState(my_root, 'recordset_id', d.__recordset_id);
+				form_info.info.recordset_id = d.__recordset_id;
 			} else {
-				$INFO.setState(my_root, 'recordset_id', null);
+				form_info.info.recordset_id = null;
 			}
 		}
 	
-		var grid_record_offset = $INFO.getState(my_root, 'grid_record_offset');
+		var grid_record_offset = form_info.info.grid_record_offset;
 		if (!grid_record_offset){
 			grid_record_offset = 0;
 		}
-	//	alert(grid_record_offset);
 		var records_data = [];
 		//FIXME want to go through form setting data for each field
 		// for continuous forms need to regenerate them or hide unused ones 
@@ -217,7 +214,7 @@ $FORM = {
 			// do the nav buttons
 			
 			if (!count && has_records){
-				var my_recordset_id = $INFO.getState(my_root, 'recordset_id');
+				var my_recordset_id = form_info.info.recordset_id;
 				var my_root_id = '#' + $INFO.getId(my_root);
 
 				if (my_recordset_id === 0){
@@ -251,7 +248,8 @@ $FORM = {
 				if (!count){
 					if (root.substring(root.length - 1) == '#'){
 						full_id = root + id;
-					} else {
+					} else {			// we are a subform
+
 						full_id = root + "#" + id;
 					}
 
@@ -289,12 +287,12 @@ $FORM = {
 		
 			}
 		}
-		$INFO.setState(my_root, 'records', records_data);
+		form_info.info.records = records_data;
+
 	},
 
 	_fill_request: function(data_id, form_id, command, link_id, 
 							parent_field, form_root){
-
 		var request = {data: data_id, 
 					   stamp : 12345, 
 					   form: form_id, 
@@ -303,8 +301,8 @@ $FORM = {
 					   parent_id:link_id, 
 					   parent_field:parent_field, 
 					   field:'id', 
-					   form_type:$INFO.getState(form_root + '#', 'form_type') };
-		
+					   form_type:this._get_form_info(form_root).info.form_type };
+
 		var data = {type: 'data', 
 					form_id: form_id, 
 					data_id: data_id, 
@@ -341,9 +339,9 @@ $FORM = {
 		// FIXME this stamp needs to be versioned
 		var stamp;
 		if ($INFO.existsForm(form_id)){
-			stamp = false;
-		} else {
 			stamp = true;
+		} else {
+			stamp = false;
 		}
 		var request = {form: form_id, stamp: stamp, command: command };
 		var data = {type: 'form', 
@@ -362,37 +360,41 @@ $FORM = {
 
 	_generate: function(form_id, root, form_type){
 
-		var form = this._generate_html(form_id, form_type, root);
-		// place the generated form in the div
-		// FIXME we can cache the form html for future use 
-		// to make things snappier
-		$("#" + $INFO.getId(root)).html(form);
-		//alert(form.length);
+		// see if the form html is already generated
+		// if not then generate and store
+		var form = $INFO.getForm(form_id);
+
+		// store the form info
+		$INFO.newState(root, 'form');
+		$INFO.setState(root, 'form', form);
+
+		if (!form.html){
+			form.html = this._generate_html(form_id, form_type, root);
+		}
+		$("#" + $INFO.getId(root)).html(form.html);
 	},
+
+
 
 	_generate_html: function(form_id, form_type, root){
 
 		// create the form and place in the div
-		// FIXME I think I need to provide both the form_id and the div
-		// not just one as at present
-		var form = $INFO.getForm(form_id);	
+		var form_info = this._get_form_info(root);
+		var form = form_info.layout;
 		var fields = form.fields;
 		var order = form.order;
 
 		if (!fields){
 			return "FORM NO ENTRY";
 		}		
-		var is_top_level;
+		var is_top_level = form_info.info.top_level;
 		var my_root;
-//		alert('generation root: ' + root);
-		// am I a top level form
-		if (root.substring(root.length - 1) == '#'){ 
-			is_top_level = true;
+		if (is_top_level){
 			my_root = root;
 		} else {
-			is_top_level = false;
 			my_root = root + '#';
 		}
+
 		// if form type not supplied use the one in the form parameters
 		if (!form_type){
 			if (form.params && form.params.form_type){
@@ -408,16 +410,13 @@ $FORM = {
 		} else {
 			has_records = true;
 		}		
-		// clear the state for my_root and set as form
-		$INFO.newState(my_root, 'form');
-		$INFO.setState(my_root, 'clean', true) ;
-		$INFO.setState(my_root, 'clean_rows', []); 
-		$INFO.setState(my_root, 'form_id', form_id);
-		$INFO.setState(my_root, 'is_top_level', is_top_level);
-		$INFO.setState(my_root, 'has_records', has_records);
-		$INFO.setState(my_root, 'form_type', form_type);
-		$INFO.setState(my_root, 'grid_record_offset', 0);
-		
+
+		form_info.info.clean = true;
+		form_info.info.clean_rows = [];
+		form_info.info.form_type = form_type;
+		form_info.info.grid_record_offset = 0;
+		form_info.info.has_records = has_records;
+
 		var count;
 		var wrap_tag;
 		var show_label;
@@ -428,7 +427,6 @@ $FORM = {
 				show_label = false;
 				if (is_top_level){
 					root = root.substring(0,root.length - 1);
-			//		alert(root);
 				}
 				break;
 			case 'continuous':
@@ -531,7 +529,7 @@ $FORM = {
 				my_id = $INFO.addId(my_id);			
 				if (fields[item].type == 'subform'){
 					// get HTML for subform
-					formHTML += this._subform(fields[item], my_id);
+					formHTML += this._subform(fields[item], my_id, form_info);
 				} else {
 					// add item
 					var temp = $FORM_CONTROL.html(fields[item], my_id, show_label);
@@ -547,8 +545,9 @@ $FORM = {
 			}
 		formHTML += '</tbody></table>';
 		}
-
-		formHTML += '<input type="text" id="' + id + '" class="hidden" /> ';
+		if (form_type=='normal'){
+			formHTML += '<input type="text" id="' + id + '" class="hidden" /> ';
+		}
 		formHTML += '</div>';  // end of form body div
 
 		// FORM FOOTER
@@ -573,8 +572,26 @@ $FORM = {
 			formHTML += '</div>';
 		}
 
-		return formHTML;	},
+		return formHTML;
+	},
 
+	_get_form_info: function(root){
+
+		// add a final # if there isn't one
+		if (root.substring(root.length - 1) != '#'){
+			root += '#';
+		}
+
+		// we need to walk the nodes
+		var nodes = root.split('#');
+		var location = nodes[0];
+		var state = $INFO.getState(location + '#', 'form');
+		for (var i=1; i<nodes.length - 1; i++){
+			location += '#' + nodes[i];
+			state = state.subform[location];
+		}
+		return state;
+	},
 
 	_wrap: function(arg, tag){
 		// this wraps the item in <tag> tags
@@ -582,15 +599,23 @@ $FORM = {
 	},
 
 
-	_subform: function(item, id){
+	_subform: function(item, id, form_info){
 		// we have a subform
 		// we want to get the subform
 		var my_id = $INFO.getReverseId(id);
+
+		form_info.subform[my_id] = {};
+		form_info.subform[my_id].layout = $INFO.getForm(item.params.subform_name).layout;
+		form_info.subform[my_id].info = {};
+		form_info.subform[my_id].info.name = item.params.subform_name;
+		form_info.subform[my_id].info.toplevel = false;
+		form_info.subform[my_id].subform = {};
+
 		var subForm = '<div id="' + $INFO.addId(my_id + '#');
 		subForm += '" class="subform" >';
 		subForm += this._generate_html(item.params.subform_name,
-									  item.params.form_type, 
-									  my_id);
+					  item.params.form_type,
+					  my_id);
 		subForm += '</div>';
 		return subForm;
 	},
@@ -653,16 +678,16 @@ $FORM = {
 
 		var field_data = this._get_data(root, m.root, m.row);
 		var request = {action:'save', field_data : field_data, command:command};
-		var form_id = $INFO.getState(m.root, 'form_id');
-
+		var form_info = this._get_form_info(m.root);
+		var form_id = form_info.info.name;
 		var data = {form_id:form_id, root:root, form_root:m.root, row:m.row};
 
 		if (command){
 			// add extra record movement data
-			var current_id = $INFO.getState(root, 'recordset_id');
+			var current_id = form_info.info.recordset_id;
 			request.value = current_id;
-			var link_id = $INFO.getState(m.root, 'link_id');
-			var parent_field = $INFO.getState(m.root, 'parent_field');
+			var link_id = form_info.info.link_id;
+			var parent_field = form_info.info.parent_field;
 			if (m.row !== null){
 				request.parent_id = link_id;
 				request.parent_field = parent_field;
@@ -692,14 +717,14 @@ $FORM = {
 		} else {
 			my_form_type = 'grid';
 		}
-
-		var records = $INFO.getState(m.root, 'records');
+		var form_info = this._get_form_info(m.root);
+		var records = form_info.info.records;
 		var record_id = records[my_row];
-		var form_id = $INFO.getState(m.root, 'form_id');
+		var form_id = form_info.info.name;
 		var field_data = {record_id:record_id, form:form_id};
 		var request = {action:'delete', field_data : field_data};
-		var link_id = $INFO.getState(m.root, 'link_id');
-		var parent_field = $INFO.getState(m.root, 'parent_field');
+		var link_id = form_info.info.link_id;
+		var parent_field =form_info.info.parent_field;
 	
 		if (m.row !== null){
 			request.parent_id = link_id;
@@ -723,17 +748,19 @@ $FORM = {
 	},
 
 	_move: function(root, command){
-		var parent_field = $INFO.getState(root, 'parent_field');
-		var link_id = $INFO.getState(root, 'link_id');	
-		var current_id = $INFO.getState(root, 'recordset_id');	
-		var form_id = $INFO.getState(root, 'form_id');
+
+		var form_info = this._get_form_info(root);
+
+		var parent_field = form_info.info.parent_field;
+		var link_id = form_info.info.link_id;
+		var current_id = form_info.info.recordset_id;
+		var form_id = form_info.info.name;
 		var strip_root = root.substring(0, root.length -1);
 		
-		if ($INFO.getState(root, 'form_type') == 'normal'){
+		if (form_info.info.form_type == 'normal'){
 			// normal
 			var msg = 'Save Record?';
-			if (!$INFO.getState(root, 'clean') && confirm(msg)){
-			//	alert('moo');
+			if (!form_info.info.clean && confirm(msg)){
 				this._save(root, command);
 			} else {
 				this._fill_request(current_id, 
@@ -746,23 +773,16 @@ $FORM = {
 		} else {
 			// grid etc
 			this._grid_move(root, command);
-			// FIXME code repeat see above
-
 			this.fill(current_id, form_id, root, link_id, parent_field);
-	//		this._fill_request(current_id, 
-	//						   form_id,
-	//						   command,
-	//						   link_id,
-	//						   parent_field,
-	//						   strip_root);			
 		}
 	},
 	
 	_grid_move: function(root, command){
 
-		var offset = $INFO.getState(root, 'grid_record_offset');
+		var form_info = this._get_form_info(root);
+		var offset = form_info.info.grid_record_offset;
 		if (!offset){offset = 0;}
-		var max_offset = $INFO.getState(root, 'rowcount') - 1;
+		var max_offset = form_info.info.rowcount - 1;
 		switch (command){
 			case 'first':
 				offset = 0;
@@ -780,8 +800,7 @@ $FORM = {
 		
 		if (offset < 0){offset = 0;}
 		if (offset > max_offset){offset = max_offset;}
-		
-		$INFO.setState(root, 'grid_record_offset', offset);
+		form_info.info.grid_record_offset = offset;
 	},
 
 	_info: function(root){
@@ -828,7 +847,7 @@ $FORM = {
 			return {root:root + '#',
 					root_stripped:root,
 					row:row,
-					control:control, 
+					control:control,
 					grid:grid};
 		} else {
 			alert("something went wrong with the item parser");
@@ -842,7 +861,7 @@ $FORM = {
 	itemChanged: function(item){
 
 		var m = this._parse_id(item);
-		if (m) {	
+		if (m) {
 			this.dirty(m.root, m.row, true);
 		}
 	},
@@ -851,36 +870,37 @@ $FORM = {
 
 		// keeps track of form dirtyness
 		// use css to show user
-
 		// we don't dirty 'action' forms
-		if ($INFO.getState(root, 'form_type') != 'action'){
+		form_info = this._get_form_info(root);
+
+		if (form_info.info.form_type != 'action'){
 			var my_root;
 			if (row === null){
 				// single form
 				if (state){
 					// are we already dirty?
-					if($INFO.getState(root,'clean')){
-						$INFO.setState(root, 'clean', false);
+					if(form_info.info.clean){
+						form_info.info.clean = false;
 						my_root = '#' + $INFO.getId(root);
 						$(my_root).addClass("dirty");
 						// buttons
 						$(my_root + '__save').removeAttr("disabled");
 					}
 				} else {
-					$INFO.setState(root, 'clean', true);
+					form_info.info.clean = true;
 					my_root = '#' + $INFO.getId(root);
 					$(my_root).removeClass("dirty");
 					// buttons
 					$(my_root + '__save').attr("disabled","disabled");
 				}
-			} else { 
+			} else {
 				// grid etc
 				my_root = root.substring(0,root.length - 1) + '(' + row + ')#';
 				var my_root_id;
 				if (state){
 			
 					// are we already dirty?
-					if($INFO.getState(root, 'clean_rows')[row]){
+					if(form_info.info.clean_rows[row]){
 						$INFO.setStateArray(root, 'clean_rows',row, false);
 						my_root_id = '#' + $INFO.getId(my_root);
 						$(my_root_id).addClass("dirty");
@@ -892,7 +912,6 @@ $FORM = {
 					my_root_id = '#' + $INFO.getId(my_root);
 					$(my_root_id).removeClass("dirty");
 					// buttons
-				//	alert(my_root_id)
 					$(my_root_id + '__save').attr("disabled","disabled");
 				}
 			}
@@ -908,11 +927,11 @@ $FORM = {
 		// data job function
 		var fn = function(data){
 			
-			$FORM.fill(data.data_id, 
-					   data.form_id, 
-					   data.form_root, 
-					   data.link_id, 
-					   data.parent_field); 
+			$FORM.fill(data.data_id,
+					   data.form_id,
+					   data.form_root,
+					   data.link_id,
+					   data.parent_field);
 		};
 		$JOB.addJobFunction('data', fn);
 		
@@ -951,12 +970,10 @@ $FORM = {
 		};
 		$JOB.addPacketFunction('action', fn);
 	
-		// delete packet function	
+		// delete packet function
   		fn = function(packet, job){};
 		$JOB.addPacketFunction('delete', fn);
-
 
 	} 
 
 };
-

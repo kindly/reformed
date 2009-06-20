@@ -121,7 +121,7 @@ $INFO = {
 
 	existsForm: function (form_id){
 		if (typeof(this._form[form_id]) != 'undefined' &&
-		this._form[form_id].fields){
+		this._form[form_id].layout){
 			return true;
 		} else {
 			return false;
@@ -131,7 +131,11 @@ $INFO = {
 	_addForm: function(form_id, data){
 
 		// set the form info
-		this._form[form_id] = data
+		this._form[form_id] = {};
+		this._form[form_id].layout = data;
+		this._form[form_id].html = null;
+		this._form[form_id].subform = {};
+		this._form[form_id].info = {top_level: true, name: form_id};
 	},
 	
 	getData: function(data_obj, data_id){
@@ -149,7 +153,7 @@ $INFO = {
 
 		// do we have the object already? if not create it
 		if (typeof(this._data[data_obj]) == 'undefined'){
-			this._data[data_obj] = {}
+			this._data[data_obj] = {};
 		}
 		// set the value
 		this._data[data_obj][data_id] = data;	},
@@ -159,7 +163,7 @@ $INFO = {
 		//this needs to do some clever stuff 
 		//to ensure that we have the proper (latest) data
 		//talk to the webserver. hacked for records
-		if (data_id == 0){
+		if (data_id === 0){
 			return null;
 		}
 		if (typeof(this._records[obj]) != 'undefined' &&
@@ -173,7 +177,7 @@ $INFO = {
 		//this needs to do some clever stuff 
 		//to ensure that we have the proper (latest) data
 		//talk to the webserver. hacked for records
-		if (data_id == 0){
+		if (data_id === 0){
 			return null;
 		}
 		if (typeof(this._records[obj]) != 'undefined' &&
@@ -186,7 +190,7 @@ $INFO = {
 
 		// do we have the object already? if not create it
 		if (typeof(this._records[obj]) == 'undefined'){
-			this._records[obj] = {}
+			this._records[obj] = {};
 		}
 		// set the value
 		data = {'records':records, 'rowcount':rowcount};
@@ -206,7 +210,7 @@ $INFO = {
 	getId: function(id){
 	
 		if (this._id[id]){
-			return this._id[id]
+			return this._id[id];
 		} else {
 			alert('id ' + id + ' does not exist');
 		}
@@ -216,7 +220,7 @@ $INFO = {
 
 		// if we already have this reuse it
 		if (this._id[id]){
-			return this._id[id]
+			return this._id[id];
 		}
 		// set the value
 		this._id[id] = 'rfd_' + this._id_counter;
@@ -227,16 +231,16 @@ $INFO = {
 	getReverseId: function(id){
 
 		// get the name of the element with this id
-		var my_id = parseInt(id.substring(4))
+		var my_id = parseInt(id.substring(4), 10);
 		return this._reverse_id[my_id];
 	},
 	
 	
 	getState: function(root, item){
-	//	alert(root + ' ' + this.state[root] + ' ' + typeof(this.state[root][item]));
+
 		if (root && this._state[root] && 
 		typeof(this._state[root][item]) != 'undefined'){
-			return this._state[root][item]
+			return this._state[root][item];
 		} else {
 			alert('getState:\nnot found\n' + root + ' : ' + item);
 		}
@@ -253,17 +257,19 @@ $INFO = {
 
 	setStateArray: function(root, item, row, value){
 		//FIXME clean this up
-		if (row == null){
+		if (row === null){
 			row = 0;
 		} 
-		this._state[root][item][row] = value;
+	//	alert('state' + root)
+		var form_info = $FORM._get_form_info(root);
+		form_info.info[item][row] = value;
 	},
 	
 	newState: function(root, type){
 
 		if (root){
 			this._state[root] = {};
-			this._state[root]['type'] = type;
+			this._state[root].type = type;
 		} else {
 			alert('newState:\nroot undefined\n');
 		}
@@ -271,7 +277,7 @@ $INFO = {
 	
 	getStateDebug: function(root){
 		// returns the state for debug purposes
-		return $.toJSON(this._state[root])
+		return $.toJSON(this._state[root]);
 	},
 	
 	_init: function(){

@@ -84,6 +84,9 @@ class AjaxThing(object):
 				 'form_type': None}
 			parent.add_command('data', info)
 					
+		if 'stamp' in data and data['stamp']:
+			# we don't need to send the form back
+			return
 		form_name = data['form']
 		print "##### %s" % form_name
 		# FIXME does form_name want to be form_ref or something more like that.
