@@ -86,10 +86,10 @@ $FORM_CONTROL = {
 	},
 	
 	set: function (type, id, value){
+		msg('set');
 		if (typeof(this['_' + type + '_set']) == "undefined"){
 			// default set method
 			var item = $("#" + id);
-			msg('set');
 			item.val([value]);
 			item.attr('_value', value);
 

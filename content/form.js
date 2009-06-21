@@ -415,44 +415,19 @@ $FORM = {
 			formHTML += '<div id="' + error_id; 
 			formHTML += '" class="error_single">&nbsp;</div>';
 		}
-		
-		if (local_data.form_type == 'grid'){
-			formHTML += this._generate_grid_header(form);
-		}
-	
-		for ( local_data.i = 0;local_data.i<=local_data.count;local_data.i++){
-			if (local_data.form_type == 'grid'){
-				local_data.id = $INFO.addId(local_data.root + "(" + local_data.i + ")#");
-				formHTML += '<tr id="' + local_data.id + '" >';
-			}
-		
-			if (local_data.count){
-				local_data.id = $INFO.addId(local_data.root + "(" + local_data.i + ")#*id");
-				local_data.record_id = local_data.root + "(" + local_data.i +")" + "#";
-			} else {
-				if (local_data.root.substring(local_data.root.length - 1) == '#'){
-					local_data.record_id = local_data.root;
-					local_data.id = $INFO.addId(local_data.root + "*id");
-				} else {
-					local_data.record_id = local_data.root + '#';
-					local_data.id = $INFO.addId(local_data.root + "#*id");
-				}
-			}
-			if (local_data.form_type == 'grid'){
-				formHTML += this._generate_grid_row_prefix(local_data);
-			}
-			formHTML += this._generate_fields_html(form_info, local_data);
-			if (local_data.form_type == 'grid'){
-				formHTML += '</tr>';
-			}
+
+		switch (local_data.form_type){
+			case 'action':
+			case 'normal':
+				formHTML += this._generate_form_html_normal(form_info, local_data);
+				break;
+			case 'grid':
+				formHTML += this._generate_form_html_grid(form_info, local_data);
+				break;
+			default:
+				alert('unknown form type generation request');
 		}
 
-		if (local_data.form_type == 'grid'){
-			formHTML += this._generate_grid_footer(local_data, form);
-		}
-		if (local_data.form_type=='normal'){
-			formHTML += '<input type="text" id="' + local_data.id + '" class="hidden" /> ';
-		}
 		formHTML += '</div>';  // end of form body div
 
 		// FORM FOOTER
@@ -460,6 +435,41 @@ $FORM = {
 			formHTML += this._generate_footer_html(local_data);
 		}
 
+		return formHTML;
+	},
+
+	_generate_form_html_grid: function(form_info, local_data){
+
+		var formHTML = this._generate_grid_header(form_info.layout);
+		var id;
+		for (local_data.i = 0;local_data.i<=local_data.count;local_data.i++){
+			id = $INFO.addId(local_data.root + "(" + local_data.i + ")#");
+			local_data.id = $INFO.addId(local_data.root + "(" + local_data.i + ")#*id");
+			local_data.record_id = local_data.root + "(" + local_data.i +")" + "#";
+
+			formHTML += '<tr id="' + id + '" >';
+			formHTML += this._generate_grid_row_prefix(local_data);
+			formHTML += this._generate_fields_html(form_info, local_data);
+			formHTML += '</tr>';
+		}
+
+		formHTML += this._generate_grid_footer(local_data, form_info.layout);
+		return formHTML;
+	},
+
+
+	_generate_form_html_normal: function(form_info, local_data){
+
+		if (local_data.root.substring(local_data.root.length - 1) == '#'){
+			local_data.record_id = local_data.root;
+			local_data.id = $INFO.addId(local_data.root + "*id");
+		} else {
+			local_data.record_id = local_data.root + '#';
+			local_data.id = $INFO.addId(local_data.root + "#*id");
+		}
+
+		var formHTML = this._generate_fields_html(form_info, local_data);
+		formHTML += '<input type="text" id="' + local_data.id + '" class="hidden" /> ';
 		return formHTML;
 	},
 
@@ -579,7 +589,7 @@ $FORM = {
 			var item = form.order[ordered_item];
 
 			if (local_data.count){
-			my_id = local_data.root + "(" + local_data.i + ")#" + form.fields[item].name;
+				my_id = local_data.root + "(" + local_data.i + ")#" + form.fields[item].name;
 			} else {
 				if (local_data.root.substring(local_data.root.length - 1) == '#'){
 					my_id = local_data.root + form.fields[item].name;
