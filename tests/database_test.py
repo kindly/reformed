@@ -70,11 +70,11 @@ class test_database(object):
         d = self.Donkey
 
         assert d.tables_with_relations(self.Donkey.tables["people"])\
-                                             [("email","this")].table.name == "people"
+                                             [("email","here")].table.name == "people"
         assert d.tables_with_relations(self.Donkey.tables["email"])\
                                              [("people","other")].table.name == "people"
         assert d.tables_with_relations(self.Donkey.tables["people"])\
-                                             [("email","this")].type == "onetomany"
+                                             [("email","here")].type == "onetomany"
         assert d.tables_with_relations(self.Donkey.tables["email"])\
                                              [("people","other")].type == "onetomany"
 

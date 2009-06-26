@@ -20,7 +20,7 @@ class Search(object):
         self.table_paths_list = [] 
         
         for k,v in table_paths.iteritems():
-            self.table_paths_list.append([k, v[0], v[1]])
+            self.table_paths_list.append([k, v[0], v[1], v[2]])
 
 
         self.table_paths_list.sort(self.sort_order)
@@ -48,17 +48,18 @@ class Search(object):
         ## put relationships with entities in last then by depth. 
         ## This is to ensure most usable table is not numbered
 
-        if "_entity" in a[0]:
-            asize = len(a[0]) + JOINS_DEEP  
-        else:
-            asize = len(a[0])
+#        if "_entity" in a[0]:
+#            asize = len(a[0]) + JOINS_DEEP  
+#        else:
+#            asize = len(a[0])
+#
+#        if "_entity" in b[0]:
+#            bsize = len(b[0]) + JOINS_DEEP
+#        else:
+#            bsize = len(b[0])
+        return len(a[0]) - len(b[0]) 
 
-        if "_entity" in b[0]:
-            bsize = len(b[0]) + JOINS_DEEP
-        else:
-            bsize = len(b[0])
-
-        return asize - bsize
+#        return asize - bsize
 
         
     def add_query(self, *args, **kw):
@@ -152,29 +153,34 @@ class Search(object):
 
     def create_path_and_holder(self):
         
-        table_count = {}
-        table_count[self.table] = 1
+        #table_count = {}
+        #table_count[self.table] = 1
         self.table_path[self.table] = "root"
         setattr(self.t, self.table, self.database.tables[self.table].sa_class) 
 
         for item in self.table_paths_list:
-            key, table_name, relation = item
-            table_count.setdefault(table_name, 0) 
-            table_count[table_name] = table_count[table_name] + 1
+            key, table_name, relation, one_ways = item
+            #table_count.setdefault(table_name, 0) 
+            #table_count[table_name] = table_count[table_name] + 1
+            new_name = "_".join(one_ways + [table_name])
+            setattr(self.t, new_name, self.database.aliases[new_name])
+            self.tables[new_name] = self.database.aliases[new_name]
+            self.table_path[new_name] = [list(key), relation]
+            self.aliased_name_path[new_name] = list(key)
 
-            if table_count[table_name] == 1:
-                setattr(self.t, table_name, self.database.tables[table_name].sa_class)
-                self.tables[table_name] = self.database.tables[table_name].sa_class
-                self.table_path[table_name] = [list(key), relation]
-                self.aliased_name_path[table_name] = list(key)
-            if table_count[table_name] != 1:
-                new_name = "%s_%s" % (table_name, str(table_count[table_name]))
-                aliased_table = sa.orm.aliased(self.database.tables[table_name].sa_class)
-                self.tables[new_name] = aliased_table
-                setattr(self.t, new_name, aliased_table)
-                self.table_path[new_name] = [list(key), relation]
-                aliased_name = (aliased_table.id == 1).get_children()[0].table.name
-                self.aliased_name_path[aliased_name] = list(key)
+            #if table_count[table_name] == 1:
+            #    setattr(self.t, table_name, self.database.tables[table_name].sa_class)
+            #    self.tables[table_name] = self.database.tables[table_name].sa_class
+            #    self.table_path[table_name] = [list(key), relation]
+            #    self.aliased_name_path[table_name] = list(key)
+            #if table_count[table_name] != 1:
+            #    new_name = "%s_%s" % (table_name, str(table_count[table_name]))
+            #    aliased_table = sa.orm.aliased(self.database.tables[table_name].sa_class)
+            #    self.tables[new_name] = aliased_table
+            #    setattr(self.t, new_name, aliased_table)
+            #    self.table_path[new_name] = [list(key), relation]
+            #    aliased_name = (aliased_table.id == 1).get_children()[0].table.name
+            #    self.aliased_name_path[aliased_name] = list(key)
 
     def create_local_tables(self):
 

@@ -142,6 +142,7 @@ class Relation(BaseSchema):
         backref = kw.pop("backref", None)
         if backref:
             self.sa_options["backref"] = backref
+        self.one_way = kw.pop("one_way", None)
 
     @property
     def order_by_list(self):
@@ -165,6 +166,8 @@ class Relation(BaseSchema):
                 self.order_by = parent._order_by
             if parent._many_side_mandatory is False:
                 self.many_side_mandatory = parent._many_side_mandatory 
+            if parent._one_way:
+                self.one_way = True
 
         if self.name in parent.items.iterkeys():
             raise AttributeError("column already in field definition")
@@ -229,6 +232,7 @@ class Field(object):
         if obj._length:
             obj._length = int(obj._length)
         obj._many_side_mandatory = kw.get("many_side_mandatory", True)
+        obj._one_way = kw.get("one_way", None)
         return obj
 
     def __repr__(self):

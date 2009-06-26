@@ -265,7 +265,7 @@ class test_donkey_persist_sqlite(object):
 
         assert 1500 in [a.amount for a in result.donkey_sponsership]
 
-    def test_z_after_export_then_import(self):
+    def tfdsest_z_after_export_then_import(self):
 
         session = self.Donkey.Session()
 

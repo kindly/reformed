@@ -71,7 +71,7 @@ class test_donkey(object):
                                  ),
                              Table("relation",
                                    Text("relation_type"),
-                                   ManyToOne("_core_entity", "_core_entity")
+                                   ManyToOne("_core_entity", "_core_entity", one_way = True)
                                   ),
                         metadata = cls.meta,
                         engine = cls.engine,
@@ -202,9 +202,21 @@ class test_basic_input(test_donkey):
 
     def test_table_paths(self):
 
-        assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey")] == ["donkey", "manytoone"]
-        assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey", "donkey_pics",)] == ["donkey_pics", "onetoone"]
-        assert self.Donkey.tables["donkey"].paths[("donkey_sponsership", "_people", "email")] == ["email", "onetomany"]
+        assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey")] == ["donkey", "manytoone", []]
+        assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey", "donkey_pics",)] == ["donkey_pics", "onetoone", []]
+        assert self.Donkey.tables["donkey"].paths[("donkey_sponsership", "_people", "email")] == ["email", "onetomany", []]
+
+    def test_z_make_table_paths(self):
+
+        people = self.Donkey.tables["people"]
+        people.paths = None
+        people.make_paths()
+        print self.Donkey.aliases 
+
+        #assert self.Donkey.aliases == {} 
+        
+
+
 
 class test_after_reload(test_basic_input):
     

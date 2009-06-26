@@ -87,7 +87,7 @@ class SingleObject(object):
     def make_list(self, obj, key):
 
         list = []
-        table, join = self.paths[key]
+        table, join, one_ways = self.paths[key]
         if join in ("onetoone", "manytoone"):
             new_obj = getattr(obj, key[-1])
             if new_obj:

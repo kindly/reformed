@@ -220,6 +220,8 @@ class test_search(donkey_test.test_donkey):
 
         search.add_query(t.donkey.name.in_([u"poo", u"fine"]))
 
+        for line in search.table_paths_list:
+            print line
 
         assert len(search.search().all()) == 6
 

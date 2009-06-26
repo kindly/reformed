@@ -8,37 +8,48 @@ def swap_relations(relation_type):
         return "onetomany"
     return "onetoone"
 
-def get_next_relation(gr, node, path_dict, current_path = [], last_edge = ()):
-
+def get_next_relation(gr, node, path_dict, tables, current_path = [], last_edge = (), one_ways = []):
+    
     for edge in gr.out_edges(node, data = True):
         node1, node2, relation = edge
+        rtables = relation.table.database.tables
+        if len(tables) > 1 and rtables[node2].entity and rtables[tables[-1]].name == "_core_entity" and rtables[tables[-2]].entity:
+            continue
         if (node1, node2) != last_edge:
             new_path = current_path + [relation.name] 
             if len(new_path) > JOINS_DEEP*2:
                 continue
-            path_dict[tuple(new_path)] = [node2, relation.type]
-            get_next_relation(gr, node2, path_dict, new_path, (node1,node2))
+            if relation.one_way:
+                new_one_ways = one_ways + [node1]
+            else:
+                new_one_ways = one_ways
+            path_dict[tuple(new_path)] = [node2, relation.type, new_one_ways]
+            new_tables = tables + [node2]
+            get_next_relation(gr, node2, path_dict, new_tables, new_path, (node1,node2), new_one_ways)
         
     for edge in gr.in_edges(node, data = True):
         node1, node2, relation = edge
-        if (node1, node2) != last_edge:
+        rtables = relation.table.database.tables
+        if len(tables) > 1 and rtables[node1].entity and rtables[tables[-1]].name == "_core_entity" and rtables[tables[-2]].entity:
+            continue
+        if (node1, node2) != last_edge and not relation.one_way:
             backref = relation.sa_options.get("backref", "_%s" % node1)
             new_path = current_path + [backref] 
             if len(new_path) > JOINS_DEEP*2:
                 continue
-            path_dict[tuple(new_path)] = [node1, swap_relations(relation.type)]
-            get_next_relation(gr, node1, path_dict, new_path, (node1,node2))
+            path_dict[tuple(new_path)] = [node1, swap_relations(relation.type), one_ways]
+            new_tables = tables + [node1]
+            get_next_relation(gr, node1, path_dict, new_tables, new_path, (node1,node2), one_ways)
 
 def get_paths(gr, table):
 
     path_dict = {}
 
-    get_next_relation(gr, table, path_dict)
+    get_next_relation(gr, table, path_dict, [table])
 
     return path_dict
 
 def get_table_from_instance(instance, database):
 
     return database.tables[instance.__class__.__name__]
-
 

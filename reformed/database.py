@@ -28,6 +28,7 @@ import sqlalchemy as sa
 import custom_exceptions
 import resultset
 import tables
+from util import get_paths
 from fields import ManyToOne, OneToOne
 import fields as field_types
 import boot_tables
@@ -117,9 +118,9 @@ class Database(object):
 
     @property
     def t(self):
-        class tables(object):
+        class Tables(object):
             pass
-        tables = tables()
+        tables = Tables()
         for name, table in self.tables.iteritems():
             setattr(tables, name, table.sa_class) 
         return tables
@@ -273,6 +274,7 @@ class Database(object):
             for table in self.tables.itervalues():
                 for column in table.columns.iterkeys():
                     getattr(table.sa_class, column).impl.active_history = True
+            self.make_table_aliases()
         except (custom_exceptions.NoDatabaseError,\
                 custom_exceptions.RelationError):
             pass
@@ -291,7 +293,7 @@ class Database(object):
     def tables_with_relations(self,Table):
         relations = {}
         for n, v in Table.relations.iteritems():
-            relations[(v.other,"this")] = v
+            relations[(v.other,"here")] = v
         for v in self.relations:
             if v.other == Table.name:
                 relations[(v.table.name,"other")] = v
@@ -367,6 +369,41 @@ class Database(object):
             gr.add_edge(rel.table.name, rel.other, rel)
 
         self.graph = gr
+
+    def make_table_aliases(self, root_table = None):
+
+        if "_core_entity" in self.tables and not root_table:
+            root_table = "_core_entity"
+        aliases = {} 
+
+        if root_table:
+            unique_aliases = set()
+            paths = get_paths(self.graph, root_table)
+            unique_aliases.update([(root_table,)])
+            for key, value in paths.iteritems():
+                table, join, one_ways = value
+                unique_aliases.update([tuple(one_ways + [table])])
+            
+            for item in unique_aliases:
+                if len(item) == 1:
+                    aliases[item[0]] = self.get_class(item[0])
+                else:
+                    aliases["_".join(item)] = sa.orm.aliased(self.get_class(item[-1]))
+        else:
+            for key,value in self.tables.iteritems():
+                aliases[key] = value.sa_class
+
+        self.aliases = aliases
+
+
+
+
+                
+                
+
+                
+
+
 
 
 
