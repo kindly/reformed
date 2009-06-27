@@ -49,6 +49,63 @@ def get_paths(gr, table):
 
     return path_dict
 
+def table_path_sort_order(a,b):
+    return len(a[0]) - len(b[0]) 
+
+def create_table_path_list(path_dict):
+
+    table_paths_list = [] 
+
+    for k,v in path_dict.iteritems():
+        table_paths_list.append([k, v[0], v[1], v[2]])
+
+    table_paths_list.sort(table_path_sort_order)
+
+    return table_paths_list
+    
+
+def create_table_path(table_path_list, table):
+
+    table_path = {}
+
+    table_path[table] = "root"
+
+    for item in table_path_list:
+        key, table_name, relation, one_ways = item
+        new_name = "_".join(one_ways + [table_name])
+        table_path[new_name] = [list(key), relation]
+
+    return table_path
+
+def get_fields_from_obj(obj):
+
+    return obj._table.columns.keys()
+
+def get_row_data(obj):
+    
+    row_data = {}
+    table = obj._table.name
+    for field in get_fields_from_obj(obj):
+        if field in ("modified_by", "modified_date", "id", "_core_entity_id"):
+            continue
+        row_data["%s.%s" % (table, field)] = getattr(obj, field)
+    return row_data
+
+def create_data_dict(result):
+
+    data = {}
+    if hasattr(result, "_table"):
+        data[result.id] = get_row_data(result) 
+        return data
+
+    for row in result:
+        data[row.id] = get_row_data(row) 
+    return data
+
+
+
+
+    
 def get_table_from_instance(instance, database):
 
     return database.tables[instance.__class__.__name__]

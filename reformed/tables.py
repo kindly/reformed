@@ -382,7 +382,9 @@ class Table(object):
             return
         table = self
         class sa_class(object):
-            pass
+            @sa.orm.reconstructor
+            def __init__(self):
+                self._table = table
                 
 
         sa_class.__name__ = self.name

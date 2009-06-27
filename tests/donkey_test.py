@@ -4,7 +4,7 @@ from reformed.database import *
 from nose.tools import assert_raises,raises
 import sqlalchemy as sa
 from sqlalchemy import create_engine
-from reformed.util import get_table_from_instance
+from reformed.util import get_table_from_instance, create_data_dict
 import os
 import logging
 
@@ -214,6 +214,16 @@ class test_basic_input(test_donkey):
         print self.Donkey.aliases 
 
         #assert self.Donkey.aliases == {} 
+
+    def test_create_data_dict(self):
+
+        results = self.session.query(self.Donkey.tables["donkey"].sa_class)[:2]
+        assert create_data_dict(results) == {1: {'donkey.age': 13, 'donkey.name': u'jim'}, 2: {'donkey.age': 131, 'donkey.name': u'jim1'}}
+
+        results2 = self.session.query(self.Donkey.tables["donkey"].sa_class).first()
+        assert create_data_dict(results2) == {1: {'donkey.age': 13, 'donkey.name': u'jim'}}
+
+
         
 
 
