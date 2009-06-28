@@ -32,6 +32,7 @@ import migrate.versioning
 from migrate.versioning import schemadiff
 from sqlalchemy.sql import and_
 import datetime
+import util
 
 reformed = Database("reformed", 
             metadata = dbconfig.metadata,
@@ -39,4 +40,10 @@ reformed = Database("reformed",
             session = dbconfig.Session
             )
 
+
+session = reformed.Session()
+
+aa = session.query(reformed.t.people).all()
+
+print util.create_data_dict(aa)
 
