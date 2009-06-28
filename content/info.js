@@ -146,6 +146,21 @@ $INFO = {
 		if (typeof(this._data[data_obj]) != 'undefined' && 
 		typeof(this._data[data_obj][data_id]) != 'undefined'){
 			return this._data[data_obj][data_id];
+		} else {
+			return null;
+		}
+	},
+
+	existsData: function(data_obj, data_id){
+
+		//this needs to dome some clever stuff 
+		//to ensure that we have the proper (latest) data
+		//talk to the webserver.
+		if (typeof(this._data[data_obj]) != 'undefined' && 
+		typeof(this._data[data_obj][data_id]) != 'undefined'){
+			return true;
+		} else {
+			return false;
 		}
 	},
 
@@ -242,7 +257,8 @@ $INFO = {
 		typeof(this._state[root][item]) != 'undefined'){
 			return this._state[root][item];
 		} else {
-			alert('getState:\nnot found\n' + root + ' : ' + item);
+		//	alert('getState:\nnot found\n' + root + ' : ' + item);
+			return false;
 		}
 	},
 
@@ -260,7 +276,6 @@ $INFO = {
 		if (row === null){
 			row = 0;
 		} 
-	//	alert('state' + root)
 		var form_info = $FORM._get_form_info(root);
 		form_info.info[item][row] = value;
 	},
@@ -295,17 +310,21 @@ $INFO = {
 		
 		// data packet function
   		fn = function(packet, job){
-			var obj = packet.form;
-			var records = packet.records;
-			var data_id = packet.data_id;
-			var rowcount = packet.rowcount;
-			$INFO._addRecord(obj, data_id, records, rowcount);
+			var record;
+			var obj = packet.object;
+			var data_id;
+		//	var records = packet.records;
+		//	var data_id = packet.data_id;
+		//	var rowcount = packet.rowcount;
+		//	$INFO._addRecord(obj, data_id, records, rowcount);
 			// store the returned recordID for the initial packet
-			job.data_id = data_id;
-			for (var j = packet.data.length; j>0; j--){						
-				var obj_id = packet.data[j-1].__id;
-				$INFO._addData(obj, obj_id, packet.data[j-1]);
-			}
+		//	job.data_id = data_id;
+		//	for (var j = packet.data.length; j>0; j--){
+		//		record = packet.data[j-1];
+				for (data_id in packet.data){
+					$INFO._addData(obj,data_id, packet.data[data_id]);
+				}
+		//	}
   		};
 		$JOB.addPacketFunction('data', fn);
 	

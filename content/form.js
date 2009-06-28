@@ -70,7 +70,7 @@ $FORM = {
 		msg('_get_data');
 		// FIXME needs error trapping
 		var form_info = this._get_form_info(form_root);
-		var record_data = form_info.info.records;
+		var record_data = form_info.info.record_id;
 
 		var out = {};
 		out.form = form_info.info.name;
@@ -82,6 +82,7 @@ $FORM = {
 				// single form
 				out.record.id=record_data[0];
 			} else {
+				// FIXME multiple rows needs fixing 
 				out.record.id=record_data[row];
 			}
 		}
@@ -94,17 +95,181 @@ $FORM = {
 
 		// get the data from the form
 		var fields = form_info.layout.fields;
-		for (var field in fields){
-			var id = $INFO.getId(root + field);
-			var type = fields[field].type;
+		var i;
+		for (i=0; i<fields.length; i++){
+			var id = $INFO.getId(root + fields[i].name);
+			var type = fields[i].type;
 			if ($FORM_CONTROL.exists(type)){
-				out.data[field] = $FORM_CONTROL.get(id, type);
+				out.data[fields[i].name] = $FORM_CONTROL.get(id, type);
 			}
 		}
 		return out;
 	},
 
+	_new: function(root){
+		var form_info = this._get_form_info(root);
+		if (form_info){
+			this.show(form_info.info.name, root, 0);
+		} else {
+			alert('no form to add new to ;)');
+		}
+	},
 
+	show: function(form_id, root, data_id){
+		// check if we have the form and data
+		// if we have display it else request what we need
+		root += '#';
+		request = [];  // place to keep any requests we may need
+
+		// check if html displayed
+		if (!$INFO.existsForm(form_id)){
+			request.push(this._show_request_form(form_id));
+		}
+		// check if we have data
+		var form_object = form_id; //fixme form_info.layout.params.form_object;
+		var data = $INFO.existsData(form_object, data_id);
+		if (!data) {
+			request.push(this._show_request_data(form_object, data_id));
+		}
+
+		if (request.length > 0){
+			// we are missing the form or the data
+			// we need to request them
+			this._show_request_call(request, form_id, root, data_id);
+		} else {
+			// we have everything we need so let's just display it
+			this._show(form_id, root, data_id);
+		}
+	},
+
+	_show: function(form_id, root, data_id){
+		msg('_show');
+		// check if html displayed
+		var form_info = this._get_form_info(root);
+		var form_type;
+		if (!form_info || form_info.info.name != form_id){
+			if (form_info){
+				form_type = form_info.info.form_type;
+			}
+			// add the div to hold the generated form;
+			// FIXME I think that this is not needed and it'd be cleaner to 
+			// not have this extra div but removing it will
+			// break stuf so I think it's best left for the next
+			// round of cleanup.
+			// this is also created in the $FORM.request() fn
+			// so needs fixing there too
+			var location = root.substring(0, root.length - 1);
+			var form_root = $INFO.addId(root);
+			var form = '<div id="' + form_root + '" class="form"></div>';
+			$("#" + location).html(form);
+
+			this._generate(form_id, root, form_type);
+			form_info = this._get_form_info(root);
+		}
+		
+		// check if we have data
+		var form_object = form_id; //FIXME form_info.layout.params.form_object;
+		var data = $INFO.getData(form_object, data_id);
+		if (!data && data_id != 0) {
+			// request the data
+			alert('no data: ' + form_object + '=' + data_id);
+		} else {
+			this._fill_form_normal(root, data, form_info, data_id);
+		}
+		// fill
+
+	},
+
+	_show_request_form: function(form_id){
+		msg('_show_request_form');
+		// here we build the request to 'order' a form
+		// FIXME this stamp needs to be versioned
+		var stamp;
+		if ($INFO.existsForm(form_id)){
+			stamp = true;
+		} else {
+			stamp = false;
+		}
+		return ['form', {form: form_id, stamp: stamp}];
+	},
+
+	_show_request_data: function(obj, data_id){
+		msg('_show_request_data');
+
+		return ['data', {//data: data_id, 
+					   stamp : 12345, 
+					   form: obj, 
+					   value: data_id, 
+					   command:'next', 
+					   parent_id:null, 
+					   parent_field:null, 
+					   field:'id', 
+					   form_type:'normal' 
+			} ];
+	},
+
+	_show_request_call: function(request, form_id, root, data_id){
+		var data = {type: 'function', 
+					return_object: $FORM,
+					return_function: $FORM._show,
+					return_params: [form_id, root, data_id] };
+		$JOB.add(request, data, 'new', true);
+	},
+
+	_fill_form_normal: function(root, data, form_info, data_id){
+		var value;
+		var id;
+		var coded_id;
+		var my_records;
+		var item;
+		// process the id
+		id = $INFO.getId(root + "*id");
+		if (data){
+			value = data_id;
+		} else {
+			value = 0;
+		}		
+		// store it
+		form_info.info.record_id[0] = value;
+		// show it
+		$('#' + id).val(value);
+
+
+		for (var form_item in form_info.layout.fields){
+			item = form_info.layout.fields[form_item];
+			id = item.name;
+
+			if (data && data[id]){
+				value = data[id];
+			} else {
+				value = '';
+			}
+
+			id = root + id;
+			coded_id = $INFO.getId(id);
+			
+			if (item.type == "subform"){
+	/*			// this is a subform so process it
+				var sub = item.params.subform_name;
+				var records2 = $INFO.getRecords(sub, data_id);
+				if (records2 && records2.length>0){
+					// we have some data
+					my_records = records2[0];
+				} else {
+					// we have no data
+					my_records = null;
+				}
+				this.fill(my_records, 
+					 form_item.params.subform_name, 
+					 full_id, 
+					 data_id, 
+					 item.params.child_id); */
+			} else {
+				$FORM_CONTROL.set(item.type, coded_id, value);
+			}
+		}
+		this.dirty(root, null, false);
+	},
 
 	fill: function(data_id, form_id, root, link_id, parent_field){
 		// this fills outputs the form with the data
@@ -392,6 +557,8 @@ $FORM = {
 		form_info.info.form_type = local_data.form_type;
 		form_info.info.grid_record_offset = 0;
 		form_info.info.has_records = local_data.has_records;
+		// place for record id data
+		form_info.info.record_id = [];
 
 		var formHTML = '';
 	
@@ -498,7 +665,6 @@ $FORM = {
 		} else {
 			local_data.has_records = true;
 		}
-
 		switch (local_data.form_type){
 			case 'grid':
 				local_data.count = this._subform_num_rows - 1;
@@ -536,11 +702,12 @@ $FORM = {
 	},
 
 	_generate_grid_header: function(form){
+		var i;
 		var formHTML = '<table border="1" >';
 		formHTML += '<thead><tr><th class="th_id" >#</th>';
-		for (var ordered_item in form.order){
-			item = form.order[ordered_item];
-			formHTML += '<th>' + form.fields[item].title + '</th>';
+		for (i=0; i<form.fields.length; i++){
+			item = form.fields[i];
+			formHTML += '<th>' + item.title + '</th>';
 		}
 		formHTML += '</tr></thead>';
 		formHTML += '<tbody>';
@@ -551,7 +718,7 @@ $FORM = {
 		var formHTML = '';
 		if (local_data.has_records){
 			formHTML += '<tfoot>';
-			formHTML += '<tr><td>&nbsp</td><td colspan="' + form.order.length + '" >' + this._navigation(local_data.my_root) + '</td></tr>';
+			formHTML += '<tr><td>&nbsp</td><td colspan="' + form.fields.length + '" >' + this._navigation(local_data.my_root) + '</td></tr>';
 			formHTML += '</tfoot>';
 		}
 		formHTML += '</tbody></table>';
@@ -584,27 +751,28 @@ $FORM = {
 		var form = form_info.layout;
 		var formHTML = '';
 		var my_id;
-		for (var ordered_item in form.order){
+		var i;
+		for (i=0; i<form.fields.length; i++){
 
-			var item = form.order[ordered_item];
+			var item = form.fields[i];
 
 			if (local_data.count){
-				my_id = local_data.root + "(" + local_data.i + ")#" + form.fields[item].name;
+				my_id = local_data.root + "(" + local_data.i + ")#" + item.name;
 			} else {
 				if (local_data.root.substring(local_data.root.length - 1) == '#'){
-					my_id = local_data.root + form.fields[item].name;
+					my_id = local_data.root + item.name;
 				} else {
-					my_id = local_data.root + "#" + form.fields[item].name;
+					my_id = local_data.root + "#" + item.name;
 				}
 			}
 
 			my_id = $INFO.addId(my_id);
-			if (form.fields[item].type == 'subform'){
+			if (item.type == 'subform'){
 				// get HTML for subform
-				formHTML += this._subform(form.fields[item], my_id, form_info);
+				formHTML += this._subform(item, my_id, form_info);
 			} else {
 				// add item
-				var temp = $FORM_CONTROL.html(form.fields[item], my_id, local_data.show_label);
+				var temp = $FORM_CONTROL.html(item, my_id, local_data.show_label);
 				formHTML += this._wrap(temp, local_data.wrap_tag);
 			}
 		}
@@ -712,10 +880,11 @@ $FORM = {
 		msg('_save');
 		var m = this._parse_item(root);
 		var field_data = this._get_data(root, m.root, m.row);
-		var request = {action:'save', field_data : field_data, command:command};
+		var request = {action:'save', field_data:field_data, command:command};
 		var form_info = this._get_form_info(m.root);
 		var form_id = form_info.info.name;
-		var data = {form_id:form_id, root:root, form_root:m.root, row:m.row};
+		var data = {form_id:form_id, root:root, form_root:m.root,
+				row:m.row, record_data:field_data.data, obj:field_data.form};
 
 		if (command){
 			// add extra record movement data
@@ -753,7 +922,7 @@ $FORM = {
 			my_form_type = 'grid';
 		}
 		var form_info = this._get_form_info(m.root);
-		var records = form_info.info.records;
+		var records = form_info.info.record_id;
 		var record_id = records[my_row];
 		var form_id = form_info.info.name;
 		var field_data = {record_id:record_id, form:form_id};
@@ -989,11 +1158,13 @@ $FORM = {
   		fn = function(packet, job){
   			// update the id
 			var row = job.row;
-			var value = packet.record_id;
-			$INFO.setStateArray(job.form_root, 'records', row, value);
+			var id = packet.record_id;
+			$INFO.setStateArray(job.form_root, 'record_id', row, id);
+			// save the data locally
+			$INFO._addData(job.obj, id, job.record_data);
 			// and display
-			var id = $INFO.getId(job.root + '*id');
-			$('#' + id).val(value);
+			var id_field = $INFO.getId(job.root + '*id');
+			$('#' + id_field).val(id);
 			// mark as clean
 			$FORM.dirty(job.form_root, job.row, false);
   		};

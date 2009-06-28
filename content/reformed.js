@@ -61,7 +61,7 @@ page();
 	});
 	
 	// preload the donkey form
-	$FORM.request('donkey', 'main', 'first');
+//	$FORM.request('donkey', 'main', 'first');
 }
 
 form_active = true;
@@ -92,7 +92,7 @@ function form_mode(){
 
 function page(){
 request = {type:'page'};
-data = {};
+data = {root: 'main'};
 $JOB.add(request, data, 'page', true);
 //$FORM.request('form_item', 'moo', 'first');
 }
@@ -490,10 +490,10 @@ function action_hide(action_id){
 action_hash = {
 	previous: [['previous', 'go-previous.png', 'X', 'record'],[$FORM, $FORM._move, ['main#','prev']]],
 	next: [['next', 'go-next.png', 'Y', 'record'],[$FORM, $FORM._move, ['main#','next']]],
-	new: [['new', 'document-new.png', 'B', 'record'],[$FORM, $FORM._move, ['main#','new']]],
-	save: [['save', 'document-save.png', 'C', 'record'],[$FORM, $FORM._save, ['main#','']]],
-	delete:[['delete', 'edit-delete.png', 'D', 'record'],[$FORM, $FORM._delete, ['main#','']]],
-	home: [['home', 'go-home.png', 'H', 'general'],[document, get_html, ['main', 'frontpage']]],
+	new: [['new', 'document-new.png', 'B', 'record'],[$FORM, $FORM._new, ['main']]],
+	save: [['save', 'document-save.png', 'c', 'record'],[$FORM, $FORM._save, ['main#','']]],
+	delete:[['delete', 'edit-delete.png', 'd', 'record'],[$FORM, $FORM._delete, ['main#','']]],
+	home: [['home', 'go-home.png', 'h', 'general'],[document, get_html, ['main', 'frontpage']]],
 	donkey: [['donkey', 'go-home.png', 'I', 'general'],[$FORM, $FORM.request, ['donkey', 'main', 'first']]]
 };
 
