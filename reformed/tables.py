@@ -34,7 +34,7 @@ import formencode
 from formencode import validators
 from fields import Modified, Integer
 from sqlalchemy.orm.interfaces import AttributeExtension
-from util import get_paths 
+from util import get_paths, make_local_tables
 import logging
 import migrate.changeset
 
@@ -103,6 +103,8 @@ class Table(object):
         self.sa_class = None
         self.mapper = None
         self.paths = None
+        self.local_tables = None
+        self.one_to_many_tables = None
 
     def persist(self):
         """This puts the information about the this objects parameters 
@@ -434,6 +436,11 @@ class Table(object):
 
         if not self.paths:
             self.paths = get_paths(self.database.graph, self.name)
+
+        if not self.local_tables:
+            local_tables, one_to_many_tables = make_local_tables(self.paths)
+            self.local_tables = local_tables
+            self.one_to_many_tables = one_to_many_tables
 
     
     def _make_sa_order_by_list(self, relation, other_table):

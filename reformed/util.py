@@ -49,6 +49,33 @@ def get_paths(gr, table):
 
     return path_dict
 
+def get_local_tables(path_dict, one_to_many_tables, local_tables, current_pos):
+
+    table, relation, one_ways = path_dict[current_pos]  
+    new_name = "_".join(one_ways + [table])
+    if relation in ("manytoone", "onetoone"):
+        local_tables[new_name] = current_pos
+    else:
+        one_to_many_tables[new_name] = current_pos
+        return
+
+    for new_path, info in path_dict.iteritems():
+        if len(current_pos)+1 == len(new_path) and list(new_path)[:len(current_pos)] == list(current_pos):
+            get_local_tables(path_dict, one_to_many_tables, local_tables, new_path)
+
+
+def make_local_tables(path_dict):
+
+    local_tables = {}
+    one_to_many_tables = {}
+    
+    for path, info in path_dict.iteritems():
+        if len(path) == 1:
+            get_local_tables(path_dict, one_to_many_tables, local_tables, path)
+
+    return [local_tables, one_to_many_tables]
+
+
 def table_path_sort_order(a,b):
     return len(a[0]) - len(b[0]) 
 
@@ -102,10 +129,29 @@ def create_data_dict(result):
         data[row.id] = get_row_data(row) 
     return data
 
+def get_all_local_data(obj, allow_system = False):
 
+    row_data = {}
+    table = obj._table
+    database = table.database
+    local_tables = table.local_tables
+    row_data.update(get_row_data(obj))
 
+    for aliased_table_name, path in table.local_tables.iteritems():
+        table_name = table.paths[path][0]
+        if not allow_system:
+            if table_name.startswith("_"):
+                continue
+        current_obj = obj
+        for relation in path:
+            current_obj = getattr(current_obj, relation)
+            if not current_obj:
+                current_obj = database.get_instance(table_name)
+                break
+        row_data.update(get_row_data(current_obj))
 
-    
+    return row_data
+
 def get_table_from_instance(instance, database):
 
     return database.tables[instance.__class__.__name__]

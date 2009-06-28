@@ -121,8 +121,8 @@ class Database(object):
         class Tables(object):
             pass
         tables = Tables()
-        for name, table in self.tables.iteritems():
-            setattr(tables, name, table.sa_class) 
+        for name, table in self.aliases.iteritems():
+            setattr(tables, name, table) 
         return tables
 
     def add_entity(self, table):
@@ -287,6 +287,8 @@ class Database(object):
             table.sa_class = None
             table.sa_table = None
             table.paths = None
+            table.local_tables = None
+            table.one_to_many_tables = None
         self.graph = None
             
 
@@ -390,7 +392,7 @@ class Database(object):
                 else:
                     aliases["_".join(item)] = sa.orm.aliased(self.get_class(item[-1]))
         else:
-            for key,value in self.tables.iteritems():
+            for key, value in self.tables.iteritems():
                 aliases[key] = value.sa_class
 
         self.aliases = aliases

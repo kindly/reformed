@@ -13,19 +13,13 @@ class Search(object):
         self.database = database
         self.table = table
         self.session = session
-
-        self.t = QueryTableHolder()
-        self.tables = {}
+        self.rtable = database.tables[table]
 
         self.table_paths_list = create_table_path_list(table_paths) 
         self.table_path = create_table_path(self.table_paths_list, self.table)
+
         self.aliased_name_path = {} 
-
-        self.create_path_and_holder()
-
-        self.local_tables = {}#create_local_tables(self.table_path, self.table)
-        
-        self.create_local_tables()
+        self.create_aliased_path()
 
         self.search_base = self.session.query(self.database.get_class(self.table))
 
@@ -55,7 +49,7 @@ class Search(object):
         if len(self.queries) == 1:
             ## if query contains a onetomany make the whole query a distinct
             for table in first_query.inner_joins.union(first_query.outer_joins):
-                if table != self.table and table not in self.local_tables[self.table]:
+                if table != self.table and table not in self.rtable.local_tables:
                     return first_query.add_conditions(self.search_base).distinct()
             return first_query.add_conditions(self.search_base)
 
@@ -99,7 +93,7 @@ class Search(object):
 
         ### if first query has a one to many distict the query
         for table in first_query.inner_joins.union(first_query.outer_joins):
-            if table != self.table and table not in self.local_tables[self.table]:
+            if table != self.table and table not in self.rtable.local_tables:
                 return self.search_base.join((main_subquery, main_subquery.c.id == self.database.get_class(self.table).id)).distinct()
         return self.search_base.join((main_subquery, main_subquery.c.id == self.database.get_class(self.table).id))
 
@@ -124,55 +118,13 @@ class Search(object):
 
         
 
-    def create_path_and_holder(self):
+    def create_aliased_path(self):
         
-        setattr(self.t, self.table, self.database.tables[self.table].sa_class) 
-
         for item in self.table_paths_list:
             key, table_name, relation, one_ways = item
             new_name = "_".join(one_ways + [table_name])
-            setattr(self.t, new_name, self.database.aliases[new_name])
-            self.tables[new_name] = self.database.aliases[new_name]
             self.aliased_name_path[new_name] = list(key)
 
-    def create_local_tables(self):
-
-        for table, value in self.table_path.iteritems():
-            if value == "root":
-                self.local_tables[self.table] = [self.table]
-                self.subsiquant_relation_finder(self.table, "root")
-                continue
-
-            key, relation = value
-            self.local_tables[table] = [table]
-            self.previous_relation_finder(table, key, relation)
-            self.subsiquant_relation_finder(table, key)
-
-    def previous_relation_finder(self, table, current_key, relation):
-
-        if relation == "manytoone":
-            return
-        if len(current_key) == 1:
-            self.local_tables[table].append(self.table)
-        for new_table, value in self.table_path.iteritems():
-            if value == "root":
-                continue
-            key, relation = value
-            if key == current_key[:-1]:
-                self.local_tables[table].append(new_table)
-                self.previous_relation_finder(table, current_key[:-1], relation)
-
-    def subsiquant_relation_finder(self, table, current_key):
-
-        for new_table, value in self.table_path.iteritems():
-            if value == "root":
-                continue
-            key, relation = value
-            if key[:-1] == current_key or (len(key) == 1 and current_key == "root"):
-                if relation == "onetomany":
-                    continue
-                self.local_tables[table].append(new_table)
-                self.subsiquant_relation_finder(table, key)
 
 class SingleQuery(object):
 
@@ -241,9 +193,6 @@ class SingleQuery(object):
         
         return conj(*statement_list)
                     
-
-
-            
 
 class Conjunction(object):
 
@@ -358,5 +307,3 @@ class Conjunction(object):
             conj.tables_covered_by_this.update([table])
 
                 
-class QueryTableHolder(object):
-    pass

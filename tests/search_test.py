@@ -34,41 +34,12 @@ class test_search(donkey_test.test_donkey):
                             )
         cls.flatfile.load()
 
-    def tesfdt_basic_search(self):
 
-        search = self.Donkey.search(self.Donkey, "people", self.session)
-
-        t = search.t
-
-        search.add([d.c.name == "popp21",
-                    d.email.email == "pop2@pop.com",
-                    (d.donkey.name == 'fred', d.donkey.name == "fine")])
-
-        results = search.all()
-
-        assert len(results) == 2
-        assert "road21" in [r.address_line_1 for r in results]
-
-    def test_create_table_holder(self):
-
-        #TODO these need to be re-added once 2 relations between 2 tables actually works.
-        #assert [["relation", "people", "relation", "people"], "manytoone"] in Search(self.Donkey, "people").table_path.values()
-        #assert [["_relation", "_people" , "_relation", "_people"], "manytoone"] in Search(self.Donkey, "people").table_path.values()
-        
-        assert Search(self.Donkey, "people", self.session).t.donkey is self.Donkey.tables["donkey"].sa_class
-        
-
-    def tespopt_local_tables(self):
-
-        search = Search(self.Donkey, "people", self.session)
-        search.create_local_tables()
-        #previous_relation_finder("_log_email", ['email', '__log_email'], "onetomany")
-        assert search.local_tables == {}
 
     def test_conjunctions(self):
 
         s = Search(self.Donkey, "people", self.session)
-        t = s.t
+        t = self.Donkey.t
 
         assert str(Conjunction("not", "or", [t.people.name <> "poo", [t.email.email.like("poo2%"), t.donkey_sponsership.amount > 10]], search = s)) ==\
                 "and <and not <(True, 'name', 'ne'), or not <(True, 'email', 'like_op'), (True, 'amount', 'gt')>>>"
@@ -122,7 +93,7 @@ class test_search(donkey_test.test_donkey):
     def test_where_clause(self):
 
         s = Search(self.Donkey, "people", self.session)
-        t = s.t
+        t = self.Donkey.t
 
         print SingleQuery(s,
                                Conjunction("or", [t.people.name <> "poo", "not",
@@ -143,7 +114,7 @@ class test_search(donkey_test.test_donkey):
     def test_single_query(self):
 
         search = Search(self.Donkey, "people", self.session)
-        t = search.t
+        t = self.Donkey.t
 
         session = self.Donkey.Session()
 
@@ -181,7 +152,7 @@ class test_search(donkey_test.test_donkey):
     def test_zzzz_search_with_single_query(self):
 
         search = Search(self.Donkey, "people", self.session)
-        t = search.t
+        t = self.Donkey.t
         session = self.session
         search.add_query(t.people.name < u"popp02", "not", t.email.email.like(u"popi%"))
 
@@ -193,7 +164,6 @@ class test_search(donkey_test.test_donkey):
                    filter(and_(people_class.name < u"popp02", or_(email_class.email == None, not_(email_class.email.like(u"popi%"))))).all())) == set()
 
         search2 = Search(self.Donkey, u"people", self.session)
-        t = search2.t
 
         search2.add_query(SingleQuery(search, t.people.name < u"popp02", "not", t.email.email.like(u"popi%")))
 
@@ -203,7 +173,6 @@ class test_search(donkey_test.test_donkey):
 
 
         search3 = Search(self.Donkey, u"people", self.session)
-        t = search3.t
 
         search3.add_query(SingleQuery(search, t.people.name < u"popp02", "not", t.email.email.like(u"popi%")))
 
@@ -213,7 +182,7 @@ class test_search(donkey_test.test_donkey):
     def test_search_with_union(self):
 
         search = Search(self.Donkey, u"people", self.session)
-        t = search.t
+        t = self.Donkey.t
         session = self.session
 
         search.add_query(t.people.name < u"popp005",  t.email.email.like(u"popi%"))
@@ -233,7 +202,7 @@ class test_search(donkey_test.test_donkey):
     def test_search_with_joined_exclude(self):
 
         search = Search(self.Donkey, "people", self.session)
-        t = search.t
+        t = self.Donkey.t
 
         search.add_query(t.people.name < u"popp007", t.people.name <>  u"david" )
 
@@ -267,7 +236,7 @@ class test_search(donkey_test.test_donkey):
     def test_z_search_with_except_exclude(self):
 
         search = Search(self.Donkey, "people", self.session)
-        t = search.t
+        t = self.Donkey.t
 
         search.add_query(t.people.name < "popp007", t.people.name <>  "david" )
 
@@ -299,7 +268,7 @@ class test_search(donkey_test.test_donkey):
     def test_zz_search_with_limit(self):
 
         search = Search(self.Donkey, "people", self.session)
-        t = search.t
+        t = self.Donkey.t
 
         search.add_query(t.email.email.like("popi%"))
         search.add_query(t.people.name ==  "david", exclude = "true")
