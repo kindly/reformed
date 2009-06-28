@@ -135,5 +135,5 @@ class OneToOne(Field):
     
     def __init__(self, name, other, *args, **kw):
         self.other = other
-        self.onetoone = Relation("onetoone",other,use_parent = True)
+        self.onetoone = Relation("onetoone", other, use_parent = True)
     

@@ -25,7 +25,7 @@ def get_next_relation(gr, node, path_dict, tables, current_path = [], last_edge 
                 new_one_ways = one_ways
             path_dict[tuple(new_path)] = [node2, relation.type, new_one_ways]
             new_tables = tables + [node2]
-            get_next_relation(gr, node2, path_dict, new_tables, new_path, (node1,node2), new_one_ways)
+            get_next_relation(gr, node2, path_dict, new_tables, new_path, (node1, node2), new_one_ways)
         
     for edge in gr.in_edges(node, data = True):
         node1, node2, relation = edge
@@ -39,7 +39,7 @@ def get_next_relation(gr, node, path_dict, tables, current_path = [], last_edge 
                 continue
             path_dict[tuple(new_path)] = [node1, swap_relations(relation.type), one_ways]
             new_tables = tables + [node1]
-            get_next_relation(gr, node1, path_dict, new_tables, new_path, (node1,node2), one_ways)
+            get_next_relation(gr, node1, path_dict, new_tables, new_path, (node1, node2), one_ways)
 
 def get_paths(gr, table):
 
@@ -76,14 +76,14 @@ def make_local_tables(path_dict):
     return [local_tables, one_to_many_tables]
 
 
-def table_path_sort_order(a,b):
+def table_path_sort_order(a, b):
     return len(a[0]) - len(b[0]) 
 
 def create_table_path_list(path_dict):
 
     table_paths_list = [] 
 
-    for k,v in path_dict.iteritems():
+    for k, v in path_dict.iteritems():
         table_paths_list.append([k, v[0], v[1], v[2]])
 
     table_paths_list.sort(table_path_sort_order)

@@ -48,12 +48,12 @@ logger.addHandler(reformedhandler)
 
 class Database(object):
     
-    def __init__(self,name,*args,**kw):
+    def __init__(self, name, *args, **kw):
         self.name =name
         self.tables = {}
-        self.metadata = kw.pop("metadata",None)
-        self.engine = kw.pop("engine",None)
-        self._Session = kw.pop("session",None)
+        self.metadata = kw.pop("metadata", None)
+        self.engine = kw.pop("engine", None)
+        self._Session = kw.pop("session", None)
         self.metadata.bind = self.engine
         self.Session = sessionwrapper.SessionClass(self._Session, self)
         self.persisted = False
@@ -133,7 +133,7 @@ class Database(object):
         table.entity = True
         table.kw["entity"] = True
         self.add_table(table)
-        relation = OneToOne(table.name,table.name, backref = "_entity")
+        relation = OneToOne(table.name, table.name, backref = "_entity")
         self.tables["_core_entity"]._add_field_no_persist(relation)
         if self.tables["_core_entity"].persisted:
             self.fields_to_persist.append(relation)
@@ -220,7 +220,7 @@ class Database(object):
 
             kw["table_id"] = row.id
 
-            self.add_table(tables.Table( row.table_name.encode("ascii"), *fields, **kw))
+            self.add_table(tables.Table(row.table_name.encode("ascii"), *fields, **kw))
 
         for table in self.tables.itervalues():
             table.persisted = True
@@ -234,8 +234,8 @@ class Database(object):
 
     def add_relations(self):     #not property for optimisation
         self.relations = []
-        for table_name,table_value in self.tables.iteritems():
-            for rel_name,rel_value in table_value.relations.iteritems():
+        for table_name, table_value in self.tables.iteritems():
+            for rel_name, rel_value in table_value.relations.iteritems():
                 self.relations.append(rel_value)
 
     def checkrelations(self):
@@ -292,13 +292,13 @@ class Database(object):
         self.graph = None
             
 
-    def tables_with_relations(self,Table):
+    def tables_with_relations(self, Table):
         relations = {}
         for n, v in Table.relations.iteritems():
-            relations[(v.other,"here")] = v
+            relations[(v.other, "here")] = v
         for v in self.relations:
             if v.other == Table.name:
-                relations[(v.table.name,"other")] = v
+                relations[(v.table.name, "other")] = v
         return relations
 
     def result_set(self, search):
@@ -318,7 +318,7 @@ class Database(object):
         for column in logged_table.columns.itervalues():
             
             ##FIXME if type is an object (not a class) need different rules
-            if hasattr(column.type,"length"):
+            if hasattr(column.type, "length"):
                 length = column.type.length
                 field =getattr(field_types, column.type.__class__.__name__)\
                               (column.name, length = length)
@@ -328,7 +328,7 @@ class Database(object):
             logging_table.add_field(field)
 
         logging_table.add_field(ManyToOne(logged_table.name+"_logged" 
-                                         ,logged_table.name ))
+                                         , logged_table.name ))
 
         return logging_table
 

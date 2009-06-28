@@ -41,9 +41,3 @@ reformed = Database("reformed",
             )
 
 
-session = reformed.Session()
-
-aa = session.query(reformed.t.people).all()
-
-print util.create_data_dict(aa)
-

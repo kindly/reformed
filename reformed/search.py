@@ -217,12 +217,12 @@ class Conjunction(object):
 
     def process_propersitions(self):
 
-        for enum ,prop in enumerate(self.propersitions):
+        for enum, prop in enumerate(self.propersitions):
             if isinstance(prop, list):
                 if enum != 0 and str(self.propersitions[enum - 1]) == "not":
                     notted = not self.notted
                     type = self.swap_or_and("and", notted)
-                elif enum not in (0,1) and str((self.propersitions[enum - 1]) == "or")\
+                elif enum not in (0, 1) and str((self.propersitions[enum - 1]) == "or")\
                                        and str(self.propersitions[enum -2]) == "not":
                     notted = not self.notted
                     type = self.swap_or_and("or", notted)
@@ -250,11 +250,11 @@ class Conjunction(object):
                     notted = self.notted
                 if notted:
                     self.processed_propersitions.append(prop.id == None)
-                    self.printable_propersitions.append((notted,table,"eq"))
+                    self.printable_propersitions.append((notted, table, "eq"))
                     self.outer_joins.update([table])
                 else:
                     self.processed_propersitions.append(prop.id != None)
-                    self.printable_propersitions.append((notted,table,"ne"))
+                    self.printable_propersitions.append((notted, table, "ne"))
                     self.inner_joins.update([table])
                 self.update_covering_ors(self.covering_ors, table)
 

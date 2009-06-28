@@ -90,16 +90,16 @@ class SessionWrapper(object):
             logged_instance = self.database.get_instance("_log_%s"%table.name)
             changed = False
             for column in table.columns.keys():
-                a,b,c = attributes.get_history(attributes.instance_state(obj), column,
+                a, b, c = attributes.get_history(attributes.instance_state(obj), column,
                                               passive = False)
                 #logger.info (repr(a)+repr(b)+repr(c))
                 if c:
                     setattr(logged_instance, column, c[0])
                     changed = True
                 else:
-                    setattr(logged_instance, column, getattr(obj,column))
+                    setattr(logged_instance, column, getattr(obj, column))
             if changed:
-                setattr(logged_instance, table.name + "_logged" , obj )
+                setattr(logged_instance, table.name + "_logged", obj)
                 self.session.add(logged_instance)
 
     def add_entity_instance(self):

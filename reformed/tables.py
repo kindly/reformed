@@ -60,7 +60,7 @@ class Table(object):
         """
         self.name =name
         self.kw = kw
-        self.table_id = kw.get("table_id",None)
+        self.table_id = kw.get("table_id", None)
         self.field_list = args
         self.fields = {}
         self.field_order = []
@@ -70,7 +70,7 @@ class Table(object):
         self.entity = kw.get("entity", False)
         self.logged = kw.get("logged", True)
         self.modified_date = kw.get("modified_date", True)
-        self.index = kw.get("index",None)
+        self.index = kw.get("index", None)
         self.unique_constraint = kw.get("unique_constraint", None)
         self.entity_relationship = kw.get("entity_relationship", False)
         self.primary_key_list = []
@@ -129,7 +129,7 @@ class Table(object):
             if hasattr(field, "other"):
                 __field.other = u"%s" % field.other
             
-            for n,v in field._kw.iteritems():
+            for n, v in field._kw.iteritems():
                 __field_param = self.database.tables["__field_params"].sa_class()
                 __field_param.item = u"%s" % n
                 __field_param.value = u"%s" % str(v) 
@@ -143,7 +143,7 @@ class Table(object):
         self.persisted = True
         session.close()
 
-    def add_field(self,field):
+    def add_field(self, field):
         """add a Field object to this Table"""
         if self.persisted == True:
             field.check_table(self)
@@ -155,12 +155,12 @@ class Table(object):
         else:
             self._add_field_no_persist(field)
 
-    def _add_field_no_persist(self,field):
+    def _add_field_no_persist(self, field):
         """add a Field object to this Table"""
         field._set_parent(self)
 
     def _add_field_by_alter_table(self, field):
-        for n,v in field.columns.iteritems():
+        for n, v in field.columns.iteritems():
             col = sa.Column(n, v.type, **v.sa_options)
             col.create(self.sa_table)
 
@@ -174,7 +174,7 @@ class Table(object):
         if hasattr(field, "other"):
             __field.other = u"%s" % field.other
         
-        for n,v in field._kw.iteritems():
+        for n, v in field._kw.iteritems():
             __field_param = self.database.tables["__field_params"].sa_class()
             __field_param.item = u"%s" % n
             __field_param.value = u"%s" % str(v) 
@@ -190,8 +190,8 @@ class Table(object):
     def items(self):
         """gathers all columns and relations defined in this table"""
         items = {}
-        for n,v in self.fields.iteritems():
-            for n,v in v.items.iteritems():
+        for n, v in self.fields.iteritems():
+            for n, v in v.items.iteritems():
                 items[n]=v
         return items
 
@@ -199,8 +199,8 @@ class Table(object):
     def defined_columns(self):
         """gathers all columns defined in this table"""
         columns = {}
-        for n,v in self.fields.iteritems():
-            for n,v in v.columns.iteritems():
+        for n, v in self.fields.iteritems():
+            for n, v in v.columns.iteritems():
                 columns[n]=v
         return columns
 
@@ -217,11 +217,11 @@ class Table(object):
         """gathers all columns this table has whether defined here on in
         another tables relation"""
         columns = {}
-        for n,v in self.fields.iteritems():
-            for n,v in v.columns.iteritems():
+        for n, v in self.fields.iteritems():
+            for n, v in v.columns.iteritems():
                 columns[n]=v
         try:
-            for n,v in self.foriegn_key_columns.iteritems():
+            for n, v in self.foriegn_key_columns.iteritems():
                 columns[n] = v
         except custom_exceptions.NoDatabaseError:
             pass
@@ -231,8 +231,8 @@ class Table(object):
     def add_relations(self):   # this is not a property for an optimisation
         """gathers all relations defined in this table"""
         relations = {}
-        for n,v in self.fields.iteritems():
-            for n,v in v.relations.iteritems():
+        for n, v in self.fields.iteritems():
+            for n, v in v.relations.iteritems():
                 relations[n]=v
         self.relations = relations
 
@@ -257,15 +257,15 @@ class Table(object):
 
     def check_database(self):
         """checks if this table is part of a Database object"""
-        if not hasattr(self,"database"):
+        if not hasattr(self, "database"):
             raise custom_exceptions.NoDatabaseError,\
                   "Table %s has not been assigned a database" % self.name
 
-    def _set_parent(self,Database):
+    def _set_parent(self, database):
         """adds this table to a database object"""
-        Database.tables[self.name]=self
-        Database.add_relations()
-        self.database = Database
+        database.tables[self.name]=self
+        database.add_relations()
+        self.database = database
 
     @property    
     def tables_with_relations(self):
@@ -333,7 +333,7 @@ class Table(object):
             for n, v in self.foriegn_key_columns.iteritems():
                 if v.defined_relation == rel:
                     other_table_columns.append("%s.%s"%\
-                                               (table,v.original_column))
+                                               (table, v.original_column))
                     this_table_columns.append(n)
             if other_table_columns:
                 foreign_key_constraints[(table, rel.name)] = [this_table_columns,
@@ -352,7 +352,7 @@ class Table(object):
             raise custom_exceptions.NoMetadataError("table not assigned a metadata")
         sa_table = sa.Table(self.name, self.database.metadata)
         sa_table.append_column(sa.Column("id", sa.Integer, primary_key = True))
-        for n,v in self.foriegn_key_columns.iteritems():
+        for n, v in self.foriegn_key_columns.iteritems():
             sa_options = v.sa_options
             sa_table.append_column(sa.Column(n, v.type, **sa_options))
         defined_columns = self.defined_columns
@@ -364,14 +364,14 @@ class Table(object):
             primary_keys = tuple(self.primary_key_list)
             sa_table.append_constraint(sa.UniqueConstraint(*primary_keys))
         if self.foreign_key_constraints:
-            for n,v in self.foreign_key_constraints.iteritems():
+            for n, v in self.foreign_key_constraints.iteritems():
                 sa_table.append_constraint(sa.ForeignKeyConstraint(v[0],
                                                                    v[1]))
         if self.index_list:
             for index in self.index_list:
                 ind = [sa_table.columns[col] for col in index]
                 name = "_".join(index)
-                sa_table.append_constraint(sa.Index(name,*ind))
+                sa_table.append_constraint(sa.Index(name, *ind))
         if self.unique_constraint_list:
             for constraint in self.unique_constraint_list:
                 sa_table.append_constraint(sa.UniqueConstraint(*constraint))
@@ -418,7 +418,7 @@ class Table(object):
                     if relation == column.defined_relation:
                         joined_columns.append([name, column.original_column])
                 if not joined_columns:
-                    joined_columns.extend([[a,a] for a in self.primary_key_list])
+                    joined_columns.extend([[a, a] for a in self.primary_key_list])
                 if not joined_columns:
                     for name, column in other_rtable.foriegn_key_columns.iteritems():
                         if relation == column.defined_relation:
@@ -501,9 +501,9 @@ class Table(object):
                     validator = getattr(validators, column.validation)()
                 schema_dict[column.name].validators.append(validator)
 
-        for n,v in self.fields.iteritems():
-            if hasattr(v,"validation"):
-                for n,v in v.validation.iteritems():
+        for n, v in self.fields.iteritems():
+            if hasattr(v, "validation"):
+                for n, v in v.validation.iteritems():
                     schema_dict[n].validators.append(v)
         return formencode.Schema(allow_extra_fields =True, ignore_key_missing = True, **schema_dict)
     
@@ -512,7 +512,7 @@ class Table(object):
         by this tables Field objects"""
         
         validation_dict = {}
-        for n,v in self.columns.iteritems():
+        for n, v in self.columns.iteritems():
             validation_dict[n] = getattr(instance, n)
 
         return self.validation_schema.to_python(validation_dict)
@@ -522,8 +522,8 @@ class Table(object):
         
         ##not used as sessionwrapper now does this
         logged_instance = self.database.tables["_log_" + self.name].sa_class()
-        for n,v in self.columns.iteritems():
-            setattr(logged_instance, n, getattr(instance,n))
+        for n, v in self.columns.iteritems():
+            setattr(logged_instance, n, getattr(instance, n))
         return logged_instance
 
     

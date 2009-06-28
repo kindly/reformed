@@ -321,7 +321,7 @@ class SingleRecord(object):
             try:
                 session.add(obj)
             except fe.Invalid, e:
-                invalid_msg[key] = e.msg.replace("\n",", ")
+                invalid_msg[key] = e.msg.replace("\n", ", ")
                 invalid_dict[key] = e
         if invalid_msg:
             if not self.flat_file:
@@ -506,10 +506,10 @@ class SingleRecord(object):
                 if from_list:
                     self.process_list(names + [n], v)
                 else:
-                    self.process_list(names + [0,n], v)
+                    self.process_list(names + [0, n], v)
             if isinstance(v, dict):
                 if from_list:
                     self.process_dict(names + [n], v)
                 else:
-                    self.process_dict(names + [0,n], v)
+                    self.process_dict(names + [0, n], v)
             

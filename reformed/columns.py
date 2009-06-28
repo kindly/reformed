@@ -40,7 +40,7 @@ class BaseSchema(object):
                   instead.
     """
 
-    def __init__(self, type,*args, **kw):
+    def __init__(self, type, *args, **kw):
 
         self.type = type
         self.name = kw.pop("name", None)
@@ -51,28 +51,28 @@ class BaseSchema(object):
         self.defined_relation = kw.pop("defined_relation", None)
         self.sa_options ={}
     
-    def _set_name(self, Field, name):
+    def _set_name(self, field, name):
         if self.use_parent:
-            self.name = Field.decendants_name
+            self.name = field.decendants_name
         else:
             self.name = name
 
-    def _set_sa_options(self, Field):
+    def _set_sa_options(self, field):
 
         if self.use_parent or self.use_parent_options:
-            self.sa_options.update(Field._sa_options)
+            self.sa_options.update(field._sa_options)
             
 
     def __repr__(self):
         return "<class = %s , name = %s , type = %s>" % ( self.__class__.__name__, self.name
-                                           ,self.type ) 
+                                           , self.type ) 
     
     @property
     def table(self):
         """The table object accociated with this object"""
         if self.defined_relation:
             return self.defined_relation.table
-        if not hasattr(self,"parent"):
+        if not hasattr(self, "parent"):
             raise custom_exceptions.NoFieldError("no field defined for column")
         return self.parent.table                                         
 
@@ -81,9 +81,9 @@ class Column(BaseSchema):
     :param default: default value for the column
     :param onupdate: value whenever the accosiated row is updated"""
 
-    def __init__(self, type,*args, **kw):
+    def __init__(self, type, *args, **kw):
 
-        super(Column,self).__init__(type ,*args, **kw)
+        super(Column, self).__init__(type , *args, **kw)
         ##original column should be made private. 
         self.original_column = kw.pop("original_column", None)
         default = kw.pop("default", None)
@@ -99,7 +99,7 @@ class Column(BaseSchema):
 
     def _set_parent(self, parent, name):
         
-        self._set_name(parent ,name)
+        self._set_name(parent, name)
         self._set_sa_options(parent)
         
         if self.use_parent:
@@ -127,7 +127,7 @@ class Relation(BaseSchema):
 
     def __init__(self, type, other, *args, **kw):
 
-        super(Relation,self).__init__(type ,*args, **kw)
+        super(Relation, self).__init__(type , *args, **kw)
         self.other = other 
         self.order_by = kw.pop("order_by", None)
         if self.type == "onetoone":
@@ -158,7 +158,7 @@ class Relation(BaseSchema):
         
     def _set_parent(self, parent, name):
         """adds this relation to a field object"""
-        self._set_name(parent ,name)
+        self._set_name(parent, name)
         self._set_sa_options(parent)
 
         if self.use_parent:
@@ -224,7 +224,7 @@ class Field(object):
         obj._backref = kw.get("backref", None)
         if obj._backref:
             obj._sa_options["backref"] = obj._backref
-        obj._validation = kw.get("validation",None)
+        obj._validation = kw.get("validation", None)
         if obj._validation:
             obj._validation = r"%s" % obj._validation.encode("ascii")
         obj._order_by = kw.get("order_by", None)
@@ -269,8 +269,8 @@ class Field(object):
             table.database.add_relations()
         self.table = table
 
-    def check_table(self,table):
-        for n,v in self.items.iteritems():
+    def check_table(self, table):
+        for n, v in self.items.iteritems():
             if n in table.items.iterkeys():
                 raise AttributeError("already an item named %s" % n)
                 
