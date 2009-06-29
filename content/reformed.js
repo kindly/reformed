@@ -61,7 +61,7 @@ page();
 	});
 	
 	// preload the donkey form
-	$FORM.request('donkey', 'main', 'first');
+//	$FORM.request('donkey', 'main', 'first');
 }
 
 form_active = true;
@@ -92,7 +92,7 @@ function form_mode(){
 
 function page(){
 request = {type:'page'};
-data = {};
+data = {root: 'main'};
 $JOB.add(request, data, 'page', true);
 //$FORM.request('form_item', 'moo', 'first');
 }
@@ -201,7 +201,7 @@ var $REFORMED = {
 	LOGO_HEIGHT : 100,
 	ACTION_HEIGHT : 100,
 	INFO_HEIGHT : 30,
-	STATUS_HEIGHT : 40,
+	STATUS_HEIGHT : 80,
 	MIN_APP_WIDTH : 800,
 	MAX_APP_WIDTH : 1000,
 	ACTION_PAD : 2,
@@ -490,10 +490,10 @@ function action_hide(action_id){
 action_hash = {
 	previous: [['previous', 'go-previous.png', 'X', 'record'],[$FORM, $FORM._move, ['main#','prev']]],
 	next: [['next', 'go-next.png', 'Y', 'record'],[$FORM, $FORM._move, ['main#','next']]],
-	new: [['new', 'document-new.png', 'B', 'record'],[$FORM, $FORM._move, ['main#','new']]],
-	save: [['save', 'document-save.png', 'C', 'record'],[$FORM, $FORM._save, ['main#','']]],
-	delete:[['delete', 'edit-delete.png', 'D', 'record'],[$FORM, $FORM._delete, ['main#','']]],
-	home: [['home', 'go-home.png', 'H', 'general'],[document, get_html, ['main', 'frontpage']]],
+	new: [['new', 'document-new.png', 'B', 'record'],[$FORM, $FORM._new, ['main']]],
+	save: [['save', 'document-save.png', 'c', 'record'],[$FORM, $FORM._save, ['main#','']]],
+	delete:[['delete', 'edit-delete.png', 'd', 'record'],[$FORM, $FORM._delete, ['main#','']]],
+	home: [['home', 'go-home.png', 'h', 'general'],[document, get_html, ['main', 'frontpage']]],
 	donkey: [['donkey', 'go-home.png', 'I', 'general'],[$FORM, $FORM.request, ['donkey', 'main', 'first']]]
 };
 
@@ -520,3 +520,9 @@ function action_call(action_id){
 	cmd_info[1].apply(cmd_info[0], cmd_info[2]);
 }
 
+
+status_message = '';
+function msg(arg){
+	status_message = arg + ' - ' + status_message;
+	$('#status').html(status_message);
+}

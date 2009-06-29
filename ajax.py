@@ -4,6 +4,7 @@ import simplejson as json
 import cgi
 import reformed.dbconfig as dbconfig
 import reformed.reformed as r
+import reformed.util as util
 from sqlalchemy.orm import eagerload
 from form_cache import FormCache
 from paste.session import SessionMiddleware
@@ -67,50 +68,33 @@ class AjaxThing(object):
 		else:
 			error = {'@main': 'username and password no good :('}
 			parent.output.append({'type':'error', 'data':error})
-		
+
 		
 	def get_form(self, data, parent):
 		
 		""" this function returns the structure of a given form """
 
-		if 'command' in data:
-			# we want to get the form data too
-			info = { 'form': data['form'],
-				 'field':'id',
-				 'value':'',
-				 'command': data['command'],
-				 'parent_id':'',
-				 'parent_field':'',
-				 'form_type': None}
-			parent.add_command('data', info)
-					
+		if 'stamp' in data and data['stamp']:
+			# we don't need to send the form back
+			return
 		form_name = data['form']
-		print "##### %s" % form_name
 		# FIXME does form_name want to be form_ref or something more like that.
 		
 		# FIXME I'd like this session to be repeatedly used
 		session = r.reformed.Session()
 		form = session.query(r.reformed.get_class('_core_form')).options(eagerload('_core_form_param')).filter_by(name=form_name).one()
-		print repr(form)
 		form_params = get_params(form._core_form_param)
-		print repr(form_params)
-		# FIXME not all items are wanted.  what bit field do we use for this (already have active)
-		# FIXME want working sort order do we have it??
+
 		form_items = session.query(r.reformed.get_class('_core_form_item')).options(eagerload('_core_form_item_param')).filter_by(_core_form_id=form.id, active=True).order_by(r.reformed.get_class('_core_form_item').sort_order)
 	
 		form_data = {}
 		
 		form_security_allowed  = True
 		# FIXME security needs re integration
-#		if 'form_security' in form_params:
-#			if form_params['form_security'] == 'private':
-#				if not 'username' in self.http_session:
-#					form_security_allowed  = False
 					
 		if form_security_allowed:
 			# this form is allowed
-			form_data['fields'] = {}
-			form_data['order'] = []
+			form_data['fields'] = []
 			form_data['params'] = form_params;
 			for form_item in form_items:
 		
@@ -121,14 +105,10 @@ class AjaxThing(object):
 				item_data['name'] = form_item.name # FIXME name -> ref?
 				item_data['title'] = form_item.label
 				item_data['type'] = form_item.item
-				print repr(form_item)
 				params = get_params(form_item._core_form_item_param)
-				if params:
-					item_data['params'] = params
-				form_data['fields'][form_item.name] = item_data
+				item_data['params'] = params
+				form_data['fields'].append(item_data)
 
-				form_data['order'].append(form_item.name)
-	#			form_item.name
 				if form_item.item == 'subform':
 			
 					# FIXME I don't like this. 
@@ -137,142 +117,67 @@ class AjaxThing(object):
 					# will have to see plus push through the changes
 					print "add subform %s" % item_data['params']['subform_name']
 					my_data = {'form':item_data['params']['subform_name']}
-					self.get_form(my_data, parent)
+					self.get_form_new(my_data, parent)
 		else:
 			# we are no allowed to see this form
 			item_data = {}
 		session.close()
 		
-		parent.output.append({'type':'form', 'id': form_name, 'data':form_data})
+		parent.output.append({'type':'form', 'id': form_name, 'data':form_data})	
 
 
 
-	##  DATA
 	def get_data(self, data, parent):
 		""" retrieves data for a recordset """
 		# want to have a cleaner call
-	# need form, id (+ movement eg next prev record first/last/new)
-		form_name = data['form']
+		object = data['form']
 		field = str(data['field'])
 		value = data['value']
-		command = data['command']
+	#	command = data['command']
 		parent_id = data['parent_id']
 		parent_field = data['parent_field']
 		form_type = data['form_type']
 		if parent_field:
 			parent_field = str(parent_field)
 
-		print "DATA request \n%s\ncommand %s" % (repr(data), command)
+		print "DATA request \n%s\n" % (repr(data))
 		# form
 
 		# FIXME I'd like this session to be repeatedly used
-
 		session = r.reformed.Session()
-		form = session.query(r.reformed.get_class('_core_form')).options(eagerload('_core_form_param')).filter_by(name=form_name).one()
-
-		params = get_params(form._core_form_param)
+		print "record_id = %s" % value
 		
-		if form_type == None: # need to get it from the form
-			if 'form_type' in params:
-				form_type = params['form_type']
-			else:
-				form_type = 'normal'
-#
-		if 'form_object' in params:
-			form_object_name = params['form_object']
-		else:
-			form_object_name = None
-			
-		if form_object_name and form_type != 'action':
+		obj_filter = {}
 		
-			# form object
-			
-			
+		if parent_field and parent_field != None:
+			obj_filter[parent_field] = parent_id
 		
-			# record movement
-
-			if command:
-				(value, recordset_id, rowcount) = record_movement(form_object_name, data);
-			else:
-				recordset_id = None
-				rowcount = None
-				value = None
-			print "record_id = %s" % value
-		
-			obj_filter = {}
-		
-			if parent_field and parent_field != None:
-				obj_filter[parent_field] = parent_id
-				
-				if form_type == 'normal':
-					obj_filter[field] = value
+			if form_type == 'normal':
+				obj_filter[field] = value
 				# we need to make sure we pass the corect value with the data
-				value = parent_id
-			else:
-				if form_type == 'normal':
-					obj_filter[field] = value
-			print "form object: %s" % form_object_name
-			print "field: %s, value: %s\n%s" % (field, value, repr(obj_filter))
+			value = parent_id
+		else:
+			if form_type == 'normal':
+				obj_filter[field] = value
+		print "form object: %s" % object
+		print "field: %s, value: %s\n%s" % (field, value, repr(obj_filter))
 
-			obj = r.reformed.get_class(form_object_name)
-			# get the data here
-			print "OBJECT: %s" % repr(obj)
-			if obj_filter:
-				data = session.query(obj).filter_by(**obj_filter).all()
-			else:
-				data = session.query(obj).all()
+		obj = r.reformed.get_class(object)
+		# get the data here
+		print "OBJECT: %s" % repr(obj)
+		if obj_filter:
+			data = session.query(obj).filter_by(**obj_filter).all()
+		else:
+			data = session.query(obj).all()
 
-			# items	
-			form_items = session.query(r.reformed.get_class('_core_form_item')).options(eagerload('_core_form_item_param')).filter_by(_core_form_id=form.id, active=1).order_by(r.reformed.get_class('_core_form_item').sort_order)
+	
+        	data_out_array = util.create_data_dict(data)
 
-			data_out_array = []
-			records = []
-			for data_row in data:		
+		parent.output.append({'type':'data',
+					'object': object,
+					'data':data_out_array,
+					})
 
-				data_out = {}
-				data_out['__id'] = data_row.id
-				if recordset_id != None:
-					data_out['__recordset_id'] = recordset_id
-				records.append(data_row.id)
-				for form_item in form_items:
-					if form_item.name.count('.'):
-						(table, field) = form_item.name.split('.')
-						field_value = getattr(data_row, field)
-					#	print form_item.name, field_value
-						data_out[form_item.name] = field_value
-					if form_item.item == 'subform':
-						# force the subform to be see in form filling FIXME hack
-						data_out[form_item.name] = 0;
-						params = get_params(form_item._core_form_item_param)
-					#	print "add data %s" % params['subform_name']
-				
-						# FIXME this data structure is horrid make this an object?
-						info = { 'form': params['subform_name'],
-							 'field':params['child_id'],
-							 'value':getattr(data_row, params['parent_id']),
-							 'command':'first',
-							 'parent_id':data_row.id,
-							 'parent_field':params['child_id'],
-							 'form_type':params['form_type']}
-						parent.add_command('data', info)
-				data_out_array.append(data_out)
-				
-				
-				# if not a grid we only want he first record so let's quit here
-				if form_type != 'grid':
-					break
-			# if a top level form grid then we need to clear the value
-			# if not the data gets sent to the wrong place
-			if form_type == 'grid' and parent_field == None:
-				value = 0
-			if rowcount == None:
-				rowcount = len(records)
-			parent.output.append({'type':'data',
-								'form': form_name,
-								'data':data_out_array,
-								'data_id':value,
-								'records':records,
-								'rowcount':rowcount})
 
 	def process_edit(self, data, parent):
 

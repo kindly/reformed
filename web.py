@@ -24,9 +24,8 @@ def process_ajax(environ, start_response):
 	formdata = cgi.FieldStorage(fp=environ['wsgi.input'],
 	                	environ=environ,
 	                	keep_blank_values=1)
-	                	
-	# this can be put in a loop
 	head = str(formdata.getvalue('head'))
+
 	try:
 		body = json.loads(str(formdata.getvalue('body')))
 	except:
@@ -42,6 +41,9 @@ def process_ajax(environ, start_response):
  	if body:
  		if head in ("form", "data", "page", "html", "edit", "action"):
 			moo.add_command(head, body)
+		if head == 'new':
+			for (my_head, my_body) in body:
+				moo.add_command(my_head, my_body)
 		moo.process()
 		data = moo.output
 	else:

@@ -100,7 +100,6 @@ window.$JOB = {
 			// this wants to be thread safe but isn't yet
 	_timeout: null,   // the timeout lives here
 	_process_wait_time: 50, // how long between job
-	_job_functions: {}, // where the job processing instructions live
 	
 	_timer_on: function (){
 		// jslint does not like this line but we need it
@@ -158,23 +157,36 @@ window.$JOB = {
 		}
 	},
 	
+	_job_functions: { 
+		// DEFAULT job functions
+		'function': function(data){
+			obj = data.return_object;
+			fn = data.return_function;
+			params = data.return_params;
+			fn.apply(obj, params);
+		}
+
+	},
+
 	_packet_functions: {
 		// DEFAULT packet handlers
   		 'page': function(packet, job){
   		 		var out = packet.data;
   		 		var root = job.root;
+				$INFO.newState(root + '#', 'page');
   				$('#' + root).html(out);
-  				for (var i = 0; i < packet.items.length; i++){
+  		/*		for (var i = 0; i < packet.items.length; i++){
   					var item = packet.items[i];
   					if (item.type == 'form'){
   						$FORM.request(item.form_id, item.root, item.command);
   					}
-  				}
+  				}*/
 			},
 					  		
 		 'error': function(packet, job){
-	  			var error_id = '#' + $INFO.getId(job.form_root) + '__error';
-	  			$(error_id).html(packet.data['@main']);
+	  		//	var error_id = '#' + $INFO.getId(job.form_root) + '__error';
+	  		//	$(error_id).html(packet.data['@main']);
+				alert(packet.data['@main']);
 			},
 			
 		'status': function(packet, job){}

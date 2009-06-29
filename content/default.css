@@ -251,3 +251,7 @@ tr.inactive input{
 .action > a > span.command:hover {
 	text-decoration:underline;
 }
+
+#status {
+	font-size:80%;
+}
