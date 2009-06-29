@@ -25,8 +25,6 @@
 
 import sqlalchemy as sa
 import custom_exceptions 
-import formencode
-from formencode import validators
 
 class BaseSchema(object):
     """Base class of everthing that turn into a database field or 
@@ -37,19 +35,18 @@ class BaseSchema(object):
             with onetomany, manytoone or onetoone to define join types.
 
     :param use_parent:  if True will use its parents (Field) column parameters
-                  instead.
+                  and name.
+    :param use_parent_options:  if True will use its parents parameters only.
     """
 
-    def __init__(self, type, *args, **kw):
+    def __init__(self, rtype, *args, **kw):
 
-        self.type = type
+        self.type = rtype
         self.name = kw.pop("name", None)
-        self.use_parent=kw.pop("use_parent", False)
-        self.use_parent_options= kw.pop("use_parent_options", False)
-        self.args = args
-        self.kw = kw
+        self.use_parent = kw.pop("use_parent", False)
+        self.use_parent_options = kw.pop("use_parent_options", False)
         self.defined_relation = kw.pop("defined_relation", None)
-        self.sa_options ={}
+        self.sa_options = {}
     
     def _set_name(self, field, name):
         if self.use_parent:
@@ -60,12 +57,12 @@ class BaseSchema(object):
     def _set_sa_options(self, field):
 
         if self.use_parent or self.use_parent_options:
-            self.sa_options.update(field._sa_options)
+            self.sa_options.update(field.sa_options)
             
 
     def __repr__(self):
-        return "<class = %s , name = %s , type = %s>" % ( self.__class__.__name__, self.name
-                                           , self.type ) 
+        return "<class = %s, name = %s, type = %s>" % \
+                (self.__class__.__name__, self.name, self.type) 
     
     @property
     def table(self):
@@ -79,7 +76,9 @@ class BaseSchema(object):
 class Column(BaseSchema):
     """Contains information to make a database field.
     :param default: default value for the column
-    :param onupdate: value whenever the accosiated row is updated"""
+    :param onupdate: value whenever the accosiated row is updated
+    :param mandatory: boolean saying if the column will be not nullable
+    """
 
     def __init__(self, type, *args, **kw):
 
@@ -96,6 +95,7 @@ class Column(BaseSchema):
         if mandatory:
             self.sa_options["nullable"] = False
         self.validation = kw.pop("validation", None)
+        self.parent = None
 
     def _set_parent(self, parent, name):
         
@@ -103,26 +103,58 @@ class Column(BaseSchema):
         self._set_sa_options(parent)
         
         if self.use_parent:
-            if parent._length:
-                self.type.length = parent._length
-            if parent._validation:
-                self.validation = parent._validation
+            if parent.length:
+                self.type.length = parent.length
+            if parent.field_validation:
+                self.validation = parent.field_validation
             
         if self.name in parent.items.iterkeys():
             raise AttributeError("column already in field definition")
         else: 
-            parent._add_column(self.name, self)
+            parent.add_column(self.name, self)
             self.parent = parent
         
 class Relation(BaseSchema):
     """Specifies a relationship between the table where this relation
-    is defined and another table.
+    is defined and another table.  You cannot specify more that one relation
+    going from one table to another.
+    i.e you can not have more that one relation defined on table "a" that
+    joins to table "b". You can however also have a relation on table "b" that joins
+    to table "a". There for there is a maximum of two relations bewtween any
+    two tables.
 
-    type AND other are mandatory for relations
+    type and other are mandatory for relations
+
+    :param type: specifies join type. Accepts onetoone, onetomany and 
+        manytoone.
 
     :param other: The name of the table where this reltaion will
-      join to.
+        join to.
 
+    :param eager: Boolean stating if the other table is automatically
+        eager loaded.
+
+    :param cascade: Default cascade options see sqlalchemy docs for details
+
+    :param order_by: defines the default ordering of the the related table.
+        Input is a string with column names of the other table and ordering 
+        seperated by comma.
+        Default ordering is asc
+        i.e "email desc, email_type" This will order by email descending then
+        email_type ascending. 
+
+    :param backref: Name the attribute that will occur on the instance of the
+        other tables sqlalchemy objects. By default this will be _thistable 
+        where this table is the name of the table where this relation is 
+        defined.
+
+    :param one_way: This is to be put at the last edge of where the tables
+        join paths comes back in a cycle. If the one_way parmeter is not set
+        for tables whos joins loop back to a table search fuctionality wont
+        work.
+        ie.  table "a" has a relation to "b" and "b" has a relation back to "a"
+        In this case you would put the one_way flag on the secone relation 
+        defined on "b".  
     """
 
     def __init__(self, type, other, *args, **kw):
@@ -143,6 +175,7 @@ class Relation(BaseSchema):
         if backref:
             self.sa_options["backref"] = backref
         self.one_way = kw.pop("one_way", None)
+        self.parent = None
 
     @property
     def order_by_list(self):
@@ -162,17 +195,17 @@ class Relation(BaseSchema):
         self._set_sa_options(parent)
 
         if self.use_parent:
-            if parent._order_by:
-                self.order_by = parent._order_by
-            if parent._many_side_mandatory is False:
-                self.many_side_mandatory = parent._many_side_mandatory 
-            if parent._one_way:
+            if parent.order_by:
+                self.order_by = parent.order_by
+            if parent.many_side_mandatory is False:
+                self.many_side_mandatory = parent.many_side_mandatory 
+            if parent.one_way:
                 self.one_way = True
 
         if self.name in parent.items.iterkeys():
             raise AttributeError("column already in field definition")
         else:
-            parent._add_relation(self.name, self)
+            parent.add_relation(self.name, self)
             self.parent = parent
 
     @property
@@ -192,51 +225,54 @@ class Field(object):
     Examples are in fields.py
 
     :param name:  field name will be used as column name if use_parent is 
-           used"""
+           used
 
+    A field can also have any paremeters defined for a column or relation
+    as long as the field only has one column or relation and the use parent
+    or use_parent_option flag is set for that column or relation.
+    """
     
     def __new__(cls, name, *args, **kw):
 
-        #TODO namespace issues need to be sorted out
         obj = object.__new__(cls)
         obj.name = name
-        obj.decendants_name=name
+        obj.decendants_name = name
         obj.columns = {}
         obj.relations = {}
-        obj._sa_options = {}
-        obj._column_order = []
-        obj._kw = kw
-        obj._default = kw.get("default", None)
-        if obj._default:
-            obj._sa_options["default"] = obj._default
-        obj._onupdate = kw.get("onupdate", None)
-        if obj._onupdate:
-            obj._sa_options["onupdate"] = obj._onupdate
-        obj._mandatory = kw.get("mandatory", False)
-        if obj._mandatory:
-            obj._sa_options["nullable"] = False
-        obj._eager = kw.get("eager", None)
-        if obj._eager:
-            obj._sa_options["lazy"] = not obj._eager
-        obj._cascade = kw.get("cascade", None)
-        if obj._cascade:
-            obj._sa_options["cascade"] = obj._cascade
-        obj._backref = kw.get("backref", None)
-        if obj._backref:
-            obj._sa_options["backref"] = obj._backref
-        obj._validation = kw.get("validation", None)
-        if obj._validation:
-            obj._validation = r"%s" % obj._validation.encode("ascii")
-        obj._order_by = kw.get("order_by", None)
-        obj._length = kw.get("length", None)
-        if obj._length:
-            obj._length = int(obj._length)
-        obj._many_side_mandatory = kw.get("many_side_mandatory", True)
-        obj._one_way = kw.get("one_way", None)
+        obj.sa_options = {}
+        obj.column_order = []
+        obj.kw = kw
+        obj.default = kw.get("default", None)
+        if obj.default:
+            obj.sa_options["default"] = obj.default
+        obj.onupdate = kw.get("onupdate", None)
+        if obj.onupdate:
+            obj.sa_options["onupdate"] = obj.onupdate
+        obj.mandatory = kw.get("mandatory", False)
+        if obj.mandatory:
+            obj.sa_options["nullable"] = False
+        obj.eager = kw.get("eager", None)
+        if obj.eager:
+            obj.sa_options["lazy"] = not obj.eager
+        obj.cascade = kw.get("cascade", None)
+        if obj.cascade:
+            obj.sa_options["cascade"] = obj.cascade
+        obj.backref = kw.get("backref", None)
+        if obj.backref:
+            obj.sa_options["backref"] = obj.backref
+        obj.field_validation = kw.get("validation", None)
+        if obj.field_validation:
+            obj.field_validation = r"%s" % obj.field_validation.encode("ascii")
+        obj.order_by = kw.get("order_by", None)
+        obj.length = kw.get("length", None)
+        if obj.length:
+            obj.length = int(obj.length)
+        obj.many_side_mandatory = kw.get("many_side_mandatory", True)
+        obj.one_way = kw.get("one_way", None)
         return obj
 
     def __repr__(self):
-        return "<%s - %s>" % (self.name, self._column_order)
+        return "<%s - %s>" % (self.name, self.column_order)
 
     def __setattr__(self, name, value):
 
@@ -247,16 +283,17 @@ class Field(object):
 
     @property
     def items(self):
+        """all columns and relation related to this field"""
         items = {}
         items.update(self.columns)
         items.update(self.relations)
         return items
 
-    def _add_column(self, name, column):
+    def add_column(self, name, column):
         self.columns[name] = column
-        self._column_order.append(name)
+        self.column_order.append(name)
 
-    def _add_relation(self, name, relation):
+    def add_relation(self, name, relation):
         self.relations[name] = relation
 
     def _set_parent(self, table):
@@ -270,7 +307,12 @@ class Field(object):
         self.table = table
 
     def check_table(self, table):
-        for n, v in self.items.iteritems():
-            if n in table.items.iterkeys():
-                raise AttributeError("already an item named %s" % n)
+        """check to see if this fields columns or relation name clash with
+        any fields or columns in a table.
+
+        :param table:  rtable to check this field against 
+        """
+        for name, item in self.items.iteritems():
+            if name in table.items.iterkeys():
+                raise AttributeError("already an item named %s" % name)
                 

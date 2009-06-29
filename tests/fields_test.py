@@ -1,4 +1,6 @@
 from reformed.fields import *
+import formencode
+from formencode import validators
 from nose.tools import assert_raises
 
 class test_fields():

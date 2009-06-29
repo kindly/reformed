@@ -27,18 +27,16 @@
 
 import sqlalchemy as sa
 from sqlalchemy.orm import mapper
-from sqlalchemy.orm import column_property
 from columns import Column
-import custom_exceptions
+from custom_exceptions import NoMetadataError, NoDatabaseError
 import formencode
 from formencode import validators
 from fields import Modified, Integer
-from sqlalchemy.orm.interfaces import AttributeExtension
 from util import get_paths, make_local_tables
 import logging
 import migrate.changeset
 
-logger = logging.getLogger('reformed.main')
+LOGGER = logging.getLogger('reformed.main')
 
 class Table(object):
     """ this holds metadata relating to a database table.  It also
@@ -58,7 +56,7 @@ class Table(object):
                            unique constraint
         *args :  All the Field objects this table has.
         """
-        self.name =name
+        self.name = name
         self.kw = kw
         self.table_id = kw.get("table_id", None)
         self.field_list = args
@@ -82,15 +80,9 @@ class Table(object):
                                self.index.split(";")]
         self.unique_constraint_list  = []
         if self.unique_constraint:
-            self.unique_constraint_list = [column_list.split(",") for column_list in
-                               self.unique_constraint.split(";")]
-
-
-        for key in self.primary_key_list:
-            column_names = []
-            for fields in args:
-                for column in fields.columns.itervalues():
-                    column_names.append(column.name)
+            self.unique_constraint_list = [column_list.split(",") 
+                                           for column_list in
+                                           self.unique_constraint.split(";")]
 
         for fields in args:
             fields._set_parent(self)
@@ -98,6 +90,7 @@ class Table(object):
         if "modified_date" not in self.fields.iterkeys() and self.modified_date:
             self.add_field(Modified("modified_date"))
             self.add_field(Integer("modified_by" , default = 1))
+
         #sqlalchemy objects
         self.sa_table = None
         self.sa_class = None
@@ -116,10 +109,10 @@ class Table(object):
         __table.table_name = u"%s" % self.name
 
 
-        for n, v in self.kw.iteritems():
-            __table_param = self.database.tables["__table_params"].sa_class()
-            __table_param.item = u"%s" % n
-            __table_param.value = u"%s" % str(v) 
+        for name, param in self.kw.iteritems():
+            __table_param = self.database.get_instance("__table_params")
+            __table_param.item = u"%s" % name
+            __table_param.value = u"%s" % str(param) 
             __table.table_params.append(__table_param)
 
         for field_name, field  in self.fields.iteritems():
@@ -129,10 +122,10 @@ class Table(object):
             if hasattr(field, "other"):
                 __field.other = u"%s" % field.other
             
-            for n, v in field._kw.iteritems():
-                __field_param = self.database.tables["__field_params"].sa_class()
-                __field_param.item = u"%s" % n
-                __field_param.value = u"%s" % str(v) 
+            for name, param in field.kw.iteritems():
+                __field_param = self.database.get_instance("__field_params")
+                __field_param.item = u"%s" % name
+                __field_param.value = u"%s" % str(param) 
                 __field.field_params.append(__field_param)
 
             __table.field.append(__field)
@@ -160,24 +153,25 @@ class Table(object):
         field._set_parent(self)
 
     def _add_field_by_alter_table(self, field):
-        for n, v in field.columns.iteritems():
-            col = sa.Column(n, v.type, **v.sa_options)
+        for name, column in field.columns.iteritems():
+            col = sa.Column(name, column.type, **column.sa_options)
             col.create(self.sa_table)
 
     def _persist_extra_field(self, field):
 
         session = self.database.Session()
-        __table = session.query(self.database.tables["__table"].sa_class).filter_by(table_name = u"%s" % self.name).one()
+        __table = session.query(self.database.get_class("__table")).\
+                                filter_by(table_name = u"%s" % self.name).one()
         __field = self.database.tables["__field"].sa_class()
         __field.field_name = u"%s" % field.name
         __field.type = u"%s" % field.__class__.__name__
         if hasattr(field, "other"):
             __field.other = u"%s" % field.other
         
-        for n, v in field._kw.iteritems():
+        for name, param in field.kw.iteritems():
             __field_param = self.database.tables["__field_params"].sa_class()
-            __field_param.item = u"%s" % n
-            __field_param.value = u"%s" % str(v) 
+            __field_param.item = u"%s" % name
+            __field_param.value = u"%s" % str(param) 
             __field.field_params.append(__field_param)
 
         __table.field.append(__field)
@@ -190,25 +184,25 @@ class Table(object):
     def items(self):
         """gathers all columns and relations defined in this table"""
         items = {}
-        for n, v in self.fields.iteritems():
-            for n, v in v.items.iteritems():
-                items[n]=v
+        for fields in self.fields.itervalues():
+            for name, item in fields.items.iteritems():
+                items[name] = item
         return items
 
     @property    
     def defined_columns(self):
         """gathers all columns defined in this table"""
         columns = {}
-        for n, v in self.fields.iteritems():
-            for n, v in v.columns.iteritems():
-                columns[n]=v
+        for field in self.fields.itervalues():
+            for name, column in field.columns.iteritems():
+                columns[name] = column
         return columns
 
     @property
     def defined_columns_order(self):
         column_order = []
         for field in self.field_order:
-            for column in self.fields[field]._column_order:
+            for column in self.fields[field].column_order:
                 column_order.append(column)
         return column_order
 
@@ -217,13 +211,13 @@ class Table(object):
         """gathers all columns this table has whether defined here on in
         another tables relation"""
         columns = {}
-        for n, v in self.fields.iteritems():
-            for n, v in v.columns.iteritems():
-                columns[n]=v
+        for field in self.fields.itervalues():
+            for name, column in field.columns.iteritems():
+                columns[name] = column
         try:
-            for n, v in self.foriegn_key_columns.iteritems():
-                columns[n] = v
-        except custom_exceptions.NoDatabaseError:
+            for name, column in self.foriegn_key_columns.iteritems():
+                columns[name] = column
+        except NoDatabaseError:
             pass
         return columns
 
@@ -231,9 +225,9 @@ class Table(object):
     def add_relations(self):   # this is not a property for an optimisation
         """gathers all relations defined in this table"""
         relations = {}
-        for n, v in self.fields.iteritems():
-            for n, v in v.relations.iteritems():
-                relations[n]=v
+        for field in self.fields.itervalues():
+            for name, relation in field.relations.iteritems():
+                relations[name] = relation
         self.relations = relations
 
     @property
@@ -241,24 +235,24 @@ class Table(object):
         """gathers all primary key columns in this table"""
         columns = {}
         if self.primary_key:
-            for n, v in self.columns.iteritems():
-                if n in self.primary_key_list:
-                    columns[n] = v
+            for name, column in self.columns.iteritems():
+                if name in self.primary_key_list:
+                    columns[name] = column
         return columns
 
     @property
     def defined_non_primary_key_columns(self):
         """gathers all non primary key columns in this table"""
         columns = {}
-        for n, v in self.defined_columns.iteritems():
-            if n not in self.primary_key_list:
-                columns[n] = v
+        for name, column in self.defined_columns.iteritems():
+            if name not in self.primary_key_list:
+                columns[name] = column
         return columns
 
     def check_database(self):
         """checks if this table is part of a Database object"""
         if not hasattr(self, "database"):
-            raise custom_exceptions.NoDatabaseError,\
+            raise NoDatabaseError,\
                   "Table %s has not been assigned a database" % self.name
 
     def _set_parent(self, database):
@@ -283,7 +277,7 @@ class Table(object):
 
         
         self.check_database()
-        d = self.database
+        database = self.database
         columns={}
         ##  could be made simpler
         for tab, rel in self.tables_with_relations.iteritems():
@@ -292,13 +286,15 @@ class Table(object):
             if (rel.type == "onetomany" and self.name == rel.other) or\
               (rel.type == "onetoone" and self.name == rel.other) or\
               (rel.type == "manytoone" and self.name == rel.table.name):
-                if d.tables[table].primary_key_columns:
-                    for n, v in d.tables[table].primary_key_columns.items():
-                        columns[n] = Column(v.type,
-                                            name=n,
-                                            mandatory = rel.many_side_mandatory,
-                                            defined_relation= rel,
-                                            original_column= n)
+                if database.tables[table].primary_key_columns:
+                    table = database.tables[table]
+                    for name, column in table.primary_key_columns.items():
+                        new_col = Column(column.type,
+                                         name=name,
+                                         mandatory = rel.many_side_mandatory,
+                                         defined_relation= rel,
+                                         original_column= name) 
+                        columns[name] = new_col
                 else:
                     if table+"_id" not in columns:
                         columns[table+'_id'] = Column(sa.Integer,
@@ -322,24 +318,22 @@ class Table(object):
         has the foriegn key columns in this table and the second the accocited
         primary key columns the the related tabel"""
 
-        foreign_key_constraints = {}
+        fk_constraints = {}
         self.check_database()
-        d = self.database
         ##  could be made simpler
         for tab, rel in self.tables_with_relations.iteritems():
             table, pos = tab
             other_table_columns=[]
             this_table_columns=[]
-            for n, v in self.foriegn_key_columns.iteritems():
-                if v.defined_relation == rel:
+            for name, column in self.foriegn_key_columns.iteritems():
+                if column.defined_relation == rel:
                     other_table_columns.append("%s.%s"%\
-                                               (table, v.original_column))
-                    this_table_columns.append(n)
+                                               (table, column.original_column))
+                    this_table_columns.append(name)
             if other_table_columns:
-                foreign_key_constraints[(table, rel.name)] = [this_table_columns,
+                fk_constraints[(table, rel.name)] = [this_table_columns,
                                                     other_table_columns]
-                logger.info(foreign_key_constraints)
-        return foreign_key_constraints
+        return fk_constraints
 
     def make_sa_table(self):
         """makes a sqlalchemy table object and stores it in the 
@@ -349,24 +343,25 @@ class Table(object):
             return
         self.check_database()
         if not self.database.metadata:
-            raise custom_exceptions.NoMetadataError("table not assigned a metadata")
+            raise NoMetadataError("table not assigned a metadata")
         sa_table = sa.Table(self.name, self.database.metadata)
         sa_table.append_column(sa.Column("id", sa.Integer, primary_key = True))
-        for n, v in self.foriegn_key_columns.iteritems():
-            sa_options = v.sa_options
-            sa_table.append_column(sa.Column(n, v.type, **sa_options))
+        for name, column in self.foriegn_key_columns.iteritems():
+            sa_options = column.sa_options
+            sa_table.append_column(sa.Column(name, column.type, **sa_options))
         defined_columns = self.defined_columns
         for column in self.defined_columns_order:
-            v = defined_columns[column]
-            sa_options = v.sa_options
-            sa_table.append_column(sa.Column(column, v.type, **sa_options))
+            name = column
+            column = defined_columns[column]
+            sa_options = column.sa_options
+            sa_table.append_column(sa.Column(name, column.type, **sa_options))
         if self.primary_key_list:
             primary_keys = tuple(self.primary_key_list)
             sa_table.append_constraint(sa.UniqueConstraint(*primary_keys))
         if self.foreign_key_constraints:
-            for n, v in self.foreign_key_constraints.iteritems():
-                sa_table.append_constraint(sa.ForeignKeyConstraint(v[0],
-                                                                   v[1]))
+            for con in self.foreign_key_constraints.itervalues():
+                sa_table.append_constraint(sa.ForeignKeyConstraint(con[0],
+                                                                   con[1]))
         if self.index_list:
             for index in self.index_list:
                 ind = [sa_table.columns[col] for col in index]
@@ -399,41 +394,46 @@ class Table(object):
         """runs sqlalchemy mapper to map the sa_table to sa_class and stores  
         the mapper object in the 'mapper' attribute"""
         #make sure mapping has not been done
-        if self.mapper is None:
-            properties ={}
-            for relation in self.relations.itervalues():
-                sa_options = relation.sa_options
-                other_rtable = self.database.tables[relation.other]
-                other_table = other_rtable.sa_table
-                other_class = self.database.tables[relation.other].sa_class
-                order_by_statement = self._make_sa_order_by_list(relation, other_table)
-                if order_by_statement:
-                    sa_options["order_by"] = order_by_statement
-                if "backref" not in sa_options:
-                    sa_options["backref"] = "_%s"% self.name
+        if self.mapper:
+            return
 
-                joined_columns = []
+        properties ={}
+        for relation in self.relations.itervalues():
+            sa_options = relation.sa_options
+            other_rtable = self.database.tables[relation.other]
+            other_table = other_rtable.sa_table
+            other_class = self.database.tables[relation.other].sa_class
+            order_by = self._make_sa_order_by_list(relation, other_table)
+            if order_by:
+                sa_options["order_by"] = order_by
+            if "backref" not in sa_options:
+                sa_options["backref"] = "_%s"% self.name
 
-                for name, column in self.foriegn_key_columns.iteritems():
-                    if relation == column.defined_relation:
-                        joined_columns.append([name, column.original_column])
-                if not joined_columns:
-                    joined_columns.extend([[a, a] for a in self.primary_key_list])
-                if not joined_columns:
-                    for name, column in other_rtable.foriegn_key_columns.iteritems():
-                        if relation == column.defined_relation:
-                            joined_columns.append([column.original_column, name])
+            joined_columns = []
 
-                join_conditions = [] 
-                for col1, col2 in joined_columns:
-                    join_conditions.append(getattr(self.sa_table.c, col1) ==\
-                                           getattr(other_table.c, col2))
+            for name, column in self.foriegn_key_columns.iteritems():
+                if relation == column.defined_relation:
+                    joined_columns.append([name, column.original_column])
+            if not joined_columns:
+                joined_columns.extend([[a, a] for a in self.primary_key_list])
+            if not joined_columns:
+                for name, col in other_rtable.foriegn_key_columns.iteritems():
+                    if relation == col.defined_relation:
+                        joined_columns.append([col.original_column, name])
 
-                sa_options["primaryjoin"] = sa.sql.and_(*join_conditions)
-                
-                properties[relation.name] = sa.orm.relation(other_class,
-                                                        **sa_options)
-            self.mapper = mapper(self.sa_class, self.sa_table, properties = properties)
+            join_conditions = [] 
+            for col1, col2 in joined_columns:
+                join_conditions.append(getattr(self.sa_table.c, col1) ==\
+                                       getattr(other_table.c, col2))
+
+            sa_options["primaryjoin"] = sa.sql.and_(*join_conditions)
+            
+            properties[relation.name] = sa.orm.relation(other_class,
+                                                    **sa_options)
+
+        self.mapper = mapper(self.sa_class,
+                             self.sa_table,
+                             properties = properties)
     
     def make_paths(self):
 
@@ -448,41 +448,41 @@ class Table(object):
     
     def _make_sa_order_by_list(self, relation, other_table):
 
-        order_by_statement = [] 
+        order_by = [] 
         if relation.order_by_list:
             for col in relation.order_by_list:
                 if col[1] == 'desc':
-                    order_by_statement.append(getattr(other_table.c, col[0]).desc())
+                    order_by.append(getattr(other_table.c, col[0]).desc())
                 else:
-                    order_by_statement.append(getattr(other_table.c, col[0]))
-        return order_by_statement
+                    order_by.append(getattr(other_table.c, col[0]))
+        return order_by
  
     def validation_from_field_types(self, column):
         formencode_all = formencode.All()
         validators = formencode_all.validators
-        ct = column.type
+        col_type = column.type
         #TODO do not make mand when forighn key column
         mand = not column.sa_options.get("nullable", True)
         val = formencode.validators
-        if ct is sa.Unicode or isinstance(ct, sa.Unicode):
-            if hasattr(ct, 'length'):
-                if ct.length:
-                    max = ct.length
+        if col_type is sa.Unicode or isinstance(col_type, sa.Unicode):
+            if hasattr(col_type, 'length'):
+                if col_type.length:
+                    max = col_type.length
                 else:
                     max = 100
             else:
                 max = 100
-            formencode_all.validators.append(val.UnicodeString(max = max,
-                                                               not_empty = mand))
-        elif ct is sa.Integer or isinstance(ct, sa.Integer):
+            validators.append(val.UnicodeString(max = max,
+                                                not_empty = mand))
+        elif col_type is sa.Integer or isinstance(col_type, sa.Integer):
             validators.append(val.Int(not_empty = mand))
-        elif ct is sa.Numeric or isinstance(ct, sa.Numeric):
+        elif col_type is sa.Numeric or isinstance(col_type, sa.Numeric):
             validators.append(val.Number(not_empty = mand))
-        elif ct is sa.DateTime or isinstance(ct, sa.DateTime):
+        elif col_type is sa.DateTime or isinstance(col_type, sa.DateTime):
             validators.append(val.DateValidator(not_empty = mand))
-        elif ct is sa.Boolean or isinstance(ct, sa.Boolean):
+        elif col_type is sa.Boolean or isinstance(col_type, sa.Boolean):
             validators.append(val.Bool(not_empty = mand))
-        elif ct is sa.Binary or isinstance(ct, sa.Binary):
+        elif col_type is sa.Binary or isinstance(col_type, sa.Binary):
             validators.append(val.FancyValidator(not_empty = mand))
         return formencode_all
 
@@ -501,19 +501,22 @@ class Table(object):
                     validator = getattr(validators, column.validation)()
                 schema_dict[column.name].validators.append(validator)
 
-        for n, v in self.fields.iteritems():
-            if hasattr(v, "validation"):
-                for n, v in v.validation.iteritems():
-                    schema_dict[n].validators.append(v)
-        return formencode.Schema(allow_extra_fields =True, ignore_key_missing = True, **schema_dict)
+        for field in self.fields.itervalues():
+            if hasattr(field, "validation"):
+                for name, validation in field.validation.iteritems():
+                    schema_dict[name].validators.append(validation)
+
+        return formencode.Schema(allow_extra_fields =True,
+                                 ignore_key_missing = True,
+                                 **schema_dict)
     
     def validate(self, instance):
         """this validates an instance of sa_class with the schema defined
         by this tables Field objects"""
         
         validation_dict = {}
-        for n, v in self.columns.iteritems():
-            validation_dict[n] = getattr(instance, n)
+        for name in self.columns.iterkeys():
+            validation_dict[name] = getattr(instance, name)
 
         return self.validation_schema.to_python(validation_dict)
     
@@ -522,8 +525,8 @@ class Table(object):
         
         ##not used as sessionwrapper now does this
         logged_instance = self.database.tables["_log_" + self.name].sa_class()
-        for n, v in self.columns.iteritems():
-            setattr(logged_instance, n, getattr(instance, n))
+        for name in self.columns.iterkeys():
+            setattr(logged_instance, name, getattr(instance, name))
         return logged_instance
 
     

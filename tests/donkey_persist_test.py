@@ -238,14 +238,14 @@ class test_donkey_persist_sqlite(object):
 
     def test_params_load(self):
 
-        assert self.Donkey.tables["donkey"].fields["name"]._validation == "__^[a-zA-Z0-9]*$"
-        assert self.Donkey.tables["donkey"].fields["donkey_pics"]._many_side_mandatory == False 
-        assert self.Donkey.tables["donkey"].fields["age"]._validation == "Int"
-        assert self.Donkey.tables["people"].fields["name"]._length == 30
-        assert self.Donkey.tables["people"].fields["name"]._mandatory == True
-        assert self.Donkey.tables["people"].fields["email"]._cascade == "all, delete-orphan"
-        assert self.Donkey.tables["people"].fields["email"]._order_by == "email"
-        assert self.Donkey.tables["people"].fields["email"]._eager == True
+        assert self.Donkey.tables["donkey"].fields["name"].field_validation == "__^[a-zA-Z0-9]*$"
+        assert self.Donkey.tables["donkey"].fields["donkey_pics"].many_side_mandatory == False 
+        assert self.Donkey.tables["donkey"].fields["age"].field_validation == "Int"
+        assert self.Donkey.tables["people"].fields["name"].length == 30
+        assert self.Donkey.tables["people"].fields["name"].mandatory == True
+        assert self.Donkey.tables["people"].fields["email"].cascade == "all, delete-orphan"
+        assert self.Donkey.tables["people"].fields["email"].order_by == "email"
+        assert self.Donkey.tables["people"].fields["email"].eager == True
 
     def test_regex_validation(self):
 

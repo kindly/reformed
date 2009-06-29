@@ -292,12 +292,12 @@ class Database(object):
         self.graph = None
             
 
-    def tables_with_relations(self, Table):
+    def tables_with_relations(self, table):
         relations = {}
-        for n, v in Table.relations.iteritems():
+        for n, v in table.relations.iteritems():
             relations[(v.other, "here")] = v
         for v in self.relations:
-            if v.other == Table.name:
+            if v.other == table.name:
                 relations[(v.table.name, "other")] = v
         return relations
 
