@@ -12,10 +12,12 @@ class test_session_wrapper(donkey_test.test_donkey):
         obj2 =  obj.donkey_sponsership[0]
         obj2.amount = p
         session.add(obj)
+        session.add(obj2)
         session.commit()
         obj.name = u"davidagain"
         obj2.amount = 100
         session.add(obj)
+        session.add(obj2)
         session.commit()
 
         allpeople = session.query(self.Donkey.get_class("_log_people")).all()

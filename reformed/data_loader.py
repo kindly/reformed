@@ -325,7 +325,7 @@ class SingleRecord(object):
                 invalid_dict[key] = e
         if invalid_msg:
             if not self.flat_file:
-                session.clear()
+                session.expunge_all()
             raise custom_exceptions.Invalid("invalid object(s) are %s" % invalid_msg, invalid_msg, invalid_dict) 
 
     def add_values_to_obj(self, key):

@@ -35,6 +35,8 @@ from fields import Modified, Integer
 from util import get_paths, make_local_tables
 import logging
 import migrate.changeset
+from sqlalchemy.orm import column_property
+from sqlalchemy.orm.interfaces import AttributeExtension
 
 LOGGER = logging.getLogger('reformed.main')
 
@@ -381,10 +383,12 @@ class Table(object):
         class sa_class(object):
             def __init__(self):
                 self._table = table
+                self._validated = False
 
             @sa.orm.reconstructor
             def init_onload(self):
                 self._table = table
+                self._validated = False
                 
 
         sa_class.__name__ = self.name
@@ -398,6 +402,10 @@ class Table(object):
             return
 
         properties ={}
+        for column in self.columns:
+            properties[column] = column_property(getattr(self.sa_table.c,column),
+                                                     extension = ChangedAttributes())
+
         for relation in self.relations.itervalues():
             sa_options = relation.sa_options
             other_rtable = self.database.tables[relation.other]
@@ -530,4 +538,14 @@ class Table(object):
         return logged_instance
 
     
+class ChangedAttributes(AttributeExtension):
+
+    def set(self, state, value, oldvalue, initator):
+
+        if value != oldvalue:
+            state.dict["_validated"] = False
+
+        return value
+    
+
 

@@ -14,7 +14,6 @@ class test_fields():
                 self.text = Column(sa.Unicode)
                 self.text3 = Column(sa.Unicode)
 
-                super(Text2,self).__init__(name, *args, **kw)
         
         self.b = Text2("col")
 

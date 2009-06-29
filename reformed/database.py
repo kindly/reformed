@@ -101,12 +101,12 @@ class Database(object):
             table_to_drop = self.tables[table]
 
         if table_to_drop.logged:
-            logger_instance = session.query(self.get_class("__table")).filter_by(table_name = "_log_" + table_to_drop.name).one()
+            logger_instance = session.query(self.get_class("__table")).filter_by(table_name = u"_log_%s" % table_to_drop.name).one()
             session.delete(logger_instance)
             self.tables["_log_" + table_to_drop.name].sa_table.drop() 
             self.tables.pop("_log_" + table_to_drop.name)
 
-        instance = session.query(self.get_class("__table")).filter_by(table_name = table_to_drop.name).one()
+        instance = session.query(self.get_class("__table")).filter_by(table_name = u"%s" % table_to_drop.name).one()
         session.delete(instance)
         table_to_drop.sa_table.drop()
         self.tables.pop(table_to_drop.name)

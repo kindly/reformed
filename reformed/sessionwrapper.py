@@ -56,6 +56,7 @@ class SessionWrapper(object):
     def add(self, obj):
         """save or update and validate a sqlalchemy object"""
         get_table_from_instance(obj, self.database).validate(obj)
+        obj._validated = True
         self.session.add(obj)
     
     def query(self, mapper):
@@ -71,6 +72,8 @@ class SessionWrapper(object):
         if self.has_entity:
             self.add_entity_instance()
         self.add_logged_instances()
+        for obj in self.session:
+            obj._validated = False
         self.session.flush()
         self.session.commit()
 
@@ -84,6 +87,9 @@ class SessionWrapper(object):
     def add_logged_instances(self):
 
         for obj in self.session.dirty:
+            if not obj._validated:
+                self.session.expunge(obj)
+                continue
             table = get_table_from_instance(obj, self.database)
             if not table.logged:
                 continue

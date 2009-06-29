@@ -389,7 +389,7 @@ class test_flat_file(donkey_test.test_donkey):
 
         self.flatfile.load()
 
-        result = self.session.query(self.Donkey.get_class("people")).filter_by(name = "popp102").one()
+        result = self.session.query(self.Donkey.get_class("people")).filter_by(name = u"popp102").one()
 
         assert 102 in [a.amount for a in result.donkey_sponsership]
 
@@ -401,7 +401,7 @@ class test_flat_file(donkey_test.test_donkey):
         flatfile.load()
 
 
-        result = self.session.query(self.Donkey.get_class("people")).filter_by(name = "popph15").one()
+        result = self.session.query(self.Donkey.get_class("people")).filter_by(name = u"popph15").one()
 
         assert 1500 in [a.amount for a in result.donkey_sponsership]
 

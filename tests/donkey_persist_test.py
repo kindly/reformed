@@ -177,10 +177,10 @@ class test_donkey_persist_sqlite(object):
         alltable = self.session.query(self.Donkey.get_class("__table")).all()
         allfield = self.session.query(self.Donkey.get_class("__field")).all()
 
-        assert "moo%s" % self.p not in [a.table_name for a in alltable]
-        assert "_log_moo%s" % self.p not in [a.table_name for a in alltable]
-        assert "moo%s" % self.p not in [a.table_name for a in allfield]
-        assert "_log_moo%s" % self.p not in [a.table_name for a in allfield]
+        assert u"moo%s" % self.p not in [a.table_name for a in alltable]
+        assert u"_log_moo%s" % self.p not in [a.table_name for a in alltable]
+        assert u"moo%s" % self.p not in [a.table_name for a in allfield]
+        assert u"_log_moo%s" % self.p not in [a.table_name for a in allfield]
 
         assert validate_database(self.Donkey)[0] == []
         assert validate_database(self.Donkey)[1] == []
@@ -205,8 +205,8 @@ class test_donkey_persist_sqlite(object):
 
         allfield = self.session.query(self.Donkey.get_class("__field")).all()
 
-        assert ("moo%s" % self.p, "moo%s" % self.p)  in [(a.table_name, a.field_name) for a in allfield]
-        assert ("_log_moo%s" % self.p, "moo%s" % self.p)  in [(a.table_name, a.field_name) for a in allfield]
+        assert (u"moo%s" % self.p, u"moo%s" % self.p)  in [(a.table_name, a.field_name) for a in allfield]
+        assert (u"_log_moo%s" % self.p, u"moo%s" % self.p)  in [(a.table_name, a.field_name) for a in allfield]
 
         print validate_database(self.Donkey)
         assert validate_database(self.Donkey)[0] == []
@@ -261,7 +261,7 @@ class test_donkey_persist_sqlite(object):
         flatfile.load()
 
 
-        result = self.session.query(self.Donkey.get_class("people")).filter_by(name = "popph15").first()
+        result = self.session.query(self.Donkey.get_class("people")).filter_by(name = u"popph15").first()
 
         assert 1500 in [a.amount for a in result.donkey_sponsership]
 

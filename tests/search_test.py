@@ -131,7 +131,7 @@ class test_search(donkey_test.test_donkey):
 
         assert set(SingleQuery(search, t.people.name < u"popp02", "not", t.email.email.like(u"popi%")).add_conditions(base_query).all()).symmetric_difference(
                set(session.query(people_class.id).outerjoin(["email"]).\
-                   filter(and_(people_class.name < u"popp02", or_(email_class.email == None, not_(email_class.email.like("popi%"))))).all())) == set()
+                   filter(and_(people_class.name < u"popp02", or_(email_class.email == None, not_(email_class.email.like(u"popi%"))))).all())) == set()
 
         assert set(SingleQuery(search, 
                                "or",
@@ -238,9 +238,9 @@ class test_search(donkey_test.test_donkey):
         search = Search(self.Donkey, "people", self.session)
         t = self.Donkey.t
 
-        search.add_query(t.people.name < "popp007", t.people.name <>  "david" )
+        search.add_query(t.people.name < u"popp007", t.people.name <>  u"david" )
 
-        search.add_query(t.email.email.like("popi%"), exclude = True)
+        search.add_query(t.email.email.like(u"popi%"), exclude = True)
 
         assert len(search.search(exclude_mode = "except").all()) == 4
 
@@ -270,8 +270,8 @@ class test_search(donkey_test.test_donkey):
         search = Search(self.Donkey, "people", self.session)
         t = self.Donkey.t
 
-        search.add_query(t.email.email.like("popi%"))
-        search.add_query(t.people.name ==  "david", exclude = "true")
+        search.add_query(t.email.email.like(u"popi%"))
+        search.add_query(t.people.name ==  u"david", exclude = "true")
 
 
         assert len(search.search()[0:2]) == 2
