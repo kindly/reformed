@@ -1,5 +1,5 @@
 import util
-import simplejson as json
+import json
 
 
 def multi_row_export(obj_list, database, log = False, id = False, modified = False):

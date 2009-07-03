@@ -5,7 +5,7 @@ import logging
 import re
 import csv
 import formencode as fe
-import simplejson as json
+import json
 
 logger = logging.getLogger('reformed.main')
 

@@ -1,6 +1,6 @@
 import sys
 import os.path
-import simplejson as json
+import json
 import cgi
 import reformed.dbconfig as dbconfig
 import reformed.reformed as r

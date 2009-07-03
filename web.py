@@ -6,7 +6,7 @@ import cgi
 
 import wsgiref.util
 from paste.session import SessionMiddleware
-import simplejson as json
+import json
 
 import interface
 

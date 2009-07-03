@@ -42,7 +42,4 @@ reformed = Database("reformed",
 
 session = reformed.Session()
 
-first = session.query(reformed.get_class("donkey")).first()
-
-first.age = "poo"
 
