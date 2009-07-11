@@ -76,7 +76,7 @@ class SingleObject(object):
                     row[column] = str(cell)
 
         for key in self.next_keys[current_key]:
-            if (not self.log and key[-1].startswith("_log_")) or key[-1].startswith("_entity"):
+            if (not self.log and (key[-1].startswith("__log_") or key[-1].startswith("_log_"))) or key[-1].startswith("_entity"):
                 continue
             list = self.make_list(obj, key)
             if list:

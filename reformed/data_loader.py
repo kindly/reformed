@@ -196,7 +196,7 @@ class FlatFile(object):
             record.add_all_values_to_obj()
             try:
                 record.save_all_objs(self.session)
-            except custom_exceptions.Invalid, e:
+            except fe.Invalid, e:
                 error_lines.append(line + [str(e.error_dict)])
             if line_number % batch == 0 and not error_lines:
                 self.session.commit()
@@ -266,11 +266,12 @@ class FlatFile(object):
 
 class SingleRecord(object):
 
-    def __init__(self, database, table, data, flat_file = None):
+    def __init__(self, database, table, data = None, flat_file = None, all_rows = None):
 
         self.data = data
         self.database = database
         self.table = table
+        self.all_rows = all_rows
         self.flat_file = flat_file
 
         if flat_file:
@@ -278,8 +279,9 @@ class SingleRecord(object):
             self.keys = self.all_rows.keys()
             self.keys.sort(lambda a, b : len(a) - len(b))
         else:
-            self.all_rows = {}
-            self.process()
+            if not self.all_rows:
+                self.all_rows = {}
+                self.process()
             self.keys = self.all_rows.keys()
             self.keys.sort(lambda a, b : len(a) - len(b))
 
@@ -326,7 +328,8 @@ class SingleRecord(object):
         if invalid_msg:
             if not self.flat_file:
                 session.expunge_all()
-            raise custom_exceptions.Invalid("invalid object(s) are %s" % invalid_msg, invalid_msg, invalid_dict) 
+            raise fe.Invalid("invalid object(s) are %s" % invalid_msg,
+                             self.data, self, None, invalid_dict) 
 
     def add_values_to_obj(self, key):
 

@@ -36,3 +36,4 @@
 - give a way to log and record all validation errors on data loading by catching all exceptions.
 - validation accross rows
 - 2 joins between 2 tables needs to work, making sure it works for data_loader and searching
+- make way of running queries and tasks in the background.

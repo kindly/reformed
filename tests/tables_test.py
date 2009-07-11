@@ -333,11 +333,11 @@ class test_database_primary_key(object):
         long_person.name3 = u"davidfdsafsdasffdsas"
         assert_raises(fe.Invalid, session.add, long_person)
 
-    def test_many_side_mandatory(self):
+    def test_basic_validation(self):
 
         session = self.Donkey.Session()
         email = self.Donkey.tables["email"].sa_class()
-        email.email = u"po@po.com"
+        email.email = u"popo.com"
         assert_raises(fe.Invalid, session.add, email)
 
 

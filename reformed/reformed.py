@@ -42,4 +42,13 @@ reformed = Database("reformed",
 
 session = reformed.Session()
 
+david = reformed.get_instance("donkey")
+
+david.age = 12
+
+session.add(david)
+logged_david = david._table.logged_instance(david)
+
+
+
 

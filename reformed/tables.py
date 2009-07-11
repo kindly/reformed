@@ -301,11 +301,13 @@ class Table(object):
                     if table+"_id" not in columns:
                         columns[table+'_id'] = Column(sa.Integer,
                                                        name = table+'_id',
+                                                       mandatory = rel.many_side_mandatory,
                                                        defined_relation= rel,
                                                        original_column= "id")
                     else:
                         columns[table+'_id2'] = Column(sa.Integer,
                                                        name = table+'_id2',
+                                                       mandatory = rel.many_side_mandatory,
                                                        defined_relation= rel,
                                                        original_column= "id")
         return columns
@@ -453,7 +455,6 @@ class Table(object):
             self.local_tables = local_tables
             self.one_to_many_tables = one_to_many_tables
 
-    
     def _make_sa_order_by_list(self, relation, other_table):
 
         order_by = [] 
@@ -471,6 +472,9 @@ class Table(object):
         col_type = column.type
         #TODO do not make mand when forighn key column
         mand = not column.sa_options.get("nullable", True)
+        if column.defined_relation:
+            mand = False
+        
         val = formencode.validators
         if col_type is sa.Unicode or isinstance(col_type, sa.Unicode):
             if hasattr(col_type, 'length'):
@@ -535,6 +539,7 @@ class Table(object):
         logged_instance = self.database.tables["_log_" + self.name].sa_class()
         for name in self.columns.iterkeys():
             setattr(logged_instance, name, getattr(instance, name))
+        setattr(logged_instance, self.name + "_logged", instance)
         return logged_instance
 
     

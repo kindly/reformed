@@ -11,7 +11,6 @@ class test_export_database(test_donkey):
 
         payment = self.Donkey.get_instance("__table")
         singleobj = SingleObject(payment, self.Donkey)
-        print singleobj.next_keys
 
         assert singleobj.next_keys == {('field', 'field_params', '__log___field_params'): [], ('table_params',): [('table_params', '__log___table_params')], ('field', '__log___field'): [], ('table_params', '__log___table_params'): [], ('field', 'field_params'): [('field', 'field_params', '__log___field_params')], ('field',): [('field', 'field_params'), ('field', '__log___field')], 'root': [('table_params',), ('field',), ('__log___table',)], ('__log___table',): []}
 
@@ -20,7 +19,6 @@ class test_export_database(test_donkey):
         session = self.Donkey.Session()
 
         person = session.query(self.Donkey.get_class("people")).first()
-
 
         assert SingleObject(person, self.Donkey).data == {'donkey_sponsership': [{'_donkey': [{'age': '13', 'name': 'jim'}], 'amount': '50'}], 'address_line_1': '43 union street', 'name': 'david', 'postcode': 'es388'}
 

@@ -25,6 +25,7 @@
 
 from sqlalchemy.orm import attributes 
 import logging
+import custom_exceptions
 from util import get_table_from_instance
 
 logger = logging.getLogger('reformed.session')
@@ -72,6 +73,7 @@ class SessionWrapper(object):
         if self.has_entity:
             self.add_entity_instance()
         self.add_logged_instances()
+        self.check_all_validated()
         for obj in self.session:
             obj._validated = False
         self.session.flush()
@@ -81,15 +83,20 @@ class SessionWrapper(object):
             for obj in self.new_entities:
                 obj._entity.table_id = obj.id
                 self.session.add(obj)
+                self.session.add(obj._entity)
             self.new_entities = []
-            self.commit()
+            self.session.commit()
+
+    def check_all_validated(self):
+
+        for obj in self.session.dirty:
+            if not obj._validated:
+                raise custom_exceptions.NotValidatedError(
+                    """obj %s has not been saved and validated""" % obj)
 
     def add_logged_instances(self):
 
         for obj in self.session.dirty:
-            if not obj._validated:
-                self.session.expunge(obj)
-                continue
             table = get_table_from_instance(obj, self.database)
             if not table.logged:
                 continue
@@ -116,10 +123,9 @@ class SessionWrapper(object):
                 entity = self.database.get_instance("_core_entity")
                 self.new_entities.append(obj)
                 entity.table = table.table_id
-      #          logger.info(dir(obj))
                 obj._entity = entity
-      #          logger.info(dir(obj.__core_entity))
                 self.add(obj)
+                self.add(entity)
 
 class SessionClass(object):
 

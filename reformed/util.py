@@ -1,4 +1,6 @@
 JOINS_DEEP = 3
+import data_loader
+import formencode as fe
 
 
 def swap_relations(relation_type):
@@ -151,6 +153,51 @@ def get_all_local_data(obj, allow_system = False):
         row_data.update(get_row_data(current_obj))
 
     return row_data
+
+def load_local_data(database, data):
+    
+    session = database.Session()
+
+    table = data["__table"]
+    rtable = database.tables[table]
+
+    record = {}
+
+    for key, value in data.iteritems():
+        if key.startswith("__"):
+            continue
+        alias, field = key.split(".")
+        if alias == table:
+            path_key = "root"
+        else:
+            path_key = []
+            for item in rtable.local_tables[alias]:
+                path_key.extend([item,0])
+            path_key = tuple(path_key)
+
+        if isinstance(value, basestring):
+            value = value.decode("utf8")
+
+        record.setdefault(path_key, {})[field] = value
+    try:
+        data_loader.SingleRecord(database, table, all_rows = record).load() 
+    except fe.Invalid, e:
+        error_dict = {}
+        invalid_msg = ""
+        for key, invalid in e.error_dict.iteritems():
+            new_key = key[::2]
+            for field_name, sub_invalid in invalid.error_dict.iteritems():
+                if key == "root":
+                    new_table, one_ways = table, []
+                else:
+                    new_table, relation, one_ways = rtable.paths[new_key]
+                error_dict["%s.%s" % ("_".join(one_ways + [new_table]),
+                                        field_name)] = sub_invalid
+            invalid_msg = invalid_msg + "\n" + invalid.msg  
+
+        if error_dict:
+            raise fe.Invalid(invalid_msg, data, record, None, error_dict) 
+        
 
 def get_table_from_instance(instance, database):
 

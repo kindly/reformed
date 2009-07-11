@@ -4,7 +4,7 @@ from reformed.database import *
 from nose.tools import assert_raises,raises
 import sqlalchemy as sa
 from sqlalchemy import create_engine
-from reformed.util import get_table_from_instance, create_data_dict, make_local_tables, get_all_local_data
+from reformed.util import get_table_from_instance, create_data_dict, make_local_tables, get_all_local_data, load_local_data
 from decimal import Decimal
 import os
 import logging
@@ -19,7 +19,7 @@ class test_donkey(object):
     @classmethod
     def setUpClass(cls):
         if not hasattr(cls, "engine"):
-            cls.engine = create_engine('sqlite:///:memory:', echo = True)
+            cls.engine = create_engine('sqlite:///:memory:')
         
 #        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
         cls.meta = sa.MetaData()
@@ -80,7 +80,6 @@ class test_donkey(object):
                         )
 
         cls.Donkey.persist()
-
         cls.session = cls.Donkey.Session()
 
         cls.set_up_inserts()
@@ -88,7 +87,6 @@ class test_donkey(object):
     @classmethod
     def set_up_inserts(cls):
 
-        cls.session = cls.Donkey.Session()
         cls.jim = cls.Donkey.tables["donkey"].sa_class()
         cls.jim.name = u"jim"
         cls.jim.age = 13
@@ -151,7 +149,6 @@ class test_donkey(object):
         cls.session.add(jim0)
         cls.session.add(davidsjim)
         cls.session.add(jimimage)
-        cls.session.commit()
 
         cls.david2 = cls.Donkey.tables["people"].sa_class()
         cls.david2.name = u"david"
@@ -173,6 +170,7 @@ class test_basic_input(test_donkey):
         assert u"jim" in [a.name for a in\
                           self.session.query(self.Donkey.tables["donkey"].sa_class).all()]
 
+
         assert self.david in [ds for ds in\
                          [a._people for a in\
                           self.session.query(self.Donkey.tables["donkey_sponsership"].sa_class).all()]]
@@ -180,6 +178,7 @@ class test_basic_input(test_donkey):
         assert self.jim in [ds for ds in\
                          [a._donkey for a in\
                           self.session.query(self.Donkey.tables["donkey_sponsership"].sa_class).all()]]
+        
 
     def test_address_validation(self):
 
@@ -283,6 +282,61 @@ class test_basic_input(test_donkey):
                                                                      'relation_donkey_sponsership': ('_core_entity', 'people', 'donkey_sponsership'),
                                                                      '_log__core_entity': ('__core_entity', '__log__core_entity'),
                                                                      'donkey_sponsership': ('__core_entity', 'donkey', 'donkey_sponsership')}
+        
+    def test_zz_add_local(self):
+
+        assert_raises(formencode.Invalid, load_local_data, self.Donkey, {"__table": "people",
+                                      "people.address_line_1" : "poo1010101",
+                                      "people.address_line_2" : "poop"})
+        try:
+            load_local_data(self.Donkey, {"__table": "people",
+                                      "people.address_line_1" : "poo1010101",
+                                      "people.address_line_2" : "poop"})
+        except formencode.Invalid, e:
+            assert str(e.error_dict) == """{'people.postcode': Invalid(u'Please enter a value',), 'people.name': Invalid(u'Please enter a value',)}"""
+
+
+        assert_raises(formencode.Invalid, load_local_data, self.Donkey, {"__table": "donkey_sponsership",
+                                                                         "donkey_sponsership.amount" : 70,                                   
+                                      "people.address_line_1" : "poo1010101",
+                                      "people.address_line_2" : "poop"})
+
+        try:
+            load_local_data(self.Donkey, {"__table": "donkey_sponsership",
+                                          "donkey_sponsership.amount" : 70,                                   
+                                          "donkey.age" : u"poo",                                   
+                                      "people.address_line_1" : u"poo1010101",
+                                      "people.address_line_2" : u"poop"})
+        except formencode.Invalid, e:
+            assert str(e.error_dict) == """{'donkey.age': Invalid(u'Please enter an integer value',), 'people.postcode': Invalid(u'Please enter a value',), 'people.name': Invalid(u'Please enter a value',)}"""
+
+        load_local_data(self.Donkey, {"__table": u"donkey_sponsership",
+                                      "donkey_sponsership.amount" : 711110,                                   
+                                      "donkey.age" : 12,                                   
+                                      "people.name" : u"fred",
+                                      "people.postcode" : u"fred",
+                                      "people.address_line_1" : u"poo1010101",
+                                      "people.address_line_2" : u"poop"})
+
+        a = self.session.query(self.Donkey.t.donkey_sponsership).filter_by(amount = 711110).one()
+
+        assert get_all_local_data(a) == {'donkey_sponsership.date': None, 
+                                         'donkey_sponsership.people_id': 2,
+                                         'people.country': None,
+                                         'people.address_line_1': u'poo1010101',
+                                         'people.address_line_2': u'poop',
+                                         'people.address_line_3': None,
+                                         'people.name': u'fred',
+                                         'donkey_pics.pic_name': None,
+                                         'donkey_sponsership.amount': Decimal('711110'),
+                                         'donkey_pics.pic': None,
+                                         'donkey_sponsership.donkey_id': 12,
+                                         'donkey.age': 12,
+                                         'people.town': None,
+                                         'donkey_pics.donkey_id': None,
+                                         'donkey.name': None,
+                                         'people.postcode': u'fred'}
+
 
 class test_after_reload(test_basic_input):
     

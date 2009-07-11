@@ -44,18 +44,9 @@ class InvalidField(AttributeError):
     pass
 class InvalidData(AttributeError):
     pass
-class Invalid(AttributeError):
-    def __init__(self, msg, error_dict, invalid_dict):
-        self.msg = msg
-        self.error_dict = error_dict
-
-    def __str__(self):
-        return str(self.msg) 
-
-    def __repr__(self):
-        return str(self.msg) 
-
 class SearchError(Exception):
+    pass
+class NotValidatedError(Exception):
     pass
 class DatabaseInvalid(AttributeError):
     def __init__(self, msg, list):

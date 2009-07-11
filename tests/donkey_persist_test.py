@@ -76,8 +76,8 @@ class test_donkey_persist_sqlite(object):
         cls.david.address_line_1 = u"43 union street"
         cls.david.postcode = u"es388"
         davidsjim = cls.Donkey.tables["donkey_sponsership"].sa_class()
-        davidsjim.people = cls.david
-        davidsjim.donkey = cls.jim
+        davidsjim._people = cls.david
+        davidsjim._donkey = cls.jim
         davidsjim.amount = 50
         
         jimpic = file("tests/jim.xcf", mode = "rb").read()
@@ -100,7 +100,6 @@ class test_donkey_persist_sqlite(object):
         cls.session.add(jim0)
         cls.session.add(davidsjim)
         cls.session.add(jimimage)
-        cls.session.commit()
 
         cls.david2 = cls.Donkey.tables["people"].sa_class()
         cls.david2.name = u"david"
@@ -283,9 +282,6 @@ class test_donkey_persist_sqlite(object):
         assert countpeople*2  == countpeopleafter
         assert countspone*2  == countsponeafter
 
-
-
-    
 class test_donkey_persist_mysql(test_donkey_persist_sqlite):
 
     @classmethod
