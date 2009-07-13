@@ -394,7 +394,7 @@ class Table(object):
 
             def __repr__(self):
 
-                return "_table: %s, %s" % (self._table.name, ", ".join(["%s: %s" % 
+                return "_table: %s, id: %s, %s" % (self._table.name, self.id, ", ".join(["%s: %s" % 
                                          (field, getattr(self, field)) for 
                                           field in self._table.columns])
                                          )

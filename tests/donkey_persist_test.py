@@ -1,13 +1,13 @@
 from reformed.fields import *
 from reformed.tables import *
 from reformed.database import *
-from reformed.data_loader import FlatFile, SingleRecord, load_json_from_file
+from reformed.data_loader import FlatFile, load_json_from_file
 from reformed.export import json_dump_all_from_table
-from reformed.export import multi_row_export
-from nose.tools import assert_raises,raises
+from nose.tools import assert_raises
 import sqlalchemy as sa
 from sqlalchemy import create_engine
 import random
+import time
 from reformed.util import get_table_from_instance
 from reformed.validate_database import validate_database
 import logging
@@ -24,7 +24,7 @@ class test_donkey_persist_sqlite(object):
     @classmethod
     def setUpClass(cls):
         if not hasattr(cls, "engine"):
-            cls.engine = create_engine('sqlite:///tests/test_donkey.sqlite',echo = True)
+            cls.engine = create_engine('sqlite:///tests/test_donkey.sqlite')
         cls.meta = sa.MetaData()
         cls.Session = sa.orm.sessionmaker(bind =cls.engine , autoflush = False)
         cls.Donkey = Database("Donkey", 
@@ -114,6 +114,8 @@ class test_donkey_persist_sqlite(object):
         cls.session.commit()
         cls.jimmi_id = donk.id
 
+        time.sleep(1)
+
         donk2 = cls.session.query(cls.Donkey.get_class("donkey")).filter_by(name=donk.name).first()
         donk2.name = u"jimmii"
         cls.session.add(donk2)
@@ -124,7 +126,7 @@ class test_donkey_persist_sqlite(object):
     def tearDownClass(cls):
 
         cls.session.close()
-
+        
 
 #class test_basic_input(test_donkey_persist):
 
@@ -286,12 +288,12 @@ class test_donkey_persist_mysql(test_donkey_persist_sqlite):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
+        cls.engine = create_engine('mysql://localhost/test_donkey')
         super(test_donkey_persist_mysql, cls).setUpClass()
 
 class test_donkey_persist_post(test_donkey_persist_sqlite):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine('postgres://david:@:5432/test_donkey', echo = True)
+        cls.engine = create_engine('postgres://david:@:5432/test_donkey')
         super(test_donkey_persist_post, cls).setUpClass()

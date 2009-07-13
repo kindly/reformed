@@ -100,8 +100,17 @@ class SessionWrapper(object):
         to_check = []
 
         for obj in self.session.dirty:
-            if self.is_modified(obj):
+
+            table = get_table_from_instance(obj, self.database)
+            changed = False
+            for column in table.columns.keys():
+                a, b, c = attributes.get_history(attributes.instance_state(obj), column,
+                                              passive = False)
+                if c:
+                    changed = True
+            if changed:
                 to_check.append(obj)
+
         for obj in self.session.deleted:
             to_check.append(obj)
 
@@ -109,8 +118,8 @@ class SessionWrapper(object):
             lock = self.database.get_instance("_core_lock")
             lock.row_id = row.id
             lock.date = row.modified_date
-            lock.table_name = row._table.name
-            print row
+            lock.table_name = u"%s" % row._table.name
+            logger.info(row.__dict__)
             self.session.add(lock)
 
             try:
