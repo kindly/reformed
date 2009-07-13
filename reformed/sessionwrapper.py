@@ -24,6 +24,7 @@
 ##  funtionality such a as logging and validataion.
 
 from sqlalchemy.orm import attributes 
+import sqlalchemy as sa
 import logging
 import custom_exceptions
 from util import get_table_from_instance
@@ -67,6 +68,8 @@ class SessionWrapper(object):
         if self.has_entity:
             self.add_entity_instance()
         self.add_logged_instances()
+        self.check_all_validated()
+        self.add_locked_rows()
         self.session.flush()
 
     def commit(self):
@@ -74,6 +77,8 @@ class SessionWrapper(object):
             self.add_entity_instance()
         self.add_logged_instances()
         self.check_all_validated()
+        self.add_locked_rows()
+
         for obj in self.session:
             obj._validated = False
         self.session.flush()
@@ -86,6 +91,37 @@ class SessionWrapper(object):
                 self.session.add(obj._entity)
             self.new_entities = []
             self.session.commit()
+
+    def add_locked_rows(self):
+
+        if "_core_lock" not in self.database.tables:
+            return
+        
+        to_check = []
+
+        for obj in self.session.dirty:
+            if self.is_modified(obj):
+                to_check.append(obj)
+        for obj in self.session.deleted:
+            to_check.append(obj)
+
+        for row in to_check:
+            lock = self.database.get_instance("_core_lock")
+            lock.row_id = row.id
+            lock.date = row.modified_date
+            lock.table_name = row._table.name
+            print row
+            self.session.add(lock)
+
+            try:
+                self.session.flush([lock])
+            except sa.exc.IntegrityError:
+                self.session.rollback()
+                raise custom_exceptions.LockingError(
+                    "object %s has been modified" % row, row)
+
+            
+            
 
     def check_all_validated(self):
 

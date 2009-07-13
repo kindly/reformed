@@ -48,6 +48,17 @@ class SearchError(Exception):
     pass
 class NotValidatedError(Exception):
     pass
+class LockingError(Exception):
+    def __init__(self, msg, obj):
+        self.msg = msg
+        self.obj = obj
+
+    def __str__(self):
+        return str(self.msg) 
+
+    def __repr__(self):
+        return str(self.msg) 
+
 class DatabaseInvalid(AttributeError):
     def __init__(self, msg, list):
         self.msg = msg

@@ -382,7 +382,7 @@ class Table(object):
         if self.sa_class:
             return
         table = self
-        class sa_class(object):
+        class SaClass(object):
             def __init__(self):
                 self._table = table
                 self._validated = False
@@ -391,10 +391,17 @@ class Table(object):
             def init_onload(self):
                 self._table = table
                 self._validated = False
+
+            def __repr__(self):
+
+                return "_table: %s, %s" % (self._table.name, ", ".join(["%s: %s" % 
+                                         (field, getattr(self, field)) for 
+                                          field in self._table.columns])
+                                         )
                 
 
-        sa_class.__name__ = self.name
-        self.sa_class = sa_class
+        SaClass.__name__ = self.name
+        self.sa_class = SaClass
 
     def sa_mapper(self):
         """runs sqlalchemy mapper to map the sa_table to sa_class and stores  

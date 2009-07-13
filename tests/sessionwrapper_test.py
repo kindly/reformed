@@ -1,4 +1,6 @@
 import donkey_test
+import reformed.custom_exceptions
+from nose.tools import assert_raises
 import random
 
 class test_session_wrapper(donkey_test.test_donkey):
@@ -23,12 +25,25 @@ class test_session_wrapper(donkey_test.test_donkey):
         allpeople = session.query(self.Donkey.get_class("_log_people")).all()
         allspon = session.query(self.Donkey.get_class("_log_donkey_sponsership")).all()
 
-        
-
         assert u"david%s" % p in [people.name for people in allpeople]
         assert u"david"  in [people.name for people in allpeople]
-
         
         assert p in [spon.amount for spon in allspon]
         assert 50 in [spon.amount for spon in allspon]
+
+    def test_zz_locking(self):
+
+        session1 = self.Donkey.Session()
+        person = session1.query(self.Donkey.t.people).first()
+        person.name = u"poo"
+        session1.save(person)
         
+        session2 = self.Donkey.Session()
+        person = session2.query(self.Donkey.t.people).first()
+        person.name = u"poo"
+        session2.save(person)
+
+        session1.commit()
+        assert_raises(reformed.custom_exceptions.LockingError, session2.commit)
+
+

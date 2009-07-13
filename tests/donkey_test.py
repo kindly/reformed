@@ -74,6 +74,11 @@ class test_donkey(object):
                                    Text("relation_type"),
                                    ManyToOne("_core_entity", "_core_entity", one_way = True)
                                   ),
+                            Table("_core_lock",
+                                  Text("table_name"),
+                                  Integer("row_id"),
+                                  DateTime("date"),
+                                  unique_constraint = "table_name,row_id,date"),
                         metadata = cls.meta,
                         engine = cls.engine,
                         session = cls.Sess
@@ -336,6 +341,8 @@ class test_basic_input(test_donkey):
                                          'donkey_pics.donkey_id': None,
                                          'donkey.name': None,
                                          'people.postcode': u'fred'}
+
+        
 
 
 class test_after_reload(test_basic_input):
