@@ -114,7 +114,6 @@ class test_donkey_persist_sqlite(object):
         cls.session.commit()
         cls.jimmi_id = donk.id
 
-        time.sleep(1)
 
         donk2 = cls.session.query(cls.Donkey.get_class("donkey")).filter_by(name=donk.name).first()
         donk2.name = u"jimmii"

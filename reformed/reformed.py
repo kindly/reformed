@@ -33,6 +33,9 @@ from migrate.versioning import schemadiff
 from sqlalchemy.sql import and_
 import datetime
 import util
+import time
+import job_scheduler
+import standard_jobs
 
 reformed = Database("reformed", 
             metadata = dbconfig.metadata,
@@ -40,14 +43,18 @@ reformed = Database("reformed",
             session = dbconfig.Session
             )
 
-session = reformed.Session()
+scheduler_thread = job_scheduler.JobScedulerThread(reformed)
+scheduler_thread.start()
 
-david = reformed.get_instance("donkey")
+reformed.job_scheduler.add_job("delete_lock", 
+                               standard_jobs.delete_lock_tables,
+                               reformed,
+                               "running",
+                               "stopped")
 
-david.age = 12
 
-session.add(david)
-logged_david = david._table.logged_instance(david)
+
+
 
 
 

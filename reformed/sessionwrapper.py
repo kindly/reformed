@@ -25,6 +25,8 @@
 
 from sqlalchemy.orm import attributes 
 import sqlalchemy as sa
+import datetime
+import time
 import logging
 import custom_exceptions
 from util import get_table_from_instance
@@ -79,9 +81,9 @@ class SessionWrapper(object):
         self.check_all_validated()
         self.add_locked_rows()
 
+        self.session.flush()
         for obj in self.session:
             obj._validated = False
-        self.session.flush()
         self.session.commit()
 
         if self.new_entities:
@@ -102,6 +104,7 @@ class SessionWrapper(object):
         for obj in self.session.dirty:
 
             table = get_table_from_instance(obj, self.database)
+            
             changed = False
             for column in table.columns.keys():
                 a, b, c = attributes.get_history(attributes.instance_state(obj), column,
@@ -112,14 +115,20 @@ class SessionWrapper(object):
                 to_check.append(obj)
 
         for obj in self.session.deleted:
+            if obj._table.name == "_core_lock":
+                continue
             to_check.append(obj)
 
         for row in to_check:
             lock = self.database.get_instance("_core_lock")
             lock.row_id = row.id
             lock.date = row.modified_date
+        
+            ## hack to make sure times are unique for mysql
+            if lock.date == datetime.datetime.now().replace(microsecond = 0):
+                time.sleep(1)
+
             lock.table_name = u"%s" % row._table.name
-            logger.info(row.__dict__)
             self.session.add(lock)
 
             try:
@@ -128,9 +137,6 @@ class SessionWrapper(object):
                 self.session.rollback()
                 raise custom_exceptions.LockingError(
                     "object %s has been modified" % row, row)
-
-            
-            
 
     def check_all_validated(self):
 

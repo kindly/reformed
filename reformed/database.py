@@ -37,6 +37,7 @@ import validate_database
 import logging
 import search
 import networkx as nx
+import job_scheduler
 
 logger = logging.getLogger('reformed.main')
 logger.setLevel(logging.INFO)
@@ -65,6 +66,7 @@ class Database(object):
         for table in args:
             self.add_table(table)
         self.persist()
+        self.job_scheduler = job_scheduler.JobScheduler(self)
 
 
     def add_table(self, table, ignore = False, drop = False):
@@ -386,6 +388,8 @@ class Database(object):
             for key, value in paths.iteritems():
                 table, join, one_ways = value
                 unique_aliases.update([tuple(one_ways + [table])])
+            for key, value in self.tables.iteritems():
+                unique_aliases.update([(key,)])
             
             for item in unique_aliases:
                 if len(item) == 1:
