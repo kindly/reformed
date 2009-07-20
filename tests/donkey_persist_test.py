@@ -215,7 +215,7 @@ class test_donkey_persist_sqlite(object):
         assert validate_database(self.Donkey)[4] == []
 
         
-    def test_z_add_entity_after_loaded(self):
+    def test_zz_add_entity_after_loaded(self):
 
         p = random.randrange(1,10000)
         self.Donkey.add_entity(tables.Table("entity%s" % p, Text("moo")))
@@ -294,5 +294,5 @@ class test_donkey_persist_post(test_donkey_persist_sqlite):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine('postgres://david:@:5432/test_donkey')
+        cls.engine = create_engine('postgres://david:@:5432/test_donkey', echo = True)
         super(test_donkey_persist_post, cls).setUpClass()
