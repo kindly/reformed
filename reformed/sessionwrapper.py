@@ -145,6 +145,11 @@ class SessionWrapper(object):
                 raise custom_exceptions.NotValidatedError(
                     """obj %s has not been saved and validated""" % obj)
 
+        for obj in self.session.new:
+            if not obj._validated:
+                raise custom_exceptions.NotValidatedError(
+                    """obj %s has not been saved and validated""" % obj)
+
     def add_logged_instances(self):
 
         for obj in self.session.dirty:
@@ -164,7 +169,7 @@ class SessionWrapper(object):
                     setattr(logged_instance, column, getattr(obj, column))
             if changed:
                 setattr(logged_instance, table.name + "_logged", obj)
-                self.session.add(logged_instance)
+                self.add(logged_instance)
 
     def add_entity_instance(self):
 

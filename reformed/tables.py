@@ -109,6 +109,7 @@ class Table(object):
         session = self.database.Session()
         __table = self.database.tables["__table"].sa_class()
         __table.table_name = u"%s" % self.name
+        session.add(__table)
 
 
         for name, param in self.kw.iteritems():
@@ -116,6 +117,7 @@ class Table(object):
             __table_param.item = u"%s" % name
             __table_param.value = u"%s" % str(param) 
             __table.table_params.append(__table_param)
+            session.add(__table_param)
 
         for field_name, field  in self.fields.iteritems():
             __field = self.database.tables["__field"].sa_class()
@@ -123,16 +125,17 @@ class Table(object):
             __field.type = u"%s" % field.__class__.__name__
             if hasattr(field, "other"):
                 __field.other = u"%s" % field.other
+            __table.field.append(__field)
+            session.add(__field)
             
             for name, param in field.kw.iteritems():
                 __field_param = self.database.get_instance("__field_params")
                 __field_param.item = u"%s" % name
                 __field_param.value = u"%s" % str(param) 
                 __field.field_params.append(__field_param)
+                session.add(__field_param)
 
-            __table.field.append(__field)
 
-        session.add(__table)
         session.commit()
         self.table_id = __table.id
         self.persisted = True
@@ -164,6 +167,7 @@ class Table(object):
         session = self.database.Session()
         __table = session.query(self.database.get_class("__table")).\
                                 filter_by(table_name = u"%s" % self.name).one()
+
         __field = self.database.tables["__field"].sa_class()
         __field.field_name = u"%s" % field.name
         __field.type = u"%s" % field.__class__.__name__
@@ -175,10 +179,13 @@ class Table(object):
             __field_param.item = u"%s" % name
             __field_param.value = u"%s" % str(param) 
             __field.field_params.append(__field_param)
+            session.add(__field_param)
 
         __table.field.append(__field)
+        session.add(__field)
 
         session.add(__table)
+
         session.commit()
         session.close()
 
@@ -517,9 +524,8 @@ class Table(object):
         return formencode_all
 
     @property
-    def validation_schema(self):
-        """Gathers all the validation dictionarys from all the Field Objects
-        and a makes a formencode Schema out of them"""
+    def schema_dict(self):
+
         schema_dict = {}
 
         # gets from column definition
@@ -552,20 +558,24 @@ class Table(object):
 
                 validator = validators.FancyValidator(not_empty = True)
                 schema_dict[attribute] = validator
+        return schema_dict
+
+    @property
+    def validation_schema(self):
+        """Gathers all the validation dictionarys from all the Field Objects
+        and a makes a formencode Schema out of them"""
                     
 
         return formencode.Schema(allow_extra_fields = True,
                                  ignore_key_missing = True,
-                                 **schema_dict)
+                                 **self.schema_dict)
     
     def validate(self, instance):
         """this validates an instance of sa_class with the schema defined
         by this tables Field objects"""
         
         validation_dict = {}
-        for name in self.columns.iterkeys():
-            validation_dict[name] = getattr(instance, name)
-        for name in self.relation_attributes.iterkeys():
+        for name in self.schema_dict.iterkeys():
             validation_dict[name] = getattr(instance, name)
 
         return self.validation_schema.to_python(validation_dict)

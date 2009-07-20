@@ -129,18 +129,18 @@ class test_donkey_persist_sqlite(object):
 
 #class test_basic_input(test_donkey_persist):
 
-    def test_donkey_input(self):
+    def test_1_donkey_input(self):
 
         assert u"jim" in [a.name for a in\
                           self.session.query(self.Donkey.tables["donkey"].sa_class).all()]
 
-#       assert self.david in [ds for ds in\
-#                         [a.people for a in\
-#                          self.session.query(self.Donkey.tables["donkey_sponsership"].sa_class).all()]]
+        assert self.david in [ds for ds in\
+                          [a._people for a in\
+                           self.session.query(self.Donkey.tables["donkey_sponsership"].sa_class).all()]]
 
-#       assert self.jim in [ds for ds in\
-#                        [a.donkey for a in\
-#                         self.session.query(self.Donkey.tables["donkey_sponsership"].sa_class).all()]]
+        assert self.jim in [ds for ds in\
+                         [a._donkey for a in\
+                          self.session.query(self.Donkey.tables["donkey_sponsership"].sa_class).all()]]
 
     def test_address_validation(self):
 
@@ -148,6 +148,12 @@ class test_donkey_persist_sqlite(object):
         
         assert_raises(formencode.Invalid,
                       get_table_from_instance(self.david2, self.Donkey).validate,self.david2)
+
+    #def test_many_side_not_null(self):
+
+    #    email = self.Donkey.t.email()
+    #    email.email = "poo@poo.com"
+    #    assert_raises(formencode.Invalid, self.session.save, email)
 
     def test_logged_attribute(self):
 
@@ -215,7 +221,8 @@ class test_donkey_persist_sqlite(object):
         assert validate_database(self.Donkey)[4] == []
 
         
-    def test_zz_add_entity_after_loaded(self):
+    def test_z_add_entity_after_loaded(self):
+
 
         p = random.randrange(1,10000)
         self.Donkey.add_entity(tables.Table("entity%s" % p, Text("moo")))

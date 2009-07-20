@@ -47,7 +47,7 @@ class JobScheduler(object):
             session = self.database.Session()
             job_class = self.database.get_class(self.table_name)
             job = session.query(job_class).get(job_id)
-            job.message = "%s, %s" % (compl_message, result)
+            job.message = u"%s, %s" % (compl_message, result)
             job.job_ended = datetime.datetime.now()
             session.save(job)
             session.commit()
@@ -56,7 +56,7 @@ class JobScheduler(object):
             session = self.database.Session()
             job_class = self.database.get_class(self.table_name)
             job = session.query(job_class).get(job_id)
-            job.error = "%s\n %s" % (request, "".join(traceback.format_exception(*result)))
+            job.error = u"%s\n %s" % (request, "".join(traceback.format_exception(*result)))
             job.job_ended = datetime.datetime.now()
             session.save(job)
             session.commit()
@@ -67,12 +67,10 @@ class JobScheduler(object):
 
 class JobScedulerThread(threading.Thread):
 
-
     def __init__(self, database):
         super(JobScedulerThread, self).__init__()
         self.database = database
 
-    
     alive = False
     def run(self):
 

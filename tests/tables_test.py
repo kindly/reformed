@@ -193,9 +193,14 @@ class test_database_primary_key(object):
         self.people.Email.append(self.email3)
         
         session.add(self.people)
+        session.add(self.email)
+        session.add(self.email2)
+        session.add(self.email3)
+
         session.commit()
 
-        self.all = session.query(self.Donkey.tables["people"].sa_class).first()
+        self.session = session
+
         self.peoplelogged = self.Donkey.tables["_log_people"].sa_table
         
 
@@ -208,6 +213,7 @@ class test_database_primary_key(object):
         del self.meta
         del self.engine
         del self.Session
+        del self.session
 
     def test_foriegn_key_columns2(self):
         
@@ -317,12 +323,14 @@ class test_database_primary_key(object):
 
     def test_order(self):
 
-        assert self.all.Email[0].email == u"david@raz.nick"
-        assert self.all.Email[1].email == u"david@raz.nick"
-        assert self.all.Email[2].email == u"aavid@raz.nick"
-        assert self.all.Email[0].email_type == u"a"
-        assert self.all.Email[1].email_type == u"b"
-        assert self.all.Email[2].email_type == u"a"
+        all = self.session.query(self.Donkey.tables["people"].sa_class).first()
+
+        assert all.Email[0].email == u"david@raz.nick"
+        assert all.Email[1].email == u"david@raz.nick"
+        assert all.Email[2].email == u"aavid@raz.nick"
+        assert all.Email[0].email_type == u"a"
+        assert all.Email[1].email_type == u"b"
+        assert all.Email[2].email_type == u"a"
 
     def test_length(self):
         
