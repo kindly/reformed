@@ -340,6 +340,14 @@ class test_database_primary_key(object):
         email.email = u"popo.com"
         assert_raises(fe.Invalid, session.add, email)
 
+    def test_validation_of_mandatory_fk(self):
+
+        session = self.Donkey.Session()
+        email = self.Donkey.tables["email"].sa_class()
+        email.email = u"po@po.com"
+        assert_raises(fe.Invalid, session.add, email)
+
+
 
 
         

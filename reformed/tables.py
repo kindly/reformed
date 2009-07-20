@@ -270,6 +270,18 @@ class Table(object):
         self.check_database()
         return self.database.tables_with_relations(self)
 
+    @property
+    def relation_attributes(self):
+        """returns all the attributes names and accociated relation object
+        that appear on the sqlalchemy object"""
+        relation_attributes = {}
+        for relation in self.tables_with_relations.values():
+            if relation.table is self:
+                relation_attributes[relation.name] = relation
+            else:
+                relation_attributes[relation.sa_options["backref"]] = relation
+        return relation_attributes
+
     @property    
     def foriegn_key_columns(self):
         """gathers the extra columns in this table that are needed as the tables
@@ -477,7 +489,6 @@ class Table(object):
         formencode_all = formencode.All()
         validators = formencode_all.validators
         col_type = column.type
-        #TODO do not make mand when forighn key column
         mand = not column.sa_options.get("nullable", True)
         if column.defined_relation:
             mand = False
@@ -511,6 +522,7 @@ class Table(object):
         and a makes a formencode Schema out of them"""
         schema_dict = {}
 
+        # gets from column definition
         for column in self.columns.itervalues():
             schema_dict[column.name] = self.validation_from_field_types(column)
             if column.validation:
@@ -520,12 +532,29 @@ class Table(object):
                     validator = getattr(validators, column.validation)()
                 schema_dict[column.name].validators.append(validator)
 
+        # gets from field definition
         for field in self.fields.itervalues():
             if hasattr(field, "validation"):
                 for name, validation in field.validation.iteritems():
                     schema_dict[name].validators.append(validation)
 
-        return formencode.Schema(allow_extra_fields =True,
+        # Non nullable foriegn keys are validated on the 
+        # relationship attribute
+        for column in self.foriegn_key_columns.itervalues():
+            mand = not column.sa_options.get("nullable", True)
+            relation = column.defined_relation
+            table = relation.table
+            if relation and mand and not table.name.startswith("_core_"):
+                if relation.table is self:
+                    attribute = relation.name
+                else:
+                    attribute = relation.sa_options["backref"].encode("ascii")
+
+                validator = validators.FancyValidator(not_empty = True)
+                schema_dict[attribute] = validator
+                    
+
+        return formencode.Schema(allow_extra_fields = True,
                                  ignore_key_missing = True,
                                  **schema_dict)
     
@@ -536,8 +565,12 @@ class Table(object):
         validation_dict = {}
         for name in self.columns.iterkeys():
             validation_dict[name] = getattr(instance, name)
+        for name in self.relation_attributes.iterkeys():
+            validation_dict[name] = getattr(instance, name)
 
         return self.validation_schema.to_python(validation_dict)
+        
+        
     
     def logged_instance(self, instance):
         """this creates a copy of an instace of sa_class"""

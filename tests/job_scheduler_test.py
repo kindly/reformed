@@ -16,14 +16,15 @@ class test_single_request(donkey_test.test_donkey):
 
         def func(number):
             time.sleep(number)
+            return "%s is done!" % number
 
         self.job_scheduler.add_job("test_type", func, 2, u"started", u"finished")
         self.job_scheduler.add_job("test_type", func, 1, u"started", u"finished")
 
         self.job_scheduler.threadpool.wait()
 
-        assert self.session.query(self.Donkey.get_class("_core_job_scheduler"))[0].message.count("args=[2]") > 0
-        assert self.session.query(self.Donkey.get_class("_core_job_scheduler"))[1].message.count("args=[1]") > 0
+        assert self.session.query(self.Donkey.get_class("_core_job_scheduler"))[0].message.count("2 is done") > 0
+        assert self.session.query(self.Donkey.get_class("_core_job_scheduler"))[1].message.count("1 is done") > 0
 
         assert self.session.query(self.Donkey.get_class("_core_job_scheduler"))[0].job_ended  > \
                self.session.query(self.Donkey.get_class("_core_job_scheduler"))[1].job_ended  
