@@ -398,12 +398,18 @@ class SingleRecord(object):
         ##TODO cache pk_list for flat files
         pk_list = self.database.tables[table].primary_key_columns.keys()
         ##TODO incorrect need to check even if just one key is specified and error otherwise
+        print key
         if set(pk_list).intersection(set(row.keys())) == set(pk_list) and pk_list:
             obj = self.get_obj_with_pk(key, row)
             self.all_obj[key] = obj
             return obj
 
         ##TODO add a possibility to get objects by the order in their parents list
+        return self.get_new_obj(key, row)
+
+    def get_new_obj(self, key, row):
+
+        table, join, parent_key, relation_name  = self.get_key_info(key)
 
         parents_obj_relation = getattr(self.all_obj[parent_key], relation_name)
         if join in ("onetoone", "manytoone"):
@@ -431,8 +437,12 @@ class SingleRecord(object):
             pk_values[item] = row[item]
 
         parents_obj_relation = getattr(self.all_obj[parent_key], relation_name)
+        print self.all_obj[parent_key]
+        print relation_name
 
         if join in ("onetoone", "manytoone"):
+            if parents_obj_relation is None:
+                return self.get_new_obj(key, row)
             pk_current_values = {}
             for item in pk_list:
                 pk_current_values[item] = getattr(parents_obj_relation, item)

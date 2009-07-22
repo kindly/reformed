@@ -85,6 +85,38 @@ class test_donkey(object):
                         session = cls.Sess
                         )
 
+        cls.Donkey.add_table(Table("category",
+                             Text("category_name"),
+                             Text("category_description"),
+                             Text("category_type"),
+                             OneToMany("sub_category", "sub_category"),
+                             primary_key = 'category_name')
+                            )
+
+        cls.Donkey.add_table(Table("sub_category",
+                             Text("sub_category_name"),
+                             Text("sub_category_description"),
+                             OneToMany("sub_sub_category", "sub_sub_category"),
+                             primary_key = 'category_name,sub_category_name')
+                            )
+
+        cls.Donkey.add_table(Table("sub_sub_category",
+                             Text("sub_sub_category_name"),
+                             Text("sub_sub_category_description"),
+                             OneToMany('entity_categories', 'entity_categories',
+                                       backref = 'category'),
+                             primary_key = 'category_name,sub_category_name,'
+                                           'sub_sub_category_name')
+                            )
+
+        cls.Donkey.add_table(Table("entity_categories",
+                             DateTime("start_date"),
+                             DateTime("end_date"),
+                             ManyToOne("entity", "_core_entity",
+                                       backref = "categories")),
+                            )
+
+
         cls.Donkey.persist()
         cls.session = cls.Donkey.Session()
 
@@ -251,19 +283,9 @@ class test_basic_input(test_donkey):
 
     def test_local_tables(self):
 
-        assert make_local_tables(self.Donkey.tables["people"].paths) == [{'_core_entity': ('_entity',)},
-                                                                         {'_log_people': ('__log_people',),
-                                                                          '_log__core_entity': ('_entity', '__log__core_entity'),
-                                                                          'relation': ('_entity', 'relation'), 'email': ('email',),
-                                                                          'donkey_sponsership': ('donkey_sponsership',)}] 
+        assert make_local_tables(self.Donkey.tables["people"].paths) == [{'_core_entity': ('_entity',)}, {'donkey_sponsership': ('donkey_sponsership',), '_log_people': ('__log_people',), 'entity_categories': ('_entity', 'categories'), 'relation': ('_entity', 'relation'), '_log__core_entity': ('_entity', '__log__core_entity'), 'email': ('email',)}] 
 
-        assert make_local_tables(self.Donkey.tables["donkey"].paths) == [{'_core_entity': ('_entity',),
-                                                                          'donkey_pics': ('donkey_pics',)},
-                                                                         {'_log__core_entity': ('_entity', '__log__core_entity'),
-                                                                          'relation': ('_entity', 'relation'),
-                                                                          '_log_donkey': ('__log_donkey',),
-                                                                          '_log_donkey_pics': ('donkey_pics', '__log_donkey_pics'),
-                                                                          'donkey_sponsership': ('donkey_sponsership',)}] 
+        assert make_local_tables(self.Donkey.tables["donkey"].paths) == [{'_core_entity': ('_entity',), 'donkey_pics': ('donkey_pics',)}, {'_log_donkey': ('__log_donkey',), 'entity_categories': ('_entity', 'categories'), 'relation': ('_entity', 'relation'), '_log_donkey_pics': ('donkey_pics', '__log_donkey_pics'), '_log__core_entity': ('_entity', '__log__core_entity'), 'donkey_sponsership': ('donkey_sponsership',)}] 
         
         assert self.Donkey.tables["relation"].local_tables == {'donkey': ('__core_entity', 'donkey'),
                                                                'relation_donkey': ('_core_entity', 'donkey'),
@@ -274,20 +296,8 @@ class test_basic_input(test_donkey):
                                                                'relation__core_entity': ('_core_entity',),
                                                                'relation_donkey_pics': ('_core_entity', 'donkey', 'donkey_pics')} 
 
-        assert self.Donkey.tables["relation"].one_to_many_tables == {'relation__log__core_entity': ('_core_entity', '__log__core_entity'),
-                                                                     '_log_relation': ('__log_relation',),
-                                                                     'relation_relation': ('_core_entity', 'relation'),
-                                                                     'relation__log_people': ('_core_entity', 'people', '__log_people'),
-                                                                     'relation_email': ('_core_entity', 'people', 'email'),
-                                                                     'relation__log_donkey': ('_core_entity', 'donkey', '__log_donkey'),
-                                                                     'relation__log_donkey_pics': ('_core_entity', 'donkey', 'donkey_pics', '__log_donkey_pics'),
-                                                                     '_log_donkey': ('__core_entity', 'donkey', '__log_donkey'),
-                                                                     'email': ('__core_entity', 'people', 'email'),
-                                                                     '_log_people': ('__core_entity', 'people', '__log_people'),
-                                                                     '_log_donkey_pics': ('__core_entity', 'donkey', 'donkey_pics', '__log_donkey_pics'),
-                                                                     'relation_donkey_sponsership': ('_core_entity', 'people', 'donkey_sponsership'),
-                                                                     '_log__core_entity': ('__core_entity', '__log__core_entity'),
-                                                                     'donkey_sponsership': ('__core_entity', 'donkey', 'donkey_sponsership')}
+
+        assert self.Donkey.tables["relation"].one_to_many_tables == {'relation__log__core_entity': ('_core_entity', '__log__core_entity'), '_log__core_entity': ('__core_entity', '__log__core_entity'), 'relation_relation': ('_core_entity', 'relation'), 'relation_entity_categories': ('_core_entity', 'categories'), 'relation__log_people': ('_core_entity', 'people', '__log_people'), 'relation_email': ('_core_entity', 'people', 'email'), 'relation__log_donkey': ('_core_entity', 'donkey', '__log_donkey'), 'relation__log_donkey_pics': ('_core_entity', 'donkey', 'donkey_pics', '__log_donkey_pics'), '_log_donkey': ('__core_entity', 'donkey', '__log_donkey'), 'donkey_sponsership': ('__core_entity', 'people', 'donkey_sponsership'), '_log_people': ('__core_entity', 'people', '__log_people'), 'entity_categories': ('__core_entity', 'categories'), '_log_donkey_pics': ('__core_entity', 'donkey', 'donkey_pics', '__log_donkey_pics'), 'relation_donkey_sponsership': ('_core_entity', 'people', 'donkey_sponsership'), '_log_relation': ('__log_relation',), 'email': ('__core_entity', 'people', 'email')}
         
     def test_zz_add_local(self):
 
@@ -342,6 +352,22 @@ class test_basic_input(test_donkey):
                                          'donkey_pics.donkey_id': None,
                                          'donkey.name': None,
                                          'people.postcode': u'fred'}
+        
+    def test_import_catagory_data(self):
+
+        load_local_data(self.Donkey, {"__table": u"sub_sub_category",
+                                      "category.category_name": u"a",
+                                      "category.category_description": u"this is a",
+                                      "category.category_type": u"wee",
+                                      "sub_category.sub_category_name": u"ab",
+                                      "sub_category.sub_category_description": u"this is ab",
+                                      "sub_sub_category.sub_sub_category_name": u"abc",
+                                      "sub_sub_category.sub_sub_category_description": u"this is abc"}
+                       )
+
+        results = self.session.query(self.Donkey.t.sub_sub_category).all()
+
+        assert [get_all_local_data(a) for a in results] == [{'sub_category.sub_category_name': u'ab', 'sub_sub_category.sub_sub_category_name': u'abc', 'category.category_name': u'a', 'category.category_description': u'this is a', 'sub_category.sub_category_description': u'this is ab', 'category.category_type': u'wee', 'sub_sub_category.sub_sub_category_description': u'this is abc', 'sub_sub_category.sub_category_name': u'ab', 'sub_sub_category.category_name': u'a', 'sub_category.category_name': u'a'}]
 
         
 

@@ -152,7 +152,7 @@ class Database(object):
                 if table.name in self.tables.iterkeys():
                     break
                 self.add_table(table)
-        self.update_sa()
+        self.update_sa(reload = True)
         self.metadata.create_all(self.engine)
         for table in self.tables.itervalues():
             if not table.persisted:
