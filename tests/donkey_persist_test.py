@@ -246,7 +246,7 @@ class test_donkey_persist_sqlite(object):
     def test_params_load(self):
 
         assert self.Donkey.tables["donkey"].fields["name"].field_validation == "__^[a-zA-Z0-9]*$"
-        assert self.Donkey.tables["donkey"].fields["donkey_pics"].many_side_mandatory == False 
+        assert self.Donkey.tables["donkey"].fields["donkey_pics"].many_side_not_null == False 
         assert self.Donkey.tables["donkey"].fields["age"].field_validation == "Int"
         assert self.Donkey.tables["people"].fields["name"].length == 30
         assert self.Donkey.tables["people"].fields["name"].mandatory == True

@@ -170,7 +170,7 @@ class Relation(BaseSchema):
         cascade = kw.pop("cascade", None)
         if cascade:
             self.sa_options["cascade"] = cascade
-        self.many_side_mandatory = kw.pop("many_side_mandatory", True)
+        self.many_side_not_null = kw.pop("many_side_not_null", True)
         backref = kw.pop("backref", None)
         if backref:
             self.sa_options["backref"] = backref
@@ -197,8 +197,8 @@ class Relation(BaseSchema):
         if self.use_parent:
             if parent.order_by:
                 self.order_by = parent.order_by
-            if parent.many_side_mandatory is False:
-                self.many_side_mandatory = parent.many_side_mandatory 
+            if parent.many_side_not_null is False:
+                self.many_side_not_null = parent.many_side_not_null
             if parent.one_way:
                 self.one_way = True
 
@@ -267,7 +267,7 @@ class Field(object):
         obj.length = kw.get("length", None)
         if obj.length:
             obj.length = int(obj.length)
-        obj.many_side_mandatory = kw.get("many_side_mandatory", True)
+        obj.many_side_not_null = kw.get("many_side_not_null", True)
         obj.one_way = kw.get("one_way", None)
         return obj
 

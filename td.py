@@ -30,7 +30,7 @@ d.add_entity(r.Table("donkey",
                     r.Text("name", validation = '__^[a-zA-Z0-9]*$'),
                     r.Integer("age", validation = 'Int'),
                     r.OneToOne("donkey_pics","donkey_pics",
-                             many_side_mandatory = False,
+                             many_side_not_null = False,
                              ),
                     r.OneToMany("donkey_sponsership",
                               "donkey_sponsership")

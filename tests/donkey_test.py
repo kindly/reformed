@@ -42,7 +42,7 @@ class test_donkey(object):
                                   Text("name", validation = '__^[a-zA-Z0-9]*$'),
                                   Integer("age", validation = 'Int'),
                                   OneToOne("donkey_pics","donkey_pics",
-                                           many_side_mandatory = False,
+                                           many_side_not_null = False,
                                            ),
                                   OneToMany("donkey_sponsership",
                                             "donkey_sponsership"),
@@ -78,7 +78,8 @@ class test_donkey(object):
                                   Text("table_name"),
                                   Integer("row_id"),
                                   DateTime("date"),
-                                  unique_constraint = "table_name,row_id,date"),
+                                  unique_constraint = "table_name,row_id,date",
+                                  logged = False),
                         metadata = cls.meta,
                         engine = cls.engine,
                         session = cls.Sess

@@ -312,7 +312,7 @@ class Table(object):
                     for name, column in table.primary_key_columns.items():
                         new_col = Column(column.type,
                                          name=name,
-                                         mandatory = rel.many_side_mandatory,
+                                         mandatory = rel.many_side_not_null, 
                                          defined_relation= rel,
                                          original_column= name) 
                         columns[name] = new_col
@@ -320,13 +320,13 @@ class Table(object):
                     if table+"_id" not in columns:
                         columns[table+'_id'] = Column(sa.Integer,
                                                        name = table+'_id',
-                                                       mandatory = rel.many_side_mandatory,
+                                                       mandatory = rel.many_side_not_null,
                                                        defined_relation= rel,
                                                        original_column= "id")
                     else:
                         columns[table+'_id2'] = Column(sa.Integer,
                                                        name = table+'_id2',
-                                                       mandatory = rel.many_side_mandatory,
+                                                       mandatory = rel.many_side_not_null,
                                                        defined_relation= rel,
                                                        original_column= "id")
         return columns

@@ -163,20 +163,7 @@ class test_search(donkey_test.test_donkey):
                set(session.query(people_class).outerjoin(["email"]).\
                    filter(and_(people_class.name < u"popp02", or_(email_class.email == None, not_(email_class.email.like(u"popi%"))))).all())) == set()
 
-        search2 = Search(self.Donkey, u"people", self.session)
-
-        search2.add_query(SingleQuery(search, t.people.name < u"popp02", "not", t.email.email.like(u"popi%")))
-
-        assert set(search2.search().all()).symmetric_difference( 
-               set(session.query(people_class).outerjoin(["email"]).\
-                   filter(and_(people_class.name < u"popp02", or_(email_class.email == None, not_(email_class.email.like(u"popi%"))))).all())) == set()
-
-
-        search3 = Search(self.Donkey, u"people", self.session)
-
-        search3.add_query(SingleQuery(search, t.people.name < u"popp02", "not", t.email.email.like(u"popi%")))
-
-        assert len(search3.search()[0:15]) == 15
+        assert len(search.search()[0:15]) == 15
 
 
     def test_search_with_union(self):
