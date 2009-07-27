@@ -331,6 +331,8 @@ class Table(object):
                                                        original_column= "id")
         return columns
 
+    
+
 
     @property
     def foreign_key_constraints(self):
@@ -558,6 +560,17 @@ class Table(object):
 
                 validator = validators.FancyValidator(not_empty = True)
                 schema_dict[attribute] = validator
+
+        for tab, rel in self.tables_with_relations.iteritems():
+            if not rel.many_side_mandatory:
+                continue
+            table, pos = tab
+            if rel.type in ("onetomany", "onetone") and pos == "here":
+                print rel.name
+                schema_dict[rel.name] = validators.FancyValidator(not_empty = True)
+            if rel.type == "manytoone" and pos == "other":
+                schema_dict[rel.sa_options["backref"]] = validators.FancyValidator(not_empty = True)
+        
         return schema_dict
 
     @property

@@ -8,6 +8,7 @@ from reformed.data_loader import SingleRecord
 from sqlalchemy import create_engine
 from reformed.util import get_table_from_instance, create_data_dict, make_local_tables, get_all_local_data, load_local_data
 from decimal import Decimal
+import formencode as fe
 import yaml
 import os
 import logging
@@ -92,14 +93,14 @@ class test_donkey(object):
                              Text("category_name"),
                              Text("category_description"),
                              Text("category_type"),
-                             OneToMany("sub_category", "sub_category"),
+                             OneToMany("sub_category", "sub_category", many_side_mandatory = True),
                              primary_key = 'category_name')
                             )
 
         cls.Donkey.add_table(Table("sub_category",
                              Text("sub_category_name"),
                              Text("sub_category_description"),
-                             OneToMany("sub_sub_category", "sub_sub_category"),
+                             OneToMany("sub_sub_category", "sub_sub_category", many_side_mandatory = True),
                              primary_key = 'category_name,sub_category_name')
                             )
 
@@ -438,6 +439,34 @@ class test_basic_input(test_donkey):
         cat = SingleRecord(self.Donkey, "category", cat)
 
         assert_raises(custom_exceptions.InvalidData,cat.load)
+
+    def test_many_side_mandatory_validation(self):
+
+
+        assert_raises(
+            fe.Invalid,
+            load_local_data,
+            self.Donkey, 
+            {"__table": u"category",
+            "category.category_name": u"z",
+            "category.category_description": u"this is a",
+            "category.category_type": u"wee",
+            }
+        )
+
+        try:
+            load_local_data(self.Donkey, 
+                            {"__table": u"category",
+                            "category.category_name": u"z",
+                            "category.category_description": u"this is a",
+                            "category.category_type": u"wee",
+                            })
+        except fe.Invalid, e:
+            assert e.msg == "\nsub_category: Please enter a value"
+
+
+
+
 
 
 class test_after_reload(test_basic_input):
