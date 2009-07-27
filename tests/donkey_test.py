@@ -3,9 +3,12 @@ from reformed.tables import *
 from reformed.database import *
 from nose.tools import assert_raises,raises
 import sqlalchemy as sa
+import reformed.custom_exceptions
+from reformed.data_loader import SingleRecord
 from sqlalchemy import create_engine
 from reformed.util import get_table_from_instance, create_data_dict, make_local_tables, get_all_local_data, load_local_data
 from decimal import Decimal
+import yaml
 import os
 import logging
 
@@ -370,6 +373,71 @@ class test_basic_input(test_donkey):
         assert [get_all_local_data(a) for a in results] == [{'sub_category.sub_category_name': u'ab', 'sub_sub_category.sub_sub_category_name': u'abc', 'category.category_name': u'a', 'category.category_description': u'this is a', 'sub_category.sub_category_description': u'this is ab', 'category.category_type': u'wee', 'sub_sub_category.sub_sub_category_description': u'this is abc', 'sub_sub_category.sub_category_name': u'ab', 'sub_sub_category.category_name': u'a', 'sub_category.category_name': u'a'}]
 
         
+        load_local_data(self.Donkey, {"__table": u"sub_sub_category",
+                                      "category.category_name": u"a",
+                                      "sub_category.sub_category_name": u"ac",
+                                      "sub_category.sub_category_description": u"this is ac",
+                                      "sub_sub_category.sub_sub_category_name": u"acc",
+                                      "sub_sub_category.sub_sub_category_description": u"this is acc"}
+                       )
+
+        results = self.session.query(self.Donkey.t.sub_sub_category).all()
+
+        assert [get_all_local_data(a) for a in results] == [{'sub_category.sub_category_name': u'ab', 'sub_sub_category.sub_sub_category_name': u'abc', 'category.category_name': u'a', 'category.category_description': u'this is a', 'sub_category.sub_category_description': u'this is ab', 'category.category_type': u'wee', 'sub_sub_category.sub_sub_category_description': u'this is abc', 'sub_sub_category.sub_category_name': u'ab', 'sub_sub_category.category_name': u'a', 'sub_category.category_name': u'a'}, {'sub_category.sub_category_name': u'ac', 'sub_sub_category.sub_sub_category_name': u'acc', 'category.category_name': u'a', 'category.category_description': u'this is a', 'sub_category.sub_category_description': u'this is ac', 'category.category_type': u'wee', 'sub_sub_category.sub_sub_category_description': u'this is acc', 'sub_sub_category.sub_category_name': u'ac', 'sub_sub_category.category_name': u'a', 'sub_category.category_name': u'a'}]
+
+
+
+        assert_raises(custom_exceptions.InvalidData,load_local_data,
+                      self.Donkey,
+                      {"__table": u"sub_sub_category",
+                                      "category.category_name": u"b",
+                                      "sub_category.category_name": u"a",
+                                      "sub_category.sub_category_name": u"ac",
+                                      "sub_category.sub_category_description": u"this is ac",
+                                      "sub_sub_category.sub_sub_category_name": u"acd",
+                                      "sub_sub_category.sub_sub_category_description": u"this is acc"}
+                       )
+
+        load_local_data(self.Donkey, {"__table": u"sub_sub_category",
+                                      "category.id": 1,
+                                      "sub_category.id": 2,
+                                      "sub_sub_category.sub_sub_category_name": u"acd",
+                                      "sub_sub_category.sub_sub_category_description": u"this is acc"}
+                       )
+
+        results = self.session.query(self.Donkey.t.sub_sub_category).all()
+
+        assert [get_all_local_data(a) for a in results][2]  == {'sub_category.sub_category_name': u'ac', 'sub_sub_category.sub_sub_category_name': u'acd', 'category.category_name': u'a', 'category.category_description': u'this is a', 'sub_category.sub_category_description': u'this is ac', 'category.category_type': u'wee', 'sub_sub_category.sub_sub_category_description': u'this is acc', 'sub_sub_category.sub_category_name': u'ac', 'sub_sub_category.category_name': u'a', 'sub_category.category_name': u'a'}
+
+
+        assert_raises(custom_exceptions.InvalidData,
+                      load_local_data,
+                      self.Donkey,
+                      {"__table": u"sub_sub_category",
+                       "category.id": 1,
+                       "sub_category.id": 3,
+                       "sub_sub_category.sub_sub_category_name": u"acd",
+                       "sub_sub_category.sub_sub_category_description": u"this is acc"}
+                       )
+
+    def test_zzz_add_one_to_many(self):
+
+        cat ="""
+        category_name: b,
+        sub_category:
+            category_name: a
+            sub_category_name: ac
+            sub_category_description: this is ac
+            sub_sub_category:
+                sub_sub_category_name: acd
+                sub_sub_category_description: this is acc
+        """
+
+        cat = yaml.load(cat)
+
+        cat = SingleRecord(self.Donkey, "category", cat)
+
+        assert_raises(custom_exceptions.InvalidData,cat.load)
 
 
 class test_after_reload(test_basic_input):

@@ -398,7 +398,6 @@ class SingleRecord(object):
         ##TODO cache pk_list for flat files
         pk_list = self.database.tables[table].primary_key_columns.keys()
         ##TODO incorrect need to check even if just one key is specified and error otherwise
-        print key
         if set(pk_list).intersection(set(row.keys())) == set(pk_list) and pk_list:
             obj = self.get_obj_with_pk(key, row)
             self.all_obj[key] = obj
@@ -437,12 +436,16 @@ class SingleRecord(object):
             pk_values[item] = row[item]
 
         parents_obj_relation = getattr(self.all_obj[parent_key], relation_name)
-        print self.all_obj[parent_key]
-        print relation_name
+
 
         if join in ("onetoone", "manytoone"):
-            if parents_obj_relation is None:
-                return self.get_new_obj(key, row)
+            if not parents_obj_relation:
+                try:
+                    obj = self.session.query(self.database.get_class(table)).filter_by(**pk_values).one()
+                    setattr(self.all_obj[parent_key], relation_name, obj)
+                    return obj
+                except sqlalchemy.orm.exc.NoResultFound:
+                    return self.get_new_obj(key, row)
             pk_current_values = {}
             for item in pk_list:
                 pk_current_values[item] = getattr(parents_obj_relation, item)
@@ -460,9 +463,9 @@ class SingleRecord(object):
                     pk_current_values[item] = getattr(obj, item)
                 if pk_current_values == pk_values:
                     return obj
-            raise custom_exceptions.InvalidData("""primary key value(s) %s in table %s
-                                    either do(es) not exist or 
-                                    is not associted with join"""
+            raise custom_exceptions.InvalidData("primary key value(s) %s in table %s"
+                                    "either do(es) not exist or" 
+                                    "is not associted with join"
                                     % (pk_values, table))
 
     def get_obj_with_id(self, key, row):
@@ -474,6 +477,15 @@ class SingleRecord(object):
 
         parents_obj_relation = getattr(self.all_obj[parent_key], relation_name)
         if join in ("onetoone", "manytoone"):
+            if not parents_obj_relation:
+                try:
+                    obj = self.session.query(self.database.get_class(table)).filter_by(id = id).one()
+                    setattr(self.all_obj[parent_key], relation_name, obj)
+                    return obj
+                except sqlalchemy.orm.exc.NoResultFound:
+                    raise custom_exceptions.InvalidData("id %s is not in "
+                                                        "table %s"
+                                                        % (id, table))
             if parents_obj_relation.id <> id:
                 raise custom_exceptions.InvalidData("""id %s in table %s
                                         either does not exist or 
