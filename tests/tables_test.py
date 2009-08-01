@@ -147,6 +147,8 @@ class test_database_primary_key(object):
                                   Text("name6"),
                                   Text("name7"),
                                   Text("name8"),
+                                  Text("name9"),
+                                  RequireIfMissing("req_name9", field = 'name9', missing = 'name'),
                                   OneToOne("address","address"),
                                   OneToMany("Email","email", 
                                            order_by = 'email desc,name2, email_type'),
@@ -186,8 +188,6 @@ class test_database_primary_key(object):
         self.email.email_type = u"a"
         self.email2.email_type = u"b"
         self.email3.email_type = u"a"
-
-
         self.people.Email.append(self.email)
         self.people.Email.append(self.email2)
         self.people.Email.append(self.email3)
@@ -203,8 +203,6 @@ class test_database_primary_key(object):
 
         self.peoplelogged = self.Donkey.tables["_log_people"].sa_table
         
-
-
 #    def tearDown(self):
 #        self.meta.clear()
     @classmethod
@@ -355,7 +353,21 @@ class test_database_primary_key(object):
         email.email = u"po@po.com"
         assert_raises(fe.Invalid, session.add, email)
 
+    def test_chained_validation(self):
 
+        people = self.Donkey.tables["people"].sa_class()
+
+        assert_raises(fe.Invalid, self.session.add, people)
+
+        people = self.Donkey.tables["people"].sa_class()
+
+        people.name9 = "pop"
+        assert self.session.add(people) is None
+        
+        people = self.Donkey.tables["people"].sa_class()
+        people.name = "pop"
+
+        self.session.add(people) is None
 
 
         

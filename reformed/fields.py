@@ -24,7 +24,7 @@
 
 from columns import Column, Field, Relation
 import formencode
-from formencode import validators
+import validators
 import sqlalchemy as sa
 import datetime
 
@@ -76,6 +76,21 @@ class Address(Field):
                            "postcode": validators.String(not_empty =True)
                           }
 
+class RequireIfMissing(Field):
+
+    def __init__(self, name, *args, **kw):
+
+        field = kw.get("field")
+        missing = kw.get("missing")
+
+        self.chained_validator = validators.RequireIfMissing(field, missing = missing)
+
+class CheckOverLappingDates(Field):
+
+    def __init__(self, name, *args, **kw):
+
+        parent_table = kw.get("parent_table")
+        self.chained_validator = validators.CheckNoOverlappingDates(parent_table)
 
 class Binary(Field):
 
@@ -111,7 +126,7 @@ class Email(Field):
 class Date(Field):
     
     def __init__(self, name, *args, **kw):
-        self.date = Column(sa.Date)
+        self.date = Column(sa.Date, use_parent = True)
 
 
 class ManyToOne(Field):

@@ -529,6 +529,7 @@ class Table(object):
     def schema_dict(self):
 
         schema_dict = {}
+        chained_validators = [] 
 
         # gets from column definition
         for column in self.columns.itervalues():
@@ -541,10 +542,19 @@ class Table(object):
                 schema_dict[column.name].validators.append(validator)
 
         # gets from field definition
+        print self.fields
         for field in self.fields.itervalues():
+            print field
             if hasattr(field, "validation"):
                 for name, validation in field.validation.iteritems():
                     schema_dict[name].validators.append(validation)
+            # chained validaors
+            if hasattr(field, "chained_validator"):
+                if isinstance(field.chained_validator, list):
+                    chained_validators.extend(field.chained_validator)
+                else:
+                    chained_validators.append(field.chained_validator)
+                    
 
         # Non nullable foriegn keys are validated on the 
         # relationship attribute
@@ -561,23 +571,33 @@ class Table(object):
                 validator = validators.FancyValidator(not_empty = True)
                 schema_dict[attribute] = validator
 
+        # many side mandatory validators
         for tab, rel in self.tables_with_relations.iteritems():
             if not rel.many_side_mandatory:
                 continue
             table, pos = tab
             if rel.type in ("onetomany", "onetone") and pos == "here":
-                print rel.name
                 schema_dict[rel.name] = validators.FancyValidator(not_empty = True)
             if rel.type == "manytoone" and pos == "other":
                 schema_dict[rel.sa_options["backref"]] = validators.FancyValidator(not_empty = True)
         
+        if chained_validators:
+            schema_dict["chained_validators"] = chained_validators
+
+
         return schema_dict
+
 
     @property
     def validation_schema(self):
         """Gathers all the validation dictionarys from all the Field Objects
         and a makes a formencode Schema out of them"""
-                    
+
+
+        #print formencode.Schema(allow_extra_fields = True,
+        #                         ignore_key_missing = True,
+        #                         **self.schema_dict)
+    
 
         return formencode.Schema(allow_extra_fields = True,
                                  ignore_key_missing = True,
@@ -589,9 +609,11 @@ class Table(object):
         
         validation_dict = {}
         for name in self.schema_dict.iterkeys():
+            if name == "chained_validators":
+                continue
             validation_dict[name] = getattr(instance, name)
 
-        return self.validation_schema.to_python(validation_dict)
+        return self.validation_schema.to_python(validation_dict, instance)
         
         
     

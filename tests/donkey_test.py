@@ -7,6 +7,7 @@ import reformed.custom_exceptions
 from reformed.data_loader import SingleRecord
 from sqlalchemy import create_engine
 from reformed.util import get_table_from_instance, create_data_dict, make_local_tables, get_all_local_data, load_local_data
+import datetime
 from decimal import Decimal
 import formencode as fe
 import yaml
@@ -114,10 +115,11 @@ class test_donkey(object):
                             )
 
         cls.Donkey.add_table(Table("entity_categories",
-                             DateTime("start_date"),
-                             DateTime("end_date"),
+                             Date("start_date"),
+                             Date("end_date"),
                              ManyToOne("entity", "_core_entity",
-                                       backref = "categories")),
+                                       backref = "categories"),
+                             CheckOverLappingDates("check_dates", parent_table = "_core_entity"))
                             )
 
 
@@ -269,8 +271,9 @@ class test_basic_input(test_donkey):
 
         result = self.session.query(self.Donkey.tables["donkey_sponsership"].sa_class).first()
 
-        assert get_all_local_data(result) == {'donkey_sponsership.date': None,
-                                              'donkey_sponsership.people_id': 1,
+        print get_all_local_data(result)
+
+        assert get_all_local_data(result) == {'donkey_sponsership.people_id': 1,
                                               'people.country': None,
                                               'people.address_line_1': u'43 union street',
                                               'people.address_line_2': None,
@@ -280,9 +283,11 @@ class test_basic_input(test_donkey):
                                               'donkey_sponsership.amount': Decimal('50'),
                                               'donkey_pics.pic': None,
                                               'donkey_sponsership.donkey_id': 1,
-                                              'donkey.age': 13, 'people.town': None,
+                                              'donkey.age': 13,
+                                              'people.town': None,
                                               'donkey_pics.donkey_id': None,
                                               'donkey.name': u'jim',
+                                              'donkey_sponsership.giving_date': None,
                                               'people.postcode': u'es388'} 
 
     def test_local_tables(self):
@@ -330,6 +335,7 @@ class test_basic_input(test_donkey):
         except formencode.Invalid, e:
             assert str(e.error_dict) == """{'donkey.age': Invalid(u'Please enter an integer value',), 'people.postcode': Invalid(u'Please enter a value',), 'people.name': Invalid(u'Please enter a value',)}"""
 
+
         load_local_data(self.Donkey, {"__table": u"donkey_sponsership",
                                       "donkey_sponsership.amount" : 711110,                                   
                                       "donkey.age" : 12,                                   
@@ -340,22 +346,8 @@ class test_basic_input(test_donkey):
 
         a = self.session.query(self.Donkey.t.donkey_sponsership).filter_by(amount = 711110).one()
 
-        assert get_all_local_data(a) == {'donkey_sponsership.date': None, 
-                                         'donkey_sponsership.people_id': 2,
-                                         'people.country': None,
-                                         'people.address_line_1': u'poo1010101',
-                                         'people.address_line_2': u'poop',
-                                         'people.address_line_3': None,
-                                         'people.name': u'fred',
-                                         'donkey_pics.pic_name': None,
-                                         'donkey_sponsership.amount': Decimal('711110'),
-                                         'donkey_pics.pic': None,
-                                         'donkey_sponsership.donkey_id': 12,
-                                         'donkey.age': 12,
-                                         'people.town': None,
-                                         'donkey_pics.donkey_id': None,
-                                         'donkey.name': None,
-                                         'people.postcode': u'fred'}
+
+        assert get_all_local_data(a) == {'donkey_sponsership.people_id': 2, 'people.country': None, 'people.address_line_1': u'poo1010101', 'people.address_line_2': u'poop', 'people.address_line_3': None, 'people.name': u'fred', 'donkey_pics.pic_name': None, 'donkey_sponsership.amount': Decimal('711110'), 'donkey_pics.pic': None, 'donkey_sponsership.donkey_id': 12, 'donkey.age': 12, 'people.town': None, 'donkey_pics.donkey_id': None, 'donkey.name': None, 'donkey_sponsership.giving_date': None, 'people.postcode': u'fred'}
         
     def test_import_catagory_data(self):
 
@@ -464,8 +456,35 @@ class test_basic_input(test_donkey):
         except fe.Invalid, e:
             assert e.msg == "\nsub_category: Please enter a value"
 
+    def test_zzzz_overlapping_date_validation(self):
 
+        entity = self.session.query(self.Donkey.t._core_entity).first()
+        category = self.session.query(self.Donkey.t.sub_sub_category).first()
 
+        cat1 = self.Donkey.get_instance("entity_categories")
+        cat1.start_date = datetime.date(2009,04,02)
+        cat1.end_date = datetime.date(2009,04,03)
+        cat1.category = category
+
+        cat2 = self.Donkey.get_instance("entity_categories")
+        cat2.start_date = datetime.date(2009,04,02)
+        cat2.end_date = datetime.date(2009,04,03)
+        cat2.category = category
+
+        entity.categories.append(cat1)
+        entity.categories.append(cat2)
+
+        self.session.save(entity)
+
+        assert_raises(
+            fe.Invalid,
+            self.session.save,
+            cat1)
+
+        cat2.start_date = datetime.date(2009,05,02)
+        cat2.end_date = datetime.date(2009,05,03)
+
+        assert self.session.save(cat1) is None
 
 
 

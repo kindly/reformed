@@ -318,5 +318,6 @@ class Field(object):
         """
         for name, item in self.items.iteritems():
             if name in table.items.iterkeys():
-                raise AttributeError("already an item named %s" % name)
+                raise AttributeError("already an item named %s in %s" % 
+                                     (name, table.name))
                 
