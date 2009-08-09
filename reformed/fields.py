@@ -85,12 +85,21 @@ class RequireIfMissing(Field):
 
         self.chained_validator = validators.RequireIfMissing(field, missing = missing)
 
+
 class CheckOverLappingDates(Field):
 
     def __init__(self, name, *args, **kw):
 
         parent_table = kw.get("parent_table")
         self.chained_validator = validators.CheckNoOverlappingDates(parent_table)
+
+class CheckNoTwoNulls(Field):
+
+    def __init__(self, name, *args, **kw):
+
+        parent_table = kw.get("parent_table")
+        field = kw.get("field")
+        self.chained_validator = validators.CheckNoTwoNulls(parent_table, field)
 
 class Binary(Field):
 

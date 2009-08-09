@@ -542,9 +542,7 @@ class Table(object):
                 schema_dict[column.name].validators.append(validator)
 
         # gets from field definition
-        print self.fields
         for field in self.fields.itervalues():
-            print field
             if hasattr(field, "validation"):
                 for name, validation in field.validation.iteritems():
                     schema_dict[name].validators.append(validation)
@@ -593,11 +591,6 @@ class Table(object):
         """Gathers all the validation dictionarys from all the Field Objects
         and a makes a formencode Schema out of them"""
 
-
-        #print formencode.Schema(allow_extra_fields = True,
-        #                         ignore_key_missing = True,
-        #                         **self.schema_dict)
-    
 
         return formencode.Schema(allow_extra_fields = True,
                                  ignore_key_missing = True,

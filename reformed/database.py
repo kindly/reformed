@@ -280,7 +280,6 @@ class Database(object):
         except (custom_exceptions.NoDatabaseError,\
                 custom_exceptions.RelationError):
             pass
-            print '#' * 100
 
     def clear_sa(self):
         sa.orm.clear_mappers()
