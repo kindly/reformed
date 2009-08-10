@@ -43,7 +43,6 @@ class SessionWrapper(object):
         self.session = Session()
         self.database = database
         self.has_entity = has_entity
-        self.new_entities = []
 
     def __getattr__(self, item):
         return getattr(self.session, item)
@@ -86,13 +85,6 @@ class SessionWrapper(object):
             obj._validated = False
         self.session.commit()
 
-        if self.new_entities:
-            for obj in self.new_entities:
-                obj._entity.table_id = obj.id
-                self.session.add(obj)
-                self.session.add(obj._entity)
-            self.new_entities = []
-            self.session.commit()
 
     def add_locked_rows(self):
 
@@ -177,7 +169,6 @@ class SessionWrapper(object):
             table = get_table_from_instance(obj, self.database)
             if table.entity == True:
                 entity = self.database.get_instance("_core_entity")
-                self.new_entities.append(obj)
                 entity.table = table.table_id
                 obj._entity = entity
                 self.add(obj)

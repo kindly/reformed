@@ -16,7 +16,7 @@ class test_database(object):
     @classmethod
     def setUpClass(self):
 
-        self.engine = sa.create_engine('sqlite:///:memory:', echo=True)
+        self.engine = sa.create_engine('sqlite:///:memory:')
         self.meta = sa.MetaData()
         self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
         self.Donkey = Database("Donkey",
@@ -24,13 +24,14 @@ class test_database(object):
                               Text("name"),
                               Text("name2", length = 10),
                               OneToMany("Email","email"),
-                              entity = True),
+                              ),
                          Table("email",
                                Text("email")
                               ),
                                metadata = self.meta,
                                engine = self.engine,
-                               session = self.Session)
+                               session = self.Session,
+                              )
         #self.Donkey.update_sa()
         self.Donkey.persist()
 
@@ -58,7 +59,7 @@ class test_database(object):
     def test_relations(self):
 
         print self.Donkey.relations
-        assert self.Donkey.relations[3].name == "Email" 
+        assert "Email" in [email.name for email in self.Donkey.relations] 
 
     def test_checkrelations(self):
 
@@ -93,8 +94,8 @@ class test_database(object):
         allfields = session.query(self.Donkey.tables["__field"].sa_class).all()
         allfield_param = session.query(self.Donkey.tables["__field_params"].sa_class).all()
            
-        assert (u"people",u"entity", u"True") in [(a.table_name, a.item,
-                                                   a.value) for a in all]
+        #assert (u"people",u"entity", u"True") in [(a.table_name, a.item,
+        #                                           a.value) for a in all]
                                                     
         assert (u"people",u"name", u"Text") in [(a.table_name, a.field_name,
                                                    a.type) for a in allfields]
@@ -182,11 +183,7 @@ class test_database(object):
                             Address("address")
                                  ))
 
-        self.Donkey.add_table(Table("_core_entity",
-                             Integer("table"),
-                             Integer("table_id"),
-                             )
-                    )
+        self.Donkey.add_entity_table()
 
         self.Donkey.add_entity(Table("donkey", 
                                Text("name", validation = '__^[a-zA-Z0-9]*$'),

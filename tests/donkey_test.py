@@ -68,18 +68,6 @@ class test_donkey(object):
                                   Money("amount"),
                                   Text("source")
                                  ),
-                            Table("_core_entity",
-                                  Integer("table"),
-                                  Integer("table_id"),
-                                  OneToOne("people","people", backref = "_entity"),
-                                  OneToOne("donkey","donkey", backref = "_entity"),
-                                  OneToMany("relation",
-                                            "relation"),
-                                 ),
-                             Table("relation",
-                                   Text("relation_type"),
-                                   ManyToOne("_core_entity", "_core_entity", one_way = True)
-                                  ),
                              Table("membership",
                                    DateTime("start_date", mandatory = True),
                                    DateTime("end_date" ),
@@ -94,7 +82,8 @@ class test_donkey(object):
                                   logged = False),
                         metadata = cls.meta,
                         engine = cls.engine,
-                        session = cls.Sess
+                        session = cls.Sess,
+                        entity = True
                         )
 
         cls.Donkey.add_table(Table("category",

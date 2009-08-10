@@ -4,8 +4,7 @@ import reformed.reformed as r
 d = r.reformed
 
 d.add_table(r.Table("_core_entity",
-                     r.Integer("table"),
-                     r.Integer("table_id"),
+                     r.Integer("table")
                      )
             )
 

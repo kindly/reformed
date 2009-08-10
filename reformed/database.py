@@ -29,7 +29,7 @@ import custom_exceptions
 import resultset
 import tables
 from util import get_paths
-from fields import ManyToOne, OneToOne
+from fields import ManyToOne, OneToOne, OneToMany
 import fields as field_types
 import boot_tables
 import sessionwrapper
@@ -55,16 +55,22 @@ class Database(object):
         self.metadata = kw.pop("metadata", None)
         self.engine = kw.pop("engine", None)
         self._Session = kw.pop("session", None)
+        self.entity = kw.pop("entity", False)
         self.metadata.bind = self.engine
         self.Session = sessionwrapper.SessionClass(self._Session, self)
         self.persisted = False
         boots = boot_tables.boot_tables()
-        self.boot_tables =boots.boot_tables
+        self.boot_tables = boots.boot_tables
         self.graph = None
         self.fields_to_persist = [] 
         self.load_from_persist()
+        if self.entity:
+            self.add_entity_table()
         for table in args:
-            self.add_table(table)
+            if table.entity is True:
+                self.add_entity(table)
+            else:
+                self.add_table(table)
         self.persist()
         self.job_scheduler = job_scheduler.JobScheduler(self)
 
@@ -126,6 +132,24 @@ class Database(object):
         for name, table in self.aliases.iteritems():
             setattr(tables, name, table) 
         return tables
+
+    def add_entity_table(self):
+
+        if "_core_entity" not in self.tables:
+            entity_table = tables.Table("_core_entity",
+                                  field_types.Integer("table"),
+                                  OneToMany("relation",
+                                            "relation"),
+                                  )
+
+            relation =  tables.Table("relation",
+                               field_types.Text("relation_type"),
+                               ManyToOne("_core_entity", "_core_entity", one_way = True)
+                              )
+
+            self.add_table(entity_table)
+            self.add_table(relation)
+
 
     def add_entity(self, table):
         if "_core_entity" not in self.tables:
@@ -400,6 +424,8 @@ class Database(object):
                 aliases[key] = value.sa_class
 
         self.aliases = aliases
+
+
 
 
 
