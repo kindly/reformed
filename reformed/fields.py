@@ -22,7 +22,8 @@
 ##	
 ##	This file contains all the standard reformed field subclasses
 
-from columns import Column, Field, Relation
+from columns import Column, Field, Relation, Constraint
+import columns
 import formencode
 import validators
 import sqlalchemy as sa
@@ -164,4 +165,22 @@ class OneToOne(Field):
     def __init__(self, name, other, *args, **kw):
         self.other = other
         self.onetoone = Relation("onetoone", other, use_parent = True)
+
+class Index(Field):
+
+    def __init__(self, name, fields, *args, **kw):
+        self.other = fields
+        self.index = columns.Index("normal", fields, use_parent = True)
+
+class UniqueIndex(Field):
+
+    def __init__(self, name, fields, *args, **kw):
+        self.other = fields
+        self.index = columns.Index("unique", fields, use_parent = True)
     
+class UniqueConstraint(Field):
+
+    def __init__(self, name, fields, *args, **kw):
+        self.other = fields
+        self.index = columns.Constraint("unique", fields, use_parent = True)
+

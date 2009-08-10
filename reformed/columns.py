@@ -114,6 +114,40 @@ class Column(BaseSchema):
             parent.add_column(self.name, self)
             self.parent = parent
         
+class Index(BaseSchema):
+
+    def __init__(self, type, fields, *args, **kw):
+        self.fields = fields
+        self.type = type
+        super(Index, self).__init__(type , *args, **kw)
+
+    def _set_parent(self, parent, name):
+
+        self._set_name(parent, name)
+
+        if self.name in parent.items.iterkeys():
+            raise AttributeError("index name already in field definition")
+        else: 
+            parent.add_index(self.name, self)
+            self.parent = parent
+
+class Constraint(BaseSchema):
+
+    def __init__(self, type, fields, *args, **kw):
+        self.fields = fields
+        self.type = type
+        super(Constraint, self).__init__(type , *args, **kw)
+
+    def _set_parent(self, parent, name):
+
+        self._set_name(parent, name)
+
+        if self.name in parent.items.iterkeys():
+            raise AttributeError("constraint name already in field definition")
+        else: 
+            parent.add_constraint(self.name, self)
+            self.parent = parent
+
 class Relation(BaseSchema):
     """Specifies a relationship between the table where this relation
     is defined and another table.  You cannot specify more that one relation
@@ -242,6 +276,8 @@ class Field(object):
         obj.decendants_name = name
         obj.columns = {}
         obj.relations = {}
+        obj.indexes = {}
+        obj.constraints = {}
         obj.sa_options = {}
         obj.column_order = []
         obj.kw = kw
@@ -291,6 +327,8 @@ class Field(object):
         items = {}
         items.update(self.columns)
         items.update(self.relations)
+        items.update(self.constraints)
+        items.update(self.indexes)
         return items
 
     def add_column(self, name, column):
@@ -299,6 +337,12 @@ class Field(object):
 
     def add_relation(self, name, relation):
         self.relations[name] = relation
+
+    def add_index(self, name, index):
+        self.indexes[name] = index
+
+    def add_constraint(self, name, constraint):
+        self.constraints[name] = constraint
 
     def _set_parent(self, table):
                 

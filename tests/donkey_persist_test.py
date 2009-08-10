@@ -272,6 +272,14 @@ class test_donkey_persist_sqlite(object):
 
         assert 1500 in [a.amount for a in result.donkey_sponsership]
 
+    def test_indexs_present(self):
+
+        print [a.name for a in self.Donkey.tables["donkey"].sa_table.indexes] 
+        assert "idx_name" in [a.name for a in self.Donkey.tables["donkey"].sa_table.indexes] 
+        
+
+
+
     def tfdsest_z_after_export_then_import(self):
 
         session = self.Donkey.Session()

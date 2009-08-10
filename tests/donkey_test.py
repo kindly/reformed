@@ -51,6 +51,7 @@ class test_donkey(object):
                                            ),
                                   OneToMany("donkey_sponsership",
                                             "donkey_sponsership"),
+                                  Index("idx_name", "name"),
                                   entity = True
                                  ),
                             Table("donkey_pics",
@@ -89,7 +90,7 @@ class test_donkey(object):
                                   Text("table_name"),
                                   Integer("row_id"),
                                   DateTime("date"),
-                                  unique_constraint = "table_name,row_id,date",
+                                  UniqueConstraint("unique", "table_name,row_id,date"),
                                   logged = False),
                         metadata = cls.meta,
                         engine = cls.engine,

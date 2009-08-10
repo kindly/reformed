@@ -207,6 +207,24 @@ class Table(object):
                 columns[name] = column
         return columns
 
+    @property    
+    def indexes(self):
+        """gathers all columns defined in this table"""
+        columns = {}
+        for field in self.fields.itervalues():
+            for name, column in field.indexes.iteritems():
+                columns[name] = column
+        return columns
+
+    @property    
+    def constraints(self):
+        """gathers all columns defined in this table"""
+        columns = {}
+        for field in self.fields.itervalues():
+            for name, column in field.constraints.iteritems():
+                columns[name] = column
+        return columns
+
     @property
     def defined_columns_order(self):
         column_order = []
@@ -387,14 +405,18 @@ class Table(object):
             for con in self.foreign_key_constraints.itervalues():
                 sa_table.append_constraint(sa.ForeignKeyConstraint(con[0],
                                                                    con[1]))
-        if self.index_list:
-            for index in self.index_list:
-                ind = [sa_table.columns[col] for col in index]
-                name = "_".join(index)
-                sa_table.append_constraint(sa.Index(name, *ind))
-        if self.unique_constraint_list:
-            for constraint in self.unique_constraint_list:
-                sa_table.append_constraint(sa.UniqueConstraint(*constraint))
+        for name, index in self.indexes.iteritems():
+            ind = [sa_table.columns[col.strip()] for col in index.fields.split(",")]
+            if index.type == "unique":
+                logging.info(index.type)
+                sa.Index(name, *ind, unique = True)
+            else:
+                sa.Index(name, *ind)
+
+        for name, constr in self.constraints.iteritems():
+            con = [col.strip() for col in constr.fields.split(",")]
+            sa_table.append_constraint(sa.UniqueConstraint(*con, name = name))
+
         self.sa_table = sa_table
    
     def make_sa_class(self):

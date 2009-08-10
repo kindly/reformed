@@ -6,6 +6,7 @@ from nose.tools import assert_raises,raises
 import formencode as fe
 import logging
 import datetime
+from sqlalchemy.exc import IntegrityError
 
 sqlhandler = logging.FileHandler("sql.log")
 sqllogger = logging.getLogger('sqlalchemy.engine')
@@ -61,36 +62,18 @@ class test_table_primary_key(object):
                        Text("col3"),
                        ManyToOne("rel1","table2"),
                        primary_key="col,col2",
-                       index= "col3;col2,col3",
-                       unique_constraint= "col3,col;col2,col3,col")
+                       )
         
     def test_primary_key_columns(self):
         
         assert self.a.primary_key_columns.has_key("col")
         assert self.a.primary_key_columns.has_key("col2")
 
-    def test_index_columns(self):
-        
-        assert ['col3'] in self.a.index_list
-        assert ['col2','col3'] in self.a.index_list
-
-    def test_unique_constraint_columns(self):
-        
-        assert ['col3','col'] in self.a.unique_constraint_list
-        assert ['col2','col3','col'] in self.a.unique_constraint_list
 
     def test_defined_non_primary_key(self):
         
         assert self.a.defined_non_primary_key_columns.has_key("col3")
 
-#    @raises(AttributeError)
-#    def test_defined_primary_keyssetUp(self):
-#        
-#        a= Table("poo",
-#            Text("col"),
-#            Text("col2"),
-#            ManyToOne("rel1","table2"),
-#            primary_key="col,col1")
 
 class test_database_default_primary_key(object):
     
@@ -133,7 +116,7 @@ class test_database_primary_key(object):
     @classmethod
     def setUpClass(self):
 
-        self.engine = sa.create_engine('sqlite:///:memory:', echo=True)
+        self.engine = sa.create_engine('sqlite:///:memory:')
         self.meta = sa.MetaData()
         self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
         
@@ -152,9 +135,11 @@ class test_database_primary_key(object):
                                   OneToOne("address","address"),
                                   OneToMany("Email","email", 
                                            order_by = 'email desc,name2, email_type'),
+                                  Index("idx_name3_name4", "name3, name4"),
+                                  UniqueIndex("idx_name5", "name5"),
+                                  UniqueConstraint("name67", "name6,name7"),
+                                  UniqueConstraint("con_name8", "name8"),
                                   primary_key = "name,name2",
-                                  index = "name3,name4;name5",
-                                  unique_constraint = "name6,name7;name8"
                                  ),
                             Table("email",
                                   Email("email"),
@@ -239,8 +224,22 @@ class test_database_primary_key(object):
 
     def test_index(self):
 
-        assert "name3_name4" in [a.name for a in self.peopletable.indexes] 
-        assert "name5" in [a.name for a in self.peopletable.indexes] 
+        assert "idx_name3_name4" in [a.name for a in self.peopletable.indexes] 
+        assert "idx_name5" in [a.name for a in self.peopletable.indexes] 
+        
+    def test_unique_index(self):
+        a = self.Donkey.get_instance("people") 
+        a.name9 = "poo"
+        a.name5 = "poo"
+        self.session.add(a)
+        self.session.commit()
+
+        b = self.Donkey.get_instance("people") 
+        b.name9 = "poo"
+        b.name5 = "poo"
+        self.session.add(b)
+        assert_raises(IntegrityError, self.session.commit)
+
         
     def test_unique_constraints(self):
 
@@ -368,6 +367,7 @@ class test_database_primary_key(object):
         people.name = "pop"
 
         self.session.add(people) is None
+
 
 
         
