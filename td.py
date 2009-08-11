@@ -3,10 +3,6 @@ import reformed.reformed as r
 
 d = r.reformed
 
-d.add_table(r.Table("_core_entity",
-                     r.Integer("table")
-                     )
-            )
 
 d.add_entity(r.Table("people",
                     r.Text("name", mandatory = True, length = 30),

@@ -58,7 +58,7 @@ class SessionWrapper(object):
 
     def add(self, obj):
         """save or update and validate a sqlalchemy object"""
-        get_table_from_instance(obj, self.database).validate(obj)
+        obj._table.validate(obj)
         obj._validated = True
         self.session.add(obj)
     

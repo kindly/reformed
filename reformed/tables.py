@@ -630,7 +630,6 @@ class Table(object):
 
         return self.validation_schema.to_python(validation_dict, instance)
         
-        
     
     def logged_instance(self, instance):
         """this creates a copy of an instace of sa_class"""

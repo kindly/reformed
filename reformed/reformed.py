@@ -38,10 +38,11 @@ import job_scheduler
 import standard_jobs
 
 reformed = Database("reformed", 
-            metadata = dbconfig.metadata,
-            engine = dbconfig.engine,
-            session = dbconfig.Session
-            )
+                    entity = True,
+                    metadata = dbconfig.metadata,
+                    engine = dbconfig.engine,
+                    session = dbconfig.Session
+                    )
 
 scheduler_thread = job_scheduler.JobScedulerThread(reformed)
 scheduler_thread.start()
