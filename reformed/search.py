@@ -2,6 +2,10 @@ import sqlalchemy as sa
 from util import create_table_path_list, create_table_path
 import custom_exceptions
 import tables
+import pyparsing 
+import decimal
+from decimal import Decimal
+import datetime
 from sqlalchemy.sql import not_, and_, or_
 
 class Search(object):
@@ -116,8 +120,6 @@ class Search(object):
 
         return query
 
-        
-
     def create_aliased_path(self):
         
         for item in self.table_paths_list:
@@ -125,6 +127,194 @@ class Search(object):
             new_name = "_".join(one_ways + [table_name])
             self.aliased_name_path[new_name] = list(key)
 
+class QueryFromString(object):
+
+    def __init__(self, search, *args):
+
+        self.search = search
+        self.query = args[0]
+
+        parser = self.parser()
+
+        self.ast = parser.parseString(self.query)
+
+        self.covering_ors = set()
+
+        self.inner_joins = set()
+        self.outer_joins = set()
+
+        self.gather_joins(self.ast, False)
+
+        self.gather_covering_ors(self.ast, False, False)
+
+    def add_conditions(self, sa_query):
+
+        for join in self.outer_joins.union(self.covering_ors):
+            sa_query = sa_query.outerjoin(self.search.aliased_name_path[join])
+
+        for join in self.inner_joins:
+            sa_query = sa_query.join(self.search.aliased_name_path[join])
+
+        sa_query = sa_query.filter(self.where)
+
+        return sa_query
+
+    def gather_covering_ors(self, node, notted, ored):
+
+        for item in node:
+            if item == "not":
+                notted = not notted
+            if item == "or" and not notted:
+                ored = True
+            if item == "and" and notted:
+                ored = True
+
+        for item in node:
+            if isinstance(item, pyparsing.ParseResults) and item.table and ored:
+                self.covering_ors.update([item.table])
+                
+            if isinstance(item, pyparsing.ParseResults):
+                self.gather_covering_ors(item, notted, ored)
+
+    def gather_joins(self, node, notted):
+
+        for item in node:
+            if item == "not":
+                notted = not notted
+
+        for item in node:
+            if isinstance(item, pyparsing.ParseResults) and item.table:
+                if item.operator in ("<", "<=") and not notted or\
+                   item.operator not in ("<", "<=") and notted:
+                    self.outer_joins.update([item.table])
+                else:
+                    self.inner_joins.update([item.table])
+
+            if isinstance(item, pyparsing.ParseResults):
+                self.gather_joins(item, notted)
+
+    def convert_where(self, node):
+
+        print node
+        for item in node:
+            to_not = True if item == "not" else False
+            to_and = True if item == "and" else False
+            to_or = True if item == "or" else False
+            if any([to_not, to_and, to_or]):
+                break
+
+        if to_not:
+            return not_(self.convert_where(node[1]))
+
+        if node.operator:
+            if node.table:
+                table_class = getattr(self.search.database.t,node.table)
+            else:
+                table_class = getattr(self.search.database.t,self.search.table)
+            
+            field = getattr(table_class, node.field)
+
+            if node.operator == "<":
+                return or_(field < node.value, table_class.id == None)
+            if node.operator == "<=":
+                return or_(field <= node.value, table_class.id == None)
+            if node.operator == "=":
+                return and_( field == node.value, table_class.id <> None)
+            if node.operator == ">":
+                return and_(field > node.value, table_class.id <> None)
+            if node.operator == ">=":
+                return and_(field >= node.value, table_class.id <> None)
+            if node.operator == "in":
+                return and_(field.in_(*list(node.value)), table_class.id <> None)
+            if node.operator == "between":
+                return and_(field.between(node.value, node.value2), table_class.id <> None)
+            if node.operator == "like":
+                return and_(field.ilike(node.value), table_class.id <> None)
+        if to_or:
+            ors = [self.convert_where(stat) for stat in node[0::2]]
+            return or_(*ors)
+        if to_and:
+            ors = [self.convert_where(stat) for stat in node[0::2]]
+            return and_(*ors)
+    
+        raise
+    
+
+    def parser(self):
+        
+        Word = pyparsing.Word
+        Literal = pyparsing.Literal
+        Group = pyparsing.Group
+        Combine = pyparsing.Combine
+        nums = pyparsing.nums
+
+        attr = Word(pyparsing.alphanums)
+
+        string_value = Word(pyparsing.alphanums)
+        iso_date = Word(nums, exact =4) + Literal("-") +\
+                   Word(nums, exact =2) + Literal("-") + Word(nums, exact = 2)
+
+        uk_date = Word(nums, exact = 2) + Literal("/") +\
+                     Word(nums, exact = 2) + Literal("/") + Word(nums, exact = 4)
+
+        def convert_iso(tok):
+            return datetime.datetime.strptime(tok[0], "%Y-%m-%d")
+
+        def convert_uk(tok):
+            return datetime.datetime.strptime(tok[0], "%d/%m/%Y")
+
+        date = Combine(iso_date).setParseAction(convert_iso) | Combine(uk_date).setParseAction(convert_uk)
+
+        def convert_decimal(tok):
+            return Decimal(tok[0], 2)
+
+        decimal = Combine(Word(nums) + Literal(".") + Word(nums, exact = 2)).setParseAction(convert_decimal)
+
+        string_no_quote = Word(pyparsing.alphanums + "_")
+
+        def remove_quotes(str):
+            return str[0][1:-1]
+
+        value = date | decimal | pyparsing.quotedString.setParseAction(remove_quotes) |string_no_quote
+
+        objwithtable = attr.setResultsName("table") +\
+                       Literal(".").suppress() +\
+                       attr.setResultsName("field")
+                        
+        objnotable = attr.setResultsName("field")
+
+        obj = objwithtable | objnotable
+        
+        comparison = ((Literal("<=") | Literal("<") | Literal("=") | Literal(">=") |\
+                       Literal(">")).setResultsName("operator") + \
+                       value.setResultsName("value"))
+
+        between = pyparsing.CaselessKeyword("between").setResultsName("operator") +\
+                  value.setResultsName("value") +\
+                  pyparsing.CaselessKeyword("and") +\
+                  value.setResultsName("value2")
+
+
+        like = pyparsing.CaselessKeyword("like").setResultsName("operator") +\
+               value.setResultsName("value")
+
+
+        in_ = pyparsing.CaselessKeyword("in").setResultsName("operator") +\
+              (Literal("(").suppress() +\
+              Group(pyparsing.delimitedList(value)).setResultsName("value") +\
+              Literal(")").suppress())
+
+        singlexpr =  pyparsing.Group( obj + (between|comparison|like|in_) )
+
+        expression = pyparsing.StringStart() + pyparsing.operatorPrecedence(singlexpr,
+                [
+                ("not", 1, pyparsing.opAssoc.RIGHT),
+                ("or",  2, pyparsing.opAssoc.LEFT),
+                ("and", 2, pyparsing.opAssoc.LEFT),
+                ]) + pyparsing.StringEnd()
+        
+
+        return expression
 
 class SingleQuery(object):
 
@@ -140,7 +330,6 @@ class SingleQuery(object):
         self.outer_joins = self.query.outer_joins
         self.gather_covering_ors()
         self.where = self.process_query(self.query)
-        root_class = self.search.database.tables[self.search.table].sa_class
 
         
     def add_conditions(self, sa_query):
