@@ -39,7 +39,7 @@ class Search(object):
         query = args[0]
 
         if not hasattr(query, "add_conditions"):
-            query = SingleQuery(self, *args)
+            query = QueryFromString(self, *args)
 
         self.queries.append([query, exclude])
 
@@ -129,7 +129,7 @@ class Search(object):
 
 class QueryFromString(object):
 
-    def __init__(self, search, *args):
+    def __init__(self, search, *args, **kw):
 
         self.search = search
         self.query = args[0]
@@ -147,13 +147,21 @@ class QueryFromString(object):
 
         self.gather_covering_ors(self.ast, False, False)
 
+        if kw.get("test", False) == True:
+            return
+
+        self.where = self.convert_where(self.ast[0])
+
+
     def add_conditions(self, sa_query):
 
         for join in self.outer_joins.union(self.covering_ors):
-            sa_query = sa_query.outerjoin(self.search.aliased_name_path[join])
+            if join <> self.search.table:
+                sa_query = sa_query.outerjoin(self.search.aliased_name_path[join])
 
         for join in self.inner_joins:
-            sa_query = sa_query.join(self.search.aliased_name_path[join])
+            if join <> self.search.table:
+                sa_query = sa_query.join(self.search.aliased_name_path[join])
 
         sa_query = sa_query.filter(self.where)
 
@@ -195,7 +203,6 @@ class QueryFromString(object):
 
     def convert_where(self, node):
 
-        print node
         for item in node:
             to_not = True if item == "not" else False
             to_and = True if item == "and" else False
@@ -218,6 +225,8 @@ class QueryFromString(object):
                 return or_(field < node.value, table_class.id == None)
             if node.operator == "<=":
                 return or_(field <= node.value, table_class.id == None)
+            if node.operator == "<>":
+                return or_(field <> node.value, table_class.id == None)
             if node.operator == "=":
                 return and_( field == node.value, table_class.id <> None)
             if node.operator == ">":
@@ -225,7 +234,7 @@ class QueryFromString(object):
             if node.operator == ">=":
                 return and_(field >= node.value, table_class.id <> None)
             if node.operator == "in":
-                return and_(field.in_(*list(node.value)), table_class.id <> None)
+                return and_(field.in_(list(node.value)), table_class.id <> None)
             if node.operator == "between":
                 return and_(field.between(node.value, node.value2), table_class.id <> None)
             if node.operator == "like":
@@ -237,7 +246,7 @@ class QueryFromString(object):
             ors = [self.convert_where(stat) for stat in node[0::2]]
             return and_(*ors)
     
-        raise
+        raise 
     
 
     def parser(self):
@@ -248,7 +257,7 @@ class QueryFromString(object):
         Combine = pyparsing.Combine
         nums = pyparsing.nums
 
-        attr = Word(pyparsing.alphanums)
+        attr = Word(pyparsing.alphanums + "_" )
 
         string_value = Word(pyparsing.alphanums)
         iso_date = Word(nums, exact =4) + Literal("-") +\
@@ -285,7 +294,7 @@ class QueryFromString(object):
 
         obj = objwithtable | objnotable
         
-        comparison = ((Literal("<=") | Literal("<") | Literal("=") | Literal(">=") |\
+        comparison = ((Literal("<>") | Literal("<=") | Literal("<") | Literal("=") | Literal(">=") |\
                        Literal(">")).setResultsName("operator") + \
                        value.setResultsName("value"))
 
