@@ -2,15 +2,14 @@ from search import Search
 from datetime import datetime, timedelta
 import time
 
-def delete_lock_tables(database, wait = 60 * 5):
+def delete_lock_tables(database, wait = 60.0 * 5):
 
 
     session = database.Session()
     search = Search(database, 
                     "_core_lock",
                     session, 
-                    database.t._core_lock.date <\
-                    datetime.now() - timedelta(minutes = 1))
+                    "date < now")
 
     count = 0
     for obj in search.search().all():
@@ -19,15 +18,14 @@ def delete_lock_tables(database, wait = 60 * 5):
 
 
     session.commit()
-    session.expunge_all()
+    session.close()
 
-    time.sleep(wait)
-
-    database.job_scheduler.add_job("delete_lock", 
-                                   delete_lock_tables,
-                                   database,
-                                   "running",
-                                   "stopped")
 
     return "number deleted = %s" % count
 
+def wait(database, number):
+    time.sleep(int(number))
+    return "%s is done!" % number
+
+def error(database, number):
+    assert 1 <> 1

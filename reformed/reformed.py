@@ -48,8 +48,7 @@ scheduler_thread = job_scheduler.JobScedulerThread(reformed)
 scheduler_thread.start()
 
 reformed.job_scheduler.add_job("delete_lock", 
-                               standard_jobs.delete_lock_tables,
-                               reformed,
-                               "running",
-                               "stopped")
+                               "delete_lock_tables",
+                               "1000"
+                               )
 

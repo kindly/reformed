@@ -181,7 +181,6 @@ class Database(object):
         for table in self.tables.itervalues():
             if not table.persisted:
                 table.persist()
-        logger.info(self.fields_to_persist)
         for field in self.fields_to_persist:
             field.table._persist_extra_field(field)
         if self.fields_to_persist:
@@ -342,7 +341,9 @@ class Database(object):
             result = resultset.ResultSet(query, result_num = limit).first_set()
         else:
             result = resultset.ResultSet(query).all()
-        return [get_all_local_data(obj, keep_all = True) for obj in result]    
+        return [get_all_local_data(obj, keep_all = True, allow_system = True) for obj in result]    
+        
+        session.close()
 
     def logged_table(self, logged_table):
 

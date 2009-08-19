@@ -1,6 +1,5 @@
 #!/usr/bin/python
 import os, sys
-from reformed.reformed import reformed 
 from reformed.export import json_dump_all_from_table
 from reformed.data_loader import load_json_from_file
 
@@ -8,6 +7,7 @@ from reformed.data_loader import load_json_from_file
 
 def create():
 
+    from reformed.reformed import reformed 
     import td
     load_json_from_file("form_dump.json", reformed, "_core_form") 
 
@@ -17,11 +17,14 @@ def delete():
 
 def dump():
 
+    from reformed.reformed import reformed 
     session = reformed.Session()
     json_dump_all_from_table(session, "_core_form", reformed, "form_dump.json", style='clear')
     session.close()
 
 def run():
+
+    from reformed.reformed import reformed 
     import web
     if os.environ.get("REQUEST_METHOD", ""):
         from wsgiref.handlers import BaseCGIHandler
@@ -35,12 +38,12 @@ def run():
 
 
 if __name__ == "__main__":
-   if 'create' in sys.argv:
-        create()
-   if 'run' in sys.argv:
-        run()
    if 'dump' in sys.argv:
        dump()
    if 'delete' in sys.argv:
        delete()
+   if 'create' in sys.argv:
+        create()
+   if 'run' in sys.argv:
+        run()
 

@@ -52,6 +52,14 @@ d.add_table(r.Table("paymentdds",
                    )
            )
 
+d.add_table(r.Table("_core_lock",
+              r.Text("table_name"),
+              r.Integer("row_id"),
+              r.DateTime("date"),
+              r.UniqueConstraint("unique", "table_name,row_id,date"),
+              logged = False)
+           )
+
 d.add_table(r.Table("_core_form", r.Text("name"),
                    r.OneToMany("_core_form_param","_core_form_param"), r.OneToMany("_core_form_item","_core_form_item")))
 
