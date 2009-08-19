@@ -5,15 +5,15 @@
 - add default not nulls for joint columns -Done
 - modify the add table and add field so as to go through set parent - Done
 - sort out test coverage for database especially looking at all join conditions - Done
-- add table that joins back to an entity table - can be done by making join from both tables - not working
+- add table that joins back to an entity table - can be done by making join from both tables - Done 
 - add unique constraints - Done
 - add nullable,sequences and any other sqlalchemy column level parameters -Done
 - add validation - basicly DONE
 - sort out order of field, by adding counter to columns and fields using setattr - Done
 - do checks to see if defined table reflects table underneath - Done
 - persist database information - Done
-- create object for getting sa_objects
-- give all relevent tables locking information
+- create object for getting sa_objects - Done
+- give all relevent tables locking information - Done
 - give all tables potential to log information - Done
 - make sure namespaces for objects are unique, looking at especially backreferences need to check relations forien keyclashed- Wontfix just let you define own backref
 - make sure field definition namespaces are unique - Done
@@ -24,7 +24,7 @@
 - optimise make sa_table - Done
 - make sure indexs and unique constraints are remade, and can be added and dropped
 - entity table configuration - Done
-- seperate out indexs
+- seperate out indexs - Done
 - add ordering list implementation
 - make sure sa type class/object distinction works - Wontfix as all will be objects
 - make sure primary key columns are present once they are defined in check_relations or similar
@@ -34,6 +34,6 @@
 - add fields add to logging instances also
 - table loading with yaml and csv - Done
 - give a way to log and record all validation errors on data loading by catching all exceptions.
-- validation accross rows
-- 2 joins between 2 tables needs to work, making sure it works for data_loader and searching
-- make way of running queries and tasks in the background.
+- validation accross rows - Done
+- 2 joins between 2 tables needs to work, making sure it works for data_loader and searching - Done
+- make way of running queries and tasks in the background. - Done

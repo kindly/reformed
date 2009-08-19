@@ -1,9 +1,6 @@
-import sqlalchemy as sa
 from util import create_table_path_list, create_table_path
 import custom_exceptions
-import tables
 import pyparsing 
-import decimal
 from decimal import Decimal
 import datetime
 from sqlalchemy.sql import not_, and_, or_
@@ -210,8 +207,6 @@ class QueryFromString(object):
             if any([to_not, to_and, to_or]):
                 break
 
-        if to_not:
-            return not_(self.convert_where(node[1]))
 
         if node.operator:
             if node.table:
@@ -239,6 +234,13 @@ class QueryFromString(object):
                 return and_(field.between(node.value, node.value2), table_class.id <> None)
             if node.operator == "like":
                 return and_(field.ilike(node.value), table_class.id <> None)
+            if node.operator == "is":
+                return field == None
+            if node.operator == "not":
+                return field <> None
+
+        if to_not:
+            return not_(self.convert_where(node[1]))
         if to_or:
             ors = [self.convert_where(stat) for stat in node[0::2]]
             return or_(*ors)
@@ -259,6 +261,10 @@ class QueryFromString(object):
 
         attr = Word(pyparsing.alphanums + "_" )
 
+        def convert_unicode(tok):
+            return u"%s" % tok[0]
+
+
         string_value = Word(pyparsing.alphanums)
         iso_date = Word(nums, exact =4) + Literal("-") +\
                    Word(nums, exact =2) + Literal("-") + Word(nums, exact = 2)
@@ -272,19 +278,27 @@ class QueryFromString(object):
         def convert_uk(tok):
             return datetime.datetime.strptime(tok[0], "%d/%m/%Y")
 
-        date = Combine(iso_date).setParseAction(convert_iso) | Combine(uk_date).setParseAction(convert_uk)
+        def convert_now(tok):
+            return datetime.datetime.now()
+
+        
+
+        date = pyparsing.CaselessKeyword("now").setParseAction(convert_now) |\
+               Combine(iso_date).setParseAction(convert_iso) |\
+               Combine(uk_date).setParseAction(convert_uk)
 
         def convert_decimal(tok):
             return Decimal(tok[0], 2)
 
         decimal = Combine(Word(nums) + Literal(".") + Word(nums, exact = 2)).setParseAction(convert_decimal)
 
-        string_no_quote = Word(pyparsing.alphanums + "_")
+        string_no_quote = Word(pyparsing.alphanums + "_").setParseAction(convert_unicode)
+
 
         def remove_quotes(str):
-            return str[0][1:-1]
+            return u"%s" % str[0][1:-1]
 
-        value = date | decimal | pyparsing.quotedString.setParseAction(remove_quotes) |string_no_quote
+        value = date | decimal | Word(nums) | pyparsing.quotedString.setParseAction(remove_quotes) |string_no_quote
 
         objwithtable = attr.setResultsName("table") +\
                        Literal(".").suppress() +\
@@ -293,6 +307,11 @@ class QueryFromString(object):
         objnotable = attr.setResultsName("field")
 
         obj = objwithtable | objnotable
+
+        is_ = pyparsing.CaselessKeyword("is")
+        is_not = is_.suppress() + pyparsing.CaselessKeyword("not")
+
+        null_comarison = (is_not | is_).setResultsName("operator") + pyparsing.CaselessKeyword("null").setResultsName("value")
         
         comparison = ((Literal("<>") | Literal("<=") | Literal("<") | Literal("=") | Literal(">=") |\
                        Literal(">")).setResultsName("operator") + \
@@ -313,7 +332,7 @@ class QueryFromString(object):
               Group(pyparsing.delimitedList(value)).setResultsName("value") +\
               Literal(")").suppress())
 
-        singlexpr =  pyparsing.Group( obj + (between|comparison|like|in_) )
+        singlexpr =  pyparsing.Group( obj + (null_comarison|between|comparison|like|in_) )
 
         expression = pyparsing.StringStart() + pyparsing.operatorPrecedence(singlexpr,
                 [
@@ -325,183 +344,3 @@ class QueryFromString(object):
 
         return expression
 
-class SingleQuery(object):
-
-    def __init__(self, search, *args):
-
-        self.search = search
-        self.query = args[0]
-
-        if not hasattr(self.query, "inner_joins"):
-            self.query = Conjunction(*args, search = self.search)
-
-        self.inner_joins = self.query.inner_joins
-        self.outer_joins = self.query.outer_joins
-        self.gather_covering_ors()
-        self.where = self.process_query(self.query)
-
-        
-    def add_conditions(self, sa_query):
-
-        for join in self.outer_joins:
-            if join <> self.search.table:
-                sa_query = sa_query.outerjoin(self.search.aliased_name_path[join])
-
-        for join in self.inner_joins:
-            if join <> self.search.table:
-                sa_query = sa_query.join(self.search.aliased_name_path[join])
-
-        sa_query = sa_query.filter(self.where)
-
-        return sa_query
-
-    def gather_covering_ors(self):
-        
-        ors = [] 
-             
-        def recurse_query(conjunction, ors):
-
-            if conjunction.type == "or":
-                ors.append(conjunction)
-            for statement in conjunction.processed_propersitions:
-                if hasattr(statement, "processed_propersitions"):
-                    recurse_query(statement, ors)
-
-        recurse_query(self.query, ors)
-
-        for conj in ors:
-            if len(conj.tables_covered_by_this) > 1:
-                for table in conj.tables_covered_by_this:
-                    self.outer_joins.update([table])
-
-    def process_query(self, conjunction):
-
-        statement_list = []
-        if conjunction.type == "or":
-            conj = or_
-        else:
-            conj = and_
-
-        for statement in conjunction.processed_propersitions:
-            if hasattr(statement, "processed_propersitions"):
-                sub_statement = self.process_query(statement)
-                statement_list.append(sub_statement)
-            else:
-                statement_list.append(statement)
-        
-        return conj(*statement_list)
-                    
-
-class Conjunction(object):
-
-    def __init__(self, *args, **kw):
-
-        self.propersitions = args
-        self.processed_propersitions = []
-        self.printable_propersitions = []
-        self.type = kw.pop("type", "and")
-        self.notted = kw.pop("notted", False)
-        covering_ors = kw.pop("ors", [])
-        if self.type == "or":
-            self.covering_ors = covering_ors + [self]
-        else:
-            self.covering_ors = covering_ors + []
-        self.tables_covered_by_this = set()
-        self.search = kw.pop("search", None)
-        self.inner_joins = kw.pop("inner_joins", set())
-        self.outer_joins = kw.pop("outer_joins", set())
-
-        self.process_propersitions()
-
-    def process_propersitions(self):
-
-        for enum, prop in enumerate(self.propersitions):
-            if isinstance(prop, list):
-                if enum != 0 and str(self.propersitions[enum - 1]) == "not":
-                    notted = not self.notted
-                    type = self.swap_or_and("and", notted)
-                elif enum not in (0, 1) and str((self.propersitions[enum - 1]) == "or")\
-                                       and str(self.propersitions[enum -2]) == "not":
-                    notted = not self.notted
-                    type = self.swap_or_and("or", notted)
-                elif enum != 0 and (str(self.propersitions[enum - 1]) == "or"):
-                    notted = self.notted
-                    type = self.swap_or_and("or", notted)
-                else:
-                    notted = self.notted
-                    type = self.swap_or_and("and", notted)
-                new_conjunction =Conjunction(*prop, 
-                                             type = type,
-                                             notted = notted,
-                                             ors = self.covering_ors,
-                                             search = self.search,
-                                             inner_joins = self.inner_joins,
-                                             outer_joins = self.outer_joins)
-                self.processed_propersitions.append(new_conjunction)
-                self.printable_propersitions.append(str(new_conjunction))
-
-            elif prop.__class__.__name__ == "type" and hasattr(prop, "id"): #only way to find out if its a sa_class
-                table = (prop.id == 1).get_children()[0].table.name
-                if enum <> 0 and str(self.propersitions[enum -1]) == "not":
-                    notted = not self.notted
-                else:
-                    notted = self.notted
-                if notted:
-                    self.processed_propersitions.append(prop.id == None)
-                    self.printable_propersitions.append((notted, table, "eq"))
-                    self.outer_joins.update([table])
-                else:
-                    self.processed_propersitions.append(prop.id != None)
-                    self.printable_propersitions.append((notted, table, "ne"))
-                    self.inner_joins.update([table])
-                self.update_covering_ors(self.covering_ors, table)
-
-            elif hasattr(prop, "operator"):
-                operator_name = prop.operator.__name__
-                column = prop.get_children()[0]
-                table = column.table.name
-                column_name = column.name
-                if enum <> 0 and str(self.propersitions[enum -1]) == "not":
-                    notted = not self.notted
-                else:
-                    notted = self.notted
-                if notted and operator_name in ("eq", "gt", "ge", "in_op", "between_op", "like_op" , "ilike_op"):
-                    self.processed_propersitions.append(or_(not_(prop), column == None))
-                    self.outer_joins.update([table])
-                if notted and operator_name in ("lt", "le", "ne"):
-                    self.processed_propersitions.append(not_(prop))
-                    self.inner_joins.update([table])
-                if not notted and operator_name in ("eq", "gt", "ge", "in_op", "between_op", "like_op" , "ilike_op"):
-                    self.processed_propersitions.append(prop)
-                    self.inner_joins.update([table])
-                if not notted and operator_name in ("lt", "le", "ne"):
-                    self.processed_propersitions.append(or_(prop, column == None))
-                    self.outer_joins.update([table])
-                    
-                self.update_covering_ors(self.covering_ors, table)
-                self.printable_propersitions.append((notted, column_name, operator_name))
-    
-    def swap_or_and(self, prop, swap):
-        if swap:
-            if prop == "or":
-                return "and"
-            if prop == "and":
-                return "or"
-        return prop
-
-    def __repr__(self):
-        if self.notted == True:
-            notted = " not"
-        else:
-            notted = ""
-        cond = self.type + notted
-        return "%s <%s>" % (cond, ", ".join([str(prop) for prop in self.printable_propersitions]))
-
-    def __str__(self):
-        return self.__repr__()
-
-    def update_covering_ors(self, covering_ors, table):
-        for conj in covering_ors:
-            conj.tables_covered_by_this.update([table])
-
-                

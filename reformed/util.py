@@ -110,14 +110,16 @@ def get_fields_from_obj(obj):
 
     return obj._table.columns.keys()
 
-def get_row_data(obj):
+def get_row_data(obj, keep_all = False):
     
     row_data = {}
     table = obj._table.name
     for field in get_fields_from_obj(obj):
-        if field in ("modified_by", "modified_date", "id", "_core_entity_id"):
+        if field in ("modified_by", "modified_date", "id", "_core_entity_id") and not keep_all:
             continue
         row_data["%s.%s" % (table, field)] = getattr(obj, field)
+    if keep_all:
+        row_data["%s.id" % table] = obj.id
     return row_data
 
 def create_data_dict(result):
@@ -131,13 +133,13 @@ def create_data_dict(result):
         data[row.id] = get_row_data(row) 
     return data
 
-def get_all_local_data(obj, allow_system = False):
+def get_all_local_data(obj, allow_system = False, keep_all = False):
 
     row_data = {}
     table = obj._table
     database = table.database
     local_tables = table.local_tables
-    row_data.update(get_row_data(obj))
+    row_data.update(get_row_data(obj, keep_all))
 
     for aliased_table_name, path in table.local_tables.iteritems():
         table_name = table.paths[path][0]
@@ -150,7 +152,7 @@ def get_all_local_data(obj, allow_system = False):
             if not current_obj:
                 current_obj = database.get_instance(table_name)
                 break
-        row_data.update(get_row_data(current_obj))
+        row_data.update(get_row_data(current_obj, keep_all))
 
     return row_data
 

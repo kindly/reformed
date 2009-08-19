@@ -184,3 +184,13 @@ class UniqueConstraint(Field):
         self.other = fields
         self.index = columns.Constraint("unique", fields, use_parent = True)
 
+class SumDecimal(Field):
+
+    def __init__(self, name, target_field, *args, **kw):
+
+        self.other = target_field
+        self.sum = Column(sa.Decimal, use_parent = True)
+
+        self.on_change = ChangeEvent("sum", target_field, self)
+
+

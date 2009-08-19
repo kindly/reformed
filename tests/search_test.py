@@ -75,6 +75,15 @@ class test_query_from_string(donkey_test.test_donkey):
         query = QueryFromString(None, """wee = 4.20""", test = True)
         assert query.ast[0].value == Decimal("4.20")
 
+        query = QueryFromString(None, """wee is null""", test = True)
+        assert query.ast[0].operator == "is"
+
+        query = QueryFromString(None, """wee is  not null""", test = True)
+        assert query.ast[0].operator == "not"
+
+        query = QueryFromString(None, """wee < now""", test = True)
+        assert query.ast[0].value.isoformat()[:20] == datetime.datetime.now().isoformat()[:20] 
+
     def test_gather_covering_ors(self):
 
         query = QueryFromString(None, """wee = 4.20""", test = True)
@@ -185,8 +194,6 @@ class test_query_from_string(donkey_test.test_donkey):
 
         search.add_query('donkey.name in (poo, fine)')
 
-        for line in search.table_paths_list:
-            print line
 
         assert len(search.search().all()) == 6
 

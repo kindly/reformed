@@ -42,6 +42,8 @@ class InvalidRow(AttributeError):
     pass
 class InvalidField(AttributeError):
     pass
+class InvalidEvent(AttributeError):
+    pass
 class InvalidData(AttributeError):
     pass
 class SearchError(Exception):

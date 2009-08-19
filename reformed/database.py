@@ -26,16 +26,16 @@
 
 import sqlalchemy as sa
 import custom_exceptions
+import search
 import resultset
 import tables
-from util import get_paths
+from util import get_paths, get_all_local_data
 from fields import ManyToOne, OneToOne, OneToMany
 import fields as field_types
 import boot_tables
 import sessionwrapper
 import validate_database
 import logging
-import search
 import networkx as nx
 import job_scheduler
 
@@ -331,9 +331,18 @@ class Database(object):
 
         return resultset.ResultSet(search)
     
-    def search(self, table_name, session, *args): 
+    def search(self, table_name, *args, **kw): 
 
-        return search.Search(self, table_name, session, *args)
+        session = self.Session()
+
+        limit = kw.get("limit", None)
+        query = search.Search(self, table_name, session, *args)
+
+        if limit:
+            result = resultset.ResultSet(query, result_num = limit).first_set()
+        else:
+            result = resultset.ResultSet(query).all()
+        return [get_all_local_data(obj, keep_all = True) for obj in result]    
 
     def logged_table(self, logged_table):
 

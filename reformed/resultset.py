@@ -20,7 +20,7 @@
 ##	resultset.py
 ##	======
 ##	
-##	This file is experimental
+##	This file is produces a result set.
 
 class ResultSet(object):
 
