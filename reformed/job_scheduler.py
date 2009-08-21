@@ -13,7 +13,7 @@ from sqlalchemy import and_
 logger = logging.getLogger('reformed.main')
 
 POOL_SIZE = 10
-POLL_INTERVAL = 5
+POLL_INTERVAL = 10
 
 class JobScheduler(object):
 
@@ -36,15 +36,17 @@ class JobScheduler(object):
 
         self.threadpool = threadpool.ThreadPool(POOL_SIZE)
 
-    def add_job(self, job_type, func, arg):
+    def add_job(self, job_type, func, arg = None, **kw):
 
         session = self.database.Session()
+
+        run_time = kw.get("time", datetime.datetime.now())
 
         job = self.database.get_instance(self.table_name)
         job.job_type = job_type.decode("utf8")
         if arg:
             job.arg = arg
-        job.job_start_time = datetime.datetime.now()
+        job.job_start_time = run_time
         job.function = func
         session.save(job)
         session.commit()
@@ -59,7 +61,7 @@ class JobScedulerThread(threading.Thread):
         super(JobScedulerThread, self).__init__()
         self.database = database
         self.threadpool = self.database.job_scheduler.threadpool
-        self.deamon = True
+        self.daemon = True
 
     alive = False
     def run(self):
@@ -69,18 +71,9 @@ class JobScedulerThread(threading.Thread):
         self.alive = True
         while True:
 
-            #to_run = self.database.search("_core_job_scheduler",
-            #                              "job_start_time <= now and job_started is null") 
+            to_run = self.database.search("_core_job_scheduler",
+                                          "job_start_time <= now and job_started is null") 
 
-            time.sleep(POLL_INTERVAL)
-
-            session = self.database.Session()
-            table = self.database.t._core_job_scheduler
-            res = session.query(table).filter(and_(table.job_start_time <= datetime.datetime.now(), table.job_started == None)).all()
-            to_run = [get_all_local_data(obj, keep_all = True, allow_system = True) for obj in res]    
-
-            logger.info(to_run)
-        
 
             for result in to_run:
                 result["_core_job_scheduler.job_started"] = datetime.datetime.now()
@@ -94,6 +87,7 @@ class JobScedulerThread(threading.Thread):
                 load_local_data(self.database, result)
 
             try:
+                time.sleep(POLL_INTERVAL)
                 self.database.job_scheduler.threadpool.poll()
             except KeyboardInterrupt:
                 print "**** Interrupted!"
@@ -123,6 +117,10 @@ class JobScedulerThread(threading.Thread):
             session.commit()
             session.close()
 
-        request = threadpool.makeRequests(func, [((self.database, arg), {})], callback, exc_callback)
+        if arg:
+            request = threadpool.makeRequests(func, [((self.database, arg), {})], callback, exc_callback)
+        else:
+            request = threadpool.makeRequests(func, [((self.database, ), {})], callback, exc_callback)
+
         self.threadpool.putRequest(request[0])
 

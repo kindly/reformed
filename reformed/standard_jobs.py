@@ -2,7 +2,7 @@ from search import Search
 from datetime import datetime, timedelta
 import time
 
-def delete_lock_tables(database, wait = 60.0 * 5):
+def delete_lock_tables(database, wait = "60" ):
 
 
     session = database.Session()
@@ -19,6 +19,13 @@ def delete_lock_tables(database, wait = 60.0 * 5):
 
     session.commit()
     session.close()
+
+    database.job_scheduler.add_job("delete_lock", 
+                                   "delete_lock_tables",
+                                    wait,
+                                    time = datetime.now() + timedelta(seconds = int(wait))
+                                  )
+
 
 
     return "number deleted = %s" % count

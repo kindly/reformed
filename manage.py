@@ -7,7 +7,7 @@ from reformed.data_loader import load_json_from_file
 
 def create():
 
-    from reformed.reformed import reformed 
+    from reformed.reformed import reformed
     import td
     load_json_from_file("form_dump.json", reformed, "_core_form") 
 
@@ -24,7 +24,8 @@ def dump():
 
 def run():
 
-    from reformed.reformed import reformed 
+    from reformed.reformed import reformed, scheduler_thread 
+    scheduler_thread.start()
     import web
     if os.environ.get("REQUEST_METHOD", ""):
         from wsgiref.handlers import BaseCGIHandler
