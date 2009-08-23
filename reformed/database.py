@@ -409,7 +409,7 @@ class Database(object):
             gr.add_node(table)
 
         for rel in self.relations:
-            gr.add_edge(rel.table.name, rel.other, rel)
+            gr.add_edge(rel.table.name, rel.other, relation = rel)
 
         self.graph = gr
 
