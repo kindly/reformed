@@ -45,9 +45,9 @@ class JobScheduler(object):
         job = self.database.get_instance(self.table_name)
         job.job_type = job_type.decode("utf8")
         if arg:
-            job.arg = arg
+            job.arg = u"%s" % arg
         job.job_start_time = run_time
-        job.function = func
+        job.function = u"%s" % func
         session.save(job)
         session.commit()
         job_id = job.id

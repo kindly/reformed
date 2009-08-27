@@ -28,6 +28,7 @@ import formencode
 import validators
 import sqlalchemy as sa
 import datetime
+import events
 
 
 class Text(Field):
@@ -189,8 +190,15 @@ class SumDecimal(Field):
     def __init__(self, name, target_field, *args, **kw):
 
         self.other = target_field
-        self.sum = Column(sa.Decimal, use_parent = True)
+        self.sum = Column(sa.Numeric, use_parent = True)
 
-        self.on_change = ChangeEvent("sum", target_field, self)
+        self.event = events.SumEvent(target_field, self)
 
+class CountRows(Field):
+
+    def __init__(self, name, target_field, *args, **kw):
+
+        self.other = target_field
+        self.count = Column(sa.Integer, use_parent = True)
+        self.event = events.CountEvent(target_field, self)
 

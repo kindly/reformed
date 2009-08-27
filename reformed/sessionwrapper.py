@@ -68,23 +68,46 @@ class SessionWrapper(object):
     def flush(self):
         if self.has_entity:
             self.add_entity_instance()
-        self.add_logged_instances()
+        self.add_events()
+        self.delete_events()
+        self.update_events()
         self.check_all_validated()
         self.add_locked_rows()
+        self.add_logged_instances()
         self.session.flush()
 
     def commit(self):
+
         if self.has_entity:
             self.add_entity_instance()
-        self.add_logged_instances()
         self.check_all_validated()
+        self.add_events()
+        self.delete_events()
+        self.update_events()
         self.add_locked_rows()
-
+        self.add_logged_instances()
         self.session.flush()
         for obj in self.session:
             obj._validated = False
         self.session.commit()
 
+    def add_events(self):
+
+        for obj in self.session.new:
+            for events in obj._table.events:
+                events.insert_action(self, obj)
+
+    def update_events(self):
+
+        for obj in self.session.dirty:
+            for events in obj._table.events:
+                events.update_action(self, obj)
+
+    def delete_events(self):
+
+        for obj in self.session.deleted:
+            for events in obj._table.events:
+                events.delete_action(self, obj)
 
     def add_locked_rows(self):
 

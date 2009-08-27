@@ -9,7 +9,7 @@ def delete_lock_tables(database, wait = "60" ):
     search = Search(database, 
                     "_core_lock",
                     session, 
-                    "date < now")
+                    "date < now - 30 mins")
 
     count = 0
     for obj in search.search().all():

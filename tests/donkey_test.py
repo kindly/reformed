@@ -39,7 +39,20 @@ class test_donkey(object):
                                             cascade = "all, delete-orphan"),
                                   OneToMany("donkey_sponsership",
                                             "donkey_sponsership"),
+                                  OneToOne("contact_summary",
+                                           "contact_summary"),
+                                  OneToMany("transactions",
+                                           "transactions"),
                                   entity = True),
+                            Table("contact_summary",
+                                  SumDecimal("total_amount", "transactions.amount"),
+#                                  CountRows("transaction_count", "transactions.id"),
+                                  logged = False
+                                 ),
+                            Table("transactions",
+                                   Date("date"),
+                                   Money("amount"),
+                                   Text("Type")),
                             Table("email",
                                   Email("email")
                                  ),
@@ -253,14 +266,18 @@ class test_basic_input(test_donkey):
 
         result = self.session.query(self.Donkey.tables["donkey_sponsership"].sa_class).first()
 
+        print get_all_local_data(result)
 
-        assert get_all_local_data(result) == {'donkey_sponsership.people_id': 1,
+
+        assert get_all_local_data(result) == {'contact_summary.people_id': 1,
+                                              'donkey_sponsership.people_id': 1,
                                               'people.country': None,
                                               'people.address_line_1': u'43 union street',
                                               'people.address_line_2': None,
                                               'people.address_line_3': None,
-                                              'people.name': u'david',
                                               'donkey_pics.pic_name': None,
+                                              'people.name': u'david',
+                                              'contact_summary.total_amount': Decimal('35'),
                                               'donkey_sponsership.amount': Decimal('50'),
                                               'donkey_pics.pic': None,
                                               'donkey_sponsership.donkey_id': 1,
@@ -272,21 +289,20 @@ class test_basic_input(test_donkey):
                                               'people.postcode': u'es388'} 
 
     def test_local_tables(self):
+        
 
-        assert make_local_tables(self.Donkey.tables["people"].paths) == [{'_core_entity': ('_entity',)}, {'donkey_sponsership': ('donkey_sponsership',), '_log_people': ('__log_people',), 'entity_categories': ('_entity', 'categories'), 'membership': ('_entity', '_membership'), 'relation': ('_entity', 'relation'), '_log__core_entity': ('_entity', '__log__core_entity'), 'email': ('email',)}] 
+        assert make_local_tables(self.Donkey.tables["people"].paths) == [{'_core_entity': ('_entity',), 'contact_summary': ('contact_summary',)}, {'transactions': ('transactions',), 'donkey_sponsership': ('donkey_sponsership',), '_log_people': ('__log_people',), 'entity_categories': ('_entity', 'categories'), 'membership': ('_entity', '_membership'), 'relation': ('_entity', 'relation'), '_log__core_entity': ('_entity', '__log__core_entity'), 'email': ('email',)}] 
+
 
         assert make_local_tables(self.Donkey.tables["donkey"].paths) == [{'_core_entity': ('_entity',), 'donkey_pics': ('donkey_pics',)}, {'_log_donkey': ('__log_donkey',), 'entity_categories': ('_entity', 'categories'), 'membership': ('_entity', '_membership'), 'relation': ('_entity', 'relation'), '_log_donkey_pics': ('donkey_pics', '__log_donkey_pics'), '_log__core_entity': ('_entity', '__log__core_entity'), 'donkey_sponsership': ('donkey_sponsership',)}] 
         
-        assert self.Donkey.tables["relation"].local_tables == {'donkey': ('__core_entity', 'donkey'),
-                                                               'relation_donkey': ('_core_entity', 'donkey'),
-                                                               'donkey_pics': ('__core_entity', 'donkey', 'donkey_pics'),
-                                                               'people': ('__core_entity', 'people'),
-                                                               '_core_entity': ('__core_entity',),
-                                                               'relation_people': ('_core_entity', 'people'),
-                                                               'relation__core_entity': ('_core_entity',),
-                                                               'relation_donkey_pics': ('_core_entity', 'donkey', 'donkey_pics')} 
 
-        assert self.Donkey.tables["relation"].one_to_many_tables == {'relation__log__core_entity': ('_core_entity', '__log__core_entity'), '_log__core_entity': ('__core_entity', '__log__core_entity'), 'relation_relation': ('_core_entity', 'relation'), 'relation_entity_categories': ('_core_entity', 'categories'), 'relation__log_people': ('_core_entity', 'people', '__log_people'), 'relation_email': ('_core_entity', 'people', 'email'), 'relation__log_donkey': ('_core_entity', 'donkey', '__log_donkey'), 'relation__log_donkey_pics': ('_core_entity', 'donkey', 'donkey_pics', '__log_donkey_pics'), '_log_donkey': ('__core_entity', 'donkey', '__log_donkey'), 'donkey_sponsership': ('__core_entity', 'people', 'donkey_sponsership'), '_log_people': ('__core_entity', 'people', '__log_people'), 'entity_categories': ('__core_entity', 'categories'), 'membership': ('__core_entity', '_membership'), 'relation_membership': ('_core_entity', '_membership'), '_log_donkey_pics': ('__core_entity', 'donkey', 'donkey_pics', '__log_donkey_pics'), 'relation_donkey_sponsership': ('_core_entity', 'people', 'donkey_sponsership'), '_log_relation': ('__log_relation',), 'email': ('__core_entity', 'people', 'email')}
+        print self.Donkey.tables["relation"].local_tables 
+        assert self.Donkey.tables["relation"].local_tables == {'donkey': ('__core_entity', 'donkey'), 'relation_donkey': ('_core_entity', 'donkey'), 'people': ('__core_entity', 'people'), 'relation_contact_summary': ('_core_entity', 'people', 'contact_summary'), 'donkey_pics': ('__core_entity', 'donkey', 'donkey_pics'), 'contact_summary': ('__core_entity', 'people', 'contact_summary'), '_core_entity': ('__core_entity',), 'relation_people': ('_core_entity', 'people'), 'relation__core_entity': ('_core_entity',), 'relation_donkey_pics': ('_core_entity', 'donkey', 'donkey_pics')} 
+
+        print self.Donkey.tables["relation"].one_to_many_tables
+
+        assert self.Donkey.tables["relation"].one_to_many_tables == {'relation__log__core_entity': ('_core_entity', '__log__core_entity'), '_log__core_entity': ('__core_entity', '__log__core_entity'), 'relation_relation': ('_core_entity', 'relation'), 'transactions': ('__core_entity', 'people', 'transactions'), 'relation__log_people': ('_core_entity', 'people', '__log_people'), 'relation_entity_categories': ('_core_entity', 'categories'), 'relation_email': ('_core_entity', 'people', 'email'), 'relation__log_donkey': ('_core_entity', 'donkey', '__log_donkey'), 'relation__log_donkey_pics': ('_core_entity', 'donkey', 'donkey_pics', '__log_donkey_pics'), '_log_donkey': ('__core_entity', 'donkey', '__log_donkey'), 'donkey_sponsership': ('__core_entity', 'people', 'donkey_sponsership'), '_log_people': ('__core_entity', 'people', '__log_people'), 'entity_categories': ('__core_entity', 'categories'), 'membership': ('__core_entity', '_membership'), 'relation_membership': ('_core_entity', '_membership'), 'relation_transactions': ('_core_entity', 'people', 'transactions'), '_log_donkey_pics': ('__core_entity', 'donkey', 'donkey_pics', '__log_donkey_pics'), 'relation_donkey_sponsership': ('_core_entity', 'people', 'donkey_sponsership'), '_log_relation': ('__log_relation',), 'email': ('__core_entity', 'people', 'email')}
         
     def test_zz_add_local(self):
 
@@ -327,7 +343,7 @@ class test_basic_input(test_donkey):
         a = self.session.query(self.Donkey.t.donkey_sponsership).filter_by(amount = 711110).one()
 
 
-        assert get_all_local_data(a) == {'donkey_sponsership.people_id': 2, 'people.country': None, 'people.address_line_1': u'poo1010101', 'people.address_line_2': u'poop', 'people.address_line_3': None, 'people.name': u'fred', 'donkey_pics.pic_name': None, 'donkey_sponsership.amount': Decimal('711110'), 'donkey_pics.pic': None, 'donkey_sponsership.donkey_id': 12, 'donkey.age': 12, 'people.town': None, 'donkey_pics.donkey_id': None, 'donkey.name': None, 'donkey_sponsership.giving_date': None, 'people.postcode': u'fred'}
+        assert get_all_local_data(a) == {'contact_summary.people_id': None, 'donkey_sponsership.people_id': 2, 'people.country': None, 'people.address_line_1': u'poo1010101', 'people.address_line_2': u'poop', 'people.address_line_3': None, 'donkey_pics.pic_name': None, 'people.name': u'fred', 'contact_summary.total_amount': None, 'donkey_sponsership.amount': Decimal('711110'), 'donkey_pics.pic': None, 'donkey_sponsership.donkey_id': 12, 'donkey.age': 12, 'people.town': None, 'donkey_pics.donkey_id': None, 'donkey.name': None, 'donkey_sponsership.giving_date': None, 'people.postcode': u'fred'}
         
     def test_import_catagory_data(self):
 
@@ -411,6 +427,58 @@ class test_basic_input(test_donkey):
         cat = SingleRecord(self.Donkey, "category", cat)
 
         assert_raises(custom_exceptions.InvalidData,cat.load)
+
+    def test_add_action(self):
+
+        transaction = self.Donkey.get_instance("transactions")
+
+        print self.Donkey.tables["contact_summary"].columns
+
+        first = self.session.query(self.Donkey.t.people).first()
+
+        transaction.amount = 10
+        transaction._people = first
+        self.session.save(transaction)
+        self.session.save(first)
+        self.session.commit()
+
+
+        assert first.contact_summary.total_amount == 10
+       # assert first.contact_summary.transaction_count == 1
+
+        first = self.session.query(self.Donkey.t.people).first()
+
+        transaction2 = self.Donkey.get_instance("transactions")
+        transaction2.amount = 10
+        transaction2._people = first
+        self.session.save(transaction2)
+        self.session.save(first)
+        self.session.commit()
+
+        assert first.contact_summary.total_amount == 20 
+       # assert first.contact_summary.transaction_count == 2
+
+
+        transaction3 = self.Donkey.get_instance("transactions")
+        transaction3.amount = 20
+        transaction3._people = first
+        self.session.save(transaction3)
+        self.session.save(first)
+        self.session.commit()
+
+        assert first.contact_summary.total_amount == 40 
+       # assert first.contact_summary.transaction_count == 3
+
+        self.session.delete(transaction2)
+        self.session.commit()
+        assert first.contact_summary.total_amount == 30
+       # assert first.contact_summary.transaction_count == 2
+
+        transaction.amount  = 15
+        self.session.save(transaction)
+        self.session.commit()
+        assert first.contact_summary.total_amount == 35
+       # assert first.contact_summary.transaction_count == 2
 
 
 

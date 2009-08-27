@@ -3,6 +3,7 @@ import custom_exceptions
 import pyparsing 
 from decimal import Decimal
 import datetime
+from datetime import timedelta
 from sqlalchemy.sql import not_, and_, or_
 
 class Search(object):
@@ -258,6 +259,7 @@ class QueryFromString(object):
         Group = pyparsing.Group
         Combine = pyparsing.Combine
         nums = pyparsing.nums
+        CaselessKeyword = pyparsing.CaselessKeyword
 
         attr = Word(pyparsing.alphanums + "_" )
 
@@ -281,9 +283,23 @@ class QueryFromString(object):
         def convert_now(tok):
             return datetime.datetime.now()
 
+        def convert_now_diff(tok):
+
+            if tok[3] == "days":
+                timediff = timedelta(days = int(tok[1]+tok[2]))
+            if tok[3] in ("mins", "minutes"):
+                timediff = timedelta(minutes = int(tok[1]+tok[2]))
+            if tok[3] == "hours":
+                timediff = timedelta(hours = int(tok[1]+tok[2]))
+
+            return datetime.datetime.now() + timediff
+
+        now_diff = CaselessKeyword("now") + (Literal("+") | Literal("-")) + Word(pyparsing.nums) + \
+                   (CaselessKeyword("days") | CaselessKeyword("mins") | CaselessKeyword("minutes") | CaselessKeyword("hours"))
         
 
-        date = pyparsing.CaselessKeyword("now").setParseAction(convert_now) |\
+        date = now_diff.setParseAction(convert_now_diff) |\
+               pyparsing.CaselessKeyword("now").setParseAction(convert_now) |\
                Combine(iso_date).setParseAction(convert_iso) |\
                Combine(uk_date).setParseAction(convert_uk)
 

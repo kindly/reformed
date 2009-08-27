@@ -32,7 +32,7 @@ from custom_exceptions import NoMetadataError, NoDatabaseError
 import formencode
 from formencode import validators
 from fields import Modified, Integer
-from util import get_paths, make_local_tables
+from util import get_paths, make_local_tables, create_table_path_list, create_table_path
 import logging
 import migrate.changeset
 from sqlalchemy.orm import column_property
@@ -74,6 +74,7 @@ class Table(object):
         self.unique_constraint = kw.get("unique_constraint", None)
         self.entity_relationship = kw.get("entity_relationship", False)
         self.primary_key_list = []
+        self.events = []
         if self.primary_key:
             self.primary_key_list = self.primary_key.split(",")
         self.index_list  = []
@@ -100,6 +101,8 @@ class Table(object):
         self.paths = None
         self.local_tables = None
         self.one_to_many_tables = None
+        self.table_path_list = None
+        self.table_path = None
 
     def persist(self):
         """This puts the information about the this objects parameters 
@@ -408,7 +411,6 @@ class Table(object):
         for name, index in self.indexes.iteritems():
             ind = [sa_table.columns[col.strip()] for col in index.fields.split(",")]
             if index.type == "unique":
-                logging.info(index.type)
                 sa.Index(name, *ind, unique = True)
             else:
                 sa.Index(name, *ind)
@@ -504,6 +506,9 @@ class Table(object):
             local_tables, one_to_many_tables = make_local_tables(self.paths)
             self.local_tables = local_tables
             self.one_to_many_tables = one_to_many_tables
+
+            self.table_path_list = create_table_path_list(self.paths)
+            self.table_path = create_table_path(self.table_path_list, self.name)
 
     def _make_sa_order_by_list(self, relation, other_table):
 

@@ -300,6 +300,10 @@ class Database(object):
                 for column in table.columns.iterkeys():
                     getattr(table.sa_class, column).impl.active_history = True
             self.make_table_aliases()
+            for table in self.tables.itervalues():
+                for field in table.fields.itervalues():
+                    if hasattr(field, "event"):
+                        field.event.add_event(self)
         except (custom_exceptions.NoDatabaseError,\
                 custom_exceptions.RelationError):
             pass
@@ -314,6 +318,7 @@ class Database(object):
             table.paths = None
             table.local_tables = None
             table.one_to_many_tables = None
+            table.events = []
         self.graph = None
             
 

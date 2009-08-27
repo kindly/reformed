@@ -84,6 +84,15 @@ class test_query_from_string(donkey_test.test_donkey):
         query = QueryFromString(None, """wee < now""", test = True)
         assert query.ast[0].value.isoformat()[:20] == datetime.datetime.now().isoformat()[:20] 
 
+        query = QueryFromString(None, """wee < now - 5 mins""", test = True)
+        assert query.ast[0].value.isoformat()[:20] == (datetime.datetime.now() - datetime.timedelta(minutes = 5)).isoformat()[:20] 
+
+        query = QueryFromString(None, """wee < now + 5 days""", test = True)
+        assert query.ast[0].value.isoformat()[:20] == (datetime.datetime.now() + datetime.timedelta(days = 5)).isoformat()[:20] 
+
+        query = QueryFromString(None, """wee < now - 5 hours""", test = True)
+        assert query.ast[0].value.isoformat()[:20] == (datetime.datetime.now() - datetime.timedelta(hours = 5)).isoformat()[:20] 
+
     def test_gather_covering_ors(self):
 
         query = QueryFromString(None, """wee = 4.20""", test = True)
