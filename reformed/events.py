@@ -56,7 +56,7 @@ class ChangeEvent(object):
 
         #target and base table are the same. [] will be ignored by sqlalchemy
         if not self.target_to_base_path:
-            return [] 
+            return [object.id == object._table.sa_table.c.id] 
 
         relation_attr = self.target_to_base_path[0]
         parent_table_obj = getattr(object, relation_attr)
@@ -227,13 +227,16 @@ class MaxDate(ChangeEvent):
         session.add_after_flush(self.update_after, (object, result, session))
 
 
-class CopyText(ChangeEvent):
+class CopyTextAfter(ChangeEvent):
 
     def __init__(self, target, field, base_level = None, initial_event = False, **kw):
 
-        super(CopyText, self).__init__(target, field, base_level, initial_event)
+        super(CopyTextAfter, self).__init__(target, field, base_level, initial_event)
 
         fields = kw.get("field_list", self.target_field)
+        self.changed_flag = kw.get("changed_flag", None)
+        self.update_when_flag = kw.get("update_when_flag" , None)
+
         self.field_list = [s.strip() for s in fields.split(",")]
 
     def update_after(self, object, result, session):
@@ -242,10 +245,23 @@ class CopyText(ChangeEvent):
         join = self.get_parent_primary_keys(object)
         fields = [object._table.sa_table.c[field] + u' ' for field in self.field_list] 
         fields_concat = reduce(add, fields)
-        setattr(result, self.field.name,
-                select([func.max(fields_concat)],
-                       and_(*join))
-               )
+        
+        if self.update_when_flag:
+            condition_column = object._table.sa_table.c[self.update_when_flag]
+
+            setattr(result, self.field.name,
+                    select([fields_concat],
+                           and_(condition_column, *join))
+                   )
+        else:
+            setattr(result, self.field.name,
+                    select([fields_concat],
+                           and_(*join))
+                   )
+
+        if self.changed_flag:
+            setattr(result, self.changed_flag, True)
+        
         session.save(result)
 
     def add(self, result, base_table_obj, object, session):
@@ -258,5 +274,37 @@ class CopyText(ChangeEvent):
             
     def update(self, result, base_table_obj, object, session):
 
+        session.add_after_flush(self.update_after, (object, result, session))
+
+class CopyText(ChangeEvent):
+
+    def __init__(self, target, field, base_level = None, initial_event = False, **kw):
+
+        super(CopyText, self).__init__(target, field, base_level, initial_event)
+
+        fields = kw.get("field_list", self.target_field)
+        self.changed_flag = kw.get("changed_flag", None)
+        self.update_when_flag = kw.get("update_when_flag" , None)
+
+        self.field_list = [s.strip() for s in fields.split(",")]
+
+
+    def update_after(self, object, result, session):
+
+        if self.update_when_flag and getattr(result, self.update_when_flag):
+            setattr(result, self.field.name, u" ".join([getattr(result, field) for field in self.field_list]))
+        if not self.update_when_flag:
+            setattr(result, self.field.name, u" ".join([getattr(object, field) for field in self.field_list]))
+
+        if self.changed_flag:
+            setattr(result, self.changed_flag, True)
+
+    def add(self, result, base_table_obj, object, session):
+        session.add_after_flush(self.update_after, (object, result, session))
+
+    def delete(self, result, base_table_obj, object, session):
+        return
+
+    def update(self, result, base_table_obj, object, session):
         session.add_after_flush(self.update_after, (object, result, session))
 

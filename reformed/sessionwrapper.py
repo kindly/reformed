@@ -122,18 +122,18 @@ class SessionWrapper(object):
 
     def update_events(self):
 
-        #for obj in self.session.dirty:
-        #    for events in obj._table.initial_events:
-        #        events.update_action(self, obj)
+        for obj in self.session.dirty:
+            for events in obj._table.initial_events:
+                events.update_action(self, obj)
         for obj in self.session.dirty:
             for events in obj._table.events:
                 events.update_action(self, obj)
 
     def delete_events(self):
 
-        #for obj in self.session.deleted:
-        #    for events in obj._table.initial_events:
-        #        events.delete_action(self, obj)
+        for obj in self.session.deleted:
+            for events in obj._table.initial_events:
+                events.delete_action(self, obj)
         for obj in self.session.deleted:
             for events in obj._table.events:
                 events.delete_action(self, obj)
