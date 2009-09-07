@@ -1,4 +1,4 @@
-JOINS_DEEP = 3
+JOINS_DEEP = 6
 import data_loader
 import formencode as fe
 
@@ -10,6 +10,30 @@ def swap_relations(relation_type):
         return "onetomany"
     return "onetoone"
 
+def check_two_entities(tables, node, rtables):
+    if node == "_core_entity":
+        counter = 0
+        for table in tables[::-1]:
+            if rtables[table].name == "_core_entity":
+                return False
+            if rtables[table].entity:
+                counter = counter + 1
+                if counter == 2:
+                    return True
+        return False
+    if rtables[node].entity:
+        counter = 0
+        for table in tables[::-1]:
+            if rtables[table].entity:
+                counter = counter + 1
+            if rtables[table].name == "_core_entity":
+                if counter > 0:
+                    return True
+                else:
+                    return False
+        return False
+
+
 def get_next_relation(gr, node, path_dict, tables, current_path = [], last_edge = (), one_ways = []):
     
     for edge in gr.out_edges(node, data = True):
@@ -17,9 +41,11 @@ def get_next_relation(gr, node, path_dict, tables, current_path = [], last_edge 
         rtables = relation.table.database.tables
         if len(tables) > 1 and rtables[node2].entity and rtables[tables[-1]].name == "_core_entity" and rtables[tables[-2]].entity:
             continue
+        if len(tables) > 1 and check_two_entities(tables, node2, rtables):
+            continue
         if (node1, node2) != last_edge:
             new_path = current_path + [relation.name] 
-            if len(new_path) > JOINS_DEEP*2:
+            if len(new_path) > JOINS_DEEP:
                 continue
             if relation.one_way:
                 new_one_ways = one_ways + [node1]
@@ -34,14 +60,33 @@ def get_next_relation(gr, node, path_dict, tables, current_path = [], last_edge 
         rtables = relation.table.database.tables
         if len(tables) > 1 and rtables[node1].entity and rtables[tables[-1]].name == "_core_entity" and rtables[tables[-2]].entity:
             continue
+        if len(tables) > 1 and check_two_entities(tables, node1, rtables):
+            continue
         if (node1, node2) != last_edge and not relation.one_way:
             backref = relation.sa_options.get("backref", "_%s" % node1)
             new_path = current_path + [backref] 
-            if len(new_path) > JOINS_DEEP*2:
+            if len(new_path) > JOINS_DEEP:
                 continue
             path_dict[tuple(new_path)] = [node1, swap_relations(relation.type), one_ways]
             new_tables = tables + [node1]
             get_next_relation(gr, node1, path_dict, new_tables, new_path, (node1, node2), one_ways)
+
+def get_collection_of_obj(database, obj, parent_name):
+
+    table_name = obj._table.name
+
+    table = database.tables[table_name]
+ 
+    relation_path = table.local_tables[parent_name]
+ 
+    parent_obj = reduce(getattr, relation_path, obj) 
+ 
+    parent_obj_table = parent_obj._table
+ 
+    relation_back_path = parent_obj_table.one_to_many_tables[table.name]
+ 
+    return reduce(getattr, relation_back_path, parent_obj)
+ 
 
 def get_paths(gr, table):
 

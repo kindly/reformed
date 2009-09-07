@@ -85,8 +85,8 @@ class Column(BaseSchema):
         super(Column, self).__init__(type , *args, **kw)
         ##original column should be made private. 
         self.original_column = kw.pop("original_column", None)
-        default = kw.pop("default", None)
-        if default:
+        default = kw.get("default", None)
+        if default is not None:
             self.sa_options["default"] = default
         onupdate = kw.pop("onupdate", None)
         if onupdate:
@@ -253,6 +253,27 @@ class Relation(BaseSchema):
             return self.parent.table.database.tables[self.other]
         except AttributeError:
             return None
+
+    @property
+    def this_table_join_keys(self):
+        keys_this_table = []
+        keys_other_table = []
+        if self.type in ("manytoone"):
+            for name, column in self.table.foriegn_key_columns.iteritems():
+                if column.defined_relation == self:
+                    keys_this_table.append(name)
+                    keys_other_table.append(column.original_column)
+        if self.type in ("onetoone", "onetomany"):
+            for name, column in self.other_table.foriegn_key_columns.iteritems():
+                if column.defined_relation == self:
+                    keys_this_table.append(column.original_column)
+                    keys_other_table.append(name)
+
+        return [keys_this_table, keys_other_table]
+            
+
+        
+
         
 class Field(object):
     """ This is intended to be sublassed and should be the only way

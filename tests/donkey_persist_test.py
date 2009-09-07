@@ -219,10 +219,8 @@ class test_donkey_persist_sqlite(object):
         assert validate_database(self.Donkey)[1] == []
         assert validate_database(self.Donkey)[2] == []
         assert validate_database(self.Donkey)[4] == []
-
         
     def test_z_add_entity_after_loaded(self):
-
 
         p = random.randrange(1,10000)
         self.Donkey.add_entity(tables.Table("entity%s" % p, Text("moo")))
@@ -265,6 +263,7 @@ class test_donkey_persist_sqlite(object):
         flatfile = FlatFile(self.Donkey,
                             "people",
                             "tests/new_people_with_header.csv")    
+
         flatfile.load()
 
 
@@ -309,5 +308,5 @@ class test_donkey_persist_post(test_donkey_persist_sqlite):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine('postgres://david:@:5432/test_donkey', echo = True)
+        cls.engine = create_engine('postgres://david:@:5432/test_donkey')
         super(test_donkey_persist_post, cls).setUpClass()

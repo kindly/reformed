@@ -319,6 +319,7 @@ class Database(object):
             table.local_tables = None
             table.one_to_many_tables = None
             table.events = []
+            table.initial_events = []
         self.graph = None
             
 

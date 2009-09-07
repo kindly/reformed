@@ -76,8 +76,6 @@ class SingleObject(object):
                     row[column] = str(cell)
 
         for key in self.next_keys[current_key]:
-            if (not self.log and (key[-1].startswith("__log_") or key[-1].startswith("_log_"))) or key[-1].startswith("_entity"):
-                continue
             list = self.make_list(obj, key)
             if list:
                 row[key[-1]] = list
@@ -88,6 +86,12 @@ class SingleObject(object):
 
         list = []
         table, join, one_ways = self.paths[key]
+        if table.startswith("_log_") and not self.log:
+            return list
+        if table.startswith("_core_"):
+            return list
+        if table.endswith("summary"):
+            return list
         if join in ("onetoone", "manytoone"):
             new_obj = getattr(obj, key[-1])
             if new_obj:

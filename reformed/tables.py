@@ -69,12 +69,14 @@ class Table(object):
         self.persisted = kw.get("persisted", False)
         self.entity = kw.get("entity", False)
         self.logged = kw.get("logged", True)
+        self.validated = kw.get("validated", True)
         self.modified_date = kw.get("modified_date", True)
         self.index = kw.get("index", None)
         self.unique_constraint = kw.get("unique_constraint", None)
         self.entity_relationship = kw.get("entity_relationship", False)
         self.primary_key_list = []
         self.events = []
+        self.initial_events = []
         if self.primary_key:
             self.primary_key_list = self.primary_key.split(",")
         self.index_list  = []
@@ -334,8 +336,8 @@ class Table(object):
                         new_col = Column(column.type,
                                          name=name,
                                          mandatory = rel.many_side_not_null, 
-                                         defined_relation= rel,
-                                         original_column= name) 
+                                         defined_relation = rel,
+                                         original_column = name) 
                         columns[name] = new_col
                 else:
                     if table+"_id" not in columns:
@@ -352,17 +354,11 @@ class Table(object):
                                                        original_column= "id")
         return columns
 
-    
-
-
     @property
     def foreign_key_constraints(self):
 
-        """gathers a dictionary of all the foreign key columns in this table
-        with their related primary key colums.  The key is the other table name
-        and the values are a pair of linked lists by their index.  The first list
-        has the foriegn key columns in this table and the second the accocited
-        primary key columns the the related tabel"""
+        """gathers a dictionary of all the foreign key columns for use in defining
+        foreign key constraints in createing sqlalchemy tables"""
 
         fk_constraints = {}
         self.check_database()
@@ -632,6 +628,9 @@ class Table(object):
             if name == "chained_validators":
                 continue
             validation_dict[name] = getattr(instance, name)
+
+        if not self.validated:
+            return {}
 
         return self.validation_schema.to_python(validation_dict, instance)
         

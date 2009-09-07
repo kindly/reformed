@@ -23,6 +23,7 @@
 ##	This file contains all the standard reformed field subclasses
 
 from columns import Column, Field, Relation, Constraint
+import decimal
 import columns
 import formencode
 import validators
@@ -126,6 +127,10 @@ class Numeric(Field):
     def __init__(self, name, *args, **kw):
         self.money = Column(sa.Numeric, use_parent = True)
         
+class Numeric(Field):
+
+    def __init__(self, name, *args, **kw):
+        self.money = Column(sa.Numeric, use_parent = True)
 
 class Email(Field):
     
@@ -187,18 +192,49 @@ class UniqueConstraint(Field):
 
 class SumDecimal(Field):
 
-    def __init__(self, name, target_field, *args, **kw):
+    def __init__(self, name, target, *args, **kw):
 
-        self.other = target_field
-        self.sum = Column(sa.Numeric, use_parent = True)
-
-        self.event = events.SumEvent(target_field, self)
+        self.other = target
+        self.total_amount = Column(sa.Numeric, default = 0, use_parent = True)
+        self.base_level = kw.get("base_level", None)
+        self.event = events.SumEvent(target, self, self.base_level)
 
 class CountRows(Field):
 
-    def __init__(self, name, target_field, *args, **kw):
+    def __init__(self, name, target, *args, **kw):
 
-        self.other = target_field
-        self.count = Column(sa.Integer, use_parent = True)
-        self.event = events.CountEvent(target_field, self)
+        self.other = target
+        self.base_level = kw.get("base_level", None)
+        self.count = Column(sa.Integer, default = 0, use_parent = True)
+        self.event = events.CountEvent(target, self, self.base_level)
 
+class AddRow(Field):
+
+    def __init__(self, name, target, *args, **kw):
+
+        self.other = target
+        self.base_level = kw.get("base_level", None)
+        self.initial_event = kw.get("initial_event", False)
+        self.event = events.AddRow(target, self, self.base_level, initial_event = self.initial_event)
+
+class MaxDate(Field):
+
+    def __init__(self, name, target, *args, **kw):
+
+        self.other = target
+        self.base_level = kw.get("base_level", None)
+        self.exists = Column(sa.DateTime, use_parent = True)
+        self.event = events.MaxDate(target, self, self.base_level)
+
+class CopyText(Field):
+
+    def __init__(self, name, target, *args, **kw):
+
+        self.other = target
+        self.base_level = kw.get("base_level", None)
+        fields = kw.get("fields", None)
+        self.exists = Column(sa.Unicode(100), use_parent = True)
+        if fields:
+            self.event = events.CopyText(target, self, self.base_level, field_list = fields)
+        else:
+            self.event = events.CopyText(target, self, self.base_level)

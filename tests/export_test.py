@@ -35,6 +35,7 @@ class test_export_database(test_donkey):
 
         all_rows = multi_row_export(people, self.Donkey)
 
+        print all_rows
 
         for line in all_rows:
             SingleRecord(self.Donkey, "people", line).load() 

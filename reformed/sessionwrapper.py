@@ -42,6 +42,7 @@ class SessionWrapper(object):
     def __init__(self, Session, database, has_entity = False):
         self.session = Session()
         self.database = database
+        self.after_flush_list = []
         self.has_entity = has_entity
 
     def __getattr__(self, item):
@@ -75,6 +76,9 @@ class SessionWrapper(object):
         self.add_locked_rows()
         self.add_logged_instances()
         self.session.flush()
+        self.after_flush()
+        self.session.flush()
+        self.after_flush_list = []
 
     def commit(self):
 
@@ -87,24 +91,49 @@ class SessionWrapper(object):
         self.add_locked_rows()
         self.add_logged_instances()
         self.session.flush()
+        self.after_flush()
+        self.session.flush()
+        self.after_flush_list = []
         for obj in self.session:
             obj._validated = False
         self.session.commit()
 
+    def after_flush(self):
+
+        for function, args in self.after_flush_list:
+            try:
+                function(*args)
+            except Exception:
+                self.session.rollback()
+                raise
+
+    def add_after_flush(self, function, params = ()):
+
+        self.after_flush_list.append([function, params])
+
     def add_events(self):
 
+        for obj in self.session.new:
+            for events in obj._table.initial_events:
+                events.insert_action(self, obj)
         for obj in self.session.new:
             for events in obj._table.events:
                 events.insert_action(self, obj)
 
     def update_events(self):
 
+        #for obj in self.session.dirty:
+        #    for events in obj._table.initial_events:
+        #        events.update_action(self, obj)
         for obj in self.session.dirty:
             for events in obj._table.events:
                 events.update_action(self, obj)
 
     def delete_events(self):
 
+        #for obj in self.session.deleted:
+        #    for events in obj._table.initial_events:
+        #        events.delete_action(self, obj)
         for obj in self.session.deleted:
             for events in obj._table.events:
                 events.delete_action(self, obj)
