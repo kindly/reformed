@@ -95,6 +95,7 @@ class Column(BaseSchema):
         if mandatory:
             self.sa_options["nullable"] = False
         self.validation = kw.pop("validation", None)
+        self.validate = kw.pop("validate", True)
         self.parent = None
 
     def _set_parent(self, parent, name):

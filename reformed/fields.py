@@ -172,6 +172,7 @@ class OneToOne(Field):
         self.other = other
         self.onetoone = Relation("onetoone", other, use_parent = True)
 
+
 class Index(Field):
 
     def __init__(self, name, fields, *args, **kw):
@@ -226,6 +227,18 @@ class MaxDate(Field):
         self.exists = Column(sa.DateTime, use_parent = True)
         self.event = events.MaxDate(target, self, self.base_level)
 
+class Counter(Field):
+
+    def __init__(self, name, target = None, *args, **kw):
+
+        self.base_level = kw.get("base_level", None)
+
+        self.counter = Column(sa.Integer, default = 0, validate = False, use_parent = True)
+
+        self.event = events.Counter(target, self, self.base_level)
+
+
+
 class CopyTextAfter(Field):
 
     def __init__(self, name, target, *args, **kw):
@@ -254,6 +267,7 @@ class CopyText(Field):
         self.other = target
         self.base_level = kw.get("base_level", None)
         fields = kw.get("fields", None)
+        counter = kw.get("counter", "counter")
         self.changed_flag = kw.get("changed_flag", None)
         self.update_when_flag = kw.get("update_when_flag" , None)
 
@@ -262,8 +276,10 @@ class CopyText(Field):
             self.event = events.CopyText(target, self, self.base_level,
                                               field_list = fields,
                                               changed_flag = self.changed_flag,
+                                              counter = counter,
                                               update_when_flag = self.update_when_flag)
         else:
             self.event = events.CopyText(target, self, self.base_level,
                                               changed_flag = self.changed_flag,
+                                              counter = counter,
                                               update_when_flag = self.update_when_flag)

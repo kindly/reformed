@@ -106,6 +106,9 @@ class Table(object):
         self.table_path_list = None
         self.table_path = None
 
+    def __repr__(self):
+        return "%s - %s" % (self.name, self.columns.keys())
+
     def persist(self):
         """This puts the information about the this objects parameters 
         and its collection of fields into private database tables so that in future they
@@ -526,7 +529,9 @@ class Table(object):
             mand = False
         
         val = formencode.validators
-        if col_type is sa.Unicode or isinstance(col_type, sa.Unicode):
+        if column.validate == False:
+            pass
+        elif col_type is sa.Unicode or isinstance(col_type, sa.Unicode):
             if hasattr(col_type, 'length'):
                 if col_type.length:
                     max = col_type.length
@@ -644,6 +649,36 @@ class Table(object):
             setattr(logged_instance, name, getattr(instance, name))
         setattr(logged_instance, self.name + "_logged", instance)
         return logged_instance
+
+    def update_all_initial_events(self):
+
+        session = self.database.Session()
+        for field in self.fields.itervalues():
+            try:
+                event = field.event
+            except AttributeError:
+                continue
+            if event.initial_event:
+                try:
+                    event.update_all(session)
+                except AttributeError:
+                    continue
+        session.commit()
+        session.close()
+
+    def update_all_events(self):
+
+        session = self.database.Session()
+        for field in self.fields.itervalues():
+            try:
+                event = field.event
+            except AttributeError:
+                continue
+            if not event.initial_event:
+                event.update_all(session)
+        session.commit()
+        session.close()
+
 
     
 class ChangedAttributes(AttributeExtension):

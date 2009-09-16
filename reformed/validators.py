@@ -80,3 +80,39 @@ class CheckNoTwoNulls(FormValidator):
                 raise Invalid(self.message("invalid", obj), field_dict, obj)
 
 
+class CheckDefaultEmail(FormValidator):
+
+    __unpackargs__ = ('many_to_one_table', 'field')
+
+    messages = {
+        'invalid': _("field has two nulls"),
+        }
+
+    def validate_python(self, field_dict, obj):
+
+        table = obj._table
+
+        relation_path = table.local_tables[self.many_to_one_table]
+
+        parent_obj = obj
+        for relation in relation_path:
+            parent_obj = getattr(parent_obj, relation)
+
+        parent_obj_table = parent_obj._table
+        ## should get alias name not table name
+        relation_back_path = parent_obj_table.one_to_many_tables[table.name]
+
+        collection = parent_obj
+
+        for relation in relation_back_path:
+            collection = getattr(collection, relation)
+
+        if not collection:
+            return
+
+        trues = 0
+        for obj in collection:
+            if getattr(obj, self.field) is True:
+                trues = trues +1
+        if trues <> 1:
+            raise Invalid(self.message("invalid", obj), field_dict, obj)

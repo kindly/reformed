@@ -290,9 +290,9 @@ class Database(object):
         self.make_graph()
         try:
             for table in self.tables.itervalues():
+                table.make_paths()
                 table.make_sa_table()
                 table.make_sa_class()
-                table.make_paths()
             for table in self.tables.itervalues():
                 table.sa_mapper()
             sa.orm.compile_mappers()

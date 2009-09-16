@@ -24,7 +24,7 @@ class test_donkey(object):
     @classmethod
     def setUpClass(cls):
         if not hasattr(cls, "engine"):
-            cls.engine = create_engine('sqlite:///:memory:')
+            cls.engine = create_engine('sqlite:///:memory:', echo = True)
         
 #        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
         cls.meta = sa.MetaData()
@@ -49,8 +49,15 @@ class test_donkey(object):
                                   AddRow("new_row", "people", initial_event = True),
                                   CountRows("transaction_count", "transactions.id", base_level = "people"),
                                   MaxDate("membership", "membership", base_level = "people"),
-                                  CopyText("email", "email", base_level = "people", fields = "email,email", ),
-                                  CopyTextAfter("address", "people", base_level = "people", fields = "address_line_1,postcode", changed_flag = "modified"),
+                                  CopyText("email", "email", 
+                                           base_level = "people", 
+                                           fields = "email,email", 
+                                           update_when_flag = "active_email",
+                                           counter = "email_number"),
+                                  CopyTextAfter("address", "people",
+                                                base_level = "people",
+                                                fields = "address_line_1,postcode",
+                                                changed_flag = "modified"),
                                   Boolean("modified", default = True),
                                   logged = False, validated = False
                                  ),
@@ -59,7 +66,9 @@ class test_donkey(object):
                                    Money("amount"),
                                    Text("Type")),
                             Table("email",
-                                  Email("email")
+                                  Email("email"),
+                                  Counter("email_number", base_level = "people"),
+                                  Boolean("active_email", default = True)
                                  ),
                             Table("donkey", 
                                   Text("name", validation = '__^[a-zA-Z0-9]*$'),
@@ -274,7 +283,7 @@ class test_basic_input(test_donkey):
         print get_all_local_data(result)
 
 
-        assert get_all_local_data(result) == {'contact_summary.people_id': 1, 'contact_summary.transaction_count': 2, 'people.name': u'david', 'contact_summary.membership': None, 'donkey_pics.pic_name': None, 'contact_summary.modified': True, 'contact_summary.email': u'poo@poo.com poo@poo.com', 'contact_summary.address': u'43 union street es399 ', 'donkey.age': 13, 'people.town': None, 'donkey_sponsership.giving_date': None, 'people.postcode': u'es399', 'donkey_sponsership.people_id': 1, 'people.country': None, 'people.address_line_1': u'43 union street', 'people.address_line_2': None, 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('35'), 'donkey_sponsership.amount': Decimal('50'), 'donkey_pics.pic': None, 'donkey_sponsership.donkey_id': 1, 'donkey_pics.donkey_id': None, 'donkey.name': u'jim'} 
+        assert get_all_local_data(result) == {'contact_summary.people_id': 1, 'contact_summary.transaction_count': 0, 'people.name': u'david', 'contact_summary.membership': None, 'donkey_pics.pic_name': None, 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'43 union street es388', 'donkey.age': 13, 'people.town': None, 'donkey_sponsership.giving_date': None, 'people.postcode': u'es388', 'donkey_sponsership.people_id': 1, 'people.country': None, 'people.address_line_1': u'43 union street', 'people.address_line_2': None, 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'donkey_sponsership.amount': Decimal('50'), 'donkey_pics.pic': None, 'donkey_sponsership.donkey_id': 1, 'donkey_pics.donkey_id': None, 'donkey.name': u'jim'} 
 
     def test_local_tables(self):
         
@@ -332,7 +341,7 @@ class test_basic_input(test_donkey):
 
 
         print get_all_local_data(a)
-        assert get_all_local_data(a) == {'contact_summary.people_id': 2, 'contact_summary.transaction_count': 0, 'people.name': u'fred', 'contact_summary.membership': None, 'donkey_pics.pic_name': None, 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'poo1010101 fred ', 'donkey.age': 12, 'people.town': None, 'donkey_sponsership.giving_date': None, 'people.postcode': u'fred', 'donkey_sponsership.people_id': 2, 'people.country': None, 'people.address_line_1': u'poo1010101', 'people.address_line_2': u'poop', 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'donkey_sponsership.amount': Decimal('711110'), 'donkey_pics.pic': None, 'donkey_sponsership.donkey_id': 12, 'donkey_pics.donkey_id': None, 'donkey.name': None}
+        assert get_all_local_data(a) == {'contact_summary.people_id': 2, 'contact_summary.transaction_count': 0, 'people.name': u'fred', 'contact_summary.membership': None, 'donkey_pics.pic_name': None, 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'poo1010101 fred', 'donkey.age': 12, 'people.town': None, 'donkey_sponsership.giving_date': None, 'people.postcode': u'fred', 'donkey_sponsership.people_id': 2, 'people.country': None, 'people.address_line_1': u'poo1010101', 'people.address_line_2': u'poop', 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'donkey_sponsership.amount': Decimal('711110'), 'donkey_pics.pic': None, 'donkey_sponsership.donkey_id': 12, 'donkey_pics.donkey_id': None, 'donkey.name': None}
         
     def test_import_catagory_data(self):
 
@@ -417,155 +426,7 @@ class test_basic_input(test_donkey):
 
         assert_raises(custom_exceptions.InvalidData,cat.load)
 
-    def test_add_action(self):
 
-        transaction = self.Donkey.get_instance("transactions")
-
-        first = self.session.query(self.Donkey.t.people).first()
-
-        transaction.amount = 10
-        transaction._people = first
-        self.session.save(transaction)
-        self.session.save(first)
-        self.session.commit()
-
-
-        print first.contact_summary.total_amount 
-        assert first.contact_summary.total_amount == 10
-       # assert first.contact_summary.transaction_count == 1
-
-        first = self.session.query(self.Donkey.t.people).first()
-
-        transaction2 = self.Donkey.get_instance("transactions")
-        transaction2.amount = 10
-        transaction2._people = first
-        self.session.save(transaction2)
-        self.session.save(first)
-        self.session.commit()
-
-        assert first.contact_summary.total_amount == 20 
-        assert first.contact_summary.transaction_count == 2
-
-
-        transaction3 = self.Donkey.get_instance("transactions")
-        transaction3.amount = 20
-        transaction3._people = first
-        self.session.save(transaction3)
-        self.session.save(first)
-        self.session.commit()
-
-        assert first.contact_summary.total_amount == 40 
-        assert first.contact_summary.transaction_count == 3
-
-        self.session.delete(transaction2)
-        self.session.commit()
-        assert first.contact_summary.total_amount == 30
-        assert first.contact_summary.transaction_count == 2
-
-        transaction.amount  = 15
-        self.session.save(transaction)
-        self.session.commit()
-        assert first.contact_summary.total_amount == 35
-        assert first.contact_summary.transaction_count == 2
-
-    def test_maxdate_action(self):
-
-        person = self.session.query(self.Donkey.t.people).first()
-        entity = person._entity
-        membership1 = self.Donkey.get_instance("membership")
-        membership1.start_date = datetime.datetime(2009,05,02)
-        membership1.end_date = datetime.datetime(2013,06,02)
-        membership1._core_entity = entity
-        self.session.add(membership1)
-        self.session.add(entity)
-        self.session.commit()
-
-        print entity.people.contact_summary.membership 
-        assert entity.people.contact_summary.membership == datetime.datetime(2013,06,02)
-
-        person2 = self.session.query(self.Donkey.t.people).first()
-        entity2 = person._entity
-        membership2 = self.Donkey.get_instance("membership")
-        membership2.start_date = datetime.datetime(2009,05,02)
-        membership2.end_date = datetime.datetime(2013,07,02)
-        membership2._core_entity = entity
-        self.session.add(membership2)
-        self.session.add(entity2)
-        self.session.commit()
-
-        assert entity.people.contact_summary.membership == datetime.datetime(2013,07,02) 
-
-        person3 = self.session.query(self.Donkey.t.people).first()
-        entity3 = person._entity
-        membership3 = self.Donkey.get_instance("membership")
-        membership3.start_date = datetime.datetime(2009,05,02)
-        membership3._core_entity = entity
-        self.session.add(membership3)
-        self.session.add(entity3)
-        self.session.commit()
-
-        assert entity.people.contact_summary.membership == datetime.datetime(2199,12,31) 
-
-        self.session.delete(membership3)
-        self.session.commit()
-
-        assert entity.people.contact_summary.membership == datetime.datetime(2013,07,02)
-
-        self.session.delete(membership2)
-        self.session.commit()
-
-        assert entity.people.contact_summary.membership == datetime.datetime(2013,06,02)
-
-        person4 = self.session.query(self.Donkey.t.people).first()
-        entity4 = person._entity
-        membership4 = self.Donkey.get_instance("membership")
-        membership4.start_date = datetime.datetime(2010,05,02)
-        membership4.end_date = datetime.datetime(2010,05,02)
-        membership4._core_entity = entity
-        self.session.add(membership4)
-        self.session.add(entity4)
-        self.session.commit()
-
-        assert entity.people.contact_summary.membership == datetime.datetime(2013,06,02) 
-        
-        self.session.delete(membership4)
-        self.session.delete(membership1)
-        self.session.commit()
-
-        assert entity.people.contact_summary.membership is None
-
-    def test_copy_text(self):
-
-        person = self.session.query(self.Donkey.t.people).first()
-
-        assert person.contact_summary.address == "43 union street es388 "
-
-        email = self.Donkey.get_instance("email")
-        email.email = "poo@poo.com"
-        email._people = person
-
-        self.session.add(person)
-        self.session.add(email)
-        self.session.commit()
-
-        assert person.contact_summary.email == "poo@poo.com poo@poo.com"
-
-        person.contact_summary.modified = False
-        self.session.save(person.contact_summary)
-        self.session.commit()
-
-        assert person.contact_summary.modified == False
-
-        person.postcode = "es399"
-
-        self.session.save(person)
-        self.session.commit()
-
-        assert person.contact_summary.modified == True
-
-        
-
-        
 
 class test_after_reload(test_basic_input):
     
