@@ -47,7 +47,7 @@ class boot_tables(object):
                                 primary_key = "field_name,table_name"
                             ),
                             Table("__field_params", fields.Text("item"),
-                                fields.Text("value"),
+                                fields.Text("value", length = 1000),
                                 primary_key = "field_name,table_name,item"
                             )
                             ]

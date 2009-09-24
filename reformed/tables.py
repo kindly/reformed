@@ -581,7 +581,6 @@ class Table(object):
                 else:
                     chained_validators.append(field.chained_validator)
                     
-
         # Non nullable foriegn keys are validated on the 
         # relationship attribute
         for column in self.foriegn_key_columns.itervalues():

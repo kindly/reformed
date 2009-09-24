@@ -25,6 +25,7 @@ class test_donkey(object):
     def setUpClass(cls):
         if not hasattr(cls, "engine"):
             cls.engine = create_engine('sqlite:///:memory:', echo = True)
+            #cls.engine = create_engine('sqlite:///:memory:')
         
 #        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
         cls.meta = sa.MetaData()
@@ -138,8 +139,9 @@ class test_donkey(object):
                             )
 
         cls.Donkey.add_table(Table("entity_categories",
-                             Date("start_date"),
-                             Date("end_date"),
+                             DateTime("start_date"),
+                             DateTime("end_date"),
+                             Counter("category_number", base_level = "_core_entity"),
                              ManyToOne("entity", "_core_entity",
                                        backref = "categories"),
                              CheckOverLappingDates("check_dates", parent_table = "_core_entity"))

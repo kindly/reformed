@@ -22,6 +22,35 @@ sqllogger.addHandler(sqlhandler)
 
 class test_events(test_donkey):
 
+    @classmethod
+    def setUpClass(cls):
+        super(test_events, cls).setUpClass()
+        cls.Donkey.tables["contact_summary"].add_field(CopyText("categories", "entity_categories", 
+                                                base_level = "people", 
+                                                fields = "category.category_description,sub_category.sub_category_description,sub_sub_category.sub_sub_category_description",
+                                                counter = "category_number"
+                                                ))
+
+        load_local_data(cls.Donkey, {"__table": u"sub_sub_category",
+                                      "category.category_name": u"a",
+                                      "category.category_description": u"this is a",
+                                      "category.category_type": u"wee",
+                                      "sub_category.sub_category_name": u"ab",
+                                      "sub_category.sub_category_description": u"this is ab",
+                                      "sub_sub_category.sub_sub_category_name": u"abc",
+                                      "sub_sub_category.sub_sub_category_description": u"this is abc"}
+                       )
+
+        load_local_data(cls.Donkey, {"__table": u"sub_sub_category",
+                                      "category.category_name": u"aa",
+                                      "category.category_description": u"this is aa",
+                                      "category.category_type": u"wee",
+                                      "sub_category.sub_category_name": u"aab",
+                                      "sub_category.sub_category_description": u"this is aab",
+                                      "sub_sub_category.sub_sub_category_name": u"aabc",
+                                      "sub_sub_category.sub_sub_category_description": u"this is aabc"}
+                       )
+
     def test_add_action(self):
 
         transaction = self.Donkey.get_instance("transactions")
@@ -228,6 +257,53 @@ class test_events(test_donkey):
         self.session.commit()
 
         assert person.contact_summary.modified == True
+
+    def test_add_category(self):
+
+        person = self.session.query(self.Donkey.t.people).first()
+        subsub_category = self.session.query(self.Donkey.t.sub_sub_category).first()
+
+        entity_categories = self.Donkey.get_instance("entity_categories")
+        entity_categories.category = subsub_category
+        entity_categories.entity = person._entity
+        entity_categories.start_date = datetime.datetime(2001,10,01)
+        entity_categories.end_date = datetime.datetime(2002,10,01)
+
+        self.session.save(entity_categories)
+        self.session.save(person._entity)
+        self.session.save(subsub_category)
+        self.session.save(person)
+
+        self.session.commit()
+
+        assert entity_categories.category_number == 1
+
+        assert person.contact_summary.categories == "this is a this is ab this is abc"
+
+
+        subsub_category = self.session.query(self.Donkey.t.sub_sub_category)[1]
+
+        entity_categories = self.Donkey.get_instance("entity_categories")
+        entity_categories.category = subsub_category
+        entity_categories.start_date = datetime.datetime(2012,10,01)
+        entity_categories.end_date = datetime.datetime(2013,10,01)
+        entity_categories.entity = person._entity
+
+        self.session.save(entity_categories)
+        self.session.save(person._entity)
+        self.session.save(subsub_category)
+        self.session.save(person)
+
+        self.session.commit()
+
+        assert entity_categories.category_number == 2
+
+        print person.contact_summary.categories 
+
+        assert person.contact_summary.categories == "this is a this is ab this is abc this is aa this is aab this is aabc"
+        
+
+
         
 
     def test_z_recreate_all(self):
@@ -242,6 +318,9 @@ class test_events(test_donkey):
 
         assert len(all_summary) == len(all_people)
         assert all([person.contact_summary.total_amount == 0 for person in all_people])
+        person = self.session.query(self.Donkey.t.people).first()
+
+        assert person.contact_summary.categories is None
 
         self.Donkey.tables["contact_summary"].update_all_events()
 
@@ -249,10 +328,12 @@ class test_events(test_donkey):
 
         person = self.session.query(self.Donkey.t.people).first()
 
+        assert person.contact_summary.categories == "this is a this is ab this is abc this is aabc this is aab this is aa"
         assert person.contact_summary.total_amount == 35
         assert person.contact_summary.address == "43 union street es399"
         assert person.contact_summary.membership is None
 
+        print person.contact_summary.categories
         print person.contact_summary.email
 
         assert person.contact_summary.email == u"poo@poo.com poo@poo.com zpoo@poo.com zpoo@poo.com"
@@ -272,3 +353,5 @@ class test_events(test_donkey):
         self.session.expire_all()
 
         assert person.contact_summary.email == u"poo@poo.com poo@poo.com zpoo@poo.com zpoo@poo.com zzpoo@poo.com zzpoo@poo.com"
+
+

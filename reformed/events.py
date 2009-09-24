@@ -157,7 +157,9 @@ class ChangeEvent(object):
             ## check to see if entity table is related to correct table
             for attribute in self.target_to_base_path:
                 base_table_obj = getattr(base_table_obj, attribute)
-                if base_table_obj._table.name == "_core_entity" and base_table_obj.table <> self.base_table.table_id:
+                if base_table_obj._table.name == "_core_entity" and\
+                   base_table_obj.table <> self.base_table.table_id and\
+                   self.base_level <> "_core_entity" :
                     return
         else:
             base_table_obj = object
@@ -175,7 +177,9 @@ class ChangeEvent(object):
             ## check to see if entity table is related to correct table
             for attribute in self.target_to_base_path:
                 base_table_obj = getattr(base_table_obj, attribute)
-                if base_table_obj._table.name == "_core_entity" and base_table_obj.table <> self.base_table.table_id:
+                if base_table_obj._table.name == "_core_entity" and\
+                   base_table_obj.table <> self.base_table.table_id and\
+                   self.base_level <> "_core_entity" :
                     return
         else:
             base_table_obj = object
@@ -192,7 +196,9 @@ class ChangeEvent(object):
             ## check to see if entity table is related to correct table
             for attribute in self.target_to_base_path:
                 base_table_obj = getattr(base_table_obj, attribute)
-                if base_table_obj._table.name == "_core_entity" and base_table_obj.table <> self.base_table.table_id:
+                if base_table_obj._table.name == "_core_entity" and\
+                   base_table_obj.table <> self.base_table.table_id and\
+                   self.base_level <> "_core_entity" :
                     return
         else:
             base_table_obj = object
@@ -429,15 +435,15 @@ class Counter(ChangeEvent):
 
         join_tuples = self.get_join_tuples(relation_attr, object._table, self.base_level)
 
-        target_table = self.database.tables[self.target_table].sa_table
+        target_table = self.database.tables[self.target_table].sa_table.alias()
 
         join_keys = [key[0] for key in join_tuples]
 
         key_values = [target_table.c[key] == getattr(object, key) for key in join_keys]
 
         setattr(object, self.field.name,
-                select([func.max(func.coalesce(target_table.c[self.field.name], 0)) + 1],
-                       and_(*key_values))
+                select([select([func.max(func.coalesce(target_table.c[self.field.name], 0)) + 1],
+                       and_(*key_values)).alias()])
                )
 
         session.save(object)
@@ -470,7 +476,6 @@ class CopyTextAfter(ChangeEvent):
         self.field_list = [s.strip() for s in fields.split(",")]
 
     def update_after(self, object, result, session):
-
 
         join = self.get_parent_primary_keys(object)
         fields = [func.coalesce(object._table.sa_table.c[field], "") + u' ' 
@@ -539,26 +544,36 @@ class CopyText(ChangeEvent):
 
         super(CopyText, self).__init__(target, field, base_level, initial_event)
 
-        fields = kw.get("field_list", self.target_field)
+        self.fields = kw.get("field_list", self.target_field)
         self.changed_flag = kw.get("changed_flag", None)
         self.update_when_flag = kw.get("update_when_flag" , None)
         self.counter = kw.get("counter", "counter") 
 
-        self.field_list = [s.strip() for s in fields.split(",")]
+
+    def add_event(self, database):
+
+        super(CopyText, self).add_event(database)
+
+        self.field_list_all = [s.strip() for s in self.fields.split(",")]
+
+        self.field_list = []
+        self.table_field_list = []
+
+        for field in self.field_list_all:
+            if field.count(".") == 1:
+                self.table_field_list.append(field.split("."))
+            else:
+                self.field_list.append(field)
+
+        target_table = self.database.tables[self.target_table]
+
+
 
 
     def update_after(self, object, result, session):
 
         join = self.get_parent_primary_keys(object)
 
-        relation_attr = self.target_to_base_path[0]
-        parent_table_obj = getattr(object, relation_attr)
-
-        joins = self.get_join_tuples(relation_attr, object._table, parent_table_obj._table) 
-
-        this_table_keys = [key[0] for key in joins]
-
-        key_columns = [object._table.sa_table.c[key] for key in this_table_keys] 
 
         target_table = self.database.tables[self.target_table]
 
@@ -567,7 +582,16 @@ class CopyText(ChangeEvent):
         text_list = []
 
         for row in rows:
-            text_list.append(" ".join([getattr(row, field) for field in self.field_list if getattr(row, field)]))
+            for field in self.field_list:
+                text = getattr(row, field)
+                if text:
+                    text_list.append(text)
+
+            for table, field in self.table_field_list:
+                obj = reduce(getattr, target_table.local_tables[table], row)
+                text = getattr(obj, field)
+                if text:
+                    text_list.append(text)
 
         setattr(result, self.field.name, " ".join(text_list))
 
@@ -606,17 +630,49 @@ class CopyText(ChangeEvent):
              join_statement = join_holder.apply_join_conditions(join_statement)
 
 
-        first_join_cond = target_to_base_cond[0]
 
         target_table = self.database.tables[self.target_table].sa_table
 
         max_counter = select([func.max(target_table.c[self.counter])]).execute().fetchone()[0]
-
-        tables_aliased = [target_table]
+        if not max_counter:
+            return
 
         fields = [func.coalesce(target_table.c[field], "") for field in self.field_list]
 
-        outerjoins = []
+        for table, field in self.table_field_list:
+            sa_table = self.database.tables[table].sa_table
+            fields.append(func.coalesce(sa_table.c[field], ""))
+
+
+        first_join_cond = target_to_base_cond[0]
+
+        lookup_paths = {}
+        for table, field in self.table_field_list:
+            lookup_paths[table] = self.database.tables[self.target_table].local_tables[table]
+
+
+        distinct_lookup_path = []
+
+        for table, path in lookup_paths.iteritems():
+            duplicate = False
+            for other_table, other_path in lookup_paths.iteritems():
+                if table == other_table:
+                    continue
+                if list(path) == list(other_path)[:len(path)]:
+                    duplicate = True
+
+            if not duplicate:
+                distinct_lookup_path.append(path)
+
+
+        current_table = target_table
+        for path in distinct_lookup_path:
+            join_holders = self.join_condition_of_path(self.target_table, path)
+            for join_holder in join_holders:
+                current_table = join_holder.table2
+                join_condition = join_holder.join_conditions()
+                join_statement = join_statement.join(current_table, and_(*join_condition))
+        
 
         for num in range(1, max_counter + 1):
             if num == 1:
@@ -627,7 +683,18 @@ class CopyText(ChangeEvent):
             join_statement = join_statement.outerjoin(aliased_table,
                                                       and_(aliased_table.c[self.counter] == num,
                                                       *join_condition))
-            #outerjoins.append(outer_join_condition)
+            current_table = aliased_table
+            for path in distinct_lookup_path:
+                join_holders = self.join_condition_of_path(self.target_table, path)
+                for join_holder in join_holders:
+                    join_holder.table1 = current_table
+                    current_table = join_holder.alias(2)
+                    for table, field in self.table_field_list:
+                        if current_table.original.name == table:
+                            fields.append(func.coalesce(current_table.c[field], ""))
+                    join_condition = join_holder.join_conditions()
+                    join_statement = join_statement.outerjoin(current_table, and_(*join_condition))
+
             fields.extend([func.coalesce(aliased_table.c[field], "") for field in self.field_list])
 
         fields_concat = [field + u' ' for field in fields[:-1]] 
@@ -638,11 +705,7 @@ class CopyText(ChangeEvent):
             condition_column = target_table.c[self.update_when_flag]
             statement= select([fields_concat], condition_column, from_obj = join_statement)
         else:
-            statement= select([fields_concat], from_obj = all_joins)
-
-        print statement
-
-
+            statement= select([fields_concat], from_obj = join_statement)
 
         if self.changed_flag:
             session.query(self.table.sa_class).update({self.field.name: statement,
