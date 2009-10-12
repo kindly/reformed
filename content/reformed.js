@@ -491,7 +491,7 @@ action_hash = {
 	previous: [['previous', 'go-previous.png', 'X', 'record'],[$FORM, $FORM._move, ['main#','prev']]],
 	next: [['next', 'go-next.png', 'Y', 'record'],[$FORM, $FORM._move, ['main#','next']]],
 	new: [['new', 'document-new.png', 'B', 'record'],[$FORM, $FORM._new, ['main']]],
-	save: [['save', 'document-save.png', 'c', 'record'],[$FORM, $FORM._save, ['main#','']]],
+	save: [['save', 'document-save.png', 'c', 'record'],[$FORM, node_save, ['main#','']]],
 	delete:[['delete', 'edit-delete.png', 'd', 'record'],[$FORM, $FORM._delete, ['main#','']]],
 	home: [['home', 'go-home.png', 'h', 'general'],[document, get_html, ['main', 'frontpage']]],
 	donkey: [['donkey', 'go-home.png', 'I', 'general'],[$FORM, $FORM.request, ['donkey', 'main', 'first']]]

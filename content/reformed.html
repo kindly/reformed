@@ -43,27 +43,15 @@ body {
 </ul>
 <ul>
 <li><span onclick="get_html('main','frontpage')">frontpage</span></li>
-<li><span onclick="$FORM.show('donkey', 'main', 1)">moo</span></li>
-<li><span onclick="$FORM.show('donkey', 'main', 2)">moo</span></li>
-<li><span onclick="$FORM.show('donkey', 'main', 3)">moo</span></li>
-<li><span onclick="$FORM.show('donkey', 'main', 4)">moo</span></li>
-<li><span onclick="$FORM.show('donkey', 'main', 5)">moo</span></li>
-<li><span onclick="$FORM.show('people', 'main', 1)">mog</span></li>
-<li><span onclick="$FORM.show('people', 'main', 2)">moo</span></li>
-<li><span onclick="$FORM.show('people', 'main', 3)">moo</span></li>
-<li><span onclick="$FORM.show('people', 'main', 4)">moo</span></li>
-<li><span onclick="$FORM.show('people', 'main', 5)">moo</span></li>
 <li><span onclick="$JOB.add({node: 'test.Node4'}, {node: 'moo'}, 'node', true)">moop</span></li>
-<li><span onclick="$JOB.add({node: 'test.Node6', lastnode: 'test.Node6', data:{
-moo: 'moo'
-}, command: 'c'
-}, {}, 'node', true)">moop</span></li>
-<li><span onclick="$JOB.add({node: 'test.Node6', lastnode: 'test.Node6', data:{
-moo: 'moo2'
-}, command: 'b'
-}, {}, 'node', true)">moop</span></li>
-</ul>
+<li><span onclick="$JOB.add({node: 'test.Donkey', lastnode: 'test.Donkey', data:{id: 2
+}, command: 'view'
+}, {}, 'node', true)">moop 2</span></li>
 
+<li><span onclick="$JOB.add({node: 'test.Donkey', lastnode: 'test.Donkey', data:{id: 1
+}, command: 'view'
+}, {}, 'node', true)">moop 1</span></li>
+</ul>
 </div>
 
 <div id='action'>action</div>

@@ -18,18 +18,7 @@
 ##   Copyright (c) 2008-2009 Toby Dacre & David Raznick
 ##
 
-class Singleton(type):
-    def __init__(cls, name, bases, dict):
-        super(Singleton, cls).__init__(name, bases, dict)
-        cls.instance = None 
-
-    def __call__(cls,*args,**kw):
-        if cls.instance is None:
-            cls.instance = super(Singleton, cls).__call__(*args, **kw)
-        return cls.instance
-
 class Node(object):
-    #__metaclass__ = Singleton
 
     def __init__(self, data, last_node = None):
         self.out = []
@@ -54,12 +43,8 @@ class Node(object):
         """called first when the node is used"""
         pass
 
-    def call1(self):
+    def call(self):
         """called when the node is first used"""
-        pass
-
-    def call2(self):
-        """called when the node is replied too"""
         pass
 
     def finalise(self):
