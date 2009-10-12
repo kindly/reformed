@@ -39,7 +39,7 @@ def process_ajax(environ, start_response):
 	print repr(body)
 
  	if body:
- 		if head in ("form", "data", "page", "html", "edit", "action"):
+ 		if head in ("form", "data", "page", "html", "edit", "action", "node"):
 			moo.add_command(head, body)
 		if head == 'new':
 			for (my_head, my_body) in body:
@@ -56,7 +56,6 @@ def process_ajax(environ, start_response):
 	print 'length %s bytes' % len(json.dumps(data, sort_keys=True, indent=4))
 	print 'condenced length %s bytes' % len(json.dumps(data, separators=(',',':')))
 	print 'SESSION\n%s' % json.dumps(http_session, sort_keys=False, indent=4)
-	# print json.dumps(data, separators=(',',':'))
 
 	return json.dumps(data, separators=(',',':'))
 

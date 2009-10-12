@@ -191,7 +191,6 @@ window.$JOB = {
 			},
 			
 		'status': function(packet, job){}
-
 	},
 
 	_ajax: function(request, job_number, type){

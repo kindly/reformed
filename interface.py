@@ -1,4 +1,5 @@
 import ajax
+import node_runner
 
 
 class Interface(object):
@@ -29,4 +30,5 @@ class Interface(object):
                 ajax.ajax.process_page(data, self)
             elif command == 'html':
                 ajax.ajax.process_html(data, self)
-    
+            elif command == 'node':
+                node_runner.node(data, self)    
