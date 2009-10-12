@@ -23,8 +23,9 @@ body {
 <script src="jquery.json.js"></script>
 <script src="job.js" ></script>
 <script src="form.js"></script>
-<script src="form_control.js" ></script>
+<script src="form_control2.js" ></script>
 <script src="info.js" ></script>
+<script src="node.js" ></script>
 <script src="reformed.js"></script>
 
 </head>
@@ -52,7 +53,15 @@ body {
 <li><span onclick="$FORM.show('people', 'main', 3)">moo</span></li>
 <li><span onclick="$FORM.show('people', 'main', 4)">moo</span></li>
 <li><span onclick="$FORM.show('people', 'main', 5)">moo</span></li>
-<li><span onclick="$FORM.show('form_item', 'main', 1)">moop</span></li>
+<li><span onclick="$JOB.add({node: 'test.Node4'}, {node: 'moo'}, 'node', true)">moop</span></li>
+<li><span onclick="$JOB.add({node: 'test.Node6', lastnode: 'test.Node6', data:{
+moo: 'moo'
+}, command: 'c'
+}, {}, 'node', true)">moop</span></li>
+<li><span onclick="$JOB.add({node: 'test.Node6', lastnode: 'test.Node6', data:{
+moo: 'moo2'
+}, command: 'b'
+}, {}, 'node', true)">moop</span></li>
 </ul>
 
 </div>
