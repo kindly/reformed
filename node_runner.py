@@ -19,6 +19,7 @@
 ##
 
 import nodes
+import traceback
 
 def node(data, caller):
     node = data.get('node')
@@ -35,6 +36,7 @@ def run(node_name, data, last_node = None):
             globals()['nodes.' + node_base] = __import__('nodes.' + node_base)
         except:
             print "import failed"
+            print traceback.print_exc()
 
     search_node = nodes
     node_path = node_name.split('.')
