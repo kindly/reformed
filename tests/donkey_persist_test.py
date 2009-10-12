@@ -125,6 +125,7 @@ class test_donkey_persist_sqlite(object):
     def tearDownClass(cls):
 
         cls.session.close()
+        cls.Donkey.job_scheduler.threadpool.wait()
         
 
 #class test_basic_input(test_donkey_persist):
@@ -144,10 +145,10 @@ class test_donkey_persist_sqlite(object):
 
     def test_address_validation(self):
 
-        assert len(get_table_from_instance(self.david, self.Donkey).validate(self.david)) > 3
+        assert len(get_table_from_instance(self.david, self.Donkey).validate(self.david, self.session)) > 3
         
         assert_raises(formencode.Invalid,
-                      get_table_from_instance(self.david2, self.Donkey).validate,self.david2)
+                      get_table_from_instance(self.david2, self.Donkey).validate,self.david2, self.session)
 
     #def test_many_side_not_null(self):
 

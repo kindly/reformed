@@ -135,6 +135,7 @@ window.$JOB = {
 					// get the function to process the packet
 				  	if (typeof(this._packet_functions[packet.type]) != 'undefined'){
 				  		this._packet_functions[packet.type](packet, job.data);
+                        console.log(this)
 				  	} else {
 						var error = "unknown packet type: ";
 						error += packet.type;

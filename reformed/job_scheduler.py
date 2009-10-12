@@ -69,7 +69,7 @@ class JobScedulerThread(threading.Thread):
         if self.alive:
             return
         self.alive = True
-        while True:
+        while self.alive:
 
             to_run = self.database.search("_core_job_scheduler",
                                           "job_start_time <= now and job_started is null") 
@@ -94,6 +94,10 @@ class JobScedulerThread(threading.Thread):
                 break
             except threadpool.NoResultsPending:
                 continue
+
+    def stop(self):
+
+        self.alive = False
 
     def make_request(self, func, arg, job_id):
 

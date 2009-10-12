@@ -623,7 +623,7 @@ class Table(object):
                                  ignore_key_missing = True,
                                  **self.schema_dict)
     
-    def validate(self, instance):
+    def validate(self, instance, session):
         """this validates an instance of sa_class with the schema defined
         by this tables Field objects"""
         
@@ -632,6 +632,7 @@ class Table(object):
             if name == "chained_validators":
                 continue
             validation_dict[name] = getattr(instance, name)
+        instance._session = session
 
         if not self.validated:
             return {}
@@ -689,5 +690,8 @@ class ChangedAttributes(AttributeExtension):
 
         return value
     
+class FormEncodeState(object):
+    pass
+
 
 

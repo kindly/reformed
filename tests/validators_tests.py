@@ -34,10 +34,10 @@ class test_validation(test_donkey):
 
     def test_address_validation(self):
 
-        assert len(get_table_from_instance(self.david, self.Donkey).validate(self.david)) > 3
+        assert len(get_table_from_instance(self.david, self.Donkey).validate(self.david, None)) > 3
         
         assert_raises(formencode.Invalid,
-                      get_table_from_instance(self.david2, self.Donkey).validate,self.david2)
+                      get_table_from_instance(self.david2, self.Donkey).validate,self.david2, None)
 
     def test_regex_validation(self):
 

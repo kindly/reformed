@@ -178,19 +178,22 @@ def create_data_dict(result):
         data[row.id] = get_row_data(row) 
     return data
 
-def get_all_local_data(obj, allow_system = False, keep_all = False):
+def get_all_local_data(obj, tables = None, allow_system = False, keep_all = False):
 
-    row_data = {}
     table = obj._table
+    row_data = {"__table": table.name}
     database = table.database
     local_tables = table.local_tables
-    row_data.update(get_row_data(obj, keep_all))
+    if not tables or obj._table.name in tables:
+        row_data.update(get_row_data(obj, keep_all))
 
     for aliased_table_name, path in table.local_tables.iteritems():
         table_name = table.paths[path][0]
         if not allow_system:
             if table_name.startswith("_"):
                 continue
+        if tables and table_name not in tables:
+            continue
         current_obj = obj
         for relation in path:
             current_obj = getattr(current_obj, relation)

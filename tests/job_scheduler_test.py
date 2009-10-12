@@ -19,6 +19,7 @@ class test_single_request(donkey_persist_test.test_donkey_persist_mysql):
         cls.wait1 = cls.job_scheduler.add_job("test_type", "wait", "1")
         cls.waiterror = cls.job_scheduler.add_job("test_type", "error", "3")
         time.sleep(5)
+        cls.scheduler_thread.stop()
 
     def test_add_basic_job(self):
 

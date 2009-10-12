@@ -29,6 +29,7 @@ import datetime
 import time
 import logging
 import custom_exceptions
+import warnings
 from util import get_table_from_instance
 
 logger = logging.getLogger('reformed.session')
@@ -59,7 +60,7 @@ class SessionWrapper(object):
 
     def add(self, obj):
         """save or update and validate a sqlalchemy object"""
-        obj._table.validate(obj)
+        obj._table.validate(obj, self.session)
         obj._validated = True
         self.session.add(obj)
     
@@ -176,7 +177,10 @@ class SessionWrapper(object):
             self.session.add(lock)
 
             try:
-                self.session.flush([lock])
+                #FIXME need to find a better way to flush locking rows
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    self.session.flush([lock])
             except sa.exc.IntegrityError:
                 self.session.rollback()
                 raise custom_exceptions.LockingError(

@@ -343,11 +343,18 @@ class Database(object):
         limit = kw.get("limit", None)
         query = search.Search(self, table_name, session, *args)
 
+        tables = None
+        if self.tables[table_name].entity:
+            tables = ["_core_entity"]
+            for table in self.tables[table_name].local_tables:
+                if table.count("summary"):
+                    tables.append(table)
+
         if limit:
-            result = resultset.ResultSet(query, result_num = limit).first_set()
+            result = resultset.ResultSet(query, tables = tables, result_num = limit).first_set()
         else:
             result = resultset.ResultSet(query).all()
-        return [get_all_local_data(obj, keep_all = True, allow_system = True) for obj in result]    
+        return [get_all_local_data(obj, tables =tables, keep_all = True, allow_system = True) for obj in result]    
         
         session.close()
 
