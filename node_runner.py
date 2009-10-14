@@ -52,10 +52,7 @@ def run(node_name, data, last_node = None):
         print "Node: %s, last: %s" % (node_name, last_node)
         x = search_node(data, last_node)
         x.initialise()
-        if node_name == last_node:
-            x.call2()
-        else:
-            x.call1()
+        x.call()
         x.finalise()
         if x.next_node:
             run(x.next_node, 'moo', node_name)

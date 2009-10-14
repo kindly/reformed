@@ -167,6 +167,20 @@ def get_row_data(obj, keep_all = False):
         row_data["%s.id" % table] = obj.id
     return row_data
 
+
+def get_row_data_basic(obj, keep_all = False):
+    
+    row_data = {}
+    table = obj._table.name
+    for field in get_fields_from_obj(obj):
+        if field in ("modified_by", "modified_date", "id", "_core_entity_id") and not keep_all:
+            continue
+        row_data[field] = getattr(obj, field)
+    if keep_all:
+        row_data["id"] = obj.id
+    return row_data
+
+
 def create_data_dict(result):
 
     data = {}
