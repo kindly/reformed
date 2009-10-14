@@ -35,5 +35,13 @@ class Donkey(TableNode):
         ['name', 'textbox', 'name:'],
         ['age', 'textbox', 'age:']
     ]
+    list_title = 'donkey %s'
      
+class People(TableNode):
+
+    table = "people"
+    fields = [
+        ['name', 'textbox', 'name:']
+    ]
+    list_title = 'person %s'
 

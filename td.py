@@ -12,7 +12,9 @@ d.add_entity(r.Table("people",
                               eager = True,
                               cascade = "all, delete-orphan"),
                     r.OneToMany("donkey_sponsership",
-                              "donkey_sponsership")
+                              "donkey_sponsership",
+                              many_side_not_null = False
+)
                    )
            )
 

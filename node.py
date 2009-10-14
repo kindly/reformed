@@ -21,7 +21,7 @@
 import reformed.reformed as r
 import reformed.util as util
 import formencode as fe
-
+import sqlalchemy as sa
 
 class Node(object):
 
@@ -63,7 +63,7 @@ class TableNode(Node):
     table = "unknown"
     fields = []
     form_params =  {"form_type": "normal"}
-     
+    list_title = 'item %s'
 
     def call(self):
         if  self.command == 'view':
@@ -93,9 +93,12 @@ class TableNode(Node):
         id = self.data.get('__id')
         session = r.reformed.Session()
         obj = r.reformed.get_class(self.table)
-        data = session.query(obj).filter_by(_core_entity_id = id).one()
-        data_out = util.get_row_data_basic(data)
-        data_out['__id'] = id
+        try:
+            data = session.query(obj).filter_by(_core_entity_id = id).one()
+            data_out = util.get_row_data_basic(data)
+            data_out['__id'] = id
+        except sa.orm.exc.NoResultFound:
+            data_out = {}
         data = {
             "form": {
                 "fields":self.create_fields(), 
@@ -113,22 +116,31 @@ class TableNode(Node):
         id = self.data.get('__id')
         session = r.reformed.Session()
         obj = r.reformed.get_class(self.table)
-        data = session.query(obj).filter_by(_core_entity_id = id).one()
-        data_out_array = util.create_data_dict(data)
-        for field in self.fields:
-            field_name = field[0]
-            value = self.data.get(field_name)
-            setattr(data, field_name, value)
         try:
-            session.save_or_update(data)
-            session.commit()
-        except fe.Invalid, e:
-            session.rollback()
-            print "we fucked!", e.msg
-            errors = {}
-            for key, value in e.error_dict.items():
-                errors[key] = value.msg
-            print repr(errors)
+            data = session.query(obj).filter_by(_core_entity_id = id).one()
+   #         data_out_array = util.create_data_dict(data)
+        except sa.orm.exc.NoResultFound:
+   #         data_out_array = None
+            data = None
+        if (data):
+            for field in self.fields:
+                field_name = field[0]
+                value = self.data.get(field_name)
+                setattr(data, field_name, value)
+            try:
+                session.save_or_update(data)
+                session.commit()
+            except fe.Invalid, e:
+                session.rollback()
+                print "we fucked!", e.msg
+                errors = {}
+                for key, value in e.error_dict.items():
+                    errors[key] = value.msg
+                print repr(errors)
+                self.out = errors
+                self.action = 'save_error'
+        else:
+            errors = {'~': 'record not found'}
             self.out = errors
             self.action = 'save_error'
         session.close()
@@ -152,7 +164,7 @@ class TableNode(Node):
         for result in results:
             row = {"table": result["__table"],
                    "id": result["_core_entity.id"],
-                   "title": "donkey %s" % result["_core_entity.id"]}
+                   "title": self.list_title % result["_core_entity.id"]}
             out.append(row)
 
         self.out = out
