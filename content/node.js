@@ -89,7 +89,7 @@
 		formHTML += '</div>';  // end of form body div
 
 		// FORM FOOTER
-		if (!form_info.info.top_level && (local_data.form_type=='normal' || local_data.form_type=='action')){
+		if (!form_info.info.top_level && (local_data.form_many_side_not_null = False,type=='normal' || local_data.form_type=='action')){
 			formHTML += $FORM._generate_footer_html(local_data);
 		}
 
@@ -169,12 +169,25 @@ function node_save(root, command){
         get_node('test.Donkey', 'save', out); 
     }
 
+
+function node_delete(root, command){
+		msg('node_delete');
+		var m = this._parse_item(root);
+        //alert( $.toJSON($INFO.getState('#', 'form_data')));
+        form_data = $INFO.getState('#', 'form_data');
+        var out = {};
+        id = $INFO.getId('main#*id');
+        out['__id'] = $('#'+ id).val();
+        get_node('test.Donkey', 'delete', out); 
+    }
+
+
 function show_listing(data){
 
     html = '';
     for (i=0; i<data.length; i++){
         item = data[i];
-                html += '<p onclick="$JOB.add({node: \'test.Donkey\', lastnode: \'test.Donkey\', data:{id: '
+                html += '<p onclick="$JOB.add({node: \'test.Donkey\', lastnode: \'test.Donkey\', data:{__id: '
                 html += item.id + '}, command: \'view\'}';
                 html += ', {}, \'node\', true)">' + item.title + '</p>';
     }
