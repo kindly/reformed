@@ -166,10 +166,7 @@ function node_save(root, command){
         }
         id = $INFO.getId('main#*id');
         out['__id'] = $('#'+ id).val();
-        $JOB.add({node: 'test.Donkey',
-                  lastnode: 'test.Donkey',
-                  data: out,
-                  command: 'save'},  {}, 'node', true) 
+        get_node('test.Donkey', 'save', out); 
     }
 
 function show_listing(data){
