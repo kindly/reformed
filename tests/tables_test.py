@@ -229,14 +229,14 @@ class test_database_primary_key(object):
         
     def test_unique_index(self):
         a = self.Donkey.get_instance("people") 
-        a.name9 = "poo"
-        a.name5 = "poo"
+        a.name9 = u"poo"
+        a.name5 = u"poo"
         self.session.add(a)
         self.session.commit()
 
         b = self.Donkey.get_instance("people") 
-        b.name9 = "poo"
-        b.name5 = "poo"
+        b.name9 = u"poo"
+        b.name5 = u"poo"
         self.session.add(b)
         assert_raises(IntegrityError, self.session.commit)
 
@@ -360,11 +360,11 @@ class test_database_primary_key(object):
 
         people = self.Donkey.tables["people"].sa_class()
 
-        people.name9 = "pop"
+        people.name9 = u"pop"
         assert self.session.add(people) is None
         
         people = self.Donkey.tables["people"].sa_class()
-        people.name = "pop"
+        people.name = u"pop"
 
         self.session.add(people) is None
 
@@ -413,10 +413,10 @@ class test_field_type_validation(object):
 
         person.email = "p@pl.com"
         self.session.add(person)
-        person.email = 'pop'
+        person.email = u'pop'
         assert_raises(fe.Invalid, self.session.add, person)
         person.email = "p@pl.com"
-        person.name2 = "plop"
+        person.name2 = u"plop"
         assert_raises(fe.Invalid, self.session.add, person)
         person.name2 = 10.2
         person.name3 =  "plop"

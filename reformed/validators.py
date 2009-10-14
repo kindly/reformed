@@ -116,3 +116,37 @@ class CheckDefaultEmail(FormValidator):
                 trues = trues +1
         if trues <> 1:
             raise Invalid(self.message("invalid", obj), field_dict, obj)
+
+class CheckInField(FancyValidator):
+
+    __unpackargs__ = ('target',)
+
+    filter_field = None
+
+    filter_value = None
+
+    messages = {
+        'invalid': _("field %(field)s can not have value %(value)s"),
+        }
+
+    def validate_python(self, value, obj):
+
+
+        session = obj._session
+        database = obj._table.database
+        self.table, self.field = self.target.split(".")
+
+        target_class = database.tables[self.table].sa_class
+        target_field = getattr(target_class, self.field)
+        if self.filter_field:
+            filter_field = getattr(target_class, self.filter_field)
+            results = session.query(target_field).filter(filter_field == u"%s" % self.filter_value).all()
+        else:
+            results = session.query(getattr(target_class, self.field)).all()
+
+        if value and (value,) not in results:
+            raise Invalid(self.message("invalid", obj, field = self.field, value = value), value, obj)
+
+
+
+

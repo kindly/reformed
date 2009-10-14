@@ -105,6 +105,7 @@ class Table(object):
         self.one_to_many_tables = None
         self.table_path_list = None
         self.table_path = None
+        self.schema_dict = None
 
     def __repr__(self):
         return "%s - %s" % (self.name, self.columns.keys())
@@ -553,8 +554,7 @@ class Table(object):
             validators.append(val.FancyValidator(not_empty = mand))
         return formencode_all
 
-    @property
-    def schema_dict(self):
+    def make_schema_dict(self):
 
         schema_dict = {}
         chained_validators = [] 
@@ -609,8 +609,7 @@ class Table(object):
         if chained_validators:
             schema_dict["chained_validators"] = chained_validators
 
-
-        return schema_dict
+        self.schema_dict = schema_dict
 
 
     @property

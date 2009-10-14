@@ -304,6 +304,7 @@ class Database(object):
                 for field in table.fields.itervalues():
                     if hasattr(field, "event"):
                         field.event.add_event(self)
+                table.make_schema_dict()
         except (custom_exceptions.NoDatabaseError,\
                 custom_exceptions.RelationError):
             pass
@@ -320,6 +321,7 @@ class Database(object):
             table.one_to_many_tables = None
             table.events = []
             table.initial_events = []
+            table.schema_dict = None
         self.graph = None
             
 

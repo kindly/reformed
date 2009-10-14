@@ -37,6 +37,17 @@ class Text(Field):
     def __init__(self, name, *args, **kw):
         self.text = Column(sa.Unicode(100),  use_parent = True)
 
+class TextLookupValidated(Field):
+    
+    def __init__(self, name, target, *args, **kw):
+        self.text = Column(sa.Unicode(100),  use_parent = True)
+
+        filter_field = kw.get("filter_field", None)
+        filter_value = kw.get("filter_value", None)
+
+        self.validation = {name: validators.CheckInField(target, 
+                                                         filter_field = filter_field,
+                                                         filter_value = filter_value )}
 
 class Unicode(Field):
     
@@ -95,6 +106,7 @@ class CheckOverLappingDates(Field):
 
         parent_table = kw.get("parent_table")
         self.chained_validator = validators.CheckNoOverlappingDates(parent_table)
+
 
 class CheckNoTwoNulls(Field):
 

@@ -74,6 +74,7 @@ class test_donkey(object):
                             Table("donkey", 
                                   Text("name", validation = '__^[a-zA-Z0-9]*$'),
                                   Integer("age", validation = 'Int'),
+                                  TextLookupValidated("donkey_type", "donkey_types.donkey_type", filter_field = "donkey_type_type", filter_value = "looks"),
                                   OneToOne("donkey_pics","donkey_pics",
                                            many_side_not_null = False,
                                            ),
@@ -82,6 +83,9 @@ class test_donkey(object):
                                   Index("idx_name", "name"),
                                   entity = True
                                  ),
+                            Table("donkey_types",
+                                  Text("donkey_type"),
+                                  Text("donkey_type_type")),
                             Table("donkey_pics",
                                   Binary("pic"),
                                   Text("pic_name")
@@ -225,6 +229,21 @@ class test_donkey(object):
         cls.david_logged = get_table_from_instance(cls.david, cls.Donkey).logged_instance(cls.david)
         cls.session.add(cls.david_logged)
         cls.session.commit()
+
+        donkey_type1 = cls.Donkey.get_instance("donkey_types")
+        donkey_type1.donkey_type = u"hairy"
+        donkey_type1.donkey_type_type = u"looks"
+        donkey_type2 = cls.Donkey.get_instance("donkey_types")
+        donkey_type2.donkey_type = u"smooth"
+        donkey_type2.donkey_type_type = u"looks"
+        donkey_type3 = cls.Donkey.get_instance("donkey_types")
+        donkey_type3.donkey_type = u"pooey"
+        donkey_type3.donkey_type_type = u"smell"
+
+        cls.session.add(donkey_type1)
+        cls.session.add(donkey_type2)
+        cls.session.add(donkey_type3)
+        cls.session.commit()
         
     @classmethod
     def tearDownClass(cls):
@@ -274,10 +293,12 @@ class test_basic_input(test_donkey):
     def test_create_data_dict(self):
 
         results = self.session.query(self.Donkey.tables["donkey"].sa_class)[:2]
-        assert create_data_dict(results) == {1: {'donkey.age': 13, 'donkey.name': u'jim'}, 2: {'donkey.age': 131, 'donkey.name': u'jim1'}}
+        print create_data_dict(results) 
+        assert create_data_dict(results) == {1: {'donkey.age': 13, 'donkey.donkey_type': None, 'donkey.name': u'jim'}, 2: {'donkey.age': 131, 'donkey.donkey_type': None, 'donkey.name': u'jim1'}}
 
         results2 = self.session.query(self.Donkey.tables["donkey"].sa_class).first()
-        assert create_data_dict(results2) == {1: {'donkey.age': 13, 'donkey.name': u'jim'}}
+        print create_data_dict(results2) 
+        assert create_data_dict(results2) == {1: {'donkey.age': 13, 'donkey.donkey_type': None, 'donkey.name': u'jim'}}
 
     def test_create_local_data(self):
 
@@ -286,7 +307,7 @@ class test_basic_input(test_donkey):
         print get_all_local_data(result)
 
 
-        assert get_all_local_data(result) == {'contact_summary.people_id': 1, 'contact_summary.transaction_count': 0, 'people.name': u'david', '__table': 'donkey_sponsership', 'contact_summary.membership': None, 'donkey_pics.pic_name': None, 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'43 union street es388', 'donkey_sponsership.donkey_id': 1, 'people.town': None, 'donkey_sponsership.giving_date': None, 'people.postcode': u'es388', 'donkey_sponsership.people_id': 1, 'people.country': None, 'people.address_line_1': u'43 union street', 'people.address_line_2': None, 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'donkey_sponsership.amount': Decimal('50'), 'donkey_pics.pic': None, 'donkey.age': 13, 'donkey_pics.donkey_id': None, 'donkey.name': u'jim'} 
+        assert get_all_local_data(result) == {'contact_summary.people_id': 1, 'contact_summary.transaction_count': 0, 'people.name': u'david', '__table': 'donkey_sponsership', 'contact_summary.membership': None, 'donkey_pics.pic_name': None, 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'43 union street es388', 'donkey_sponsership.donkey_id': 1, 'people.town': None, 'donkey_sponsership.giving_date': None, 'people.postcode': u'es388', 'donkey_sponsership.people_id': 1, 'people.country': None, 'people.address_line_1': u'43 union street', 'people.address_line_2': None, 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'donkey_sponsership.amount': Decimal('50'), 'donkey_pics.pic': None, 'donkey.donkey_type': None, 'donkey.age': 13, 'donkey_pics.donkey_id': None, 'donkey.name': u'jim'} 
 
     def test_local_tables(self):
         
@@ -344,7 +365,7 @@ class test_basic_input(test_donkey):
 
 
         print get_all_local_data(a)
-        assert get_all_local_data(a) == {'contact_summary.people_id': 2, 'contact_summary.transaction_count': 0, 'people.name': u'fred', '__table': 'donkey_sponsership', 'contact_summary.membership': None, 'donkey_pics.pic_name': None, 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'poo1010101 fred', 'donkey_sponsership.donkey_id': 12, 'people.town': None, 'donkey_sponsership.giving_date': None, 'people.postcode': u'fred', 'donkey_sponsership.people_id': 2, 'people.country': None, 'people.address_line_1': u'poo1010101', 'people.address_line_2': u'poop', 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'donkey_sponsership.amount': Decimal('711110'), 'donkey_pics.pic': None, 'donkey.age': 12, 'donkey_pics.donkey_id': None, 'donkey.name': None}
+        assert get_all_local_data(a) == {'contact_summary.people_id': 2, 'contact_summary.transaction_count': 0, 'people.name': u'fred', '__table': 'donkey_sponsership', 'contact_summary.membership': None, 'donkey_pics.pic_name': None, 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'poo1010101 fred', 'donkey_sponsership.donkey_id': 12, 'people.town': None, 'donkey_sponsership.giving_date': None, 'people.postcode': u'fred', 'donkey_sponsership.people_id': 2, 'people.country': None, 'people.address_line_1': u'poo1010101', 'people.address_line_2': u'poop', 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'donkey_sponsership.amount': Decimal('711110'), 'donkey_pics.pic': None, 'donkey.donkey_type': None, 'donkey.age': 12, 'donkey_pics.donkey_id': None, 'donkey.name': None}
         
     def test_import_catagory_data(self):
 

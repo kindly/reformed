@@ -119,3 +119,22 @@ class test_validation(test_donkey):
         membership2.end_date = datetime.date(2009,05,02)
 
         assert self.session.add(membership2) == None
+
+    
+    def test_lookup_validation(self):
+
+        load_local_data(self.Donkey, 
+                        {"__table": u"donkey",
+                        "donkey.name": u"good",
+                        "donkey.donkey_type": u"smooth",
+                        })
+
+
+        assert_raises(formencode.Invalid,
+                      load_local_data,
+                      self.Donkey, 
+                      {"__table": u"donkey",
+                      "donkey.name": u"z",
+                      "donkey.donkey_type": u"pooey",
+                      })
+
