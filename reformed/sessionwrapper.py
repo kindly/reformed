@@ -67,20 +67,6 @@ class SessionWrapper(object):
     def query(self, mapper):
         return self.session.query(mapper)
 
-    def flush(self):
-        if self.has_entity:
-            self.add_entity_instance()
-        self.add_events()
-        self.delete_events()
-        self.update_events()
-        self.check_all_validated()
-        self.add_locked_rows()
-        self.add_logged_instances()
-        self.session.flush()
-        self.after_flush()
-        self.session.flush()
-        self.after_flush_list = []
-
     def commit(self):
 
         if self.has_entity:

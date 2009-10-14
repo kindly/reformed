@@ -56,6 +56,7 @@ class Database(object):
         self.engine = kw.pop("engine", None)
         self._Session = kw.pop("session", None)
         self.entity = kw.pop("entity", False)
+        self.logging_tables = kw.pop("logging_tables", True)
         self.metadata.bind = self.engine
         self.Session = sessionwrapper.SessionClass(self._Session, self)
         self.persisted = False
@@ -386,7 +387,8 @@ class Database(object):
     def update_tables(self):
 
         for table in self.tables.values():
-                              
+            if not self.logging_tables:
+                table.logged = False
             if table.logged and "_log_%s" % table.name not in self.tables.iterkeys() :
                 self.add_table(self.logged_table(table))
 

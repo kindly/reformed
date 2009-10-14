@@ -41,7 +41,8 @@ reformed = Database("reformed",
                     entity = True,
                     metadata = dbconfig.metadata,
                     engine = dbconfig.engine,
-                    session = dbconfig.Session
+                    session = dbconfig.Session,
+                    logging_tables = False
                     )
 
 scheduler_thread = job_scheduler.JobScedulerThread(reformed)
