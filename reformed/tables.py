@@ -31,6 +31,7 @@ from columns import Column
 from custom_exceptions import NoMetadataError, NoDatabaseError
 import formencode
 from formencode import validators
+from validators import All
 from fields import Modified, Integer
 from util import get_paths, make_local_tables, create_table_path_list, create_table_path
 import logging
@@ -522,7 +523,7 @@ class Table(object):
         return order_by
  
     def validation_from_field_types(self, column):
-        formencode_all = formencode.All()
+        formencode_all = All()
         validators = formencode_all.validators
         col_type = column.type
         mand = not column.sa_options.get("nullable", True)

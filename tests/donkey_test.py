@@ -350,7 +350,10 @@ class test_basic_input(test_donkey):
                                       "people.address_line_1" : u"poo1010101",
                                       "people.address_line_2" : u"poop"})
         except formencode.Invalid, e:
-            assert str(e.error_dict) == """{'donkey.age': Invalid(u'Please enter an integer value',), 'people.postcode': Invalid(u'Please enter a value',), 'people.name': Invalid(u'Please enter a value',)}"""
+            print str(e.error_dict)
+            assert str(e.error_dict) == """{'donkey.age': Invalid(u'Please enter an integer value-Please enter an integer value',), 'people.postcode': Invalid(u'Please enter a value',), 'people.name': Invalid(u'Please enter a value',)}"""
+
+            assert str(e.error_dict["donkey.age"].error_list) == "[Invalid(u'Please enter an integer value',), Invalid(u'Please enter an integer value',)]"
 
 
         load_local_data(self.Donkey, {"__table": u"donkey_sponsership",
