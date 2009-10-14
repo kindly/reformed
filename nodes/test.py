@@ -41,7 +41,9 @@ class People(TableNode):
 
     table = "people"
     fields = [
-        ['name', 'textbox', 'name:']
+        ['name', 'textbox', 'name:'],
+        ['address_line_1', 'textbox', 'address:'],
+        ['postcode', 'textbox', 'postcode:']
     ]
     list_title = 'person %s'
 

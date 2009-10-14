@@ -50,12 +50,12 @@ def run(node_name, data, last_node = None):
 
     if found:
         print "Node: %s, last: %s" % (node_name, last_node)
-        x = search_node(data, last_node)
+        x = search_node(data, node_name, last_node)
         x.initialise()
         x.call()
         x.finalise()
         if x.next_node:
-            run(x.next_node, 'moo', node_name)
+            return run(x.next_node, x.next_data, node_name)
         else:
             info = {'action': x.action,
                     'node': node_name,
