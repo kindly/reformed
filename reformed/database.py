@@ -30,7 +30,7 @@ import search
 import resultset
 import tables
 from util import get_paths, get_all_local_data
-from fields import ManyToOne, OneToOne, OneToMany
+from fields import ManyToOne, OneToOne, OneToMany, Integer
 import fields as field_types
 import boot_tables
 import sessionwrapper
@@ -379,8 +379,10 @@ class Database(object):
             
             logging_table.add_field(field)
 
-        logging_table.add_field(ManyToOne(logged_table.name+"_logged" 
-                                         , logged_table.name ))
+        logging_table.add_field(Integer("%s_id" % logged_table.name))
+
+        #logging_table.add_field(ManyToOne(logged_table.name+"_logged" 
+        #                                 , logged_table.name ))
 
         return logging_table
 
