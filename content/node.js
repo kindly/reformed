@@ -172,6 +172,21 @@ function node_save(root, command){
                   command: 'save'},  {}, 'node', true) 
     }
 
+function show_listing(data){
+
+    html = '';
+    for (i=0; i<data.length; i++){
+        item = data[i];
+                html += '<p onclick="$JOB.add({node: \'test.Donkey\', lastnode: \'test.Donkey\', data:{id: '
+                html += item.id + '}, command: \'view\'}';
+                html += ', {}, \'node\', true)">' + item.title + '</p>';
+    }
+    $('#main').html(html);
+
+
+
+
+}
         fn = function(packet, job){
              switch (packet.data.action){
                 
@@ -183,6 +198,12 @@ function node_save(root, command){
                      data = packet.data.data.data
                      $('#main').html(node_generate_html(form, data));
                      break;
+                 case 'save_error':
+                    alert($.toJSON(packet.data.data));
+                    break;
+                 case 'listing':
+                    show_listing(packet.data.data);
+                    break;
             }
         }
 
