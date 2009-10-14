@@ -1,6 +1,7 @@
 JOINS_DEEP = 6
 import data_loader
 import formencode as fe
+import datetime
 
 
 def swap_relations(relation_type):
@@ -175,7 +176,10 @@ def get_row_data_basic(obj, keep_all = False):
     for field in get_fields_from_obj(obj):
         if field in ("modified_by", "modified_date", "id", "_core_entity_id") and not keep_all:
             continue
-        row_data[field] = getattr(obj, field)
+        value = getattr(obj, field)
+        if isinstance(value, datetime.datetime):
+            value = value.strftime('%Y-%m-%dT%H:%M:%SZ')
+        row_data[field] = value
     if keep_all:
         row_data["id"] = obj.id
     return row_data
