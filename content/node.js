@@ -24,10 +24,10 @@
 
 */
 
-	node_generate_html= function(form_data, data, form_id, form_type, root){
+	node_generate_html= function(form_data, data, root, form_id, form_type){
 		msg('node_generate_html: ');
-        $INFO.newState('#');
-        $INFO.setState('#', 'form_data', form_data);
+        $INFO.newState(root);
+        $INFO.setState(root, 'form_data', form_data);
 		// create the form and place in the div
 //		var form_info = this._get_form_info(root);
 		var form = form_data;
@@ -89,7 +89,7 @@
 		formHTML += '</div>';  // end of form body div
 
 		// FORM FOOTER
-		if (!form_info.info.top_level && (local_data.form_type=='normal' || local_data.form_type=='action')){
+		if (!form_info.info.top_level && (local_data.form_many_side_not_null = False,type=='normal' || local_data.form_type=='action')){
 			formHTML += $FORM._generate_footer_html(local_data);
 		}
 
@@ -152,9 +152,8 @@ function _generate_fields_html(form_info, local_data, data){
 
 function node_save(root, command){
 		msg('node_save');
-		var m = this._parse_item(root);
-        //alert( $.toJSON($INFO.getState('#', 'form_data')));
-        form_data = $INFO.getState('#', 'form_data');
+        var form_data = $INFO.getState(root, 'form_data');
+        var node =  $INFO.getState(root, 'node')
         var out = {};
 		for (i=0; i<form_data.fields.length; i++){
 
@@ -166,15 +165,27 @@ function node_save(root, command){
         }
         id = $INFO.getId('main#*id');
         out['__id'] = $('#'+ id).val();
-        get_node('test.Donkey', 'save', out); 
+        get_node(node, 'save', out); 
     }
 
-function show_listing(data){
+
+function node_delete(root, command){
+		msg('node_delete');
+        var form_data = $INFO.getState('#', 'form_data');
+        var node =  $INFO.getState(root, 'node')
+        var out = {};
+        var id = $INFO.getId('main#*id');
+        out['__id'] = $('#'+ id).val();
+        get_node(node, 'delete', out); 
+    }
+
+
+function show_listing(data, node){
 
     html = '';
     for (i=0; i<data.length; i++){
         item = data[i];
-                html += '<p onclick="$JOB.add({node: \'test.Donkey\', lastnode: \'test.Donkey\', data:{id: '
+                html += '<p onclick="$JOB.add({node: \'' + node + '\', lastnode: \'' + node + '\', data:{__id: '
                 html += item.id + '}, command: \'view\'}';
                 html += ', {}, \'node\', true)">' + item.title + '</p>';
     }
@@ -202,21 +213,23 @@ function get_node(node_name, node_command, node_data){
 
 }
         fn = function(packet, job){
+             root = 'main';
              switch (packet.data.action){
                 
                  case 'html':
-                     $('#main').html(packet.data.data.html);
+                     $('#' + root).html(packet.data.data.html);
                      break;
                  case 'form':
-                     form = packet.data.data.form
-                     data = packet.data.data.data
-                     $('#main').html(node_generate_html(form, data));
+                     form = packet.data.data.form;
+                     data = packet.data.data.data;
+                     $('#' + root).html(node_generate_html(form, data, root));
+                     $INFO.setState(root, 'node', packet.data.node)
                      break;
                  case 'save_error':
                     alert($.toJSON(packet.data.data));
                     break;
                  case 'listing':
-                    show_listing(packet.data.data);
+                    show_listing(packet.data.data, packet.data.node);
                     break;
             }
         }
