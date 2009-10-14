@@ -187,6 +187,23 @@ function show_listing(data){
 
 
 }
+
+
+
+function get_node(node_name, node_command, node_data){
+
+    info = {node: node_name,
+            lastnode: 'test.Donkey',  //FIXME
+            command: node_command }
+
+    if (node_data){
+        info['data'] = node_data;
+    }
+
+    $JOB.add(info, {}, 'node', true)
+
+
+}
         fn = function(packet, job){
              switch (packet.data.action){
                 

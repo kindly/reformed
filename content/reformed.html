@@ -43,14 +43,10 @@ body {
 </ul>
 <ul>
 <li><span onclick="get_html('main','frontpage')">frontpage</span></li>
-<li><span onclick="$JOB.add({node: 'test.Donkey', command: 'list'}, {node: 'moo'}, 'node', true)">moop</span></li>
-<li><span onclick="$JOB.add({node: 'test.Donkey', lastnode: 'test.Donkey', data:{id: 2
-}, command: 'view'
-}, {}, 'node', true)">moop 2</span></li>
+<li><span onclick="get_node('test.Donkey', 'list')">moop</span></li>
+<li><span onclick="get_node('test.Donkey', 'view', {id: 2})">moop 2</span></li>
 
-<li><span onclick="$JOB.add({node: 'test.Donkey', lastnode: 'test.Donkey', data:{id: 1
-}, command: 'view'
-}, {}, 'node', true)">moop 1</span></li>
+<li><span onclick="get_node('test.Donkey', 'view', {id: 1})">moop 1</span></li>
 </ul>
 </div>
 
