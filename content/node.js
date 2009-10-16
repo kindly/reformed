@@ -152,6 +152,29 @@ function _generate_fields_html(form_info, local_data, data){
 		return formHTML;
 	}
 
+function form_setup(root, form_data){
+    // do any setting up of the form
+    for (i=0; i<form_data.fields.length; i++){
+			item = form_data.fields[i];
+            if (item.params){
+                setup_process_params(root, item);
+            }
+    }
+}
+
+function setup_process_params(root, item){
+    for (key in item.params){
+        v = item.params[key]
+        if (key == 'autocomplete'){
+            id = $INFO.getId(root + '#' + item.name)
+ //           alert('autocomplete' + ' ~ ' + typeof(v) + ' ~ # ' + $.toJSON(v));
+
+
+            $('#' + id).autocomplete(v);
+        }
+    }
+}
+
 function node_save(root, command){
 		msg('node_save');
         out = node_get_form_data(root);
@@ -237,6 +260,7 @@ function get_node(node_name, node_command, node_data){
                      $('#' + root).html(node_generate_html(form, data, root));
                      $INFO.setState(root, 'node', packet.data.node)
                      $INFO.setState(root, 'sent_data', data)
+                     form_setup(root, form);
                      break;
                  case 'save_error':
                     alert($.toJSON(packet.data.data));

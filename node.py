@@ -183,8 +183,6 @@ def create_fields(fields_list):
         row['title'] = field[2]
         if len(field) > 3:
             row['params'] = field[3]
-        else:
-            row['params'] = {}
         fields.append(row)
     return fields
 
