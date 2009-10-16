@@ -17,17 +17,11 @@
 ##   Reformed
 ##   Copyright (c) 2008-2009 Toby Dacre & David Raznick
 ##
+
 from formencode import validators
 import node
 from node import TableNode, Node
 from .reformed import reformed as r
-
-#class Text(Node):
-#
-#    def call(self):
-#        data = {'html': 'goodbye'}
-#        self.out = data
-#        self.action = 'html'
 
 class Donkey(TableNode):
 
@@ -50,7 +44,6 @@ class People(TableNode):
 
 
 class Search(Node):
-
 
     def call(self):
 
@@ -98,8 +91,3 @@ class Sponsorship(Node):
             data = node.create_form_data(fields, data=vdata)
             self.action = 'form'
         self.out = data
-        
-
-
-
-
