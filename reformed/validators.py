@@ -150,3 +150,79 @@ class CheckInField(FancyValidator):
 
 
 
+class All(formencode.compound.CompoundValidator):
+
+    """
+    This class is a copy of formencodes All validator but makes a new exception 
+    with a list of errors (in the error_list property) instead of just raising the
+    first found error."""
+
+    def __repr__(self):
+        return '<All %s>' % self.validators
+
+    def attempt_convert(self, value, state, validate):
+
+        validators = self.validators
+
+        error_list = []
+
+        for validator in validators:
+            try:
+                validate(validator, value, state)
+            except Invalid, e:
+                error_list.append(e)
+
+        if error_list:
+            invalid = Invalid("-".join([error.msg for error in error_list]), value, state)
+            invalid.error_list = error_list
+            raise invalid
+
+        return value
+
+
+    def with_validator(self, validator):
+        """
+        Adds the validator (or list of validators) to a copy of
+        this validator.
+        """
+        new = self.validators[:]
+        if isinstance(validator, list) or isinstance(validator, tuple):
+            new.extend(validator)
+        else:
+            new.append(validator)
+        return self.__class__(*new, **{'if_invalid': self.if_invalid})
+
+    def join(cls, *validators):
+        """
+        Joins several validators together as a single validator,
+        filtering out None and trying to keep `All` validators from
+        being nested (which isn't needed).
+        """
+        validators = filter(lambda v: v and v is not Identity, validators)
+        if not validators:
+            return Identity
+        if len(validators) == 1:
+            return validators[0]
+        elif isinstance(validators[0], All):
+            return validators[0].with_validator(validators[1:])
+        else:
+            return cls(*validators)
+    join = classmethod(join)
+
+    def if_missing__get(self):
+        for validator in self.validators:
+            v = validator.if_missing
+            return v
+
+    if_missing = property(if_missing__get)
+
+    def not_empty__get(self):
+        not_empty = False
+        for validator in self.validators:
+            not_empty = not_empty or getattr(validator, 'not_empty', False)
+        return not_empty
+    not_empty = property(not_empty__get)
+
+    def is_empty(self, value):
+        # sub-validators should handle emptiness.
+        return False

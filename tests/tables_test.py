@@ -295,6 +295,7 @@ class test_database_primary_key(object):
         validation_schema = self.Donkey.tables["email"].validation_schema
 
         print validation_schema
+
         
         assert self.Donkey.tables["email"].validation_schema.to_python(
                                              {"email": "pop@david.com"})==\
