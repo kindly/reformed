@@ -133,7 +133,14 @@ $FORM_CONTROL = {
 	_controls: {
 	
 		// this is where our controls are defined
-		
+		info: function(item, id, show_label, value){
+			var x = '<div>';
+            x += item.title;
+			x += '</div>'; 
+			return x;
+		},
+
+	
 		textbox: function(item, id, show_label, value){
 			// simple textbox
 			var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
@@ -169,7 +176,7 @@ $FORM_CONTROL = {
 		submit: function(item, id, show_label){
 			// button
 			var x = '<button id="' + id + '" type="button" ';
-			x += 'onclick="$FORM.buttonPress(this)" >';
+			x += 'onclick="node_button(this, \'' + item.params.node + '\', \'' + item.params.action + '\')" >';
 			x += item.title + '</button>';			
 			return x;
 		},

@@ -107,7 +107,9 @@ function _generate_form_html_normal(form_info, local_data, data){
 		}
 
 		var formHTML = _generate_fields_html(form_info, local_data, data);
-		formHTML += '<input type="text" id="' + local_data.id + '" class="hidden" value = "' + data.__id + '" /> ';
+        if (data){
+    		formHTML += '<input type="text" id="' + local_data.id + '" class="hidden" value = "' + data.__id + '" /> ';
+        }
 		return formHTML;
 	}
 
@@ -152,22 +154,29 @@ function _generate_fields_html(form_info, local_data, data){
 
 function node_save(root, command){
 		msg('node_save');
-        var form_data = $INFO.getState(root, 'form_data');
-        var node =  $INFO.getState(root, 'node')
-        var out = {};
-		for (i=0; i<form_data.fields.length; i++){
-
-			item = form_data.fields[i];
-            name = item.name;
-            id = $INFO.getId('main#' + item.name);
-            value = $('#' + id).val();
-            out[name] = value;
-        }
+        out = node_get_form_data(root);
         id = $INFO.getId('main#*id');
+        var node =  $INFO.getState(root, 'node');
         out['__id'] = $('#'+ id).val();
         get_node(node, 'save', out); 
     }
 
+
+function node_get_form_data(root){
+        var form_data = $INFO.getState(root, 'form_data');
+        var out = $INFO.getState(root, 'sent_data');
+		for (i=0; i<form_data.fields.length; i++){
+			item = form_data.fields[i];
+            name = item.name;
+            id = $INFO.getId('main#' + name);
+            value = $('#' + id).val();
+            if (typeof value == 'undefined'){
+                value = null;
+            }
+            out[name] = value;
+        }
+        return out;
+    }
 
 function node_delete(root, command){
 		msg('node_delete');
@@ -176,8 +185,13 @@ function node_delete(root, command){
         var out = {};
         var id = $INFO.getId('main#*id');
         out['__id'] = $('#'+ id).val();
-        get_node(node, 'delete', out); 
     }
+
+
+function node_button(item, node, command){
+    out = node_get_form_data(root);
+    get_node(node, command, out);
+}
 
 
 function show_listing(data, node){
@@ -185,15 +199,13 @@ function show_listing(data, node){
     html = '';
     for (i=0; i<data.length; i++){
         item = data[i];
-                html += '<p onclick="$JOB.add({node: \'' + node + '\', lastnode: \'' + node + '\', data:{__id: '
-                html += item.id + '}, command: \'view\'}';
-                html += ', {}, \'node\', true)">' + item.title + '</p>';
+        table = String(item.table);
+        next_node = 'test.' + table.substring(0,1).toUpperCase() + table.substring(1,table.length);
+        html += '<p onclick="$JOB.add({node: \'' + next_node + '\', lastnode: \'' + node + '\', data:{__id: '
+        html += item.id + '}, command: \'view\'}';
+        html += ', {}, \'node\', true)">' + item.title + '</p>';
     }
     $('#main').html(html);
-
-
-
-
 }
 
 
@@ -201,7 +213,7 @@ function show_listing(data, node){
 function get_node(node_name, node_command, node_data){
 
     info = {node: node_name,
-            lastnode: 'test.Donkey',  //FIXME
+            lastnode: '',  //fixme
             command: node_command }
 
     if (node_data){
@@ -224,6 +236,7 @@ function get_node(node_name, node_command, node_data){
                      data = packet.data.data.data;
                      $('#' + root).html(node_generate_html(form, data, root));
                      $INFO.setState(root, 'node', packet.data.node)
+                     $INFO.setState(root, 'sent_data', data)
                      break;
                  case 'save_error':
                     alert($.toJSON(packet.data.data));

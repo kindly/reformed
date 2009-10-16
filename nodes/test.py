@@ -17,9 +17,10 @@
 ##   Reformed
 ##   Copyright (c) 2008-2009 Toby Dacre & David Raznick
 ##
-
-from node import TableNode
-
+from formencode import validators
+import node
+from node import TableNode, Node
+from .reformed import reformed as r
 
 #class Text(Node):
 #
@@ -47,3 +48,68 @@ class People(TableNode):
     ]
     list_title = 'person %s'
 
+
+class Search(Node):
+
+
+    def call(self):
+
+        results = r.reformed.search('_core_entity')
+        out = []
+        for result in results:
+            row = {"id": result["_core_entity.id"],
+                   "title": 'result id %s' % result["_core_entity.id"]}
+            if result['_core_entity.table'] == 8:
+                row['table'] = 'donkey'
+            else:
+                row['table'] = 'people'
+            out.append(row)
+        self.out = out
+        self.action = 'listing'
+
+
+class Sponsorship(Node):
+
+    def call(self):
+
+        fields = [
+            ['info', 'info', 'please enter the id'],
+            ['person', 'textbox', 'person id:'],
+            ['button', 'submit', 'moo', {'action': 'next', 'node': 'test.Sponsorship'}]
+        ]
+        fields2 = [
+            ['info', 'info', 'please enter the donkey id'],
+            ['donkey', 'textbox', 'donkey id:'],
+            ['button', 'submit', 'moo', {'action': 'next', 'node': 'test.Sponsorship'}]
+        ]
+        validations = [
+            ['person', validators.Int],
+            ['donkey', validators.Int]
+        ]
+        vdata = validate_data_full(self.data, validations)
+
+        if vdata['donkey'] and  vdata['person']:
+            data = {'html': 'person %s, donkey %s' % (vdata['person'], vdata['donkey'])}
+            self.action = 'html'
+        elif vdata['person']:
+            data = node.create_form_data(fields2, data=vdata)
+            self.action = 'form'
+        else:
+            data = node.create_form_data(fields, data=vdata)
+            self.action = 'form'
+        self.out = data
+        
+
+
+
+def validate_data(data, field, validator):
+    try:
+        return validator().to_python(data.get(field))
+    except:
+        return None
+
+def validate_data_full(data, validators):
+    validated_data = {}
+    for (field, validator) in validators:
+        validated_data[field] = validate_data(data, field, validator)
+    return validated_data

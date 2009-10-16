@@ -33,6 +33,8 @@ class Node(object):
         self.next_data = None
         self.last_node = data.get('lastnode')
         self.data = data.get('data')
+        if type(self.data).__name__ != 'dict':
+            self.data = {}
         self.command = data.get('command')
 
         if self.last_node == self.__class__.__name__:
@@ -80,30 +82,13 @@ class TableNode(Node):
             self._new()
 
 
-    def create_fields(self):
 
-        fields = []
-        for field in self.fields:
-            row = {}
-            row['name'] = field[0]
-            row['type'] = field[1]
-            row['title'] = field[2]
-            row['params'] = {}
-            fields.append(row)
-        return fields
 
 
     def _new(self):
 
         data_out = {'__id': 0}
-        data = {
-            "form": {
-                "fields":self.create_fields(), 
-                "params":self.form_params
-            },
-            "data": data_out,
-            "type": "form", 
-        }
+        data = create_form_data(self.fields, self.form_params, data_out)
         self.out = data
         self.action = 'form'
 
@@ -118,14 +103,7 @@ class TableNode(Node):
             data_out['__id'] = id
         except sa.orm.exc.NoResultFound:
             data_out = {}
-        data = {
-            "form": {
-                "fields":self.create_fields(), 
-                "params":self.form_params
-            },
-            "data": data_out,
-            "type": "form", 
-        }
+        data = create_form_data(self.fields, self.form_params, data_out)
         self.out = data
         self.action = 'form'
 
@@ -193,3 +171,46 @@ class TableNode(Node):
 
         self.out = out
         self.action = 'listing'
+
+
+def create_fields(fields_list):
+
+    fields = []
+    for field in fields_list:
+        row = {}
+        row['name'] = field[0]
+        row['type'] = field[1]
+        row['title'] = field[2]
+        if len(field) > 3:
+            row['params'] = field[3]
+        else:
+            row['params'] = {}
+        fields.append(row)
+    return fields
+
+
+
+def create_form_data(fields, params=None, data=None):
+    out = {
+        "form": {
+            "fields":create_fields(fields) 
+        },
+        "type": "form", 
+    }
+    if data:
+        out['data'] = data
+    if params:
+        out['form']['params'] = params
+    return out
+
+def validate_data(data, field, validator):
+    try:
+        return validator().to_python(data.get(field))
+    except:
+        return None
+
+def validate_data_full(data, validators):
+    validated_data = {}
+    for (field, validator) in validators:
+        validated_data[field] = validate_data(data, field, validator)
+    return validated_data
