@@ -86,7 +86,7 @@ class Sponsorship(Node):
             ['person', validators.Int],
             ['donkey', validators.Int]
         ]
-        vdata = validate_data_full(self.data, validations)
+        vdata = node.validate_data_full(self.data, validations)
 
         if vdata['donkey'] and  vdata['person']:
             data = {'html': 'person %s, donkey %s' % (vdata['person'], vdata['donkey'])}
@@ -102,14 +102,4 @@ class Sponsorship(Node):
 
 
 
-def validate_data(data, field, validator):
-    try:
-        return validator().to_python(data.get(field))
-    except:
-        return None
 
-def validate_data_full(data, validators):
-    validated_data = {}
-    for (field, validator) in validators:
-        validated_data[field] = validate_data(data, field, validator)
-    return validated_data
