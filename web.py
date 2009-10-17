@@ -38,18 +38,9 @@ def process_ajax(environ, start_response):
 
 	print repr(body)
 
- 	if body:
- 		if head in ("form", "data", "page", "html", "edit", "action", "node", "reload"):
-			moo.add_command(head, body)
-		if head == 'new':
-			for (my_head, my_body) in body:
-				moo.add_command(my_head, my_body)
-		moo.process()
-		data = moo.output
-	else:
-		# a communication error occurred
-		error = {'@main': 'you sent bad data :('}
-		data = [{'type':'error', 'data':error}]
+	moo.add_command(head, body)
+	moo.process()
+	data = moo.output
 
 	start_response('200 OK', [('Content-Type', 'text/html')])
 	print json.dumps(data, sort_keys=False, indent=4)
