@@ -39,7 +39,7 @@ def process_ajax(environ, start_response):
 	print repr(body)
 
  	if body:
- 		if head in ("form", "data", "page", "html", "edit", "action", "node"):
+ 		if head in ("form", "data", "page", "html", "edit", "action", "node", "reload"):
 			moo.add_command(head, body)
 		if head == 'new':
 			for (my_head, my_body) in body:

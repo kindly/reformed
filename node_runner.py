@@ -20,12 +20,21 @@
 
 import nodes
 import traceback
+import imp
+import sys
+
 
 def node(data, caller):
     node = data.get('node')
     out = run(node, data)
     caller.output.append({'type' : 'node',
                           'data' : out})
+def reload():
+    for node in globals():
+        if node[:6] == 'nodes.':
+            print 'reloading %s' % node
+            imp.reload(sys.modules[node])
+
 
 def run(node_name, data, last_node = None):
     node_base = node_name.rsplit('.')[0]
