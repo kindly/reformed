@@ -1,6 +1,5 @@
 import traceback
 
-import ajax
 import node_runner
 
 
@@ -34,19 +33,7 @@ class Interface(object):
                 (command, data) = self.command_queue.pop()
                 print command, repr(data)
 
-                if command == 'form':
-                    ajax.ajax.get_form(data, self)
-                elif command == 'data':
-                    ajax.ajax.get_data(data, self)
-                elif command == 'edit':
-                    ajax.ajax.process_edit(data, self)
-                elif command == 'action':
-                    ajax.ajax.process_action(data, self)
-                elif command == 'page':
-                    ajax.ajax.process_page(data, self)
-                elif command == 'html':
-                    ajax.ajax.process_html(data, self)
-                elif command == 'node':
+                if command == 'node':
                     node_runner.node(data, self)
                 elif command == 'reload':
                     self.reload_nodes()

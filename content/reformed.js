@@ -48,7 +48,7 @@ function init(){
 	//$FORM.request('form', 'root', 'first');
 	//$FORM.request('logon', 'root', '');
 	//$FORM.request('Codes', 'root2', 'first');
-page();
+//page();
 	$(window).keydown(function(event){
 	//alert(event.keyCode);
 });
