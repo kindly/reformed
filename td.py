@@ -63,19 +63,6 @@ d.add_table(r.Table("_core_lock",
               logged = False)
            )
 
-d.add_table(r.Table("_core_form", r.Text("name"),
-                   r.OneToMany("_core_form_param","_core_form_param"), r.OneToMany("_core_form_item","_core_form_item")))
-
-d.add_table(r.Table("_core_form_param", r.Text("key", mandatory = True, length = 30), r.Text("value", mandatory = True, length = 30)))
-
-d.add_table(r.Table("_core_form_item" ,r.Text("name") ,
-                   r.Text("label"),r.Text("item"),r.Boolean('active'),r.Integer('sort_order'),
-                                  r.OneToMany("_core_form_item_param","_core_form_item_param")))
-
-
-
-d.add_table(r.Table("_core_form_item_param", r.Text("key"),r.Text("value")))
-
 
 d.persist()
 

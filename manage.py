@@ -9,7 +9,6 @@ def create():
 
     from reformed.reformed import reformed
     import td
-    load_json_from_file("form_dump.json", reformed, "_core_form") 
 
 def delete():
 
@@ -19,7 +18,6 @@ def dump():
 
     from reformed.reformed import reformed 
     session = reformed.Session()
-    json_dump_all_from_table(session, "_core_form", reformed, "form_dump.json", style='clear')
     session.close()
 
 def run():
