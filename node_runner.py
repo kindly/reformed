@@ -37,6 +37,11 @@ def run(node_name, data, last_node = None):
         except:
             print "import failed"
             print traceback.print_exc()
+            error_msg = 'IMPORT FAIL (%s)\n\n%s' % (node_name, traceback.format_exc())
+            info = {'action': 'general_error',
+                    'node': node_name,
+                    'data' : error_msg}
+            return info
 
     search_node = nodes
     node_path = node_name.split('.')

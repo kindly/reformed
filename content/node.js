@@ -265,6 +265,9 @@ function get_node(node_name, node_command, node_data){
                  case 'save_error':
                     alert($.toJSON(packet.data.data));
                     break;
+                 case 'general_error':
+                    alert(packet.data.data);
+                    break;
                  case 'listing':
                     show_listing(packet.data.data, packet.data.node);
                     break;
