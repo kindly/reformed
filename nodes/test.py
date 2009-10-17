@@ -67,7 +67,7 @@ class Sponsorship(Node):
 
         fields = [
             ['info', 'info', 'please enter the id'],
-            ['person', 'textbox', 'person id:', {'autocomplete':['111134556','1123','345','1211']}],
+            ['person', 'textbox', 'person id:', {'autocomplete': '/ajax/people/name'}],
             ['button', 'submit', 'moo', {'action': 'next', 'node': 'test.Sponsorship'}]
         ]
         fields2 = [

@@ -9,13 +9,13 @@ from paste.session import SessionMiddleware
 import json
 
 import interface
-
+import lookup
 
 
 # I'd like to put this in the WebApplication class but it
 # doesn't like the decorator if I do :(
 @SessionMiddleware
-def process_ajax(environ, start_response):
+def process_autocomplete(environ, start_response):
     """ this gets the request data and starts any processing jobs
     needs to be expanded to do multiple requests """
 
@@ -24,19 +24,31 @@ def process_ajax(environ, start_response):
     formdata = cgi.FieldStorage(fp=environ['wsgi.input'],
                         environ=environ,
                         keep_blank_values=1)
+    request = environ['PATH_INFO'].split("/")[2:]
+    q = str(formdata.getvalue('q'))
+    limit = int(formdata.getvalue('limit'))
+    print 'q=%s, limit=%s' % (q, limit)
+    start_response('200 OK', [('Content-Type', 'text/html')])
+
+    return lookup.table_lookup(q, limit, request, http_session)
+
+@SessionMiddleware
+def process_node(environ, start_response):
+
+    http_session = environ['paste.session.factory']()
+
+    formdata = cgi.FieldStorage(fp=environ['wsgi.input'],
+                        environ=environ,
+                        keep_blank_values=1)
+
     head = str(formdata.getvalue('head'))
 
     try:
         body = json.loads(str(formdata.getvalue('body')))
     except:
-        print "WHOOA that data you sent looks corrupt!"
-        print "*" * 40
-        print repr(formdata.getvalue('body'))
-        print "*" * 40
-        body = {};
-    moo = interface.Interface(http_session)
+        body = {}
 
-    print repr(body)
+    moo = interface.Interface(http_session)
 
     moo.add_command(head, body)
     moo.process()
@@ -102,11 +114,13 @@ class WebApplication(object):
         """Request handler"""
 
         request_url = environ['PATH_INFO']
-        if request_url.startswith('/ajax'):
+        if request_url == '/ajax':
+            return (process_node(environ, start_response))
+        elif request_url.startswith('/ajax'):
             # ajax request
-            return(process_ajax(environ, start_response))
+            return (process_autocomplete(environ, start_response))
         else:
             # content request
-            return(self.static(environ, start_response, request_url))
+            return (self.static(environ, start_response, request_url))
 
 

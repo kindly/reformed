@@ -167,9 +167,6 @@ function setup_process_params(root, item){
         v = item.params[key]
         if (key == 'autocomplete'){
             id = $INFO.getId(root + '#' + item.name)
- //           alert('autocomplete' + ' ~ ' + typeof(v) + ' ~ # ' + $.toJSON(v));
-
-
             $('#' + id).autocomplete(v);
         }
     }
