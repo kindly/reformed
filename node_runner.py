@@ -20,12 +20,21 @@
 
 import nodes
 import traceback
+import imp
+import sys
+
 
 def node(data, caller):
     node = data.get('node')
     out = run(node, data)
     caller.output.append({'type' : 'node',
                           'data' : out})
+def reload():
+    for node in globals():
+        if node[:6] == 'nodes.':
+            print 'reloading %s' % node
+            imp.reload(sys.modules[node])
+
 
 def run(node_name, data, last_node = None):
     node_base = node_name.rsplit('.')[0]
@@ -37,6 +46,11 @@ def run(node_name, data, last_node = None):
         except:
             print "import failed"
             print traceback.print_exc()
+            error_msg = 'IMPORT FAIL (%s)\n\n%s' % (node_name, traceback.format_exc())
+            info = {'action': 'general_error',
+                    'node': node_name,
+                    'data' : error_msg}
+            return info
 
     search_node = nodes
     node_path = node_name.split('.')
@@ -50,12 +64,12 @@ def run(node_name, data, last_node = None):
 
     if found:
         print "Node: %s, last: %s" % (node_name, last_node)
-        x = search_node(data, last_node)
+        x = search_node(data, node_name, last_node)
         x.initialise()
         x.call()
         x.finalise()
         if x.next_node:
-            run(x.next_node, 'moo', node_name)
+            return run(x.next_node, x.next_data, node_name)
         else:
             info = {'action': x.action,
                     'node': node_name,

@@ -48,7 +48,7 @@ function init(){
 	//$FORM.request('form', 'root', 'first');
 	//$FORM.request('logon', 'root', '');
 	//$FORM.request('Codes', 'root2', 'first');
-page();
+//page();
 	$(window).keydown(function(event){
 	//alert(event.keyCode);
 });
@@ -234,7 +234,7 @@ var $REFORMED = {
 	
 */	
 
-	_module: ['FORM', 'FORM_CONTROL', 'JOB', 'INFO'],
+	_module: [ 'FORM_CONTROL', 'JOB', 'INFO'],
 	
 	_module_loaded: [],
 	
@@ -488,16 +488,16 @@ function action_hide(action_id){
 }
 
 action_hash = {
-	previous: [['previous', 'go-previous.png', 'X', 'record'],[$FORM, $FORM._move, ['main#','prev']]],
-	next: [['next', 'go-next.png', 'Y', 'record'],[$FORM, $FORM._move, ['main#','next']]],
-	new: [['new', 'document-new.png', 'B', 'record'],[$FORM, $FORM._new, ['main']]],
-	save: [['save', 'document-save.png', 'c', 'record'],[$FORM, node_save, ['main','']]],
-	delete:[['delete', 'edit-delete.png', 'd', 'record'],[$FORM, node_delete, ['main','']]],
-	home: [['home', 'go-home.png', 'h', 'general'],[document, get_html, ['main', 'frontpage']]],
-	donkey: [['donkey', 'go-home.png', 'I', 'general'],[$FORM, $FORM.request, ['donkey', 'main', 'first']]]
+	//previous: [['previous', 'go-previous.png', 'X', 'record'],[$FORM, $FORM._move, ['main#','prev']]],
+	//next: [['next', 'go-next.png', 'Y', 'record'],[$FORM, $FORM._move, ['main#','next']]],
+//	new: [['new', 'document-new.png', 'B', 'record'],[$FORM, $FORM._new, ['main']]],
+	save: [['save', 'document-save.png', 'c', 'record'],[document, node_save, ['main','']]],
+	delete:[['delete', 'edit-delete.png', 'd', 'record'],[document, node_delete, ['main','']]],
+	home: [['home', 'go-home.png', 'h', 'general'],[document, get_html, ['main', 'frontpage']]]
+//	donkey: [['donkey', 'go-home.png', 'I', 'general'],[$FORM, $FORM.request, ['donkey', 'main', 'first']]]
 };
 
-action_list = ['home', 'previous', 'next', 'new', 'save', null, 'delete', 'donkey']; 
+action_list = ['home',  'save', null, 'delete']; 
 
 function action_change(){
 	for (var i=0; i<action_list.length; i++){

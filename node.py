@@ -25,12 +25,16 @@ import sqlalchemy as sa
 
 class Node(object):
 
-    def __init__(self, data, last_node = None):
+    def __init__(self, data, node_name, last_node = None):
         self.out = []
+        self.name = node_name
         self.action = None
         self.next_node = None
+        self.next_data = None
         self.last_node = data.get('lastnode')
         self.data = data.get('data')
+        if type(self.data).__name__ != 'dict':
+            self.data = {}
         self.command = data.get('command')
 
         if self.last_node == self.__class__.__name__:
@@ -74,19 +78,19 @@ class TableNode(Node):
             self._list()
         elif self.command == 'delete':
             self._delete()
+        elif self.command == 'new':
+            self._new()
 
 
-    def create_fields(self):
 
-        fields = []
-        for field in self.fields:
-            row = {}
-            row['name'] = field[0]
-            row['type'] = field[1]
-            row['title'] = field[2]
-            row['params'] = {}
-            fields.append(row)
-        return fields
+
+
+    def _new(self):
+
+        data_out = {'__id': 0}
+        data = create_form_data(self.fields, self.form_params, data_out)
+        self.out = data
+        self.action = 'form'
 
 
     def _view(self):
@@ -99,14 +103,7 @@ class TableNode(Node):
             data_out['__id'] = id
         except sa.orm.exc.NoResultFound:
             data_out = {}
-        data = {
-            "form": {
-                "fields":self.create_fields(), 
-                "params":self.form_params
-            },
-            "data": data_out,
-            "type": "form", 
-        }
+        data = create_form_data(self.fields, self.form_params, data_out)
         self.out = data
         self.action = 'form'
 
@@ -115,14 +112,12 @@ class TableNode(Node):
 
         id = self.data.get('__id')
         session = r.reformed.Session()
-        obj = r.reformed.get_class(self.table)
         try:
-            data = session.query(obj).filter_by(_core_entity_id = id).one()
-   #         data_out_array = util.create_data_dict(data)
-        except sa.orm.exc.NoResultFound:
-   #         data_out_array = None
-            data = None
-        if (data):
+            if id != '0':
+                obj = r.reformed.get_class(self.table)
+                data = session.query(obj).filter_by(_core_entity_id = id).one()
+            else:
+                data = r.reformed.get_instance(self.table)
             for field in self.fields:
                 field_name = field[0]
                 value = self.data.get(field_name)
@@ -139,7 +134,7 @@ class TableNode(Node):
                 print repr(errors)
                 self.out = errors
                 self.action = 'save_error'
-        else:
+        except sa.orm.exc.NoResultFound:
             errors = {'~': 'record not found'}
             self.out = errors
             self.action = 'save_error'
@@ -151,14 +146,21 @@ class TableNode(Node):
         id = self.data.get('__id')
         session = r.reformed.Session()
         obj = r.reformed.get_class(self.table)
-        data = session.query(obj).filter_by(_core_entity_id = id).one()
-        session.delete(data)
-        session.commit()
+        try:
+            data = session.query(obj).filter_by(_core_entity_id = id).one()
+            session.delete(data)
+            session.commit()
+            self.next_node = self.name
+            self.next_data = {'command': 'list'}
+        except sa.orm.exc.NoResultFound:
+            errors = {'~': 'record not found'}
+            self.out = errors
+            self.action = 'delete_error'
         session.close()
 
 
     def _list(self):
-
+        print '######## %s'  % self.table
         results = r.reformed.search(self.table)
         out = []
         for result in results:
@@ -169,3 +171,44 @@ class TableNode(Node):
 
         self.out = out
         self.action = 'listing'
+
+
+def create_fields(fields_list):
+
+    fields = []
+    for field in fields_list:
+        row = {}
+        row['name'] = field[0]
+        row['type'] = field[1]
+        row['title'] = field[2]
+        if len(field) > 3:
+            row['params'] = field[3]
+        fields.append(row)
+    return fields
+
+
+
+def create_form_data(fields, params=None, data=None):
+    out = {
+        "form": {
+            "fields":create_fields(fields) 
+        },
+        "type": "form", 
+    }
+    if data:
+        out['data'] = data
+    if params:
+        out['form']['params'] = params
+    return out
+
+def validate_data(data, field, validator):
+    try:
+        return validator().to_python(data.get(field))
+    except:
+        return None
+
+def validate_data_full(data, validators):
+    validated_data = {}
+    for (field, validator) in validators:
+        validated_data[field] = validate_data(data, field, validator)
+    return validated_data

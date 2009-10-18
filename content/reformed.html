@@ -1,6 +1,7 @@
 <html>
 <head>
 <link rel="stylesheet" type="text/css" href="default.css" />
+<link rel="stylesheet" type="text/css" href="jquery.autocomplete.css" />
 <style>
 div {
 	border:0; /* 1px solid #000; */
@@ -21,9 +22,9 @@ body {
 </style>
 <script src="jquery.js"></script>
 <script src="jquery.json.js"></script>
+<script src="jquery.autocomplete.js"></script>
 <script src="job.js" ></script>
-<script src="form.js"></script>
-<script src="form_control2.js" ></script>
+<script src="form_control.js" ></script>
 <script src="info.js" ></script>
 <script src="node.js" ></script>
 <script src="reformed.js"></script>
@@ -34,17 +35,16 @@ body {
 
 <div id='logo'><img src="logo.png"  width="126" height="125" /></div>
 
-<div id='sidebar'><ul>
-<li><a href="javascript:$FORM.request('form', 'main', 'new')" >form</a></li>
-<li><a href="javascript:$FORM.request('form_item', 'main', 'first')" >form_item</a></li>
-<li><a href="javascript:$FORM.request('Codes', 'main', '')" >codes</a></li>
-<li><a href="javascript:$FORM.request('logon', 'main', '')" >log in</a></li>
-<li><a href="javascript:$FORM.request('donkey', 'main', 'first')" >donkey</a></li>
-</ul>
+<div id='sidebar'>
 <ul>
 <li><span onclick="get_html('main','frontpage')">frontpage</span></li>
 <li><span onclick="get_node('test.Donkey', 'list')">donkey</span></li>
 <li><span onclick="get_node('test.People', 'list')">people</span></li>
+<li><span onclick="get_node('test.Donkey', 'new')">new donkey</span></li>
+<li><span onclick="get_node('test.People', 'new')">new people</span></li>
+<li><span onclick="get_node('test.Search', '')">search</span></li>
+<li><span onclick="get_node('test.Sponsorship', '')">sponsor</span></li>
+<li><span onclick="$JOB.add({}, {}, 'reload', true)" ><b>reload</b></span></li>
 </ul>
 </div>
 
