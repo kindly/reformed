@@ -229,7 +229,7 @@ function dirty(root, row, state){
 //		form_info = this._get_form_info(root);
         form_data = $INFO.getState(root, 'form_data');
         form_info = $INFO.getState(root, 'form_info');
-		if (form_data.params.form_type != 'action'){
+		if (!form_data.params ||  !form_data.params.form_type || form_data.params.form_type != 'action'){
 			var my_root;
 			if (row === null){
 				// single form
