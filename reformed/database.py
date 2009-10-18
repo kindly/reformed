@@ -30,7 +30,7 @@ import search
 import resultset
 import tables
 from util import get_paths, get_all_local_data
-from fields import ManyToOne, OneToOne, OneToMany, Integer
+from fields import ManyToOne, OneToOne, OneToMany, Integer, CopyTextAfter
 import fields as field_types
 import boot_tables
 import sessionwrapper
@@ -139,6 +139,8 @@ class Database(object):
         if "_core_entity" not in self.tables:
             entity_table = tables.Table("_core_entity",
                                   field_types.Integer("table"),
+                                  field_types.Text("title"),
+                                  field_types.Text("summary"),
                                   OneToMany("relation",
                                             "relation"),
                                   )
@@ -160,10 +162,27 @@ class Database(object):
         table.entity = True
         table.kw["entity"] = True
         self.add_table(table)
+
+        #add relation
         relation = OneToOne(table.name, table.name, backref = "_entity")
         self.tables["_core_entity"]._add_field_no_persist(relation)
+
         if self.tables["_core_entity"].persisted:
             self.fields_to_persist.append(relation)
+
+        #add title events
+
+        if table.title_field:
+            target_field = table.title_field
+        else:
+            target_field = "name"
+
+        title_event = CopyTextAfter("%s_title" % table.name, table.name, field_name = "title", fields = target_field)
+        self.tables["_core_entity"]._add_field_no_persist(title_event)
+
+        if self.tables["_core_entity"].persisted:
+            self.fields_to_persist.append(title_event)
+        
 
     
     def _add_table_no_persist(self, table):

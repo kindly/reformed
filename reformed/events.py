@@ -9,9 +9,11 @@ LOGGER = logging.getLogger('reformed.main')
 
 class ChangeEvent(object):
     
-    def __init__(self, target, field, base_level = None, initial_event = False):
+    def __init__(self, target, field = None, base_level = None, initial_event = False, **kw):
 
         self.field = field
+        self.field_name = kw.get("field_name", None)
+
         if not target:
             self.target_table, self.target_field = None, None
         elif target.count(".") == 1:
@@ -25,12 +27,18 @@ class ChangeEvent(object):
         self.base_level = base_level
         self.initial_event = initial_event
 
+    def __repr__(self):
+        return "%s %s %s" % (self.__class__.__name__, self.field_name, self.table)
+
     def add_event(self, database):
 
         self.database = database
 
-
         self.table = self.field.table
+
+        if not self.field_name:
+            self.field_name = self.field.name
+
 
         if not self.target_table:
             self.target_table = self.table.name
@@ -304,7 +312,7 @@ class SumEvent(ChangeEvent):
 
         value = getattr(object, self.target_field)
 
-        setattr(result, self.field.name, self.table.sa_table.c[self.field.name] + value)
+        setattr(result, self.field_name, self.table.sa_table.c[self.field_name] + value)
 
         session.add(result)
 
@@ -313,7 +321,7 @@ class SumEvent(ChangeEvent):
 
         value = getattr(object, self.target_field)
 
-        setattr(result, self.field.name, self.table.sa_table.c[self.field.name] - value)
+        setattr(result, self.field_name, self.table.sa_table.c[self.field_name] - value)
 
         session.add(result)
 
@@ -328,7 +336,7 @@ class SumEvent(ChangeEvent):
 
         diff = value - c[0]
 
-        setattr(result, self.field.name, self.table.sa_table.c[self.field.name] + diff)
+        setattr(result, self.field_name, self.table.sa_table.c[self.field_name] + diff)
 
         session.add(result)
 
@@ -341,7 +349,7 @@ class SumEvent(ChangeEvent):
         statement = select([func.sum(target_table.c[self.target_field])],
                            and_(*all_cond))
 
-        session.query(self.table.sa_class).update({self.field.name :statement})
+        session.query(self.table.sa_class).update({self.field_name :statement})
 
 
 class CountEvent(ChangeEvent):
@@ -350,7 +358,7 @@ class CountEvent(ChangeEvent):
 
         value = getattr(object, self.target_field)
 
-        setattr(result, self.field.name, self.table.sa_table.c[self.field.name] + 1)
+        setattr(result, self.field_name, self.table.sa_table.c[self.field_name] + 1)
 
         session.add(result)
 
@@ -358,7 +366,7 @@ class CountEvent(ChangeEvent):
 
         value = getattr(object, self.target_field)
 
-        setattr(result, self.field.name, self.table.sa_table.c[self.field.name] - 1)
+        setattr(result, self.field_name, self.table.sa_table.c[self.field_name] - 1)
 
         session.add(result)
 
@@ -375,14 +383,14 @@ class CountEvent(ChangeEvent):
         statement = select([func.count(target_table.c["id"])],
                            and_(*all_cond))
 
-        session.query(self.table.sa_class).update({self.field.name :statement})
+        session.query(self.table.sa_class).update({self.field_name :statement})
 
 
 class MaxDate(ChangeEvent):
 
     def __init__(self, target, field, base_level = None, initial_event = False, **kw):
 
-        super(MaxDate, self).__init__(target, field, base_level, initial_event)
+        super(MaxDate, self).__init__(target, field, base_level, initial_event, **kw)
 
         self.end = kw.get("end", "end_date") 
         self.default_end = kw.get("default_end", datetime.datetime(2199,12,31))
@@ -391,7 +399,7 @@ class MaxDate(ChangeEvent):
 
         join = self.get_parent_primary_keys(object)
         end_date_field = object._table.sa_table.c[self.end]
-        setattr(result, self.field.name,
+        setattr(result, self.field_name,
                 select([func.max(func.coalesce(end_date_field, self.default_end))],
                        and_(*join))
                )
@@ -420,14 +428,14 @@ class MaxDate(ChangeEvent):
         statement = select([func.max(func.coalesce(end_date_field, self.default_end))],
                            and_(*all_cond))
 
-        session.query(self.table.sa_class).update({self.field.name :statement})
+        session.query(self.table.sa_class).update({self.field_name :statement})
 
 
 class Counter(ChangeEvent):
 
     def __init__(self, target, field, base_level = None, initial_event = False, **kw):
 
-        super(Counter, self).__init__(target, field, base_level, initial_event)
+        super(Counter, self).__init__(target, field, base_level, initial_event, **kw)
 
     def update_after(self, object, result, session):
 
@@ -441,8 +449,8 @@ class Counter(ChangeEvent):
 
         key_values = [target_table.c[key] == getattr(object, key) for key in join_keys]
 
-        setattr(object, self.field.name,
-                select([select([func.max(func.coalesce(target_table.c[self.field.name], 0)) + 1],
+        setattr(object, self.field_name,
+                select([select([func.max(func.coalesce(target_table.c[self.field_name], 0)) + 1],
                        and_(*key_values)).alias()])
                )
 
@@ -467,7 +475,7 @@ class CopyTextAfter(ChangeEvent):
 
     def __init__(self, target, field, base_level = None, initial_event = False, **kw):
 
-        super(CopyTextAfter, self).__init__(target, field, base_level, initial_event)
+        super(CopyTextAfter, self).__init__(target, field, base_level, initial_event, **kw)
 
         fields = kw.get("field_list", self.target_field)
         self.changed_flag = kw.get("changed_flag", None)
@@ -487,12 +495,12 @@ class CopyTextAfter(ChangeEvent):
         if self.update_when_flag:
             condition_column = object._table.sa_table.c[self.update_when_flag]
 
-            setattr(result, self.field.name,
+            setattr(result, self.field_name,
                     select([fields_concat],
                            and_(condition_column, *join))
                    )
         else:
-            setattr(result, self.field.name,
+            setattr(result, self.field_name,
                     select([fields_concat],
                            and_(*join))
                    )
@@ -500,7 +508,7 @@ class CopyTextAfter(ChangeEvent):
         if self.changed_flag:
             setattr(result, self.changed_flag, True)
         
-        session.save(result)
+        session.add_no_validate(result)
 
     def add(self, result, base_table_obj, object, session):
 
@@ -531,18 +539,20 @@ class CopyTextAfter(ChangeEvent):
             statement= select([fields_concat], and_(*all_cond))
 
 
+        ##TODO needs to work for entity table where update from multiple events effect
+        ## single field
         if self.changed_flag:
-            session.query(self.table.sa_class).update({self.field.name: statement,
+            session.query(self.table.sa_class).update({self.field_name: statement,
                                                        self.changed_flag: True})
         else:
-            session.query(self.table.sa_class).update({self.field.name: statement})
+            session.query(self.table.sa_class).update({self.field_name: statement})
 
 
 class CopyText(ChangeEvent):
 
     def __init__(self, target, field, base_level = None, initial_event = False, **kw):
 
-        super(CopyText, self).__init__(target, field, base_level, initial_event)
+        super(CopyText, self).__init__(target, field, base_level, initial_event, **kw)
 
         self.fields = kw.get("field_list", self.target_field)
         self.changed_flag = kw.get("changed_flag", None)
@@ -593,7 +603,7 @@ class CopyText(ChangeEvent):
                 if text:
                     text_list.append(text)
 
-        setattr(result, self.field.name, " ".join(text_list))
+        setattr(result, self.field_name, " ".join(text_list))
 
         if self.changed_flag:
             setattr(result, self.changed_flag, True)
@@ -708,8 +718,8 @@ class CopyText(ChangeEvent):
             statement= select([fields_concat], from_obj = join_statement)
 
         if self.changed_flag:
-            session.query(self.table.sa_class).update({self.field.name: statement,
+            session.query(self.table.sa_class).update({self.field_name: statement,
                                                        self.changed_flag: True})
         else:
-            session.query(self.table.sa_class).update({self.field.name: statement})
+            session.query(self.table.sa_class).update({self.field_name: statement})
 

@@ -63,6 +63,11 @@ class SessionWrapper(object):
         obj._table.validate(obj, self.session)
         obj._validated = True
         self.session.add(obj)
+
+    def add_no_validate(self, obj):
+        """save or update and validate a sqlalchemy object"""
+        obj._validated = True
+        self.session.add(obj)
     
     def query(self, mapper):
         return self.session.query(mapper)

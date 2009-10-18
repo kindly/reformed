@@ -261,15 +261,21 @@ class CopyTextAfter(Field):
         self.changed_flag = kw.get("changed_flag", None)
         self.update_when_flag = kw.get("update_when_flag" , None)
 
-        self.exists = Column(sa.Unicode(100), use_parent = True)
+        self.field_name = kw.get("field_name" , None)
+
+        if not self.field_name:
+            self.exists = Column(sa.Unicode(100), use_parent = True)
+
         if fields:
             self.event = events.CopyTextAfter(target, self, self.base_level,
                                               field_list = fields,
                                               changed_flag = self.changed_flag,
+                                              field_name = self.field_name,
                                               update_when_flag = self.update_when_flag)
         else:
             self.event = events.CopyTextAfter(target, self, self.base_level,
                                               changed_flag = self.changed_flag,
+                                              field_name = self.field_name,
                                               update_when_flag = self.update_when_flag)
 
 class CopyText(Field):
@@ -283,15 +289,20 @@ class CopyText(Field):
         self.changed_flag = kw.get("changed_flag", None)
         self.update_when_flag = kw.get("update_when_flag" , None)
 
+        self.field_name = kw.get("field_name" , None)
+
         self.exists = Column(sa.Unicode(100), use_parent = True)
+
         if fields:
             self.event = events.CopyText(target, self, self.base_level,
                                               field_list = fields,
                                               changed_flag = self.changed_flag,
                                               counter = counter,
+                                              field_name = self.field_name,
                                               update_when_flag = self.update_when_flag)
         else:
             self.event = events.CopyText(target, self, self.base_level,
                                               changed_flag = self.changed_flag,
                                               counter = counter,
+                                              field_name = self.field_name,
                                               update_when_flag = self.update_when_flag)

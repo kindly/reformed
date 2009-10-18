@@ -224,7 +224,7 @@ class test_donkey_persist_sqlite(object):
     def test_z_add_entity_after_loaded(self):
 
         p = random.randrange(1,10000)
-        self.Donkey.add_entity(tables.Table("entity%s" % p, Text("moo")))
+        self.Donkey.add_entity(tables.Table("entity%s" % p, Text("moo"), Text("name")))
         self.Donkey.persist()
 
         self.jim = self.Donkey.tables["entity%s" % p].sa_class()
