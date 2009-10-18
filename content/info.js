@@ -276,8 +276,9 @@ $INFO = {
 		if (row === null){
 			row = 0;
 		} 
-		var form_info = $FORM._get_form_info(root);
-		form_info.info[item][row] = value;
+    //FIXME this don't work
+	//	var form_info = $FORM._get_form_info(root);
+	//	form_info.info[item][row] = value;
 	},
 	
 	newState: function(root, type){

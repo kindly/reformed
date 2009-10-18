@@ -64,11 +64,11 @@
 
 $FORM_CONTROL = {
 
-	html: function(item, id, show_label){
+	html: function(item, id, show_label, value){
 		// returns HTML of a control
 		if (this.exists(item.type)){
 			// generate the HTML by calling the function	
-			return this._controls[item.type](item, id, show_label);
+			return this._controls[item.type](item, id, show_label, value);
 		} else {
 			// can't find this control
 			return this._unknown(item, id);
@@ -120,51 +120,72 @@ $FORM_CONTROL = {
 		x += item.title + '</span>';
 		return x;
 	},
+
+    _clean_value: function(arg){
+        if (arg){
+            arg = String(arg).replace(/"/g, '&quot;');
+        } else {
+            arg = '';
+        }
+        return arg;
+    },
 	
 	_controls: {
 	
 		// this is where our controls are defined
-		
-		textbox: function(item, id, show_label){
+		info: function(item, id, show_label, value){
+			var x = '<div>';
+            x += item.title;
+			x += '</div>'; 
+			return x;
+		},
+
+	
+		textbox: function(item, id, show_label, value){
 			// simple textbox
 			var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
 			x += '<input id="' + id + '" name="' + id + '" type="text" ';
-			x += 'onchange="$FORM.itemChanged(this)"  ';
-			x += 'onkeyup="$FORM.itemChanged(this)" />'; 
+            x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+			x += 'onchange="itemChanged(this)"  ';
+			x += 'onkeyup="itemChanged(this)" />'; 
 			return x;
 		},
 
-		password: function(item, id, show_label){
+		password: function(item, id, show_label, value){
 			// simple textbox
 			var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
 			x += '<input id="' + id + '" name="' + id + '" type="password" ';
-			x += 'onchange="$FORM.itemChanged(this)"  ';
-			x += 'onkeyup="$FORM.itemChanged(this)" />'; 
+            x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+			x += 'onchange="itemChanged(this)"  ';
+			x += 'onkeyup="itemChanged(this)" />'; 
 			return x;
 		},
 
-		checkbox: function(item, id, show_label){
+		checkbox: function(item, id, show_label, value){
 			// checkbox
 			var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
 			x += '<input id="' + id + '" name="' + id + '" type="checkbox" ';
-			x += 'value="true" class="checkbox" ';
-			x += 'onchange="$FORM.itemChanged(this)" />'; 
+	        if (value){
+                x += 'checked="checked" ';
+            }
+    		x += 'value="true" class="checkbox" ';
+			x += 'onchange="itemChanged(this)" />'; 
 			return x;
 		},
 
 		submit: function(item, id, show_label){
 			// button
 			var x = '<button id="' + id + '" type="button" ';
-			x += 'onclick="$FORM.buttonPress(this)" >';
+			x += 'onclick="node_button(this, \'' + item.params.node + '\', \'' + item.params.action + '\')" >';
 			x += item.title + '</button>';			
 			return x;
 		},
 
-		dropdown: function(item, id, show_label){
+		dropdown: function(item, id, show_label, value){
 			// dropdown
 			var x = show_label ? $FORM_CONTROL._label(item, id) : '';
 			x += '<select id="' + id + '" name="' + id;
-			x += '" onchange="$FORM.itemChanged(this)" >';
+			x += '" onchange="itemChanged(this)" >';
 			var type = item.params.type;
 			var items = item.params.values.split('|');
 			var i;
@@ -186,7 +207,7 @@ $FORM_CONTROL = {
 			return x;
 		},
 
-		datebox: function(item, id, show_label){
+		datebox: function(item, id, show_label, value){
 			// datebox
 			// need to add onchange="itemChanged(this)" etc
 			var x = show_label ? $FORM_CONTROL._label(item, id) : '';
