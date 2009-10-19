@@ -6,22 +6,34 @@ from reformed.data_loader import load_json_from_file
 
 
 def create():
-
-    from reformed.reformed import reformed
+    print 'creating database structure'
     import td
 
-def delete():
+def load_data():
+    print 'loading data'
+    import reformed.reformed as r
+    from reformed.data_loader import FlatFile
+    flatfile = FlatFile(r.reformed,
+                        "people",
+                        "data.csv")
+    flatfile.load()
 
+def generate_data():
+    print 'generating data'
+    import data_creator
+
+def delete():
+    print 'deleting database'
     os.system("rm reformed/reformed.sqlite")
 
 def dump():
-
+    print 'dumping data'
     from reformed.reformed import reformed 
     session = reformed.Session()
     session.close()
 
 def run():
-
+    print 'starting webserver'
     from reformed.reformed import reformed, scheduler_thread 
     scheduler_thread.start()
     import web
@@ -43,6 +55,15 @@ if __name__ == "__main__":
        delete()
    if 'create' in sys.argv:
         create()
+   if 'generate' in sys.argv:
+        generate_data()
+   if 'load' in sys.argv:
+        load_data()
    if 'run' in sys.argv:
+        run()
+   if 'test' in sys.argv:
+        delete()
+        create()
+        load_data()
         run()
 

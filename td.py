@@ -69,9 +69,5 @@ d.add_table(r.Table("_core_lock",
 
 d.persist()
 
-from reformed.data_loader import FlatFile
-flatfile = FlatFile(d,
-                    "people",
-                    "tests/new_people_with_header.csv")    
-flatfile.load()
+
 
