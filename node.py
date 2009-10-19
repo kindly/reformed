@@ -166,7 +166,8 @@ class TableNode(Node):
         for result in results:
             row = {"table": result["__table"],
                    "id": result["_core_entity.id"],
-                   "title": self.list_title % result["_core_entity.id"]}
+                   "title": result["_core_entity.title"],
+                   "summary": result["_core_entity.summary"]}
             out.append(row)
 
         self.out = out

@@ -51,7 +51,8 @@ class Search(Node):
         out = []
         for result in results:
             row = {"id": result["_core_entity.id"],
-                   "title": result["_core_entity.title"]}
+                   "title": result["_core_entity.title"],
+                   "summary": result["_core_entity.summary"]}
             if result['_core_entity.table'] == 8:
                 row['table'] = 'donkey'
             else:

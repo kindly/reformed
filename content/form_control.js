@@ -115,6 +115,11 @@ $FORM_CONTROL = {
 		return x;
 	},
 
+	_error_span: function(id){
+		var x = '<span id="' + id + '__error" class="error_span"></span>';
+		return x;
+	},
+
 	_unknown: function(item, id){
 		var x = '<span>unknown control: &lt;' + item.type + '&gt; for ';
 		x += item.title + '</span>';
@@ -148,6 +153,8 @@ $FORM_CONTROL = {
             x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
 			x += 'onchange="itemChanged(this)"  ';
 			x += 'onkeyup="itemChanged(this)" />'; 
+
+            x += $FORM_CONTROL._error_span(id);
 			return x;
 		},
 

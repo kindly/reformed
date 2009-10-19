@@ -45,8 +45,10 @@ def run():
         httpd = WSGIServer(('', 8000), WSGIRequestHandler)
         httpd.set_app(web.WebApplication())
         print "Serving HTTP on %s port %s ..." % httpd.socket.getsockname()
-        httpd.serve_forever()
-
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            pass
 
 if __name__ == "__main__":
    if 'dump' in sys.argv:

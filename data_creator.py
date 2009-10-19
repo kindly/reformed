@@ -21,7 +21,7 @@ def make_domain():
 def make_email():
     return make_char(3,20, extras='__..') + '@' + make_domain()
 
-num_rows = 1000
+num_rows = 100
 filename = 'data.csv'
 data = [
     ["name", make_char, (5, 10)],

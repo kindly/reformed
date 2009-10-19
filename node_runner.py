@@ -29,7 +29,10 @@ def node(data, caller):
     out = run(node, data)
     caller.output.append({'type' : 'node',
                           'data' : out})
-def reload():
+def reload_nodes():
+    global nodes
+    nodes = reload(nodes)
+
     for node in globals():
         if node[:6] == 'nodes.':
             print 'reloading %s' % node

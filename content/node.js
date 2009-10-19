@@ -240,14 +240,14 @@ function dirty(root, row, state){
 						my_root = '#' + root//$INFO.getId(root);
 						$(my_root).addClass("dirty");
 						// buttons
-						$(my_root + '__save').removeAttr("disabled");
+			//FIXME				$(my_root + '__save').removeAttr("disabled");
 					}
 				} else {
 					form_info.clean = true;
 					my_root = '#' + root;//$INFO.getId(root);
 					$(my_root).removeClass("dirty");
 					// buttons
-					$(my_root + '__save').attr("disabled","disabled");
+			//FIXME			$(my_root + '__save').attr("disabled","disabled");
 				}
 			} else {
 				// grid etc
@@ -261,14 +261,14 @@ function dirty(root, row, state){
 						my_root_id = '#' + $INFO.getId(my_root);
 						$(my_root_id).addClass("dirty");
 						// buttons
-						$(my_root_id + '__save').removeAttr("disabled");
+		//FIXME				$(my_root_id + '__save').removeAttr("disabled");
 					}
 				} else {
 					$INFO.setStateArray(root, 'clean_rows',row, true);
 					my_root_id = '#' + $INFO.getId(my_root);
 					$(my_root_id).removeClass("dirty");
 					// buttons
-					$(my_root_id + '__save').attr("disabled","disabled");
+	//FIXME				$(my_root_id + '__save').attr("disabled","disabled");
 				}
 			}
 		}
@@ -344,9 +344,10 @@ function show_listing(data, node){
         item = data[i];
         table = String(item.table);
         next_node = 'test.' + table.substring(0,1).toUpperCase() + table.substring(1,table.length);
-        html += '<p onclick="$JOB.add({node: \'' + next_node + '\', lastnode: \'' + node + '\', data:{__id: '
+        html += '<div class="list">'
+        html += '<span class="list_title" onclick="$JOB.add({node: \'' + next_node + '\', lastnode: \'' + node + '\', data:{__id: '
         html += item.id + '}, command: \'view\'}';
-        html += ', {}, \'node\', true)">' + item.title + '</p>';
+        html += ', {}, \'node\', true)">' + item.table + ' - ' + item.title + '</span></br><span class="list_summary">' + item.summary + '</span></div>';
     }
     $('#main').html(html);
 }
@@ -383,7 +384,14 @@ function get_node(node_name, node_command, node_data){
                      form_setup(root, form);
                      break;
                  case 'save_error':
-                    alert($.toJSON(packet.data.data));
+               //     alert($.toJSON(packet.data.data));
+                    data = packet.data.data
+                    for (key in data){
+             //           alert('key: ' + key + '\nvalue: ' + data[key]);
+                        id = $INFO.getId(root + '#' + key);
+                        $('#' + id).addClass('error');
+                        $('#' + id + '__error').html(data[key]);
+                    }
                     break;
                  case 'general_error':
                     alert(packet.data.data);

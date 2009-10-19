@@ -12,7 +12,7 @@ def table_lookup(q, limit, request, http_session):
     session = r.reformed.Session()
     obj = r.reformed.get_class(table)
     search_field = getattr(obj, field)
-    filter = search_field.like(unicode(q + '%'))
+    filter = search_field.like(unicode('%' + q + '%'))
 
     data = session.query(search_field).filter(filter).all()[:limit]
 

@@ -17,7 +17,7 @@ class Interface(object):
         print "Reloading"
         global node_runner
         node_runner = reload(node_runner)
-        node_runner.reload()
+        node_runner.reload_nodes()
         out ={'action': 'null',
               'node': '',
               'data' : 'Nodes reimported'}

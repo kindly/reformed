@@ -4,10 +4,6 @@
 	color:blue;
 	padding:0 15px;
 }
-.error {
-	background-color:#FFEC8B;
-}
-
 
 
 /* GENERAL */
@@ -254,4 +250,28 @@ tr.inactive input{
 
 #status {
 	font-size:80%;
+}
+
+
+div.form_body > p > input.error {
+	background-color:#FFEC8B;
+}
+
+.error_span{
+    font-size:75%;
+    color:#3a3;
+}
+
+
+.list_title {
+    color:#33A;
+}
+
+.list_summary {
+    color:#3A3;
+    font-size:75%;
+}
+
+.list {
+    margin-bottom:5px;
 }
