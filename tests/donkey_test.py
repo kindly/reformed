@@ -44,7 +44,9 @@ class test_donkey(object):
                                            "contact_summary"),
                                   OneToMany("transactions",
                                            "transactions"),
-                                  entity = True),
+                                  entity = True,
+                                  summary_fields = "name,address_line_1,postcode"
+                                  ),
                             Table("contact_summary",
                                   SumDecimal("total_amount", "transactions.amount", base_level = "people"),
                                   AddRow("new_row", "people", initial_event = True),
@@ -81,6 +83,7 @@ class test_donkey(object):
                                   OneToMany("donkey_sponsership",
                                             "donkey_sponsership"),
                                   Index("idx_name", "name"),
+                                  summary_fields = "name,age",
                                   entity = True
                                  ),
                             Table("donkey_types",

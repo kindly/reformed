@@ -1,6 +1,7 @@
 from custom_exceptions import InvalidEvent
 from sqlalchemy.orm import attributes
-from sqlalchemy.sql import func, select, and_
+import sqlalchemy as sa
+from sqlalchemy.sql import func, select, and_, cast
 from operator import add
 import datetime
 import logging
@@ -546,6 +547,36 @@ class CopyTextAfter(ChangeEvent):
                                                        self.changed_flag: True})
         else:
             session.query(self.table.sa_class).update({self.field_name: statement})
+
+class CopyTextAfterField(CopyTextAfter):
+
+    def update_after(self, object, result, session):
+
+        join = self.get_parent_primary_keys(object)
+        fields = [u"%s: " % field + cast(func.coalesce(object._table.sa_table.c[field], ""), sa.Unicode(100)) + u' -- ' 
+                  for field 
+                  in self.field_list[:-1]] 
+        last_field = self.field_list[-1]
+        fields.append(u"%s: " % last_field + cast(func.coalesce(object._table.sa_table.c[last_field], ""), sa.Unicode(100)))
+        fields_concat = reduce(add, fields)
+        
+        if self.update_when_flag:
+            condition_column = object._table.sa_table.c[self.update_when_flag]
+
+            setattr(result, self.field_name,
+                    select([fields_concat],
+                           and_(condition_column, *join))
+                   )
+        else:
+            setattr(result, self.field_name,
+                    select([fields_concat],
+                           and_(*join))
+                   )
+
+        if self.changed_flag:
+            setattr(result, self.changed_flag, True)
+        
+        session.add_no_validate(result)
 
 
 class CopyText(ChangeEvent):

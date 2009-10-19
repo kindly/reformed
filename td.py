@@ -14,7 +14,9 @@ d.add_entity(r.Table("people",
                     r.OneToMany("donkey_sponsership",
                               "donkey_sponsership",
                               many_side_not_null = False
-)
+                               ),
+                    summary_fields = "name,address_line_1,postcode"
+
                    )
            )
 
@@ -31,7 +33,8 @@ d.add_entity(r.Table("donkey",
                              ),
                     r.OneToMany("donkey_sponsership",
                               "donkey_sponsership",
-                                many_side_not_null = False)
+                                many_side_not_null = False),
+                    summary_fields = "name,age"
                    )
            )
 

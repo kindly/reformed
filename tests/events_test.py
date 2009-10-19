@@ -354,15 +354,19 @@ class test_events(test_donkey):
 
         assert person.contact_summary.email == u"poo@poo.com poo@poo.com zpoo@poo.com zpoo@poo.com zzpoo@poo.com zzpoo@poo.com"
 
-    def test_entity_title(self):
+    def test_entity_title_summary(self):
 
 
         person = self.session.query(self.Donkey.t.people).first()
 
         assert person.name == person._entity.title
 
+        assert person._entity.summary == "name: david -- address_line_1: 43 union street -- postcode: es399"
+
         donkey = self.session.query(self.Donkey.t.donkey).first()
 
         assert donkey.name == donkey._entity.title
 
+        print donkey._entity.summary
+        assert donkey._entity.summary == "name: jim -- age: 13"
 

@@ -76,6 +76,7 @@ class Table(object):
         self.unique_constraint = kw.get("unique_constraint", None)
         self.entity_relationship = kw.get("entity_relationship", False)
         self.title_field = kw.get("title_field", None)
+        self.summary_fields = kw.get("summary_fields", None)
         self.primary_key_list = []
         self.events = []
         self.initial_events = []

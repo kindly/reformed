@@ -278,6 +278,33 @@ class CopyTextAfter(Field):
                                               field_name = self.field_name,
                                               update_when_flag = self.update_when_flag)
 
+class CopyTextAfterField(Field):
+
+    def __init__(self, name, target, *args, **kw):
+
+        self.other = target
+        self.base_level = kw.get("base_level", None)
+        fields = kw.get("fields", None)
+        self.changed_flag = kw.get("changed_flag", None)
+        self.update_when_flag = kw.get("update_when_flag" , None)
+
+        self.field_name = kw.get("field_name" , None)
+
+        if not self.field_name:
+            self.exists = Column(sa.Unicode(100), use_parent = True)
+
+        if fields:
+            self.event = events.CopyTextAfterField(target, self, self.base_level,
+                                              field_list = fields,
+                                              changed_flag = self.changed_flag,
+                                              field_name = self.field_name,
+                                              update_when_flag = self.update_when_flag)
+        else:
+            self.event = events.CopyTextAfterField(target, self, self.base_level,
+                                              changed_flag = self.changed_flag,
+                                              field_name = self.field_name,
+                                              update_when_flag = self.update_when_flag)
+
 class CopyText(Field):
 
     def __init__(self, name, target, *args, **kw):

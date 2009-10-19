@@ -30,7 +30,7 @@ import search
 import resultset
 import tables
 from util import get_paths, get_all_local_data
-from fields import ManyToOne, OneToOne, OneToMany, Integer, CopyTextAfter
+from fields import ManyToOne, OneToOne, OneToMany, Integer, CopyTextAfter, CopyTextAfterField
 import fields as field_types
 import boot_tables
 import sessionwrapper
@@ -183,6 +183,16 @@ class Database(object):
         if self.tables["_core_entity"].persisted:
             self.fields_to_persist.append(title_event)
         
+        #add summary events
+
+        if table.summary_fields:
+            summary_fields = table.summary_fields
+
+            summary_event = CopyTextAfterField("%s_summary" % table.name, table.name, field_name = "summary", fields = summary_fields)
+            self.tables["_core_entity"]._add_field_no_persist(summary_event)
+
+            if self.tables["_core_entity"].persisted:
+                self.fields_to_persist.append(summary_event)
 
     
     def _add_table_no_persist(self, table):
