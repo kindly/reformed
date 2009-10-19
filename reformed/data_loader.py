@@ -6,6 +6,7 @@ import re
 import csv
 import formencode as fe
 import json
+import datetime
 
 logger = logging.getLogger('reformed.main')
 
@@ -170,7 +171,9 @@ class FlatFile(object):
 
         return first_line
 
-    def load(self, batch = 100000):
+    def load(self, batch = 250):
+
+        start_time = datetime.datetime.now()
 
         self.session = self.database.Session()
         flat_file = self.get_file()
@@ -200,7 +203,13 @@ class FlatFile(object):
                 error_lines.append(line + [str(e.error_dict)])
             if line_number % batch == 0 and not error_lines:
                 self.session.commit()
-        
+                time = (datetime.datetime.now() - start_time).seconds
+                try:
+                    rate = line_number/time
+                except:
+                    rate = 'n/a'
+                print "%s rows in %s seconds  %s rows/s" % (line_number,
+                                                            time, rate)
         if error_lines:
             self.session.close()
             error_lines.insert(0, self.headers + ["__errors"])
