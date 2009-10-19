@@ -373,6 +373,7 @@ class Database(object):
         session = self.Session()
 
         limit = kw.get("limit", None)
+        offset = kw.get("offset", 0)
         query = search.Search(self, table_name, session, *args)
 
         tables = None
@@ -386,7 +387,7 @@ class Database(object):
                     tables.append(table)
 
         if limit:
-            result = resultset.ResultSet(query, tables = tables, result_num = limit).first_set()
+            result = resultset.ResultSet(query, tables = tables, result_num = limit, offset = offset).first_set()
         else:
             result = resultset.ResultSet(query).all()
         return [get_all_local_data(obj, tables =tables, keep_all = True, allow_system = True) for obj in result]    
