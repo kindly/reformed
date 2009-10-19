@@ -159,12 +159,12 @@ class TableNode(Node):
         session.close()
 
 
-    def _list(self):
+    def _list(self, limit=20):
         print '######## %s'  % self.table
-        results = r.reformed.search(self.table)
+        results = r.reformed.search('_core_entity', "%s.id >0" % self.table, limit=limit)
         out = []
         for result in results:
-            row = {"table": result["__table"],
+            row = {"table": self.table,
                    "id": result["_core_entity.id"],
                    "title": result["_core_entity.title"],
                    "summary": result["_core_entity.summary"]}

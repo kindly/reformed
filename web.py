@@ -59,8 +59,8 @@ def process_node(environ, start_response):
     print 'length %s bytes' % len(json.dumps(data, sort_keys=True, indent=4))
     print 'condenced length %s bytes' % len(json.dumps(data, separators=(',',':')))
     print 'SESSION\n%s' % json.dumps(http_session, sort_keys=False, indent=4)
-
-    return json.dumps(data, separators=(',',':'))
+    print 'DONE'
+    return [json.dumps(data, separators=(',',':'))]
 
 
 

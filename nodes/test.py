@@ -45,9 +45,9 @@ class People(TableNode):
 
 class Search(Node):
 
-    def call(self):
+    def call(self, limit = 25):
 
-        results = r.reformed.search('_core_entity')
+        results = r.reformed.search('_core_entity', limit=limit)
         out = []
         for result in results:
             row = {"id": result["_core_entity.id"],
