@@ -352,7 +352,10 @@ function show_listing(data, node){
     $('#main').html(html);
 }
 
-
+function search_box(){
+    get_node('test.Search', $('#search').val());
+    return false;
+}
 
 function get_node(node_name, node_command, node_data){
 

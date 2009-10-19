@@ -275,3 +275,7 @@ div.form_body > p > input.error {
 .list {
     margin-bottom:5px;
 }
+
+#search {
+    width:130px;
+}

@@ -45,9 +45,9 @@ class People(TableNode):
 
 class Search(Node):
 
-    def call(self, limit = 25):
-
-        results = r.reformed.search('_core_entity', limit=limit)
+    def call(self, limit = 100):
+        where = "_core_entity.title like '%%%s%%'" % self.command
+        results = r.reformed.search('_core_entity', where, limit=limit)
         out = []
         for result in results:
             row = {"id": result["_core_entity.id"],
