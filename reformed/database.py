@@ -366,6 +366,9 @@ class Database(object):
         query = search.Search(self, table_name, session, *args)
 
         tables = None
+
+        if table_name == "_core_entity":
+            tables = ["_core_entity"]
         if self.tables[table_name].entity:
             tables = ["_core_entity"]
             for table in self.tables[table_name].local_tables:
