@@ -21,7 +21,7 @@ def make_domain():
 def make_email():
     return make_char(3,20, extras='__..') + '@' + make_domain()
 
-num_rows = 100
+num_rows = 1000
 filename = 'data.csv'
 data = [
     ["name", make_char, (5, 10)],
@@ -51,5 +51,8 @@ for i in range(num_rows):
     if row:
         row = row[:-2]
     f.write(row + '\n')
-    if i % 1000 == 0:
-        print i
+    if (i + 1) % 1000 == 0:
+        print "%s rows" % (i + 1)
+f.close()
+
+print "%s rows generated" % (i + 1)
