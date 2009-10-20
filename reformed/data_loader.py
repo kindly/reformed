@@ -205,6 +205,7 @@ class FlatFile(object):
             except fe.Invalid, e:
                 error_lines.append(line + [str(e.error_dict)])
             if line_number % batch == 0 and not error_lines:
+                print 'commiting'
                 self.session.commit()
                 self.session.expunge_all()
             if line_number % print_every == 0 and not error_lines:

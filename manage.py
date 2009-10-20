@@ -21,10 +21,11 @@ def load_data():
 def generate_data():
     print 'generating data'
     import data_creator
+    data_creator.create_csv()
 
 def delete():
     print 'deleting database'
-    os.system("rm reformed/reformed.sqlite")
+  #  os.system("rm reformed/reformed.sqlite")
 
 def dump():
     print 'dumping data'

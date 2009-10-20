@@ -6,8 +6,8 @@ def make_int(min, max):
     return random.randint(min,max)
 
 def make_char(min, max, extras = ''):
-    chars = 'aabbcddeeeefghijklmnnoppqrssttuvwxyz' + extras
-    out = ''
+    chars = u'aabbcddeeeefghijklmnnoppqrssttuvwxyz' + extras
+    out = u''
     for i in range(random.randint(min,max)):
         out += chars[random.randint(0,len(chars)-1)]
     return out
@@ -21,38 +21,40 @@ def make_domain():
 def make_email():
     return make_char(3,20, extras='__..') + '@' + make_domain()
 
-num_rows = 10000
-filename = 'data.csv'
-data = [
-    ["name", make_char, (5, 10)],
-    ["address_line_1", make_char, (5, 10)],
-    ["postcode", make_char, (5, 10)],
-    ["email__0__email" ,make_email, ()],
-    ["email__1__email", make_email, ()],
-    ["donkey_sponsership__0__amount", make_int, (1,50)],
-    ["donkey_sponsership__0___donkey__0__name", make_char, (5, 10)],
-    ["donkey_sponsership__0___donkey__0__age", make_int, (1, 25)]
-]
 
-f = open(filename,'w')
-
-
-header = ''
-for (title, fn, params) in data:
-    header += '"%s", ' % title
-if header:
-    header = header[:-2]
-f.write(header + '\n')
-
-for i in range(num_rows):
-    row = ''
+def create_csv():
+    num_rows = 100000
+    filename = 'data.csv'
+    data = [
+        ["name", make_char, (5, 10)],
+        ["address_line_1", make_char, (5, 10)],
+        ["postcode", make_char, (5, 10)],
+        ["email__0__email" ,make_email, ()],
+        ["email__1__email", make_email, ()],
+        ["donkey_sponsership__0__amount", make_int, (1,50)],
+        ["donkey_sponsership__0___donkey__0__name", make_char, (5, 10)],
+        ["donkey_sponsership__0___donkey__0__age", make_int, (1, 25)]
+    ]
+    
+    f = open(filename,'w')
+    
+    
+    header = ''
     for (title, fn, params) in data:
-         row += '"%s", ' % fn(*params)
-    if row:
-        row = row[:-2]
-    f.write(row + '\n')
-    if (i + 1) % 1000 == 0:
-        print "%s rows" % (i + 1)
-f.close()
-
-print "%s rows generated" % (i + 1)
+        header += '"%s", ' % title
+    if header:
+        header = header[:-2]
+    f.write(header + '\n')
+    
+    for i in range(num_rows):
+        row = ''
+        for (title, fn, params) in data:
+             row += '"%s", ' % fn(*params)
+        if row:
+            row = row[:-2]
+        f.write(row + '\n')
+        if (i + 1) % 1000 == 0:
+            print "%s rows" % (i + 1)
+    f.close()
+    
+    print "%s rows generated" % (i + 1)
