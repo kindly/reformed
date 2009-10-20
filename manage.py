@@ -46,9 +46,12 @@ def generate_data():
 def delete():
     print 'deleting database'
 
-    if r.dbconfig.engine.name = 'sqlite':
+    if r.dbconfig.engine.name == 'sqlite':
         file = r.dbconfig.engine.url.database
         os.system("rm %s" % file)
+    elif r.dbconfig.engine.name == 'mysql':
+        db_name =  r.dbconfig.engine.url.database
+        print "You need to drop database %s yourself" % db_name
 
 def dump():
     print 'dumping data'
