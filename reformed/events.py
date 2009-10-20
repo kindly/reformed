@@ -474,6 +474,8 @@ class Counter(ChangeEvent):
 
 class CopyTextAfter(ChangeEvent):
 
+    ##TODO rename class and update_initial method
+
     def __init__(self, target, field, base_level = None, initial_event = False, **kw):
 
         super(CopyTextAfter, self).__init__(target, field, base_level, initial_event, **kw)
@@ -511,17 +513,36 @@ class CopyTextAfter(ChangeEvent):
         
         session.add_no_validate(result)
 
+    def update_initial(self, object, result, session):
+
+        if self.update_when_flag:
+            values = [getattr(object, field) for field in self.field_list if getattr(object, self.update_when_flag)]
+        else:
+            values = [getattr(object, field) for field in self.field_list]
+
+
+        value = u' '.join([val for val in values if val])
+
+        if self.changed_flag:
+            setattr(result, self.changed_flag, True)
+
+        if value:
+            setattr(result, self.field_name, value)
+
     def add(self, result, base_table_obj, object, session):
 
-        session.add_after_flush(self.update_after, (object, result, session))
+        self.update_initial(object, result, session)
+        #session.add_after_flush(self.update_after, (object, result, session))
 
     def delete(self, result, base_table_obj, object, session):
 
-        session.add_after_flush(self.update_after, (object, result, session))
+        self.update_initial(object, result, session)
+        #session.add_after_flush(self.update_after, (object, result, session))
             
     def update(self, result, base_table_obj, object, session):
 
-        session.add_after_flush(self.update_after, (object, result, session))
+        self.update_initial(object, result, session)
+        #session.add_after_flush(self.update_after, (object, result, session))
 
     def update_all(self, session):
 
@@ -549,6 +570,23 @@ class CopyTextAfter(ChangeEvent):
             session.query(self.table.sa_class).update({self.field_name: statement})
 
 class CopyTextAfterField(CopyTextAfter):
+
+    ## rename class and update_initial method
+
+    def update_initial(self, object, result, session):
+
+        if self.update_when_flag:
+            values = [u"%s: %s" % (field, getattr(object, field)) for field in self.field_list if getattr(object, self.update_when_flag)]
+        else:
+            values = [u"%s: %s" % (field, getattr(object, field)) for field in self.field_list]
+
+        value = u' -- '.join([val for val in values if val])
+
+        if self.changed_flag:
+            setattr(result, self.changed_flag, True)
+
+        if value:
+            setattr(result, self.field_name, value)
 
     def update_after(self, object, result, session):
 

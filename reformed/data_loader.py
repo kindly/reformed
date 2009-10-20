@@ -174,9 +174,11 @@ class FlatFile(object):
 
         return first_line
 
-    def load(self, validation = True, print_every = 100, batch = 100000):
+    def load(self, validation = True, print_every = 250, batch = 250):
 
         self.validation = validation
+
+        start_time = datetime.datetime.now()
 
         self.session = self.database.Session()
         flat_file = self.get_file()
@@ -209,8 +211,13 @@ class FlatFile(object):
                 self.session.commit()
                 self.session.expunge_all()
             if line_number % print_every == 0 and not error_lines:
-                print datetime.datetime.now(), " line %s" % line_number
-        
+                time = (datetime.datetime.now() - start_time).seconds
+                try:
+                    rate = line_number/time
+                except:
+                    rate = 'n/a'
+                print "%s rows in %s seconds  %s rows/s" % (line_number,
+                                                            time, rate)
         if error_lines:
             self.session.close()
             error_lines.insert(0, self.headers + ["__errors"])

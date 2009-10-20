@@ -74,21 +74,30 @@ class SessionWrapper(object):
 
     def commit(self):
 
+        #print datetime.datetime.now(), "start commit"
         if self.has_entity:
             self.add_entity_instance()
+        #print datetime.datetime.now(), "check all validated"
         self.check_all_validated()
+        #print datetime.datetime.now(), "events"
         self.add_events()
+        #print datetime.datetime.now(), "add event"
         self.delete_events()
         self.update_events()
+        #print datetime.datetime.now(), "locked and logged"
         self.add_locked_rows()
         self.add_logged_instances()
+        #print datetime.datetime.now(), "first flush"
         self.session.flush()
         self.after_flush()
+        #print datetime.datetime.now(), "second flush"
         self.session.flush()
         self.after_flush_list = []
         for obj in self.session:
             obj._validated = False
+        #print datetime.datetime.now(), "before commit"
         self.session.commit()
+        #print datetime.datetime.now(), "after commit"
 
     def after_flush(self):
 
