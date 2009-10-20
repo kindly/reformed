@@ -45,22 +45,20 @@ def generate_data():
 
 def delete():
     print 'deleting database'
-    import reformed.reformed as r
-    if r.dbconfig.engine.name == 'sqlite':
-        file = r.dbconfig.engine.url.database
+    import reformed.dbconfig as config
+    if config.engine.name == 'sqlite':
+        file = config.engine.url.database
         os.system("rm %s" % file)
-    elif r.dbconfig.engine.name == 'mysql':
-        db_name =  r.dbconfig.engine.url.database
-        session = r.reformed.Session()
+    elif config.engine.name == 'mysql':
+        db_name =  config.engine.url.database
+        session = config.Session()
         tables = session.execute('SHOW TABLES')
         for (table, ) in tables:
             print 'deleting %s...' % table
             session.execute('DROP TABLE `%s`' % table)
         session.commit()
         session.close()
-        if 'create' in sys.argv:
-            print 'Currently reformed cannot delete and create so stopping now'
-            sys.exit(0)
+
 
 def dump():
     print 'dumping data'
