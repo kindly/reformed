@@ -31,6 +31,7 @@ class ResultSet(object):
         self.session = search.session
         self.order_by = kw.pop("order_by", None)
         self.result_num = kw.pop("result_num", 5)
+        self.offset = kw.pop("offset", 0)
         if self.order_by:
             self.ordered = getattr(self.database.get_class(self.search.table), self.order_by)
             self.selection_set = self.search.search().order_by(self.ordered)
@@ -58,7 +59,7 @@ class ResultSet(object):
     def first_set(self):
 
         self.current_row = 0
-        return self.selection_set[0:self.result_num]
+        return self.selection_set[self.offset : self.offset + self.result_num]
 
     def last_set(self):
         

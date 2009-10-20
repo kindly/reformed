@@ -4,6 +4,7 @@ import sqlalchemy
 import logging
 import re
 import csv
+import datetime
 import formencode as fe
 import json
 import datetime
@@ -118,6 +119,8 @@ class FlatFile(object):
         self.database = database
         self.table = table
 
+        self.validation = True
+
         self.parent_key = {}
         self.key_data = {}
         self.key_decendants = {}
@@ -171,9 +174,9 @@ class FlatFile(object):
 
         return first_line
 
-    def load(self, batch = 250):
+    def load(self, validation = True, print_every = 100, batch = 100000):
 
-        start_time = datetime.datetime.now()
+        self.validation = validation
 
         self.session = self.database.Session()
         flat_file = self.get_file()
@@ -203,13 +206,10 @@ class FlatFile(object):
                 error_lines.append(line + [str(e.error_dict)])
             if line_number % batch == 0 and not error_lines:
                 self.session.commit()
-                time = (datetime.datetime.now() - start_time).seconds
-                try:
-                    rate = line_number/time
-                except:
-                    rate = 'n/a'
-                print "%s rows in %s seconds  %s rows/s" % (line_number,
-                                                            time, rate)
+                self.session.expunge_all()
+            if line_number % print_every == 0 and not error_lines:
+                print datetime.datetime.now(), " line %s" % line_number
+        
         if error_lines:
             self.session.close()
             error_lines.insert(0, self.headers + ["__errors"])
@@ -330,7 +330,10 @@ class SingleRecord(object):
         
         for key, obj in self.all_obj.iteritems():
             try:
-                session.add(obj)
+                if self.flat_file and not self.flat_file.validation:
+                    session.add_no_validate(obj)
+                else:
+                    session.add(obj)
             except fe.Invalid, e:
                 invalid_msg[key] = e.msg.replace("\n", ", ")
                 invalid_dict[key] = e

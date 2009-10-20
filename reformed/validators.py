@@ -173,7 +173,7 @@ class All(formencode.compound.CompoundValidator):
                 error_list.append(e)
 
         if error_list:
-            invalid = Invalid("-".join([error.msg for error in error_list]), value, state)
+            invalid = Invalid("\n".join([error.msg for error in error_list]), value, state)
             invalid.error_list = error_list
             raise invalid
 
