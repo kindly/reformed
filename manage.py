@@ -1,4 +1,24 @@
-#!/usr/bin/python
+##   This file is part of Reformed.
+##
+##   Reformed is free software: you can redistribute it and/or modify
+##   it under the terms of the GNU General Public License version 2 as
+##   published by the Free Software Foundation.
+##
+##   Reformed is distributed in the hope that it will be useful,
+##   but WITHOUT ANY WARRANTY; without even the implied warranty of
+##   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+##   GNU General Public License for more details.
+##
+##   You should have received a copy of the GNU General Public License
+##   along with Reformed.  If not, see <http://www.gnu.org/licenses/>.
+##
+##   -----------------------------------------------------------------
+##
+##   Reformed
+##   Copyright (c) 2008-2009 Toby Dacre & David Raznick
+##
+
+
 import os, sys
 from reformed.export import json_dump_all_from_table
 from reformed.data_loader import load_json_from_file
@@ -25,7 +45,10 @@ def generate_data():
 
 def delete():
     print 'deleting database'
-  #  os.system("rm reformed/reformed.sqlite")
+
+    if r.dbconfig.engine.name = 'sqlite':
+        file = r.dbconfig.engine.url.database
+        os.system("rm %s" % file)
 
 def dump():
     print 'dumping data'
