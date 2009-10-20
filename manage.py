@@ -46,11 +46,11 @@ def generate_data():
 def delete():
     print 'deleting database'
     import reformed.dbconfig as config
-    if config.engine.name == 'sqlite':
+    engine = config.engine.name
+    if engine == 'sqlite':
         file = config.engine.url.database
         os.system("rm %s" % file)
-    elif config.engine.name == 'mysql':
-        db_name =  config.engine.url.database
+    elif engine == 'mysql':
         session = config.Session()
         tables = session.execute('SHOW TABLES')
         for (table, ) in tables:
@@ -58,6 +58,9 @@ def delete():
             session.execute('DROP TABLE `%s`' % table)
         session.commit()
         session.close()
+    else:
+        print 'Database engine "%s" cannot be deleted' % engine
+        sys.exit(1)
 
 
 def dump():
