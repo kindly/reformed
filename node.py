@@ -106,7 +106,7 @@ class TableNode(Node):
         data = create_form_data(self.fields, self.form_params, data_out)
         self.out = data
         self.action = 'form'
-
+        session.close()
 
     def _save(self):
 
