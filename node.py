@@ -99,7 +99,7 @@ class TableNode(Node):
         obj = r.reformed.get_class(self.table)
         try:
             data = session.query(obj).filter_by(_core_entity_id = id).one()
-            data_out = util.get_row_data_basic(data)
+            data_out = util.get_row_data(data, basic = True)
             data_out['__id'] = id
         except sa.orm.exc.NoResultFound:
             data_out = {}
