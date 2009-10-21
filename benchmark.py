@@ -29,7 +29,7 @@ for i in range(num_rows):
     for j in range(len(fields)):
         setattr(obj, fields[j][0], data[i][j])
     session.save_or_update(obj)
-    session.commit()    
+    session.commit()
     if i and i % 100 == 0:
         print i
 
