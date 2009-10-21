@@ -178,7 +178,6 @@ def get_row_data(obj, keep_all = False, basic = False):
             row_data["%s.id" % table] = obj.id
     return row_data
 
-
 def create_data_dict(result, **kw):
 
     data = {}
@@ -188,6 +187,22 @@ def create_data_dict(result, **kw):
 
     for row in result:
         data[row.id] = get_row_data(row, **kw)
+    return data
+
+
+def create_data_array(result, **kw):
+
+    data = []
+    if hasattr(result, "_table"):
+        out = get_row_data(result, **kw)
+        out['id'] = result.id
+        data.append(out)
+        return data
+
+    for row in result:
+        out = get_row_data(row, **kw)
+        out['id'] = row.id
+        data.append(out)
     return data
 
 def get_all_local_data(obj, tables = None, allow_system = False, keep_all = False):
