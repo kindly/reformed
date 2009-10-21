@@ -192,9 +192,9 @@ def create_fields(fields_list):
 def create_form_data(fields, params=None, data=None):
     out = {
         "form": {
-            "fields":create_fields(fields) 
+            "fields":create_fields(fields)
         },
-        "type": "form", 
+        "type": "form",
     }
     if data:
         out['data'] = data
