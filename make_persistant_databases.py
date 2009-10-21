@@ -12,9 +12,9 @@ class sqlite_database(test_donkey):
         os.system("rm tests/test_donkey.sqlite")
         self.engine = create_engine('sqlite:///tests/test_donkey.sqlite')
         super(sqlite_database, self).setUpClass()
- 
+
 class mysql_database(test_donkey):
-        
+
     @classmethod
     def setUpClass(self):
         os.system("mysqladmin --host=localhost drop test_donkey --force=TRUE")
@@ -23,7 +23,7 @@ class mysql_database(test_donkey):
         super(mysql_database, self).setUpClass()
 
 class postgres_database(test_donkey):
-        
+
     @classmethod
     def setUpClass(self):
         os.system("dropdb test_donkey")
@@ -36,6 +36,6 @@ if __name__== "__main__":
     sqlite_database.setUpClass()
     mysql_database.setUpClass()
     postgres_database.setUpClass()
-    
+
 
 
