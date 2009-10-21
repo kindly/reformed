@@ -365,6 +365,8 @@ class test_events(test_donkey):
 
         donkey = self.session.query(self.Donkey.t.donkey).first()
 
+        print donkey._entity.title
+        print donkey.name
         assert donkey.name == donkey._entity.title
 
         print donkey._entity.summary
