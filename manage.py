@@ -65,13 +65,13 @@ def delete():
 
 def dump():
     print 'dumping data'
-    from reformed.reformed import reformed 
+    from reformed.reformed import reformed
     session = reformed.Session()
     session.close()
 
 def run():
     print 'starting webserver'
-    from reformed.reformed import reformed, scheduler_thread 
+    from reformed.reformed import reformed, scheduler_thread
     scheduler_thread.start()
     import web
     if os.environ.get("REQUEST_METHOD", ""):
