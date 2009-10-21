@@ -7,12 +7,12 @@ class Interface(object):
 
     def __init__(self, http_session):
         self.http_session = http_session
-        self.command_queue = [] 
+        self.command_queue = []
         self.output = [] # this will be returned
 
     def add_command(self, command, data):
         self.command_queue.append((command, data))
-        
+
     def reload_nodes(self):
         print "Reloading"
         global node_runner
