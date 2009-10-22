@@ -147,7 +147,7 @@ class Numeric(Field):
 class Email(Field):
     
     def __init__(self, name, *args, **kw):
-        self.email = Column(sa.Unicode(100), use_parent_options = True)
+        self.email = Column(sa.Unicode(300), use_parent_options = True)
         self.validation = {"email" : validators.Email()}
 
 
@@ -318,7 +318,7 @@ class CopyText(Field):
 
         self.field_name = kw.get("field_name" , None)
 
-        self.exists = Column(sa.Unicode(100), use_parent = True)
+        self.exists = Column(sa.Unicode(1000), use_parent = True)
 
         if fields:
             self.event = events.CopyText(target, self, self.base_level,

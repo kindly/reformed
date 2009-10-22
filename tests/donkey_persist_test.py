@@ -125,7 +125,6 @@ class test_donkey_persist_sqlite(object):
     def tearDownClass(cls):
 
         cls.session.close()
-        cls.Donkey.job_scheduler.threadpool.wait()
         
 
 #class test_basic_input(test_donkey_persist):

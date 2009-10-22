@@ -68,8 +68,8 @@ def dump():
 
 def run():
     print 'starting webserver'
-    from reformed.reformed import reformed, scheduler_thread 
-    scheduler_thread.start()
+    from reformed.reformed import reformed 
+    reformed.scheduler_thread.start()
     import web
     if os.environ.get("REQUEST_METHOD", ""):
         from wsgiref.handlers import BaseCGIHandler

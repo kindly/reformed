@@ -38,6 +38,7 @@ import validate_database
 import logging
 import networkx as nx
 import job_scheduler
+import threading
 
 logger = logging.getLogger('reformed.main')
 logger.setLevel(logging.INFO)
@@ -73,7 +74,9 @@ class Database(object):
             else:
                 self.add_table(table)
         self.persist()
-        self.job_scheduler = job_scheduler.JobScheduler(self)
+        #self.job_scheduler = job_scheduler.JobScheduler(self)
+        self.scheduler_thread = job_scheduler.JobSchedulerThread(self, threading.currentThread())
+        self.job_scheduler = self.scheduler_thread.job_scheduler
 
 
     def add_table(self, table, ignore = False, drop = False):

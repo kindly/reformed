@@ -283,9 +283,19 @@ class ThreadPool:
     def joinAllDismissedWorkers(self):
         """Perform Thread.join() on all worker threads that have been dismissed.
         """
-        for worker in self.dismissedWorkers:
-            worker.join()
-        self.dismissedWorkers = []
+        while self.dismissedWorkers:
+            for index, worker in enumerate(self.dismissedWorkers):
+                worker.join(3)
+                if not worker.isAlive():
+                    self.dismissedWorkers.pop(index)
+
+            count = 0
+            for thread in self.dismissedWorkers:
+                if thread.isAlive():
+                    count = count + 1
+            if count > 0:
+                print "There are %s job(s) left to finish" % count
+
 
     def putRequest(self, request, block=True, timeout=0):
         """Put work request into work queue and save its id for later."""

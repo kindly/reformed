@@ -13,7 +13,7 @@ from sqlalchemy import and_
 logger = logging.getLogger('reformed.main')
 
 POOL_SIZE = 10
-POLL_INTERVAL = 10
+POLL_INTERVAL = 1
 
 class JobScheduler(object):
 
@@ -55,19 +55,37 @@ class JobScheduler(object):
         return job_id
 
 
-class JobScedulerThread(threading.Thread):
+    def shut_down_all_threads(self):
 
-    def __init__(self, database):
-        super(JobScedulerThread, self).__init__()
+        threadpool = self.database.job_scheduler.threadpool
+
+        threadpool.dismissWorkers(POOL_SIZE)
+        threadpool.joinAllDismissedWorkers()
+
+        if self.database.schedular_thread:
+            self.database.schedular_thread.alive = False
+            self.database.schedular_thread.join()
+
+        
+
+
+
+class JobSchedulerThread(threading.Thread):
+
+    def __init__(self, database, maker_thread):
+        super(JobSchedulerThread, self).__init__()
         self.database = database
-        self.threadpool = self.database.job_scheduler.threadpool
-        self.daemon = True
+        self.maker_thread = maker_thread
+        self.job_scheduler = JobScheduler(self.database)
 
     alive = False
     def run(self):
 
         if self.alive:
             return
+
+        self.threadpool = self.job_scheduler.threadpool
+
         self.alive = True
         while self.alive:
 
@@ -85,6 +103,10 @@ class JobScedulerThread(threading.Thread):
                     arg = arg.encode("ascii")
                 self.make_request(func, arg, result["_core_job_scheduler.id"])
                 load_local_data(self.database, result)
+
+            if not self.maker_thread.isAlive():
+                self.shut_down_all_threads()
+                self.alive = False
 
             try:
                 time.sleep(POLL_INTERVAL)
@@ -127,4 +149,11 @@ class JobScedulerThread(threading.Thread):
             request = threadpool.makeRequests(func, [((self.database, ), {})], callback, exc_callback)
 
         self.threadpool.putRequest(request[0])
+
+    def shut_down_all_threads(self):
+
+        threadpool = self.threadpool
+
+        threadpool.dismissWorkers(POOL_SIZE)
+        threadpool.joinAllDismissedWorkers()
 
