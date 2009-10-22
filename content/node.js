@@ -41,6 +41,7 @@
         local_data.show_label = true;
         local_data.form_type='normal';
         local_data.root = 'main'
+
         var form_info = {info:{}};
         form_info.info.top_level = true;
         form_info.info.clean = true;
@@ -78,7 +79,8 @@
         switch (local_data.form_type){
             case 'action':
             case 'normal':
-                formHTML += _generate_form_html_normal(form_info, local_data, data);
+// count root i wrap_tag show_label 
+                formHTML += _generate_form_html_normal(form_info, local_data, data);//########### @@@@@@
                 break;
             case 'grid':
                 alert('grid not defined')
@@ -92,43 +94,45 @@
 
         // FORM FOOTER
         if (!form_info.info.top_level && (local_data.form_many_side_not_null = False,type=='normal' || local_data.form_type=='action')){
-            formHTML += _generate_footer_html(local_data);
-        }
+// my_root has_records form.fields.length
 
+            formHTML += _generate_footer_html(local_data);//########### @@@@@@
+        }
+// grid footer
+// has_records my_root form.fields.length
         return formHTML;
     };
 
 function _generate_form_html_normal(form_info, local_data, data){
-
+// local_data: count root i wrap_tag show_label 
+        var id
         if (local_data.root.substring(local_data.root.length - 1) == '#'){
-            local_data.record_id = local_data.root;
-            local_data.id = $INFO.addId(local_data.root + "*id");
+            id = $INFO.addId(local_data.root + "*id");
         } else {
-            local_data.record_id = local_data.root + '#';
-            local_data.id = $INFO.addId(local_data.root + "#*id");
+            id = $INFO.addId(local_data.root + "#*id");
         }
 
-        var formHTML = _generate_fields_html(form_info, local_data, data);
+        var formHTML = _generate_fields_html(form_info.layout, local_data, data);
         if (data){
-            formHTML += '<input type="text" id="' + local_data.id + '" class="hidden" value = "' + data.__id + '" /> ';
+            formHTML += '<input type="text" id="' + id + '" class="hidden" value = "' + data.__id + '" /> ';
         }
         return formHTML;
     }
 
-function _generate_fields_html(form_info, local_data, data){
-        var form = form_info.layout;
+function _generate_fields_html(form, local_data, data){
         var formHTML = '';
         var my_id;
         var i;
         var value = '';
         var item;
-
+//local_data: count root i wrap_tag show_label 
         for (i=0; i<form.fields.length; i++){
 
             item = form.fields[i];
 
             if (local_data.count){
                 my_id = local_data.root + "(" + local_data.i + ")#" + item.name;
+
             } else {
                 if (local_data.root.substring(local_data.root.length - 1) == '#'){
                     my_id = local_data.root + item.name;
@@ -140,7 +144,7 @@ function _generate_fields_html(form_info, local_data, data){
             my_id = $INFO.addId(my_id);
             if (item.type == 'subform'){
                 // get HTML for subform
-                formHTML += this._subform(item, my_id, form_info);
+                formHTML += _subform(item, my_id);
             } else {
                 // get value
                 if (data && typeof(data[item.name]) != 'undefined'){
@@ -154,13 +158,21 @@ function _generate_fields_html(form_info, local_data, data){
         return formHTML;
     }
 
-function _generate_grid_footer(local_data, form){
+function _subform(item, my_id){
 
-//FIXME we aren't passing form at the moment
+    out = '<div class="subform">' + item.title + '</br>'
+ //   out += $.toJSON(item.params);
+    out += node_generate_html(item.params.form, {}, root + '#' + item.name);
+    out += '</div>';
+    return out
+
+}
+function _generate_grid_footer(local_data){
+// local_data: has_records my_root num_fields
         var formHTML = '';
         if (local_data.has_records){
             formHTML += '<tfoot>';
-            formHTML += '<tr><td>&nbsp</td><td colspan="' + form.fields.length + '" >' + this._navigation(local_data.my_root) + '</td></tr>';
+            formHTML += '<tr><td>&nbsp</td><td colspan="' + local_data.num_fields + '" >' + this._navigation(local_data.my_root) + '</td></tr>';
             formHTML += '</tfoot>';
         }
         formHTML += '</tbody></table>';

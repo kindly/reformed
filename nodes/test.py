@@ -22,6 +22,8 @@ from formencode import validators
 import node
 from node import TableNode, Node
 from .reformed import reformed as r
+import reformed.util as util
+import sqlalchemy as sa
 
 class Donkey(TableNode):
 
@@ -35,12 +37,48 @@ class Donkey(TableNode):
 class People(TableNode):
 
     table = "people"
+    email_subform = {"form": {
+                    "fields": [
+                        {
+                            "type": "textbox",
+                            "name": "email",
+                            "title": "email:"
+                        }
+                    ]}}
     fields = [
         ['name', 'textbox', 'name:'],
         ['address_line_1', 'textbox', 'address:'],
-        ['postcode', 'textbox', 'postcode:']
+        ['postcode', 'textbox', 'postcode:'],
+        ['subform', 'subform', 'emails', email_subform]
     ]
     list_title = 'person %s'
+
+    def _view(self):
+        id = self.data.get('__id')
+        session = r.reformed.Session()
+        obj = r.reformed.get_class(self.table)
+        try:
+            data = session.query(obj).filter_by(_core_entity_id = id).one()
+            data_out = util.get_row_data(data, keep_all = False, basic = True)
+            data_out['__id'] = id
+            people_id = data.id
+        except sa.orm.exc.NoResultFound:
+            data_out = {}
+            people_id = 0
+        obj = r.reformed.get_class('email')
+        try:
+            data = session.query(obj).filter_by(people_id = people_id).all()
+            data_out['email'] = util.create_data_array(data, keep_all=False, basic=True)
+     #       data_out['email']['__id'] = data.id
+        except sa.orm.exc.NoResultFound:
+            data_out['email'] = {}
+
+        data = node.create_form_data(self.fields, self.form_params, data_out)
+        self.out = data
+        self.action = 'form'
+        session.close()
+
+
 
 
 class Search(Node):
