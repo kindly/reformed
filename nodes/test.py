@@ -18,6 +18,7 @@
 ##   Copyright (c) 2008-2009 Toby Dacre & David Raznick
 ##
 
+import formencode as fe
 from formencode import validators
 import node
 from node import TableNode, Node
@@ -37,48 +38,165 @@ class Donkey(TableNode):
 class People(TableNode):
 
     table = "people"
-    email_subform = {"form": {
-                    "fields": [
-                        {
-                            "type": "textbox",
-                            "name": "email",
-                            "title": "email:"
-                        }
-                    ]}}
+
+    subforms = {
+        'email':{
+            'fields': [
+                ['email', 'textbox', 'email:']
+            ],
+            "parent_id": "id",
+            "child_id": "people_id",
+            "table": "email",
+            "params":{
+                "form_type": "grid"
+            }                  
+        }
+    }
+
+    subform_data = {}
+
     fields = [
         ['name', 'textbox', 'name:'],
         ['address_line_1', 'textbox', 'address:'],
         ['postcode', 'textbox', 'postcode:'],
-        ['subform', 'subform', 'emails', email_subform]
+        ['email', 'subform', 'email']
     ]
     list_title = 'person %s'
 
+    has_run = False;
+
+    def __init__(self, data, node_name, last_node = None):
+        super(People,self).__init__(data, node_name, last_node)
+        self.saved = []
+        if not self.has_run: #FIXME get this to not balloon out.
+            # sort subforms
+            for field in self.fields:
+                if field[1] == 'subform':
+                    name = field[2]
+                    subform = self.subforms.get(name)
+                    data = node.create_form_data(subform.get('fields'), subform.get('params'))
+                    self.subform_data[name] = data
+                    field.append(data)
+            self.has_run = True
+            
+    def save_record_rows(self, session, table, fields, data):
+        for row_data in data:
+            row_id = row_data.get('id', 0)
+            root = row_data.get('__root')
+            if row_id:
+                filter = {'id' : row_id}
+                self.save_record(session, table, fields, row_data, filter, root = root)
+
+    def save_record(self, session, table, fields, data, filter, root):
+        print 'table %s' % table
+        print 'fields %s' % fields
+        try:
+            if filter:
+                obj = r.reformed.get_class(table)
+                record_data = session.query(obj).filter_by(**filter).one()
+            else:
+                record_data = r.reformed.get_instance(table)
+            for field in fields:
+                field_name = field[0]
+                field_type = field[1]
+                if field_name != 'id' and field_type != 'subform':
+                    value = data.get(field_name)
+                    print '%s = %s' % (field_name, value)
+                    setattr(record_data, field_name, value)
+            try:
+                session.save_or_update(record_data)
+                session.commit()
+                self.saved.append([root, record_data.id])
+            except fe.Invalid, e:
+                session.rollback()
+                print "we fucked!", e.msg
+                errors = {}
+                for key, value in e.error_dict.items():
+                    errors[root + '#' + key] = value.msg
+                print repr(errors)
+                self.out = errors
+                self.action = 'save_error'
+        except sa.orm.exc.NoResultFound:
+            errors = {'~': 'record not found'}
+            self.out = errors
+            self.action = 'save_error'
+
+    def _save(self):
+
+        session = r.reformed.Session()
+        id = self.data.get('id')
+        root = self.data.get('__root')
+        if id:
+            filter = {'id' : id}
+        else:
+            filter = {}
+
+        self.save_record(session, self.table, self.fields, self.data, filter, root)
+
+        for subform_name in self.subforms.keys():
+            subform_data = self.data.get(subform_name)
+            if subform_data:
+                subform = self.subforms.get(subform_name)
+                table = subform.get('table')
+                fields = subform.get('fields')
+                self.save_record_rows(session, table, fields, subform_data)
+        session.close()
+        self.out = {'saved' : self.saved}
+        self.action = 'save'
+        print '@@@@@@@@@@@@@',self.saved
+
+
+    def _new(self):
+
+        data_out = {'id': 0}
+        data = node.create_form_data(self.fields, self.form_params, data_out)
+        self.out = data
+        self.action = 'form'
+
+
     def _view(self):
-        id = self.data.get('__id')
+        id = self.data.get('id')
+        if id:
+            filter = {'id' : id}
+        else:
+            id = self.data.get('__id')
+            filter = {'_core_entity_id' : id}
+
         session = r.reformed.Session()
         obj = r.reformed.get_class(self.table)
         try:
-            data = session.query(obj).filter_by(_core_entity_id = id).one()
+            data = session.query(obj).filter_by(**filter).one()
             data_out = util.get_row_data(data, keep_all = False, basic = True)
-            data_out['__id'] = id
+            data_out['id'] = data.id
             people_id = data.id
         except sa.orm.exc.NoResultFound:
             data_out = {}
             people_id = 0
-        obj = r.reformed.get_class('email')
-        try:
-            data = session.query(obj).filter_by(people_id = people_id).all()
-            data_out['email'] = util.create_data_array(data, keep_all=False, basic=True)
-     #       data_out['email']['__id'] = data.id
-        except sa.orm.exc.NoResultFound:
-            data_out['email'] = {}
+
+        for subform_name in self.subforms.keys():
+            subform = self.subforms.get(subform_name)
+            subform_parent_id = subform.get('parent_id')
+            subform_parent_value = getattr(data, subform_parent_id)
+            subform_data = self.subform_data.get(subform_name)
+            data_out[subform_name] = self.subform(session, subform, subform_data, subform_parent_value)
 
         data = node.create_form_data(self.fields, self.form_params, data_out)
         self.out = data
         self.action = 'form'
         session.close()
 
+    def subform(self, session, subform, form_data, parent_value):
 
+        table = subform.get('table')
+        child_id = subform.get('child_id')
+        obj = r.reformed.get_class(table)
+        filter = {child_id : parent_value}
+        try:
+            data = session.query(obj).filter_by(**filter).all()
+            out = util.create_data_array(data, keep_all=False, basic=True)
+        except sa.orm.exc.NoResultFound:
+            out = {}
+        return out
 
 
 class Search(Node):
