@@ -270,6 +270,9 @@ function parse_strip_subform_info(item){
 function itemChanged(item){
 
         msg('itemChanged');
+        // remove the error css
+        $('#' + item.id).removeClass('error');
+        // set dirty
         var m = _parse_id(item);
         if (m) {
             dirty(m.root_stripped, m.row, true);
@@ -311,7 +314,7 @@ function dirty(root, row, state){
                         $(my_root_id).addClass("dirty");
                     }
                 } else {
-                    $INFO.setStateArray(root, 'clean_rows',row, true);
+                    form_info.clean_rows[row] = true;
                     my_root_id = '#' + $INFO.getId(my_root);
                     $(my_root_id).removeClass("dirty");
                 }
@@ -394,6 +397,14 @@ function node_get_form_data_rows(root){
                         value = null;
                     }
                     out_row[name] = value;
+                }
+                // check we have any linking data
+                if(!out_row[form_data.child_id]){
+                    // get the parent root
+                    var m = String(root).match(/^(.*)#([^#]*)$/);
+                    parent_root = m[1];
+                    parent_id = $INFO.getState(parent_root, 'sent_data')[form_data.parent_id]
+                    out_row[form_data.child_id] = parent_id;
                 }
                 out.push(out_row)
             }

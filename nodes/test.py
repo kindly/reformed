@@ -69,29 +69,36 @@ class People(TableNode):
             name = field[2]
             subform = subforms.get(name)
             data = node.create_form_data(subform.get('fields'), subform.get('params'))
+            data['form']['parent_id'] =  subform.get('parent_id')
+            data['form']['child_id'] =  subform.get('child_id')
+            print '###', data
             subform_data[name] = data
             field.append(data)
 
 
             
-    def save_record_rows(self, session, table, fields, data):
+    def save_record_rows(self, session, table, fields, data, join_fields):
         for row_data in data:
             row_id = row_data.get('id', 0)
             root = row_data.get('__root')
             if row_id:
                 filter = {'id' : row_id}
-                self.save_record(session, table, fields, row_data, filter, root = root)
+            else:
+                filter = {}
+            self.save_record(session, table, fields, row_data, filter, root = root, join_fields = join_fields)
 
-    def save_record(self, session, table, fields, data, filter, root):
+    def save_record(self, session, table, fields, data, filter, root, join_fields = []):
         print 'table %s' % table
         print 'fields %s' % fields
         errors = None
 
         try:
             if filter:
+                print 'existing record'
                 obj = r.reformed.get_class(table)
                 record_data = session.query(obj).filter_by(**filter).one()
             else:
+                print 'new record'
                 record_data = r.reformed.get_instance(table)
             for field in fields:
                 field_name = field[0]
@@ -99,6 +106,10 @@ class People(TableNode):
                 if field_name != 'id' and field_type != 'subform':
                     value = data.get(field_name)
                     print '%s = %s' % (field_name, value)
+                    setattr(record_data, field_name, value)
+            for field_name in join_fields:
+                    value = data.get(field_name)
+                    print 'join: %s = %s' % (field_name, value)
                     setattr(record_data, field_name, value)
             try:
                 session.save_or_update(record_data)
@@ -140,7 +151,11 @@ class People(TableNode):
                     subform = self.subforms.get(subform_name)
                     table = subform.get('table')
                     fields = subform.get('fields')
-                    self.save_record_rows(session, table, fields, subform_data)
+                    # do we have a joining field?
+                    child_id = subform.get('child_id')
+                    if child_id:
+                        join_fields= [child_id]
+                    self.save_record_rows(session, table, fields, subform_data, join_fields)
 
         session.close()
 
