@@ -441,6 +441,27 @@ function get_node(node_name, node_command, node_data){
 
 
 }
+
+function form_show_errors(root, errors){
+    // display errors on form for bad rows
+    // ensure 'good' rows do not show errors
+    var form_data = $INFO.getState(root, 'form_data');
+    for (field in form_data.fields){
+        field_name = form_data.fields[field].name;
+        id = $INFO.getId(root + '#' + field_name);
+        if (errors && errors[field_name]){
+            // there is an error for this field
+            $('#' + id).addClass('error');
+            $('#' + id + '__error').html(data[form_root][field_name]);
+        } else {
+            // field is good
+            $('#' + id).removeClass('error');
+            $('#' + id + '__error').html('');
+        }
+    }
+}
+
+
         fn = function(packet, job){
              root = 'main';
              switch (packet.data.action){
@@ -457,13 +478,11 @@ function get_node(node_name, node_command, node_data){
                      form_setup(root, form);
                      break;
                  case 'save_error':
-               //     alert($.toJSON(packet.data.data));
+              //      alert($.toJSON(packet.data.data));
                     data = packet.data.data
-                    for (key in data){
-             //           alert('key: ' + key + '\nvalue: ' + data[key]);
-                        id = $INFO.getId(key);
-                        $('#' + id).addClass('error');
-                        $('#' + id + '__error').html(data[key]);
+                    // clear form items with no errors
+                    for (form_root in data){
+                        form_show_errors(form_root, data[form_root]);
                     }
                     break;
                  case 'save':
@@ -475,7 +494,7 @@ function get_node(node_name, node_command, node_data){
                         $('#' + id).val(inserted_id);
                         info = _parse_item(div + '#x')
                         dirty(info.root_stripped, info.row, false);
-     
+                        form_show_errors(info.root_stripped, null);
                     }
                     break
                  case 'general_error':

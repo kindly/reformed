@@ -90,6 +90,8 @@ class People(TableNode):
     def save_record(self, session, table, fields, data, filter, root):
         print 'table %s' % table
         print 'fields %s' % fields
+        errors = None
+
         try:
             if filter:
                 obj = r.reformed.get_class(table)
@@ -109,17 +111,18 @@ class People(TableNode):
                 self.saved.append([root, record_data.id])
             except fe.Invalid, e:
                 session.rollback()
-                print "we fucked!", e.msg
-                errors = {}
+                print "failed to save\n%s" % e.msg
+                errors = {root : {}}
                 for key, value in e.error_dict.items():
-                    errors[root + '#' + key] = value.msg
+                    errors[root][key] = value.msg
                 print repr(errors)
-                self.out = errors
-                self.action = 'save_error'
+           #     self.out = errors
+          #      self.action = 'save_error'
         except sa.orm.exc.NoResultFound:
-            errors = {'~': 'record not found'}
-            self.out = errors
-            self.action = 'save_error'
+            errors = {root: 'record not found'}
+        #    self.out = errors
+        #    self.action = 'save_error'
+        return errors
 
     def _save(self):
 
@@ -131,19 +134,28 @@ class People(TableNode):
         else:
             filter = {}
 
-        self.save_record(session, self.table, self.fields, self.data, filter, root)
+        errors = self.save_record(session, self.table, self.fields, self.data, filter, root)
 
-        for subform_name in self.subforms.keys():
-            subform_data = self.data.get(subform_name)
-            if subform_data:
-                subform = self.subforms.get(subform_name)
-                table = subform.get('table')
-                fields = subform.get('fields')
-                self.save_record_rows(session, table, fields, subform_data)
+        # FIXME how do we deal with save errors more cleverly?
+        # need to think about possible behaviours we want
+        # and add some 'failed save' options
+        if not errors:
+            for subform_name in self.subforms.keys():
+                subform_data = self.data.get(subform_name)
+                if subform_data:
+                    subform = self.subforms.get(subform_name)
+                    table = subform.get('table')
+                    fields = subform.get('fields')
+                    self.save_record_rows(session, table, fields, subform_data)
+
         session.close()
-        self.out = {'saved' : self.saved}
-        self.action = 'save'
-        print '@@@@@@@@@@@@@',self.saved
+        if errors:
+            self.out = errors
+            self.action = 'save_error'
+        else:
+            self.out = {'saved' : self.saved}
+            self.action = 'save'
+            print '@@@@@@@@@@@@@',self.saved
 
 
     def _new(self):
