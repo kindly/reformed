@@ -68,6 +68,7 @@ class People(TableNode):
     def __init__(self, data, node_name, last_node = None):
         super(People,self).__init__(data, node_name, last_node)
         self.saved = []
+        self.errors = {}
         if not self.has_run: #FIXME get this to not balloon out.
             # sort subforms
             for field in self.fields:
@@ -112,17 +113,13 @@ class People(TableNode):
             except fe.Invalid, e:
                 session.rollback()
                 print "failed to save\n%s" % e.msg
-                errors = {root : {}}
+                errors = {}
                 for key, value in e.error_dict.items():
-                    errors[root][key] = value.msg
+                    errors[key] = value.msg
                 print repr(errors)
-           #     self.out = errors
-          #      self.action = 'save_error'
+                self.errors[root] = errors
         except sa.orm.exc.NoResultFound:
-            errors = {root: 'record not found'}
-        #    self.out = errors
-        #    self.action = 'save_error'
-        return errors
+            self.errors[root] = 'record not found'
 
     def _save(self):
 
@@ -134,12 +131,12 @@ class People(TableNode):
         else:
             filter = {}
 
-        errors = self.save_record(session, self.table, self.fields, self.data, filter, root)
+        self.save_record(session, self.table, self.fields, self.data, filter, root)
 
         # FIXME how do we deal with save errors more cleverly?
         # need to think about possible behaviours we want
         # and add some 'failed save' options
-        if not errors:
+        if not self.errors:
             for subform_name in self.subforms.keys():
                 subform_data = self.data.get(subform_name)
                 if subform_data:
@@ -149,8 +146,8 @@ class People(TableNode):
                     self.save_record_rows(session, table, fields, subform_data)
 
         session.close()
-        if errors:
-            self.out = errors
+        if self.errors:
+            self.out = self.errors
             self.action = 'save_error'
         else:
             self.out = {'saved' : self.saved}

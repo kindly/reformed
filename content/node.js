@@ -257,6 +257,16 @@ function _parse_item(item){
         }
     }
 
+function parse_strip_subform_info(item){
+        var m = String(item).match(/^([^\(]*)/);
+        if(m){
+            return m[1]
+        } else {
+            alert("something went wrong with parse_strip_subform_info()");
+            return null;
+        }
+    }
+
 function itemChanged(item){
 
         msg('itemChanged');
@@ -445,18 +455,22 @@ function get_node(node_name, node_command, node_data){
 function form_show_errors(root, errors){
     // display errors on form for bad rows
     // ensure 'good' rows do not show errors
-    var form_data = $INFO.getState(root, 'form_data');
+    var form_root = parse_strip_subform_info(root);
+    var form_data = $INFO.getState(form_root, 'form_data');
     for (field in form_data.fields){
-        field_name = form_data.fields[field].name;
-        id = $INFO.getId(root + '#' + field_name);
-        if (errors && errors[field_name]){
-            // there is an error for this field
-            $('#' + id).addClass('error');
-            $('#' + id + '__error').html(data[form_root][field_name]);
-        } else {
-            // field is good
-            $('#' + id).removeClass('error');
-            $('#' + id + '__error').html('');
+        // ignore subforms
+        if (form_data.fields[field].type != 'subform'){
+            field_name = form_data.fields[field].name;
+            id = $INFO.getId(root + '#' + field_name);
+            if (errors && errors[field_name]){
+                // there is an error for this field
+                $('#' + id).addClass('error');
+                $('#' + id + '__error').html(data[root][field_name]);
+            } else {
+                // field is good
+                $('#' + id).removeClass('error');
+                $('#' + id + '__error').html('');
+            }
         }
     }
 }
@@ -474,11 +488,9 @@ function form_show_errors(root, errors){
                      data = packet.data.data.data;
                      $('#' + root).html(node_generate_html(form, data, root));
                      $INFO.setState(root, 'node', packet.data.node)
-                 //    $INFO.setState(root, 'sent_data', data)
                      form_setup(root, form);
                      break;
                  case 'save_error':
-              //      alert($.toJSON(packet.data.data));
                     data = packet.data.data
                     // clear form items with no errors
                     for (form_root in data){
@@ -494,7 +506,7 @@ function form_show_errors(root, errors){
                         $('#' + id).val(inserted_id);
                         info = _parse_item(div + '#x')
                         dirty(info.root_stripped, info.row, false);
-                        form_show_errors(info.root_stripped, null);
+                        form_show_errors(div, null);
                     }
                     break
                  case 'general_error':
