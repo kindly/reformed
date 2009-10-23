@@ -23,135 +23,17 @@
     ======
 
 */
+function _wrap(arg, tag){
+        // this wraps the item in <tag> tags
+        return '<' + tag + '>' + arg + '</' + tag + '>';
+}
 
-    node_generate_html= function(form, data, root, form_id, form_type){
-        msg('node_generate_html: ');
-        $INFO.newState(root);
-        $INFO.setState(root, 'form_data', form);
-        $INFO.setState(root, 'sent_data', data)
-        // create the form and place in the div
+function _subform(item, my_id, data){
+    out = '<div class="subform">' + item.title + '</br>';
+    out += node_generate_html(item.params.form, data, root + '#' + item.name);
+    out += '</div>';
+    return out;
 
-        if (!form.fields){
-            return "FORM NO ENTRY";
-        }
-        if (form.params && form.params.form_type){
-            form_type = form.params.form_type
-        } else {
-            form_type = "normal"
-        }
-        var local_data = {}; //$FORM._generate_process_vars(form_info, root, form_type);
-        local_data.count = 0;
-        local_data.wrap_tag = 'p';
-        local_data.show_label = true;
-        local_data.form_type = form_type;
-        local_data.root = root
-
-        var form_info = {info:{}};
-        form_info.info.top_level = true;
-        form_info.info.clean = true;
-        form_info.info.clean_rows = [];
-        if (data){
-            for (i=0; i<data.length + 1; i++){
-                form_info.info.clean_rows[i] = true
-            }
-        }
-        form_info.info.form_type = local_data.form_type;
-        form_info.info.grid_record_offset = 0;
-        form_info.info.has_records = local_data.has_records;
-        // place for record id data
-        form_info.info.record_id = [];
-        $INFO.setState(root, 'form_info', form_info.info);
-        form_info.layout = form
-        var formHTML = '';
-    
-        // FORM HEADER
-    
-        formHTML += '<div class="form_header" >';
-        formHTML += form_info.info.name;
-        formHTML += '</div>';
-    
-        // FORM BODY
-    
-        formHTML += '<div class="form_body" >';    
-
-        // ERROR message area
-        
-        if (form.params && form.params.form_error &&
-        form.params.form_error == 'single'){
-            error_id = $INFO.getId(local_data.root) + '__error';
-            formHTML += '<div id="' + error_id; 
-            formHTML += '" class="error_single">&nbsp;</div>';
-        }
-
-        switch (local_data.form_type){
-            case 'action':
-            case 'normal':
-// count root i wrap_tag show_label 
-                formHTML += _generate_form_html_normal(form_info, local_data, data);//########### @@@@@@
-                break;
-            case 'grid':
-                formHTML += _generate_form_html_continuous(form_info, local_data, data);
-  //              formHTML += $FORM._generate_form_html_grid(form_info, local_data, data);
-                break;
-            default:
-                alert('unknown form type generation request');
-        }
-
-        formHTML += '</div>';  // end of form body div
-
-        // FORM FOOTER
-        if (!form_info.info.top_level && (local_data.form_many_side_not_null = False,type=='normal' || local_data.form_type=='action')){
-// my_root has_records form.fields.length
-
-            formHTML += _generate_footer_html(local_data);//########### @@@@@@
-        }
-// grid footer
-// has_records my_root form.fields.length
-        return formHTML;
-    };
-
-function _generate_form_html_normal(form_info, local_data, data){
-// local_data: count root i wrap_tag show_label 
-        var id
-        if (local_data.root.substring(local_data.root.length - 1) == '#'){
-            id = $INFO.addId(local_data.root + "*id");
-        } else {
-            id = $INFO.addId(local_data.root + "#*id");
-        }
-
-        var formHTML = _generate_fields_html(form_info.layout, local_data, data);
-        if (data){
-            formHTML += '<input type="text" id="' + id + '" class="hidden" value = "' + data.id + '" /> ';
-        }
-        return formHTML;
-    }
-
-
-function _generate_form_html_continuous(form_info, local_data, data){
-// local_data: count root i wrap_tag show_label
-    formHTML = '';
-    if (data){
-        for (i=0; i<data.length +1; i++){
-            base_id = local_data.root + "(" + i + ")";
-            div_id = $INFO.addId(base_id);
-            id_id = $INFO.addId(base_id + "#*id");
-    
-            local_data.i = i
-            local_data.count = data.length + 1
-            formHTML += "<div id='" + div_id + "'>";
-            formHTML += '<div class="form_body">';
-            formHTML += _generate_fields_html(form_info.layout, local_data, data[i]);
-            if (data[i]){
-                record_id = data[i].id;
-            } else {
-                record_id = 0;
-            }
-            formHTML += '<input type="text" id="' + id_id + '" class="hidden" value = "' + record_id + '" /> ';
-            formHTML += "</div>";
-            formHTML += "</div>";
-        }
-    }
-    return formHTML;
 }
 
 function _generate_fields_html(form, local_data, data){
@@ -193,13 +75,140 @@ function _generate_fields_html(form, local_data, data){
         return formHTML;
     }
 
-function _subform(item, my_id, data){
-    out = '<div class="subform">' + item.title + '</br>'
-    out += node_generate_html(item.params.form, data, root + '#' + item.name);
-    out += '</div>';
-    return out
+function _generate_form_html_normal(form_info, local_data, data){
+// local_data: count root i wrap_tag show_label 
+        var id;
+        if (local_data.root.substring(local_data.root.length - 1) == '#'){
+            id = $INFO.addId(local_data.root + "*id");
+        } else {
+            id = $INFO.addId(local_data.root + "#*id");
+        }
 
+        var formHTML = _generate_fields_html(form_info.layout, local_data, data);
+        if (data){
+            formHTML += '<input type="text" id="' + id + '" class="hidden" value = "' + data.id + '" /> ';
+        }
+        return formHTML;
+    }
+
+function _generate_form_html_continuous(form_info, local_data, data){
+// local_data: count root i wrap_tag show_label
+    formHTML = '';
+    if (data){
+        for (i=0; i<data.length +1; i++){
+            base_id = local_data.root + "(" + i + ")";
+            div_id = $INFO.addId(base_id);
+            id_id = $INFO.addId(base_id + "#*id");
+    
+            local_data.i = i;
+            local_data.count = data.length + 1;
+            formHTML += "<div id='" + div_id + "'>";
+            formHTML += '<div class="form_body">';
+            formHTML += _generate_fields_html(form_info.layout, local_data, data[i]);
+            if (data[i]){
+                record_id = data[i].id;
+            } else {
+                record_id = 0;
+            }
+            formHTML += '<input type="text" id="' + id_id + '" class="hidden" value = "' + record_id + '" /> ';
+            formHTML += "</div>";
+            formHTML += "</div>";
+        }
+    }
+    return formHTML;
 }
+
+    node_generate_html= function(form, data, root, form_id, form_type){
+        msg('node_generate_html: ');
+        $INFO.newState(root);
+        $INFO.setState(root, 'form_data', form);
+        $INFO.setState(root, 'sent_data', data);
+        // create the form and place in the div
+
+        if (!form.fields){
+            return "FORM NO ENTRY";
+        }
+        if (form.params && form.params.form_type){
+            form_type = form.params.form_type;
+        } else {
+            form_type = "normal";
+        }
+        var local_data = {}; //$FORM._generate_process_vars(form_info, root, form_type);
+        local_data.count = 0;
+        local_data.wrap_tag = 'p';
+        local_data.show_label = true;
+        local_data.form_type = form_type;
+        local_data.root = root;
+
+        var form_info = {info:{}};
+        form_info.info.top_level = true;
+        form_info.info.clean = true;
+        form_info.info.clean_rows = [];
+        if (data){
+            for (i=0; i<data.length + 1; i++){
+                form_info.info.clean_rows[i] = true;
+            }
+        }
+        form_info.info.form_type = local_data.form_type;
+        form_info.info.grid_record_offset = 0;
+        form_info.info.has_records = local_data.has_records;
+        // place for record id data
+        form_info.info.record_id = [];
+        $INFO.setState(root, 'form_info', form_info.info);
+        form_info.layout = form;
+        var formHTML = '';
+    
+        // FORM HEADER
+    
+        formHTML += '<div class="form_header" >';
+        formHTML += form_info.info.name;
+        formHTML += '</div>';
+    
+        // FORM BODY
+    
+        formHTML += '<div class="form_body" >';    
+
+        // ERROR message area
+        
+        if (form.params && form.params.form_error &&
+        form.params.form_error == 'single'){
+            error_id = $INFO.getId(local_data.root) + '__error';
+            formHTML += '<div id="' + error_id; 
+            formHTML += '" class="error_single">&nbsp;</div>';
+        }
+
+        switch (local_data.form_type){
+            case 'action':
+            case 'normal':
+// count root i wrap_tag show_label 
+                formHTML += _generate_form_html_normal(form_info, local_data, data);//########### @@@@@@
+                break;
+            case 'grid':
+                formHTML += _generate_form_html_continuous(form_info, local_data, data);
+  //              formHTML += $FORM._generate_form_html_grid(form_info, local_data, data);
+                break;
+            default:
+                alert('unknown form type generation request');
+        }
+
+        formHTML += '</div>';  // end of form body div
+
+        // FORM FOOTER
+        if (!form_info.info.top_level && (local_data.form_many_side_not_null = false || local_data.form_type=='action')){
+// my_root has_records form.fields.length
+
+            formHTML += _generate_footer_html(local_data);//########### @@@@@@
+        }
+// grid footer
+// has_records my_root form.fields.length
+        return formHTML;
+    };
+
+
+
+
+
+
 function _generate_grid_footer(local_data){
 // local_data: has_records my_root num_fields
         var formHTML = '';
@@ -212,16 +221,7 @@ function _generate_grid_footer(local_data){
         return formHTML;
     }
 
-function _wrap(arg, tag){
-        // this wraps the item in <tag> tags
-        return '<' + tag + '>' + arg + '</' + tag + '>';
-}
     // FORM housekeeping
-function _parse_id(item){
-
-        var item_id = $INFO.getReverseId(item.id);
-        return _parse_item(item_id);
-    }
 
 function _parse_item(item){
         // parse  root#control
@@ -257,27 +257,23 @@ function _parse_item(item){
         }
     }
 
+function _parse_id(item){
+
+        var item_id = $INFO.getReverseId(item.id);
+        return _parse_item(item_id);
+    }
+
 function parse_strip_subform_info(item){
         var m = String(item).match(/^([^\(]*)/);
         if(m){
-            return m[1]
+            return m[1];
         } else {
             alert("something went wrong with parse_strip_subform_info()");
             return null;
         }
     }
 
-function itemChanged(item){
 
-        msg('itemChanged');
-        // remove the error css
-        $('#' + item.id).removeClass('error');
-        // set dirty
-        var m = _parse_id(item);
-        if (m) {
-            dirty(m.root_stripped, m.row, true);
-        }
-    }
 
 function dirty(root, row, state){
         msg('dirty');
@@ -299,7 +295,7 @@ function dirty(root, row, state){
                     }
                 } else {
                     form_info.clean = true;
-                    my_root = '#' + root;;
+                    my_root = '#' + root;
                     $(my_root).removeClass("dirty");
                 }
             } else {
@@ -322,6 +318,29 @@ function dirty(root, row, state){
         }
     }
 
+function itemChanged(item){
+
+        msg('itemChanged');
+        // remove the error css
+        $('#' + item.id).removeClass('error');
+        // set dirty
+        var m = _parse_id(item);
+        if (m) {
+            dirty(m.root_stripped, m.row, true);
+        }
+    }
+
+function setup_process_params(root, item){
+    for (var key in item.params){
+            if (item.params.hasOwnProperty(key)){
+            v = item.params[key];
+            if (key == 'autocomplete'){
+                id = $INFO.getId(root + '#' + item.name);
+                $('#' + id).autocomplete(v);
+            }
+        }
+    }
+}
 function form_setup(root, form_data){
     // do any setting up of the form
     for (i=0; i<form_data.fields.length; i++){
@@ -333,30 +352,65 @@ function form_setup(root, form_data){
     dirty(root, null, false);
 }
 
-function setup_process_params(root, item){
-    for (key in item.params){
-        v = item.params[key]
-        if (key == 'autocomplete'){
-            id = $INFO.getId(root + '#' + item.name)
-            $('#' + id).autocomplete(v);
-        }
+
+
+function get_node(node_name, node_command, node_data){
+
+    info = {node: node_name,
+            lastnode: '',  //fixme
+            command: node_command };
+
+    if (node_data){
+        info.data = node_data;
     }
+
+    $JOB.add(info, {}, 'node', true);
+
+
 }
 
-function node_save(root, command){
-        msg('node_save');
-        out = node_get_form_data(root);
-        id = $INFO.getId(root + '#*id');
-        var node =  $INFO.getState(root, 'node');
-        out['__id'] = $('#'+ id).val();
-        get_node(node, 'save', out);
+function node_get_form_data_rows(root){
+        var form_data = $INFO.getState(root, 'form_data');
+        var form_info = $INFO.getState(root, 'form_info');
+        var out = [];
+        var my_root;
+        for(var row=0; row<form_info.clean_rows.length; row++){
+            if (!form_info.clean_rows[row]){
+                // the row is dirty so needs to be saved
+                out_row = $INFO.getState(root, 'sent_data')[row];
+                if (typeof(out_row) == 'undefined'){
+                    out_row = {};
+                }
+                my_root = root + '(' + row + ')';
+                out_row.__root = my_root;
+                for (var i=0; i<form_data.fields.length; i++){
+                    item = form_data.fields[i];
+                    name = item.name;
+                    id = $INFO.getId(my_root + '#' + name);
+                    value = $('#' + id).val();
+                    if (typeof value == 'undefined'){
+                        value = null;
+                    }
+                    out_row[name] = value;
+                }
+                // check we have any linking data
+                if(!out_row[form_data.child_id]){
+                    // get the parent root
+                    var m = String(root).match(/^(.*)#([^#]*)$/);
+                    parent_root = m[1];
+                    parent_id = $INFO.getState(parent_root, 'sent_data')[form_data.parent_id];
+                    out_row[form_data.child_id] = parent_id;
+                }
+                out.push(out_row);
+            }
+        }
+        return out;
     }
-
 
 function node_get_form_data(root){
         var form_data = $INFO.getState(root, 'form_data');
         var out = $INFO.getState(root, 'sent_data');
-        out['__root'] = root;
+        out.__root = root;
         for (i=0; i<form_data.fields.length; i++){
             item = form_data.fields[i];
             name = item.name;
@@ -374,51 +428,25 @@ function node_get_form_data(root){
         return out;
     }
 
-function node_get_form_data_rows(root){
-        var form_data = $INFO.getState(root, 'form_data');
-        var form_info = $INFO.getState(root, 'form_info');
-        var out = [];
-        var my_root;
-        for(var row=0; row<form_info.clean_rows.length; row++){
-            if (!form_info.clean_rows[row]){
-                // the row is dirty so needs to be saved
-                out_row = $INFO.getState(root, 'sent_data')[row];
-                if (typeof(out_row) == 'undefined'){
-                    out_row = {};
-                }
-                my_root = root + '(' + row + ')';
-                out_row['__root'] = my_root;
-                for (var i=0; i<form_data.fields.length; i++){
-                    item = form_data.fields[i];
-                    name = item.name;
-                    id = $INFO.getId(my_root + '#' + name);
-                    value = $('#' + id).val();
-                    if (typeof value == 'undefined'){
-                        value = null;
-                    }
-                    out_row[name] = value;
-                }
-                // check we have any linking data
-                if(!out_row[form_data.child_id]){
-                    // get the parent root
-                    var m = String(root).match(/^(.*)#([^#]*)$/);
-                    parent_root = m[1];
-                    parent_id = $INFO.getState(parent_root, 'sent_data')[form_data.parent_id]
-                    out_row[form_data.child_id] = parent_id;
-                }
-                out.push(out_row)
-            }
-        }
-        return out;
+function node_save(root, command){
+        msg('node_save');
+        out = node_get_form_data(root);
+        id = $INFO.getId(root + '#*id');
+        var node =  $INFO.getState(root, 'node');
+        out.__id = $('#'+ id).val();
+        get_node(node, 'save', out);
     }
+
+
+
 
 function node_delete(root, command){
         msg('node_delete');
         var form_data = $INFO.getState('#', 'form_data');
-        var node =  $INFO.getState(root, 'node')
+        var node =  $INFO.getState(root, 'node');
         var out = {};
         var id = $INFO.getId('main#*id');
-        out['__id'] = $('#'+ id).val();
+        out.__id = $('#'+ id).val();
     }
 
 
@@ -435,8 +463,8 @@ function show_listing(data, node){
         item = data[i];
         table = String(item.table);
         next_node = 'test.' + table.substring(0,1).toUpperCase() + table.substring(1,table.length);
-        html += '<div class="list">'
-        html += '<span class="list_title" onclick="$JOB.add({node: \'' + next_node + '\', lastnode: \'' + node + '\', data:{__id: '
+        html += '<div class="list">';
+        html += '<span class="list_title" onclick="$JOB.add({node: \'' + next_node + '\', lastnode: \'' + node + '\', data:{__id: ';
         html += item.id + '}, command: \'view\'}';
         html += ', {}, \'node\', true)">' + item.table + ' - ' + item.title + '</span></br><span class="list_summary">' + item.summary + '</span></div>';
     }
@@ -448,27 +476,14 @@ function search_box(){
     return false;
 }
 
-function get_node(node_name, node_command, node_data){
 
-    info = {node: node_name,
-            lastnode: '',  //fixme
-            command: node_command }
-
-    if (node_data){
-        info['data'] = node_data;
-    }
-
-    $JOB.add(info, {}, 'node', true)
-
-
-}
 
 function form_show_errors(root, errors){
     // display errors on form for bad rows
     // ensure 'good' rows do not show errors
     var form_root = parse_strip_subform_info(root);
     var form_data = $INFO.getState(form_root, 'form_data');
-    for (field in form_data.fields){
+    for (var field in form_data.fields){
         // ignore subforms
         if (form_data.fields[field].type != 'subform'){
             field_name = form_data.fields[field].name;
@@ -498,19 +513,21 @@ function form_show_errors(root, errors){
                      form = packet.data.data.form;
                      data = packet.data.data.data;
                      $('#' + root).html(node_generate_html(form, data, root));
-                     $INFO.setState(root, 'node', packet.data.node)
+                     $INFO.setState(root, 'node', packet.data.node);
                      form_setup(root, form);
                      break;
                  case 'save_error':
-                    data = packet.data.data
+                    data = packet.data.data;
                     // clear form items with no errors
                     break;
                  case 'save':
                     data = packet.data.data;
                     // errors
                     if (data.errors){
-                        for (form_root in data.errors){
-                            form_show_errors(form_root, data.errors[form_root]);
+                        for (var form_root in data.errors){
+                            if (data.errors.hasOwnProperty(form_root)){
+                                form_show_errors(form_root, data.errors[form_root]);
+                            }
                         }
                     }
                     // saved records
@@ -538,7 +555,7 @@ function form_show_errors(root, errors){
                     show_listing(packet.data.data, packet.data.node);
                     break;
             }
-        }
+        };
 
         $JOB.addPacketFunction('node', fn);
 
