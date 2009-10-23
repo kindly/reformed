@@ -465,7 +465,7 @@ function form_show_errors(root, errors){
             if (errors && errors[field_name]){
                 // there is an error for this field
                 $('#' + id).addClass('error');
-                $('#' + id + '__error').html(data[root][field_name]);
+                $('#' + id + '__error').html(errors[field_name]);
             } else {
                 // field is good
                 $('#' + id).removeClass('error');
@@ -493,22 +493,33 @@ function form_show_errors(root, errors){
                  case 'save_error':
                     data = packet.data.data
                     // clear form items with no errors
-                    for (form_root in data){
-                        form_show_errors(form_root, data[form_root]);
-                    }
                     break;
                  case 'save':
-                    saved = packet.data.data.saved;
-                    for (var i=0; i<saved.length; i++){
-                        div = saved[i][0];
-                        inserted_id = saved[i][1];
-                        id = $INFO.getId(div + '#*id');
-                        $('#' + id).val(inserted_id);
-                        info = _parse_item(div + '#x')
-                        dirty(info.root_stripped, info.row, false);
-                        form_show_errors(div, null);
+                    data = packet.data.data;
+                    // errors
+                    if (data.errors){
+                        for (form_root in data.errors){
+                            form_show_errors(form_root, data.errors[form_root]);
+                        }
                     }
-                    break
+                    // saved records
+                    if (data.saved){
+                        saved = data.saved;
+                        for (var i=0; i<saved.length; i++){
+                            div = saved[i][0];
+                            inserted_id = saved[i][1];
+                            // update the id
+                            id = $INFO.getId(div + '#*id');
+                            $('#' + id).val(inserted_id);
+                            // we want to mark the form as clean
+                            // this is a hack to get the needed info
+                            info = _parse_item(div + '#x');
+                            dirty(info.root_stripped, info.row, false);
+                            // remove any error messages/css etc
+                            form_show_errors(div, null);
+                        }
+                    }
+                    break;
                  case 'general_error':
                     alert(packet.data.data);
                     break;

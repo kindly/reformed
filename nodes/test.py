@@ -146,13 +146,17 @@ class People(TableNode):
                     self.save_record_rows(session, table, fields, subform_data)
 
         session.close()
+
+        # output data
+        out = {}
         if self.errors:
-            self.out = self.errors
-            self.action = 'save_error'
-        else:
-            self.out = {'saved' : self.saved}
-            self.action = 'save'
+            out['errors'] = self.errors
+        if self.saved:
+            out['saved'] = self.saved
             print '@@@@@@@@@@@@@',self.saved
+
+        self.out = out
+        self.action = 'save'
 
 
     def _new(self):
