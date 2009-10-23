@@ -61,24 +61,18 @@ class People(TableNode):
         ['postcode', 'textbox', 'postcode:'],
         ['email', 'subform', 'email']
     ]
+
     list_title = 'person %s'
 
-    has_run = False;
+    for field in fields:
+        if field[1] == 'subform':
+            name = field[2]
+            subform = subforms.get(name)
+            data = node.create_form_data(subform.get('fields'), subform.get('params'))
+            subform_data[name] = data
+            field.append(data)
 
-    def __init__(self, data, node_name, last_node = None):
-        super(People,self).__init__(data, node_name, last_node)
-        self.saved = []
-        self.errors = {}
-        if not self.has_run: #FIXME get this to not balloon out.
-            # sort subforms
-            for field in self.fields:
-                if field[1] == 'subform':
-                    name = field[2]
-                    subform = self.subforms.get(name)
-                    data = node.create_form_data(subform.get('fields'), subform.get('params'))
-                    self.subform_data[name] = data
-                    field.append(data)
-            self.has_run = True
+
             
     def save_record_rows(self, session, table, fields, data):
         for row_data in data:
@@ -122,6 +116,9 @@ class People(TableNode):
             self.errors[root] = 'record not found'
 
     def _save(self):
+
+        self.saved = []
+        self.errors = {}
 
         session = r.reformed.Session()
         id = self.data.get('id')
