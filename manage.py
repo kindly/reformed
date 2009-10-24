@@ -19,7 +19,7 @@
 ##
 
 
-import os, sys
+import os, os.path, sys
 from reformed.export import json_dump_all_from_table
 from reformed.data_loader import load_json_from_file
 
@@ -49,7 +49,12 @@ def delete():
     engine = config.engine.name
     if engine == 'sqlite':
         file = config.engine.url.database
-        os.system("rm %s" % file)
+        if os.path.isfile(file):
+            if os.system("rm %s" % file):
+                print "ERROR: Couldn't delete database %s" % file
+                sys.exit(1)
+        else:
+            print 'Database %s does not exist' % file
     elif engine == 'mysql':
         session = config.Session()
         tables = session.execute('SHOW TABLES')
