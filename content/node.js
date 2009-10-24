@@ -221,6 +221,34 @@ function _generate_grid_footer(local_data){
     return formHTML;
 }
 
+function _parse_div(item){
+    // parse  root
+    // or      root(row)
+    msg('_parse_div');
+    var m = String(item).match(/^([^\(]*)(\((\d+)\))?$/);
+    if(m){
+        var grid;
+        var root = m[1] ;
+        if (typeof(root) == "undefined"){
+            root = '';
+        }
+        var row = m[3];
+        if (typeof(row) != "undefined" && row !== ''){
+            row = parseInt(row, 10);
+            grid = true;
+        } else {
+            row = null;
+            grid = false;
+        }
+        return {root:root,
+                row:row,
+                grid:grid};
+    } else {
+        alert("something went wrong with the div parser");
+        return null;
+    }
+}
+
 function _parse_item(item){
     // parse  root#control
     // or      root(row)#control
@@ -244,8 +272,7 @@ function _parse_item(item){
         if (typeof(control) == "undefined" || control === ''){
             control = null;
         }
-        return {root:root + '#',
-                root_stripped:root,
+        return {root:root,
                 row:row,
                 control:control,
                 grid:grid};
@@ -262,6 +289,9 @@ function _parse_id(item){
 }
 
 function parse_strip_subform_info(item){
+    /*
+        takes a sting like main#sub(1) and returns minus (x) part
+    */
     var m = String(item).match(/^([^\(]*)/);
     if(m){
         return m[1];
@@ -315,7 +345,7 @@ function itemChanged(item){
     // set dirty
     var m = _parse_id(item);
     if (m) {
-        dirty(m.root_stripped, m.row, true);
+        dirty(m.root, m.row, true);
     }
 }
 
@@ -499,12 +529,11 @@ function form_save_process_saved(saved){
         div = saved[i][0];
         inserted_id = saved[i][1];
 
-        // this is a hack to get the needed info
-        info = _parse_item(div + '#x');
+        info = _parse_div(div);
         // update the state info for this data
         // we want to check the correct id was updated
         // and store if it is new
-        state_sent_data = $INFO.getState(info.root_stripped, 'sent_data');
+        state_sent_data = $INFO.getState(info.root, 'sent_data');
         if (info.row === null){
             // single form
             if (state_sent_data && state_sent_data.id){
@@ -530,7 +559,7 @@ function form_save_process_saved(saved){
         // remove any error messages/css etc
         form_show_errors(div, null);
         // we want to mark the form as clean
-        dirty(info.root_stripped, info.row, false);
+        dirty(info.root, info.row, false);
     }
 }
 
@@ -544,43 +573,43 @@ function form_save_process_errors(errors){
     }
 }
 
-        fn = function(packet, job){
-             root = 'main';
-             switch (packet.data.action){
+fn = function(packet, job){
+     root = 'main';
+     switch (packet.data.action){
 
-                 case 'html':
-                     $('#' + root).html(packet.data.data.html);
-                     break;
-                 case 'form':
-                     form = packet.data.data.form;
-                     data = packet.data.data.data;
-                     $('#' + root).html(node_generate_html(form, data, root));
-                     $INFO.setState(root, 'node', packet.data.node);
-                     form_setup(root, form);
-                     break;
-                 case 'save_error':
-                    data = packet.data.data;
-                    // clear form items with no errors
-                    break;
-                 case 'save':
-                    data = packet.data.data;
-                    // errors
-                    if (data.errors){
-                        form_save_process_errors(data.errors);
-                    }
-                    // saved records
-                    if (data.saved){
-                        form_save_process_saved(data.saved);
-                    }
-                    break;
-                 case 'general_error':
-                    alert(packet.data.data);
-                    break;
-                 case 'listing':
-                    show_listing(packet.data.data, packet.data.node);
-                    break;
+         case 'html':
+             $('#' + root).html(packet.data.data.html);
+             break;
+         case 'form':
+             form = packet.data.data.form;
+             data = packet.data.data.data;
+             $('#' + root).html(node_generate_html(form, data, root));
+             $INFO.setState(root, 'node', packet.data.node);
+             form_setup(root, form);
+             break;
+         case 'save_error':
+            data = packet.data.data;
+            // clear form items with no errors
+            break;
+         case 'save':
+            data = packet.data.data;
+            // errors
+            if (data.errors){
+                form_save_process_errors(data.errors);
             }
-        };
+            // saved records
+            if (data.saved){
+                form_save_process_saved(data.saved);
+            }
+            break;
+         case 'general_error':
+            alert(packet.data.data);
+            break;
+         case 'listing':
+            show_listing(packet.data.data, packet.data.node);
+            break;
+    }
+};
 
-        $JOB.addPacketFunction('node', fn);
+$JOB.addPacketFunction('node', fn);
 
