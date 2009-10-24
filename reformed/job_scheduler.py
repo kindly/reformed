@@ -13,7 +13,7 @@ from sqlalchemy import and_
 logger = logging.getLogger('reformed.main')
 
 POOL_SIZE = 10
-POLL_INTERVAL = 1
+POLL_INTERVAL = 10
 
 class JobScheduler(object):
 
@@ -92,7 +92,6 @@ class JobSchedulerThread(threading.Thread):
             to_run = self.database.search("_core_job_scheduler",
                                           "job_start_time <= now and job_started is null") 
 
-
             for result in to_run:
                 result["_core_job_scheduler.job_started"] = datetime.datetime.now()
                 result["_core_job_scheduler.message"] = "started"
@@ -104,18 +103,24 @@ class JobSchedulerThread(threading.Thread):
                 self.make_request(func, arg, result["_core_job_scheduler.id"])
                 load_local_data(self.database, result)
 
-            if not self.maker_thread.isAlive():
-                self.shut_down_all_threads()
-                self.alive = False
+
 
             try:
-                time.sleep(POLL_INTERVAL)
                 self.database.job_scheduler.threadpool.poll()
-            except KeyboardInterrupt:
-                print "**** Interrupted!"
-                break
             except threadpool.NoResultsPending:
-                continue
+                pass
+
+            time_counter = 0
+
+
+            while time_counter <= POLL_INTERVAL:
+                if not self.maker_thread.isAlive():
+                    print "commmencing shutdown procedures"
+                    self.shut_down_all_threads()
+                    self.alive = False
+                    break
+                time_counter = time_counter + 1
+                time.sleep(1)
 
     def stop(self):
 
