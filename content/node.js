@@ -29,7 +29,7 @@ function _wrap(arg, tag){
 }
 
 function _subform(item, my_id, data){
-    out = '<div class="subform">' + item.title + '</br>';
+    var out = '<div class="subform">' + item.title + '</br>';
     out += node_generate_html(item.params.form, data, root + '#' + item.name);
     out += '</div>';
     return out;
@@ -85,9 +85,7 @@ function _generate_form_html_normal(form_info, local_data, data){
         }
 
         var formHTML = _generate_fields_html(form_info.layout, local_data, data);
-        if (data){
-            formHTML += '<input type="text" id="' + id + '" class="hidden" value = "' + data.id + '" /> ';
-        }
+
         return formHTML;
     }
 
@@ -110,7 +108,6 @@ function _generate_form_html_continuous(form_info, local_data, data){
             } else {
                 record_id = 0;
             }
-            formHTML += '<input type="text" id="' + id_id + '" class="hidden" value = "' + record_id + '" /> ';
             formHTML += "</div>";
             formHTML += "</div>";
         }
@@ -118,8 +115,11 @@ function _generate_form_html_continuous(form_info, local_data, data){
     return formHTML;
 }
 
-    node_generate_html= function(form, data, root, form_id, form_type){
+ function node_generate_html(form, data, root, form_id, form_type){
         msg('node_generate_html: ');
+        if (!data){
+            data = {};
+        }
         $INFO.newState(root);
         $INFO.setState(root, 'form_data', form);
         $INFO.setState(root, 'sent_data', data);
@@ -202,7 +202,7 @@ function _generate_form_html_continuous(form_info, local_data, data){
 // grid footer
 // has_records my_root form.fields.length
         return formHTML;
-    };
+    }
 
 
 
@@ -273,50 +273,41 @@ function parse_strip_subform_info(item){
         }
     }
 
-
-
 function dirty(root, row, state){
         msg('dirty');
         // keeps track of form dirtyness
         // use css to show user
         // we don't dirty 'action' forms
-        form_data = $INFO.getState(root, 'form_data');
-        form_info = $INFO.getState(root, 'form_info');
+        var form_data = $INFO.getState(root, 'form_data');
         if (!form_data.params ||  !form_data.params.form_type || form_data.params.form_type != 'action'){
+            var form_info = $INFO.getState(root, 'form_info');
             var my_root;
+            var update = false;
             if (row === null){
                 // single form
-                if (state){
-                    // are we already dirty?
-                    if(form_info.clean){
-                        form_info.clean = false;
-                        my_root = '#' + root;
-                        $(my_root).addClass("dirty");
-                    }
-                } else {
-                    form_info.clean = true;
-                    my_root = '#' + root;
-                    $(my_root).removeClass("dirty");
+                my_root = '#' + root;
+                if(state && form_info.clean){
+                    update = true;
+                }
+                form_info.clean = !state;
+            } else {
+                // multi-row
+                my_root = root.substring(0,root.length) + '(' + row + ')';
+                my_root = '#' + $INFO.getId(my_root);
+                if(state && form_info.clean_rows[row]){
+                     update = true;
+                }
+                form_info.clean_rows[row] = !state;
+            }
+            if(state){
+                if(update){
+                    $(my_root).addClass("dirty");
                 }
             } else {
-                // grid etc
-                my_root = root.substring(0,root.length) + '(' + row + ')';
-                var my_root_id;
-                if (state){
-                    // are we already dirty?
-                    if(form_info.clean_rows[row]){
-                        form_info.clean_rows[row] = false;
-                        my_root_id = '#' + $INFO.getId(my_root);
-                        $(my_root_id).addClass("dirty");
-                    }
-                } else {
-                    form_info.clean_rows[row] = true;
-                    my_root_id = '#' + $INFO.getId(my_root);
-                    $(my_root_id).removeClass("dirty");
-                }
+                $(my_root).removeClass("dirty");
             }
-        }
     }
+}
 
 function itemChanged(item){
 
@@ -431,9 +422,7 @@ function node_get_form_data(root){
 function node_save(root, command){
         msg('node_save');
         out = node_get_form_data(root);
-        id = $INFO.getId(root + '#*id');
         var node =  $INFO.getState(root, 'node');
-        out.__id = $('#'+ id).val();
         get_node(node, 'save', out);
     }
 
@@ -501,6 +490,61 @@ function form_show_errors(root, errors){
     }
 }
 
+function form_save_process_saved(saved){
+    // process the saved data
+    // store the insered id if needed
+    // set the form as clean and remove error css messages etc
+    var state_sent_data;
+    var inserted_id;
+    var div;
+    for (var i=0; i<saved.length; i++){
+        div = saved[i][0];
+        inserted_id = saved[i][1];
+
+        // this is a hack to get the needed info
+        info = _parse_item(div + '#x');
+        // update the state info for this data
+        // we want to check the correct id was updated
+        // and store if it is new
+        state_sent_data = $INFO.getState(info.root_stripped, 'sent_data');
+        if (info.row === null){
+            // single form
+            if (state_sent_data && state_sent_data.id){
+                // check correct record
+                if (state_sent_data.id != inserted_id){
+                     alert('data coruption on save');
+                }
+            } else {
+                state_sent_data.id = inserted_id;
+                alert ('new state added');
+            }
+        } else {
+            // continuous or grid
+            if (state_sent_data[info.row]){
+                // check have correct record
+                if (state_sent_data[info.row].id != inserted_id){
+                    alert('data coruption on save continuous');
+                }
+            } else {
+                // this is a new save so lets add the id to the state data
+                state_sent_data[info.row] = {id: inserted_id};
+                alert ('new state added continuous');
+            }
+        }
+        // remove any error messages/css etc
+        form_show_errors(div, null);
+        // we want to mark the form as clean
+        dirty(info.root_stripped, info.row, false);
+    }
+}
+
+function form_save_process_errors(errors){
+    for (var form_root in errors){
+        if (errors.hasOwnProperty(form_root)){
+            form_show_errors(form_root, errors[form_root]);
+        }
+    }
+}
 
         fn = function(packet, job){
              root = 'main';
@@ -524,28 +568,11 @@ function form_show_errors(root, errors){
                     data = packet.data.data;
                     // errors
                     if (data.errors){
-                        for (var form_root in data.errors){
-                            if (data.errors.hasOwnProperty(form_root)){
-                                form_show_errors(form_root, data.errors[form_root]);
-                            }
-                        }
+                        form_save_process_errors(data.errors);
                     }
                     // saved records
                     if (data.saved){
-                        saved = data.saved;
-                        for (var i=0; i<saved.length; i++){
-                            div = saved[i][0];
-                            inserted_id = saved[i][1];
-                            // update the id
-                            id = $INFO.getId(div + '#*id');
-                            $('#' + id).val(inserted_id);
-                            // we want to mark the form as clean
-                            // this is a hack to get the needed info
-                            info = _parse_item(div + '#x');
-                            dirty(info.root_stripped, info.row, false);
-                            // remove any error messages/css etc
-                            form_show_errors(div, null);
-                        }
+                        form_save_process_saved(data.saved);
                     }
                     break;
                  case 'general_error':

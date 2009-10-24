@@ -173,7 +173,7 @@ class People(TableNode):
 
     def _new(self):
 
-        data_out = {'id': 0}
+        data_out = {}
         data = node.create_form_data(self.fields, self.form_params, data_out)
         self.out = data
         self.action = 'form'
