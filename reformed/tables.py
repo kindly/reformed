@@ -596,8 +596,10 @@ class Table(object):
                 else:
                     attribute = relation.sa_options["backref"].encode("ascii")
 
-                validator = validators.FancyValidator(not_empty = True)
-                #schema_dict[attribute] = validator
+                validator = validators.FancyValidator()
+                chained_validators.append(validators.RequireIfMissing(column.name, missing = attribute))
+
+                schema_dict[attribute] = validator
 
         # many side mandatory validators
         for tab, rel in self.tables_with_relations.iteritems():
@@ -614,12 +616,10 @@ class Table(object):
 
         self.schema_dict = schema_dict
 
-
     @property
     def validation_schema(self):
         """Gathers all the validation dictionarys from all the Field Objects
         and a makes a formencode Schema out of them"""
-
 
         return formencode.Schema(allow_extra_fields = True,
                                  ignore_key_missing = True,

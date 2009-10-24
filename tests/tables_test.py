@@ -294,12 +294,15 @@ class test_database_primary_key(object):
 
         validation_schema = self.Donkey.tables["email"].validation_schema
 
-        print validation_schema
 
         
         assert self.Donkey.tables["email"].validation_schema.to_python(
-                                             {"email": "pop@david.com"})==\
-                                             {"email": "pop@david.com"}
+                                             {"email": "pop@david.com",
+                                              "name2" :"david",
+                                              "name" : "david"})==\
+                                             {"email": "pop@david.com",
+                                              "name2" :"david",
+                                              "name" : "david"}
                                                 
         assert_raises(formencode.Invalid,
                       self.Donkey.tables["email"].validation_schema.to_python,
@@ -308,10 +311,14 @@ class test_database_primary_key(object):
         assert self.Donkey.tables["address"].validation_schema.to_python(
                                           {"address_line_1": "56 moreland",
                                            "address_line_2": "essex",
-                                           "postcode" : "IG5 0dp"})==\
+                                           "postcode" : "IG5 0dp",
+                                           "name2" :"david",
+                                           "name" : "david"})==\
                                           {"address_line_1": "56 moreland",
                                            "address_line_2": "essex",
-                                           "postcode" : "IG5 0dp"}
+                                           "postcode" : "IG5 0dp",
+                                           "name2" :"david",
+                                           "name" : "david"}
         
         assert_raises(formencode.Invalid,
                     self.Donkey.tables["address"].validation_schema.to_python,

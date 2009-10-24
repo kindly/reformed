@@ -32,7 +32,7 @@ class boot_tables(object):
     def __init__(self):
 
         self.boot_tables = [Table("__table", fields.Text("table_name"),
-                                fields.OneToManyEager("table_params", "__table_params"),
+                                fields.OneToManyEager("table_params", "__table_params" ),
                                 fields.OneToManyEager("field", "__field"),
                                 primary_key = "table_name"
                             ),

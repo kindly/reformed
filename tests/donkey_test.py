@@ -24,7 +24,7 @@ class test_donkey(object):
     @classmethod
     def setUpClass(cls):
         if not hasattr(cls, "engine"):
-            cls.engine = create_engine('sqlite:///:memory:', echo = True)
+            cls.engine = create_engine('sqlite:///:memory:', echo = False)
             #cls.engine = create_engine('sqlite:///:memory:')
         
 #        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
