@@ -21,6 +21,8 @@ for i in range(num_rows):
 
 print 'generated'
 
+print 'commit every line and core entity table being made'
+
 start = datetime.datetime.now()
 
 session = r.reformed.Session()
@@ -32,6 +34,48 @@ for i in range(num_rows):
     session.commit()
     if i and i % 100 == 0:
         print i
+
+time = (datetime.datetime.now() - start).seconds
+try:
+    rate = num_rows/time
+except:
+    rate = 'n/a'
+
+print 'finished\ntime %s seconds  rate %s rows/s' % (time, rate)
+
+print 'fastest with core entity being made'
+start = datetime.datetime.now()
+
+session = r.reformed.Session()
+for i in range(num_rows):
+    obj = r.reformed.get_instance(table)
+    for j in range(len(fields)):
+        setattr(obj, fields[j][0], data[i][j])
+    session.add(obj)
+    if i and i % 250 == 0:
+        session.commit()
+        print i
+
+time = (datetime.datetime.now() - start).seconds
+try:
+    rate = num_rows/time
+except:
+    rate = 'n/a'
+
+print 'finished\ntime %s seconds  rate %s rows/s' % (time, rate)
+
+print 'fastest sqlalchemy no relationships'
+start = datetime.datetime.now()
+
+session = r.reformed.Session()
+for i in range(num_rows):
+    obj = r.reformed.get_instance(table)
+    for j in range(len(fields)):
+        setattr(obj, fields[j][0], data[i][j])
+        setattr(obj, "_core_entity_id", 1)
+    session.session.add(obj)
+
+session.session.commit()
 
 time = (datetime.datetime.now() - start).seconds
 try:

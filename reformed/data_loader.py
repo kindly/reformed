@@ -174,7 +174,7 @@ class FlatFile(object):
 
         return first_line
 
-    def load(self, validation = True, print_every = 250, batch = 250):
+    def load(self, validation = True, print_every = 250, batch = 250, messager = None):
 
         self.validation = validation
 
@@ -211,13 +211,12 @@ class FlatFile(object):
                 self.session.commit()
                 self.session.expunge_all()
             if line_number % print_every == 0 and not error_lines:
-                time = (datetime.datetime.now() - start_time).seconds
-                try:
-                    rate = line_number/time
-                except:
-                    rate = 'n/a'
-                print "%s rows in %s seconds  %s rows/s" % (line_number,
+                time, rate = self.get_rate(start_time, line_number)
+                message = "%s rows in %s seconds  %s rows/s" % (line_number,
                                                             time, rate)
+                print message
+                if messager:
+                    messager.message(message)
         if error_lines:
             self.session.close()
             error_lines.insert(0, self.headers + ["__errors"])
@@ -228,6 +227,20 @@ class FlatFile(object):
         flat_file.close()
 
         self.session.close()
+
+        time, rate = self.get_rate(start_time, line_number)
+
+        return "completed %s rows in %s seconds  %s rows/s" % (line_number,
+                                                            time, rate)
+    
+    def get_rate(self, start_time, line_number):
+
+        time = (datetime.datetime.now() - start_time).seconds
+        try:
+            rate = line_number/time
+        except ZeroDivisionError:
+            rate = 'n/a'
+        return time, rate
 
     def make_parent_key_dict(self):
         for key in self.keys:

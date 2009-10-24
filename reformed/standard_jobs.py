@@ -1,6 +1,20 @@
 from search import Search
 from datetime import datetime, timedelta
 import time
+from data_loader import FlatFile
+
+def data_load_from_file(database, job_id, input = None):
+
+    table, file = [attrib.strip() for attrib in input.strip().split(",")]
+
+    flatfile = FlatFile(database,
+                        table,
+                        file)
+
+    flatfile.load()
+    
+
+
 
 def delete_lock_tables(database, job_id, wait = "60"):
 
