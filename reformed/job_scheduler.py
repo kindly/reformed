@@ -8,6 +8,7 @@ import datetime
 import traceback
 import standard_jobs
 import logging
+import json
 from sqlalchemy import and_
 
 logger = logging.getLogger('reformed.main')
@@ -149,9 +150,9 @@ class JobSchedulerThread(threading.Thread):
             session.close()
 
         if arg:
-            request = threadpool.makeRequests(func, [((self.database, arg), {})], callback, exc_callback)
+            request = threadpool.makeRequests(func, [((self.database, job_id, arg), {})], callback, exc_callback)
         else:
-            request = threadpool.makeRequests(func, [((self.database, ), {})], callback, exc_callback)
+            request = threadpool.makeRequests(func, [((self.database, job_id), {})], callback, exc_callback)
 
         self.threadpool.putRequest(request[0])
 

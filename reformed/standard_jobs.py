@@ -2,7 +2,7 @@ from search import Search
 from datetime import datetime, timedelta
 import time
 
-def delete_lock_tables(database, wait = "60" ):
+def delete_lock_tables(database, job_id, wait = "60"):
 
 
     session = database.Session()
@@ -30,9 +30,9 @@ def delete_lock_tables(database, wait = "60" ):
 
     return "number deleted = %s" % count
 
-def wait(database, number):
+def wait(database, job_id, number):
     time.sleep(int(number))
     return "%s is done!" % number
 
-def error(database, number):
+def error(database, job_id, number):
     assert 1 <> 1
