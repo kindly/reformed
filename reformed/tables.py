@@ -597,7 +597,7 @@ class Table(object):
                     attribute = relation.sa_options["backref"].encode("ascii")
 
                 validator = validators.FancyValidator(not_empty = True)
-                schema_dict[attribute] = validator
+                #schema_dict[attribute] = validator
 
         # many side mandatory validators
         for tab, rel in self.tables_with_relations.iteritems():
