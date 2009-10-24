@@ -71,13 +71,8 @@ def dump():
 
 def run():
     print 'starting webserver'
-<<<<<<< HEAD:manage.py
     from reformed.reformed import reformed 
     reformed.scheduler_thread.start()
-=======
-    from reformed.reformed import reformed, scheduler_thread
-    scheduler_thread.start()
->>>>>>> toby/master:manage.py
     import web
     if os.environ.get("REQUEST_METHOD", ""):
         from wsgiref.handlers import BaseCGIHandler
