@@ -13,7 +13,7 @@ def make_char(min, max, extras = ''):
     return out
 
 def make_domain():
-    
+
     tld = ['com', 'org', 'net', 'co.uk', 'org.uk', 'gov']
     out = make_char(3, 10) + '.' + tld[random.randint(0,len(tld)-1)]
     return out
@@ -35,17 +35,17 @@ def create_csv():
         ["donkey_sponsership__0___donkey__0__name", make_char, (5, 10)],
         ["donkey_sponsership__0___donkey__0__age", make_int, (1, 25)]
     ]
-    
+
     f = open(filename,'w')
-    
-    
+
+
     header = ''
     for (title, fn, params) in data:
         header += '"%s", ' % title
     if header:
         header = header[:-2]
     f.write(header + '\n')
-    
+
     for i in range(num_rows):
         row = ''
         for (title, fn, params) in data:
@@ -56,5 +56,5 @@ def create_csv():
         if (i + 1) % 1000 == 0:
             print "%s rows" % (i + 1)
     f.close()
-    
+
     print "%s rows generated" % (i + 1)

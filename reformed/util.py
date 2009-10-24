@@ -156,20 +156,8 @@ def get_fields_from_obj(obj):
 
     return obj._table.columns.keys()
 
-def get_row_data(obj, keep_all = False):
-    
-    row_data = {}
-    table = obj._table.name
-    for field in get_fields_from_obj(obj):
-        if field in ("modified_by", "modified_date", "id", "_core_entity_id") and not keep_all:
-            continue
-        row_data["%s.%s" % (table, field)] = getattr(obj, field)
-    if keep_all:
-        row_data["%s.id" % table] = obj.id
-    return row_data
 
-
-def get_row_data_basic(obj, keep_all = False):
+def get_row_data(obj, keep_all = False, basic = False):
     
     row_data = {}
     table = obj._table.name
@@ -179,21 +167,42 @@ def get_row_data_basic(obj, keep_all = False):
         value = getattr(obj, field)
         if isinstance(value, datetime.datetime):
             value = value.strftime('%Y-%m-%dT%H:%M:%SZ')
-        row_data[field] = value
+        if basic:
+            row_data[field] = value
+        else:
+            row_data["%s.%s" % (table, field)] = getattr(obj, field)
     if keep_all:
-        row_data["id"] = obj.id
+        if basic:
+            row_data["id"] = obj.id
+        else:
+            row_data["%s.id" % table] = obj.id
     return row_data
 
-
-def create_data_dict(result):
+def create_data_dict(result, **kw):
 
     data = {}
     if hasattr(result, "_table"):
-        data[result.id] = get_row_data(result) 
+        data[result.id] = get_row_data(result, **kw)
         return data
 
     for row in result:
-        data[row.id] = get_row_data(row) 
+        data[row.id] = get_row_data(row, **kw)
+    return data
+
+
+def create_data_array(result, **kw):
+
+    data = []
+    if hasattr(result, "_table"):
+        out = get_row_data(result, **kw)
+        out['id'] = result.id
+        data.append(out)
+        return data
+
+    for row in result:
+        out = get_row_data(row, **kw)
+        out['id'] = row.id
+        data.append(out)
     return data
 
 def get_all_local_data(obj, tables = None, allow_system = False, keep_all = False):

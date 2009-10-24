@@ -28,6 +28,7 @@ from sqlalchemy.orm import sessionmaker
 
 metadata = MetaData()
 engine = create_engine('sqlite:///reformed/reformed.sqlite', echo = False)
+#engine = create_engine('sqlite:///', echo = False)
 #engine = create_engine('mysql://localhost/test_donkey')
 #engine = create_engine('postgres://david:@:5432/test_donkey', echo = False)
 metadata.bind = engine
