@@ -45,8 +45,6 @@ reformed = Database("reformed",
                     logging_tables = False
                     )
 
-scheduler_thread = job_scheduler.JobScedulerThread(reformed)
-
 reformed.job_scheduler.add_job("delete_lock", 
                                "delete_lock_tables",
                                "1000"

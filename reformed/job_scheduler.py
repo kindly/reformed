@@ -55,25 +55,42 @@ class JobScheduler(object):
         return job_id
 
 
-class JobScedulerThread(threading.Thread):
+    def shut_down_all_threads(self):
 
-    def __init__(self, database):
-        super(JobScedulerThread, self).__init__()
+        threadpool = self.database.job_scheduler.threadpool
+
+        threadpool.dismissWorkers(POOL_SIZE)
+        threadpool.joinAllDismissedWorkers()
+
+        if self.database.schedular_thread:
+            self.database.schedular_thread.alive = False
+            self.database.schedular_thread.join()
+
+        
+
+
+
+class JobSchedulerThread(threading.Thread):
+
+    def __init__(self, database, maker_thread):
+        super(JobSchedulerThread, self).__init__()
         self.database = database
-        self.threadpool = self.database.job_scheduler.threadpool
-        self.daemon = True
+        self.maker_thread = maker_thread
+        self.job_scheduler = JobScheduler(self.database)
 
     alive = False
     def run(self):
 
         if self.alive:
             return
+
+        self.threadpool = self.job_scheduler.threadpool
+
         self.alive = True
         while self.alive:
 
             to_run = self.database.search("_core_job_scheduler",
                                           "job_start_time <= now and job_started is null") 
-
 
             for result in to_run:
                 result["_core_job_scheduler.job_started"] = datetime.datetime.now()
@@ -86,14 +103,24 @@ class JobScedulerThread(threading.Thread):
                 self.make_request(func, arg, result["_core_job_scheduler.id"])
                 load_local_data(self.database, result)
 
+
+
             try:
-                time.sleep(POLL_INTERVAL)
                 self.database.job_scheduler.threadpool.poll()
-            except KeyboardInterrupt:
-                print "**** Interrupted!"
-                break
             except threadpool.NoResultsPending:
-                continue
+                pass
+
+            time_counter = 0
+
+
+            while time_counter <= POLL_INTERVAL:
+                if not self.maker_thread.isAlive():
+                    print "commmencing shutdown procedures"
+                    self.shut_down_all_threads()
+                    self.alive = False
+                    break
+                time_counter = time_counter + 1
+                time.sleep(1)
 
     def stop(self):
 
@@ -127,4 +154,11 @@ class JobScedulerThread(threading.Thread):
             request = threadpool.makeRequests(func, [((self.database, ), {})], callback, exc_callback)
 
         self.threadpool.putRequest(request[0])
+
+    def shut_down_all_threads(self):
+
+        threadpool = self.threadpool
+
+        threadpool.dismissWorkers(POOL_SIZE)
+        threadpool.joinAllDismissedWorkers()
 

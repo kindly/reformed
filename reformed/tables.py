@@ -492,7 +492,7 @@ class Table(object):
                                        getattr(other_table.c, col2))
 
             sa_options["primaryjoin"] = sa.sql.and_(*join_conditions)
-            
+
             properties[relation.name] = sa.orm.relation(other_class,
                                                     **sa_options)
 

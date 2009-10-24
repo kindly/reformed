@@ -13,12 +13,12 @@ class test_single_request(donkey_persist_test.test_donkey_persist_mysql):
         reformed.job_scheduler.POLL_INTERVAL = 1
 
         cls.job_scheduler = cls.Donkey.job_scheduler
-        cls.scheduler_thread = reformed.job_scheduler.JobScedulerThread(cls.Donkey)
+        cls.scheduler_thread = cls.Donkey.scheduler_thread
         cls.scheduler_thread.start()
         cls.wait3 = cls.job_scheduler.add_job("test_type", "wait", "3")
         cls.wait1 = cls.job_scheduler.add_job("test_type", "wait", "1")
         cls.waiterror = cls.job_scheduler.add_job("test_type", "error", "3")
-        time.sleep(5)
+        time.sleep(7)
         cls.scheduler_thread.stop()
 
     def test_add_basic_job(self):
@@ -27,7 +27,10 @@ class test_single_request(donkey_persist_test.test_donkey_persist_mysql):
         assert self.session.query(self.Donkey.get_class("_core_job_scheduler")).get(self.wait3).message.count("3 is done") > 0
         assert self.session.query(self.Donkey.get_class("_core_job_scheduler")).get(self.wait1).message.count("1 is done") > 0
 
-        assert self.session.query(self.Donkey.get_class("_core_job_scheduler")).get(self.wait3).job_ended  > \
+        print self.session.query(self.Donkey.get_class("_core_job_scheduler")).get(self.wait3).job_ended
+        print self.session.query(self.Donkey.get_class("_core_job_scheduler")).get(self.wait1).job_ended  
+
+        assert self.session.query(self.Donkey.get_class("_core_job_scheduler")).get(self.wait3).job_ended  >= \
                self.session.query(self.Donkey.get_class("_core_job_scheduler")).get(self.wait1).job_ended  
 
     def test_z_add_basic_error(self):
