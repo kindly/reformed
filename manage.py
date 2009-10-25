@@ -78,6 +78,8 @@ def run():
     print 'starting webserver'
     from reformed.reformed import reformed 
     reformed.scheduler_thread.start()
+    if load:
+        reformed.job_scheduler.add_job("loader", "data_load_from_file", "people, data.csv")
     import web
     if os.environ.get("REQUEST_METHOD", ""):
         from wsgiref.handlers import BaseCGIHandler
@@ -93,6 +95,7 @@ def run():
             pass
 
 if __name__ == "__main__":
+   load = False 
    if 'dump' in sys.argv:
        dump()
    if 'delete' in sys.argv:
@@ -102,7 +105,9 @@ if __name__ == "__main__":
    if 'generate' in sys.argv:
         generate_data()
    if 'load' in sys.argv:
-        load_data()
+        if "run" not in sys.argv:
+            load_data()
+        load = True
    if 'run' in sys.argv:
         run()
    if 'test' in sys.argv:

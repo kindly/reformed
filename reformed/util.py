@@ -243,7 +243,11 @@ def load_local_data(database, data):
     for key, value in data.iteritems():
         if key.startswith("__"):
             continue
-        alias, field = key.split(".")
+        fields = key.split(".")
+        if len(fields) == 1:
+            alias, field = table, fields[0]
+        else:
+            alias, field = fields
         if alias == table:
             path_key = "root"
         else:
@@ -258,6 +262,7 @@ def load_local_data(database, data):
         record.setdefault(path_key, {})[field] = value
     try:
         data_loader.SingleRecord(database, table, all_rows = record).load() 
+        session.close()
     except fe.Invalid, e:
         error_dict = {}
         invalid_msg = ""
@@ -274,6 +279,7 @@ def load_local_data(database, data):
 
         if error_dict:
             raise fe.Invalid(invalid_msg, data, record, None, error_dict) 
+        session.close()
         
 
 def get_table_from_instance(instance, database):

@@ -392,10 +392,14 @@ class Database(object):
         if limit:
             result = resultset.ResultSet(query, tables = tables, result_num = limit, offset = offset).first_set()
         else:
-            result = resultset.ResultSet(query).all()
+            result = resultset.ResultSet(query, tables = tables).all()
 
-        session.close()
-        return [get_all_local_data(obj, tables =tables, keep_all = True, allow_system = True) for obj in result]    
+        try:
+            return [get_all_local_data(obj, tables = tables, keep_all = True, allow_system = True) for obj in result]    
+        except:
+            session.rollback()
+        finally:
+            session.close()
         
 
     def logged_table(self, logged_table):

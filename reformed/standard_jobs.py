@@ -1,7 +1,23 @@
 from search import Search
 from datetime import datetime, timedelta
 import time
+import util
 from data_loader import FlatFile
+
+class Messager(object):
+
+    def __init__(self, database, job_id):
+        self.database = database
+        self.job_id = job_id
+
+    def message(self, message):
+
+        row = self.database.search("_core_job_scheduler", "id = %s" % self.job_id)[0]
+
+        row["message"] = u"%s" % message
+
+        util.load_local_data(self.database, row)
+
 
 def data_load_from_file(database, job_id, input = None):
 
@@ -11,13 +27,12 @@ def data_load_from_file(database, job_id, input = None):
                         table,
                         file)
 
-    flatfile.load()
+    messager = Messager(database, job_id)
+
+    return flatfile.load(messager = messager)
+
     
-
-
-
 def delete_lock_tables(database, job_id, wait = "60"):
-
 
     session = database.Session()
     search = Search(database, 

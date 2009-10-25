@@ -413,7 +413,6 @@ class test_flat_file(donkey_test.test_donkey):
                             "tests/new_people_with_header_errors.csv")    
 
         
-        print flatfile.load()
         assert flatfile.load() == [['name', 'address_line_1', 'postcode', 'email__0__email', 'email__1__email', 'donkey_sponsership__0__amount', 'donkey_sponsership__0___donkey__0__name', '__errors'], ['popph22', 'road22', 'post22', 'pop@pop.com', 'pop2@pop.com', 'poo', 'feddy2200', "{('donkey_sponsership', 0): Invalid('amount: Please enter a number',)}"], ['popph23', 'road23', 'post23', 'pop@pop.com', 'pop2@pop.com', '?', 'feddy2300', "{('donkey_sponsership', 0): Invalid('amount: Please enter a number',)}"], ['popph24', '', '', 'pop@pop.com', 'pop2@pop.com', '2400', 'feddy2400', "{'root': Invalid('address_line_1: Please enter a value\\npostcode: Please enter a value',)}"], ['popph27', '', '', 'pop@pop.com', 'pop2pop.com', '2700', 'feddy2700', "{('email', 1): Invalid('email: An email address must contain a single @',), 'root': Invalid('address_line_1: Please enter a value\\npostcode: Please enter a value',)}"], ['popph28', 'road28', 'post28', 'pop@pop.com', 'pop2pop.com', '2800', 'feddy2800', "{('email', 1): Invalid('email: An email address must contain a single @',)}"]]
 
 
