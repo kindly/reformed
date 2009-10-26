@@ -617,6 +617,38 @@ class Table(object):
         self.schema_dict = schema_dict
 
     @property
+    def schema_info(self):
+
+        schema = {}
+
+        for key, value in self.schema_dict.iteritems():
+            if key == "chained_validators":
+                continue
+            if not isinstance(value, All):
+                continue
+            all_info = []
+
+
+            for validator in value.validators:
+                validator_info = {}
+
+                validator_info["type"] = validator.__class__.__name__
+
+                for name, attrib in validator.__dict__.iteritems():
+                    if name in ('declarative_count', 'inputEncoding', 'outputEncoding'):
+                        continue
+                    if name.startswith("_"):
+                        continue
+                    validator_info[name] = attrib
+                    
+                all_info.append(validator_info)
+
+            schema[key] = all_info
+
+        return schema
+
+
+    @property
     def validation_schema(self):
         """Gathers all the validation dictionarys from all the Field Objects
         and a makes a formencode Schema out of them"""
