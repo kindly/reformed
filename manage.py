@@ -44,29 +44,16 @@ def generate_data():
     data_creator.create_csv()
 
 def delete():
-    print 'deleting database'
-    import reformed.dbconfig as config
-    engine = config.engine.name
-    if engine == 'sqlite':
-        file = config.engine.url.database
-        if os.path.isfile(file):
-            if os.system("rm %s" % file):
-                print "ERROR: Couldn't delete database %s" % file
-                sys.exit(1)
-        else:
-            print 'Database %s does not exist' % file
-    elif engine == 'mysql':
-        session = config.Session()
-        tables = session.execute('SHOW TABLES')
-        for (table, ) in tables:
-            print 'deleting %s...' % table
-            session.execute('DROP TABLE `%s`' % table)
-        session.commit()
-        session.close()
-    else:
-        print 'Database engine "%s" cannot be deleted' % engine
-        sys.exit(1)
 
+    import reformed.dbconfig as config
+    from sqlalchemy import MetaData
+    print 'deleting database'
+    meta = MetaData()
+    meta.reflect(bind=config.engine)
+
+    for table in reversed(meta.sorted_tables):
+        print 'deleting %s...' % table.name
+        config.engine.execute(table.delete())
 
 def dump():
     print 'dumping data'
@@ -111,8 +98,8 @@ if __name__ == "__main__":
    if 'run' in sys.argv:
         run()
    if 'test' in sys.argv:
+        load = True
         delete()
         create()
-        load_data()
         run()
 
