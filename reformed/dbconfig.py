@@ -25,9 +25,13 @@
 
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
+import os
 
 metadata = MetaData()
-engine = create_engine('sqlite:///reformed/reformed.sqlite', echo = False)
+
+this_dir = os.path.dirname(os.path.abspath(__file__))
+print 'engine = sqlite:///%s/reformed.sqlite' % this_dir
+engine = create_engine('sqlite:///%s/reformed.sqlite' % this_dir, echo = False)
 #engine = create_engine('sqlite:///', echo = False)
 #engine = create_engine('mysql://localhost/test_donkey')
 #engine = create_engine('postgres://david:@:5432/test_donkey', echo = False)

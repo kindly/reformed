@@ -71,7 +71,8 @@ class WebApplication(object):
         """Serve static content"""
 
         print "STATIC %s" % path
-        path = '%s/content/%s' % (sys.path[0], path) # does this work in windows?
+        root = os.path.dirname(os.path.abspath(__file__))
+        path = '%s/content/%s' % (root, path) # does this work in windows?
         print path
         if os.path.isfile(path):
             stat = os.stat(path)

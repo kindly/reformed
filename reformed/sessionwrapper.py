@@ -31,10 +31,14 @@ import logging
 import custom_exceptions
 import warnings
 from util import get_table_from_instance
+import os
+
+root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+log_file = os.path.join(root, "session.log")
 
 logger = logging.getLogger('reformed.session')
 logger.setLevel(logging.INFO)
-sessionhandler = logging.FileHandler("session.log")
+sessionhandler = logging.FileHandler(log_file)
 logger.addHandler(sessionhandler)
 
 class SessionWrapper(object):

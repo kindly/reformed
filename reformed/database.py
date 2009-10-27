@@ -39,11 +39,15 @@ import logging
 import networkx as nx
 import job_scheduler
 import threading
+import os
+
+root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+log_file = os.path.join(root, "log.log")
 
 logger = logging.getLogger('reformed.main')
 logger.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s - %(message)s")
-reformedhandler = logging.FileHandler("log.log")
+reformedhandler = logging.FileHandler(log_file)
 reformedhandler.setFormatter(formatter)
 
 logger.addHandler(reformedhandler)
