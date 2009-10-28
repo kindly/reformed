@@ -51,19 +51,12 @@ def delete():
 
     engine = config.engine.name
 
-    if engine == 'sqlite':
-        file = config.engine.url.database
-        if os.path.isfile(file):
-            if os.system("rm %s" % file):
-                print "ERROR: Couldn't delete database %s" % file
-                sys.exit(1)
-    else:
-        meta = MetaData()
-        meta.reflect(bind=config.engine)
+    meta = MetaData()
+    meta.reflect(bind=config.engine)
 
-        for table in reversed(meta.sorted_tables):
-            print 'deleting %s...' % table.name
-            config.engine.execute(table.delete())
+    for table in reversed(meta.sorted_tables):
+        print 'deleting %s...' % table.name
+        table.drop(bind=config.engine)
 
 def dump():
     print 'dumping data'
