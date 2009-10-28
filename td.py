@@ -5,7 +5,7 @@ d = r.reformed
 
 
 d.add_entity(r.Table("people",
-                    r.Text("name", mandatory = True, length = 30),
+                    r.Text("name", mandatory = True, length = 50),
                     r.Address("supporter_address"),
                     r.OneToMany("email","email",
                               order_by = "email",
@@ -25,7 +25,7 @@ d.add_table(r.Table("email",
            )
 
 d.add_entity(r.Table("donkey",
-                    r.Text("name", validation = '__^[a-zA-Z0-9]*$'),
+                    r.Text("name"), #validation = '__^[a-zA-Z0-9 ]*$'),
                     r.Integer("age", validation = 'Int'),
                     r.OneToOne("donkey_pics","donkey_pics",
                              many_side_not_null = False
