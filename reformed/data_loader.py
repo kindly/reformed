@@ -184,6 +184,10 @@ class FlatFile(object):
         flat_file = self.get_file()
 
         total_lines = 0
+
+        if self.has_header:
+            csv_file.next()
+
         for line in flat_file:
             total_lines += 1
 
@@ -192,6 +196,7 @@ class FlatFile(object):
         if not hasattr(self, "dialect"):
             self.dialect = csv.Sniffer().sniff(flat_file.read(10240))
 
+        flat_file.seek(0)
 
         csv_file = csv.reader(flat_file, self.dialect)
 
