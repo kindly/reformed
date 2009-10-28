@@ -1,7 +1,7 @@
 <html>
 <head>
 <link rel="stylesheet" type="text/css" href="default.css" />
-<link rel="stylesheet" type="text/css" href="jquery.autocomplete.css" />
+<link rel="stylesheet" type="text/css" href="jquery/jquery.autocomplete.css" />
 <style>
 div {
 	border:0; /* 1px solid #000; */
@@ -20,9 +20,9 @@ body {
 	overflow:auto;
 }
 </style>
-<script src="jquery.js"></script>
-<script src="jquery.json.js"></script>
-<script src="jquery.autocomplete.js"></script>
+<script src="jquery/jquery.js"></script>
+<script src="jquery/jquery.json.js"></script>
+<script src="jquery/jquery.autocomplete.js"></script>
 <script src="job.js" ></script>
 <script src="form_control.js" ></script>
 <script src="info.js" ></script>
@@ -48,6 +48,8 @@ body {
 <li><span onclick="get_node('test.Search', '')">search</span></li>
 <li><span onclick="get_node('test.Sponsorship', '')">sponsor</span></li>
 <li><span onclick="$JOB.add({}, {}, 'reload', true)" ><b>reload</b></span></li>
+<li><span onclick="get_node('test.DataLoader', 'load')" ><b>load data</b></span></li>
+<li><span onclick="get_node('test.DataLoader', 'status')" ><b>load status</b></span></li>
 </ul>
 </div>
 

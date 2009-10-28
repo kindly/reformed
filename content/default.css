@@ -51,7 +51,7 @@ div {
 .form_body p label{
 	color:darkblue;
 	width:100px;
-	float:left;
+    float:left;
 }
 
 .form_header, .form_footer {
@@ -177,7 +177,7 @@ tr.inactive input{
 	border-bottom:1px solid #CCF;
 }
 
-.dirty >  div.form_body > p > input, .dirty >  div.form_body > p > select{
+.dirty >  p > input, .dirty >  div.form_body > p > select{
 	background-color:#FFD;
 }
 

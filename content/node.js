@@ -29,14 +29,14 @@ function _wrap(arg, tag){
 }
 
 function _subform(item, my_id, data){
-    var out = '<div class="subform">' + item.title + '</br>';
+    var out = '<div class="subform" id="' + my_id + '" >'+ item.title + '</br>';
     out += node_generate_html(item.params.form, data, root + '#' + item.name);
     out += '</div>';
     return out;
 
 }
 
-function _generate_fields_html(form, local_data, data){
+function _generate_fields_html(form, local_data, data, row_count){
     var formHTML = '';
     var my_id;
     var i;
@@ -47,15 +47,10 @@ function _generate_fields_html(form, local_data, data){
 
         item = form.fields[i];
 
-        if (local_data.count){
-            my_id = local_data.root + "(" + local_data.i + ")#" + item.name;
-
+        if (row_count !== null){
+            my_id = local_data.root + "(" + row_count + ")#" + item.name;
         } else {
-            if (local_data.root.substring(local_data.root.length - 1) == '#'){
-                my_id = local_data.root + item.name;
-            } else {
-                my_id = local_data.root + "#" + item.name;
-            }
+            my_id = local_data.root + "#" + item.name;
         }
 
         my_id = $INFO.addId(my_id);
@@ -77,44 +72,48 @@ function _generate_fields_html(form, local_data, data){
 
 function _generate_form_html_normal(form_info, local_data, data){
 // local_data: count root i wrap_tag show_label
-    var id;
-    if (local_data.root.substring(local_data.root.length - 1) == '#'){
-        id = $INFO.addId(local_data.root + "*id");
-    } else {
-        id = $INFO.addId(local_data.root + "#*id");
-    }
-
-    var formHTML = _generate_fields_html(form_info.layout, local_data, data);
+    var formHTML = _generate_fields_html(form_info.layout, local_data, data, null);
 
     return formHTML;
 }
 
 function _generate_form_html_continuous(form_info, local_data, data){
 // local_data: count root i wrap_tag show_label
-    formHTML = '';
+    var formHTML = '';
+    var base_id;
+    var div_id;
+
     if (data){
         for (i=0; i<data.length +1; i++){
             base_id = local_data.root + "(" + i + ")";
             div_id = $INFO.addId(base_id);
-            id_id = $INFO.addId(base_id + "#*id");
 
-            local_data.i = i;
-            local_data.count = data.length + 1;
-            formHTML += "<div id='" + div_id + "'>";
-            formHTML += '<div class="form_body">';
-            formHTML += _generate_fields_html(form_info.layout, local_data, data[i]);
-            if (data[i]){
-                record_id = data[i].id;
-            } else {
-                record_id = 0;
-            }
-            formHTML += "</div>";
+            formHTML += '<div id="' + div_id + '" class="form_body">';
+            formHTML += _generate_fields_html(form_info.layout, local_data, data[i], i);
             formHTML += "</div>";
         }
     }
+    formHTML += '<p id="' + $INFO.getId(local_data.root) + '__add" class="add_form_row" onclick="add_form_row(\'' + local_data.root + '\')" >add new</p>';
     return formHTML;
 }
 
+function add_form_row(root){
+    // add a new row to a continuous form
+    var form_info = $INFO.getState(root, 'form_info');
+    var form_data = $INFO.getState(root, 'form_data');
+    var row = form_info.clean_rows.length;
+    // mark as clean plus also adds the row
+    form_info.clean_rows[row] = true;
+    var local_data = {root: root,
+                  show_label: true,
+                  wrap_tag: 'p'};
+    var id =  $INFO.addId(root + '(' + row + ')');
+    var formHTML = '<div id="' + id + '" class="form_body">';
+    formHTML += _generate_fields_html(form_data, local_data, null, row);
+    formHTML += "</div>";
+    $('#' + $INFO.getId(root) + '__add').before(formHTML);
+    
+}
 function node_generate_html(form, data, root, form_id, form_type){
     msg('node_generate_html: ');
     if (!data){
@@ -166,7 +165,7 @@ function node_generate_html(form, data, root, form_id, form_type){
 
     // FORM BODY
 
-    formHTML += '<div class="form_body" >';
+    formHTML += '<div id="' + $INFO.addId(root) + '" class="form_body" >';
 
     // ERROR message area
 
@@ -313,7 +312,7 @@ function dirty(root, row, state){
         var update = false;
         if (row === null){
             // single form
-            my_root = '#' + root;
+            my_root = '#' + $INFO.getId(root);
             if(state && form_info.clean){
                 update = true;
             }
@@ -508,11 +507,12 @@ function form_show_errors(root, errors){
             if (errors && errors[field_name]){
                 // there is an error for this field
                 $('#' + id).addClass('error');
-                $('#' + id + '__error').html(errors[field_name]);
+                $('#' + id + ' + span').remove();
+                $('#' + id).after("<span class='field_error'>ERROR: " + errors[field_name] + "</span>");
             } else {
                 // field is good
                 $('#' + id).removeClass('error');
-                $('#' + id + '__error').html('');
+                $('#' + id + ' + span').remove();
             }
         }
     }
@@ -573,6 +573,31 @@ function form_save_process_errors(errors){
     }
 }
 
+
+function job_processor_status(data){
+
+    var html = '';
+    html += '<p>JOB #' + data.jobId + '</p>';
+    if (data.message){
+        html += '<p>message ' + data.message + '</p>';
+    }
+    if (data.start){
+        html += '<p>start ' + data.start + '</p>';
+    }
+    if (data.end){
+        html += '<p>end ' + data.end + '</p>';
+    }
+    if (data.percent){
+        html += '<p>percent ' + data.percent + '</p>';
+    }
+    $('#main').html(html);
+    if (!data.end){
+        status_timer = setTimeout("get_node('test.DataLoader', 'status', {id:" + data.jobId + "})", 500);
+    } else {
+        alert('finished');
+    }
+}
+
 fn = function(packet, job){
      root = 'main';
      switch (packet.data.action){
@@ -607,6 +632,9 @@ fn = function(packet, job){
             break;
          case 'listing':
             show_listing(packet.data.data, packet.data.node);
+            break;
+        case 'status':
+            job_processor_status(packet.data.data);
             break;
     }
 };
