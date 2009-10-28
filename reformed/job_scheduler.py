@@ -52,7 +52,8 @@ class JobScheduler(object):
             job.arg = u"%s" % arg
         job.job_start_time = run_time
         job.function = u"%s" % func
-        session.save(job)
+        session.save(job)i
+        # FIXME this does not look safe against exceptions
         session.commit()
         job_id = job.id
         session.close()
@@ -92,7 +93,7 @@ class JobSchedulerThread(threading.Thread):
 
         self.alive = True
         while self.alive:
-
+            ## FIXME is this a safe call? does search offer eception handling?
             to_run = self.database.search("_core_job_scheduler",
                                           "job_start_time <= now and job_started is null") 
 
@@ -136,13 +137,20 @@ class JobSchedulerThread(threading.Thread):
             session = self.database.Session()
             job_class = self.database.get_class("_core_job_scheduler")
             job = session.query(job_class).get(job_id)
+            ## FIXME this is liable to crash with messages that are too long
             job.message = u"%s" % (result)
-            job.job_ended = datetime.datetime.now()
+            ## FIXME the job cannot have an end time until it is completed.
+            ## this was a guaranteed way to know if the job is still running
+            ## when it _is_ complete it *must* have an end time
+      #      job.job_ended = datetime.datetime.now()
             session.save(job)
             session.commit()
             session.close()
 
         def exc_callback(request, result):
+            ## FIXME this is liable to crash with errors that are too long
+            ## plus *all* sqlalchemy calls need some crash protection for 
+            ## out of our control stuff ie network failures
             session = self.database.Session()
             job_class = self.database.get_class("_core_job_scheduler")
             job = session.query(job_class).get(job_id)
