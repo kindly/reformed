@@ -36,7 +36,7 @@ function _subform(item, my_id, data){
 
 }
 
-function _generate_fields_html(form, local_data, data){
+function _generate_fields_html(form, local_data, data, row_count){
     var formHTML = '';
     var my_id;
     var i;
@@ -47,8 +47,8 @@ function _generate_fields_html(form, local_data, data){
 
         item = form.fields[i];
 
-        if (local_data.count){
-            my_id = local_data.root + "(" + local_data.i + ")#" + item.name;
+        if (row_count){
+            my_id = local_data.root + "(" + row_count + ")#" + item.name;
 
         } else {
             if (local_data.root.substring(local_data.root.length - 1) == '#'){
@@ -98,11 +98,11 @@ function _generate_form_html_continuous(form_info, local_data, data){
             div_id = $INFO.addId(base_id);
             id_id = $INFO.addId(base_id + "#*id");
 
-            local_data.i = i;
-            local_data.count = data.length + 1;
+     //       local_data.i = i;
+     //       local_data.count = data.length + 1;
             formHTML += "<div id='" + div_id + "'>";
             formHTML += '<div class="form_body">';
-            formHTML += _generate_fields_html(form_info.layout, local_data, data[i]);
+            formHTML += _generate_fields_html(form_info.layout, local_data, data[i], i);
             if (data[i]){
                 record_id = data[i].id;
             } else {
