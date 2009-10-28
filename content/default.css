@@ -51,6 +51,7 @@ div {
 .form_body p label{
 	color:darkblue;
 	width:100px;
+    float:left;
 }
 
 .form_header, .form_footer {

@@ -49,13 +49,8 @@ function _generate_fields_html(form, local_data, data, row_count){
 
         if (row_count !== null){
             my_id = local_data.root + "(" + row_count + ")#" + item.name;
-
         } else {
-            if (local_data.root.substring(local_data.root.length - 1) == '#'){
-                my_id = local_data.root + item.name;
-            } else {
-                my_id = local_data.root + "#" + item.name;
-            }
+            my_id = local_data.root + "#" + item.name;
         }
 
         my_id = $INFO.addId(my_id);
@@ -170,7 +165,7 @@ function node_generate_html(form, data, root, form_id, form_type){
 
     // FORM BODY
 
-    formHTML += '<div class="form_body" >';
+    formHTML += '<div id="' + $INFO.addId(root) + '" class="form_body" >';
 
     // ERROR message area
 
@@ -317,7 +312,7 @@ function dirty(root, row, state){
         var update = false;
         if (row === null){
             // single form
-            my_root = '#' + root;
+            my_root = '#' + $INFO.getId(root);
             if(state && form_info.clean){
                 update = true;
             }
@@ -578,6 +573,31 @@ function form_save_process_errors(errors){
     }
 }
 
+
+function job_processor_status(data){
+
+    var html = '';
+    html += '<p>JOB #' + data.jobId + '</p>';
+    if (data.message){
+        html += '<p>message ' + data.message + '</p>';
+    }
+    if (data.start){
+        html += '<p>start ' + data.start + '</p>';
+    }
+    if (data.end){
+        html += '<p>end ' + data.end + '</p>';
+    }
+    if (data.percent){
+        html += '<p>percent ' + data.percent + '</p>';
+    }
+    $('#main').html(html);
+    if (!data.end){
+        status_timer = setTimeout("get_node('test.DataLoader', 'status', {id:" + data.jobId + "})", 500);
+    } else {
+        alert('finished');
+    }
+}
+
 fn = function(packet, job){
      root = 'main';
      switch (packet.data.action){
@@ -612,6 +632,9 @@ fn = function(packet, job){
             break;
          case 'listing':
             show_listing(packet.data.data, packet.data.node);
+            break;
+        case 'status':
+            job_processor_status(packet.data.data);
             break;
     }
 };
