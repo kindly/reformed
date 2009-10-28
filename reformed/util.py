@@ -11,6 +11,12 @@ def swap_relations(relation_type):
         return "onetomany"
     return "onetoone"
 
+def file_length(fname):
+    with open(fname) as f:
+        for i, l in enumerate(f):
+            pass
+    return i + 1
+
 def check_two_entities(tables, node, rtables):
     if node == "_core_entity":
         counter = 0
