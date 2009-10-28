@@ -508,6 +508,7 @@ function form_show_errors(root, errors){
             if (errors && errors[field_name]){
                 // there is an error for this field
                 $('#' + id).addClass('error');
+           //     $('#' + id).after("<b>ERROR: " + errors[field_name] + "</b>");
                 $('#' + id + '__error').html(errors[field_name]);
             } else {
                 // field is good
