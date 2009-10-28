@@ -2,7 +2,7 @@ import threadpool
 import threading
 from util import load_local_data, get_all_local_data
 import tables
-from fields import Text, DateTime
+from fields import Text, DateTime, Integer
 import time
 import datetime
 import traceback
@@ -29,7 +29,10 @@ class JobScheduler(object):
                                             DateTime("job_started"),
                                             DateTime("job_ended"),
                                             Text("error", length = 2000),
-                                            Text("message", length = 2000)))
+                                            Text("message", length = 2000),
+                                            Integer("percent"))
+                               )
+
             rdatabase.persist()
 
         self.table_name = table_name

@@ -183,10 +183,15 @@ class FlatFile(object):
         self.session = self.database.Session()
         flat_file = self.get_file()
 
+        total_lines = 0
+        for line in flat_file:
+            total_lines += 1
+
+        flat_file.seek(0)
+
         if not hasattr(self, "dialect"):
             self.dialect = csv.Sniffer().sniff(flat_file.read(10240))
 
-        flat_file.seek(0)
 
         csv_file = csv.reader(flat_file, self.dialect)
 
@@ -216,7 +221,8 @@ class FlatFile(object):
                                                             time, rate)
                 print message
                 if messager:
-                    messager.message(message)
+                    percent = line_number * 100 / total_lines
+                    messager.message(message, percent)
         if error_lines:
             self.session.close()
             error_lines.insert(0, self.headers + ["__errors"])
@@ -229,6 +235,12 @@ class FlatFile(object):
         self.session.close()
 
         time, rate = self.get_rate(start_time, line_number)
+
+        message = "%s rows in %s seconds  %s rows/s" % (line_number,
+                                                    time, rate)
+        if messager:
+            percent = 100
+            messager.message(message, percent)
 
         return "completed %s rows in %s seconds  %s rows/s" % (line_number,
                                                             time, rate)

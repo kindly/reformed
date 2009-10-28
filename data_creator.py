@@ -23,7 +23,7 @@ def make_email():
 
 
 def create_csv():
-    num_rows = 10000
+    num_rows = 5000
     filename = 'data.csv'
     data = [
         ["name", make_char, (5, 10)],
