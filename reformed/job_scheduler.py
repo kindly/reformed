@@ -137,22 +137,25 @@ class JobSchedulerThread(threading.Thread):
             session = self.database.Session()
             job_class = self.database.get_class("_core_job_scheduler")
             job = session.query(job_class).get(job_id)
-            ## FIXME this is liable to crash with messages that are too long
-            job.message = u"%s" % (result)
+            message = u"%s" % (result)
+            message = message[:2000] # truncate the message if needed
+            job.message = message
             job.job_ended = datetime.datetime.now()
             session.save(job)
             session.commit()
             session.close()
 
         def exc_callback(request, result):
-            ## FIXME this is liable to crash with errors that are too long
-            ## plus *all* sqlalchemy calls need some crash protection for 
+            ## FIXME sqlalchemy calls need some crash protection for
             ## out of our control stuff ie network failures
             session = self.database.Session()
             job_class = self.database.get_class("_core_job_scheduler")
             job = session.query(job_class).get(job_id)
-            job.message = u"%s\n %s" % (request, "".join(traceback.format_exception(*result)))
-            job.error = u"%s\n %s" % (request, "".join(traceback.format_exception(*result)))
+            #FIXME this may not be the correct error trace
+            error = u"%s\n %s" % (request, "".join(traceback.format_exception(*result)))
+            error = error[:2000] # truncate error if needed
+            job.message = error # for now output the error as a message
+            job.error = error
             job.job_ended = datetime.datetime.now()
             session.save(job)
             session.commit()

@@ -185,9 +185,6 @@ class FlatFile(object):
 
         total_lines = 0
 
-        if self.has_header:
-            csv_file.next()
-
         for line in flat_file:
             total_lines += 1
 
