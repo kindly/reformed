@@ -52,7 +52,7 @@ class JobScheduler(object):
             job.arg = u"%s" % arg
         job.job_start_time = run_time
         job.function = u"%s" % func
-        session.save(job)i
+        session.save(job)
         # FIXME this does not look safe against exceptions
         session.commit()
         job_id = job.id
@@ -139,10 +139,7 @@ class JobSchedulerThread(threading.Thread):
             job = session.query(job_class).get(job_id)
             ## FIXME this is liable to crash with messages that are too long
             job.message = u"%s" % (result)
-            ## FIXME the job cannot have an end time until it is completed.
-            ## this was a guaranteed way to know if the job is still running
-            ## when it _is_ complete it *must* have an end time
-      #      job.job_ended = datetime.datetime.now()
+            job.job_ended = datetime.datetime.now()
             session.save(job)
             session.commit()
             session.close()
@@ -154,6 +151,7 @@ class JobSchedulerThread(threading.Thread):
             session = self.database.Session()
             job_class = self.database.get_class("_core_job_scheduler")
             job = session.query(job_class).get(job_id)
+            job.message = u"%s\n %s" % (request, "".join(traceback.format_exception(*result)))
             job.error = u"%s\n %s" % (request, "".join(traceback.format_exception(*result)))
             job.job_ended = datetime.datetime.now()
             session.save(job)
