@@ -135,11 +135,17 @@ $FORM_CONTROL = {
 		// this is where our controls are defined
 		info: function(item, id, show_label, value){
 			var x = '<div>';
-            x += item.title;
-			x += '</div>'; 
+            x += (show_label ? item.title : '');
+			x += '<div id="' + id + '"></div></div>'; 
 			return x;
 		},
 
+        progress: function(item, id, show_label, value){
+			var x = '<div>';
+            x += (show_label ? item.title : '');
+			x += '<div id="' + id + '"></div></div>'; 
+			return x;
+        },
 	
 		textbox: function(item, id, show_label, value){
 			// simple textbox
@@ -220,6 +226,11 @@ $FORM_CONTROL = {
 			return x;
 		}
 	},
+
+    _info_set: function(id,value){
+        // FIXME value needs to be html escaped
+        $("#" + id).html(value);
+    },
 	
 	_checkbox_set: function(id, value){
 		// sets value of checkbox

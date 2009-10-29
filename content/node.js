@@ -359,12 +359,17 @@ function setup_process_params(root, item){
         }
     }
 }
+
 function form_setup(root, form_data){
     // do any setting up of the form
     for (i=0; i<form_data.fields.length; i++){
             item = form_data.fields[i];
             if (item.params){
                 setup_process_params(root, item);
+            }
+            if (item.type == 'progress'){
+                id = $INFO.getId(root + '#' + item.name);
+                $('#' + id).progressbar();
             }
     }
     dirty(root, null, false);
@@ -573,25 +578,43 @@ function form_save_process_errors(errors){
     }
 }
 
+function update_status(root, data){
 
-function job_processor_status(data){
+    var form_root = parse_strip_subform_info(root);
+    var form_data = $INFO.getState(form_root, 'form_data');
+    for (var field in form_data.fields){
+        // ignore subforms
+        if (form_data.fields[field].type != 'subform'){
+            field_name = form_data.fields[field].name;
+            id = $INFO.getId(root + '#' + field_name);
+            if (data[field_name]){
+                if (form_data.fields[field].type == 'info'){
+                    $('#' + id).html(data[field_name]);
+                }
+                if (form_data.fields[field].type == 'progress'){
+                    $('#' + id).progressbar('option', 'value', data[field_name]);
+                }
+            }
+        }
+    }
 
-    var html = '';
-    html += '<p>JOB #' + data.jobId + '</p>';
-    if (data.message){
-        html += '<p>message ' + data.message + '</p>';
+
+
+
+}
+
+function job_processor_status(data, root){
+
+    if (data.form){
+        $('#' + root).html(node_generate_html(data.form, null, root));
+        form_setup(root, data.form);
     }
-    if (data.start){
-        html += '<p>start ' + data.start + '</p>';
+
+    if (data.status){
+        update_status(root, data.status);
     }
-    if (data.end){
-        html += '<p>end ' + data.end + '</p>';
-    }
-    if (data.percent){
-        html += '<p>percent ' + data.percent + '</p>';
-    }
-    $('#main').html(html);
-    if (!data.end){
+
+    if (!data.status || !data.status.end){
         status_timer = setTimeout("get_node('test.DataLoader', 'status', {id:" + data.jobId + "})", 500);
     } else {
         alert('finished');
@@ -634,7 +657,7 @@ fn = function(packet, job){
             show_listing(packet.data.data, packet.data.node);
             break;
         case 'status':
-            job_processor_status(packet.data.data);
+            job_processor_status(packet.data.data, root);
             break;
     }
 };

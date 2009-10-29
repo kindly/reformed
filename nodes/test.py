@@ -29,24 +29,33 @@ import sqlalchemy as sa
 
 class DataLoader(Node):
 
+    fields = [
+        ['jobId', 'info', 'job #:'],
+        ['start', 'info', 'start:'],
+        ['message', 'info', 'msg'],
+        ['percent', 'progress', 'progress: ']
+    ]
+
     def call(self):
 
         if self.command == 'load':
             jobId = r.reformed.job_scheduler.add_job("loader", "data_load_from_file", "people, /home/toby/git/reformed/data.csv")
-            self.out = {'jobId' : jobId}
+            data = node.create_form_data(self.fields)
+            data['jobId'] = jobId
+            self.out = data
             self.action = 'status'
-        if self.command == 'status':
+        elif self.command == 'status':
             session = r.reformed.Session()
             jobId = self.data.get('id')
             obj = r.reformed.get_class('_core_job_scheduler')
             filter = {'id': jobId}
             data = session.query(obj).filter_by(**filter).one()
             data_out = util.get_row_data(data, keep_all = False, basic = True)
-            self.out = {'start': data_out['job_started'],
-                        'message':data_out['message'],
-                        'percent':data_out['percent'],
-                        'end':data_out['job_ended'],
-                        'jobId' : jobId}
+            out = {'start': data_out['job_started'],
+                   'message':data_out['message'],
+                   'percent':data_out['percent'],
+                   'end':data_out['job_ended']}
+            self.out = {'status': out, 'jobId' : jobId}
             self.action = 'status'
             session.close()
 

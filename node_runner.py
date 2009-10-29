@@ -40,7 +40,7 @@ def reload_nodes():
 
 
 def run(node_name, data, last_node = None):
-    node_base = node_name.rsplit('.')[0]
+    node_base = node_name.split('.')[0]
     found = False
     if not hasattr(nodes, node_base):
         print "importing " + 'nodes.' + node_base
