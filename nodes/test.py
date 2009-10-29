@@ -94,6 +94,7 @@ class People(TableNode):
     fields = [
         ['name', 'textbox', 'name:'],
         ['address_line_1', 'textbox', 'address:'],
+        ['address_line_2', 'textbox', 'town:'],
         ['postcode', 'textbox', 'postcode:'],
         ['email', 'subform', 'email']
     ]

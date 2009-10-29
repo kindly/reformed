@@ -26,7 +26,7 @@ for line in lines:
         postcodes[code]=towns
 
 
-def make_word(min, max):
+def make_word(min, max, delimit = ' '):
     out = []
     for i in xrange(random.randint(min, max)):
         x = random.randint(1,3)
@@ -36,7 +36,7 @@ def make_word(min, max):
             out.append(make_list('nouns'))
         else:
             out.append(make_list('verbs'))
-    out = " ".join(out)
+    out = delimit.join(out)
     return out
 
 
@@ -45,6 +45,17 @@ def make_list(list):
 
 def make_road():
     return str(make_int(1,150)) + ' ' + make_word(1,3) + ' ' + make_list('road_names')
+
+def make_town(base = None):
+    if base:
+        base = current[base]
+        if postcodes.get(base[:2]):
+            towns = postcodes.get(base[:2])
+        else:
+            towns = postcodes.get(base[:1])
+        return towns[random.randint(0, len(towns)-1)]
+    else:
+        return make_word(1,4)
 
 def make_postcode():
     return postcodes.keys()[random.randint(0, len(postcodes)-1)] + str(make_int(1,32)) + ' ' + str(make_int(1,9)) + make_char(2,2,chars='ABCDEFGHJKLMNPRSTUVWXYZ')
@@ -65,26 +76,19 @@ def make_char(min, max, extras = '', chars= u'aabbcddeeeefghijklmnnoppqrssttuvwx
 def make_domain():
 
     tld = ['com', 'org', 'net', 'co.uk', 'org.uk', 'gov']
-    out = make_char(3, 10) + '.' + tld[random.randint(0,len(tld)-1)]
+    out = make_word(1,2, delimit='.') + '.' + tld[random.randint(0,len(tld)-1)]
     return out
 
-def make_email():
-    return make_char(3,20, extras='__..') + '@' + make_domain()
+def make_email(base = None):
+    if base:
+        bases = current[base].split(' ')
+        return bases[random.randint(0,len(bases)-1)] + '@' + make_domain()
+    else:
+        return make_char(3,20, extras='__..') + '@' + make_domain()
 
+current = {}
 
-def create_csv():
-    num_rows = 5000
-    filename = 'data.csv'
-    data = [
-        ["name", make_name, ()],
-        ["address_line_1", make_road, ()],
-        ["postcode", make_postcode, ()],
-        ["email__0__email" ,make_email, ()],
-        ["email__1__email", make_email, ()],
-        ["donkey_sponsership__0__amount", make_int, (1,50)],
-        ["donkey_sponsership__0___donkey__0__name", make_word, (1,3)],
-        ["donkey_sponsership__0___donkey__0__age", make_int, (1, 25)]
-    ]
+def create_csv_from_data(filename, data, num_rows = 1000):
 
     f = open(filename,'w')
 
@@ -95,11 +99,17 @@ def create_csv():
     if header:
         header = header[:-2]
     f.write(header + '\n')
-
+    global current
     for i in range(num_rows):
-        row = ''
+        row = u''
+        current = {}
         for (title, fn, params) in data:
-             row += '"%s", ' % fn(*params)
+            value = fn(*(params))
+            current[title] = value
+            try:
+                row += u'"%s", ' % value
+            except:
+                row += u'"ERROR", '
         if row:
             row = row[:-2]
         f.write(row + '\n')
@@ -108,3 +118,34 @@ def create_csv():
     f.close()
 
     print "%s rows generated" % (i + 1)
+
+
+def create_csv():
+    full_data = [
+
+   ( "data.csv", [
+        ["name", make_name, ()],
+        ["address_line_1", make_road, ()],
+        ["postcode", make_postcode, ()],
+        ["address_line_2", make_town, ('postcode', )],
+        ["email__0__email" ,make_email, ('name', )],
+        ["email__1__email", make_email, ('name', )],
+        ["donkey_sponsership__0__amount", make_int, (1,50)],
+        ["donkey_sponsership__0___donkey__0__name", make_word, (1,3)],
+        ["donkey_sponsership__0___donkey__0__age", make_int, (1, 25)]
+    ], 10000),
+   ( "people.csv", [
+        ["name", make_name, ()],
+        ["address_line_1", make_road, ()],
+        ["postcode", make_postcode, ()],
+        ["address_line_2", make_town, ('postcode', )]
+    ], 5000),
+   ( "donkeys.csv", [
+        ["name", make_word, (1,3)],
+        ["age", make_int, (1, 25)]
+    ], 20000)
+    ]
+ 
+    for (filename, data, num_rows) in full_data:
+        create_csv_from_data(filename, data, num_rows)
+
