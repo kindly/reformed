@@ -63,85 +63,185 @@ class Node(object):
 
 class TableNode(Node):
 
-    """Node for simple table level elements"""
+    """Node for table level elements"""
     table = "unknown"
     fields = []
     form_params =  {"form_type": "normal"}
     list_title = 'item %s'
 
+    subforms = {}
+    subform_data = {}
+
+    first_run = True
+
+
+
+    def __init__(self, *args, **kw):
+        super(TableNode, self).__init__(*args, **kw)
+        if self.__class__.first_run:
+            self.__class__.first_run = False
+            print 'first run'
+            self.setup_forms()
+
+    def setup_forms(self):
+        for field in self.fields:
+            if field[1] == 'subform':
+                name = field[2]
+                subform = self.__class__.subforms.get(name)
+                data = create_form_data(subform.get('fields'), subform.get('params'))
+                data['form']['parent_id'] =  subform.get('parent_id')
+                data['form']['child_id'] =  subform.get('child_id')
+                self.__class__.subform_data[name] = data
+                field.append(data)           
+
     def call(self):
         if  self.command == 'view':
-            self._view()
+            self.view()
         elif self.command == 'save':
-            self._save()
+            self.save()
         elif self.command == 'list':
-            self._list()
+            self.list()
         elif self.command == 'delete':
-            self._delete()
+            self.delete()
         elif self.command == 'new':
-            self._new()
+            self.new()
 
 
-
-
-
-    def _new(self):
-
-        data_out = {'__id': 0}
-        data = create_form_data(self.fields, self.form_params, data_out)
-        self.out = data
-        self.action = 'form'
-
-
-    def _view(self):
-        id = self.data.get('__id')
-        session = r.reformed.Session()
-        obj = r.reformed.get_class(self.table)
-        try:
-            data = session.query(obj).filter_by(_core_entity_id = id).one()
-            data_out = util.get_row_data(data, basic = True)
-            data_out['__id'] = id
-        except sa.orm.exc.NoResultFound:
-            data_out = {}
-        data = create_form_data(self.fields, self.form_params, data_out)
-        self.out = data
-        self.action = 'form'
-        session.close()
-
-    def _save(self):
-
-        id = self.data.get('__id')
-        session = r.reformed.Session()
-        try:
-            if id != '0':
-                obj = r.reformed.get_class(self.table)
-                data = session.query(obj).filter_by(_core_entity_id = id).one()
+    def save_record_rows(self, session, table, fields, data, join_fields):
+        for row_data in data:
+            row_id = row_data.get('id', 0)
+            root = row_data.get('__root')
+            if row_id:
+                filter = {'id' : row_id}
             else:
-                data = r.reformed.get_instance(self.table)
-            for field in self.fields:
+                filter = {}
+            self.save_record(session, table, fields, row_data, filter, root = root, join_fields = join_fields)
+
+    def save_record(self, session, table, fields, data, filter, root, join_fields = []):
+        print 'table %s' % table
+        print 'fields %s' % fields
+        errors = None
+
+        try:
+            if filter:
+                print 'existing record'
+                obj = r.reformed.get_class(table)
+                record_data = session.query(obj).filter_by(**filter).one()
+            else:
+                print 'new record'
+                record_data = r.reformed.get_instance(table)
+            for field in fields:
                 field_name = field[0]
-                value = self.data.get(field_name)
-                setattr(data, field_name, value)
+                field_type = field[1]
+                if field_name != 'id' and field_type != 'subform':
+                    value = data.get(field_name)
+                    print '%s = %s' % (field_name, value)
+                    setattr(record_data, field_name, value)
+            for field_name in join_fields:
+                    value = data.get(field_name)
+                    print 'join: %s = %s' % (field_name, value)
+                    setattr(record_data, field_name, value)
             try:
-                session.save_or_update(data)
+                session.save_or_update(record_data)
                 session.commit()
+                self.saved.append([root, record_data.id])
             except fe.Invalid, e:
                 session.rollback()
-                print "we fucked!", e.msg
+                print "failed to save\n%s" % e.msg
                 errors = {}
                 for key, value in e.error_dict.items():
                     errors[key] = value.msg
                 print repr(errors)
-                self.out = errors
-                self.action = 'save_error'
+                self.errors[root] = errors
         except sa.orm.exc.NoResultFound:
-            errors = {'~': 'record not found'}
-            self.out = errors
-            self.action = 'save_error'
+            self.errors[root] = 'record not found'
+
+    def save(self):
+
+        self.saved = []
+        self.errors = {}
+
+        session = r.reformed.Session()
+        id = self.data.get('id')
+        root = self.data.get('__root')
+        if id:
+            filter = {'id' : id}
+        else:
+            filter = {}
+
+        self.save_record(session, self.table, self.fields, self.data, filter, root)
+
+        # FIXME how do we deal with save errors more cleverly?
+        # need to think about possible behaviours we want
+        # and add some 'failed save' options
+        if not self.errors:
+            for subform_name in self.subforms.keys():
+                subform_data = self.data.get(subform_name)
+                if subform_data:
+                    subform = self.subforms.get(subform_name)
+                    table = subform.get('table')
+                    fields = subform.get('fields')
+                    # do we have a joining field?
+                    child_id = subform.get('child_id')
+                    if child_id:
+                        join_fields= [child_id]
+                    self.save_record_rows(session, table, fields, subform_data, join_fields)
+
         session.close()
 
+        # output data
+        out = {}
+        if self.errors:
+            out['errors'] = self.errors
+        if self.saved:
+            out['saved'] = self.saved
 
-    def _delete(self):
+        self.out = out
+        self.action = 'save'
+
+
+    def new(self):
+
+        data_out = {}
+        data = node.create_form_data(self.fields, self.form_params, data_out)
+        self.out = data
+        self.action = 'form'
+
+
+    def view(self):
+        id = self.data.get('id')
+        if id:
+            filter = {'id' : id}
+        else:
+            id = self.data.get('__id')
+            filter = {'_core_entity_id' : id}
+
+        session = r.reformed.Session()
+        obj = r.reformed.get_class(self.table)
+        try:
+            data = session.query(obj).filter_by(**filter).one()
+            data_out = util.get_row_data(data, keep_all = False, basic = True)
+            data_out['id'] = data.id
+            people_id = data.id
+        except sa.orm.exc.NoResultFound:
+            data_out = {}
+            people_id = 0
+
+        for subform_name in self.subforms.keys():
+            print 'subforrm', subform_name
+            print self.subforms
+            subform = self.subforms.get(subform_name)
+            subform_parent_id = subform.get('parent_id')
+            subform_parent_value = getattr(data, subform_parent_id)
+            subform_data = self.subform_data.get(subform_name)
+            data_out[subform_name] = self.subform(session, subform, subform_data, subform_parent_value)
+
+        data = create_form_data(self.fields, self.form_params, data_out)
+        self.out = data
+        self.action = 'form'
+        session.close()
+
+    def delete(self):
 
         id = self.data.get('__id')
         session = r.reformed.Session()
@@ -159,8 +259,7 @@ class TableNode(Node):
         session.close()
 
 
-    def _list(self, limit=20):
-        print '######## %s'  % self.table
+    def list(self, limit=20):
         results = r.reformed.search('_core_entity', "%s.id >0" % self.table, limit=limit)
         out = []
         for result in results:
@@ -172,6 +271,23 @@ class TableNode(Node):
 
         self.out = out
         self.action = 'listing'
+
+
+    def subform(self, session, subform, form_data, parent_value):
+
+        table = subform.get('table')
+        child_id = subform.get('child_id')
+        obj = r.reformed.get_class(table)
+        filter = {child_id : parent_value}
+        try:
+            data = session.query(obj).filter_by(**filter).all()
+            out = util.create_data_array(data, keep_all=False, basic=True)
+        except sa.orm.exc.NoResultFound:
+            out = {}
+        return out
+
+
+
 
 
 def create_fields(fields_list):
