@@ -2,6 +2,7 @@ import os
 import os.path
 import sys
 import mimetypes
+import beaker
 import cgi
 
 import wsgiref.util
@@ -10,6 +11,9 @@ import json
 
 import interface
 import lookup
+
+import logging
+logger = logging.getLogger('reformed.main')
 
 
 # I'd like to put this in the WebApplication class but it

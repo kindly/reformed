@@ -36,6 +36,7 @@ import util
 import time
 import job_scheduler
 import standard_jobs
+import os
 
 reformed = Database("reformed", 
                     entity = True,
@@ -44,6 +45,7 @@ reformed = Database("reformed",
                     session = dbconfig.Session,
                     logging_tables = False
                     )
+
 
 reformed.job_scheduler.add_job("delete_lock", 
                                "delete_lock_tables",

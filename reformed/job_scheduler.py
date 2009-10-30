@@ -18,7 +18,7 @@ POLL_INTERVAL = 10
 
 class JobScheduler(object):
 
-    def __init__(self, rdatabase, table_name = "_core_job_scheduler"):
+    def __init__(self, rdatabase, schedular_thread, table_name = "_core_job_scheduler"):
 
         if not table_name in rdatabase.tables:
             rdatabase.add_table(tables.Table(table_name, 
@@ -35,6 +35,7 @@ class JobScheduler(object):
 
             rdatabase.persist()
 
+        self.schedular_thread = schedular_thread
         self.table_name = table_name
         self.database = rdatabase
 
@@ -42,37 +43,27 @@ class JobScheduler(object):
 
     def add_job(self, job_type, func, arg = None, **kw):
 
-        session = self.database.Session()
-
-        run_time = kw.get("time", datetime.datetime.now())
-
-        job = self.database.get_instance(self.table_name)
-        job.job_type = job_type.decode("utf8")
-        if arg:
-            job.arg = u"%s" % arg
-        job.job_start_time = run_time
-        job.function = u"%s" % func
-        session.save(job)
-        # FIXME this does not look safe against exceptions
-        session.commit()
-        job_id = job.id
-        session.close()
-        return job_id
-
-
-    def shut_down_all_threads(self):
-
-        threadpool = self.database.job_scheduler.threadpool
-
-        threadpool.dismissWorkers(POOL_SIZE)
-        threadpool.joinAllDismissedWorkers()
-
-        if self.database.schedular_thread:
-            self.database.schedular_thread.alive = False
-            self.database.schedular_thread.join()
-
-        
-
+        try:
+            session = self.database.Session()
+            run_time = kw.get("time", datetime.datetime.now())
+            job = self.database.get_instance(self.table_name)
+            job.job_type = job_type.decode("utf8")
+            if arg:
+                job.arg = u"%s" % arg
+            job.job_start_time = run_time
+            job.function = u"%s" % func
+            session.save(job)
+            # FIXME this does not look safe against exceptions
+            session.commit()
+            job_id = job.id
+            session.close()
+            return job_id
+        except Exception:
+            import sys
+            print >> sys.stderr, "%s %s" % ("error in schedular thread shutting down",
+                                            traceback.format_exc())
+            self.schedular_thread.shut_down_all_threads()
+            self.schedular_thread.alive = False
 
 
 class JobSchedulerThread(threading.Thread):
@@ -81,7 +72,7 @@ class JobSchedulerThread(threading.Thread):
         super(JobSchedulerThread, self).__init__()
         self.database = database
         self.maker_thread = maker_thread
-        self.job_scheduler = JobScheduler(self.database)
+        self.job_scheduler = JobScheduler(self.database, self)
 
     alive = False
     def run(self):
@@ -93,20 +84,38 @@ class JobSchedulerThread(threading.Thread):
 
         self.alive = True
         while self.alive:
-            ## FIXME is this a safe call? does search offer eception handling?
-            to_run = self.database.search("_core_job_scheduler",
-                                          "job_start_time <= now and job_started is null") 
 
-            for result in to_run:
-                result["_core_job_scheduler.job_started"] = datetime.datetime.now()
-                result["_core_job_scheduler.message"] = "started"
-                result["__table"] = "_core_job_scheduler"
-                func = getattr(standard_jobs, result["_core_job_scheduler.function"].encode("ascii"))
-                arg = result["_core_job_scheduler.arg"]
-                if arg:
-                    arg = arg.encode("ascii")
-                self.make_request(func, arg, result["_core_job_scheduler.id"])
-                load_local_data(self.database, result)
+            ## added to make sure query does not run and clean up
+            if not self.maker_thread.isAlive():
+                print "commmencing shutdown procedures"
+                self.shut_down_all_threads()
+                self.alive = False
+                break
+
+
+            ## added as last resort 
+            try:
+                to_run = self.database.search("_core_job_scheduler",
+                                              "job_start_time <= now and job_started is null") 
+
+                for result in to_run:
+                    result["_core_job_scheduler.job_started"] = datetime.datetime.now()
+                    result["_core_job_scheduler.message"] = "started"
+                    result["__table"] = "_core_job_scheduler"
+                    func = getattr(standard_jobs, result["_core_job_scheduler.function"].encode("ascii"))
+                    arg = result["_core_job_scheduler.arg"]
+                    if arg:
+                        arg = arg.encode("ascii")
+                    self.make_request(func, arg, result["_core_job_scheduler.id"])
+                    load_local_data(self.database, result)
+            except Exception:
+                import sys
+                print >> sys.stderr, "%s %s" % ("error in schedular thread shutting down",
+                                                traceback.format_exc())
+                self.shut_down_all_threads()
+                self.alive = False
+                break
+
 
 
 
@@ -153,6 +162,7 @@ class JobSchedulerThread(threading.Thread):
             job = session.query(job_class).get(job_id)
             #FIXME this may not be the correct error trace
             error = u"%s\n %s" % (request, "".join(traceback.format_exception(*result)))
+            logger.error(error)
             error = error[:2000] # truncate error if needed
             job.message = error # for now output the error as a message
             job.error = error

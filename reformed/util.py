@@ -2,6 +2,26 @@ JOINS_DEEP = 6
 import data_loader
 import formencode as fe
 import datetime
+import os
+
+
+def get_dir(file = None, extra_path = None):
+
+    """path from parent directory of this this file
+    file:  
+        file to be added to end of path
+    extra path:
+        path from this directory"""
+    root_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+    if not file:
+        if extra_path:
+            return os.path.join(root_dir, extra_path)
+        else:
+            return root_dir
+    if extra_path:
+        return os.path.join(os.path.join(root_dir, extra_path), file)
+    else:
+        return os.path.join(root_dir, file)
 
 
 def swap_relations(relation_type):

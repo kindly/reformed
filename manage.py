@@ -22,6 +22,8 @@
 import os, os.path, sys
 from reformed.export import json_dump_all_from_table
 from reformed.data_loader import load_json_from_file
+from reformed.util import get_dir
+
 
 
 
@@ -66,6 +68,7 @@ def dump():
 
 def run():
     print 'starting webserver'
+    import beaker.middleware
     from reformed.reformed import reformed 
     reformed.scheduler_thread.start()
     if load:
@@ -77,7 +80,13 @@ def run():
     else:
         from wsgiref.simple_server import WSGIServer, WSGIRequestHandler
         httpd = WSGIServer(('', 8000), WSGIRequestHandler)
-        httpd.set_app(web.WebApplication())
+        application = web.WebApplication()
+        
+        application = beaker.middleware.SessionMiddleware(application, {"session.type": "memory",
+                                                                        "session.auto": True})
+
+        httpd.set_app(application)
+
         print "Serving HTTP on %s port %s ..." % httpd.socket.getsockname()
         try:
             httpd.serve_forever()
