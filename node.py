@@ -203,7 +203,7 @@ class TableNode(Node):
     def new(self):
 
         data_out = {}
-        data = node.create_form_data(self.fields, self.form_params, data_out)
+        data = create_form_data(self.fields, self.form_params, data_out)
         self.out = data
         self.action = 'form'
 
