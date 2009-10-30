@@ -41,7 +41,10 @@ def make_word(min, max, delimit = ' '):
 
 
 def make_list(list):
-    return lists[list][random.randint(0,len(lists[list])-1)]
+    out = None
+    while not out:
+        out = lists[list][random.randint(0,len(lists[list])-1)]
+    return out
 
 def make_road():
     return str(make_int(1,150)) + ' ' + make_word(1,3) + ' ' + make_list('road_names')
