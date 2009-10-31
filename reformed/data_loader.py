@@ -8,6 +8,7 @@ import datetime
 import formencode as fe
 import json
 import datetime
+import custom_exceptions
 
 logger = logging.getLogger('reformed.main')
 
@@ -108,8 +109,28 @@ def load_json_from_file(file, database, table):
 
 
 
-    
+class ErrorLine(object):
 
+    def __init__(self, line_number, line, error_dict):
+
+        self.line_number =  line_number
+        self.line =  line
+        self.error_dict = error_dict
+
+    def __repr__(self):
+
+        return "line_number: %s, errors: %s" % (self.line_number, self.error_dict)
+
+class ChunkStatus(object):
+
+    def __init__(self, chunk, status, error_lines = None, error = None):
+
+        self.chunk = chunk
+        self.status = status
+        self.error_lines =  error_lines or []
+
+        self.error_count = len(self.error_lines)
+        self.length = chunk[0] - chunk[1]
 
 class FlatFile(object):
 
@@ -120,6 +141,9 @@ class FlatFile(object):
         self.table = table
 
         self.validation = True
+
+        self.dialect = None
+        self.total_lines = None
 
         self.parent_key = {}
         self.key_data = {}
@@ -153,11 +177,7 @@ class FlatFile(object):
 
     def get_file(self):
 
-        if isinstance(self.data, basestring):
-            flat_file = open(self.data, mode = "rb")
-        else:
-            flat_file = data
-
+        flat_file = open(self.data, mode = "rb")
         return flat_file
 
     def get_headers(self):
@@ -174,65 +194,147 @@ class FlatFile(object):
 
         return first_line
 
-    def load(self, validation = True, print_every = 250, batch = 250, messager = None):
+    def count_lines(self):
+
+        if not self.total_lines:
+            with open(self.data, mode = "rb") as flat_file:
+
+                total_lines = 0
+
+                if self.has_header:
+                    flat_file.next()
+
+                for line in flat_file:
+                    total_lines += 1
+
+                self.total_lines = total_lines
+
+        return self.total_lines
+
+
+    def set_dialect(self):
+
+        if not self.dialect:
+            with open(self.data, mode = "rb") as flat_file:
+                self.dialect = csv.Sniffer().sniff(flat_file.read(10240))
+
+    def make_chunks(self, chunk_size):
+
+        total_lines = self.count_lines()
+
+        chunks = []
+
+        low_bound = 0
+        up_bound = 0
+
+        while True:
+            up_bound = low_bound + chunk_size
+            if up_bound >= total_lines:
+                chunks.append([low_bound, total_lines])
+                break
+            else:
+                chunks.append([low_bound, up_bound])
+                low_bound = up_bound
+
+        return chunks
+
+    def load_chunk(self, chunk):
+
+        session = self.database.Session()
+
+        lower, upper = chunk
+
+        error_lines = []
+
+        with open(self.data, mode = "rb") as flat_file:
+
+            csv_file = csv.reader(flat_file, self.dialect)
+
+            if self.has_header:
+                csv_file.next()
+
+            for line_number, line in enumerate(csv_file):
+
+                if line_number < lower:
+                    continue
+                if line_number >= upper:
+                    break
+
+                record = SingleRecord(self.database, self.table, line, self)
+
+                record.get_all_obj(session)
+
+                record.add_all_values_to_obj()
+
+                try:
+                    record.save_all_objs(session)
+                except fe.Invalid, e:
+                    error_lines.append(ErrorLine(line_number, line, e.error_dict))
+
+        if error_lines:
+            return ChunkStatus(chunk, "validation error", error_lines)
+        
+        try:
+            session.commit()
+            return ChunkStatus(chunk, "committed")
+        except custom_exceptions.LockingError, e:
+            return ChunkStatus(chunk, "locking error", error = e)
+        except Exception, e:
+            return ChunkStatus(chunk, "unknown error", error = e)
+        finally:
+            session.close()
+
+    def load(self, validation = True, batch = 250, messager = None):
 
         self.validation = validation
 
         start_time = datetime.datetime.now()
 
         self.session = self.database.Session()
-        flat_file = self.get_file()
-
-        total_lines = 0
-
-        for line in flat_file:
-            total_lines += 1
-
-        flat_file.seek(0)
-
-        if not hasattr(self, "dialect"):
-            self.dialect = csv.Sniffer().sniff(flat_file.read(10240))
-
-        flat_file.seek(0)
-
-        csv_file = csv.reader(flat_file, self.dialect)
-
-        if self.has_header:
-            csv_file.next()
         
-        error_lines = []
+        total_lines = self.count_lines()
 
-        line_number = 0
+        self.set_dialect()
 
-        for line in csv_file:
-            line_number = line_number + 1
-            record = SingleRecord(self.database, self.table, line, self)
-            record.get_all_obj(self.session)
-            record.add_all_values_to_obj()
-            try:
-                record.save_all_objs(self.session)
-            except fe.Invalid, e:
-                error_lines.append(line + [str(e.error_dict)])
-            if line_number % batch == 0 and not error_lines:
-                print 'commiting'
+        with open(self.data, mode = "rb") as flat_file:
+
+            csv_file = csv.reader(flat_file, self.dialect)
+
+            if self.has_header:
+                csv_file.next()
+            
+            error_lines = []
+
+            line_number = 0
+
+            for line in csv_file:
+                line_number = line_number + 1
+                record = SingleRecord(self.database, self.table, line, self)
+                record.get_all_obj(self.session)
+                record.add_all_values_to_obj()
+                try:
+                    record.save_all_objs(self.session)
+                except fe.Invalid, e:
+                    error_lines.append(line + [str(e.error_dict)])
+                if line_number % batch == 0 and not error_lines:
+                    print 'commiting'
+                    self.session.commit()
+                    self.session.expunge_all()
+                    time, rate = self.get_rate(start_time, line_number)
+                    message = "%s rows in %s seconds  %s rows/s" % (line_number,
+                                                                time, rate)
+                    print message
+                    if messager:
+                        percent = line_number * 100 / total_lines
+                        messager.message(message, percent)
+
+            if error_lines:
+                self.session.close()
+                error_lines.insert(0, self.headers + ["__errors"])
+                return error_lines
+            else:
                 self.session.commit()
-                self.session.expunge_all()
-            if line_number % print_every == 0 and not error_lines:
-                time, rate = self.get_rate(start_time, line_number)
-                message = "%s rows in %s seconds  %s rows/s" % (line_number,
-                                                            time, rate)
-                print message
-                if messager:
-                    percent = line_number * 100 / total_lines
-                    messager.message(message, percent)
-        if error_lines:
-            self.session.close()
-            error_lines.insert(0, self.headers + ["__errors"])
-            return error_lines
-        else:
-            self.session.commit()
-                
-        flat_file.close()
+                    
 
         self.session.close()
 
