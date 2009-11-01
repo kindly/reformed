@@ -1,6 +1,8 @@
 import reformed.reformed as r
 import data_creator as d
 import datetime
+import re
+import csv
 from multiprocessing import Pool
 
 data = []
@@ -13,7 +15,7 @@ fields = [
 
 table = 'people'
 
-num_rows = 10000 
+num_rows = 1000 
 for i in range(num_rows):
     row = []
     for j in range(len(fields)):
