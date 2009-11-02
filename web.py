@@ -66,13 +66,13 @@ def process_node(environ, start_response):
         return [json.dumps(data, separators=(',',':'))]
     except TypeError:
         # we had a problem with the JSON conversion
+        print traceback.format_exc()
         # let's send the error to the front-end
         error_msg = 'JSON OUTPUT FAIL\n\n%s' % traceback.format_exc()
         info = {'action': 'general_error',
                 'node' : 'moo',
                 'data' : error_msg}
         data = [{'data' : info, 'type' : 'node'}]
-        print json.dumps(data, sort_keys=False, indent=4)
         return [json.dumps(data,  separators=(',',':'))]
 
 
