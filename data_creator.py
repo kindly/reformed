@@ -1,4 +1,5 @@
 import random
+import codecs
 
 l = ['last_names',
      'first_names',
@@ -93,15 +94,14 @@ current = {}
 
 def create_csv_from_data(filename, data, num_rows = 1000):
 
-    f = open(filename,'w')
+    f = codecs.open(filename,'w+', 'utf-8')
 
-
-    header = ''
+    header = u''
     for (title, fn, params) in data:
-        header += '"%s", ' % title
+        header += u'"%s", ' % title
     if header:
         header = header[:-2]
-    f.write(header + '\n')
+    f.write(header + u'\n')
     global current
     for i in range(num_rows):
         row = u''
@@ -109,13 +109,17 @@ def create_csv_from_data(filename, data, num_rows = 1000):
         for (title, fn, params) in data:
             value = fn(*(params))
             current[title] = value
-            try:
-                row += u'"%s", ' % value
-            except:
-                row += u'"ERROR", '
+            #try:
+            if isinstance(value, basestring):
+                value = value.decode("utf-8")
+            row += u'"%s", ' % value
+            #except:
+            #    row += u'"ERROR", '
         if row:
             row = row[:-2]
-        f.write(row + '\n')
+
+        f.write(row + u"\n")
+
         if (i + 1) % 1000 == 0:
             print "%s rows" % (i + 1)
     f.close()
@@ -151,4 +155,8 @@ def create_csv():
  
     for (filename, data, num_rows) in full_data:
         create_csv_from_data(filename, data, num_rows)
+
+if __name__ == "__main__":
+
+    create_csv()
 
