@@ -465,11 +465,15 @@ function node_save(root, command){
 
 function node_delete(root, command){
     msg('node_delete');
-    var form_data = $INFO.getState('#', 'form_data');
+ //   var form_data = $INFO.getState('#', 'form_data');
+    var sent_data = $INFO.getState(root, 'sent_data');
     var node =  $INFO.getState(root, 'node');
     var out = {};
-    var id = $INFO.getId('main#*id');
-    out.__id = $('#'+ id).val();
+    var id = sent_data.id;
+    if (id){
+        out.id = id;
+    }
+    get_node(node, 'delete', out);
 }
 
 

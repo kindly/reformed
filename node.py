@@ -242,12 +242,17 @@ class TableNode(Node):
         session.close()
 
     def delete(self):
+        id = self.data.get('id')
+        if id:
+            filter = {'id' : id}
+        else:
+            id = self.data.get('__id')
+            filter = {'_core_entity_id' : id}
 
-        id = self.data.get('__id')
         session = r.reformed.Session()
         obj = r.reformed.get_class(self.table)
         try:
-            data = session.query(obj).filter_by(_core_entity_id = id).one()
+            data = session.query(obj).filter_by(**filter).one()
             session.delete(data)
             session.commit()
             self.next_node = self.name
