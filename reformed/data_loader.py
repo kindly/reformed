@@ -315,6 +315,7 @@ class FlatFile(object):
             self.status.append(chunk_status)
             self.calculate_stats()
 
+        return self.calculate_stats()
 
 
     def calculate_stats(self):
@@ -343,6 +344,8 @@ class FlatFile(object):
 
         if self.messager:
             self.messager.message(message, percent)
+
+        return message
 
     
 
