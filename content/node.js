@@ -629,7 +629,6 @@ function update_status(root, data){
 
 function job_processor_status(data, node, root){
 
-    var current_node = $INFO.getState(root, 'node');
 
     if (data.form){
         $('#' + root).html(node_generate_html(data.form, null, root));
@@ -637,6 +636,7 @@ function job_processor_status(data, node, root){
         $INFO.setState(root, 'node', node);
     }
 
+    var current_node = $INFO.getState(root, 'node');
     if (data.status && current_node == node){
         update_status(root, data.status);
     }
