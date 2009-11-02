@@ -339,7 +339,7 @@ class FlatFile(object):
                                    time, rate, other_errors + validation_errors)
         print message
 
-        percent = completed/self.total_lines
+        percent = completed*100/self.total_lines
 
         if self.messager:
             self.messager.message(message, percent)
