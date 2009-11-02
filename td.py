@@ -10,8 +10,8 @@ d.add_entity(r.Table("people",
                     r.OneToMany("email","email",
                               order_by = "email",
                               eager = True),
-                    r.OneToMany("donkey_sponsership",
-                              "donkey_sponsership",
+                    r.OneToMany("donkey_sponsorship",
+                              "donkey_sponsorship",
                               many_side_not_null = False
                                ),
                     summary_fields = "name,address_line_1,postcode"
@@ -30,8 +30,8 @@ d.add_entity(r.Table("donkey",
                     r.OneToOne("donkey_pics","donkey_pics",
                              many_side_not_null = False
                              ),
-                    r.OneToMany("donkey_sponsership",
-                              "donkey_sponsership",
+                    r.OneToMany("donkey_sponsorship",
+                              "donkey_sponsorship",
                                 many_side_not_null = False),
                     summary_fields = "name,age"
                    )
@@ -43,7 +43,7 @@ d.add_table(r.Table("donkey_pics",
                    )
            )
 
-d.add_table(r.Table("donkey_sponsership",
+d.add_table(r.Table("donkey_sponsorship",
                     r.Money("amount"),
                     r.Date("giving_date"),
                     entity_relationship = True

@@ -137,9 +137,9 @@ def create_csv():
         ["address_line_2", make_town, ('postcode', )],
         ["email__0__email" ,make_email, ('name', )],
         ["email__1__email", make_email, ('name', )],
-        ["donkey_sponsership__0__amount", make_int, (1,50)],
-        ["donkey_sponsership__0___donkey__0__name", make_word, (1,3)],
-        ["donkey_sponsership__0___donkey__0__age", make_int, (1, 25)]
+        ["donkey_sponsorship__0__amount", make_int, (1,50)],
+        ["donkey_sponsorship__0___donkey__0__name", make_word, (1,3)],
+        ["donkey_sponsorship__0___donkey__0__age", make_int, (1, 25)]
     ], 10000),
    ( "people.csv", [
         ["name", make_name, ()],

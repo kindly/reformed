@@ -62,6 +62,7 @@ function init(){
     
     // preload the donkey form
 //    $FORM.request('donkey', 'main', 'first');
+    $.address.change(page_load);
 }
 
 form_active = true;

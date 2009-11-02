@@ -39,7 +39,9 @@ class DataLoader(Node):
     def call(self):
 
         if self.command == 'load':
-            jobId = r.reformed.job_scheduler.add_job("loader", "data_load_from_file", "people, %s" % util.get_dir("data.csv"))
+            file = self.data.get('file')
+            table = self.data.get('table')
+            jobId = r.reformed.job_scheduler.add_job("loader", "data_load_from_file", "%s, %s" % (table, file))
             data = node.create_form_data(self.fields)
             data['jobId'] = jobId
             self.out = data
@@ -87,6 +89,18 @@ class People(TableNode):
             "params":{
                 "form_type": "grid"
             }                  
+        },
+        'sponsorship':{
+            'fields': [
+                ['amount', 'textbox', 'amount:'],
+                ['donkey_id', 'textbox', 'donkey:']
+            ],
+            "parent_id": "id",
+            "child_id": "people_id",
+            "table": "donkey_sponsorship",
+            "params":{
+                "form_type": "grid"
+            }
         }
     }
 
@@ -95,7 +109,8 @@ class People(TableNode):
         ['address_line_1', 'textbox', 'address:'],
         ['address_line_2', 'textbox', 'town:'],
         ['postcode', 'textbox', 'postcode:'],
-        ['email', 'subform', 'email']
+        ['email', 'subform', 'email'],
+        ['sponsorship', 'subform', 'sponsorship']
     ]
 
     list_title = 'person %s'

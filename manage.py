@@ -71,8 +71,6 @@ def run():
     import beaker.middleware
     from reformed.reformed import reformed 
     reformed.scheduler_thread.start()
-    if load:
-        reformed.job_scheduler.add_job("loader", "data_load_from_file", "people, data.csv")
     import web
     if os.environ.get("REQUEST_METHOD", ""):
         from wsgiref.handlers import BaseCGIHandler

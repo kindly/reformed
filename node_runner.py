@@ -76,6 +76,8 @@ def run(node_name, data, last_node = None):
         else:
             info = {'action': x.action,
                     'node': node_name,
+                    'title' : x.title,
+                    'link' : x.link,
                     'data' : x.out}
             return info
     else:

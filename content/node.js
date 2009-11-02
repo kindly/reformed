@@ -23,12 +23,28 @@
     ======
 
 */
+
+
+function page_load(){
+    var link = $.address.value().split(':');
+    if (link[0]=='/n'){
+        var node = link[1];
+        var command = link[2];
+        var data_hash = {};
+        if (link.length>3){
+            var data = link[3];
+            var x = data.split('=');
+            data_hash[x[0]] = x[1];
+        }
+        get_node(node, command, data_hash);
+    }
+}
 function _wrap(arg, tag){
     // this wraps the item in <tag> tags
     return '<' + tag + '>' + arg + '</' + tag + '>';
 }
 
-function _subform(item, my_id, data){
+function _subform(item, my_id, data, root){
     var out = '<div class="subform" id="' + my_id + '" >'+ item.title + '</br>';
     out += node_generate_html(item.params.form, data, root + '#' + item.name);
     out += '</div>';
@@ -56,11 +72,13 @@ function _generate_fields_html(form, local_data, data, row_count){
         my_id = $INFO.addId(my_id);
         if (item.type == 'subform'){
             // get HTML for subform
-            formHTML += _subform(item, my_id, data[item.name]);
+            formHTML += _subform(item, my_id, data[item.name], local_data.root);
         } else {
             // get value
             if (data && typeof(data[item.name]) != 'undefined'){
                 value = data[item.name];
+            } else {
+                value = '';
             }
             // add item
             var temp = $FORM_CONTROL.html(item, my_id, local_data.show_label, value);
@@ -491,9 +509,9 @@ function show_listing(data, node){
         table = String(item.table);
         next_node = 'test.' + table.substring(0,1).toUpperCase() + table.substring(1,table.length);
         html += '<div class="list">';
-        html += '<span class="list_title" onclick="$JOB.add({node: \'' + next_node + '\', lastnode: \'' + node + '\', data:{__id: ';
-        html += item.id + '}, command: \'view\'}';
-        html += ', {}, \'node\', true)">' + item.table + ' - ' + item.title + '</span></br><span class="list_summary">' + item.summary + '</span></div>';
+        html += '<span class="list_title" ';
+        html += 'onclick="get_node(\'' + next_node + '\', \'view\', {__id:' + item.id + '})"';
+        html += '>' + item.table + ' - ' + item.title + '</span></br><span class="list_summary">' + item.summary + '</span></div>';
     }
     $('#main').html(html);
 }
@@ -620,12 +638,21 @@ function job_processor_status(data, root){
     }
 
     if (!data.status || !data.status.end){
-        status_timer = setTimeout("get_node('test.DataLoader', 'status', {id:" + data.jobId + "})", 500);
+        status_timer = setTimeout("get_node('test.DataLoader', 'status', {id:" + data.jobId + "})", 2000);
     }
 }
 
 fn = function(packet, job){
-     root = 'main';
+     var root = 'main'; //FIXME
+
+     var title = packet.data.title;
+     if (title){
+         $.address.title(title);
+     }
+     var link = packet.data.link;
+     if (link){
+         $.address.value('n:' + link);
+     }
      switch (packet.data.action){
 
          case 'html':
