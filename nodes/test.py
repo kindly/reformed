@@ -51,7 +51,8 @@ class DataLoader(Node):
             filter = {'id': jobId}
             data = session.query(obj).filter_by(**filter).one()
             data_out = util.get_row_data(data, keep_all = False, basic = True)
-            out = {'start': data_out['job_started'],
+            out = {'jobId' : jobId,
+                   'start': data_out['job_started'],
                    'message':data_out['message'],
                    'percent':data_out['percent'],
                    'end':data_out['job_ended']}
