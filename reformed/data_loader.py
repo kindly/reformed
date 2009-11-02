@@ -111,24 +111,6 @@ def load_json_from_file(file, database, table):
     for record in json_file:
         SingleRecord(database, table, record).load()
 
-def load_chunk(chunk, table, filename, queue):
-
-    try:
-        flat_file = FlatFile(reformed_database, table, filename)
-
-        chunk_status = flat_file.load_chunk(chunk)
-
-        result_queue = data_load_queues[queue]
-
-        result_queue.put(chunk_status)
-        #return chunk_status
-    except Exception, e:
-        chunk_status = ChunkStatus(chunk, "serious error", error = e)
-        result_queue = data_load_queues[queue]
-        result_queue.put(chunk_status)
-        #return ChunkStatus(chunk, "serious error", error = e)
-
-
 
 class ErrorLine(object):
 
@@ -161,10 +143,6 @@ class ChunkStatus(object):
 class FlatFile(object):
 
     def __init__(self, database, table, data, headers = None):
-
-        global reformed_database
-        if not reformed_database:
-            reformed_database = database
 
         self.data = data
         self.database = database
@@ -332,74 +310,10 @@ class FlatFile(object):
 
         self.set_dialect()
 
-
-        if load_multiprocess:
-
-            
-            self.now = str(datetime.datetime.now())
-
-            global data_load_queues
-            
-            data_load_queues[self.now] = multiprocessing.Queue()
-
-            results = {}
-
-            process_errors = 0
-
-            pool = Pool()
-
-            for chunk in chunks:
-                result = pool.apply_async(load_chunk, (chunk, self.table, self.data, self.now)) 
-                results[tuple(chunk)] = result
-
-            while 1:
-                try:
-                    try:
-                        result = data_load_queues[self.now].get()
-                    except Exception, e:
-                        process_errors += 1
-
-                    self.status.append(result)
-                    results.pop(tuple(result.chunk))
-                    self.calculate_stats()
-                except Queue.Empty:
-                    time.sleep(0.25)
-                if not results:
-                    break
-                if len(results) == process_errors:
-                    for chunk in results:
-                        self.status.append(ChunkStatus(chunk, "unknown error"))
-
-            data_load_queues.pop(self.now)
-                
-
-            #while 1:
-            #    to_delete = []
-            #    for chunk, result in results.iteritems():
-            #        if result.ready():
-            #            to_delete.append(chunk)
-            #            try:
-            #                res = result.get()
-            #                self.status.append(res)
-            #                self.calculate_stats()
-            #            except Exception, e:
-            #                print e
-#
-#                for chunk in to_delete:
-#                    results.pop(chunk)
-#                time.sleep(0.25)
-#                if not results:
-#                    break
-
-            #pool.map_async(load_chunk, chunks, callback = self.callback)
-            pool.close()
-            pool.join()
-
-        else:
-            for chunk in chunks:
-                chunk_status = self.load_chunk(chunk)
-                self.status.append(chunk_status)
-                self.calculate_stats()
+        for chunk in chunks:
+            chunk_status = self.load_chunk(chunk)
+            self.status.append(chunk_status)
+            self.calculate_stats()
 
 
 
@@ -425,7 +339,7 @@ class FlatFile(object):
                                    time, rate, other_errors + validation_errors)
         print message
 
-        percent = completed/self.total_lines
+        percent = completed*100/self.total_lines
 
         if self.messager:
             self.messager.message(message, percent)
