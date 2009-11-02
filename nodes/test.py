@@ -87,6 +87,18 @@ class People(TableNode):
             "params":{
                 "form_type": "grid"
             }                  
+        },
+        'sponsorship':{
+            'fields': [
+                ['amount', 'textbox', 'amount:'],
+                ['donkey_id', 'textbox', 'donkey:']
+            ],
+            "parent_id": "id",
+            "child_id": "people_id",
+            "table": "donkey_sponsorship",
+            "params":{
+                "form_type": "grid"
+            }
         }
     }
 
@@ -95,7 +107,8 @@ class People(TableNode):
         ['address_line_1', 'textbox', 'address:'],
         ['address_line_2', 'textbox', 'town:'],
         ['postcode', 'textbox', 'postcode:'],
-        ['email', 'subform', 'email']
+        ['email', 'subform', 'email'],
+        ['sponsorship', 'subform', 'sponsorship']
     ]
 
     list_title = 'person %s'

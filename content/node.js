@@ -620,7 +620,7 @@ function job_processor_status(data, root){
     }
 
     if (!data.status || !data.status.end){
-        status_timer = setTimeout("get_node('test.DataLoader', 'status', {id:" + data.jobId + "})", 500);
+        status_timer = setTimeout("get_node('test.DataLoader', 'status', {id:" + data.jobId + "})", 2000);
     }
 }
 
