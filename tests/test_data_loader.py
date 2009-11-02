@@ -399,6 +399,9 @@ class test_flat_file(donkey_test.test_donkey):
         flatfile = FlatFile(self.Donkey,
                             "people",
                             "tests/new_people_with_header.csv")    
+
+        print flatfile.count_lines()
+        assert flatfile.count_lines() == 28
         flatfile.load()
 
 
@@ -413,6 +416,48 @@ class test_flat_file(donkey_test.test_donkey):
                             "tests/new_people_with_header_errors.csv")    
 
         
-        assert flatfile.load() == [['name', 'address_line_1', 'postcode', 'email__0__email', 'email__1__email', 'donkey_sponsership__0__amount', 'donkey_sponsership__0___donkey__0__name', '__errors'], ['popph22', 'road22', 'post22', 'pop@pop.com', 'pop2@pop.com', 'poo', 'feddy2200', "{('donkey_sponsership', 0): Invalid('amount: Please enter a number',)}"], ['popph23', 'road23', 'post23', 'pop@pop.com', 'pop2@pop.com', '?', 'feddy2300', "{('donkey_sponsership', 0): Invalid('amount: Please enter a number',)}"], ['popph24', '', '', 'pop@pop.com', 'pop2@pop.com', '2400', 'feddy2400', "{'root': Invalid('address_line_1: Please enter a value\\npostcode: Please enter a value',)}"], ['popph27', '', '', 'pop@pop.com', 'pop2pop.com', '2700', 'feddy2700', "{('email', 1): Invalid('email: An email address must contain a single @',), 'root': Invalid('address_line_1: Please enter a value\\npostcode: Please enter a value',)}"], ['popph28', 'road28', 'post28', 'pop@pop.com', 'pop2pop.com', '2800', 'feddy2800', "{('email', 1): Invalid('email: An email address must contain a single @',)}"]]
+        flatfile.load()
+        print flatfile.status[0].error_count 
+        assert flatfile.status[0].error_count == 5
+        
+    
+    def test_make_chunks(self):
+
+        flatfile = FlatFile(self.Donkey,
+                            "people",
+                            "tests/data.csv")    
+
+        assert flatfile.make_chunks(250) == [[0, 250], [250, 500], [500, 750], [750, 1000], [1000, 1250], [1250, 1500], [1500, 1750], [1750, 2000], [2000, 2250], [2250, 2500], [2500, 2750], [2750, 3000], [3000, 3250], [3250, 3500], [3500, 3750], [3750, 4000], [4000, 4250], [4250, 4500], [4500, 4750], [4750, 5000]]
+
+        flatfile.total_lines = 450
+        
+        assert flatfile.make_chunks(250) == [[0, 250], [250, 450]]
+
+    def test_load_chunk(self):
+        
+        session = self.Donkey.Session()
+
+        count_before = session.query(self.Donkey.t.people).count()
+
+        flatfile = FlatFile(self.Donkey,
+                            "people",
+                            "tests/data.csv")    
+
+        chunk_status = flatfile.load_chunk([0,250])
+
+        count_after = session.query(self.Donkey.t.people).count()
+
+        assert count_before + 250 == count_after
+
+        assert chunk_status.status == "committed"
+
+        chunk_status = flatfile.load_chunk([250,500])
+
+
+        assert chunk_status.error_count == 2
+#        assert repr(chunk_status.error_lines) == """[line_number: 301, errors: {('email', 0): Invalid('email: The domain portion of the email address is invalid (the portion after the @: .com)',)}, line_number: 428, errors: {('email', 0): Invalid('email: The domain portion of the email address is invalid (the portion after the @: .org)',)}]"""
+
+        print chunk_status.error_lines[0].error_dict 
+        assert str(chunk_status.error_lines[0].error_dict) == """{('email', 0, 'email'): [Invalid(u'The domain portion of the email address is invalid (the portion after the @: .com)',)]}"""
 
 

@@ -1,15 +1,20 @@
-import networkx as nx
 import custom_exceptions
 import sqlalchemy
 import logging
 import re
 import csv
 import datetime
+import time
 import formencode as fe
 import json
 import datetime
+import Queue
+from multiprocessing import Pool
+import multiprocessing
 
 logger = logging.getLogger('reformed.main')
+reformed_database = None
+data_load_queues = {}
 
 def get_key_data(key, database, table):
     """from a particular key get out what table the key relates to and the last 
@@ -106,20 +111,69 @@ def load_json_from_file(file, database, table):
     for record in json_file:
         SingleRecord(database, table, record).load()
 
+def load_chunk(chunk, table, filename, queue):
+
+    try:
+        flat_file = FlatFile(reformed_database, table, filename)
+
+        chunk_status = flat_file.load_chunk(chunk)
+
+        result_queue = data_load_queues[queue]
+
+        result_queue.put(chunk_status)
+        #return chunk_status
+    except Exception, e:
+        chunk_status = ChunkStatus(chunk, "serious error", error = e)
+        result_queue = data_load_queues[queue]
+        result_queue.put(chunk_status)
+        #return ChunkStatus(chunk, "serious error", error = e)
 
 
-    
 
+class ErrorLine(object):
+
+    def __init__(self, line_number, line, error_dict):
+
+        self.line_number =  line_number
+        self.line =  line
+        self.error_dict = error_dict
+
+    def __repr__(self):
+
+        return "line_number: %s, errors: %s" % (self.line_number, self.error_dict)
+
+class ChunkStatus(object):
+
+    def __init__(self, chunk, status, error_lines = None, error = None):
+
+        self.chunk = chunk
+        self.status = status
+        self.error_lines =  error_lines or []
+        self.error = error
+
+        self.error_count = len(self.error_lines)
+        self.length = chunk[1] - chunk[0]
+
+    def __repr__(self):
+
+        return "chunk: %s, status: %s, error: %s" % (self.chunk, self.status, self.error)
 
 class FlatFile(object):
 
     def __init__(self, database, table, data, headers = None):
+
+        global reformed_database
+        if not reformed_database:
+            reformed_database = database
 
         self.data = data
         self.database = database
         self.table = table
 
         self.validation = True
+
+        self.dialect = None
+        self.total_lines = None
 
         self.parent_key = {}
         self.key_data = {}
@@ -149,15 +203,13 @@ class FlatFile(object):
         self.get_all_decendants()
         
         self.keys.sort(lambda a, b : len(a) - len(b))
+
+        self.status = []
     
 
     def get_file(self):
 
-        if isinstance(self.data, basestring):
-            flat_file = open(self.data, mode = "rb")
-        else:
-            flat_file = data
-
+        flat_file = open(self.data, mode = "rb")
         return flat_file
 
     def get_headers(self):
@@ -174,84 +226,217 @@ class FlatFile(object):
 
         return first_line
 
-    def load(self, validation = True, print_every = 250, batch = 250, messager = None):
+    def count_lines(self):
+
+        if not self.total_lines:
+            with open(self.data, mode = "rb") as flat_file:
+
+                total_lines = 0
+
+                if self.has_header:
+                    flat_file.next()
+
+                for line in flat_file:
+                    total_lines += 1
+
+                self.total_lines = total_lines
+
+        return self.total_lines
+
+
+    def set_dialect(self):
+
+        if not self.dialect:
+            with open(self.data, mode = "rb") as flat_file:
+                self.dialect = csv.Sniffer().sniff(flat_file.read(10240))
+
+    def make_chunks(self, chunk_size):
+
+        total_lines = self.count_lines()
+
+        chunks = []
+
+        low_bound = 0
+        up_bound = 0
+
+        while True:
+            up_bound = low_bound + chunk_size
+            if up_bound >= total_lines:
+                chunks.append([low_bound, total_lines])
+                break
+            else:
+                chunks.append([low_bound, up_bound])
+                low_bound = up_bound
+
+        return chunks
+
+    def load_chunk(self, chunk):
+
+        session = self.database.Session()
+
+        lower, upper = chunk
+
+        error_lines = []
+
+        with open(self.data, mode = "rb") as flat_file:
+
+            csv_file = csv.reader(flat_file, self.dialect)
+
+            if self.has_header:
+                csv_file.next()
+
+            for line_number, line in enumerate(csv_file):
+
+                if line_number < lower:
+                    continue
+                if line_number >= upper:
+                    break
+
+                record = SingleRecord(self.database, self.table, line, self)
+
+                record.get_all_obj(session)
+
+                record.add_all_values_to_obj()
+
+                try:
+                    record.save_all_objs(session)
+                except fe.Invalid, e:
+                    error_lines.append(ErrorLine(line_number, line, e.error_dict))
+
+        if error_lines:
+            return ChunkStatus(chunk, "validation error", error_lines)
+        try:
+            session.commit()
+            return ChunkStatus(chunk, "committed")
+        except custom_exceptions.LockingError, e:
+            return ChunkStatus(chunk, "locking error", error = e)
+        except Exception, e:
+            return ChunkStatus(chunk, "unknown error", error = e)
+        finally:
+            session.close()
+
+
+    def load(self, validation = True, load_multiprocess = False, batch = 250, messager = None):
 
         self.validation = validation
 
-        start_time = datetime.datetime.now()
+        self.messager = messager
+
+        self.start_time = datetime.datetime.now()
 
         self.session = self.database.Session()
-        flat_file = self.get_file()
-
-        total_lines = 0
-
-        for line in flat_file:
-            total_lines += 1
-
-        flat_file.seek(0)
-
-        if not hasattr(self, "dialect"):
-            self.dialect = csv.Sniffer().sniff(flat_file.read(10240))
-
-        flat_file.seek(0)
-
-        csv_file = csv.reader(flat_file, self.dialect)
-
-        if self.has_header:
-            csv_file.next()
         
-        error_lines = []
+        total_lines = self.count_lines()
 
-        line_number = 0
+        chunks = self.make_chunks(batch)
 
-        for line in csv_file:
-            line_number = line_number + 1
-            record = SingleRecord(self.database, self.table, line, self)
-            record.get_all_obj(self.session)
-            record.add_all_values_to_obj()
-            try:
-                record.save_all_objs(self.session)
-            except fe.Invalid, e:
-                error_lines.append(line + [str(e.error_dict)])
-            if line_number % batch == 0 and not error_lines:
-                print 'commiting'
-                self.session.commit()
-                self.session.expunge_all()
-            if line_number % print_every == 0 and not error_lines:
-                time, rate = self.get_rate(start_time, line_number)
-                message = "%s rows in %s seconds  %s rows/s" % (line_number,
-                                                            time, rate)
-                print message
-                if messager:
-                    percent = line_number * 100 / total_lines
-                    messager.message(message, percent)
-        if error_lines:
-            self.session.close()
-            error_lines.insert(0, self.headers + ["__errors"])
-            return error_lines
-        else:
-            self.session.commit()
+        self.set_dialect()
+
+
+        if load_multiprocess:
+
+            
+            self.now = str(datetime.datetime.now())
+
+            global data_load_queues
+            
+            data_load_queues[self.now] = multiprocessing.Queue()
+
+            results = {}
+
+            process_errors = 0
+
+            pool = Pool()
+
+            for chunk in chunks:
+                result = pool.apply_async(load_chunk, (chunk, self.table, self.data, self.now)) 
+                results[tuple(chunk)] = result
+
+            while 1:
+                try:
+                    try:
+                        result = data_load_queues[self.now].get()
+                    except Exception, e:
+                        process_errors += 1
+
+                    self.status.append(result)
+                    results.pop(tuple(result.chunk))
+                    self.calculate_stats()
+                except Queue.Empty:
+                    time.sleep(0.25)
+                if not results:
+                    break
+                if len(results) == process_errors:
+                    for chunk in results:
+                        self.status.append(ChunkStatus(chunk, "unknown error"))
+
+            data_load_queues.pop(self.now)
                 
-        flat_file.close()
 
-        self.session.close()
+            #while 1:
+            #    to_delete = []
+            #    for chunk, result in results.iteritems():
+            #        if result.ready():
+            #            to_delete.append(chunk)
+            #            try:
+            #                res = result.get()
+            #                self.status.append(res)
+            #                self.calculate_stats()
+            #            except Exception, e:
+            #                print e
+#
+#                for chunk in to_delete:
+#                    results.pop(chunk)
+#                time.sleep(0.25)
+#                if not results:
+#                    break
 
-        time, rate = self.get_rate(start_time, line_number)
+            #pool.map_async(load_chunk, chunks, callback = self.callback)
+            pool.close()
+            pool.join()
 
-        message = "%s rows in %s seconds  %s rows/s" % (line_number,
-                                                    time, rate)
-        if messager:
-            percent = 100
-            messager.message(message, percent)
+        else:
+            for chunk in chunks:
+                chunk_status = self.load_chunk(chunk)
+                self.status.append(chunk_status)
+                self.calculate_stats()
 
-        return "completed %s rows in %s seconds  %s rows/s" % (line_number,
-                                                            time, rate)
+
+
+    def calculate_stats(self):
+
+        completed = 0
+        committed = 0
+        validation_errors = 0
+        other_errors = 0
+
+        for chunk_status in self.status:
+            completed += chunk_status.length
+            if chunk_status.status == "validation error":
+                validation_errors += chunk_status.error_count
+            elif chunk_status.status == "committed":
+                committed += chunk_status.length
+            else:
+                other_errors += chunk_status.length
+
+        time, rate = self.get_rate(completed)
+
+        message = "%s rows in %s seconds  %s rows/s with %s errors" % (completed,
+                                   time, rate, other_errors + validation_errors)
+        print message
+
+        percent = completed/self.total_lines
+
+        if self.messager:
+            self.messager.message(message, percent)
+
     
-    def get_rate(self, start_time, line_number):
 
-        time = (datetime.datetime.now() - start_time).seconds
+    def get_rate(self, completed):
+
+        time = (datetime.datetime.now() - self.start_time).seconds
         try:
-            rate = line_number/time
+            rate = completed/time
         except ZeroDivisionError:
             rate = 'n/a'
         return time, rate
@@ -371,7 +556,21 @@ class SingleRecord(object):
                     session.add(obj)
             except fe.Invalid, e:
                 invalid_msg[key] = e.msg.replace("\n", ", ")
-                invalid_dict[key] = e
+
+                for col_name, error_list in e.error_dict.iteritems():
+                    errors = []
+                    if not error_list.error_list:
+                        errors.append(e)
+                    for error in error_list.error_list or []:
+                        errors.append(error)
+
+                    if key == "root":
+                        key = (self.table, )
+
+                    new_key = key + (col_name,)
+
+                    invalid_dict[new_key] = errors
+
         if invalid_msg:
             if not self.flat_file:
                 session.expunge_all()

@@ -293,15 +293,18 @@ def load_local_data(database, data):
         error_dict = {}
         invalid_msg = ""
         for key, invalid in e.error_dict.iteritems():
-            new_key = key[::2]
-            for field_name, sub_invalid in invalid.error_dict.iteritems():
-                if key == "root":
-                    new_table, one_ways = table, []
-                else:
-                    new_table, relation, one_ways = rtable.paths[new_key]
-                error_dict["%s.%s" % ("_".join(one_ways + [new_table]),
-                                        field_name)] = sub_invalid
-            invalid_msg = invalid_msg + "\n" + invalid.msg  
+            new_key = key[:-1:2]
+            field_name = key[-1]
+            if key[0] == table:
+                new_table, one_ways = table, []
+            else:
+                new_table, relation, one_ways = rtable.paths[new_key]
+
+            
+            error_dict["%s.%s" % ("_".join(one_ways + [new_table]),
+                                    field_name)] = invalid
+
+            invalid_msg = invalid_msg + "\n" + "\n".join(["%s\n" % inv.msg for inv in invalid])
 
         if error_dict:
             raise fe.Invalid(invalid_msg, data, record, None, error_dict) 

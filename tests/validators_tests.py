@@ -72,7 +72,7 @@ class test_validation(test_donkey):
                             "category.category_type": u"wee",
                             })
         except fe.Invalid, e:
-            assert e.msg == "\nsub_category: Please enter a value"
+            assert e.msg.strip() == "sub_category: Please enter a value"
 
     def test_zzzz_overlapping_date_validation(self):
 
