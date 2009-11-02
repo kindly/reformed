@@ -31,7 +31,7 @@ def data_load_from_file(database, job_id, input = None):
 
     flatfile = FlatFile(database,
                         table,
-                        file)
+                        util.get_dir(file))
 
     messager = Messager(database, job_id)
 

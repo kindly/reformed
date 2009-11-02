@@ -39,7 +39,9 @@ class DataLoader(Node):
     def call(self):
 
         if self.command == 'load':
-            jobId = r.reformed.job_scheduler.add_job("loader", "data_load_from_file", "people, %s" % util.get_dir("data.csv"))
+            file = self.data.get('file')
+            table = self.data.get('table')
+            jobId = r.reformed.job_scheduler.add_job("loader", "data_load_from_file", "%s, %s" % (table, file))
             data = node.create_form_data(self.fields)
             data['jobId'] = jobId
             self.out = data

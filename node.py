@@ -28,6 +28,8 @@ class Node(object):
     def __init__(self, data, node_name, last_node = None):
         self.out = []
         self.name = node_name
+        self.title = None
+        self.link = None
         self.action = None
         self.next_node = None
         self.next_data = None
@@ -68,6 +70,7 @@ class TableNode(Node):
     fields = []
     form_params =  {"form_type": "normal"}
     list_title = 'item %s'
+    title_field = 'name'
 
     subforms = {}
     subform_data = {}
@@ -223,9 +226,13 @@ class TableNode(Node):
             data_out = util.get_row_data(data, keep_all = False, basic = True)
             data_out['id'] = data.id
             people_id = data.id
+            self.title = data_out[self.title_field]
+            self.link = '%s:view:id=%s' % (self.name, data.id)
+
         except sa.orm.exc.NoResultFound:
             data_out = {}
             people_id = 0
+            self.title = 'unknown'
 
         for subform_name in self.subforms.keys():
             print 'subform', subform_name
@@ -240,6 +247,7 @@ class TableNode(Node):
         self.out = data
         self.action = 'form'
         session.close()
+
 
     def delete(self):
         id = self.data.get('id')
@@ -276,7 +284,8 @@ class TableNode(Node):
 
         self.out = out
         self.action = 'listing'
-
+        self.link = '%s:list' % self.name
+        self.title = 'listing'
 
     def subform(self, session, subform, form_data, parent_value):
 

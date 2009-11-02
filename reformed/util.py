@@ -199,7 +199,7 @@ def get_row_data(obj, keep_all = False, basic = False):
         if basic:
             row_data[field] = value
         else:
-            row_data["%s.%s" % (table, field)] = value
+            row_data["%s.%s" % (table, field)] = getattr(obj, field)
     if keep_all:
         if basic:
             row_data["id"] = obj.id
