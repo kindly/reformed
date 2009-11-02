@@ -626,6 +626,7 @@ function job_processor_status(data, root){
 
 fn = function(packet, job){
      root = 'main';
+    alert ('moo');
      switch (packet.data.action){
 
          case 'html':

@@ -4,7 +4,7 @@ import sys
 import mimetypes
 import beaker
 import cgi
-
+import traceback
 import wsgiref.util
 import json
 
@@ -57,13 +57,23 @@ def process_node(environ, start_response):
     data = moo.output
 
     start_response('200 OK', [('Content-Type', 'text/html')])
-    print json.dumps(data, sort_keys=False, indent=4)
-    print 'length %s bytes' % len(json.dumps(data, sort_keys=True, indent=4))
-    print 'condenced length %s bytes' % len(json.dumps(data, separators=(',',':')))
-    print 'SESSION\n%s' % http_session
-    print 'DONE'
-    return [json.dumps(data, separators=(',',':'))]
-
+    try:
+        print json.dumps(data, sort_keys=False, indent=4)
+        print 'length %s bytes' % len(json.dumps(data, sort_keys=True, indent=4))
+        print 'condenced length %s bytes' % len(json.dumps(data, separators=(',',':')))
+        print 'SESSION\n%s' % http_session
+        print 'DONE'
+        return [json.dumps(data, separators=(',',':'))]
+    except TypeError:
+        # we had a problem with the JSON conversion
+        # let's send the error to the front-end
+        error_msg = 'JSON OUTPUT FAIL\n\n%s' % traceback.format_exc()
+        info = {'action': 'general_error',
+                'node' : 'moo',
+                'data' : error_msg}
+        data = [{'data' : info, 'type' : 'node'}]
+        print json.dumps(data, sort_keys=False, indent=4)
+        return [json.dumps(data,  separators=(',',':'))]
 
 
 class WebApplication(object):

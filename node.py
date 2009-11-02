@@ -228,7 +228,7 @@ class TableNode(Node):
             people_id = 0
 
         for subform_name in self.subforms.keys():
-            print 'subforrm', subform_name
+            print 'subform', subform_name
             print self.subforms
             subform = self.subforms.get(subform_name)
             subform_parent_id = subform.get('parent_id')
