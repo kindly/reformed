@@ -501,8 +501,9 @@ function node_button(item, node, command){
 }
 
 
-function show_listing(data, node){
+function show_listing(data, node, root){
 
+    $INFO.newState(root);
     var html = '';
     for (i=0; i<data.length; i++){
         item = data[i];
@@ -513,11 +514,11 @@ function show_listing(data, node){
         html += 'onclick="get_node(\'' + next_node + '\', \'view\', {__id:' + item.id + '})"';
         html += '>' + item.table + ' - ' + item.title + '</span></br><span class="list_summary">' + item.summary + '</span></div>';
     }
-    $('#main').html(html);
+    $('#' + root).html(html);
 }
 
 function search_box(){
-    get_node('test.Search', $('#search').val());
+    get_node('test.Search','',{q: $('#search').val()});
     return false;
 }
 
@@ -626,18 +627,21 @@ function update_status(root, data){
     }
 }
 
-function job_processor_status(data, root){
+function job_processor_status(data, node, root){
+
+    var current_node = $INFO.getState(root, 'node');
 
     if (data.form){
         $('#' + root).html(node_generate_html(data.form, null, root));
         form_setup(root, data.form);
+        $INFO.setState(root, 'node', node);
     }
 
-    if (data.status){
+    if (data.status && current_node == node){
         update_status(root, data.status);
     }
 
-    if (!data.status || !data.status.end){
+    if ((!data.status || !data.status.end) && current_node == node){
         status_timer = setTimeout("get_node('test.DataLoader', 'status', {id:" + data.jobId + "})", 2000);
     }
 }
@@ -664,7 +668,7 @@ fn = function(packet, job){
              $('#' + root).html(node_generate_html(form, data, root));
              $INFO.setState(root, 'node', packet.data.node);
              form_setup(root, form);
-             break;
+             break;data
          case 'save_error':
             data = packet.data.data;
             // clear form items with no errors
@@ -684,10 +688,10 @@ fn = function(packet, job){
             alert(packet.data.data);
             break;
          case 'listing':
-            show_listing(packet.data.data, packet.data.node);
+            show_listing(packet.data.data, packet.data.node, root);
             break;
         case 'status':
-            job_processor_status(packet.data.data, root);
+            job_processor_status(packet.data.data, packet.data.node, root);
             break;
     }
 };

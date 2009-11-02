@@ -42,13 +42,23 @@ class DataLoader(Node):
             file = self.data.get('file')
             table = self.data.get('table')
             jobId = r.reformed.job_scheduler.add_job("loader", "data_load_from_file", "%s, %s" % (table, file))
-            data = node.create_form_data(self.fields)
-            data['jobId'] = jobId
-            self.out = data
-            self.action = 'status'
-        elif self.command == 'status':
-            session = r.reformed.Session()
+            self.get_and_display_status(jobId)
+
+        elif self.command == 'refresh':
             jobId = self.data.get('id')
+            self.get_and_display_status(jobId)
+
+        elif self.command == 'status':
+            jobId = self.data.get('id')
+            out = self.get_status(jobId)
+            self.out = {'status': out, 'jobId' : jobId}
+
+        self.action = 'status'
+        self.title = "job %s" % jobId
+        self.link = "%s:refresh:id=%s" % (self.name, jobId)
+
+    def get_status(self, jobId):
+            session = r.reformed.Session()
             obj = r.reformed.get_class('_core_job_scheduler')
             filter = {'id': jobId}
             data = session.query(obj).filter_by(**filter).one()
@@ -58,11 +68,14 @@ class DataLoader(Node):
                    'message':data_out['message'],
                    'percent':data_out['percent'],
                    'end':data_out['job_ended']}
-            self.out = {'status': out, 'jobId' : jobId}
-            self.action = 'status'
             session.close()
+            return out
 
-
+    def get_and_display_status(self, jobId):
+            data = node.create_form_data(self.fields)
+            data['jobId'] = jobId
+            data['status'] = self.get_status(jobId)
+            self.out = data
 
 
 class Donkey(TableNode):
@@ -121,7 +134,8 @@ class People(TableNode):
 class Search(Node):
 
     def call(self, limit = 100):
-        where = "_core_entity.title like '%%%s%%'" % self.command
+        query = self.data.get('q', '')
+        where = "_core_entity.title like '%%%s%%'" % query
         results = r.reformed.search('_core_entity', where, limit=limit)
         out = []
         for result in results:
@@ -135,6 +149,8 @@ class Search(Node):
             out.append(row)
         self.out = out
         self.action = 'listing'
+        self.title = 'search for "%s"' % query
+        self.link = '%s::q=%s' % (self.name, query)
 
 
 class Sponsorship(Node):
