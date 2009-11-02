@@ -6,7 +6,6 @@ import beaker
 import cgi
 
 import wsgiref.util
-from paste.session import SessionMiddleware
 import json
 
 import interface
@@ -18,13 +17,12 @@ logger = logging.getLogger('reformed.main')
 
 # I'd like to put this in the WebApplication class but it
 # doesn't like the decorator if I do :(
-@SessionMiddleware
 def process_autocomplete(environ, start_response):
     """ this gets the request data and starts any processing jobs
     needs to be expanded to do multiple requests """
 
-    http_session = environ['paste.session.factory']()
-
+    http_session = environ['beaker.session']
+    http_session['user_id'] = 10
     formdata = cgi.FieldStorage(fp=environ['wsgi.input'],
                         environ=environ,
                         keep_blank_values=1)
@@ -36,10 +34,10 @@ def process_autocomplete(environ, start_response):
 
     return lookup.table_lookup(q, limit, request, http_session)
 
-@SessionMiddleware
 def process_node(environ, start_response):
 
-    http_session = environ['paste.session.factory']()
+    http_session = environ['beaker.session']
+    http_session['user_id'] = 10
 
     formdata = cgi.FieldStorage(fp=environ['wsgi.input'],
                         environ=environ,
@@ -62,7 +60,7 @@ def process_node(environ, start_response):
     print json.dumps(data, sort_keys=False, indent=4)
     print 'length %s bytes' % len(json.dumps(data, sort_keys=True, indent=4))
     print 'condenced length %s bytes' % len(json.dumps(data, separators=(',',':')))
-    print 'SESSION\n%s' % json.dumps(http_session, sort_keys=False, indent=4)
+    print 'SESSION\n%s' % http_session
     print 'DONE'
     return [json.dumps(data, separators=(',',':'))]
 

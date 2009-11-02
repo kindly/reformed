@@ -586,6 +586,9 @@ function form_save_process_errors(errors){
 
 function update_status(root, data){
 
+    if (data && data.percent === null){
+         data.percent = 0;
+    }
     var form_root = parse_strip_subform_info(root);
     var form_data = $INFO.getState(form_root, 'form_data');
     for (var field in form_data.fields){
