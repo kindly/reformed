@@ -2,6 +2,7 @@ JOINS_DEEP = 6
 import data_loader
 import formencode as fe
 import datetime
+import decimal
 import os
 
 
@@ -193,10 +194,12 @@ def get_row_data(obj, keep_all = False, basic = False):
         value = getattr(obj, field)
         if isinstance(value, datetime.datetime):
             value = value.strftime('%Y-%m-%dT%H:%M:%SZ')
+        if isinstance(value, decimal.Decimal):
+            value = str(value)
         if basic:
             row_data[field] = value
         else:
-            row_data["%s.%s" % (table, field)] = getattr(obj, field)
+            row_data["%s.%s" % (table, field)] = value
     if keep_all:
         if basic:
             row_data["id"] = obj.id
