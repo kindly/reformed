@@ -143,7 +143,7 @@ $FORM_CONTROL = {
         progress: function(item, id, show_label, value){
 			var x = '<div>';
             x += (show_label ? item.title : '');
-			x += '<div id="' + id + '"></div></div>'; 
+			x += '<div id="' + id + '" class="progressbar"></div></div>'; 
 			return x;
         },
 	

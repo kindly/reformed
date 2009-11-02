@@ -362,6 +362,8 @@ function setup_process_params(root, item){
 
 function form_setup(root, form_data){
     // do any setting up of the form
+    var item
+    var id
     for (i=0; i<form_data.fields.length; i++){
             item = form_data.fields[i];
             if (item.params){
@@ -379,9 +381,9 @@ function form_setup(root, form_data){
 
 function get_node(node_name, node_command, node_data){
 
-    info = {node: node_name,
-            lastnode: '',  //fixme
-            command: node_command };
+    var info = {node: node_name,
+                lastnode: '',  //fixme
+                command: node_command };
 
     if (node_data){
         info.data = node_data;
@@ -453,7 +455,7 @@ function node_get_form_data(root){
 
 function node_save(root, command){
     msg('node_save');
-    out = node_get_form_data(root);
+    var out = node_get_form_data(root);
     var node =  $INFO.getState(root, 'node');
     get_node(node, 'save', out);
 }
@@ -463,23 +465,27 @@ function node_save(root, command){
 
 function node_delete(root, command){
     msg('node_delete');
-    var form_data = $INFO.getState('#', 'form_data');
+ //   var form_data = $INFO.getState('#', 'form_data');
+    var sent_data = $INFO.getState(root, 'sent_data');
     var node =  $INFO.getState(root, 'node');
     var out = {};
-    var id = $INFO.getId('main#*id');
-    out.__id = $('#'+ id).val();
+    var id = sent_data.id;
+    if (id){
+        out.id = id;
+    }
+    get_node(node, 'delete', out);
 }
 
 
 function node_button(item, node, command){
-    out = node_get_form_data(root);
+    var out = node_get_form_data(root);
     get_node(node, command, out);
 }
 
 
 function show_listing(data, node){
 
-    html = '';
+    var html = '';
     for (i=0; i<data.length; i++){
         item = data[i];
         table = String(item.table);
@@ -597,10 +603,6 @@ function update_status(root, data){
             }
         }
     }
-
-
-
-
 }
 
 function job_processor_status(data, root){
@@ -616,8 +618,6 @@ function job_processor_status(data, root){
 
     if (!data.status || !data.status.end){
         status_timer = setTimeout("get_node('test.DataLoader', 'status', {id:" + data.jobId + "})", 500);
-    } else {
-        alert('finished');
     }
 }
 

@@ -12,7 +12,9 @@ div {
 	margin:0;
 
 }
-
+.progressbar {
+    width:200px;
+}
 	
 	
 /* FORMS */
