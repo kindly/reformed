@@ -297,11 +297,11 @@ class test_basic_input(test_donkey):
 
         results = self.session.query(self.Donkey.tables["donkey"].sa_class)[:2]
         print create_data_dict(results) 
-        assert create_data_dict(results) == {1: {'donkey.age': 13, 'donkey.donkey_type': None, 'donkey.name': u'jim'}, 2: {'donkey.age': 131, 'donkey.donkey_type': None, 'donkey.name': u'jim1'}}
+        assert create_data_dict(results) == {1: {'donkey_type': None, 'age': 13, 'name': u'jim'}, 2: {'donkey_type': None, 'age': 131, 'name': u'jim1'}}
 
         results2 = self.session.query(self.Donkey.tables["donkey"].sa_class).first()
         print create_data_dict(results2) 
-        assert create_data_dict(results2) == {1: {'donkey.age': 13, 'donkey.donkey_type': None, 'donkey.name': u'jim'}}
+        assert create_data_dict(results2) == {1: {'donkey_type': None, 'age': 13, 'name': u'jim'}}
 
     def test_create_local_data(self):
 
@@ -310,7 +310,7 @@ class test_basic_input(test_donkey):
         print get_all_local_data(result)
 
 
-        assert get_all_local_data(result) == {'contact_summary.people_id': 1, 'contact_summary.transaction_count': 0, 'people.name': u'david', '__table': 'donkey_sponsership', 'contact_summary.membership': None, 'donkey_pics.pic_name': None, 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'43 union street es388', 'donkey_sponsership.donkey_id': 1, 'people.town': None, 'donkey_sponsership.giving_date': None, 'people.postcode': u'es388', 'donkey_sponsership.people_id': 1, 'people.country': None, 'people.address_line_1': u'43 union street', 'people.address_line_2': None, 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'donkey_sponsership.amount': Decimal('50'), 'donkey_pics.pic': None, 'donkey.donkey_type': None, 'donkey.age': 13, 'donkey_pics.donkey_id': None, 'donkey.name': u'jim'} 
+        assert get_all_local_data(result) == {'contact_summary.people_id': 1, 'giving_date': None, 'contact_summary.transaction_count': 0, 'people.name': u'david', '__table': 'donkey_sponsership', 'contact_summary.membership': None, 'donkey_pics.pic_name': None, 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'43 union street es388', 'people.town': None, 'people_id': 1, 'people.postcode': u'es388', 'people.country': None, 'people.address_line_1': u'43 union street', 'people.address_line_2': None, 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'donkey_id': 1, 'amount': Decimal('50'), 'donkey.donkey_type': None, 'donkey_pics.pic': None, 'donkey.age': 13, 'donkey_pics.donkey_id': None, 'donkey.name': u'jim'} 
 
     def test_local_tables(self):
         
@@ -371,7 +371,7 @@ class test_basic_input(test_donkey):
 
 
         print get_all_local_data(a)
-        assert get_all_local_data(a) == {'contact_summary.people_id': 2, 'contact_summary.transaction_count': 0, 'people.name': u'fred', '__table': 'donkey_sponsership', 'contact_summary.membership': None, 'donkey_pics.pic_name': None, 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'poo1010101 fred', 'donkey_sponsership.donkey_id': 12, 'people.town': None, 'donkey_sponsership.giving_date': None, 'people.postcode': u'fred', 'donkey_sponsership.people_id': 2, 'people.country': None, 'people.address_line_1': u'poo1010101', 'people.address_line_2': u'poop', 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'donkey_sponsership.amount': Decimal('711110'), 'donkey_pics.pic': None, 'donkey.donkey_type': None, 'donkey.age': 12, 'donkey_pics.donkey_id': None, 'donkey.name': None}
+        assert get_all_local_data(a) == {'contact_summary.people_id': 2, 'giving_date': None, 'contact_summary.transaction_count': 0, 'people.name': u'fred', '__table': 'donkey_sponsership', 'contact_summary.membership': None, 'donkey_pics.pic_name': None, 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'poo1010101 fred', 'people.town': None, 'people_id': 2, 'people.postcode': u'fred', 'people.country': None, 'people.address_line_1': u'poo1010101', 'people.address_line_2': u'poop', 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'donkey_id': 12, 'amount': Decimal('711110'), 'donkey.donkey_type': None, 'donkey_pics.pic': None, 'donkey.age': 12, 'donkey_pics.donkey_id': None, 'donkey.name': None}
         
     def test_import_catagory_data(self):
 
@@ -387,7 +387,8 @@ class test_basic_input(test_donkey):
 
         results = self.session.query(self.Donkey.t.sub_sub_category).all()
 
-        assert [get_all_local_data(a) for a in results] == [{"__table": u"sub_sub_category", 'sub_category.sub_category_name': u'ab', 'sub_sub_category.sub_sub_category_name': u'abc', 'category.category_name': u'a', 'category.category_description': u'this is a', 'sub_category.sub_category_description': u'this is ab', 'category.category_type': u'wee', 'sub_sub_category.sub_sub_category_description': u'this is abc', 'sub_sub_category.sub_category_name': u'ab', 'sub_sub_category.category_name': u'a', 'sub_category.category_name': u'a'}]
+
+        assert [get_all_local_data(a) for a in results] == [{'category.category_type': u'wee', 'sub_category.sub_category_name': u'ab', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ab', 'sub_sub_category_name': u'abc', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_sub_category_description': u'this is abc', 'sub_category_name': u'ab', 'category_name': u'a'}]
 
         
         load_local_data(self.Donkey, {"__table": u"sub_sub_category",
@@ -400,7 +401,9 @@ class test_basic_input(test_donkey):
 
         results = self.session.query(self.Donkey.t.sub_sub_category).all()
 
-        assert [get_all_local_data(a) for a in results] == [{"__table": u"sub_sub_category",'sub_category.sub_category_name': u'ab', 'sub_sub_category.sub_sub_category_name': u'abc', 'category.category_name': u'a', 'category.category_description': u'this is a', 'sub_category.sub_category_description': u'this is ab', 'category.category_type': u'wee', 'sub_sub_category.sub_sub_category_description': u'this is abc', 'sub_sub_category.sub_category_name': u'ab', 'sub_sub_category.category_name': u'a', 'sub_category.category_name': u'a'}, {"__table": u"sub_sub_category", 'sub_category.sub_category_name': u'ac', 'sub_sub_category.sub_sub_category_name': u'acc', 'category.category_name': u'a', 'category.category_description': u'this is a', 'sub_category.sub_category_description': u'this is ac', 'category.category_type': u'wee', 'sub_sub_category.sub_sub_category_description': u'this is acc', 'sub_sub_category.sub_category_name': u'ac', 'sub_sub_category.category_name': u'a', 'sub_category.category_name': u'a'}]
+        print [get_all_local_data(a) for a in results]
+
+        assert [get_all_local_data(a) for a in results] == [{'category.category_type': u'wee', 'sub_category.sub_category_name': u'ab', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ab', 'sub_sub_category_name': u'abc', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_sub_category_description': u'this is abc', 'sub_category_name': u'ab', 'category_name': u'a'}, {'category.category_type': u'wee', 'sub_category.sub_category_name': u'ac', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ac', 'sub_sub_category_name': u'acc', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_sub_category_description': u'this is acc', 'sub_category_name': u'ac', 'category_name': u'a'}]
 
 
 
@@ -424,7 +427,9 @@ class test_basic_input(test_donkey):
 
         results = self.session.query(self.Donkey.t.sub_sub_category).all()
 
-        assert [get_all_local_data(a) for a in results][2]  == {"__table": u"sub_sub_category", 'sub_category.sub_category_name': u'ac', 'sub_sub_category.sub_sub_category_name': u'acd', 'category.category_name': u'a', 'category.category_description': u'this is a', 'sub_category.sub_category_description': u'this is ac', 'category.category_type': u'wee', 'sub_sub_category.sub_sub_category_description': u'this is acc', 'sub_sub_category.sub_category_name': u'ac', 'sub_sub_category.category_name': u'a', 'sub_category.category_name': u'a'}
+        print [get_all_local_data(a) for a in results][2]
+
+        assert [get_all_local_data(a) for a in results][2]  == {'category.category_type': u'wee', 'sub_category.sub_category_name': u'ac', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ac', 'sub_sub_category_name': u'acd', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_sub_category_description': u'this is acc', 'sub_category_name': u'ac', 'category_name': u'a'}
 
 
         assert_raises(custom_exceptions.InvalidData,

@@ -110,10 +110,10 @@ class Search(Node):
         results = r.reformed.search('_core_entity', where, limit=limit)
         out = []
         for result in results:
-            row = {"id": result["_core_entity.id"],
-                   "title": result["_core_entity.title"],
-                   "summary": result["_core_entity.summary"]}
-            if result['_core_entity.table'] == 8:
+            row = {"id": result["id"],
+                   "title": result["title"],
+                   "summary": result["summary"]}
+            if result['table'] == 8:
                 row['table'] = 'donkey'
             else:
                 row['table'] = 'people'

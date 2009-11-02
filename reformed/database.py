@@ -400,8 +400,9 @@ class Database(object):
 
         try:
             return [get_all_local_data(obj, tables = tables, keep_all = True, allow_system = True) for obj in result]    
-        except:
+        except Exception, e:
             session.rollback()
+            raise
         finally:
             session.close()
         

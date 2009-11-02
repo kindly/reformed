@@ -269,9 +269,9 @@ class TableNode(Node):
         out = []
         for result in results:
             row = {"table": self.table,
-                   "id": result["_core_entity.id"],
-                   "title": result["_core_entity.title"],
-                   "summary": result["_core_entity.summary"]}
+                   "id": result["id"],
+                   "title": result["title"],
+                   "summary": result["summary"]}
             out.append(row)
 
         self.out = out

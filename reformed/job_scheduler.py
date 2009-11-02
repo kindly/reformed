@@ -99,14 +99,14 @@ class JobSchedulerThread(threading.Thread):
                                               "job_start_time <= now and job_started is null") 
 
                 for result in to_run:
-                    result["_core_job_scheduler.job_started"] = datetime.datetime.now()
-                    result["_core_job_scheduler.message"] = "started"
+                    result["job_started"] = datetime.datetime.now()
+                    result["message"] = "started"
                     result["__table"] = "_core_job_scheduler"
-                    func = getattr(standard_jobs, result["_core_job_scheduler.function"].encode("ascii"))
-                    arg = result["_core_job_scheduler.arg"]
+                    func = getattr(standard_jobs, result["function"].encode("ascii"))
+                    arg = result["arg"]
                     if arg:
                         arg = arg.encode("ascii")
-                    self.make_request(func, arg, result["_core_job_scheduler.id"])
+                    self.make_request(func, arg, result["id"])
                     load_local_data(self.database, result)
             except Exception:
                 import sys

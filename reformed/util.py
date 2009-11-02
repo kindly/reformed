@@ -184,27 +184,45 @@ def get_fields_from_obj(obj):
     return obj._table.columns.keys()
 
 
-def get_row_data(obj, keep_all = False, basic = False):
+def get_row_data(obj, fields = None, keep_all = False, keep_format = False, basic = False, table = None):
     
     row_data = {}
-    table = obj._table.name
+
+    obj_table = obj._table.name
+
+    if not table:
+        table = obj_table
+
     for field in get_fields_from_obj(obj):
+
+        if fields and (field not in fields):
+            continue
+
         if field in ("modified_by", "modified_date", "id", "_core_entity_id") and not keep_all:
             continue
+
+        if obj_table == table:
+            field_name = field
+        else:
+            field_name = '%s.%s' % (obj_table, field)
+
         value = getattr(obj, field)
         if isinstance(value, datetime.datetime):
             value = value.strftime('%Y-%m-%dT%H:%M:%SZ')
         if isinstance(value, decimal.Decimal):
             value = str(value)
-        if basic:
-            row_data[field] = value
+        if keep_format:
+            row_data[field_name] = getattr(obj, field)
         else:
-            row_data["%s.%s" % (table, field)] = value
+            row_data[field_name] = value
+
     if keep_all:
-        if basic:
-            row_data["id"] = obj.id
+        if obj_table == table:
+            id_name = "id"
         else:
-            row_data["%s.id" % table] = obj.id
+            id_name = "%s.id" % obj_table
+        row_data[id_name] = obj.id
+
     return row_data
 
 def create_data_dict(result, **kw):
@@ -234,14 +252,15 @@ def create_data_array(result, **kw):
         data.append(out)
     return data
 
-def get_all_local_data(obj, tables = None, allow_system = False, keep_all = False):
+def get_all_local_data(obj, fields = None, tables = None, allow_system = False, keep_all = False):
+
 
     table = obj._table
     row_data = {"__table": table.name}
     database = table.database
     local_tables = table.local_tables
     if not tables or obj._table.name in tables:
-        row_data.update(get_row_data(obj, keep_all))
+        row_data.update(get_row_data(obj, keep_all = keep_all, keep_format = True, table = table.name))
 
     for aliased_table_name, path in table.local_tables.iteritems():
         table_name = table.paths[path][0]
@@ -256,7 +275,7 @@ def get_all_local_data(obj, tables = None, allow_system = False, keep_all = Fals
             if not current_obj:
                 current_obj = database.get_instance(table_name)
                 break
-        row_data.update(get_row_data(current_obj, keep_all))
+        row_data.update(get_row_data(current_obj, keep_all = keep_all, keep_format = True, table = table.name))
 
     return row_data
 
