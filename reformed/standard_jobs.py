@@ -12,12 +12,12 @@ class Messager(object):
 
     def message(self, message, percent = None):
 
-        row = self.database.search("_core_job_scheduler", "id = %s" % self.job_id)[0]
+        row = self.database.search("_core_job_scheduler", "id = %s" % self.job_id, internal = True)[0]
 
-        row["_core_job_scheduler.message"] = u"%s" % message
+        row["message"] = u"%s" % message
 
         if percent:
-            row["_core_job_scheduler.percent"] = percent
+            row["percent"] = percent
 
         util.load_local_data(self.database, row)
 

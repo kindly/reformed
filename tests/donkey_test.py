@@ -307,14 +307,17 @@ class test_basic_input(test_donkey):
 
         result = self.session.query(self.Donkey.tables["donkey_sponsership"].sa_class).first()
 
-        print get_all_local_data(result)
+        print get_all_local_data(result, internal = True)
 
 
-        assert get_all_local_data(result) == {'contact_summary.people_id': 1, 'giving_date': None, 'contact_summary.transaction_count': 0, 'people.name': u'david', '__table': 'donkey_sponsership', 'contact_summary.membership': None, 'donkey_pics.pic_name': None, 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'43 union street es388', 'people.town': None, 'people_id': 1, 'people.postcode': u'es388', 'people.country': None, 'people.address_line_1': u'43 union street', 'people.address_line_2': None, 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'donkey_id': 1, 'amount': Decimal('50'), 'donkey.donkey_type': None, 'donkey_pics.pic': None, 'donkey.age': 13, 'donkey_pics.donkey_id': None, 'donkey.name': u'jim'} 
+        assert get_all_local_data(result, internal = True) == {'contact_summary.people_id': 1, 'giving_date': None, 'contact_summary.transaction_count': 0, 'people.name': u'david', '__table': 'donkey_sponsership', 'contact_summary.membership': None, 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'43 union street es388', 'people.town': None, 'people_id': 1, 'people.postcode': u'es388', 'people.country': None, 'people.address_line_1': u'43 union street', 'people.address_line_2': None, 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'donkey_id': 1, 'amount': Decimal('50'), 'donkey.donkey_type': None, 'donkey.age': 13, 'donkey.name': u'jim'} 
 
+
+        assert get_all_local_data(result, fields = ["donkey_id", "contact_summary.total_amount", "donkey.name"]) == {'__table': 'donkey_sponsership', 'donkey.name': u'jim', 'donkey_id': 1, 'contact_summary.total_amount': '0'} 
+
+        
     def test_local_tables(self):
         
-
         assert make_local_tables(self.Donkey.tables["people"].paths) == [{'_core_entity': ('_entity',), 'contact_summary': ('contact_summary',)}, {'transactions': ('transactions',), 'donkey_sponsership': ('donkey_sponsership',), 'entity_categories': ('_entity', 'categories'), 'membership': ('_entity', '_membership'), 'relation': ('_entity', 'relation'), 'email': ('email',)}] 
 
 
@@ -370,8 +373,8 @@ class test_basic_input(test_donkey):
         a = self.session.query(self.Donkey.t.donkey_sponsership).filter_by(amount = 711110).one()
 
 
-        print get_all_local_data(a)
-        assert get_all_local_data(a) == {'contact_summary.people_id': 2, 'giving_date': None, 'contact_summary.transaction_count': 0, 'people.name': u'fred', '__table': 'donkey_sponsership', 'contact_summary.membership': None, 'donkey_pics.pic_name': None, 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'poo1010101 fred', 'people.town': None, 'people_id': 2, 'people.postcode': u'fred', 'people.country': None, 'people.address_line_1': u'poo1010101', 'people.address_line_2': u'poop', 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'donkey_id': 12, 'amount': Decimal('711110'), 'donkey.donkey_type': None, 'donkey_pics.pic': None, 'donkey.age': 12, 'donkey_pics.donkey_id': None, 'donkey.name': None}
+        print get_all_local_data(a, internal = True)
+        assert get_all_local_data(a, internal = True) == {'contact_summary.people_id': 2, 'giving_date': None, 'contact_summary.transaction_count': 0, 'people.name': u'fred', '__table': 'donkey_sponsership', 'contact_summary.membership': None,  'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'poo1010101 fred', 'people.town': None, 'people_id': 2, 'people.postcode': u'fred', 'people.country': None, 'people.address_line_1': u'poo1010101', 'people.address_line_2': u'poop', 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'donkey_id': 12, 'amount': Decimal('711110'), 'donkey.donkey_type': None, 'donkey.age': 12,  'donkey.name': None}
         
     def test_import_catagory_data(self):
 
@@ -461,7 +464,14 @@ class test_basic_input(test_donkey):
 
         assert_raises(custom_exceptions.InvalidData,cat.load)
 
+    def test_search_internal(self):
 
+        assert self.Donkey.search("people", fields = ["id", "contact_summary.total_amount", "name", "address_line_1"], internal = True) ==  [{'__table': 'people', 'address_line_1': u'43 union street', 'contact_summary.total_amount': Decimal('0'), 'id': 1, 'name': u'david'}]
+
+    def test_search_with_convert(self):
+
+        print self.Donkey.search("people", fields = ["id", "contact_summary.total_amount", "name", "address_line_1"]) 
+        assert self.Donkey.search("people", fields = ["id", "contact_summary.total_amount", "name", "address_line_1"]) ==  [{'__table': 'people', 'address_line_1': u'43 union street', 'contact_summary.total_amount': '0', 'id': 1, 'name': u'david'}]
 
 class test_after_reload(test_basic_input):
     
