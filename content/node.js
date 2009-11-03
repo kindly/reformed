@@ -685,7 +685,7 @@ fn = function(packet, job){
              $('#' + root).html(node_generate_html(form, data, root));
              $INFO.setState(root, 'node', packet.data.node);
              form_setup(root, form);
-             break;data
+             break;
          case 'save_error':
             data = packet.data.data;
             // clear form items with no errors
