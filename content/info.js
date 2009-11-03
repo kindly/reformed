@@ -29,28 +29,6 @@
 	Public Functions
 	================
 	
-	getForm (form_id) returns (object)
-		gets the structure of a form		
-		form_id:	(string) id of the form
-	
-	existsForm (form_id) returns (bool)
-		checks if we know about this form		
-		form_id:	(string) id of the form
-		
-	getData (obj, data_id) returns (object)
-		gets data for object for the data_id record		
-		obj:		(string) the object name (form_id)
-		data_id:	(int) the record we want
-
-	getRecords (obj, link_id) returns (array of int)
-		gets records for object for the link_id
-		returns an array of data_ids		
-		obj:		(string) the object name (form_id)
-		data_id:	(int) the record we want
-
-	getRowcount: function(obj, data_id) //FIXME document
-	
-	
 	clearId ()
 		Resets the Id data
 
@@ -99,120 +77,11 @@
 
 $INFO = {
 
-	_form: {},
-	_data: {},
-	_records: {}, 
 	_id: {},
 	_id_counter: 0,
 	_reverse_id: [],
 	_state: {}, 
 
-	getForm: function(form_id){
-
-		//this needs to dome some clever stuff 
-		//to ensure that we have the proper (latest) versions of forms
-		//talk to the webserver.
-		if (typeof(this._form[form_id]) != 'undefined'){
-			return this._form[form_id];
-		} else {
-			alert('form ' + form_id + ' does not exist!!!');
-		}
-	},
-
-	existsForm: function (form_id){
-		if (typeof(this._form[form_id]) != 'undefined' &&
-		this._form[form_id].layout){
-			return true;
-		} else {
-			return false;
-		}			
-	},
-
-	_addForm: function(form_id, data){
-
-		// set the form info
-		this._form[form_id] = {};
-		this._form[form_id].layout = data;
-		this._form[form_id].html = null;
-		this._form[form_id].subform = {};
-		this._form[form_id].info = {top_level: true, name: form_id};
-	},
-	
-	getData: function(data_obj, data_id){
-
-		//this needs to dome some clever stuff 
-		//to ensure that we have the proper (latest) data
-		//talk to the webserver.
-		if (typeof(this._data[data_obj]) != 'undefined' && 
-		typeof(this._data[data_obj][data_id]) != 'undefined'){
-			return this._data[data_obj][data_id];
-		} else {
-			return null;
-		}
-	},
-
-	existsData: function(data_obj, data_id){
-
-		//this needs to dome some clever stuff 
-		//to ensure that we have the proper (latest) data
-		//talk to the webserver.
-		if (typeof(this._data[data_obj]) != 'undefined' && 
-		typeof(this._data[data_obj][data_id]) != 'undefined'){
-			return true;
-		} else {
-			return false;
-		}
-	},
-
-	_addData: function(data_obj, data_id, data){
-
-		// do we have the object already? if not create it
-		if (typeof(this._data[data_obj]) == 'undefined'){
-			this._data[data_obj] = {};
-		}
-		// set the value
-		this._data[data_obj][data_id] = data;	},
-	
-	getRecords: function(obj, data_id){
-
-		//this needs to do some clever stuff 
-		//to ensure that we have the proper (latest) data
-		//talk to the webserver. hacked for records
-		if (data_id === 0){
-			return null;
-		}
-		if (typeof(this._records[obj]) != 'undefined' &&
-		typeof(this._records[obj][data_id]) != 'undefined'){
-			return this._records[obj][data_id].records;
-		}
-	},
-
-	getRowcount: function(obj, data_id){
-
-		//this needs to do some clever stuff 
-		//to ensure that we have the proper (latest) data
-		//talk to the webserver. hacked for records
-		if (data_id === 0){
-			return null;
-		}
-		if (typeof(this._records[obj]) != 'undefined' &&
-		typeof(this._records[obj][data_id]) != 'undefined'){
-			return this._records[obj][data_id].rowcount;
-		}
-	},
-	
-	_addRecord: function(obj, parent_id, records, rowcount){
-
-		// do we have the object already? if not create it
-		if (typeof(this._records[obj]) == 'undefined'){
-			this._records[obj] = {};
-		}
-		// set the value
-		data = {'records':records, 'rowcount':rowcount};
-		this._records[obj][parent_id] = data;
-
-	},
-	
 
 	clearId: function(){
 
@@ -294,42 +163,8 @@ $INFO = {
 	getStateDebug: function(root){
 		// returns the state for debug purposes
 		return $.toJSON(this._state[root]);
-	},
-	
-	_init: function(){
-		// does any initialisation such as loading job processing functions
-		// this is to ensure that all other modules are loaded
-		
-		// PACKET FUNCTIONS
-		
-		// form packet function
-  		fn = function(packet, job){
-  			var my_data = packet.data;
-  			$INFO._addForm(packet.id, my_data);
-  		};
-		$JOB.addPacketFunction('form', fn);
-		
-		// data packet function
-  		fn = function(packet, job){
-			var record;
-			var obj = packet.object;
-			var data_id;
-		//	var records = packet.records;
-		//	var data_id = packet.data_id;
-		//	var rowcount = packet.rowcount;
-		//	$INFO._addRecord(obj, data_id, records, rowcount);
-			// store the returned recordID for the initial packet
-		//	job.data_id = data_id;
-		//	for (var j = packet.data.length; j>0; j--){
-		//		record = packet.data[j-1];
-				for (data_id in packet.data){
-					$INFO._addData(obj,data_id, packet.data[data_id]);
-				}
-		//	}
-  		};
-		$JOB.addPacketFunction('data', fn);
-	
 	}
+
 };
 
 
