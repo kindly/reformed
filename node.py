@@ -218,6 +218,7 @@ class TableNode(Node):
         else:
             id = self.data.get('__id')
             filter = {'_core_entity_id' : id}
+        print filter
 
         session = r.reformed.Session()
         obj = r.reformed.get_class(self.table)
@@ -226,22 +227,25 @@ class TableNode(Node):
             data_out = util.get_row_data(data, keep_all = False, basic = True)
             data_out['id'] = data.id
             people_id = data.id
-            self.title = data_out[self.title_field]
+            self.title = data_out.get(self.title_field)
             self.link = '%s:view:id=%s' % (self.name, data.id)
 
         except sa.orm.exc.NoResultFound:
+            data = None
             data_out = {}
             people_id = 0
             self.title = 'unknown'
+            print 'no data found'
 
-        for subform_name in self.subforms.keys():
-            print 'subform', subform_name
-            print self.subforms
-            subform = self.subforms.get(subform_name)
-            subform_parent_id = subform.get('parent_id')
-            subform_parent_value = getattr(data, subform_parent_id)
-            subform_data = self.subform_data.get(subform_name)
-            data_out[subform_name] = self.subform(session, subform, subform_data, subform_parent_value)
+        if data:
+            for subform_name in self.subforms.keys():
+                print 'subform', subform_name
+                print self.subforms
+                subform = self.subforms.get(subform_name)
+                subform_parent_id = subform.get('parent_id')
+                subform_parent_value = getattr(data, subform_parent_id)
+                subform_data = self.subform_data.get(subform_name)
+                data_out[subform_name] = self.subform(session, subform, subform_data, subform_parent_value)
 
         data = create_form_data(self.fields, self.form_params, data_out)
         self.out = data
