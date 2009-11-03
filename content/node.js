@@ -366,6 +366,7 @@ function itemChanged(item){
     }
 }
 
+
 function setup_process_params(root, item){
     for (var key in item.params){
             if (item.params.hasOwnProperty(key)){
@@ -395,10 +396,9 @@ function form_setup(root, form_data){
     dirty(root, null, false);
 }
 
-
-
-function get_node(node_name, node_command, node_data){
-
+function get_node2(node_name, node_command, node_data){
+    // FIXME this is a botch to make sure that get_node sets the $INFO state node
+    // but this call doesn't
     var info = {node: node_name,
                 lastnode: '',  //fixme
                 command: node_command };
@@ -406,10 +406,18 @@ function get_node(node_name, node_command, node_data){
     if (node_data){
         info.data = node_data;
     }
-
     $JOB.add(info, {}, 'node', true);
+}
 
 
+
+function get_node(node_name, node_command, node_data){
+
+    var root = 'main'; //FIXME
+    $INFO.newState(root);
+    $INFO.setState(root, 'node', node_name);
+
+    get_node2(node_name, node_command, node_data);
 }
 
 function node_get_form_data_rows(root){
@@ -627,22 +635,31 @@ function update_status(root, data){
     }
 }
 
-function job_processor_status(data, node, root){
-
-
-    if (data.form){
-        $('#' + root).html(node_generate_html(data.form, null, root));
-        form_setup(root, data.form);
-        $INFO.setState(root, 'node', node);
-    }
+function get_status(node, root, command){
 
     var current_node = $INFO.getState(root, 'node');
-    if (data.status && current_node == node){
-        update_status(root, data.status);
+    if (node == current_node){
+        eval(command);
     }
+}
 
-    if ((!data.status || !data.status.end) && current_node == node){
-        status_timer = setTimeout("get_node('test.DataLoader', 'status', {id:" + data.jobId + "})", 2000);
+function job_processor_status(data, node, root){
+
+    if (node == $INFO.getState(root, 'node')){
+        // display the message form if it exists
+        if (data.form){
+            $('#' + root).html(node_generate_html(data.form, null, root));
+            form_setup(root, data.form);
+            $INFO.setState(root, 'node', node);
+        }
+        // show info on form
+        if (data.status){
+            update_status(root, data.status);
+        }
+        // set data refresh if job not finished
+        if (!data.status || !data.status.end){
+            status_timer = setTimeout("get_status('" + node + "','" + root + "','get_node2(\"test.DataLoader\", \"status\", {id:" + data.jobId + "})')",1000);
+        }
     }
 }
 
