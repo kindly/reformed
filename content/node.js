@@ -53,7 +53,7 @@ function node_call_from_string(arg, change_state){
     FIXME no root info yet defaults to 'main' further along the call chain
 */
     var link = arg.split(':');
-    if (link[0]=='/n'){
+    if (link[0]=='/n' || link[0]=='n'){
         var node = link[1];
         var command = link[2];
         var data_hash = {};
@@ -61,12 +61,7 @@ function node_call_from_string(arg, change_state){
         if (link.length>3){
             data_hash = convert_url_string_to_hash(link[3]);
         }
-        // FIXME these need a merge
-        if (change_state){
-            get_node(node, command, data_hash);
-        } else {
-            get_node2(node, command, data_hash);
-        }
+        get_node(node, command, data_hash, change_state);
     }
 }
 
@@ -446,9 +441,16 @@ function form_setup(root, form_data){
     dirty(root, null, false);
 }
 
-function get_node2(node_name, node_command, node_data){
-    // FIXME this is a botch to make sure that get_node sets the $INFO state node
-    // but this call doesn't
+function get_node(node_name, node_command, node_data, change_state){
+
+    // if change_state then we will set the status to that node
+    // this helps prevent front-end confusion
+    if (change_state){
+        var root = 'main'; //FIXME
+        $INFO.newState(root);
+        $INFO.setState(root, 'node', node_name);
+    }
+
     var info = {node: node_name,
                 lastnode: '',  //fixme
                 command: node_command };
@@ -457,16 +459,6 @@ function get_node2(node_name, node_command, node_data){
         info.data = node_data;
     }
     $JOB.add(info, {}, 'node', true);
-}
-
-
-
-function get_node(node_name, node_command, node_data){
-
-    var root = 'main'; //FIXME
-    $INFO.newState(root);
-    $INFO.setState(root, 'node', node_name);
-    get_node2(node_name, node_command, node_data);
 }
 
 function node_get_form_data_rows(root){
@@ -532,7 +524,7 @@ function node_save(root, command){
     msg('node_save');
     var out = node_get_form_data(root);
     var node =  $INFO.getState(root, 'node');
-    get_node(node, 'save', out);
+    get_node(node, 'save', out, false);
 }
 
 
@@ -548,13 +540,13 @@ function node_delete(root, command){
     if (id){
         out.id = id;
     }
-    get_node(node, 'delete', out);
+    get_node(node, 'delete', out, false);
 }
 
 
 function node_button(item, node, command){
     var out = node_get_form_data(root);
-    get_node(node, command, out);
+    get_node(node, command, out, false);
 }
 
 
@@ -575,7 +567,7 @@ function show_listing(data, node, root){
 }
 
 function search_box(){
-    get_node('test.Search','',{q: $('#search').val()});
+    get_node('test.Search','',{q: $('#search').val()}, true);
     return false;
 }
 
