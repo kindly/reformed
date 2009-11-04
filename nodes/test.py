@@ -32,7 +32,7 @@ class DataLoader(Node):
     fields = [
         ['jobId', 'info', 'job #:'],
         ['start', 'info', 'start:'],
-        ['message', 'info', 'msg'],
+        ['message', 'info', 'msg:'],
         ['percent', 'progress', 'progress: ']
     ]
 
@@ -42,20 +42,24 @@ class DataLoader(Node):
             file = self.data.get('file')
             table = self.data.get('table')
             jobId = r.reformed.job_scheduler.add_job("loader", "data_load_from_file", "%s, %s" % (table, file))
-            self.get_and_display_status(jobId)
+            self.link = "%s:refresh:id=%s" % (self.name, jobId)
+            self.action = 'redirect'
 
         elif self.command == 'refresh':
             jobId = self.data.get('id')
-            self.get_and_display_status(jobId)
+            data = node.create_form_data(self.fields)
+            data['jobId'] = jobId
+            data['status'] = self.get_status(jobId)
+            self.out = data
+            self.action = 'status'
 
         elif self.command == 'status':
             jobId = self.data.get('id')
             out = self.get_status(jobId)
             self.out = {'status': out, 'jobId' : jobId}
+            self.action = 'status'
 
-        self.action = 'status'
         self.title = "job %s" % jobId
-        self.link = "%s:refresh:id=%s" % (self.name, jobId)
 
     def get_status(self, jobId):
             session = r.reformed.Session()
@@ -70,12 +74,6 @@ class DataLoader(Node):
                    'end':data_out['job_ended']}
             session.close()
             return out
-
-    def get_and_display_status(self, jobId):
-            data = node.create_form_data(self.fields)
-            data['jobId'] = jobId
-            data['status'] = self.get_status(jobId)
-            self.out = data
 
 
 class Donkey(TableNode):

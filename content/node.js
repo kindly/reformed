@@ -26,19 +26,69 @@
 
 
 function page_load(){
-    var link = $.address.value().split(':');
+/*
+    function called on page load by address jquery plug-in
+    used for back/forward buttons, bookmarking etc
+    gets correct 'address' string and passes to calling function
+*/
+    var link = $.address.value();
+    node_call_from_string(link, true);
+}
+
+
+function node_load(arg){
+/*
+    sets the address which then forces a page load
+*/
+    $.address.value(arg);
+}
+
+
+function node_call_from_string(arg, change_state){
+/*
+    takes a string (arg) of the form
+    "/n:<node_name>:<command>:<arguments>"
+
+    change_state: if true will change the state for the root
+    FIXME no root info yet defaults to 'main' further along the call chain
+*/
+    var link = arg.split(':');
     if (link[0]=='/n'){
         var node = link[1];
         var command = link[2];
         var data_hash = {};
+        // if arguments are supplied
         if (link.length>3){
-            var data = link[3];
-            var x = data.split('=');
-            data_hash[x[0]] = x[1];
+            data_hash = convert_url_string_to_hash(link[3]);
         }
-        get_node(node, command, data_hash);
+        // FIXME these need a merge
+        if (change_state){
+            get_node(node, command, data_hash);
+        } else {
+            get_node2(node, command, data_hash);
+        }
     }
 }
+
+function convert_url_string_to_hash(arg){
+/*
+    convert string to a hash
+    input:  "a=1&b=2"
+    output  {a:1, b:2}
+*/
+    var out = {};
+    var args = arg.split('&');
+    for (var i=0; i<args.length; i++){
+        x = args[i];
+        s = x.split('=');
+        if (s.length == 2){
+            out[s[0]] = s[1];
+        }
+    }
+    return out;
+}
+
+
 function _wrap(arg, tag){
     // this wraps the item in <tag> tags
     return '<' + tag + '>' + arg + '</' + tag + '>';
@@ -416,7 +466,6 @@ function get_node(node_name, node_command, node_data){
     var root = 'main'; //FIXME
     $INFO.newState(root);
     $INFO.setState(root, 'node', node_name);
-
     get_node2(node_name, node_command, node_data);
 }
 
@@ -519,7 +568,7 @@ function show_listing(data, node, root){
         next_node = 'test.' + table.substring(0,1).toUpperCase() + table.substring(1,table.length);
         html += '<div class="list">';
         html += '<span class="list_title" ';
-        html += 'onclick="get_node(\'' + next_node + '\', \'view\', {__id:' + item.id + '})"';
+        html += 'onclick="node_load(\'n:' + next_node + ':view:__id=' + item.id + '\')"';
         html += '>' + item.table + ' - ' + item.title + '</span></br><span class="list_summary">' + item.summary + '</span></div>';
     }
     $('#' + root).html(html);
@@ -635,11 +684,10 @@ function update_status(root, data){
     }
 }
 
-function get_status(node, root, command){
-
+function get_status(node, root, call_string){
     var current_node = $INFO.getState(root, 'node');
     if (node == current_node){
-        eval(command);
+        node_call_from_string(call_string, false);
     }
 }
 
@@ -658,7 +706,7 @@ function job_processor_status(data, node, root){
         }
         // set data refresh if job not finished
         if (!data.status || !data.status.end){
-            status_timer = setTimeout("get_status('" + node + "','" + root + "','get_node2(\"test.DataLoader\", \"status\", {id:" + data.jobId + "})')",1000);
+            status_timer = setTimeout("get_status('" + node + "','" + root + "','/n:" + node + ":status:id=" + data.jobId + "')",1000);
         }
     }
 }
@@ -670,12 +718,13 @@ fn = function(packet, job){
      if (title){
          $.address.title(title);
      }
-     var link = packet.data.link;
-     if (link){
-         $.address.value('n:' + link);
-     }
      switch (packet.data.action){
-
+         case 'redirect':
+             var link = packet.data.link;
+             if (link){
+                 $.address.value('n:' + link);
+             }
+             break;
          case 'html':
              $('#' + root).html(packet.data.data.html);
              break;

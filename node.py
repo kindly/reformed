@@ -228,7 +228,7 @@ class TableNode(Node):
             data_out['id'] = data.id
             people_id = data.id
             self.title = data_out.get(self.title_field)
-            self.link = '%s:view:id=%s' % (self.name, data.id)
+ #           self.link = '%s:view:id=%s' % (self.name, data.id)
 
         except sa.orm.exc.NoResultFound:
             data = None
@@ -288,7 +288,7 @@ class TableNode(Node):
 
         self.out = out
         self.action = 'listing'
-        self.link = '%s:list' % self.name
+  #      self.link = '%s:list' % self.name
         self.title = 'listing'
 
     def subform(self, session, subform, form_data, parent_value):
