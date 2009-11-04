@@ -3,6 +3,7 @@
 .label {
 	color:blue;
 	padding:0 15px;
+    float:left;
 }
 
 
@@ -14,6 +15,7 @@ div {
 }
 .progressbar {
     width:200px;
+    float:left;
 }
 	
 	
