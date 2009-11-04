@@ -1,5 +1,6 @@
 import random
 import codecs
+import datetime
 
 l = ['last_names',
      'first_names',
@@ -77,6 +78,22 @@ def make_char(min, max, extras = '', chars= u'aabbcddeeeefghijklmnnoppqrssttuvwx
         out += chars[random.randint(0,len(chars)-1)]
     return out
 
+def make_bool():
+    options = ['true','false', 1, 0]
+    return options[random.randint(0,len(options)-1)]
+
+def make_date(min = 0, max = 0):
+    if min > max:
+        temp = min
+        min = max
+        max = min
+    delta = datetime.timedelta(random.randint(min, max))
+    now = datetime.date.today()
+    return (now + delta).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+def make_dob(min_age = 18, max_age = 80):
+    return make_date(max_age * -365, min_age * -366)
+
 def make_domain():
 
     tld = ['com', 'org', 'net', 'co.uk', 'org.uk', 'gov']
@@ -135,6 +152,8 @@ def create_csv():
         ["address_line_1", make_road, ()],
         ["postcode", make_postcode, ()],
         ["address_line_2", make_town, ('postcode', )],
+        ["dob", make_dob, ()],
+        ["active", make_bool, ()],
         ["email__0__email" ,make_email, ('name', )],
         ["email__1__email", make_email, ('name', )],
         ["donkey_sponsorship__0__amount", make_int, (1,50)],

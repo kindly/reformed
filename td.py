@@ -6,6 +6,8 @@ d = r.reformed
 
 d.add_entity(r.Table("people",
                     r.Text("name", mandatory = True, length = 50),
+                    r.DateTime("dob"),
+                    r.Boolean("active"),
                     r.Address("supporter_address"),
                     r.OneToMany("email","email",
                               order_by = "email",
