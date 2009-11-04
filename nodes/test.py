@@ -27,14 +27,16 @@ import reformed.util as util
 import sqlalchemy as sa
 
 
-class DataLoader(Node):
+class DataLoader(TableNode):
 
     fields = [
         ['jobId', 'info', 'job #:'],
-        ['start', 'info', 'start:'],
+        ['job_started', 'info', 'start:'],
         ['message', 'info', 'msg:'],
         ['percent', 'progress', 'progress: ']
     ]
+    extra_fields = ['job_ended']
+    table = '_core_job_scheduler'
 
     def call(self):
 
@@ -62,17 +64,12 @@ class DataLoader(Node):
         self.title = "job %s" % jobId
 
     def get_status(self, jobId):
-            session = r.reformed.Session()
-            obj = r.reformed.get_class('_core_job_scheduler')
-            filter = {'id': jobId}
-            data = session.query(obj).filter_by(**filter).one()
-            data_out = util.get_row_data(data, keep_all = False, basic = True)
+            data_out = self.node_search_single("id=%s" % jobId)
             out = {'jobId' : jobId,
                    'start': data_out['job_started'],
                    'message':data_out['message'],
                    'percent':data_out['percent'],
                    'end':data_out['job_ended']}
-            session.close()
             return out
 
 
@@ -104,7 +101,7 @@ class People(TableNode):
         'sponsorship':{
             'fields': [
                 ['amount', 'textbox', 'amount:'],
-                ['donkey_id', 'textbox', 'donkey:']
+                ['donkey.name', 'textbox', 'donkey:']
             ],
             "parent_id": "id",
             "child_id": "people_id",

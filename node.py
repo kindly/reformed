@@ -68,12 +68,15 @@ class TableNode(Node):
     """Node for table level elements"""
     table = "unknown"
     fields = []
+    field_list = []     # list of fields to be retrieved by searches (auto created)
+    extra_fields = []
     form_params =  {"form_type": "normal"}
     list_title = 'item %s'
     title_field = 'name'
 
     subforms = {}
     subform_data = {}
+    subform_field_list = {}
 
     first_run = True
 
@@ -88,6 +91,7 @@ class TableNode(Node):
 
     def setup_forms(self):
         for field in self.fields:
+            # add subform data
             if field[1] == 'subform':
                 name = field[2]
                 subform = self.__class__.subforms.get(name)
@@ -95,7 +99,19 @@ class TableNode(Node):
                 data['form']['parent_id'] =  subform.get('parent_id')
                 data['form']['child_id'] =  subform.get('child_id')
                 self.__class__.subform_data[name] = data
-                field.append(data)           
+                field.append(data)
+                self.setup_subforms(name)
+            # build the field list
+            self.field_list.append(field[0])
+        # add any extra fields to the field list
+        for field in self.extra_fields:
+            self.field_list.append(field)
+
+    def setup_subforms(self, name):
+        extra_fields = []
+        for field in self.subforms.get(name).get('fields'):
+            extra_fields.append(field[0])
+        self.subform_field_list[name] = extra_fields
 
     def call(self):
         if  self.command == 'view':
@@ -108,6 +124,10 @@ class TableNode(Node):
             self.delete()
         elif self.command == 'new':
             self.new()
+
+
+    def node_search_single(self, where):
+        return r.reformed.search_single(self.table, where, fields = self.field_list)
 
 
     def save_record_rows(self, session, table, fields, data, join_fields):
@@ -214,21 +234,17 @@ class TableNode(Node):
     def view(self):
         id = self.data.get('id')
         if id:
-            filter = {'id' : id}
+            where = 'id=%s' % id
         else:
             id = self.data.get('__id')
-            filter = {'_core_entity_id' : id}
-        print filter
+            where = '_core_entity_id=%s' % id
 
         session = r.reformed.Session()
         obj = r.reformed.get_class(self.table)
         try:
-            data = session.query(obj).filter_by(**filter).one()
-            data_out = util.get_row_data(data, keep_all = False, basic = True)
-            data_out['id'] = data.id
-            people_id = data.id
+            data_out = self.node_search_single(where)
+            people_id = data_out.get('id')
             self.title = data_out.get(self.title_field)
- #           self.link = '%s:view:id=%s' % (self.name, data.id)
 
         except sa.orm.exc.NoResultFound:
             data = None
@@ -237,15 +253,9 @@ class TableNode(Node):
             self.title = 'unknown'
             print 'no data found'
 
-        if data:
+        if data_out:
             for subform_name in self.subforms.keys():
-                print 'subform', subform_name
-                print self.subforms
-                subform = self.subforms.get(subform_name)
-                subform_parent_id = subform.get('parent_id')
-                subform_parent_value = getattr(data, subform_parent_id)
-                subform_data = self.subform_data.get(subform_name)
-                data_out[subform_name] = self.subform(session, subform, subform_data, subform_parent_value)
+                data_out[subform_name] = self.subform(subform_name, data_out)
 
         data = create_form_data(self.fields, self.form_params, data_out)
         self.out = data
@@ -288,18 +298,20 @@ class TableNode(Node):
 
         self.out = out
         self.action = 'listing'
-  #      self.link = '%s:list' % self.name
         self.title = 'listing'
 
-    def subform(self, session, subform, form_data, parent_value):
-
+    def subform(self, subform_name, data_out):
+        subform_data = self.subform_data.get(subform_name)
+        subform = self.subforms.get(subform_name)
+        subform_parent_id = subform.get('parent_id')
+        parent_value = data_out.get(subform_parent_id)
         table = subform.get('table')
         child_id = subform.get('child_id')
-        obj = r.reformed.get_class(table)
-        filter = {child_id : parent_value}
+        field_list = self.subform_field_list[subform_name]
+
+        where = "%s=%s" % (child_id, parent_value)
         try:
-            data = session.query(obj).filter_by(**filter).all()
-            out = util.create_data_array(data, keep_all=False, basic=True)
+            out = r.reformed.search(table, where, fields = field_list)
         except sa.orm.exc.NoResultFound:
             out = {}
         return out
