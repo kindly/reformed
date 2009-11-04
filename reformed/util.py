@@ -66,6 +66,7 @@ def get_next_relation(gr, node, path_dict, tables, current_path = [], last_edge 
     
     for edge in gr.out_edges(node, data = True):
         node1, node2, relation = edge
+        relation = relation["relation"]
         rtables = relation.table.database.tables
         if len(tables) > 1 and rtables[node2].entity and rtables[tables[-1]].name == "_core_entity" and rtables[tables[-2]].entity:
             continue
@@ -85,6 +86,7 @@ def get_next_relation(gr, node, path_dict, tables, current_path = [], last_edge 
         
     for edge in gr.in_edges(node, data = True):
         node1, node2, relation = edge
+        relation = relation["relation"]
         rtables = relation.table.database.tables
         if len(tables) > 1 and rtables[node1].entity and rtables[tables[-1]].name == "_core_entity" and rtables[tables[-2]].entity:
             continue
