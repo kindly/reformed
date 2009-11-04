@@ -420,8 +420,6 @@ class Database(object):
     def search_single(self, table_name, *args, **kw): 
 
         result = self.search(table_name, *args, limit = 2, **kw)
-        print  "result " , result
-        print len(result)
         if not result or len(result) == 2:
             raise custom_exceptions.SingleResultError("one result not found")
         return result[0]
