@@ -174,16 +174,23 @@ class Login(Node):
         vdata = node.validate_data_full(self.data, self.validations)
         if vdata['name'] and vdata['password']:
             where = "name='%s' and password='%s'" % (vdata['name'], vdata['password'])
-            data_out = r.reformed.search_single('user', where)
-            self.login(data_out)
+            try:
+                data_out = r.reformed.search_single('user', where)
+                self.login(data_out)
+            except:
+                self.action = 'general_error'
+                self.out = 'wrong guess'
         else:
             data = node.create_form_data(self.fields)
             self.action = 'form'
             self.out = data
 
     def login(self, data):
-        print '@@@@@@@', data
         global_session.session['user_id'] = data.get('id')
+        self.action = 'html'
+        data = "<p>Hello %s you are now logged in, what fun!</p>" % data['name']
+        self.out = {'html': data}
+
 
 class Sponsorship(Node):
 
