@@ -224,6 +224,8 @@ def get_row_data(obj, fields = None, keep_all = False, internal = False, basic =
         else:
             row_data[field_name] = convert_value(value)
         
+    if fields and obj_table == table:
+        row_data["id"] = obj.id
 
     if keep_all and not fields:
         if obj_table == table:
