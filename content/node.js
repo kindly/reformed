@@ -510,7 +510,7 @@ function node_get_form_data(root){
             out[name] = node_get_form_data_rows(root + '#' + name);
         } else {
             id = $INFO.getId(root + '#' + name);
-            value = $('#' + id).val();
+            value = $FORM_CONTROL.get(id, item.type);
             if (typeof value == 'undefined'){
                 value = null;
             }
@@ -545,6 +545,7 @@ function node_delete(root, command){
 
 
 function node_button(item, node, command){
+    root = _parse_id(item).root;
     var out = node_get_form_data(root);
     get_node(node, command, out, false);
 }

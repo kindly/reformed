@@ -7,7 +7,7 @@ import cgi
 import traceback
 import wsgiref.util
 import json
-
+from global_session import global_session
 import interface
 import lookup
 
@@ -21,8 +21,8 @@ def process_autocomplete(environ, start_response):
     """ this gets the request data and starts any processing jobs
     needs to be expanded to do multiple requests """
 
-    http_session = environ['beaker.session']
-    http_session['user_id'] = 10
+    # FIXME this has no security
+
     formdata = cgi.FieldStorage(fp=environ['wsgi.input'],
                         environ=environ,
                         keep_blank_values=1)
@@ -36,8 +36,8 @@ def process_autocomplete(environ, start_response):
 
 def process_node(environ, start_response):
 
-    http_session = environ['beaker.session']
-    http_session['user_id'] = 10
+    global_session.session = environ['beaker.session']
+    global_session.session['user_id'] = 10
 
     formdata = cgi.FieldStorage(fp=environ['wsgi.input'],
                         environ=environ,
@@ -50,7 +50,7 @@ def process_node(environ, start_response):
     except:
         body = {}
 
-    moo = interface.Interface(http_session)
+    moo = interface.Interface()
 
     moo.add_command(head, body)
     moo.process()
@@ -61,7 +61,7 @@ def process_node(environ, start_response):
         print json.dumps(data, sort_keys=False, indent=4)
         print 'length %s bytes' % len(json.dumps(data, sort_keys=True, indent=4))
         print 'condenced length %s bytes' % len(json.dumps(data, separators=(',',':')))
-        print 'SESSION\n%s' % http_session
+        print 'SESSION\n%s' % global_session.session
         print 'DONE'
         return [json.dumps(data, separators=(',',':'))]
     except TypeError:

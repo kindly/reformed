@@ -26,6 +26,13 @@ d.add_table(r.Table("email",
                    )
            )
 
+d.add_entity(r.Table("user",
+                    r.Text("name"),
+                    r.Text("password")
+                   )
+           )
+
+
 d.add_entity(r.Table("donkey",
                     r.Text("name"), #validation = '__^[a-zA-Z0-9 ]*$'),
                     r.Integer("age", validation = 'Int'),

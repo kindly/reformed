@@ -25,6 +25,7 @@ from node import TableNode, Node
 from .reformed import reformed as r
 import reformed.util as util
 import sqlalchemy as sa
+from global_session import global_session
 
 
 class DataLoader(TableNode):
@@ -72,6 +73,14 @@ class DataLoader(TableNode):
                    'end':data_out['job_ended']}
             return out
 
+class User(TableNode):
+
+    table = "user"
+    fields = [
+        ['name', 'textbox', 'name:'],
+        ['password', 'textbox', 'password:']
+    ]
+    list_title = 'user %s'
 
 class Donkey(TableNode):
 
@@ -149,6 +158,32 @@ class Search(Node):
         self.title = 'search for "%s"' % query
         self.link = '%s::q=%s' % (self.name, query)
 
+class Login(Node):
+
+    fields = [
+        ['name', 'textbox', 'username:'],
+        ['password', 'password', 'password:'],
+        ['button', 'submit', 'moo', {'action': 'next', 'node': 'test.Login'}]
+    ]
+    form_params =  {"form_type": "action"}
+    validations = [
+        ['name', validators.UnicodeString],
+        ['password', validators.UnicodeString]
+    ]
+    def call(self):
+        vdata = node.validate_data_full(self.data, self.validations)
+        if vdata['name'] and vdata['password']:
+            where = "name='%s' and password='%s'" % (vdata['name'], vdata['password'])
+            data_out = r.reformed.search_single('user', where)
+            self.login(data_out)
+        else:
+            data = node.create_form_data(self.fields)
+            self.action = 'form'
+            self.out = data
+
+    def login(self, data):
+        print '@@@@@@@', data
+        global_session.session['user_id'] = data.get('id')
 
 class Sponsorship(Node):
 
