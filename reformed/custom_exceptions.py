@@ -48,6 +48,8 @@ class InvalidData(AttributeError):
     pass
 class SearchError(Exception):
     pass
+class SingleResultError(Exception):
+    pass
 class NotValidatedError(Exception):
     pass
 class LockingError(Exception):
