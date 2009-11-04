@@ -159,17 +159,17 @@ def create_csv():
         ["donkey_sponsorship__0__amount", make_int, (1,50)],
         ["donkey_sponsorship__0___donkey__0__name", make_word, (1,3)],
         ["donkey_sponsorship__0___donkey__0__age", make_int, (1, 25)]
-    ], 10000),
+    ], 1000),
    ( "people.csv", [
         ["name", make_name, ()],
         ["address_line_1", make_road, ()],
         ["postcode", make_postcode, ()],
         ["address_line_2", make_town, ('postcode', )]
-    ], 5000),
+    ], 1000),
    ( "donkeys.csv", [
         ["name", make_word, (1,3)],
         ["age", make_int, (1, 25)]
-    ], 20000)
+    ], 1000)
     ]
  
     for (filename, data, num_rows) in full_data:

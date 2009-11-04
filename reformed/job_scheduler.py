@@ -52,6 +52,7 @@ class JobScheduler(object):
                 job.arg = u"%s" % arg
             job.job_start_time = run_time
             job.function = u"%s" % func
+            job.message = u'waiting'
             session.save(job)
             # FIXME this does not look safe against exceptions
             session.commit()
@@ -101,7 +102,7 @@ class JobSchedulerThread(threading.Thread):
 
                 for result in to_run:
                     result["job_started"] = datetime.datetime.now()
-                    result["message"] = "started"
+                    result["message"] = "starting"
                     result["__table"] = "_core_job_scheduler"
                     func = getattr(standard_jobs, result["function"].encode("ascii"))
                     arg = result["arg"]
