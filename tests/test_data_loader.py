@@ -461,3 +461,43 @@ class test_flat_file(donkey_test.test_donkey):
         assert str(chunk_status.error_lines[0].error_dict) == """{('email', 0, 'email'): [Invalid(u'The domain portion of the email address is invalid (the portion after the @: .com)',)]}"""
 
 
+    def test_key_field(self):
+
+        flatfile = FlatFile(self.Donkey,
+                            "people",
+                            "tests/data.csv")    
+
+        print repr(flatfile.key_field_type_dict) 
+
+        assert repr(flatfile.key_field_type_dict) == """{('email', 0, 'email_number'): <class 'sqlalchemy.types.Integer'>, ('root', 'address_line_1'): Unicode(length=100), ('root', 'modified_by'): <class 'sqlalchemy.types.Integer'>, ('email', 0, 'email'): Unicode(length=300), ('donkey_sponsership', 0, 'modified_by'): <class 'sqlalchemy.types.Integer'>, ('email', 1, 'email'): Unicode(length=300), ('root', 'modified_date'): <class 'sqlalchemy.types.DateTime'>, ('email', 0, 'people_id'): <class 'sqlalchemy.types.Integer'>, ('donkey_sponsership', 0, '_donkey', 0, '_core_entity_id'): <class 'sqlalchemy.types.Integer'>, ('email', 1, 'email_number'): <class 'sqlalchemy.types.Integer'>, ('donkey_sponsership', 0, 'modified_date'): <class 'sqlalchemy.types.DateTime'>, ('email', 1, 'active_email'): <class 'sqlalchemy.types.Boolean'>, ('donkey_sponsership', 0, 'donkey_id'): <class 'sqlalchemy.types.Integer'>, ('root', 'address_line_2'): Unicode(length=100), ('donkey_sponsership', 0, 'people_id'): <class 'sqlalchemy.types.Integer'>, ('email', 0, 'modified_by'): <class 'sqlalchemy.types.Integer'>, ('donkey_sponsership', 0, 'giving_date'): <class 'sqlalchemy.types.Date'>, ('root', 'town'): Unicode(length=100), ('email', 0, 'active_email'): <class 'sqlalchemy.types.Boolean'>, ('root', '_core_entity_id'): <class 'sqlalchemy.types.Integer'>, ('donkey_sponsership', 0, 'amount'): <class 'sqlalchemy.types.Numeric'>, ('root', 'address_line_3'): Unicode(length=100), ('root', 'postcode'): Unicode(length=100), ('donkey_sponsership', 0, '_donkey', 0, 'modified_date'): <class 'sqlalchemy.types.DateTime'>, ('root', 'name'): Unicode(length=30), ('email', 1, 'modified_by'): <class 'sqlalchemy.types.Integer'>, ('donkey_sponsership', 0, '_donkey', 0, 'donkey_type'): Unicode(length=100), ('email', 1, 'people_id'): <class 'sqlalchemy.types.Integer'>, ('email', 0, 'modified_date'): <class 'sqlalchemy.types.DateTime'>, ('root', 'country'): Unicode(length=100), ('donkey_sponsership', 0, '_donkey', 0, 'modified_by'): <class 'sqlalchemy.types.Integer'>, ('email', 1, 'modified_date'): <class 'sqlalchemy.types.DateTime'>, ('donkey_sponsership', 0, '_donkey', 0, 'name'): Unicode(length=100), ('donkey_sponsership', 0, '_donkey', 0, 'age'): <class 'sqlalchemy.types.Integer'>}"""
+
+
+
+    def test_boolean(self):
+
+        peter ="""
+        name : peterrrooooooooooo
+        address_line_1 : 16 blooey
+        postcode : sewjfd
+        email :
+            -
+                email : poo@poooooooooooooooo.com
+                active_email : True
+            -
+                email : poo2@poo.com
+                active_email : true
+                """
+
+        peter = yaml.load(peter)
+
+        peter["email"][0]["active_email"] = False
+
+        record = SingleRecord(self.Donkey, "people", peter)
+
+        record.load()
+
+
+
+
+
+

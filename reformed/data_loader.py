@@ -9,6 +9,7 @@ import formencode as fe
 import json
 import datetime
 import Queue
+import sqlalchemy as sa
 from multiprocessing import Pool
 import multiprocessing
 
@@ -174,6 +175,8 @@ class FlatFile(object):
 
         self.key_data = self.make_key_data_dict()
 
+        self.key_field_type_dict = self.key_field_dict()
+
         self.make_parent_key_dict()
 
         self.check_fields()
@@ -183,6 +186,20 @@ class FlatFile(object):
         self.keys.sort(lambda a, b : len(a) - len(b))
 
         self.status = []
+
+    def key_field_dict(self):
+
+        key_field_dict = {}
+
+        for col_name, column in self.database.tables[self.table].columns.iteritems():
+            key_field_dict[("root", ) + (col_name, )] = column.type
+
+        for key, key_data in self.key_data.iteritems():
+            table, join, one_ways = key_data
+            for col_name, column in self.database.tables[table].columns.iteritems():
+                key_field_dict[key + (col_name, )] = column.type
+
+        return key_field_dict
     
 
     def get_file(self):
@@ -401,7 +418,7 @@ class FlatFile(object):
         for index, key_item in enumerate(self.key_item_list):
             key, item = key_item
             if row[index]:
-                all_rows[key][item] = convert_unicode(row[index])
+                all_rows[key][item] = self.convert(row[index], key, item)
         for key in self.keys:
             if key == "root":
                 continue
@@ -409,6 +426,28 @@ class FlatFile(object):
                 if not any([all_rows[other_key] for other_key in self.key_decendants[key]]):
                     all_rows.pop(key)
         return all_rows
+
+    def convert(self, value, key, item):
+
+
+        if key == "root":
+            key = ("root", )
+        field_type = self.key_field_type_dict[key + (item,)]
+
+
+        if field_type == sa.types.Boolean:
+            if value.lower() in ("false", "0"):
+                return False
+            elif value.lower() in ("True", "1"):
+                return True
+            else:
+                return "Error"
+
+        if field_type == sa.types.DateTime:
+            return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%SZ')
+        
+        return convert_unicode(value)
+
 
 class SingleRecord(object):
 
