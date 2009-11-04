@@ -66,6 +66,7 @@ def get_next_relation(gr, node, path_dict, tables, current_path = [], last_edge 
     
     for edge in gr.out_edges(node, data = True):
         node1, node2, relation = edge
+        relation = relation["relation"]
         rtables = relation.table.database.tables
         if len(tables) > 1 and rtables[node2].entity and rtables[tables[-1]].name == "_core_entity" and rtables[tables[-2]].entity:
             continue
@@ -85,6 +86,7 @@ def get_next_relation(gr, node, path_dict, tables, current_path = [], last_edge 
         
     for edge in gr.in_edges(node, data = True):
         node1, node2, relation = edge
+        relation = relation["relation"]
         rtables = relation.table.database.tables
         if len(tables) > 1 and rtables[node1].entity and rtables[tables[-1]].name == "_core_entity" and rtables[tables[-2]].entity:
             continue
@@ -181,10 +183,19 @@ def create_table_path(table_path_list, table):
 
 def get_fields_from_obj(obj):
 
-    return obj._table.columns.keys()
+    return obj._table.columns.keys() + ["id"]
 
+INTERNAL_TABLES = ("modified_by", "modified_date", "id", "_core_entity_id")
 
-def get_row_data(obj, fields = None, keep_all = False, keep_format = False, basic = False, table = None):
+def convert_value(value):
+
+    if isinstance(value, datetime.datetime):
+        value = value.strftime('%Y-%m-%dT%H:%M:%SZ')
+    if isinstance(value, decimal.Decimal):
+        value = str(value)
+    return value
+
+def get_row_data(obj, fields = None, keep_all = False, internal = False, basic = False, table = None):
     
     row_data = {}
 
@@ -198,7 +209,7 @@ def get_row_data(obj, fields = None, keep_all = False, keep_format = False, basi
         if fields and (field not in fields):
             continue
 
-        if field in ("modified_by", "modified_date", "id", "_core_entity_id") and not keep_all:
+        if field in INTERNAL_TABLES and not keep_all and not fields:
             continue
 
         if obj_table == table:
@@ -207,16 +218,14 @@ def get_row_data(obj, fields = None, keep_all = False, keep_format = False, basi
             field_name = '%s.%s' % (obj_table, field)
 
         value = getattr(obj, field)
-        if isinstance(value, datetime.datetime):
-            value = value.strftime('%Y-%m-%dT%H:%M:%SZ')
-        if isinstance(value, decimal.Decimal):
-            value = str(value)
-        if keep_format:
-            row_data[field_name] = getattr(obj, field)
-        else:
-            row_data[field_name] = value
 
-    if keep_all:
+        if internal:
+            row_data[field_name] = value
+        else:
+            row_data[field_name] = convert_value(value)
+        
+
+    if keep_all and not fields:
         if obj_table == table:
             id_name = "id"
         else:
@@ -252,32 +261,110 @@ def create_data_array(result, **kw):
         data.append(out)
     return data
 
-def get_all_local_data(obj, fields = None, tables = None, allow_system = False, keep_all = False):
+def split_table_fields(field_list, table_name):
 
+    table_field_dict = {}
+
+    for table_field in field_list:
+        table_field_list = table_field.split(".")
+        if len(table_field_list) == 2:
+            out_table, out_field = table_field_list
+            table_field_dict.setdefault(out_table,[]).append(out_field)
+        else:
+            table_field_dict.setdefault(table_name,[]).append(table_field)
+
+    return table_field_dict
+
+
+def get_all_local_data(obj, internal = False, fields = None, tables = None, allow_system = False, keep_all = False):
 
     table = obj._table
+
+    if fields:
+        return get_row_with_fields(obj, fields, internal = internal)
+    if tables:
+        return get_row_with_table(obj, tables, keep_all = keep_all, internal = internal)
+
+    all_local_tables = table.local_tables.keys() + [table.name]
+
+    if allow_system:
+        return get_row_with_table(obj, all_local_tables, keep_all = keep_all, internal = internal)
+    else:
+        local_tables = [table for table in all_local_tables if not table.startswith("_")]
+        return get_row_with_table(obj, local_tables, keep_all = keep_all, internal = internal)
+
+def get_row_with_table(obj, tables, keep_all = True, internal = False):
+
+    table = obj._table
+
     row_data = {"__table": table.name}
     database = table.database
     local_tables = table.local_tables
-    if not tables or obj._table.name in tables:
-        row_data.update(get_row_data(obj, keep_all = keep_all, keep_format = True, table = table.name))
+
+    if obj._table.name in tables:
+        data = get_row_data(obj, keep_all = keep_all, internal = internal, table = table.name)
+        row_data.update(data)
 
     for aliased_table_name, path in table.local_tables.iteritems():
         table_name = table.paths[path][0]
-        if not allow_system:
-            if table_name.startswith("_"):
-                continue
-        if tables and table_name not in tables:
+        if table_name not in tables:
             continue
-        current_obj = obj
-        for relation in path:
-            current_obj = getattr(current_obj, relation)
-            if not current_obj:
-                current_obj = database.get_instance(table_name)
-                break
-        row_data.update(get_row_data(current_obj, keep_all = keep_all, keep_format = True, table = table.name))
+        current_obj =  recurse_relationships(database, obj, path)
+
+        if not current_obj:
+            continue
+
+        data = get_row_data(current_obj, keep_all = keep_all, internal = internal, table = table.name)
+        row_data.update(data)
 
     return row_data
+
+def get_row_with_fields(obj, fields, internal = False):
+
+    table = obj._table
+
+    table_field_dict = split_table_fields(fields, table.name)
+
+    row_data = {"__table": table.name}
+    database = table.database
+    local_tables = table.local_tables
+
+    if table.name in table_field_dict:
+        fields = table_field_dict[table.name]
+
+    if fields:
+        data = get_row_data(obj, fields = fields, internal = internal, table = table.name)
+        row_data.update(data)
+
+    for aliased_table_name, path in table.local_tables.iteritems():
+        table_name = table.paths[path][0]
+
+        if table_name not in table_field_dict:
+            continue
+
+        if table_name in table_field_dict:
+            fields = table_field_dict[table_name]
+
+        if fields:
+            current_obj = recurse_relationships(database, obj, path)
+            if not current_obj:
+                continue
+            data = get_row_data(current_obj, fields = fields, internal = internal, table = table.name)
+            row_data.update(data)
+
+    return row_data
+
+def recurse_relationships(database, obj, path):
+
+    current_obj = obj
+    for relation in path:
+        current_obj = getattr(current_obj, relation)
+        if not current_obj:
+            #current_obj = database.get_instance(table_name)
+            break
+    return current_obj
+
+
 
 def load_local_data(database, data):
     

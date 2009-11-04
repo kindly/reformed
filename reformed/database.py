@@ -381,7 +381,10 @@ class Database(object):
 
         limit = kw.get("limit", None)
         offset = kw.get("offset", 0)
+        internal = kw.get("internal", False)
         query = search.Search(self, table_name, session, *args)
+
+        fields = kw.get("fields", None)
 
         tables = None
 
@@ -393,13 +396,21 @@ class Database(object):
                 if table.count("summary"):
                     tables.append(table)
 
+        if fields:
+            tables = None
+
         if limit:
-            result = resultset.ResultSet(query, tables = tables, result_num = limit, offset = offset).first_set()
+            result = resultset.ResultSet(query, result_num = limit, offset = offset).first_set()
         else:
-            result = resultset.ResultSet(query, tables = tables).all()
+            result = resultset.ResultSet(query).all()
 
         try:
-            return [get_all_local_data(obj, tables = tables, keep_all = True, allow_system = True) for obj in result]    
+            return [get_all_local_data(obj, 
+                                       tables = tables, 
+                                       fields = fields,
+                                       internal = internal, 
+                                       keep_all = True, 
+                                       allow_system = True) for obj in result]    
         except Exception, e:
             session.rollback()
             raise
@@ -469,7 +480,7 @@ class Database(object):
             gr.add_node(table)
 
         for rel in self.relations:
-            gr.add_edge(rel.table.name, rel.other, rel)
+            gr.add_edge(rel.table.name, rel.other, relation = rel)
 
         self.graph = gr
 
