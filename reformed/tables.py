@@ -27,15 +27,17 @@
 
 import sqlalchemy as sa
 from sqlalchemy.orm import mapper
+from sqlalchemy.sql.expression import ClauseElement
 from columns import Column
 from custom_exceptions import NoMetadataError, NoDatabaseError
 import formencode
 from formencode import validators
 from validators import All
-from fields import Modified, Integer
+from fields import Modified, ModifiedBySession
 from util import get_paths, make_local_tables, create_table_path_list, create_table_path
 import logging
 import migrate.changeset
+import datetime
 from sqlalchemy.orm import column_property
 from sqlalchemy.orm.interfaces import AttributeExtension
 
@@ -97,7 +99,7 @@ class Table(object):
 
         if "modified_date" not in self.fields.iterkeys() and self.modified_date:
             self.add_field(Modified("modified_date"))
-            self.add_field(Integer("modified_by" , default = 1))
+            self.add_field(ModifiedBySession("modified_by" ))
 
         #sqlalchemy objects
         self.sa_table = None
@@ -459,9 +461,16 @@ class Table(object):
             return
 
         properties ={}
-        for column in self.columns:
-            properties[column] = column_property(getattr(self.sa_table.c,column),
-                                                     extension = ChangedAttributes())
+        for col_name, column in self.columns.iteritems():
+            if column.type == sa.DateTime:
+                properties[col_name] = column_property(getattr(self.sa_table.c,col_name),
+                                                         extension = ConvertDate())
+            elif column.type == sa.Boolean:
+                properties[col_name] = column_property(getattr(self.sa_table.c,col_name),
+                                                         extension = ConvertBoolean())
+            else:
+                properties[col_name] = column_property(getattr(self.sa_table.c,col_name),
+                                                         extension = ChangedAttributes())
 
         for relation in self.relations.itervalues():
             sa_options = relation.sa_options
@@ -724,8 +733,40 @@ class ChangedAttributes(AttributeExtension):
 
         return value
     
-class FormEncodeState(object):
-    pass
+class ConvertDate(AttributeExtension):
+    
+    def set(self, state, value, oldvalue, initator):
+
+        if value == oldvalue or not value:
+            return value
+        state.dict["_validated"] = False
+
+        if isinstance(value, ClauseElement):
+            return value
+
+        if isinstance(value, datetime.datetime):
+            return value
+
+        return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%SZ')
+
+class ConvertBoolean(AttributeExtension):
+
+    def set(self, state, value, oldvalue, initator):
+
+        if value == oldvalue or not value:
+            return value
+        state.dict["_validated"] = False
+
+        if isinstance(value, bool):
+            return value
+
+        if value.lower() in ("false", "0"):
+            return False
+        elif value.lower() in ("true", "1"):
+            return True
+        else:
+            raise AttributeError("field needs to be a boolean")
+
 
 
 

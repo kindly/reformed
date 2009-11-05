@@ -65,7 +65,7 @@ class test_donkey(object):
                                   logged = False, validated = False
                                  ),
                             Table("transactions",
-                                   Date("date"),
+                                   DateTime("date"),
                                    Money("amount"),
                                    Text("Type")),
                             Table("email",
@@ -95,11 +95,11 @@ class test_donkey(object):
                                  ),
                             Table("donkey_sponsership",
                                   Money("amount"),
-                                  Date("giving_date"),
+                                  DateTime("giving_date"),
                                   entity_relationship = True
                                  ),
                             Table("payments",
-                                  Date("giving_date"),
+                                  DateTime("giving_date"),
                                   Money("amount"),
                                   Text("source")
                                  ),
