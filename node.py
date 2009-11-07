@@ -239,8 +239,6 @@ class TableNode(Node):
             id = self.data.get('__id')
             where = '_core_entity_id=%s' % id
 
-        session = r.reformed.Session()
-        obj = r.reformed.get_class(self.table)
         try:
             data_out = self.node_search_single(where)
             people_id = data_out.get('id')
@@ -260,7 +258,6 @@ class TableNode(Node):
         data = create_form_data(self.fields, self.form_params, data_out)
         self.out = data
         self.action = 'form'
-        session.close()
 
 
     def delete(self):
