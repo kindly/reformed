@@ -43,10 +43,10 @@ function node_load(arg){
     if ($.address.value() == '/' + arg){
         // the address is already set so we need to force the reload
         // as changing the address will not trigger an event
-	node_call_from_string(arg, true, true);
+		node_call_from_string(arg, true, true);
     } else {
         // sets the address which then forces a page load
-	$.address.value(arg);
+		$.address.value(arg);
     }
 }
 
@@ -727,7 +727,7 @@ fn = function(packet, job){
          case 'redirect':
              var link = packet.data.link;
              if (link){
-                 $.address.value('n:' + link);
+                 node_load('n:' + link);
              }
              break;
          case 'html':
