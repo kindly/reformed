@@ -38,9 +38,16 @@ function page_load(){
 
 function node_load(arg){
 /*
-    sets the address which then forces a page load
+    force a page load of the node
 */
-    $.address.value(arg);
+    if ($.address.value() == '/' + arg){
+        // the address is already set so we need to force the reload
+        // as changing the address will not trigger an event
+	node_call_from_string(arg, true, true);
+    } else {
+        // sets the address which then forces a page load
+	$.address.value(arg);
+    }
 }
 
 
