@@ -1,8 +1,9 @@
 
 
 .label {
-	color:blue;
+	color:darkblue;
 	padding:0 15px;
+	width:100px;
     float:left;
 }
 
@@ -52,12 +53,6 @@ div {
 	margin:0;
 	padding:2px;
 	clear:both;
-}
-
-.form_body div label{
-	color:darkblue;
-	width:100px;
-    float:left;
 }
 
 .form_header, .form_footer {
