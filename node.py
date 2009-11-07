@@ -31,6 +31,7 @@ class Node(object):
         self.title = None
         self.link = None
         self.action = None
+        self.bookmark = None
         self.next_node = None
         self.next_data = None
         self.last_node = data.get('lastnode')
@@ -241,13 +242,13 @@ class TableNode(Node):
 
         try:
             data_out = self.node_search_single(where)
-            people_id = data_out.get('id')
+            id = data_out.get('id')
             self.title = data_out.get(self.title_field)
 
         except sa.orm.exc.NoResultFound:
             data = None
             data_out = {}
-            people_id = 0
+            id = None
             self.title = 'unknown'
             print 'no data found'
 
@@ -258,6 +259,7 @@ class TableNode(Node):
         data = create_form_data(self.fields, self.form_params, data_out)
         self.out = data
         self.action = 'form'
+        self.bookmark = 'n:%s:view:id=%s' % (self.name, id)
 
 
     def delete(self):

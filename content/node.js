@@ -716,6 +716,26 @@ function job_processor_status(data, node, root){
     }
 }
 
+bookmark_array = [];
+BOOKMARKS_SHOW_MAX = 3;
+
+function bookmark_add(link, title){
+    bookmark_array.unshift([link, title]);
+    bookmark_display();
+}
+
+function bookmark_display(){
+    var html = '<ol>';
+    for(var i=0; i<bookmark_array.length && i<BOOKMARKS_SHOW_MAX; i++){
+        html += '<li>';
+        html += '<span onclick="node_load(\'' + bookmark_array[i][0] + '\')">';
+        html += bookmark_array[i][1] + '</span>';
+        html += '</li>';
+    }
+    html += '</ol>';
+
+    $('#bookmarks').html(html);
+}
 fn = function(packet, job){
      var root = 'main'; //FIXME
 
@@ -723,6 +743,11 @@ fn = function(packet, job){
      if (title){
          $.address.title(title);
      }
+
+    var bookmark = packet.data.bookmark;
+    if (bookmark){
+        bookmark_add(bookmark, title);
+    }
      switch (packet.data.action){
          case 'redirect':
              var link = packet.data.link;
