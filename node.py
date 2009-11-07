@@ -116,11 +116,11 @@ class TableNode(Node):
     def call(self):
         if  self.command == 'view':
             self.view()
-        elif self.command == 'save':
+        elif self.command == '_save':
             self.save()
         elif self.command == 'list':
             self.list()
-        elif self.command == 'delete':
+        elif self.command == '_delete':
             self.delete()
         elif self.command == 'new':
             self.new()

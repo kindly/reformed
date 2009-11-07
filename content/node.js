@@ -32,7 +32,7 @@ function page_load(){
     gets correct 'address' string and passes to calling function
 */
     var link = $.address.value();
-    node_call_from_string(link, true);
+    node_call_from_string(link, true, true);
 }
 
 
@@ -44,7 +44,7 @@ function node_load(arg){
 }
 
 
-function node_call_from_string(arg, change_state){
+function node_call_from_string(arg, change_state, insecure){
 /*
     takes a string (arg) of the form
     "/n:<node_name>:<command>:<arguments>"
@@ -61,7 +61,12 @@ function node_call_from_string(arg, change_state){
         if (link.length>3){
             data_hash = convert_url_string_to_hash(link[3]);
         }
-        get_node(node, command, data_hash, change_state);
+	// if the command starts with a underscore we don't want
+	// to trigger the command from a url change as this can
+	// let dangerous commands be sent via urls
+	if (!insecure || command.substring(0,1) != '_'){
+            get_node(node, command, data_hash, change_state);
+	}
     }
 }
 
@@ -524,7 +529,7 @@ function node_save(root, command){
     msg('node_save');
     var out = node_get_form_data(root);
     var node =  $INFO.getState(root, 'node');
-    get_node(node, 'save', out, false);
+    get_node(node, '_save', out, false);
 }
 
 
@@ -540,7 +545,7 @@ function node_delete(root, command){
     if (id){
         out.id = id;
     }
-    get_node(node, 'delete', out, false);
+    get_node(node, '_delete', out, false);
 }
 
 
