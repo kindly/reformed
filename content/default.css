@@ -48,11 +48,13 @@ div {
 }
 
 
-.form_body p{
-	margin:3px;
+.form_body > div{
+	margin:0;
+	padding:2px;
+	clear:both;
 }
 
-.form_body p label{
+.form_body div label{
 	color:darkblue;
 	width:100px;
     float:left;
@@ -181,7 +183,7 @@ tr.inactive input{
 	border-bottom:1px solid #CCF;
 }
 
-.dirty >  p > input, .dirty >  div.form_body > p > select{
+.dirty >  div > input, .dirty >  div.form_body > div > select{
 	background-color:#FFD;
 }
 
@@ -197,7 +199,7 @@ tr.inactive input{
 	border-bottom:1px solid #CCF;
 }
 
-.inactive > div.form_body > p > input, .inactive >  div.form_body > p > select{
+.inactive > div.form_body > div > input, .inactive >  div.form_body > div > select{
 	background-color:#FAFAFF;
 	border-color:#FAFAFF;
 }
@@ -257,7 +259,7 @@ tr.inactive input{
 }
 
 
-div.form_body > p > input.error {
+div.form_body > div > input.error {
 	background-color:#FFEC8B;
 }
 

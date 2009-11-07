@@ -209,7 +209,7 @@ function node_generate_html(form, data, root, form_id, form_type){
     }
     var local_data = {};
     local_data.count = 0;
-    local_data.wrap_tag = 'p';
+    local_data.wrap_tag = 'div';
     local_data.show_label = true;
     local_data.form_type = form_type;
     local_data.root = root;
