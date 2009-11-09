@@ -329,6 +329,22 @@ class TableNode(Node):
         return out
 
 
+class AutoForm(TableNode):
+
+    def __init__(self, *args, **kw):
+        if self.__class__.first_run:
+            self.setup()
+        super(AutoForm, self).__init__(*args, **kw)
+
+    def setup(self):
+        fields = []
+        obj = r.get_instance(self.table)
+        columns = obj._table.schema_info
+        for field in columns.keys():
+            if field not in ['modified_date', 'modified_by']:
+                fields.append([field, 'textbox', '%s:' % field])
+        self.__class__.fields = fields
+
 
 
 

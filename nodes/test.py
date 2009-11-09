@@ -73,6 +73,9 @@ class DataLoader(TableNode):
                    'end':data_out['job_ended']}
             return out
 
+class Permission(AutoForm):
+    table = 'permission'
+
 class User(TableNode):
 
     table = "user"
