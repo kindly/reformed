@@ -38,6 +38,7 @@ class DataLoader(TableNode):
     ]
     extra_fields = ['job_ended']
     table = '_core_job_scheduler'
+    permissions = ['logged_in']
 
     def call(self):
 
@@ -187,6 +188,7 @@ class Login(Node):
 
     def login(self, data):
         global_session.session['user_id'] = data.get('id')
+        global_session.session['permissions'] = ['logged_in']
         self.action = 'html'
         data = "<p>Hello %s you are now logged in, what fun!</p>" % data['name']
         self.out = {'html': data}

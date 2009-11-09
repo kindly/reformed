@@ -22,8 +22,11 @@ import reformed.reformed as r
 import reformed.util as util
 import formencode as fe
 import sqlalchemy as sa
+from global_session import global_session
 
 class Node(object):
+
+    permissions = []
 
     def __init__(self, data, node_name, last_node = None):
         self.out = []
@@ -34,6 +37,9 @@ class Node(object):
         self.bookmark = None
         self.next_node = None
         self.next_data = None
+
+        self.allowed = self.check_permissions()
+
         self.last_node = data.get('lastnode')
         self.data = data.get('data')
         if type(self.data).__name__ != 'dict':
@@ -50,6 +56,13 @@ class Node(object):
         print 'first call:', self.first_call
         print 'data:', self.data
         print '~' * 19
+
+    def check_permissions(self):
+        if self.permissions:
+            user_perms = set(global_session.session.get('permissions'))
+            if not set(self.permissions).intersection(user_perms):
+                return False
+        return True
 
     def initialise(self):
         """called first when the node is used"""
