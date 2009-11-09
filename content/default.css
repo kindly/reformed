@@ -280,3 +280,22 @@ div.form_body > div > input.error {
 #search {
     width:130px;
 }
+
+.page_section_title{
+    font-weight:bold;
+    font-size:1.2em;
+}
+.page_section_summary{
+    font-size:0.8em;
+}
+
+.page_section li{
+    display:inline;
+    list-style-type: none;
+    padding-right: 20px;
+}
+
+.page_section ul{
+    margin-top:0;
+}
+
