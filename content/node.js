@@ -730,7 +730,7 @@ function bookmark_add(link, title){
     }
     // trim the array if it's too long
     if (bookmark_array.length >= BOOKMARK_ARRAY_MAX){
-        bookmark_array.splice(BOOKMARK_AARAY_MAX,1);
+        bookmark_array.splice(BOOKMARK_ARRAY_MAX - 1, 1);
     }
     bookmark_array.unshift([link, title]);
     bookmark_display();
