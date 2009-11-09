@@ -134,16 +134,14 @@ $FORM_CONTROL = {
 	
 		// this is where our controls are defined
 		info: function(item, id, show_label, value){
-			var x = '<div>';
-            x += (show_label ? '<span class="label">' + item.title + '</span>' : '');
-			x += '<div id="' + id + '">&nbsp;</div></div>';
+            var x = (show_label ? '<span class="label">' + item.title + '</span>' : '');
+			x += '<div id="' + id + '">&nbsp;</div>';
 			return x;
 		},
 
         progress: function(item, id, show_label, value){
-			var x = '<div>';
-            x += (show_label ? '<span class="label">' + item.title + '</span>' : '');
-			x += '<div id="' + id + '" class="progressbar"></div></div>'; 
+            var x = (show_label ? '<span class="label">' + item.title + '</span>' : '');
+			x += '<div id="' + id + '" class="progressbar"></div>'; 
 			return x;
         },
 	

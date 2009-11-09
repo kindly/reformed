@@ -32,19 +32,26 @@ function page_load(){
     gets correct 'address' string and passes to calling function
 */
     var link = $.address.value();
-    node_call_from_string(link, true);
+    node_call_from_string(link, true, true);
 }
 
 
 function node_load(arg){
 /*
-    sets the address which then forces a page load
+    force a page load of the node
 */
-    $.address.value(arg);
+    if ($.address.value() == '/' + arg){
+        // the address is already set so we need to force the reload
+        // as changing the address will not trigger an event
+		node_call_from_string(arg, true, true);
+    } else {
+        // sets the address which then forces a page load
+		$.address.value(arg);
+    }
 }
 
 
-function node_call_from_string(arg, change_state){
+function node_call_from_string(arg, change_state, insecure){
 /*
     takes a string (arg) of the form
     "/n:<node_name>:<command>:<arguments>"
@@ -61,7 +68,12 @@ function node_call_from_string(arg, change_state){
         if (link.length>3){
             data_hash = convert_url_string_to_hash(link[3]);
         }
-        get_node(node, command, data_hash, change_state);
+	// if the command starts with a underscore we don't want
+	// to trigger the command from a url change as this can
+	// let dangerous commands be sent via urls
+	if (!insecure || command.substring(0,1) != '_'){
+            get_node(node, command, data_hash, change_state);
+	}
     }
 }
 
@@ -197,7 +209,7 @@ function node_generate_html(form, data, root, form_id, form_type){
     }
     var local_data = {};
     local_data.count = 0;
-    local_data.wrap_tag = 'p';
+    local_data.wrap_tag = 'div';
     local_data.show_label = true;
     local_data.form_type = form_type;
     local_data.root = root;
@@ -524,7 +536,7 @@ function node_save(root, command){
     msg('node_save');
     var out = node_get_form_data(root);
     var node =  $INFO.getState(root, 'node');
-    get_node(node, 'save', out, false);
+    get_node(node, '_save', out, false);
 }
 
 
@@ -540,7 +552,7 @@ function node_delete(root, command){
     if (id){
         out.id = id;
     }
-    get_node(node, 'delete', out, false);
+    get_node(node, '_delete', out, false);
 }
 
 
@@ -704,6 +716,26 @@ function job_processor_status(data, node, root){
     }
 }
 
+bookmark_array = [];
+BOOKMARKS_SHOW_MAX = 3;
+
+function bookmark_add(link, title){
+    bookmark_array.unshift([link, title]);
+    bookmark_display();
+}
+
+function bookmark_display(){
+    var html = '<ol>';
+    for(var i=0; i<bookmark_array.length && i<BOOKMARKS_SHOW_MAX; i++){
+        html += '<li>';
+        html += '<span onclick="node_load(\'' + bookmark_array[i][0] + '\')">';
+        html += bookmark_array[i][1] + '</span>';
+        html += '</li>';
+    }
+    html += '</ol>';
+
+    $('#bookmarks').html(html);
+}
 fn = function(packet, job){
      var root = 'main'; //FIXME
 
@@ -711,11 +743,16 @@ fn = function(packet, job){
      if (title){
          $.address.title(title);
      }
+
+    var bookmark = packet.data.bookmark;
+    if (bookmark){
+        bookmark_add(bookmark, title);
+    }
      switch (packet.data.action){
          case 'redirect':
              var link = packet.data.link;
              if (link){
-                 $.address.value('n:' + link);
+                 node_load('n:' + link);
              }
              break;
          case 'html':
