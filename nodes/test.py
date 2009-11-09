@@ -21,7 +21,7 @@
 import formencode as fe
 from formencode import validators
 import node
-from node import TableNode, Node
+from node import TableNode, Node, AutoForm
 from .reformed.reformed import reformed as r
 import sqlalchemy as sa
 from global_session import global_session
@@ -72,6 +72,15 @@ class DataLoader(TableNode):
                    'percent':data_out['percent'],
                    'end':data_out['job_ended']}
             return out
+
+class UserGroup(AutoForm):
+    table = 'user_group'
+
+class UserGroupUser(AutoForm):
+    table = 'user_group_user'
+
+class UserGroupPermission(AutoForm):
+    table = 'user_group_permission'
 
 class Permission(AutoForm):
     table = 'permission'
