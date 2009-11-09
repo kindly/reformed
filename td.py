@@ -50,11 +50,13 @@ d.add_table(r.Table("email",
 d.add_entity(r.Table("user",
                     r.Text("name"),
                     r.Text("password"),
+                    primary_key = "name"
                   )
            )
 
 d.add_table(r.Table("user_group",
-                    r.Text("name")                 )
+                    r.Text("groupname"),
+                    primary_key = "groupname"                 )
            )
 
 d.add_table(r.Table("user_group_user",
@@ -64,15 +66,15 @@ d.add_table(r.Table("user_group_user",
            )
 
 d.add_table(r.Table("user_group_permission",
-                    r.Text("name"),
                     r.ManyToOne("user_group", "user_group"),
-                    r.ManyToOne("permission", "permission")
+                    r.ManyToOne("permissionx", "permission")
                    )
            )
 
 
 d.add_table(r.Table("permission",
-                    r.Text("permission")
+                    r.Text("permission"),
+                    primary_key = 'permission'
                    )
            )
 
