@@ -1,6 +1,7 @@
 import random
 import codecs
 import datetime
+import re
 
 l = ['last_names',
      'first_names',
@@ -98,6 +99,9 @@ def make_domain():
 
     tld = ['com', 'org', 'net', 'co.uk', 'org.uk', 'gov']
     out = make_word(1,2, delimit='.') + '.' + tld[random.randint(0,len(tld)-1)]
+    # only allow legal chars
+    p = re.compile('[^a-zA-Z0-9.-]')
+    out = p.sub('', out)
     return out
 
 def make_email(base = None):
