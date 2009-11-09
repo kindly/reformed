@@ -1,9 +1,10 @@
 from reformed.fields import *
 from reformed.tables import *
 from reformed.database import *
-from reformed.data_loader import FlatFile, load_json_from_file
+from reformed.data_loader import FlatFile, load_json_from_file, SingleRecord
 from reformed.export import json_dump_all_from_table
 from nose.tools import assert_raises
+import yaml
 import sqlalchemy as sa
 from sqlalchemy import create_engine
 import random
@@ -296,6 +297,7 @@ class test_donkey_persist_sqlite(object):
 
         assert countpeople*2  == countpeopleafter
         assert countspone*2  == countsponeafter
+
 
 class test_donkey_persist_mysql(test_donkey_persist_sqlite):
 

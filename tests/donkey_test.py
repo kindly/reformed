@@ -65,7 +65,7 @@ class test_donkey(object):
                                   logged = False, validated = False
                                  ),
                             Table("transactions",
-                                   Date("date"),
+                                   DateTime("date"),
                                    Money("amount"),
                                    Text("Type")),
                             Table("email",
@@ -95,11 +95,11 @@ class test_donkey(object):
                                  ),
                             Table("donkey_sponsership",
                                   Money("amount"),
-                                  Date("giving_date"),
+                                  DateTime("giving_date"),
                                   entity_relationship = True
                                  ),
                             Table("payments",
-                                  Date("giving_date"),
+                                  DateTime("giving_date"),
                                   Money("amount"),
                                   Text("source")
                                  ),
@@ -474,6 +474,19 @@ class test_basic_input(test_donkey):
 
         print self.Donkey.search("people", fields = ["contact_summary.total_amount", "name", "address_line_1"]) 
         assert self.Donkey.search("people", fields = ["contact_summary.total_amount", "name", "address_line_1"]) ==  [{'__table': 'people', 'address_line_1': u'43 union street', 'contact_summary.total_amount': '0', 'id': 1, 'name': u'david'}]
+
+    def test_search_single_result(self):
+
+        assert isinstance(self.Donkey.search_single("people"), dict)
+
+        assert_raises(custom_exceptions.SingleResultError, self.Donkey.search_single, "donkey")
+        assert_raises(custom_exceptions.SingleResultError, self.Donkey.search_single, "membership")
+
+
+
+
+
+
 
 class test_after_reload(test_basic_input):
     

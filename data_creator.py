@@ -86,7 +86,7 @@ def make_date(min = 0, max = 0):
     if min > max:
         temp = min
         min = max
-        max = min
+        max = temp
     delta = datetime.timedelta(random.randint(min, max))
     now = datetime.date.today()
     return (now + delta).strftime('%Y-%m-%dT%H:%M:%SZ')

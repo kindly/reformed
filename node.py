@@ -31,6 +31,7 @@ class Node(object):
         self.title = None
         self.link = None
         self.action = None
+        self.bookmark = None
         self.next_node = None
         self.next_data = None
         self.last_node = data.get('lastnode')
@@ -116,11 +117,11 @@ class TableNode(Node):
     def call(self):
         if  self.command == 'view':
             self.view()
-        elif self.command == 'save':
+        elif self.command == '_save':
             self.save()
         elif self.command == 'list':
             self.list()
-        elif self.command == 'delete':
+        elif self.command == '_delete':
             self.delete()
         elif self.command == 'new':
             self.new()
@@ -239,17 +240,15 @@ class TableNode(Node):
             id = self.data.get('__id')
             where = '_core_entity_id=%s' % id
 
-        session = r.reformed.Session()
-        obj = r.reformed.get_class(self.table)
         try:
             data_out = self.node_search_single(where)
-            people_id = data_out.get('id')
+            id = data_out.get('id')
             self.title = data_out.get(self.title_field)
 
         except sa.orm.exc.NoResultFound:
             data = None
             data_out = {}
-            people_id = 0
+            id = None
             self.title = 'unknown'
             print 'no data found'
 
@@ -260,7 +259,7 @@ class TableNode(Node):
         data = create_form_data(self.fields, self.form_params, data_out)
         self.out = data
         self.action = 'form'
-        session.close()
+        self.bookmark = 'n:%s:view:id=%s' % (self.name, id)
 
 
     def delete(self):

@@ -22,14 +22,28 @@
 ##	
 ##	This file contains all the standard reformed field subclasses
 
+import sys
+sys.path.append(".")
+
 from columns import Column, Field, Relation, Constraint
 import decimal
 import columns
 import formencode
+import global_session as html_session
 import validators
 import sqlalchemy as sa
 import datetime
 import events
+
+def get_user_id():
+    
+    try:
+        user_id = html_session.global_session.session["user_id"]
+    except AttributeError, e:
+        user_id = 1
+
+    return user_id
+    
 
 
 class Text(Field):
@@ -61,6 +75,13 @@ class Modified(Field):
         self.modified_date = Column(sa.DateTime,
                                      onupdate=datetime.datetime.now,
                                      default =datetime.datetime.now)
+
+class ModifiedBySession(Field):
+    
+    def __init__(self, name, *args, **kw):
+        self.modified_by = Column(sa.Integer,
+                                  onupdate = get_user_id,
+                                  default = get_user_id)
 
 
 class DateTime(Field):

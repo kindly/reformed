@@ -461,3 +461,5 @@ class test_flat_file(donkey_test.test_donkey):
         assert str(chunk_status.error_lines[0].error_dict) == """{('email', 0, 'email'): [Invalid(u'The domain portion of the email address is invalid (the portion after the @: .com)',)]}"""
 
 
+
+

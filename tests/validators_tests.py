@@ -80,13 +80,13 @@ class test_validation(test_donkey):
         category = self.session.query(self.Donkey.t.sub_sub_category).first()
 
         cat1 = self.Donkey.get_instance("entity_categories")
-        cat1.start_date = datetime.date(2009,04,02)
-        cat1.end_date = datetime.date(2009,04,03)
+        cat1.start_date = datetime.datetime(2009,04,02)
+        cat1.end_date = datetime.datetime(2009,04,03)
         cat1.category = category
 
         cat2 = self.Donkey.get_instance("entity_categories")
-        cat2.start_date = datetime.date(2009,04,02)
-        cat2.end_date = datetime.date(2009,04,03)
+        cat2.start_date = datetime.datetime(2009,04,02)
+        cat2.end_date = datetime.datetime(2009,04,03)
         cat2.category = category
 
         entity.categories.append(cat1)
@@ -99,8 +99,8 @@ class test_validation(test_donkey):
             self.session.save,
             cat1)
 
-        cat2.start_date = datetime.date(2009,05,02)
-        cat2.end_date = datetime.date(2009,05,03)
+        cat2.start_date = datetime.datetime(2009,05,02)
+        cat2.end_date = datetime.datetime(2009,05,03)
 
         assert self.session.save(cat1) is None
         self.session.expunge_all()
@@ -110,18 +110,18 @@ class test_validation(test_donkey):
 
         entity = self.session.query(self.Donkey.t._core_entity).first()
         membership1 = self.Donkey.get_instance("membership")
-        membership1.start_date = datetime.date(2009,05,02)
+        membership1.start_date = datetime.datetime(2009,05,02)
         membership1._core_entity = entity
         self.session.add(membership1)
         self.session.add(entity)
         self.session.commit()
 
         membership2 = self.Donkey.get_instance("membership")
-        membership2.start_date = datetime.date(2009,05,02)
+        membership2.start_date = datetime.datetime(2009,05,02)
         membership2._core_entity = entity
         assert_raises(formencode.Invalid, self.session.add, membership2)
 
-        membership2.end_date = datetime.date(2009,05,02)
+        membership2.end_date = datetime.datetime(2009,05,02)
 
         assert self.session.add(membership2) == None
 
