@@ -1,3 +1,24 @@
+##   This file is part of Reformed.
+##
+##   Reformed is free software: you can redistribute it and/or modify
+##   it under the terms of the GNU General Public License version 2 as
+##   published by the Free Software Foundation.
+##
+##   Reformed is distributed in the hope that it will be useful,
+##   but WITHOUT ANY WARRANTY; without even the implied warranty of
+##   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+##   GNU General Public License for more details.
+##
+##   You should have received a copy of the GNU General Public License
+##   along with Reformed.  If not, see <http://www.gnu.org/licenses/>.
+##
+##   -----------------------------------------------------------------
+##
+##   Reformed
+##   Copyright (c) 2008-2009 Toby Dacre & David Raznick
+##
+
+
 import reformed.reformed as r
 
 
@@ -28,10 +49,32 @@ d.add_table(r.Table("email",
 
 d.add_entity(r.Table("user",
                     r.Text("name"),
-                    r.Text("password")
+                    r.Text("password"),
+                  )
+           )
+
+d.add_table(r.Table("user_group",
+                    r.Text("name")                 )
+           )
+
+d.add_table(r.Table("user_group_user",
+                    r.ManyToOne("user", "user"),
+                    r.ManyToOne("user_group", "user_group")
+                 )
+           )
+
+d.add_table(r.Table("user_group_permission",
+                    r.Text("name"),
+                    r.ManyToOne("user_group", "user_group"),
+                    r.ManyToOne("permission", "permission")
                    )
            )
 
+
+d.add_table(r.Table("permission",
+                    r.Text("permission")
+                   )
+           )
 
 d.add_entity(r.Table("donkey",
                     r.Text("name"), #validation = '__^[a-zA-Z0-9 ]*$'),
