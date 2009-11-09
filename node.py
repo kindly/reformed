@@ -338,7 +338,7 @@ class AutoForm(TableNode):
 
     def setup(self):
         fields = []
-        obj = r.get_instance(self.table)
+        obj = r.reformed.get_instance(self.table)
         columns = obj._table.schema_info
         for field in columns.keys():
             if field not in ['modified_date', 'modified_by']:

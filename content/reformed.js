@@ -494,7 +494,7 @@ action_hash = {
 //    new: [['new', 'document-new.png', 'B', 'record'],[$FORM, $FORM._new, ['main']]],
     save: [['save', 'document-save.png', 'c', 'record'],[document, node_save, ['main','']]],
     delete:[['delete', 'edit-delete.png', 'd', 'record'],[document, node_delete, ['main','']]],
-    home: [['home', 'go-home.png', 'h', 'general'],[document, get_html, ['main', 'frontpage']]]
+    home: [['home', 'go-home.png', 'h', 'general'],[document, node_load, ['n:test.HomePage:']]]
 //    donkey: [['donkey', 'go-home.png', 'I', 'general'],[$FORM, $FORM.request, ['donkey', 'main', 'first']]]
 };
 

@@ -26,6 +26,44 @@ from .reformed.reformed import reformed as r
 import sqlalchemy as sa
 from global_session import global_session
 
+class HomePage(Node):
+
+    def call(self):
+        page = [
+            {'title' : 'people',
+             'summary' : 'la lal ',
+             'options' : [
+                {'title' : 'new',
+                'link' : 'n:test.People:new'},
+                {'title' : 'list',
+                'link' : 'n:test.People:list'}
+                ]
+            },
+            {'title' : 'donkey',
+             'summary' : 'la lal ',
+             'options' : [
+                {'title' : 'new',
+                'link' : 'n:test.Donkey:new'},
+                {'title' : 'list',
+                'link' : 'n:test.Donkey:list'}
+                ]
+            },
+            {'title' : 'user',
+             'summary' : 'la lal ',
+             'options' : [
+                {'title' : 'new',
+                'link' : 'n:test.User:new'},
+                {'title' : 'list',
+                'link' : 'n:test.User:list'}
+                ]
+            }
+
+
+
+        ]
+
+        self.out = page
+        self.action = 'page'
 
 class DataLoader(TableNode):
 

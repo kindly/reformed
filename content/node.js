@@ -748,6 +748,35 @@ function bookmark_display(){
 
     $('#bookmarks').html(html);
 }
+
+function page_build_section_links(data){
+    var html = '<ul>';
+    for (var i=0; i<data.length; i++){
+        html += '<li><a href="#/' + data[i].link + '">';
+        html += data[i].title;
+        html += '</a></li>'
+    }
+    html += '</ul>';
+    return html;
+}
+
+
+function page_build_section(data){
+    var html = '<div class="page_section">';
+    html += '<div class="page_section_title">' + data.title + '</div>';
+    html += '<div class="page_section_summary">' + data.summary + '</div>';
+    html += page_build_section_links(data.options)
+    html += "</div>";
+    return html
+}
+
+function page_build(data){
+    var html = '';
+    for (var i=0; i<data.length; i++){
+        html += page_build_section(data[i]);
+    }
+    return html;
+}
 fn = function(packet, job){
      var root = 'main'; //FIXME
 
@@ -770,6 +799,10 @@ fn = function(packet, job){
          case 'html':
              $('#' + root).html(packet.data.data.html);
              break;
+         case 'page':
+            //alert($.toJSON(packet.data.data));
+            $('#' + root).html(page_build(packet.data.data));
+            break;
          case 'form':
              form = packet.data.data.form;
              data = packet.data.data.data;
