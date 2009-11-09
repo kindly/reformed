@@ -718,8 +718,20 @@ function job_processor_status(data, node, root){
 
 bookmark_array = [];
 BOOKMARKS_SHOW_MAX = 3;
+BOOKMARK_ARRAY_MAX = 3;
 
 function bookmark_add(link, title){
+    // remove the item if already in the list
+    for (var i=0; i<bookmark_array.length; i++){
+        if (bookmark_array[i][0]==link){
+            bookmark_array.splice(i, 1);
+            break;
+        }
+    }
+    // trim the array if it's too long
+    if (bookmark_array.length >= BOOKMARK_ARRAY_MAX){
+        bookmark_array.splice(BOOKMARK_ARRAY_MAX - 1, 1);
+    }
     bookmark_array.unshift([link, title]);
     bookmark_display();
 }
