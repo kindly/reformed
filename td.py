@@ -26,7 +26,7 @@ d.add_table(r.Table("email",
                    )
            )
 
-d.add_entity(r.Table("user_id",
+d.add_entity(r.Table("user",
                     r.Text("name"),
                     r.Text("password")
                    )
