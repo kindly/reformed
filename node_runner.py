@@ -68,19 +68,24 @@ def run(node_name, data, last_node = None):
     if found:
         print "Node: %s, last: %s" % (node_name, last_node)
         x = search_node(data, node_name, last_node)
-        x.initialise()
-        x.call()
-        x.finalise()
-        if x.next_node:
-            return run(x.next_node, x.next_data, node_name)
+        if x.allowed:
+            x.initialise()
+            x.call()
+            x.finalise()
+            if x.next_node:
+                return run(x.next_node, x.next_data, node_name)
+            else:
+                info = {'action': x.action,
+                        'node': node_name,
+                        'title' : x.title,
+                        'link' : x.link,
+                        'bookmark' : x.bookmark,
+                        'data' : x.out}
+                return info
         else:
-            info = {'action': x.action,
-                    'node': node_name,
-                    'title' : x.title,
-                    'link' : x.link,
-                    'bookmark' : x.bookmark,
-                    'data' : x.out}
-            return info
+            # the user cannot perform this action
+            return {'action': 'general_error',
+                    'data' : 'no permission'}
     else:
         print "Node <%s> not found" % node_name
 

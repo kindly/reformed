@@ -14,6 +14,12 @@ import lookup
 import logging
 logger = logging.getLogger('reformed.main')
 
+def session(environ):
+    global_session.session = environ['beaker.session']
+    if global_session.session.get('user_id') == None:
+        global_session.session['user_id'] = 0
+        global_session.session['permissions'] = []
+        print 'new session'
 
 # I'd like to put this in the WebApplication class but it
 # doesn't like the decorator if I do :(
@@ -22,6 +28,8 @@ def process_autocomplete(environ, start_response):
     needs to be expanded to do multiple requests """
 
     # FIXME this has no security
+
+    session(environ)
 
     formdata = cgi.FieldStorage(fp=environ['wsgi.input'],
                         environ=environ,
@@ -36,8 +44,8 @@ def process_autocomplete(environ, start_response):
 
 def process_node(environ, start_response):
 
-    global_session.session = environ['beaker.session']
-    global_session.session['user_id'] = 10
+
+    session(environ)
 
     formdata = cgi.FieldStorage(fp=environ['wsgi.input'],
                         environ=environ,

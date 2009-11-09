@@ -22,8 +22,7 @@ import formencode as fe
 from formencode import validators
 import node
 from node import TableNode, Node
-from .reformed import reformed as r
-import reformed.util as util
+from .reformed.reformed import reformed as r
 import sqlalchemy as sa
 from global_session import global_session
 
@@ -38,13 +37,14 @@ class DataLoader(TableNode):
     ]
     extra_fields = ['job_ended']
     table = '_core_job_scheduler'
+    permissions = ['logged_in']
 
     def call(self):
 
         if self.command == 'load':
             file = self.data.get('file')
             table = self.data.get('table')
-            jobId = r.reformed.job_scheduler.add_job("loader", "data_load_from_file", "%s, %s" % (table, file))
+            jobId = r.job_scheduler.add_job("loader", "data_load_from_file", "%s, %s" % (table, file))
             self.link = "%s:refresh:id=%s" % (self.name, jobId)
             self.action = 'redirect'
 
@@ -72,6 +72,9 @@ class DataLoader(TableNode):
                    'percent':data_out['percent'],
                    'end':data_out['job_ended']}
             return out
+
+class Permission(AutoForm):
+    table = 'permission'
 
 class User(TableNode):
 
@@ -142,7 +145,7 @@ class Search(Node):
     def call(self, limit = 100):
         query = self.data.get('q', '')
         where = "_core_entity.title like '%%%s%%'" % query
-        results = r.reformed.search('_core_entity', where, limit=limit)
+        results = r.search('_core_entity', where, limit=limit)
         out = []
         for result in results:
             row = {"id": result["id"],
@@ -174,16 +177,24 @@ class Login(Node):
         vdata = node.validate_data_full(self.data, self.validations)
         if vdata['name'] and vdata['password']:
             where = "name='%s' and password='%s'" % (vdata['name'], vdata['password'])
-            data_out = r.reformed.search_single('user', where)
-            self.login(data_out)
+            try:
+                data_out = r.search_single('user', where)
+                self.login(data_out)
+            except:
+                self.action = 'general_error'
+                self.out = 'wrong guess'
         else:
             data = node.create_form_data(self.fields)
             self.action = 'form'
             self.out = data
 
     def login(self, data):
-        print '@@@@@@@', data
         global_session.session['user_id'] = data.get('id')
+        global_session.session['permissions'] = ['logged_in']
+        self.action = 'html'
+        data = "<p>Hello %s you are now logged in, what fun!</p>" % data['name']
+        self.out = {'html': data}
+
 
 class Sponsorship(Node):
 
