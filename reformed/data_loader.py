@@ -105,13 +105,15 @@ def get_keys_from_list(key_item_list):
 
     return all_rows
 
-def load_json_from_file(file, database, table):
+def load_json_from_file(filename, database, table):
 
-    data = open(file, mode = "rb+").read()
-    json_file = json.loads(data)
-    for record in json_file:
-        SingleRecord(database, table, record).load()
-
+    try:
+        data = open(filename, mode = "rb+").read()
+        json_file = json.loads(data)
+        for record in json_file:
+            SingleRecord(database, table, record).load()
+    except:
+        print "something went wrong loading %s" % filename
 
 class ErrorLine(object):
 

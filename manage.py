@@ -64,7 +64,13 @@ def dump():
     print 'dumping data'
     from reformed.reformed import reformed
     session = reformed.Session()
+    json_dump_all_from_table(session, 'user', reformed, 'users.json')
     session.close()
+
+def undump():
+    print 'undumping data'
+    from reformed.reformed import reformed
+    load_json_from_file('users.json', reformed, 'user')
 
 def run():
     print 'starting webserver'
@@ -99,6 +105,8 @@ if __name__ == "__main__":
        delete()
    if 'create' in sys.argv:
         create()
+   if 'undump' in sys.argv:
+       undump()
    if 'generate' in sys.argv:
         generate_data()
    if 'load' in sys.argv:
