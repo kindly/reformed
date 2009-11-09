@@ -107,13 +107,11 @@ def get_keys_from_list(key_item_list):
 
 def load_json_from_file(filename, database, table):
 
-    try:
-        data = open(filename, mode = "rb+").read()
+    with open(filename, mode = "rb+") as f:
+        data = f.read()
         json_file = json.loads(data)
         for record in json_file:
             SingleRecord(database, table, record).load()
-    except:
-        print "something went wrong loading %s" % filename
 
 class ErrorLine(object):
 

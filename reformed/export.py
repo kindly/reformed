@@ -12,17 +12,15 @@ def multi_row_export(obj_list, database, log = False, id = False, modified = Fal
 
 def json_dump_all_from_table(session, table, database, file, style=None):
 
-    dumpfile = open(file, mode= "w+")
-
-    all_rows = session.query(database.get_class(table)).all()
-    export = multi_row_export(all_rows, database)
-    if style == 'compact':
-        dumpfile.write(json.dumps(export, separators=(',', ':')))
-    elif style == 'clear':
-        dumpfile.write(json.dumps(export, sort_keys=True, indent=4))
-    else:
-        dumpfile.write(json.dumps(export))
-    dumpfile.close()
+    with open(file, mode= "w+") as dumpfile:
+        all_rows = session.query(database.get_class(table)).all()
+        export = multi_row_export(all_rows, database)
+        if style == 'compact':
+            dumpfile.write(json.dumps(export, separators=(',', ':')))
+        elif style == 'clear':
+            dumpfile.write(json.dumps(export, sort_keys=True, indent=4))
+        else:
+            dumpfile.write(json.dumps(export))
 
     
 
@@ -68,8 +66,10 @@ class SingleObject(object):
                 if cell:
                     row[column] = str(cell)
         else:
-            for column in current_table.defined_columns.iterkeys():
+            for column, rcolumn in current_table.columns.iteritems():
                 if not self.modified and column in ("modified_by", "modified_date"):
+                    continue
+                if rcolumn.original_column == "id":
                     continue
                 cell = getattr(obj, column) 
                 if cell:

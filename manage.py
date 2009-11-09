@@ -64,7 +64,7 @@ def dump():
     print 'dumping data'
     from reformed.reformed import reformed
     session = reformed.Session()
-    json_dump_all_from_table(session, 'user', reformed, 'users.json')
+    json_dump_all_from_table(session, 'user', reformed, 'users.json', style = "clear")
     session.close()
 
 def undump():
