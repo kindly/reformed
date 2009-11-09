@@ -22,8 +22,7 @@ import formencode as fe
 from formencode import validators
 import node
 from node import TableNode, Node
-from .reformed import reformed as r
-import reformed.util as util
+from .reformed.reformed import reformed as r
 import sqlalchemy as sa
 from global_session import global_session
 
@@ -45,7 +44,7 @@ class DataLoader(TableNode):
         if self.command == 'load':
             file = self.data.get('file')
             table = self.data.get('table')
-            jobId = r.reformed.job_scheduler.add_job("loader", "data_load_from_file", "%s, %s" % (table, file))
+            jobId = r.job_scheduler.add_job("loader", "data_load_from_file", "%s, %s" % (table, file))
             self.link = "%s:refresh:id=%s" % (self.name, jobId)
             self.action = 'redirect'
 
@@ -143,7 +142,7 @@ class Search(Node):
     def call(self, limit = 100):
         query = self.data.get('q', '')
         where = "_core_entity.title like '%%%s%%'" % query
-        results = r.reformed.search('_core_entity', where, limit=limit)
+        results = r.search('_core_entity', where, limit=limit)
         out = []
         for result in results:
             row = {"id": result["id"],
@@ -176,7 +175,7 @@ class Login(Node):
         if vdata['name'] and vdata['password']:
             where = "name='%s' and password='%s'" % (vdata['name'], vdata['password'])
             try:
-                data_out = r.reformed.search_single('user', where)
+                data_out = r.search_single('user', where)
                 self.login(data_out)
             except:
                 self.action = 'general_error'
