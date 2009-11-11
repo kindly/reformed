@@ -175,26 +175,77 @@ function _generate_form_html_continuous(form_info, local_data, data){
     }
     // add new link
     if (local_data.add_new_rows){
-        formHTML += '<p id="' + $INFO.getId(local_data.root) + '__add" class="add_form_row" onclick="add_form_row(\'' + local_data.root + '\')" >add new</p>';
+        formHTML += '<p id="' + $INFO.getId(local_data.root) + '__add" class="add_form_row" onclick="add_form_row(\'' + local_data.root + '\', \'normal\')" >add new</p>';
     }
     return formHTML;
 }
 
-function add_form_row(root){
+function form_grid_header(form){
+    var formHTML = '<thead><tr>';
+    //local_data: count root i wrap_tag show_label
+    for (var i=0; i<form.fields.length; i++){
+
+        item = form.fields[i];
+        formHTML += '<td>' + item.title + '</td>';
+    }
+    formHTML += '</tr></thead>'
+    return formHTML;
+}
+
+function _generate_form_html_grid(form_info, local_data, data){
+// local_data: count root i wrap_tag show_label
+    var formHTML = '';
+    var base_id;
+    var div_id;
+    var num_records;
+    formHTML += '<table>';
+    formHTML += form_grid_header(form_info.layout);
+    formHTML += '<tbody>';
+    local_data.wrap_tag = 'td';
+    local_data.show_label = false;
+    // how many rows do we want to display?
+    num_records = data.length + local_data.extra_rows;
+    if (data){
+        for (i=0; i<num_records; i++){
+            base_id = local_data.root + "(" + i + ")";
+            div_id = $INFO.addId(base_id);
+
+            formHTML += '<tr>';
+            formHTML += _generate_fields_html(form_info.layout, local_data, data[i], i);
+            formHTML += "</tr>";
+        }
+    }
+    formHTML += '</tbody>';
+    formHTML += '</table>';
+    // add new link
+    if (local_data.add_new_rows){
+        formHTML += '<p id="' + $INFO.getId(local_data.root) + '__add" class="add_form_row" onclick="add_form_row(\'' + local_data.root + '\', \'grid\')" >add new</p>';
+    }
+    return formHTML;
+}
+
+
+function add_form_row(root, type){
+
     // add a new row to a continuous form
     var form_info = $INFO.getState(root, 'form_info');
     var form_data = $INFO.getState(root, 'form_data');
     var row = form_info.clean_rows.length;
     // mark as clean plus also adds the row
     form_info.clean_rows[row] = true;
-    var local_data = {root: root,
-                  show_label: true,
-                  wrap_tag: 'p'};
     var id =  $INFO.addId(root + '(' + row + ')');
-    var formHTML = '<div id="' + id + '" class="form_body">';
-    formHTML += _generate_fields_html(form_data, local_data, null, row);
-    formHTML += "</div>";
-    $('#' + $INFO.getId(root) + '__add').before(formHTML);
+    if (type == 'normal'){
+        var local_data = {root: root,
+                      show_label: true,
+                      wrap_tag: 'p'};
+        var formHTML = '<div id="' + id + '" class="form_body">';
+        formHTML += _generate_fields_html(form_data, local_data, null, row);
+        formHTML += "</div>";
+        $('#' + $INFO.getId(root) + '__add').before(formHTML);
+    } else {
+        //FIXME make this work for grids
+        alert('this needs implementing');
+    }
     
 }
 function node_generate_html(form, data, root, form_id, form_type){
@@ -277,10 +328,11 @@ function node_generate_html(form, data, root, form_id, form_type){
             formHTML += _generate_form_html_normal(form_info, local_data, data);//########### @@@@@@
             break;
         case 'grid':
+            formHTML += _generate_form_html_grid(form_info, local_data, data);
+            break;
         case 'continuous':
         case 'results':
             formHTML += _generate_form_html_continuous(form_info, local_data, data);
- //         formHTML += $FORM._generate_form_html_grid(form_info, local_data, data);
             break;
         default:
             alert('unknown form type generation request' + local_data.form_type);
