@@ -1,6 +1,7 @@
 from reformed.search import  QueryFromStringParam, Search
 from donkey_test import test_donkey
 from reformed.data_loader import FlatFile
+from sqlalchemy.sql import not_, or_, and_
 import datetime
 
 
@@ -165,6 +166,155 @@ class TestParserParams(test_donkey):
         assert query.covering_ors == set(["email","donkey"])
         assert query.inner_joins == set(["email"])
         assert query.outer_joins == set(["donkey"])
+
+    def test_single_query(self):
+
+        search = Search(self.Donkey, "people", self.session)
+        t = self.Donkey.t
+
+        session = self.Donkey.Session()
+
+        people_class = self.Donkey.get_class("people")
+        email_class = self.Donkey.get_class("email")
+
+        base_query = session.query(t.people.id)
+
+        assert set(QueryFromStringParam(search, 'name < ?', pos_args = ["popp02"]).add_conditions(base_query).all()).symmetric_difference(
+               set(session.query(people_class.id).filter(people_class.name < u"popp02").all())) == set()
+              
+
+        assert set(QueryFromStringParam(search, 'name < ? and email.email like ?', pos_args = ["popp02", "popi%"]).add_conditions(base_query).all()).symmetric_difference(
+               set(session.query(people_class.id).join(["email"]).filter(and_(people_class.name < u"popp02", email_class.email.like(u"popi%"))).all())) == set()
+
+        assert set(QueryFromStringParam(search, "name < ? and not email.email like ?", pos_args = ["popp02", "popi%"]).add_conditions(base_query).all()).symmetric_difference(
+               set(session.query(people_class.id).outerjoin(["email"]).\
+                   filter(and_(people_class.name < u"popp02", or_(email_class.email == None, not_(email_class.email.like(u"popi%"))))).all())) == set()
+
+        assert set(QueryFromStringParam(search, "name < ? or not email.email like ?", pos_args = ["popp02", "popi%"]).add_conditions(base_query).all()).symmetric_difference(
+               set(session.query(people_class.id).outerjoin(["email"]).\
+                   filter(or_(people_class.name < u"popp02", or_(email_class.email == None, not_(email_class.email.like(u"popi%"))))).all())) == set()
+
+        assert set(QueryFromStringParam(search, "not (name < ? or not email.email like ?) ", pos_args = ["popp02", "popi%"]
+                                  ).add_conditions(base_query).all()).symmetric_difference(
+               set(session.query(people_class.id).outerjoin(["email"]).\
+                   filter(not_(or_(people_class.name < u"popp02", or_(email_class.email == None, not_(email_class.email.like(u"popi%")))))).all())) == set()
+
+    def test_zzzz_search_with_single_query(self):
+
+        search = Search(self.Donkey, "people", self.session)
+        t = self.Donkey.t
+        session = self.session
+        search.add_query('name < ? and not email.email like ?', values = ["popp02", "popi%"])
+
+        people_class = self.Donkey.get_class(u"people")
+        email_class = self.Donkey.get_class(u"email")
+
+        assert set(search.search().all()).symmetric_difference( 
+               set(session.query(people_class).outerjoin(["email"]).\
+                   filter(and_(people_class.name < u"popp02", or_(email_class.email == None, not_(email_class.email.like(u"popi%"))))).all())) == set()
+
+        assert len(search.search()[0:15]) == 15
+
+
+    def test_search_with_union(self):
+
+        search = Search(self.Donkey, u"people", self.session)
+        t = self.Donkey.t
+        session = self.session
+
+        search.add_query('name < popp005 and email.email like "popi%"')
+
+        search.add_query('donkey.name in (poo, fine)')
+
+
+        assert len(search.search().all()) == 6
+
+        search.add_query('donkey_sponsership.amount > 248')
+                         
+        assert len(search.search().all()) == 8
+
+
+    def test_search_with_joined_exclude(self):
+
+        search = Search(self.Donkey, "people", self.session)
+        t = self.Donkey.t
+
+        search.add_query('name < popp007 and name <> david' )
+
+        search.add_query('email.email like "popi%"', exclude = True)
+
+        assert len(search.search().all()) == 4
+
+        search.add_query('donkey_sponsership.amount < 3', exclude = True)
+
+        assert len(search.search().all()) == 3
+
+        search.add_query('donkey_sponsership.amount between 11 and 13')
+
+        assert len(search.search().all()) == 6
+
+        search.add_query('donkey_sponsership.amount between 15 and 19')
+
+        assert len(search.search().all()) == 11
+
+        search.add_query('donkey_sponsership.amount between 15 and 16', exclude = True)
+        search.add_query('donkey_sponsership.amount between 17 and 18', exclude = True)
+
+        assert len(search.search().all()) == 7
+
+        search.add_query('donkey_sponsership.amount between 15 and 19')
+
+        assert len(search.search().all()) == 11
+
+
+
+    def test_z_search_with_except_exclude(self):
+
+        search = Search(self.Donkey, "people", self.session)
+        t = self.Donkey.t
+
+        search.add_query('name < popp007 and name <>  david' )
+
+        search.add_query('email.email like "popi%"', exclude = True)
+
+        assert len(search.search(exclude_mode = "except").all()) == 4
+
+        search.add_query('donkey_sponsership.amount < 3', exclude = True)
+
+        assert len(search.search(exclude_mode = "except").all()) == 3
+
+
+        search.add_query('donkey_sponsership.amount between ? and ?', values = [11,13])
+
+
+        assert len(search.search(exclude_mode = "except").all()) == 6
+
+        search.add_query('donkey_sponsership.amount between 15 and 19')
+
+        assert len(search.search(exclude_mode = "except").all()) == 11
+
+        search.add_query('donkey_sponsership.amount between 15 and 16', exclude = True)
+        search.add_query('donkey_sponsership.amount between 17 and 18', exclude = True)
+
+        assert len(search.search(exclude_mode = "except").all()) == 7
+
+        search.add_query('donkey_sponsership.amount between 15 and 19')
+
+        assert len(search.search(exclude_mode = "except").all()) == 11
+
+
+    def test_zz_search_with_limit(self):
+
+        search = Search(self.Donkey, "people", self.session)
+        t = self.Donkey.t
+
+        search.add_query('email.email like "popi%"')
+        search.add_query('people.name = "david"', exclude = "true")
+
+        assert len(search.search()[0:2]) == 2
+
+        
+
 
 
 

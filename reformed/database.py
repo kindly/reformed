@@ -383,7 +383,7 @@ class Database(object):
         count = kw.get("count", False)
         offset = kw.get("offset", 0)
         internal = kw.get("internal", False)
-        query = search.Search(self, table_name, session, *args).search()
+        query = search.Search(self, table_name, session, *args, **kw).search()
         tables = kw.get("tables", [table_name])
 
         fields = kw.get("fields", None)
