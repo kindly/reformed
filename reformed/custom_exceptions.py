@@ -24,6 +24,8 @@
 
 class NoDatabaseError(AttributeError):
     pass
+class InvalidArgument(TypeError):
+    pass
 class RelationError(AttributeError):
     pass
 class NoMetadataError(AttributeError):
