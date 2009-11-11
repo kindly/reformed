@@ -64,13 +64,13 @@ def dump():
     print 'dumping data'
     from reformed.reformed import reformed
     session = reformed.Session()
-    json_dump_all_from_table(session, 'user', reformed, 'users.json', style = "clear")
+    json_dump_all_from_table(session, 'user', reformed, 'data/users.json', style = "clear")
     session.close()
 
 def undump():
     print 'undumping data'
     from reformed.reformed import reformed
-    load_json_from_file('users.json', reformed, 'user')
+    load_json_from_file('data/users.json', reformed, 'user')
 
 def run():
     print 'starting webserver'

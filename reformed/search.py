@@ -10,7 +10,7 @@ from sqlalchemy.sql import not_, and_, or_
 
 class Search(object):
 
-    def __init__(self, database, table, session, *args):
+    def __init__(self, database, table, session, *args, **kw):
 
         table_paths = database.tables[table].paths
 
@@ -18,6 +18,7 @@ class Search(object):
         self.table = table
         self.session = session
         self.rtable = database.tables[table]
+        
 
         self.table_paths_list = create_table_path_list(table_paths) 
         self.table_path = create_table_path(self.table_paths_list, self.table)
@@ -30,16 +31,24 @@ class Search(object):
         self.queries = []
 
         if args:
-            self.add_query(*args)
+            self.add_query(*args, **kw)
 
 
     def add_query(self, *args, **kw):
 
         exclude = kw.pop("exclude", False)
+
+        named_args = kw.get("params", {})
+        pos_args = kw.get("values", [])
+
         query = args[0]
 
         if not hasattr(query, "add_conditions"):
-            query = QueryFromString(self, *args)
+            if named_args or pos_args:
+                query = QueryFromStringParam(self, *args, named_args = named_args,
+                                                          pos_args = pos_args)
+            else:
+                query = QueryFromString(self, *args)
 
         self.queries.append([query, exclude])
 
