@@ -387,15 +387,6 @@ class Database(object):
 
         fields = kw.get("fields", None)
 
-        #if not tables:
-        #    if table_name == "_core_entity":
-        #        tables = ["_core_entity"]
-        #    if self.tables[table_name].entity:
-        #        tables = ["_core_entity"]
-        #        for table in self.tables[table_name].local_tables:
-        #            if table.count("summary"):
-        #                tables.append(table)
-
         if fields:
             tables = None
 

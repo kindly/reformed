@@ -73,9 +73,6 @@ class SessionWrapper(object):
         obj._validated = True
         self.session.add(obj)
     
-    def query(self, mapper):
-        return self.session.query(mapper)
-
     def commit(self):
 
         #print datetime.datetime.now(), "start commit"
