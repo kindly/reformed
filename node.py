@@ -94,6 +94,11 @@ class TableNode(Node):
 
     first_run = True
 
+    list_fields = [
+        ['title', 'link', 'title'],
+        ['summary', 'info', 'summary']
+    ]
+    list_params = {"form_type": "results"}
 
 
     def __init__(self, *args, **kw):
@@ -300,16 +305,12 @@ class TableNode(Node):
 
     def list(self, limit=20):
         results = r.reformed.search('_core_entity', "%s.id >0" % self.table, limit=limit)
-        out = []
+        # build the links
         for result in results:
-            row = {"table": self.table,
-                   "id": result["id"],
-                   "title": result["title"],
-                   "summary": result["summary"]}
-            out.append(row)
-
-        self.out = out
-        self.action = 'listing'
+            result['title'] = '#n:%s:view:__id=%s|%s' % (self.name, result['id'], result['title']) 
+        data = create_form_data(self.list_fields, self.list_params, results)
+        self.out = data
+        self.action = 'form'
         self.title = 'listing'
 
     def subform(self, subform_name, data_out):

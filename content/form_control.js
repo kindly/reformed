@@ -147,9 +147,19 @@ $FORM_CONTROL = {
         // this is where our controls are defined
         info: function(item, id, show_label, value){
             var x = (show_label ? '<span class="label">' + item.title + '</span>' : '');
-            x += '<div id="' + id + '">' + value ? value : '&nbsp;' + '</div>';
+            x += '<div id="' + id + '">' + (value ? value : '&nbsp;') + '</div>';
             return x;
         },
+
+        link: function(item, id, show_label, value){
+            split = value.split("|");
+            link = split.shift();
+            value = split.join('|');
+            var x = (show_label ? '<span class="label">' + item.title + '</span>' : '');
+            x += '<a id="' + id + '" href="' + link + '">' + (value ? value : '&nbsp;') + '</a>';
+            return x;
+        },
+
 
         progress: function(item, id, show_label, value){
             var x = (show_label ? '<span class="label">' + item.title + '</span>' : '');

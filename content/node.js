@@ -162,12 +162,7 @@ function _generate_form_html_continuous(form_info, local_data, data){
     var num_records;
 
     // how many rows do we want to display?
-    // FIXME do we want this defined here or pushed further back?
-    if (local_data.readonly){
-        num_records = data.length;
-    } else {
-        num_records = data.length +1;
-    }
+    num_records = data.length + local_data.extra_rows;
 
     if (data){
         for (i=0; i<num_records; i++){
@@ -180,7 +175,7 @@ function _generate_form_html_continuous(form_info, local_data, data){
         }
     }
     // add new link
-    if (!local_data.readonly){
+    if (!local_data.add_new_rows){
         formHTML += '<p id="' + $INFO.getId(local_data.root) + '__add" class="add_form_row" onclick="add_form_row(\'' + local_data.root + '\')" >add new</p>';
     }
     return formHTML;
@@ -220,19 +215,29 @@ function node_generate_html(form, data, root, form_id, form_type){
     } else {
         form_type = "normal";
     }
+
+
     var local_data = {};
+    local_data.add_new_rows = true;
+    local_data.readonly = false;
     local_data.count = 0;
     local_data.wrap_tag = 'div';
-    local_data.show_label = true;
+    local_data.show_label = false;
     local_data.form_type = form_type;
     local_data.root = root;
-    local_data.readonly = false;
     var form_info = {info:{}};
     form_info.info.top_level = true;
     form_info.info.clean = true;
+
+    if (form_type == 'results'){
+        local_data.add_new_rows = true;
+        local_data.extra_rows = 0;
+    }
+
+
     form_info.info.clean_rows = [];
     if (data){
-        for (i=0; i<data.length + 1; i++){
+        for (i=0; i<data.length + local_data.extra_rows; i++){
             form_info.info.clean_rows[i] = true;
         }
     }
@@ -271,11 +276,13 @@ function node_generate_html(form, data, root, form_id, form_type){
             formHTML += _generate_form_html_normal(form_info, local_data, data);//########### @@@@@@
             break;
         case 'grid':
+        case 'continuous':
+        case 'results':
             formHTML += _generate_form_html_continuous(form_info, local_data, data);
  //         formHTML += $FORM._generate_form_html_grid(form_info, local_data, data);
             break;
         default:
-            alert('unknown form type generation request');
+            alert('unknown form type generation request' + local_data.form_type);
     }
 
     formHTML += '</div>';  // end of form body div
