@@ -102,8 +102,10 @@ function _wrap(arg, tag){
 }
 
 function _subform(item, my_id, data, root){
+    root = root + '#' + item.name;
+    $INFO.newState(root);
     var out = '<div class="subform" id="' + my_id + '" >'+ item.title + '</br>';
-    out += node_generate_html(item.params.form, data, root + '#' + item.name);
+    out += node_generate_html(item.params.form, data, root);
     out += '</div>';
     return out;
 
@@ -138,7 +140,7 @@ function _generate_fields_html(form, local_data, data, row_count){
                 value = '';
             }
             // add item
-            var temp = $FORM_CONTROL.html(item, my_id, local_data.show_label, value);
+            var temp = $FORM_CONTROL.html(item, my_id, local_data.show_label, value, local_data.readonly);
             formHTML += _wrap(temp, local_data.wrap_tag);
         }
     }
@@ -157,9 +159,18 @@ function _generate_form_html_continuous(form_info, local_data, data){
     var formHTML = '';
     var base_id;
     var div_id;
+    var num_records;
+
+    // how many rows do we want to display?
+    // FIXME do we want this defined here or pushed further back?
+    if (local_data.readonly){
+        num_records = data.length;
+    } else {
+        num_records = data.length +1;
+    }
 
     if (data){
-        for (i=0; i<data.length +1; i++){
+        for (i=0; i<num_records; i++){
             base_id = local_data.root + "(" + i + ")";
             div_id = $INFO.addId(base_id);
 
@@ -168,7 +179,10 @@ function _generate_form_html_continuous(form_info, local_data, data){
             formHTML += "</div>";
         }
     }
-    formHTML += '<p id="' + $INFO.getId(local_data.root) + '__add" class="add_form_row" onclick="add_form_row(\'' + local_data.root + '\')" >add new</p>';
+    // add new link
+    if (!local_data.readonly){
+        formHTML += '<p id="' + $INFO.getId(local_data.root) + '__add" class="add_form_row" onclick="add_form_row(\'' + local_data.root + '\')" >add new</p>';
+    }
     return formHTML;
 }
 
@@ -194,7 +208,6 @@ function node_generate_html(form, data, root, form_id, form_type){
     if (!data){
         data = {};
     }
-    $INFO.newState(root);
     $INFO.setState(root, 'form_data', form);
     $INFO.setState(root, 'sent_data', data);
     // create the form and place in the div
@@ -213,7 +226,7 @@ function node_generate_html(form, data, root, form_id, form_type){
     local_data.show_label = true;
     local_data.form_type = form_type;
     local_data.root = root;
-
+    local_data.readonly = false;
     var form_info = {info:{}};
     form_info.info.top_level = true;
     form_info.info.clean = true;

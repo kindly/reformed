@@ -64,14 +64,18 @@
 
 $FORM_CONTROL = {
 
-    html: function(item, id, show_label, value){
+    html: function(item, id, show_label, value, readonly){
         // returns HTML of a control
-        if (this.exists(item.type)){
-            // generate the HTML by calling the function
-            return this._controls[item.type](item, id, show_label, value);
+        if (readonly){
+            return this._controls_readonly['general'](item, id, show_label, value);
         } else {
-            // can't find this control
-            return this._unknown(item, id);
+            if (this.exists(item.type)){
+                // generate the HTML by calling the function
+                return this._controls[item.type](item, id, show_label, value);
+            } else {
+                // can't find this control
+                return this._unknown(item, id);
+            }
         }
     },
 
@@ -130,12 +134,20 @@ $FORM_CONTROL = {
         return arg;
     },
 
+    _controls_readonly: {
+        general: function(item, id, show_label, value){
+            var x = (show_label ? '<span class="label">' + item.title + '</span>' : '');
+            x += '<div id="' + id + '">' + (value ? value : '&nbsp;') + '</div>';
+            return x;
+        }
+    },
+
     _controls: {
 
         // this is where our controls are defined
         info: function(item, id, show_label, value){
             var x = (show_label ? '<span class="label">' + item.title + '</span>' : '');
-            x += '<div id="' + id + '">&nbsp;</div>';
+            x += '<div id="' + id + '">' + value ? value : '&nbsp;' + '</div>';
             return x;
         },
 
