@@ -163,7 +163,6 @@ function _generate_form_html_continuous(form_info, local_data, data){
 
     // how many rows do we want to display?
     num_records = data.length + local_data.extra_rows;
-
     if (data){
         for (i=0; i<num_records; i++){
             base_id = local_data.root + "(" + i + ")";
@@ -175,7 +174,7 @@ function _generate_form_html_continuous(form_info, local_data, data){
         }
     }
     // add new link
-    if (!local_data.add_new_rows){
+    if (local_data.add_new_rows){
         formHTML += '<p id="' + $INFO.getId(local_data.root) + '__add" class="add_form_row" onclick="add_form_row(\'' + local_data.root + '\')" >add new</p>';
     }
     return formHTML;
@@ -219,10 +218,11 @@ function node_generate_html(form, data, root, form_id, form_type){
 
     var local_data = {};
     local_data.add_new_rows = true;
+    local_data.extra_rows = 1;
     local_data.readonly = false;
     local_data.count = 0;
     local_data.wrap_tag = 'div';
-    local_data.show_label = false;
+    local_data.show_label = true;
     local_data.form_type = form_type;
     local_data.root = root;
     var form_info = {info:{}};
@@ -230,8 +230,9 @@ function node_generate_html(form, data, root, form_id, form_type){
     form_info.info.clean = true;
 
     if (form_type == 'results'){
-        local_data.add_new_rows = true;
+        local_data.add_new_rows = false;
         local_data.extra_rows = 0;
+        local_data.show_label = false;
     }
 
 
