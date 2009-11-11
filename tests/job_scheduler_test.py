@@ -19,13 +19,13 @@ class test_single_request(donkey_persist_test.test_donkey_persist_mysql):
         cls.wait1 = cls.job_scheduler.add_job("test_type", "wait", "1")
         cls.waiterror = cls.job_scheduler.add_job("test_type", "error", "3")
 
-        cls.length_before = len(cls.Donkey.search("people"))
+        cls.length_before = len(cls.Donkey.search("people")["data"])
 
         cls.loader = cls.job_scheduler.add_job("loader", "data_load_from_file", "people, tests/new_people_with_header.csv")
 
         time.sleep(7)
 
-        cls.length_after = len(cls.Donkey.search("people"))
+        cls.length_after = len(cls.Donkey.search("people")["data"])
 
     @classmethod
     def tearDownClass(cls):

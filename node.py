@@ -304,7 +304,7 @@ class TableNode(Node):
 
 
     def list(self, limit=20):
-        results = r.reformed.search('_core_entity', "%s.id >0" % self.table, limit=limit)
+        results = r.reformed.search('_core_entity', "%s.id >0" % self.table, limit=limit)["data"]
         # build the links
         for result in results:
             result['title'] = '#n:%s:view:__id=%s|%s' % (self.name, result['id'], result['title']) 
@@ -324,7 +324,7 @@ class TableNode(Node):
 
         where = "%s=%s" % (child_id, parent_value)
         try:
-            out = r.reformed.search(table, where, fields = field_list)
+            out = r.reformed.search(table, where, fields = field_list)["data"]
         except sa.orm.exc.NoResultFound:
             out = {}
         return out

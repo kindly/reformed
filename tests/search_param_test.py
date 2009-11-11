@@ -1,9 +1,30 @@
 from reformed.search import  QueryFromStringParam, Search
 from donkey_test import test_donkey
+from reformed.data_loader import FlatFile
 import datetime
 
 
 class TestParserParams(test_donkey):
+
+    @classmethod
+    def set_up_inserts(cls):
+
+        super(cls, TestParserParams).set_up_inserts()
+
+        cls.flatfile = FlatFile(cls.Donkey,
+                            "people",
+                            "tests/new_people.csv",    
+                            ["id",
+                            "name",
+                            "address_line_1",
+                            "postcode",
+                            "email__0__email",
+                            "email__1__email",
+                            "donkey_sponsership__0__amount",
+                            "donkey_sponsership__0__id",
+                            "donkey_sponsership__0___donkey__0__name"]
+                            )
+        cls.flatfile.load()
 
     def test_parser_params(self):
 

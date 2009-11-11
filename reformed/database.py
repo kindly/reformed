@@ -380,9 +380,10 @@ class Database(object):
         session = self.Session()
 
         limit = kw.get("limit", None)
+        count = kw.get("count", False)
         offset = kw.get("offset", 0)
         internal = kw.get("internal", False)
-        query = search.Search(self, table_name, session, *args)
+        query = search.Search(self, table_name, session, *args).search()
         tables = kw.get("tables", [table_name])
 
         fields = kw.get("fields", None)
@@ -391,17 +392,22 @@ class Database(object):
             tables = None
 
         if limit:
-            result = resultset.ResultSet(query, result_num = limit, offset = offset).first_set()
+            result = query[offset: offset + limit]
         else:
-            result = resultset.ResultSet(query).all()
+            result = query.all()
 
         try:
-            return [get_all_local_data(obj, 
+            data = [get_all_local_data(obj, 
                                        tables = tables, 
                                        fields = fields,
                                        internal = internal, 
                                        keep_all = True, 
-                                       allow_system = True) for obj in result]    
+                                       allow_system = True) for obj in result]
+            results = {"data": data}
+
+            if count:
+                results["__count"] = query.count()
+            return results    
         except Exception, e:
             session.rollback()
             raise
@@ -410,7 +416,7 @@ class Database(object):
         
     def search_single(self, table_name, *args, **kw): 
 
-        result = self.search(table_name, *args, limit = 2, **kw)
+        result = self.search(table_name, *args, limit = 2, **kw)["data"]
         if not result or len(result) == 2:
             raise custom_exceptions.SingleResultError("one result not found")
         return result[0]
@@ -508,24 +514,4 @@ class Database(object):
                 aliases[key] = value.sa_class
 
         self.aliases = aliases
-
-
-
-
-
-
-                
-                
-
-                
-
-
-
-
-
-
-    
-
-
-
 

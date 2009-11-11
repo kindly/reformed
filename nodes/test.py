@@ -192,7 +192,7 @@ class Search(Node):
     def call(self, limit = 100):
         query = self.data.get('q', '')
         where = "_core_entity.title like '%%%s%%'" % query
-        results = r.search('_core_entity', where, limit=limit)
+        results = r.search('_core_entity', where, limit=limit)["data"]
         out = []
         for result in results:
             row = {"id": result["id"],

@@ -12,7 +12,7 @@ class Messager(object):
 
     def message(self, message, percent = None):
 
-        row = self.database.search("_core_job_scheduler", "id = %s" % self.job_id, internal = True)[0]
+        row = self.database.search_single("_core_job_scheduler", "id = %s" % self.job_id, internal = True)
 
         row["message"] = u"%s" % message
 
