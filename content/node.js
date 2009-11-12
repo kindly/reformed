@@ -635,23 +635,6 @@ function node_button(item, node, command){
     get_node(node, command, out, false);
 }
 
-
-function show_listing(data, node, root){
-
-    $INFO.newState(root);
-    var html = '';
-    for (i=0; i<data.length; i++){
-        item = data[i];
-        table = String(item.table);
-        next_node = 'test.' + table.substring(0,1).toUpperCase() + table.substring(1,table.length);
-        html += '<div class="list">';
-        html += '<span class="list_title" ';
-        html += 'onclick="node_load(\'n:' + next_node + ':view:__id=' + item.id + '\')"';
-        html += '>' + item.table + ' - ' + item.title + '</span></br><span class="list_summary">' + item.summary + '</span></div>';
-    }
-    $('#' + root).html(html);
-}
-
 function search_box(){
     get_node('test.Search','',{q: $('#search').val()}, true);
     return false;
