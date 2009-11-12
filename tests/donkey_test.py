@@ -478,7 +478,10 @@ class test_basic_input(test_donkey):
         print self.Donkey.search("people", fields = ["contact_summary.total_amount", "name", "address_line_1"], count = True) 
         assert self.Donkey.search("people", fields = ["contact_summary.total_amount", "name", "address_line_1"], count = True) == {'__count': 1, 'data': [{'__table': 'people', 'address_line_1': u'43 union street', 'contact_summary.total_amount': '0', 'id': 1, 'name': u'david'}]}
 
-        self.Donkey.search("donkey",  count = True)["__count"] == 11
+        assert self.Donkey.search("donkey",  count = True)["__count"] == 11
+
+        
+        assert self.Donkey.search("donkey", "name > {}", params = {"name": "jim5"},  count = True)["__count"] == 4
 
     def test_search_single_result(self):
 

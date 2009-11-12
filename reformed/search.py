@@ -499,6 +499,12 @@ class Expression(object):
         if self.type == sa.DateTime:
             return self.parse_date(value)
 
+        if self.type == sa.Numeric:
+            return Decimal(str(value))
+
+        raise Exception("type %s not allowed in query" % self.type)
+
+
 
     def parse_date(self, value):
 
