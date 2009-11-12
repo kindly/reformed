@@ -636,7 +636,8 @@ function node_button(item, node, command){
 }
 
 function search_box(){
-    get_node('test.Search','',{q: $('#search').val()}, true);
+    var node = 'n:test.Search::q=' + $('#search').val();
+    node_load(node);
     return false;
 }
 

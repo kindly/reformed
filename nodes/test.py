@@ -202,7 +202,6 @@ class Search(TableNode):
         self.out = data
         self.action = 'form'
         self.title = 'search for "%s"' % query
-        self.link = '%s::q=%s' % (self.name, query)
 
 
 class Login(Node):
