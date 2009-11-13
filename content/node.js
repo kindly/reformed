@@ -891,9 +891,6 @@ fn = function(packet, job){
          case 'general_error':
             alert(packet.data.data);
             break;
-         case 'listing':
-            show_listing(packet.data.data, packet.data.node, root);
-            break;
         case 'status':
             job_processor_status(packet.data.data, packet.data.node, root);
             break;
