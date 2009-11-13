@@ -280,8 +280,15 @@ class TableNode(Node):
             flag_parent_field = code_group.get('flag_parent_field')
             code_field = code_group.get('code_field')
             parent_value = getattr(record_data, flag_parent_field)
-
             code_group_data = self.data.get(code_group_name)
+
+            #FIXME everything following this until session.commit() is rubbish
+            # although it works i'm sure
+            # a) it's not very efficient
+            # b) it feels realy hacky
+            # c) i just don't like it
+            # still it will do for now
+
             yes_codes = set(self.code_list[code_group_name]).intersection(set(code_group_data))
             no_codes = set(self.code_list[code_group_name]).difference(set(code_group_data))
             print "YES CODES", yes_codes
