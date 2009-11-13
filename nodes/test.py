@@ -111,8 +111,23 @@ class DataLoader(TableNode):
                    'end':data_out['job_ended']}
             return out
 
-class UserGroup(AutoForm):
+class UserGroup(TableNode):
     table = 'user_group'
+    core_table = False
+    title_field = 'groupname'
+    fields = [
+        ['groupname', 'textbox', 'groupname:'],
+        ['permission', 'code_group', 'permission:']
+    ]
+    code_groups = {'permission':{
+                                    'code_table': 'permission',
+                                    'code_field': 'permission',
+                                    'flag_table': 'user_group_permission',
+                                    'flag_child_field': 'groupname',
+                                    'flag_code_field': 'permission',
+                                    'flag_parent_field': 'groupname'
+                                  }
+                    }
 
 class UserGroupUser(AutoForm):
     table = 'user_group_user'

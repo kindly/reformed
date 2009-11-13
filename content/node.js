@@ -253,6 +253,12 @@ function node_generate_html(form, data, root, form_id, form_type){
     if (!data){
         data = {};
     }
+    // make a hash for quick control lookup
+    //FIXME check if circular problems with this
+    form['items'] = {};
+    for (var i=0; i<form.fields.length; i++){
+        form.items[form.fields[i].name] = form.fields[i];
+    }
     $INFO.setState(root, 'form_data', form);
     $INFO.setState(root, 'sent_data', data);
     // create the form and place in the div
@@ -429,9 +435,9 @@ function _parse_item(item){
     }
 }
 
-function _parse_id(item){
+function _parse_id(id){
 
-    var item_id = $INFO.getReverseId(item.id);
+    var item_id = $INFO.getReverseId(id);
     return _parse_item(item_id);
 }
 
@@ -490,7 +496,7 @@ function itemChanged(item){
     // remove the error css
     $('#' + item.id).removeClass('error');
     // set dirty
-    var m = _parse_id(item);
+    var m = _parse_id(item.id);
     if (m) {
         dirty(m.root, m.row, true);
     }
@@ -630,7 +636,7 @@ function node_delete(root, command){
 
 
 function node_button(item, node, command){
-    root = _parse_id(item).root;
+    root = _parse_id(item.id).root;
     var out = node_get_form_data(root);
     get_node(node, command, out, false);
 }
