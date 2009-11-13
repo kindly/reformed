@@ -81,6 +81,7 @@ class TableNode(Node):
 
     """Node for table level elements"""
     table = "unknown"
+    core_table = True
     fields = []
     field_list = []     # list of fields to be retrieved by searches (auto created)
     extra_fields = []
@@ -304,10 +305,20 @@ class TableNode(Node):
 
 
     def list(self, limit=20):
-        results = r.reformed.search('_core_entity', "%s.id >0" % self.table, limit=limit)["data"]
+        if self.core_table:
+            results = r.reformed.search('_core_entity', "%s.id >0" % self.table, limit=limit)["data"]
+        else:
+            results = r.reformed.search(self.table, "id >0", limit=limit)["data"]
+
+        print results
         # build the links
-        for result in results:
-            result['title'] = '#n:%s:view:__id=%s|%s' % (self.name, result['id'], result['title']) 
+        if self.core_table:
+            for result in results:
+                result['title'] = '#n:%s:view:__id=%s|%s' % (self.name, result['id'], result['title']) 
+        else:
+            for result in results:
+                result['title'] = '#n:%s:view:id=%s|%s' % (self.name, result['id'], result[self.title_field]) 
+
         data = create_form_data(self.list_fields, self.list_params, results)
         self.out = data
         self.action = 'form'

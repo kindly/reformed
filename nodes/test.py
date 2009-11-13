@@ -122,6 +122,8 @@ class UserGroupPermission(AutoForm):
 
 class Permission(AutoForm):
     table = 'permission'
+    core_table = False
+    title_field = 'permission'
 
 class User(TableNode):
 
