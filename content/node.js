@@ -175,32 +175,89 @@ function _generate_form_html_continuous(form_info, local_data, data){
     }
     // add new link
     if (local_data.add_new_rows){
-        formHTML += '<p id="' + $INFO.getId(local_data.root) + '__add" class="add_form_row" onclick="add_form_row(\'' + local_data.root + '\')" >add new</p>';
+        formHTML += '<p id="' + $INFO.getId(local_data.root) + '__add" class="add_form_row" onclick="add_form_row(\'' + local_data.root + '\', \'normal\')" >add new</p>';
     }
     return formHTML;
 }
 
-function add_form_row(root){
+function form_grid_header(form){
+    var formHTML = '<thead><tr>';
+    //local_data: count root i wrap_tag show_label
+    for (var i=0; i<form.fields.length; i++){
+
+        item = form.fields[i];
+        formHTML += '<td>' + item.title + '</td>';
+    }
+    formHTML += '</tr></thead>'
+    return formHTML;
+}
+
+function _generate_form_html_grid(form_info, local_data, data){
+// local_data: count root i wrap_tag show_label
+    var formHTML = '';
+    var base_id;
+    var div_id;
+    var num_records;
+    formHTML += '<table>';
+    formHTML += form_grid_header(form_info.layout);
+    formHTML += '<tbody>';
+    local_data.wrap_tag = 'td';
+    local_data.show_label = false;
+    // how many rows do we want to display?
+    num_records = data.length + local_data.extra_rows;
+    if (data){
+        for (i=0; i<num_records; i++){
+            base_id = local_data.root + "(" + i + ")";
+            div_id = $INFO.addId(base_id);
+
+            formHTML += '<tr>';
+            formHTML += _generate_fields_html(form_info.layout, local_data, data[i], i);
+            formHTML += "</tr>";
+        }
+    }
+    formHTML += '</tbody>';
+    formHTML += '</table>';
+    // add new link
+    if (local_data.add_new_rows){
+        formHTML += '<p id="' + $INFO.getId(local_data.root) + '__add" class="add_form_row" onclick="add_form_row(\'' + local_data.root + '\', \'grid\')" >add new</p>';
+    }
+    return formHTML;
+}
+
+
+function add_form_row(root, type){
+
     // add a new row to a continuous form
     var form_info = $INFO.getState(root, 'form_info');
     var form_data = $INFO.getState(root, 'form_data');
     var row = form_info.clean_rows.length;
     // mark as clean plus also adds the row
     form_info.clean_rows[row] = true;
-    var local_data = {root: root,
-                  show_label: true,
-                  wrap_tag: 'p'};
     var id =  $INFO.addId(root + '(' + row + ')');
-    var formHTML = '<div id="' + id + '" class="form_body">';
-    formHTML += _generate_fields_html(form_data, local_data, null, row);
-    formHTML += "</div>";
-    $('#' + $INFO.getId(root) + '__add').before(formHTML);
+    if (type == 'normal'){
+        var local_data = {root: root,
+                      show_label: true,
+                      wrap_tag: 'p'};
+        var formHTML = '<div id="' + id + '" class="form_body">';
+        formHTML += _generate_fields_html(form_data, local_data, null, row);
+        formHTML += "</div>";
+        $('#' + $INFO.getId(root) + '__add').before(formHTML);
+    } else {
+        //FIXME make this work for grids
+        alert('this needs implementing');
+    }
     
 }
 function node_generate_html(form, data, root, form_id, form_type){
     msg('node_generate_html: ');
     if (!data){
         data = {};
+    }
+    // make a hash for quick control lookup
+    //FIXME check if circular problems with this
+    form['items'] = {};
+    for (var i=0; i<form.fields.length; i++){
+        form.items[form.fields[i].name] = form.fields[i];
     }
     $INFO.setState(root, 'form_data', form);
     $INFO.setState(root, 'sent_data', data);
@@ -277,10 +334,11 @@ function node_generate_html(form, data, root, form_id, form_type){
             formHTML += _generate_form_html_normal(form_info, local_data, data);//########### @@@@@@
             break;
         case 'grid':
+            formHTML += _generate_form_html_grid(form_info, local_data, data);
+            break;
         case 'continuous':
         case 'results':
             formHTML += _generate_form_html_continuous(form_info, local_data, data);
- //         formHTML += $FORM._generate_form_html_grid(form_info, local_data, data);
             break;
         default:
             alert('unknown form type generation request' + local_data.form_type);
@@ -377,9 +435,9 @@ function _parse_item(item){
     }
 }
 
-function _parse_id(item){
+function _parse_id(id){
 
-    var item_id = $INFO.getReverseId(item.id);
+    var item_id = $INFO.getReverseId(id);
     return _parse_item(item_id);
 }
 
@@ -438,7 +496,7 @@ function itemChanged(item){
     // remove the error css
     $('#' + item.id).removeClass('error');
     // set dirty
-    var m = _parse_id(item);
+    var m = _parse_id(item.id);
     if (m) {
         dirty(m.root, m.row, true);
     }
@@ -578,30 +636,14 @@ function node_delete(root, command){
 
 
 function node_button(item, node, command){
-    root = _parse_id(item).root;
+    root = _parse_id(item.id).root;
     var out = node_get_form_data(root);
     get_node(node, command, out, false);
 }
 
-
-function show_listing(data, node, root){
-
-    $INFO.newState(root);
-    var html = '';
-    for (i=0; i<data.length; i++){
-        item = data[i];
-        table = String(item.table);
-        next_node = 'test.' + table.substring(0,1).toUpperCase() + table.substring(1,table.length);
-        html += '<div class="list">';
-        html += '<span class="list_title" ';
-        html += 'onclick="node_load(\'n:' + next_node + ':view:__id=' + item.id + '\')"';
-        html += '>' + item.table + ' - ' + item.title + '</span></br><span class="list_summary">' + item.summary + '</span></div>';
-    }
-    $('#' + root).html(html);
-}
-
 function search_box(){
-    get_node('test.Search','',{q: $('#search').val()}, true);
+    var node = 'n:test.Search::q=' + $('#search').val();
+    node_load(node);
     return false;
 }
 
@@ -848,9 +890,6 @@ fn = function(packet, job){
             break;
          case 'general_error':
             alert(packet.data.data);
-            break;
-         case 'listing':
-            show_listing(packet.data.data, packet.data.node, root);
             break;
         case 'status':
             job_processor_status(packet.data.data, packet.data.node, root);

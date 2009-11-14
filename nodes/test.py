@@ -111,8 +111,23 @@ class DataLoader(TableNode):
                    'end':data_out['job_ended']}
             return out
 
-class UserGroup(AutoForm):
+class UserGroup(TableNode):
     table = 'user_group'
+    core_table = False
+    title_field = 'groupname'
+    fields = [
+        ['groupname', 'textbox', 'groupname:'],
+        ['permission', 'code_group', 'permission:']
+    ]
+    code_groups = {'permission':{
+                                    'code_table': 'permission',
+                                    'code_field': 'permission',
+                                    'flag_table': 'user_group_permission',
+                                    'flag_child_field': 'groupname',
+                                    'flag_code_field': 'permission',
+                                    'flag_parent_field': 'groupname'
+                                  }
+                    }
 
 class UserGroupUser(AutoForm):
     table = 'user_group_user'
@@ -122,6 +137,8 @@ class UserGroupPermission(AutoForm):
 
 class Permission(AutoForm):
     table = 'permission'
+    core_table = False
+    title_field = 'permission'
 
 class User(TableNode):
 
@@ -187,26 +204,22 @@ class People(TableNode):
 
 
 
-class Search(Node):
+class Search(TableNode):
 
     def call(self, limit = 100):
         query = self.data.get('q', '')
         where = "_core_entity.title like '%%%s%%'" % query
-        results = r.search('_core_entity', where, limit=limit)["data"]
-        out = []
+        results = r.search('_core_entity', where, limit=limit, fields=['table', 'title', 'summary'])["data"]
+        #FIXME botch to get table info also realy need to get the node not just guess it
+        table = {8:'Donkey',12:'People',14:'User'}
         for result in results:
-            row = {"id": result["id"],
-                   "title": result["title"],
-                   "summary": result["summary"]}
-            if result['table'] == 8:
-                row['table'] = 'donkey'
-            else:
-                row['table'] = 'people'
-            out.append(row)
-        self.out = out
-        self.action = 'listing'
+            result['title'] = '#n:test.%s:view:__id=%s|%s: %s' % (table[result['table']], result['id'], table[result['table']],result['title']) 
+
+        data = node.create_form_data(self.list_fields, self.list_params, results)
+        self.out = data
+        self.action = 'form'
         self.title = 'search for "%s"' % query
-        self.link = '%s::q=%s' % (self.name, query)
+
 
 class Login(Node):
 
