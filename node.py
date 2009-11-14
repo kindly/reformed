@@ -398,22 +398,41 @@ class TableNode(Node):
 
 
     def list(self, limit=20):
-        if self.core_table:
-            results = r.reformed.search('_core_entity', "%s.id >0" % self.table, limit=limit)["data"]
-        else:
-            results = r.reformed.search(self.table, "id >0", limit=limit)["data"]
+        query = self.data.get('q', '')
+        limit = self.data.get('l', limit)
+        offset = self.data.get('o', 0)
 
-        print results
+        if self.core_table:
+            results = r.reformed.search('_core_entity',
+                                        where = "%s.id >0" % self.table,
+                                        limit = limit,
+                                        offset = offset,
+                                        count = True)
+        else:
+            results = r.reformed.search(self.table,
+                                        where = "id >0",
+                                        limit = limit,
+                                        offset = offset,
+                                        count = True)
+
+        data = results['data']
         # build the links
         if self.core_table:
-            for result in results:
-                result['title'] = '#n:%s:view:__id=%s|%s' % (self.name, result['id'], result['title']) 
+            for row in data:
+                row['title'] = '#n:%s:view:__id=%s|%s' % (self.name, row['id'], row['title']) 
         else:
-            for result in results:
-                result['title'] = '#n:%s:view:id=%s|%s' % (self.name, result['id'], result[self.title_field]) 
+            for row in data:
+                row['title'] = '#n:%s:view:id=%s|%s' % (self.name, row['id'], row[self.title_field]) 
 
-        data = create_form_data(self.list_fields, self.list_params, results)
-        self.out = data
+        out = create_form_data(self.list_fields, self.list_params, data)
+
+        # add the paging info
+        out['paging'] = {'row_count' : results['__count'],
+                         'limit' : limit,
+                         'offset' : offset,
+                         'base_link' : 'n:%s:list:q=%s' % (self.name, query)}
+
+        self.out = out
         self.action = 'form'
         self.title = 'listing'
 

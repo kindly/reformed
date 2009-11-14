@@ -103,9 +103,10 @@ function _wrap(arg, tag){
 
 function _subform(item, my_id, data, root){
     root = root + '#' + item.name;
+    paging = null
     $INFO.newState(root);
     var out = '<div class="subform" id="' + my_id + '" >'+ item.title + '</br>';
-    out += node_generate_html(item.params.form, data, root);
+    out += node_generate_html(item.params.form, data, paging, root);
     out += '</div>';
     return out;
 
@@ -248,7 +249,36 @@ function add_form_row(root, type){
     }
     
 }
-function node_generate_html(form, data, root, form_id, form_type){
+
+
+function form_paging_bar(data){
+
+    var PAGING_SIZE = 5;
+    var html ='paging: ';
+    var offset = data.offset;
+    var limit = data.limit;
+    var count = data.row_count;
+    var base = data.base_link;
+
+    var pages = Math.ceil(count/limit);
+    var current = Math.floor(offset/limit);
+
+    for (var i=0; i < pages; i++){
+        if (i == current){
+            html += (i+1) + ' ';
+        } else {
+            if ( Math.abs(current-i)<PAGING_SIZE ||
+                 (i<(PAGING_SIZE*2)-1 && current<PAGING_SIZE) ||
+                 (pages-i<(PAGING_SIZE*2) && current>pages-PAGING_SIZE)
+            ){
+                html += '<a href="#/' + base + '&o=' + i * limit + '&l=' + limit +'">' + (i+1) + '</a> ';
+            }
+        }
+    }
+    html = _wrap(html, 'p');
+    return html;
+}
+function node_generate_html(form, data, paging, root, form_id, form_type){
     msg('node_generate_html: ');
     if (!data){
         data = {};
@@ -261,6 +291,7 @@ function node_generate_html(form, data, root, form_id, form_type){
     }
     $INFO.setState(root, 'form_data', form);
     $INFO.setState(root, 'sent_data', data);
+    $INFO.setState(root, 'paging', paging);
     // create the form and place in the div
 
     if (!form.fields){
@@ -312,6 +343,9 @@ function node_generate_html(form, data, root, form_id, form_type){
 
     formHTML += '<div class="form_header" >';
     formHTML += form_info.info.name;
+    if (paging){
+        formHTML += form_paging_bar(paging);
+    }
     formHTML += '</div>';
 
     // FORM BODY
@@ -764,7 +798,7 @@ function job_processor_status(data, node, root){
     if (node == $INFO.getState(root, 'node')){
         // display the message form if it exists
         if (data.form){
-            $('#' + root).html(node_generate_html(data.form, null, root));
+            $('#' + root).html(node_generate_html(data.form, null, null, root));
             form_setup(root, data.form);
             $INFO.setState(root, 'node', node);
         }
@@ -869,7 +903,8 @@ fn = function(packet, job){
          case 'form':
              form = packet.data.data.form;
              data = packet.data.data.data;
-             $('#' + root).html(node_generate_html(form, data, root));
+             paging = packet.data.data.paging;
+             $('#' + root).html(node_generate_html(form, data, paging, root));
              $INFO.setState(root, 'node', packet.data.node);
              form_setup(root, form);
              break;

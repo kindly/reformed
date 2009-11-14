@@ -217,16 +217,22 @@ class Search(TableNode):
                             limit = limit,
                             offset = offset,
                             values = ['%%%s%%' % query],
-                            fields=['table', 'title', 'summary']
-                           )["data"]
-
+                            fields=['table', 'title', 'summary'],
+                            count = True,
+                           )
+        data = results['data']
         #FIXME botch to get table info also realy need to get the node not just guess it
         table = {8:'Donkey',12:'People',14:'User'}
-        for result in results:
-            result['title'] = '#n:test.%s:view:__id=%s|%s: %s' % (table[result['table']], result['id'], table[result['table']],result['title']) 
+        for row in data:
+            row['title'] = '#n:test.%s:view:__id=%s|%s: %s' % (table[row['table']], row['id'], table[row['table']],row['title']) 
 
-        data = node.create_form_data(self.list_fields, self.list_params, results)
-        self.out = data
+        out = node.create_form_data(self.list_fields, self.list_params, data)
+        # add the paging info
+        out['paging'] = {'row_count' : results['__count'],
+                         'limit' : limit,
+                         'offset' : offset,
+                         'base_link' : 'n:%s::q=%s' % (self.name, query)}
+        self.out = out
         self.action = 'form'
         self.title = 'search for "%s"' % query
 
