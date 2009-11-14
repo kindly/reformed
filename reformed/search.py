@@ -31,7 +31,8 @@ class Search(object):
         self.queries = []
 
         if args:
-            self.add_query(*args, **kw)
+            if args[0]:
+                self.add_query(*args, **kw)
 
 
     def add_query(self, *args, **kw):
