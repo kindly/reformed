@@ -208,8 +208,18 @@ class Search(TableNode):
 
     def call(self, limit = 100):
         query = self.data.get('q', '')
-        where = "_core_entity.title like '%%%s%%'" % query
-        results = r.search('_core_entity', where, limit=limit, fields=['table', 'title', 'summary'])["data"]
+        limit = self.data.get('l', limit)
+        offset = self.data.get('o', 0)
+        print limit, offset
+        where = "_core_entity.title like ?"
+        results = r.search( '_core_entity',
+                            where,
+                            limit = limit,
+                            offset = offset,
+                            values = ['%%%s%%' % query],
+                            fields=['table', 'title', 'summary']
+                           )["data"]
+
         #FIXME botch to get table info also realy need to get the node not just guess it
         table = {8:'Donkey',12:'People',14:'User'}
         for result in results:

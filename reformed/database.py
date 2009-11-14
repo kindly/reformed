@@ -420,10 +420,17 @@ class Database(object):
         """
 
         session = self.Session()
-
-        limit = kw.get("limit", None)
+        # convert string values to int
+        try:
+            limit = int(kw.get("limit", None))
+        except:
+            limit = None
         count = kw.get("count", False)
-        offset = kw.get("offset", 0)
+        # convert string values to int
+        try:
+            offset = int(kw.get("offset", 0))
+        except:
+            offset = 0
         keep_all = kw.get("keep_all", True)
         internal = kw.get("internal", False)
         query = search.Search(self, table_name, session, *args, **kw).search()
