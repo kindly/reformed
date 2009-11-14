@@ -129,12 +129,6 @@ class UserGroup(TableNode):
                                   }
                     }
 
-class UserGroupUser(AutoForm):
-    table = 'user_group_user'
-
-class UserGroupPermission(AutoForm):
-    table = 'user_group_permission'
-
 class Permission(AutoForm):
     table = 'permission'
     core_table = False
@@ -145,9 +139,19 @@ class User(TableNode):
     table = "user"
     fields = [
         ['name', 'textbox', 'name:'],
-        ['password', 'textbox', 'password:']
+        ['password', 'textbox', 'password:'],
+        ['usergroup', 'code_group', 'usergroups:']
     ]
     list_title = 'user %s'
+    code_groups = {'usergroup':{
+                                    'code_table': 'user_group',
+                                    'code_field': 'groupname',
+                                    'flag_table': 'user_group_user',
+                                    'flag_child_field': 'name',
+                                    'flag_code_field': 'groupname',
+                                    'flag_parent_field': 'name'
+                                  }
+                    }
 
 class Donkey(TableNode):
 
@@ -210,7 +214,7 @@ class Search(TableNode):
         query = self.data.get('q', '')
         limit = self.data.get('l', limit)
         offset = self.data.get('o', 0)
-        print limit, offset
+
         where = "_core_entity.title like ?"
         results = r.search( '_core_entity',
                             where,
@@ -221,12 +225,17 @@ class Search(TableNode):
                             count = True,
                            )
         data = results['data']
+
         #FIXME botch to get table info also realy need to get the node not just guess it
         table = {8:'Donkey',12:'People',14:'User'}
         for row in data:
-            row['title'] = '#n:test.%s:view:__id=%s|%s: %s' % (table[row['table']], row['id'], table[row['table']],row['title']) 
+            row['title'] = '#n:test.%s:view:__id=%s|%s: %s' % (table[row['table']],
+                                                               row['id'],
+                                                               table[row['table']],
+                                                               row['title'])
 
         out = node.create_form_data(self.list_fields, self.list_params, data)
+
         # add the paging info
         out['paging'] = {'row_count' : results['__count'],
                          'limit' : limit,
