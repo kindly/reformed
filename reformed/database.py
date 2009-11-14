@@ -29,6 +29,7 @@ import custom_exceptions
 import search
 import resultset
 import tables
+import time
 from util import get_paths, get_all_local_data
 from fields import ManyToOne, OneToOne, OneToMany, Integer, CopyTextAfter, CopyTextAfterField
 import fields as field_types
@@ -55,6 +56,8 @@ logger.addHandler(reformedhandler)
 class Database(object):
     
     def __init__(self, name, *args, **kw):
+
+        self.status = "updating"
         self.name =name
         self.tables = {}
         self.metadata = kw.pop("metadata", None)
@@ -78,7 +81,11 @@ class Database(object):
             else:
                 self.add_table(table)
         self.persist()
+        self.status = "active"
         #self.job_scheduler = job_scheduler.JobScheduler(self)
+        self.manager_thread = ManagerThread(self, threading.currentThread())
+        self.manager_thread.start()
+
         self.scheduler_thread = job_scheduler.JobSchedulerThread(self, threading.currentThread())
         self.job_scheduler = self.scheduler_thread.job_scheduler
 
@@ -208,6 +215,8 @@ class Database(object):
 
     def persist(self):
 
+        self.status = "updating"
+
         if not self.persisted:
             for table in self.boot_tables:
                 if table.name in self.tables.iterkeys():
@@ -224,6 +233,8 @@ class Database(object):
             self.update_sa(reload = True)
         self.fields_to_persist = []
         self.persisted = True
+
+        self.status = "updating"
 
 
     def load_from_persist(self):
@@ -318,6 +329,8 @@ class Database(object):
 
  
     def update_sa(self, reload = False, update_tables = True):
+        if reload == True and self.status <> "terminated":
+            self.status = "updating"
         if update_tables:
             self.update_tables()
         self.checkrelations()
@@ -345,6 +358,8 @@ class Database(object):
         except (custom_exceptions.NoDatabaseError,\
                 custom_exceptions.RelationError):
             pass
+        if reload == True and self.status <> "terminated":
+            self.status = "active"
 
     def clear_sa(self):
         sa.orm.clear_mappers()
@@ -514,4 +529,33 @@ class Database(object):
                 aliases[key] = value.sa_class
 
         self.aliases = aliases
+
+
+class ManagerThread(threading.Thread):
+
+    def __init__(self, database, initiator_thread):
+
+        super(ManagerThread, self).__init__()
+        self.initiator_thread = initiator_thread
+        self.database = database
+
+    def run(self):
+
+        while True:
+            if not self.initiator_thread.isAlive():
+                self.database.status = "terminated"
+            if self.database.status == "terminated":
+                self.database.scheduler_thread.stop()
+                if self.database.scheduler_thread.isAlive():
+                    self.database.scheduler_thread.join()
+                self.database.status == "terminated"
+                break
+            time.sleep(1)
+                
+        
+
+
+
+
+
 
