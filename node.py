@@ -302,10 +302,13 @@ class TableNode(Node):
             for code in no_codes:
                 filter = {flag_child_field: parent_value, code_field: code}
                 obj = r.reformed.get_class(table)
-                data = session.query(obj).filter_by(**filter).one()
-                if data:
-                    print data
-                    session.delete(data)
+                try:
+                    data = session.query(obj).filter_by(**filter).one()
+                    if data:
+                        session.delete(data)
+                except sa.orm.exc.NoResultFound:
+                    pass
+
 
             for code in yes_codes:
                 where = "%s='%s' and %s='%s'" % (flag_child_field, parent_value, code_field, code)
