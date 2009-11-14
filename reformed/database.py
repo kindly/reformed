@@ -391,12 +391,40 @@ class Database(object):
         return resultset.ResultSet(search)
     
     def search(self, table_name, *args, **kw): 
+        
+        """
+        :param table_name: specifies the base table you will be query from (required)
+
+        :param where: either a paramatarised or normal where clause, if paramitarised 
+        either values or params keywords have to be added. (optional first arg, if 
+        missing will query without where)
+
+        :param tables: an optional list of onetoone or manytoone tables to be extracted
+        with results
+        
+        :param keep_all: will keep id, _core_entity_id, modified_by and modified_on fields
+
+        :param fields: an optional explicit field list in the form 'field' for base table
+        and 'table.field' for other tables.  Overwrites table option and keep all.
+
+        :param limit: the row limit
+        
+        :param offset: the offset
+
+        :param internal: if true will not convert date, boolean and decimal fields
+
+        :param values: a list of values to replace the ? in the paramatarised queries
+
+        :param params: a dict with the keys as the replacement to inside the curly
+        brackets i.e key name will replace {name} in query.
+        """
 
         session = self.Session()
 
         limit = kw.get("limit", None)
         count = kw.get("count", False)
         offset = kw.get("offset", 0)
+        keep_all = kw.get("keep_all", True)
         internal = kw.get("internal", False)
         query = search.Search(self, table_name, session, *args, **kw).search()
         tables = kw.get("tables", [table_name])
@@ -416,7 +444,7 @@ class Database(object):
                                        tables = tables, 
                                        fields = fields,
                                        internal = internal, 
-                                       keep_all = True, 
+                                       keep_all = keep_all, 
                                        allow_system = True) for obj in result]
             results = {"data": data}
 
