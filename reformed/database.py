@@ -86,8 +86,9 @@ class Database(object):
         self.manager_thread = ManagerThread(self, threading.currentThread())
         self.manager_thread.start()
 
+        self.job_scheduler = job_scheduler.JobScheduler(self)
+
         self.scheduler_thread = job_scheduler.JobSchedulerThread(self, threading.currentThread())
-        self.job_scheduler = self.scheduler_thread.job_scheduler
 
 
     def add_table(self, table, ignore = False, drop = False):
@@ -390,7 +391,7 @@ class Database(object):
 
         return resultset.ResultSet(search)
     
-    def search(self, table_name, *args, **kw): 
+    def search(self, table_name, where = None, *args, **kw): 
         
         """
         :param table_name: specifies the base table you will be query from (required)
@@ -433,7 +434,7 @@ class Database(object):
             offset = 0
         keep_all = kw.get("keep_all", True)
         internal = kw.get("internal", False)
-        query = search.Search(self, table_name, session, *args, **kw).search()
+        query = search.Search(self, table_name, session, where, *args, **kw).search()
         tables = kw.get("tables", [table_name])
 
         fields = kw.get("fields", None)
@@ -580,10 +581,10 @@ class ManagerThread(threading.Thread):
             if not self.initiator_thread.isAlive():
                 self.database.status = "terminated"
             if self.database.status == "terminated":
-                self.database.scheduler_thread.stop()
+                self.database.job_scheduler.stop()
                 if self.database.scheduler_thread.isAlive():
+                    self.database.scheduler_thread.stop()
                     self.database.scheduler_thread.join()
-                self.database.status == "terminated"
                 break
             time.sleep(1)
                 
