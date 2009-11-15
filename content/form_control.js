@@ -189,13 +189,19 @@ $FORM_CONTROL = {
 
         checkbox: function(item, id, show_label, value){
             // checkbox
-            var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
+            var x = '';
+            if (show_label && !item.reverse){
+                x += $FORM_CONTROL._label(item, id);
+            }
             x += '<input id="' + id + '" name="' + id + '" type="checkbox" ';
             if (value){
                 x += 'checked="checked" ';
             }
             x += 'value="true" class="checkbox" ';
             x += 'onchange="itemChanged(this)" />';
+            if (show_label && item.reverse){
+                x += $FORM_CONTROL._label(item, id);
+            }
             return x;
         },
 
@@ -214,6 +220,7 @@ $FORM_CONTROL = {
             for (var i=0; i<codes.length; i++){
                 var my_item = {};
                 my_item.title = codes[i];
+                my_item.reverse = true;
                 var selected = false;
                 for (var j=0; j<value.length; j++){
                     if (value[j]==codes[i]){
