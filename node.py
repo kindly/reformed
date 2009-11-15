@@ -260,6 +260,7 @@ class TableNode(Node):
             # code_groups
             if self.code_groups:
                 self.save_group_codes(session, record_data)
+        session.commit()
         session.close()
 
         # output data
@@ -289,6 +290,8 @@ class TableNode(Node):
             # c) i just don't like it
             # still it will do for now
 
+            if not code_group_data:
+                code_group_data = []
             yes_codes = set(self.code_list[code_group_name]).intersection(set(code_group_data))
             no_codes = set(self.code_list[code_group_name]).difference(set(code_group_data))
             print "YES CODES", yes_codes
@@ -320,7 +323,6 @@ class TableNode(Node):
                     setattr(record_data, code_field, code)
                     session.save_or_update(record_data)
                     print 'saved', record_data
-            session.commit()
 
     def new(self):
 
@@ -389,14 +391,22 @@ class TableNode(Node):
         obj = r.reformed.get_class(self.table)
         try:
             data = session.query(obj).filter_by(**filter).one()
+            # code_groups
+            if self.code_groups:
+                self.save_group_codes(session, data)
             session.delete(data)
             session.commit()
             self.next_node = self.name
             self.next_data = {'command': 'list'}
         except sa.orm.exc.NoResultFound:
-            errors = {'~': 'record not found'}
-            self.out = errors
-            self.action = 'delete_error'
+            error = 'Record not found.'
+            self.out = error
+            self.action = 'general_error'
+        except sa.exc.IntegrityError:
+            error = 'The record cannot be deleted,\nIt is referenced by another record.'
+            self.out = error
+            self.action = 'general_error'
+            session.rollback()
         session.close()
 
 
