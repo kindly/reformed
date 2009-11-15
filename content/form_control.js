@@ -207,6 +207,27 @@ $FORM_CONTROL = {
             return x;
         },
 
+        code_group: function(item, id, show_label, value){
+            codes = item.params.codes;
+            var x = show_label && item.title ? '<p>' + item.title + '</p>' : '';
+            x += '<table><tr>';
+            for (var i=0; i<codes.length; i++){
+                var my_item = {};
+                my_item.title = codes[i];
+                var selected = false;
+                for (var j=0; j<value.length; j++){
+                    if (value[j]==codes[i]){
+                        selected = true;
+                        break;
+                    }
+                }
+                var my_id = id + '__' + i;
+                x += '<td>' + $FORM_CONTROL._controls.checkbox(my_item, my_id, true, selected) + '</td>';
+            }
+            x += '</tr></table>';
+            return x;
+        },
+
         dropdown: function(item, id, show_label, value){
             // dropdown
             var x = show_label ? $FORM_CONTROL._label(item, id) : '';
@@ -260,6 +281,22 @@ $FORM_CONTROL = {
     _checkbox_get: function(id){
         // gets value of checkbox
         return $("#" + id).attr("checked");
+    },
+
+    _code_group_get: function(id){
+        var item = _parse_id(id);
+        var form_data = $INFO.getState(item.root, 'form_data')
+        var form_item = form_data.items[item.control];
+        var codes = form_item.params.codes;
+        var out = []
+        for (var i=0; i<codes.length; i++){
+            if ($("#" + id + '__' + i).attr("checked")){
+                out.push(codes[i]);
+            }
+        }
+        return out
+        //info = $("#" + id + '__*').attr("checked");
+      //  alert(info);
     },
 
     _datebox_set: function(id, value){

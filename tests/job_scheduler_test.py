@@ -1,3 +1,5 @@
+import sys
+sys.path.append("/home/david/reformed")
 import donkey_persist_test
 from sqlalchemy import MetaData, create_engine
 from reformed.standard_jobs import wait
@@ -27,9 +29,6 @@ class test_single_request(donkey_persist_test.test_donkey_persist_mysql):
 
         cls.length_after = len(cls.Donkey.search("people")["data"])
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.scheduler_thread.stop()
 
     def test_add_basic_job(self):
 

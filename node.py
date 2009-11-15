@@ -81,6 +81,7 @@ class TableNode(Node):
 
     """Node for table level elements"""
     table = "unknown"
+    core_table = True
     fields = []
     field_list = []     # list of fields to be retrieved by searches (auto created)
     extra_fields = []
@@ -92,6 +93,8 @@ class TableNode(Node):
     subform_data = {}
     subform_field_list = {}
 
+    code_groups = {}
+    code_list = {}
     first_run = True
 
     list_fields = [
@@ -103,16 +106,30 @@ class TableNode(Node):
 
     def __init__(self, *args, **kw):
         super(TableNode, self).__init__(*args, **kw)
+        self.setup_code_groups()
         if self.__class__.first_run:
             self.__class__.first_run = False
             print 'first run'
             self.setup_forms()
 
+    def setup_code_groups(self):
+        self.__class__.code_list = {}
+        for code_group_name in self.code_groups.keys():
+            code_group = self.code_groups[code_group_name]
+            table = code_group.get('code_table')
+            field = code_group.get('code_field')
+            codes = r.reformed.search(table, 'id>0', fields = [field])['data']
+            code_array = []
+            for row in codes:
+                code_array.append(row.get(field))
+            self.__class__.code_list[code_group_name] = code_array
+
+
     def setup_forms(self):
         for field in self.fields:
             # add subform data
             if field[1] == 'subform':
-                name = field[2]
+                name = field[0]
                 subform = self.__class__.subforms.get(name)
                 data = create_form_data(subform.get('fields'), subform.get('params'))
                 data['form']['parent_id'] =  subform.get('parent_id')
@@ -120,6 +137,12 @@ class TableNode(Node):
                 self.__class__.subform_data[name] = data
                 field.append(data)
                 self.setup_subforms(name)
+            # add data for code groups
+            elif field[1] == 'code_group':
+                name = field[0]
+                data = {}
+                data['codes'] = self.__class__.code_list.get(name)
+                field.append(data)
             # build the field list
             self.field_list.append(field[0])
         # add any extra fields to the field list
@@ -163,7 +186,7 @@ class TableNode(Node):
         print 'table %s' % table
         print 'fields %s' % fields
         errors = None
-
+        ignore_types = ['subform', 'code_group']
         try:
             if filter:
                 print 'existing record'
@@ -175,10 +198,14 @@ class TableNode(Node):
             for field in fields:
                 field_name = field[0]
                 field_type = field[1]
-                if field_name != 'id' and field_type != 'subform':
+                if field_name != 'id' and field_type not in ignore_types:
+                    # update/add the value
                     value = data.get(field_name)
                     print '%s = %s' % (field_name, value)
                     setattr(record_data, field_name, value)
+            # if this is a subform we need to update/add the join field
+            # FIXME is this needed here or just for new?
+            # maybe shift up a few lines to new record
             for field_name in join_fields:
                     value = data.get(field_name)
                     print 'join: %s = %s' % (field_name, value)
@@ -187,6 +214,7 @@ class TableNode(Node):
                 session.save_or_update(record_data)
                 session.commit()
                 self.saved.append([root, record_data.id])
+                return record_data
             except fe.Invalid, e:
                 session.rollback()
                 print "failed to save\n%s" % e.msg
@@ -211,12 +239,13 @@ class TableNode(Node):
         else:
             filter = {}
 
-        self.save_record(session, self.table, self.fields, self.data, filter, root)
+        record_data = self.save_record(session, self.table, self.fields, self.data, filter, root)
 
         # FIXME how do we deal with save errors more cleverly?
         # need to think about possible behaviours we want
         # and add some 'failed save' options
         if not self.errors:
+            # subforms
             for subform_name in self.subforms.keys():
                 subform_data = self.data.get(subform_name)
                 if subform_data:
@@ -228,7 +257,9 @@ class TableNode(Node):
                     if child_id:
                         join_fields= [child_id]
                     self.save_record_rows(session, table, fields, subform_data, join_fields)
-
+            # code_groups
+            if self.code_groups:
+                self.save_group_codes(session, record_data)
         session.close()
 
         # output data
@@ -241,6 +272,55 @@ class TableNode(Node):
         self.out = out
         self.action = 'save'
 
+    def save_group_codes(self, session, record_data):
+        for code_group_name in self.code_groups.keys():
+            code_group = self.code_groups[code_group_name]
+            table = code_group.get('flag_table')
+            flag_child_field = code_group.get('flag_child_field')
+            flag_parent_field = code_group.get('flag_parent_field')
+            code_field = code_group.get('code_field')
+            parent_value = getattr(record_data, flag_parent_field)
+            code_group_data = self.data.get(code_group_name)
+
+            #FIXME everything following this until session.commit() is rubbish
+            # although it works i'm sure
+            # a) it's not very efficient
+            # b) it feels realy hacky
+            # c) i just don't like it
+            # still it will do for now
+
+            yes_codes = set(self.code_list[code_group_name]).intersection(set(code_group_data))
+            no_codes = set(self.code_list[code_group_name]).difference(set(code_group_data))
+            print "YES CODES", yes_codes
+            print "NO CODES", no_codes
+            print 'table', table
+            print 'flag_child_field', flag_child_field
+            print 'flag_parent_field', flag_parent_field
+            print 'code_field', code_field
+            print 'parent_value', parent_value
+
+            for code in no_codes:
+                filter = {flag_child_field: parent_value, code_field: code}
+                obj = r.reformed.get_class(table)
+                try:
+                    data = session.query(obj).filter_by(**filter).one()
+                    if data:
+                        session.delete(data)
+                except sa.orm.exc.NoResultFound:
+                    pass
+
+
+            for code in yes_codes:
+                where = "%s='%s' and %s='%s'" % (flag_child_field, parent_value, code_field, code)
+                result = r.reformed.search(table, where)['data']
+                if not result:
+                    # need to add this field
+                    record_data = r.reformed.get_instance(table)
+                    setattr(record_data, flag_child_field, parent_value)
+                    setattr(record_data, code_field, code)
+                    session.save_or_update(record_data)
+                    print 'saved', record_data
+            session.commit()
 
     def new(self):
 
@@ -273,12 +353,29 @@ class TableNode(Node):
         if data_out:
             for subform_name in self.subforms.keys():
                 data_out[subform_name] = self.subform(subform_name, data_out)
+            for code_group_name in self.code_list:
+                data_out[code_group_name] = self.code_data(code_group_name, data_out)
 
         data = create_form_data(self.fields, self.form_params, data_out)
         self.out = data
         self.action = 'form'
         self.bookmark = 'n:%s:view:id=%s' % (self.name, id)
 
+    def code_data(self, code_group_name, data_out):
+        codes = self.code_groups.get(code_group_name)
+        flag_table = codes.get('flag_table')
+        flag_child_field = codes.get('flag_child_field')
+        flag_parent_field = codes.get('flag_parent_field')
+        flag_code_field = codes.get('flag_code_field')
+        parent_value = data_out.get(flag_parent_field)
+
+        where = "%s = '%s'" % (flag_parent_field, parent_value)
+        results = r.reformed.search(flag_table, where, fields = [flag_code_field])['data']
+
+        out = []
+        for row in results:
+            out.append(row[flag_code_field])
+        return out
 
     def delete(self):
         id = self.data.get('id')
@@ -304,12 +401,41 @@ class TableNode(Node):
 
 
     def list(self, limit=20):
-        results = r.reformed.search('_core_entity', "%s.id >0" % self.table, limit=limit)["data"]
+        query = self.data.get('q', '')
+        limit = self.data.get('l', limit)
+        offset = self.data.get('o', 0)
+
+        if self.core_table:
+            results = r.reformed.search('_core_entity',
+                                        where = "%s.id >0" % self.table,
+                                        limit = limit,
+                                        offset = offset,
+                                        count = True)
+        else:
+            results = r.reformed.search(self.table,
+                                        where = "id >0",
+                                        limit = limit,
+                                        offset = offset,
+                                        count = True)
+
+        data = results['data']
         # build the links
-        for result in results:
-            result['title'] = '#n:%s:view:__id=%s|%s' % (self.name, result['id'], result['title']) 
-        data = create_form_data(self.list_fields, self.list_params, results)
-        self.out = data
+        if self.core_table:
+            for row in data:
+                row['title'] = '#n:%s:view:__id=%s|%s' % (self.name, row['id'], row['title']) 
+        else:
+            for row in data:
+                row['title'] = '#n:%s:view:id=%s|%s' % (self.name, row['id'], row[self.title_field]) 
+
+        out = create_form_data(self.list_fields, self.list_params, data)
+
+        # add the paging info
+        out['paging'] = {'row_count' : results['__count'],
+                         'limit' : limit,
+                         'offset' : offset,
+                         'base_link' : 'n:%s:list:q=%s' % (self.name, query)}
+
+        self.out = out
         self.action = 'form'
         self.title = 'listing'
 

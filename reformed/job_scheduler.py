@@ -18,7 +18,7 @@ POLL_INTERVAL = 10
 
 class JobScheduler(object):
 
-    def __init__(self, rdatabase, schedular_thread, table_name = "_core_job_scheduler"):
+    def __init__(self, rdatabase, table_name = "_core_job_scheduler"):
 
         if not table_name in rdatabase.tables:
             rdatabase.add_table(tables.Table(table_name, 
@@ -35,7 +35,6 @@ class JobScheduler(object):
 
             rdatabase.persist()
 
-        self.schedular_thread = schedular_thread
         self.table_name = table_name
         self.database = rdatabase
 
@@ -57,15 +56,24 @@ class JobScheduler(object):
             # FIXME this does not look safe against exceptions
             session.commit()
             job_id = job.id
-            session.close()
             return job_id
         except Exception:
             import sys
-            print >> sys.stderr, "%s %s" % ("error in schedular thread shutting down",
+            print >> sys.stderr, "%s %s" % ("error in adding job",
                                             traceback.format_exc())
-            self.schedular_thread.shut_down_all_threads()
-            self.schedular_thread.alive = False
+        finally:
+            session.close()
 
+    def stop(self):
+
+        self.shut_down_all_threads()
+
+    def shut_down_all_threads(self):
+
+        threadpool = self.threadpool
+
+        threadpool.dismissWorkers(POOL_SIZE)
+        threadpool.joinAllDismissedWorkers()
 
 class JobSchedulerThread(threading.Thread):
 
@@ -73,24 +81,20 @@ class JobSchedulerThread(threading.Thread):
         super(JobSchedulerThread, self).__init__()
         self.database = database
         self.maker_thread = maker_thread
-        self.job_scheduler = JobScheduler(self.database, self)
+        self.job_scheduler = database.job_scheduler
+        self.threadpool = self.job_scheduler.threadpool
+        self.alive = False
 
-    alive = False
     def run(self):
 
-        if self.alive:
-            return
-
-        self.threadpool = self.job_scheduler.threadpool
-
         self.alive = True
+
         while self.alive:
 
             ## added to make sure query does not run and clean up
-            if not self.maker_thread.isAlive():
+            if not self.maker_thread.isAlive() or self.database.status == "terminated":
                 print "commmencing shutdown procedures"
-                self.shut_down_all_threads()
-                self.alive = False
+                self.stop()
                 break
 
 
@@ -114,11 +118,8 @@ class JobSchedulerThread(threading.Thread):
                 import sys
                 print >> sys.stderr, "%s %s" % ("error in schedular thread shutting down",
                                                 traceback.format_exc())
-                self.shut_down_all_threads()
-                self.alive = False
+                self.stop()
                 break
-
-
 
 
             try:
@@ -128,19 +129,18 @@ class JobSchedulerThread(threading.Thread):
 
             time_counter = 0
 
-
             while time_counter <= POLL_INTERVAL:
-                if not self.maker_thread.isAlive():
-                    print "commmencing shutdown procedures"
-                    self.shut_down_all_threads()
-                    self.alive = False
+                if not self.maker_thread.isAlive() or self.database.status == "terminated":
+                    print "commencing shutdown procedures"
+                    self.stop()
                     break
                 time_counter = time_counter + 1
                 time.sleep(1)
 
     def stop(self):
 
-        self.alive = False
+        if self.alive:
+            self.alive = False
 
     def make_request(self, func, arg, job_id):
 
@@ -180,10 +180,4 @@ class JobSchedulerThread(threading.Thread):
 
         self.threadpool.putRequest(request[0])
 
-    def shut_down_all_threads(self):
-
-        threadpool = self.threadpool
-
-        threadpool.dismissWorkers(POOL_SIZE)
-        threadpool.joinAllDismissedWorkers()
 

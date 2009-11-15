@@ -328,6 +328,8 @@ class FlatFile(object):
         self.set_dialect()
 
         for chunk in chunks:
+            if self.database.status == "terminated":
+                break
             chunk_status = self.load_chunk(chunk)
             self.status.append(chunk_status)
             self.calculate_stats()
