@@ -158,6 +158,8 @@ class TableNode(Node):
     def call(self):
         if  self.command == 'view':
             self.view()
+        if  self.command == 'edit':
+            self.view(read_only = False)
         elif self.command == '_save':
             self.save()
         elif self.command == 'list':
@@ -332,7 +334,7 @@ class TableNode(Node):
         self.action = 'form'
 
 
-    def view(self):
+    def view(self, read_only=True):
         id = self.data.get('id')
         if id:
             where = 'id=%s' % id
@@ -358,7 +360,7 @@ class TableNode(Node):
             for code_group_name in self.code_list:
                 data_out[code_group_name] = self.code_data(code_group_name, data_out)
 
-        data = create_form_data(self.fields, self.form_params, data_out)
+        data = create_form_data(self.fields, self.form_params, data_out, read_only)
         self.out = data
         self.action = 'form'
         self.bookmark = 'n:%s:view:id=%s' % (self.name, id)
@@ -432,10 +434,10 @@ class TableNode(Node):
         # build the links
         if self.core_table:
             for row in data:
-                row['title'] = '#n:%s:view:__id=%s|%s' % (self.name, row['id'], row['title']) 
+                row['title'] = '#n:%s:edit:__id=%s|%s' % (self.name, row['id'], row['title']) 
         else:
             for row in data:
-                row['title'] = '#n:%s:view:id=%s|%s' % (self.name, row['id'], row[self.title_field]) 
+                row['title'] = '#n:%s:edit:id=%s|%s' % (self.name, row['id'], row[self.title_field]) 
 
         out = create_form_data(self.list_fields, self.list_params, data)
 
@@ -500,7 +502,7 @@ def create_fields(fields_list):
 
 
 
-def create_form_data(fields, params=None, data=None):
+def create_form_data(fields, params=None, data=None, read_only=False):
     out = {
         "form": {
             "fields":create_fields(fields)
@@ -510,7 +512,11 @@ def create_form_data(fields, params=None, data=None):
     if data:
         out['data'] = data
     if params:
-        out['form']['params'] = params
+        out['form']['params'] = params.copy()
+    if read_only:
+        if not out['form']['params']:
+            out['form']['params'] = {}
+        out['form']['params']['read_only'] = True
     return out
 
 def validate_data(data, field, validator):

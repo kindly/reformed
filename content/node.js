@@ -101,12 +101,12 @@ function _wrap(arg, tag){
     return '<' + tag + '>' + arg + '</' + tag + '>';
 }
 
-function _subform(item, my_id, data, root){
-    root = root + '#' + item.name;
-    paging = null
+function _subform(item, my_id, data, local_data){
+    var root = local_data.root + '#' + item.name;
+    var paging = null;
     $INFO.newState(root);
     var out = '<div class="subform" id="' + my_id + '" >'+ item.title + '</br>';
-    out += node_generate_html(item.params.form, data, paging, root);
+    out += node_generate_html(item.params.form, data, paging, root, local_data.read_only);
     out += '</div>';
     return out;
 
@@ -132,7 +132,7 @@ function _generate_fields_html(form, local_data, data, row_count){
         my_id = $INFO.addId(my_id);
         if (item.type == 'subform'){
             // get HTML for subform
-            formHTML += _subform(item, my_id, data[item.name], local_data.root);
+            formHTML += _subform(item, my_id, data[item.name], local_data);
         } else {
             // get value
             if (data && typeof(data[item.name]) != 'undefined'){
@@ -141,7 +141,7 @@ function _generate_fields_html(form, local_data, data, row_count){
                 value = '';
             }
             // add item
-            var temp = $FORM_CONTROL.html(item, my_id, local_data.show_label, value, local_data.readonly);
+            var temp = $FORM_CONTROL.html(item, my_id, local_data.show_label, value, local_data.read_only);
             formHTML += _wrap(temp, local_data.wrap_tag);
         }
     }
@@ -278,7 +278,7 @@ function form_paging_bar(data){
     html = _wrap(html, 'p');
     return html;
 }
-function node_generate_html(form, data, paging, root, form_id, form_type){
+function node_generate_html(form, data, paging, root, read_only){
     msg('node_generate_html: ');
     if (!data){
         data = {};
@@ -297,27 +297,31 @@ function node_generate_html(form, data, paging, root, form_id, form_type){
     if (!form.fields){
         return "FORM NO ENTRY";
     }
-    if (form.params && form.params.form_type){
-        form_type = form.params.form_type;
-    } else {
-        form_type = "normal";
-    }
-
 
     var local_data = {};
+
+    if (form.params && form.params.form_type){
+        local_data.form_type = form.params.form_type;
+    } else {
+        local_data.form_type = "normal";
+    }
+    if (read_only || (form.params && form.params.read_only) ){
+        local_data.read_only = true;
+    } else {
+        local_data.read_only = false;
+    }
+
     local_data.add_new_rows = true;
     local_data.extra_rows = 1;
-    local_data.readonly = false;
     local_data.count = 0;
     local_data.wrap_tag = 'div';
     local_data.show_label = true;
-    local_data.form_type = form_type;
     local_data.root = root;
     var form_info = {info:{}};
     form_info.info.top_level = true;
     form_info.info.clean = true;
 
-    if (form_type == 'results'){
+    if (local_data.form_type == 'results'){
         local_data.add_new_rows = false;
         local_data.extra_rows = 0;
         local_data.show_label = false;
