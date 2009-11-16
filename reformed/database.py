@@ -90,6 +90,20 @@ class Database(object):
 
         self.scheduler_thread = job_scheduler.JobSchedulerThread(self, threading.currentThread())
 
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            table = self.get_table_by_id(item)
+            if not table:
+                raise IndexError("table id %s does not exist" % item)
+            return table
+        else:
+            return self.tables[item]
+
+    def get_table_by_id(self, id):
+
+        for table in self.tables.itervalues():
+            if table.table_id == id:
+                return table
 
     def add_table(self, table, ignore = False, drop = False):
 
