@@ -737,8 +737,10 @@ class ConvertDate(AttributeExtension):
     
     def set(self, state, value, oldvalue, initator):
 
-        if value == oldvalue or not value:
+        if value == oldvalue:
             return value
+        if not value:
+            return None
         state.dict["_validated"] = False
 
         if isinstance(value, ClauseElement):

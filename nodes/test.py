@@ -25,6 +25,7 @@ from node import TableNode, Node, AutoForm
 from .reformed.reformed import reformed as r
 import sqlalchemy as sa
 from global_session import global_session
+from .reformed import reformed as table_functions
 
 class HomePage(Node):
 
@@ -134,7 +135,9 @@ class Permission(AutoForm):
     core_table = False
     title_field = 'permission'
 
+
 class User(TableNode):
+
 
     table = "user"
     fields = [
@@ -229,10 +232,19 @@ class Search(TableNode):
         #FIXME botch to get table info also realy need to get the node not just guess it
         table = {8:'Donkey',12:'People',14:'User'}
         for row in data:
-            row['title'] = '#n:test.%s:view:__id=%s|%s: %s' % (table[row['table']],
+            row['title'] = 'n:test.%s:view:__id=%s|%s: %s' % (table[row['table']],
                                                                row['id'],
                                                                table[row['table']],
                                                                row['title'])
+
+            row['edit'] = ['n:test.%s:edit:__id=%s|Edit' % (table[row['table']],
+                                                               row['id']),
+                           'n:test.%s:view:__id=%s|View' % (table[row['table']],
+                                                               row['id']),
+                           'n:test.%s:_delete:__id=%s|Delete' % (table[row['table']],
+                                                               row['id'])
+                            ]
+
 
         out = node.create_form_data(self.list_fields, self.list_params, data)
 
@@ -311,3 +323,114 @@ class Sponsorship(Node):
             data = node.create_form_data(fields, data=vdata)
             self.action = 'form'
         self.out = data
+
+
+
+class Table(TableNode):
+
+    allowed_types = ['Text', 'Email', 'Integer', 'Money', 'DateTime', 'Boolean']
+    list_fields = [
+        ['title', 'link', 'title'],
+        ['summary', 'info', 'summary'],
+        ['edit', 'link_list', '']
+    ]
+    list_params = {"form_type": "results"}
+
+    fields = [
+        ['table_name', 'textbox', 'table name: '],
+        ['entity', 'checkbox', 'entity:'],
+        ['logged', 'checkbox', 'logged:'],
+        ['fields', 'subform', 'fields']
+    ]
+    subforms = {
+        'fields':{
+            'fields': [
+                ['field_name', 'textbox', 'field name'],
+                ['field_type', 'textbox', 'type', {'autocomplete' : allowed_types, 'auto_options':{'mustMatch':True, 'minChars': 0, 'autoFill':True}}],
+                ['length', 'textbox', 'length'],
+                ['mandatory', 'checkbox', 'mandatory'],
+                ['default', 'textbox', 'default']
+       #         ['unique', 'checkbox', 'unique'],
+
+            ],
+            "params":{
+                "form_type": "grid"
+            }
+        }
+    }
+
+    def call(self):
+        if self.command == 'list':
+            self.list()
+        elif self.command == 'edit':
+            self.edit()
+        elif self.command == 'new':
+            self.new()
+        elif self.command == '_save':
+            self.save()
+
+    def save(self):
+
+        table_name = str(self.data.get('table_name'))
+        entity = self.data.get('entity', False)
+        logged = self.data.get('logged', False)
+        fields = self.data.get('fields')
+
+        print table_name, entity, logged, fields
+
+
+        table = table_functions.Table(table_name, logged=logged)
+
+        for field in fields:
+            type = field.get('field_type')
+            name = field.get('field_name')
+            if type == 'Text':
+                length = field.get('length')
+            else:
+                length = None
+            mandatory = field.get('mandatory', False)
+            default = field.get('default')
+
+            field_info = dict(length=length, mandatory=mandatory, default=default)
+
+            field_class = getattr(table_functions, type)
+            table.add_field(field_class(name, **field_info))
+
+        if entity:
+            r.add_entity(table)
+        else:
+            r.add_table(table)
+        r.persist()
+
+
+    def list(self):
+        data = []
+        for table_name in r.tables.keys():
+            data.append({'title': "n:test.Table:edit:t=%s|%s" % (table_name, table_name)})
+        data = node.create_form_data(self.list_fields, self.list_params, data)
+        self.action = 'form'
+        self.out = data
+
+    def edit(self):
+        table = self.data.get('t')
+        table_info = r.tables[table]
+
+        field_data = []
+        for (name, value) in table_info.fields.iteritems():
+            if value.__class__.__name__ in self.allowed_types:
+                field_data.append({'field_name': name,
+                                   'field_type': value.__class__.__name__,
+                                   'mandatory': value.mandatory,
+                                   'length': value.length,
+                                   'default': value.default })
+
+        table_data = {'table_name': table_info.name,
+                      'entity': table_info.entity,
+                      'logged': table_info.logged,
+                      'fields': field_data}
+
+        data = node.create_form_data(self.fields, None, table_data)
+        self.action = 'form'
+        self.out = data
+
+

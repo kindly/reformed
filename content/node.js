@@ -46,7 +46,12 @@ function node_load(arg){
 		node_call_from_string(arg, true, true);
     } else {
         // sets the address which then forces a page load
+        var link = arg.split(':');
+        if (link[2].substring(0,1) == '_'){
+		    node_call_from_string(arg, true, false);
+        } else {
 		$.address.value(arg);
+        }
     }
 }
 
@@ -163,8 +168,12 @@ function _generate_form_html_continuous(form_info, local_data, data){
     var num_records;
 
     // how many rows do we want to display?
-    num_records = data.length + local_data.extra_rows;
-    if (data){
+    if (data.length){
+        num_records = data.length + local_data.extra_rows;
+    } else {
+        num_records = local_data.extra_rows;
+    }
+    if (num_records){
         for (i=0; i<num_records; i++){
             base_id = local_data.root + "(" + i + ")";
             div_id = $INFO.addId(base_id);
@@ -205,8 +214,12 @@ function _generate_form_html_grid(form_info, local_data, data){
     local_data.wrap_tag = 'td';
     local_data.show_label = false;
     // how many rows do we want to display?
-    num_records = data.length + local_data.extra_rows;
-    if (data){
+    if (data.length){
+        num_records = data.length + local_data.extra_rows;
+    } else {
+        num_records = local_data.extra_rows;
+    }
+    if (num_records){
         for (i=0; i<num_records; i++){
             base_id = local_data.root + "(" + i + ")";
             div_id = $INFO.addId(base_id);
@@ -216,12 +229,13 @@ function _generate_form_html_grid(form_info, local_data, data){
             formHTML += "</tr>";
         }
     }
-    formHTML += '</tbody>';
-    formHTML += '</table>';
     // add new link
     if (local_data.add_new_rows){
-        formHTML += '<p id="' + $INFO.getId(local_data.root) + '__add" class="add_form_row" onclick="add_form_row(\'' + local_data.root + '\', \'grid\')" >add new</p>';
+        formHTML += '<tr id="' + $INFO.getId(local_data.root) + '__add"><td class="add_form_row" onclick="add_form_row(\'' + local_data.root + '\', \'grid\')" >add new</td></tr>';
     }
+
+    formHTML += '</tbody>';
+    formHTML += '</table>';
     return formHTML;
 }
 
@@ -235,19 +249,25 @@ function add_form_row(root, type){
     // mark as clean plus also adds the row
     form_info.clean_rows[row] = true;
     var id =  $INFO.addId(root + '(' + row + ')');
+    var formHTML;
+    var local_data;
     if (type == 'normal'){
-        var local_data = {root: root,
+        local_data = {root: root,
                       show_label: true,
                       wrap_tag: 'p'};
-        var formHTML = '<div id="' + id + '" class="form_body">';
+        formHTML = '<div id="' + id + '" class="form_body">';
         formHTML += _generate_fields_html(form_data, local_data, null, row);
         formHTML += "</div>";
-        $('#' + $INFO.getId(root) + '__add').before(formHTML);
     } else {
-        //FIXME make this work for grids
-        alert('this needs implementing');
+        //grids
+        local_data = {root: root,
+                      show_label: false,
+                      wrap_tag: 'td'};
+        formHTML = '<tr id="' + id + '" class="form_body">';
+        formHTML += _generate_fields_html(form_data, local_data, null, row);
+        formHTML += "</tr>";
     }
-    
+    $('#' + $INFO.getId(root) + '__add').before(formHTML);
 }
 
 
@@ -345,8 +365,12 @@ function node_generate_html(form, data, paging, root, read_only){
 
 
     form_info.info.clean_rows = [];
-    if (data){
+    if (data.length){
         for (i=0; i<data.length + local_data.extra_rows; i++){
+            form_info.info.clean_rows[i] = true;
+        }
+    } else {
+        for (i=0; i<local_data.extra_rows; i++){
             form_info.info.clean_rows[i] = true;
         }
     }
@@ -562,8 +586,13 @@ function setup_process_params(root, item){
             if (item.params.hasOwnProperty(key)){
             v = item.params[key];
             if (key == 'autocomplete'){
+                if (item.params.auto_options){
+                    options = item.params.auto_options;
+                } else {
+                    options = {}
+                }
                 id = $INFO.getId(root + '#' + item.name);
-                $('#' + id).autocomplete(v);
+                $('#' + id).autocomplete(v, options);
             }
         }
     }
@@ -573,10 +602,18 @@ function form_setup(root, form_data){
     // do any setting up of the form
     var item
     var id
-    for (i=0; i<form_data.fields.length; i++){
+    for (var i=0; i<form_data.fields.length; i++){
             item = form_data.fields[i];
             if (item.params){
                 setup_process_params(root, item);
+            }
+            if (item.type == 'subform'){
+                var rows = $INFO.getState(root + '#' + item.name, 'form_info').clean_rows.length
+                if (rows){
+                    for (var j = 0; j<rows; j++){
+                        form_setup(root + '#' + item.name + '(' + j + ')',form_data.items[item.name].params.form);
+                    }
+                }
             }
             if (item.type == 'progress'){
                 id = $INFO.getId(root + '#' + item.name);
@@ -636,7 +673,9 @@ function node_get_form_data_rows(root){
                 var m = String(root).match(/^(.*)#([^#]*)$/);
                 parent_root = m[1];
                 parent_id = $INFO.getState(parent_root, 'sent_data')[form_data.parent_id];
+                if (parent_id){
                 out_row[form_data.child_id] = parent_id;
+                }
             }
             out.push(out_row);
         }
@@ -669,6 +708,7 @@ function node_save(root, command){
     msg('node_save');
     var out = node_get_form_data(root);
     var node =  $INFO.getState(root, 'node');
+ //   alert('node' + node + $.toJSON(out));
     get_node(node, '_save', out, false);
 }
 
