@@ -156,10 +156,19 @@ $FORM_CONTROL = {
             link = split.shift();
             value = split.join('|');
             var x = (show_label ? '<span class="label">' + item.title + '</span>' : '');
-            x += '<a id="' + id + '" href="' + link + '">' + (value ? value : '&nbsp;') + '</a>';
+            x += '<a id="' + id + '" href="#" onclick="node_load(\'' + link + '\');return false;">' + (value ? value : '&nbsp;') + '</a>';
             return x;
         },
 
+
+        link_list: function(item, id, show_label, value){
+            var x = '';
+            for (var i=0; i<value.length; i++){
+                x += $FORM_CONTROL._controls.link(item, id + '__' + i, false, value[i]);
+                x += ' ';
+            }
+            return x;
+        },
 
         progress: function(item, id, show_label, value){
             var x = (show_label ? '<span class="label">' + item.title + '</span>' : '');
@@ -189,13 +198,19 @@ $FORM_CONTROL = {
 
         checkbox: function(item, id, show_label, value){
             // checkbox
-            var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
+            var x = '';
+            if (show_label && !item.reverse){
+                x += $FORM_CONTROL._label(item, id);
+            }
             x += '<input id="' + id + '" name="' + id + '" type="checkbox" ';
             if (value){
                 x += 'checked="checked" ';
             }
             x += 'value="true" class="checkbox" ';
             x += 'onchange="itemChanged(this)" />';
+            if (show_label && item.reverse){
+                x += $FORM_CONTROL._label(item, id);
+            }
             return x;
         },
 
@@ -214,6 +229,7 @@ $FORM_CONTROL = {
             for (var i=0; i<codes.length; i++){
                 var my_item = {};
                 my_item.title = codes[i];
+                my_item.reverse = true;
                 var selected = false;
                 for (var j=0; j<value.length; j++){
                     if (value[j]==codes[i]){

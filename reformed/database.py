@@ -90,6 +90,20 @@ class Database(object):
 
         self.scheduler_thread = job_scheduler.JobSchedulerThread(self, threading.currentThread())
 
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            table = self.get_table_by_id(item)
+            if not table:
+                raise IndexError("table id %s does not exist" % item)
+            return table
+        else:
+            return self.tables[item]
+
+    def get_table_by_id(self, id):
+
+        for table in self.tables.itervalues():
+            if table.table_id == id:
+                return table
 
     def add_table(self, table, ignore = False, drop = False):
 
@@ -279,8 +293,9 @@ class Database(object):
                         value = field_param.value 
                     field_kw[field_param.item.encode("ascii")] = value
 
-                fields.append(getattr(field_types, field.type)( field_name,
-                                                             field_other,
+                fields.append(getattr(field_types, field.type)(field_name,
+                                                              field_other,
+                                                              field_id = field.id,
                                                               **field_kw))
             kw = {}
             for table_param in row.table_params:

@@ -2,10 +2,12 @@ from util import create_table_path_list, create_table_path
 import custom_exceptions
 import pyparsing 
 from decimal import Decimal
+import util
 import datetime
 from custom_exceptions import InvalidArgument
 from datetime import timedelta
 import sqlalchemy as sa
+from sqlalchemy.orm import eagerload_all
 from sqlalchemy.sql import not_, and_, or_
 
 class Search(object):
@@ -18,7 +20,14 @@ class Search(object):
         self.table = table
         self.session = session
         self.rtable = database.tables[table]
-        
+
+        self.tables = kw.get("tables", [table])
+        self.fields = kw.get("fields", None)
+
+        if self.fields:
+            self.tables = util.split_table_fields(self.fields, table).keys()
+
+        self.eager_tables = self.get_eager_tables(self.tables)
 
         self.table_paths_list = create_table_path_list(table_paths) 
         self.table_path = create_table_path(self.table_paths_list, self.table)
@@ -28,11 +37,26 @@ class Search(object):
 
         self.search_base = self.session.query(self.database.get_class(self.table))
 
+        if self.eager_tables:
+            for eager_join in self.eager_tables:
+                self.search_base = self.search_base.options(sa.orm.eagerload_all(eager_join))
+
         self.queries = []
 
         if args:
             if args[0]:
                 self.add_query(*args, **kw)
+
+    def get_eager_tables(self, table_list):
+
+        local_tables = []
+
+        for table in table_list:
+            if table in self.rtable.local_tables:
+                join_list = self.rtable.local_tables[table]
+                local_tables.append(".".join(join_list))
+
+        return local_tables
 
 
     def add_query(self, *args, **kw):

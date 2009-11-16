@@ -29,7 +29,6 @@ div {
 .form div {
 	margin:0;
 	padding:2px 5px;
-
 }
 
 .error_single {
@@ -42,7 +41,7 @@ div {
 #page {height:100%;width:100%;}
 
 .form_body {
-	background-color:#FAFAFF;
+	xxbackground-color:#FAFAFF;
 	/* funny little hack */
 	border-top:1px solid #DDF;
 	border-bottom:1px solid #DDF;
@@ -76,6 +75,7 @@ button {
 input, select{
 	border:1px solid #DDD;
 	color:#333;
+    float:left;
 }
 
 .form_data{

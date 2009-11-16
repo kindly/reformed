@@ -303,6 +303,7 @@ class Field(object):
         obj.sa_options = {}
         obj.column_order = []
         obj.kw = kw
+        obj.field_id = kw.get("field_id", None)
         obj.default = kw.get("default", None)
         if obj.default:
             obj.sa_options["default"] = obj.default
@@ -333,6 +334,17 @@ class Field(object):
         obj.one_way = kw.get("one_way", None)
         return obj
 
+    def __eq__(self, other):
+        if (self.__class__.__name__ == other.__class__.__name__ 
+            and self.name == other.name 
+            and self.kw == other.kw):
+            return True
+        else:
+            False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __repr__(self):
         return "<%s - %s>" % (self.name, self.column_order)
 
@@ -342,6 +354,27 @@ class Field(object):
             value._set_parent(self, name)
         else:
             object.__setattr__(self, name, value)
+
+    def diff(self, other):
+
+        new = {}
+        removed = {}
+        difference = {}
+
+        for name, value in self.kw.iteritems():
+            if name not in other.kw:
+                new[name] = value
+        
+        for name, value in other.kw.iteritems():
+            if name not in self.kw:
+                removed[name] = value
+
+        for name, value in self.kw.iteritems():
+            if name in other.kw and value <> other.kw[name]:
+                difference[name] = [other.kw[name], value]
+
+        return new, removed, difference
+
 
     @property
     def items(self):

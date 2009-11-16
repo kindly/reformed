@@ -460,15 +460,15 @@ class test_field_type_validation(object):
 
 
 if __name__ == '__main__':
+
     engine = sa.create_engine('sqlite:///:memory:', echo=True)
     meta = sa.MetaData()
     Donkey = Database("Donkey",
                         Table("people",
                               Text("name"),
-                              Text("name2"),
+                              Text("name2", default = "poo"),
                               OneToOne("address","address"),
                               OneToMany("Email","email"),
-                              primary_key = "name,name2"
                              ),
                         Table("email",
                               Text("email")
@@ -483,8 +483,5 @@ if __name__ == '__main__':
     Donkey.update_sa()
 
     a = Donkey.tables["people"]
-    b = Donkey.tables["email"]
-    c = Donkey.tables["address"]
 
     meta.create_all(engine)
-    people = Donkey.tables["people"].sa_class()

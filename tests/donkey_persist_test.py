@@ -276,6 +276,20 @@ class test_donkey_persist_sqlite(object):
 
         print [a.name for a in self.Donkey.tables["donkey"].sa_table.indexes] 
         assert "idx_name" in [a.name for a in self.Donkey.tables["donkey"].sa_table.indexes] 
+
+
+    def test_all_fields_have_different_numbers(self):
+
+        field_ids = []
+
+        for table in self.Donkey.tables.values():
+            if table.name.startswith("__") or table.name.startswith("_log___"):
+                continue
+            for field in table.fields.values():
+                field_ids.append(field.field_id)
+            print table.name, field_ids
+
+        assert len(field_ids) == len(set(field_ids))
         
 
 

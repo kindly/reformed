@@ -99,7 +99,8 @@ class TableNode(Node):
 
     list_fields = [
         ['title', 'link', 'title'],
-        ['summary', 'info', 'summary']
+        ['summary', 'info', 'summary'],
+        ['edit', 'link_list', '']
     ]
     list_params = {"form_type": "results"}
 
@@ -158,6 +159,8 @@ class TableNode(Node):
     def call(self):
         if  self.command == 'view':
             self.view()
+        if  self.command == 'edit':
+            self.view(read_only = False)
         elif self.command == '_save':
             self.save()
         elif self.command == 'list':
@@ -260,6 +263,7 @@ class TableNode(Node):
             # code_groups
             if self.code_groups:
                 self.save_group_codes(session, record_data)
+        session.commit()
         session.close()
 
         # output data
@@ -289,6 +293,8 @@ class TableNode(Node):
             # c) i just don't like it
             # still it will do for now
 
+            if not code_group_data:
+                code_group_data = []
             yes_codes = set(self.code_list[code_group_name]).intersection(set(code_group_data))
             no_codes = set(self.code_list[code_group_name]).difference(set(code_group_data))
             print "YES CODES", yes_codes
@@ -320,7 +326,6 @@ class TableNode(Node):
                     setattr(record_data, code_field, code)
                     session.save_or_update(record_data)
                     print 'saved', record_data
-            session.commit()
 
     def new(self):
 
@@ -330,7 +335,7 @@ class TableNode(Node):
         self.action = 'form'
 
 
-    def view(self):
+    def view(self, read_only=True):
         id = self.data.get('id')
         if id:
             where = 'id=%s' % id
@@ -356,7 +361,7 @@ class TableNode(Node):
             for code_group_name in self.code_list:
                 data_out[code_group_name] = self.code_data(code_group_name, data_out)
 
-        data = create_form_data(self.fields, self.form_params, data_out)
+        data = create_form_data(self.fields, self.form_params, data_out, read_only)
         self.out = data
         self.action = 'form'
         self.bookmark = 'n:%s:view:id=%s' % (self.name, id)
@@ -389,14 +394,22 @@ class TableNode(Node):
         obj = r.reformed.get_class(self.table)
         try:
             data = session.query(obj).filter_by(**filter).one()
+            # code_groups
+            if self.code_groups:
+                self.save_group_codes(session, data)
             session.delete(data)
             session.commit()
             self.next_node = self.name
             self.next_data = {'command': 'list'}
         except sa.orm.exc.NoResultFound:
-            errors = {'~': 'record not found'}
-            self.out = errors
-            self.action = 'delete_error'
+            error = 'Record not found.'
+            self.out = error
+            self.action = 'general_error'
+        except sa.exc.IntegrityError:
+            error = 'The record cannot be deleted,\nIt is referenced by another record.'
+            self.out = error
+            self.action = 'general_error'
+            session.rollback()
         session.close()
 
 
@@ -422,10 +435,10 @@ class TableNode(Node):
         # build the links
         if self.core_table:
             for row in data:
-                row['title'] = '#n:%s:view:__id=%s|%s' % (self.name, row['id'], row['title']) 
+                row['title'] = '#n:%s:edit:__id=%s|%s' % (self.name, row['id'], row['title']) 
         else:
             for row in data:
-                row['title'] = '#n:%s:view:id=%s|%s' % (self.name, row['id'], row[self.title_field]) 
+                row['title'] = '#n:%s:edit:id=%s|%s' % (self.name, row['id'], row[self.title_field]) 
 
         out = create_form_data(self.list_fields, self.list_params, data)
 
@@ -490,7 +503,7 @@ def create_fields(fields_list):
 
 
 
-def create_form_data(fields, params=None, data=None):
+def create_form_data(fields, params=None, data=None, read_only=False):
     out = {
         "form": {
             "fields":create_fields(fields)
@@ -500,7 +513,11 @@ def create_form_data(fields, params=None, data=None):
     if data:
         out['data'] = data
     if params:
-        out['form']['params'] = params
+        out['form']['params'] = params.copy()
+    if read_only:
+        if not out['form']['params']:
+            out['form']['params'] = {}
+        out['form']['params']['read_only'] = True
     return out
 
 def validate_data(data, field, validator):

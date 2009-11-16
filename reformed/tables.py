@@ -150,18 +150,31 @@ class Table(object):
                 session.add(__field_param)
 
 
+
         session.commit()
         self.table_id = __table.id
+
+        for field in __table.field:
+            self.fields[field.field_name].field_id = field.id
+
+
         self.persisted = True
         session.close()
+
+    def table_diff(self, original_field_list):
+
+        for name, fields in self.fields:
+            pass
+
+
 
     def add_field(self, field):
         """add a Field object to this Table"""
         if self.persisted == True:
             field.check_table(self)
             self._add_field_by_alter_table(field)
-            self._persist_extra_field(field)
             self._add_field_no_persist(field)
+            self._persist_extra_field(field)
             self.database.update_sa(reload = True)
 
         else:
@@ -201,6 +214,10 @@ class Table(object):
         session.add(__table)
 
         session.commit()
+
+        for field in __table.field:
+            self.fields[field.field_name].field_id = field.id
+
         session.close()
 
     @property    
@@ -737,8 +754,10 @@ class ConvertDate(AttributeExtension):
     
     def set(self, state, value, oldvalue, initator):
 
-        if value == oldvalue or not value:
+        if value == oldvalue:
             return value
+        if not value:
+            return None
         state.dict["_validated"] = False
 
         if isinstance(value, ClauseElement):

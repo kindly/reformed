@@ -40,6 +40,7 @@ def reload_nodes():
 
 
 def run(node_name, data, last_node = None):
+    print 'RUNNING NODE %s' % node_name
     node_base = node_name.split('.')[0]
     found = False
     if not hasattr(nodes, node_base):

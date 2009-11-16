@@ -67,7 +67,7 @@ class test_donkey(object):
                             Table("transactions",
                                    DateTime("date"),
                                    Money("amount"),
-                                   Text("Type")),
+                                   Text("Type", default = "payment")),
                             Table("email",
                                   Email("email"),
                                   Counter("email_number", base_level = "people"),
@@ -489,6 +489,40 @@ class test_basic_input(test_donkey):
 
         assert_raises(custom_exceptions.SingleResultError, self.Donkey.search_single, "donkey")
         assert_raises(custom_exceptions.SingleResultError, self.Donkey.search_single, "membership")
+
+
+
+    def test_default(self):
+
+        a = self.session.query(self.Donkey.t.people).first()
+
+        b = self.Donkey.get_instance("transactions")
+        b.amount = 0
+        b.Type = None
+        a.transactions.append(b)
+
+        self.session.add(a)
+        self.session.add(b)
+
+        self.session.commit()
+
+        assert b.Type == "payment"
+
+
+    def test_all_fields_have_different_numbers(self):
+
+        field_ids = []
+
+        for table in self.Donkey.tables.values():
+            if table.name.startswith("__") or table.name.startswith("_log___"):
+                continue
+            for field in table.fields.values():
+                field_ids.append(field.field_id)
+            print table.name, field_ids
+
+        assert len(field_ids) == len(set(field_ids))
+
+
 
 
 
