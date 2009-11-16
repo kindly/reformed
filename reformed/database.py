@@ -293,8 +293,9 @@ class Database(object):
                         value = field_param.value 
                     field_kw[field_param.item.encode("ascii")] = value
 
-                fields.append(getattr(field_types, field.type)( field_name,
-                                                             field_other,
+                fields.append(getattr(field_types, field.type)(field_name,
+                                                              field_other,
+                                                              field_id = field.id,
                                                               **field_kw))
             kw = {}
             for table_param in row.table_params:

@@ -14,6 +14,19 @@ class test_fields():
                       onupdate = "pop") 
         
         self.c = ManyToOne("many","table2")
+
+        self.d = Text("pop" , 
+                      mandatory = True, 
+                      default = "pop" ,
+                      onupdate = "pop")
+
+        self.e = Text("pop" , 
+                      mandatory = True, 
+                      onupdate = "pop")
+
+        self.f = Text("pop" , 
+                      mandatory = False, 
+                      onupdate = "pop")
             
     def test_text_field_fieldname(self):
         
@@ -28,6 +41,25 @@ class test_fields():
         assert ("nullable", False) in self.b.columns["pop"].sa_options.items()
         assert ("default", "pop") in self.b.columns["pop"].sa_options.items()
         assert ("onupdate", "pop") in self.b.columns["pop"].sa_options.items()
+
+    def test_eq(self):
+
+        assert self.a <> self.b
+
+        assert self.b == self.d
+
+    def test_diff(self):
+
+        print self.b.diff(self.e)
+
+        assert self.b.diff(self.e) == ({'default': 'pop'}, {}, {})
+        assert self.e.diff(self.b) == ({}, {'default': 'pop'}, {})
+
+        assert self.f.diff(self.e) == ({}, {}, {'mandatory': [True, False]})
+        assert self.e.diff(self.f) == ({}, {}, {'mandatory': [False, True]})
+
+        assert self.f.diff(self.b) == ({}, {'default': 'pop'}, {'mandatory': [True, False]})
+
         
 class test_validation(object):
     

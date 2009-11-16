@@ -116,7 +116,7 @@ class test_database(object):
 
     def test_persist_extra_field(self):
 
-        self.Donkey.tables["people"]._persist_extra_field(Text("name3", validation = "__^[a-zA-Z]*"))
+        self.Donkey.tables["people"].add_field(Text("name3", validation = "__^[a-zA-Z]*"))
 
         session = self.Donkey.Session()
 

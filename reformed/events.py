@@ -305,7 +305,24 @@ class AddRow(ChangeEvent):
 
         session.commit()
 
-            
+class DeleteRow(ChangeEvent):
+
+    def add(self, result, base_table_obj, object, session, initial_event = True):
+
+        pass
+
+
+    def delete(self, result, base_table_obj, object, session):
+
+        session.delete(base_table_obj)
+
+    def update(self, result, base_table_obj, object, session):
+
+        pass
+
+    def update_all(self, session):
+
+        pass
 
 class SumEvent(ChangeEvent):
 
