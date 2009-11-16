@@ -224,7 +224,7 @@ function _generate_form_html_grid(form_info, local_data, data){
             base_id = local_data.root + "(" + i + ")";
             div_id = $INFO.addId(base_id);
 
-            formHTML += '<tr>';
+            formHTML += '<tr id="' + div_id + '">';
             formHTML += _generate_fields_html(form_info.layout, local_data, data[i], i);
             formHTML += "</tr>";
         }
@@ -268,6 +268,7 @@ function add_form_row(root, type){
         formHTML += "</tr>";
     }
     $('#' + $INFO.getId(root) + '__add').before(formHTML);
+    form_setup(root + '(' + row + ')', form_data);
 }
 
 
@@ -661,7 +662,7 @@ function node_get_form_data_rows(root){
                 item = form_data.fields[i];
                 name = item.name;
                 id = $INFO.getId(my_root + '#' + name);
-                value = $('#' + id).val();
+                value = $FORM_CONTROL.get(id, item.type);
                 if (typeof value == 'undefined'){
                     value = null;
                 }
