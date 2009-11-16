@@ -306,13 +306,16 @@ class Field(object):
         obj.field_id = kw.get("field_id", None)
         obj.default = kw.get("default", None)
         if obj.default:
-            obj.sa_options["default"] = obj.default
+            obj.sa_options["server_default"] = obj.default
         obj.onupdate = kw.get("onupdate", None)
         if obj.onupdate:
             obj.sa_options["onupdate"] = obj.onupdate
         obj.mandatory = kw.get("mandatory", False)
         if obj.mandatory:
             obj.sa_options["nullable"] = False
+        # hack to cascade the nullable but not accidentally create it
+        elif 'mandatory' in kw:
+            obj.sa_options['nullable'] = True
         obj.eager = kw.get("eager", None)
         if obj.eager:
             obj.sa_options["lazy"] = not obj.eager
