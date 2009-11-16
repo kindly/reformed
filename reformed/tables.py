@@ -216,7 +216,6 @@ class Table(object):
         session.commit()
 
         for field in __table.field:
-            print field
             self.fields[field.field_name].field_id = field.id
 
         session.close()
