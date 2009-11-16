@@ -263,6 +263,13 @@ function form_paging_bar(data){
     var pages = Math.ceil(count/limit);
     var current = Math.floor(offset/limit);
 
+    if (current>0){
+        html += '<a href="#/' + base + '&o=0&l=' + limit +'">|&lt;</a> ';
+        html += '<a href="#/' + base + '&o=' + (current-1) * limit + '&l=' + limit +'">&lt;</a> ';
+    } else {
+        html += '|&lt; ';
+        html += '&lt; ';
+    }
     for (var i=0; i < pages; i++){
         if (i == current){
             html += (i+1) + ' ';
@@ -275,6 +282,15 @@ function form_paging_bar(data){
             }
         }
     }
+    if (current<pages - 1){
+        html += '<a href="#/' + base + '&o=' + (current + 1) * limit + '&l=' + limit +'">&gt;</a> ';
+        html += '<a href="#/' + base + '&o=' + (pages - 1) * limit + '&l=' + limit +'">&gt;|</a> ';
+    } else {
+        html += '&gt; ';
+        html += '&gt;| ';
+    }
+
+    html += 'page ' + (current+1) + ' of ' + pages
     html = _wrap(html, 'p');
     return html;
 }
