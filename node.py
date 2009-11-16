@@ -99,7 +99,8 @@ class TableNode(Node):
 
     list_fields = [
         ['title', 'link', 'title'],
-        ['summary', 'info', 'summary']
+        ['summary', 'info', 'summary'],
+        ['edit', 'link_list', '']
     ]
     list_params = {"form_type": "results"}
 
