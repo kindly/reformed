@@ -146,8 +146,10 @@ function _generate_fields_html(form, local_data, data, row_count){
                 value = '';
             }
             // add item
-            var temp = $FORM_CONTROL.html(item, my_id, local_data.show_label, value, local_data.read_only);
-            formHTML += _wrap(temp, local_data.wrap_tag);
+            if (local_data.form_type != 'results' || value){
+                var temp = $FORM_CONTROL.html(item, my_id, local_data.show_label, value, local_data.read_only);
+                formHTML += _wrap(temp, local_data.wrap_tag);
+            }
         }
     }
     return formHTML;
