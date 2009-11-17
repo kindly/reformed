@@ -146,8 +146,10 @@ function _generate_fields_html(form, local_data, data, row_count){
                 value = '';
             }
             // add item
-            var temp = $FORM_CONTROL.html(item, my_id, local_data.show_label, value, local_data.read_only);
-            formHTML += _wrap(temp, local_data.wrap_tag);
+            if (local_data.form_type != 'results' || value){
+                var temp = $FORM_CONTROL.html(item, my_id, local_data.show_label, value, local_data.read_only);
+                formHTML += _wrap(temp, local_data.wrap_tag);
+            }
         }
     }
     return formHTML;
@@ -190,13 +192,15 @@ function _generate_form_html_continuous(form_info, local_data, data){
     return formHTML;
 }
 
-function form_grid_header(form){
+function form_grid_header(form, local_data){
     var formHTML = '<thead><tr>';
+    local_data.column_count = 0;
     //local_data: count root i wrap_tag show_label
     for (var i=0; i<form.fields.length; i++){
 
         item = form.fields[i];
         formHTML += '<td>' + item.title + '</td>';
+        local_data.column_count++;
     }
     formHTML += '</tr></thead>'
     return formHTML;
@@ -208,8 +212,8 @@ function _generate_form_html_grid(form_info, local_data, data){
     var base_id;
     var div_id;
     var num_records;
-    formHTML += '<table>';
-    formHTML += form_grid_header(form_info.layout);
+    formHTML += '<table class="grid_table">';
+    formHTML += form_grid_header(form_info.layout, local_data);
     formHTML += '<tbody>';
     local_data.wrap_tag = 'td';
     local_data.show_label = false;
@@ -231,7 +235,7 @@ function _generate_form_html_grid(form_info, local_data, data){
     }
     // add new link
     if (local_data.add_new_rows){
-        formHTML += '<tr id="' + $INFO.getId(local_data.root) + '__add"><td class="add_form_row" onclick="add_form_row(\'' + local_data.root + '\', \'grid\')" >add new</td></tr>';
+        formHTML += '<tr id="' + $INFO.getId(local_data.root) + '__add"><td colspan="' + local_data.column_count + '"><span class="add_form_row" onclick="add_form_row(\'' + local_data.root + '\', \'grid\')" >add new</span></td></tr>';
     }
 
     formHTML += '</tbody>';
@@ -348,8 +352,13 @@ function node_generate_html(form, data, paging, root, read_only){
         local_data.read_only = false;
     }
 
-    local_data.add_new_rows = true;
-    local_data.extra_rows = 1;
+    if (local_data.read_only){
+        local_data.add_new_rows = false;
+        local_data.extra_rows = 0;
+    } else {
+        local_data.add_new_rows = true;
+        local_data.extra_rows = 1;
+    }
     local_data.count = 0;
     local_data.wrap_tag = 'div';
     local_data.show_label = true;
@@ -504,7 +513,14 @@ function _parse_item(item){
         if (typeof(control) == "undefined" || control === ''){
             control = null;
         }
+        var div;
+        if (row !== null){
+            div = root + '(' + row + ')';
+        } else {
+            div = root;
+        }
         return {root:root,
+                div:div,
                 row:row,
                 control:control,
                 grid:grid};
@@ -556,6 +572,12 @@ function dirty(root, row, state){
             my_root = '#' + $INFO.getId(my_root);
             if(state && form_info.clean_rows[row]){
                  update = true;
+                 if (state){
+                    if (form_info.clean_rows.length-1 == row){
+                        // this is the last row so we will add a new row
+                        add_form_row(root, form_info.form_type)
+                    }
+                }
             }
             form_info.clean_rows[row] = !state;
         }
@@ -705,6 +727,17 @@ function node_get_form_data(root){
     return out;
 }
 
+function link_process(item, link){
+    var div = _parse_id(item.id).div;
+    var info = link.split(':');
+    // we will call the function given by info[1]
+    if (info[1] && typeof this[info[1]]== 'function'){
+        this[info[1]](div);
+    } else {
+        alert(info[1] + ' is not a function.');
+    }
+}
+
 function node_save(root, command){
     msg('node_save');
     var out = node_get_form_data(root);
@@ -718,11 +751,26 @@ function node_save(root, command){
 
 function node_delete(root, command){
     msg('node_delete');
- //   var form_data = $INFO.getState('#', 'form_data');
+    var parsed_root = _parse_div(root);
+    root = parsed_root.root;
+
     var sent_data = $INFO.getState(root, 'sent_data');
     var node =  $INFO.getState(root, 'node');
     var out = {};
-    var id = sent_data.id;
+    var id;
+    var __id;
+    if (parsed_root.row === null){
+        // single form
+        id = sent_data.id;
+        __id = sent_data.__id;
+    } else {
+        // continuous form
+        id = sent_data[parsed_root.row].id;
+        __id = sent_data[parsed_root.row].__id;
+    }
+    if (__id){
+        out.__id = __id;
+    }
     if (id){
         out.id = id;
     }
@@ -965,7 +1013,7 @@ fn = function(packet, job){
              form = packet.data.data.form;
              data = packet.data.data.data;
              paging = packet.data.data.paging;
-             $('#' + root).html(node_generate_html(form, data, paging, root));
+             $('#' + root).html(node_generate_html(form, data, paging, root)).scrollTop(0);
              $INFO.setState(root, 'node', packet.data.node);
              form_setup(root, form);
              break;
