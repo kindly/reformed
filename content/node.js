@@ -212,7 +212,7 @@ function _generate_form_html_grid(form_info, local_data, data){
     var base_id;
     var div_id;
     var num_records;
-    formHTML += '<table>';
+    formHTML += '<table class="grid_table">';
     formHTML += form_grid_header(form_info.layout, local_data);
     formHTML += '<tbody>';
     local_data.wrap_tag = 'td';
