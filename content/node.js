@@ -572,6 +572,12 @@ function dirty(root, row, state){
             my_root = '#' + $INFO.getId(my_root);
             if(state && form_info.clean_rows[row]){
                  update = true;
+                 if (state){
+                    if (form_info.clean_rows.length-1 == row){
+                        // this is the last row so we will add a new row
+                        add_form_row(root, form_info.form_type)
+                    }
+                }
             }
             form_info.clean_rows[row] = !state;
         }
