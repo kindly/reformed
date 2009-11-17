@@ -190,13 +190,15 @@ function _generate_form_html_continuous(form_info, local_data, data){
     return formHTML;
 }
 
-function form_grid_header(form){
+function form_grid_header(form, local_data){
     var formHTML = '<thead><tr>';
+    local_data.column_count = 0;
     //local_data: count root i wrap_tag show_label
     for (var i=0; i<form.fields.length; i++){
 
         item = form.fields[i];
         formHTML += '<td>' + item.title + '</td>';
+        local_data.column_count++;
     }
     formHTML += '</tr></thead>'
     return formHTML;
@@ -209,7 +211,7 @@ function _generate_form_html_grid(form_info, local_data, data){
     var div_id;
     var num_records;
     formHTML += '<table>';
-    formHTML += form_grid_header(form_info.layout);
+    formHTML += form_grid_header(form_info.layout, local_data);
     formHTML += '<tbody>';
     local_data.wrap_tag = 'td';
     local_data.show_label = false;
@@ -231,7 +233,7 @@ function _generate_form_html_grid(form_info, local_data, data){
     }
     // add new link
     if (local_data.add_new_rows){
-        formHTML += '<tr id="' + $INFO.getId(local_data.root) + '__add"><td class="add_form_row" onclick="add_form_row(\'' + local_data.root + '\', \'grid\')" >add new</td></tr>';
+        formHTML += '<tr id="' + $INFO.getId(local_data.root) + '__add"><td colspan="' + local_data.column_count + '"><span class="add_form_row" onclick="add_form_row(\'' + local_data.root + '\', \'grid\')" >add new</span></td></tr>';
     }
 
     formHTML += '</tbody>';
