@@ -522,6 +522,11 @@ class test_basic_input(test_donkey):
 
         assert len(field_ids) == len(set(field_ids))
 
+    def test_dependant_attributes(self):
+
+
+        assert self.Donkey["people"].dependant_attributes.keys() == ['contact_summary', 'transactions', 'donkey_sponsership', 'email']
+        assert self.Donkey["_core_entity"].dependant_attributes.keys() == ['_membership', 'donkey', 'people', '_relation', 'relation', 'categories']
 
 
 

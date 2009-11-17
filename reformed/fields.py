@@ -251,6 +251,13 @@ class AddRow(Field):
         self.initial_event = kw.get("initial_event", False)
         self.event = events.AddRow(target, self, self.base_level, initial_event = self.initial_event)
 
+class DeleteRow(Field):
+
+    def __init__(self, name, target, *args, **kw):
+        self.other = target
+        self.base_level = kw.get("base_level", None)
+        self.event = events.DeleteRow(target, self, self.base_level)
+
 class MaxDate(Field):
 
     def __init__(self, name, target, *args, **kw):
