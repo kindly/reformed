@@ -46,6 +46,8 @@ class InvalidField(AttributeError):
     pass
 class InvalidEvent(AttributeError):
     pass
+class DependencyError(Exception):
+    pass
 class InvalidData(AttributeError):
     pass
 class SearchError(Exception):

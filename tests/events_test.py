@@ -278,6 +278,7 @@ class test_events(test_donkey):
 
         assert entity_categories.category_number == 1
 
+        print person.contact_summary
         assert person.contact_summary.categories == "this is a this is ab this is abc"
 
 
@@ -371,4 +372,35 @@ class test_events(test_donkey):
 
         print donkey._entity.summary
         assert donkey._entity.summary == "name: jim -- age: 13"
+
+    def zz_delete_entity_test(self):
+    
+        donkey = self.Donkey.get_instance("donkey")
+        donkey.name = "fresddy"
+        self.session.save(donkey)
+        self.session.commit()
+
+        entity_id = donkey._entity.id 
+
+        self.session.delete(donkey) 
+
+        self.session.commit()
+
+        assert_raises(custom_exceptions.SingleResultError,
+                      self.Donkey.search_single,
+                      "_core_entity",
+                      "id = ?",
+                      values = [entity_id])
+
+        person = self.session.query(self.Donkey.t.people).first()
+
+        self.session.delete(person)
+
+        assert_raises(custom_exceptions.DependencyError,self.session.commit)
+
+
+
+
+
+
 
