@@ -436,6 +436,15 @@ class TableNode(Node):
         if self.core_table:
             for row in data:
                 row['title'] = 'n:%s:edit:__id=%s|%s' % (self.name, row['id'], row['title']) 
+                row['edit'] = ['n:%s:edit:__id=%s|Edit' % (self.name,
+                                                                   row['id']),
+                               'n:%s:view:__id=%s|View' % (self.name,
+                                                                   row['id']),
+                               'd:node_delete::|Delete'
+                                ]
+                # the id is actually the _core_entity id so let's rename it to __id
+                row['__id'] = row['id']
+                del row['id']
         else:
             for row in data:
                 row['title'] = 'n:%s:edit:id=%s|%s' % (self.name, row['id'], row[self.title_field]) 

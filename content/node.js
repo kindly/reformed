@@ -513,7 +513,14 @@ function _parse_item(item){
         if (typeof(control) == "undefined" || control === ''){
             control = null;
         }
+        var div;
+        if (row !== null){
+            div = root + '(' + row + ')';
+        } else {
+            div = root;
+        }
         return {root:root,
+                div:div,
                 row:row,
                 control:control,
                 grid:grid};
@@ -714,6 +721,17 @@ function node_get_form_data(root){
     return out;
 }
 
+function link_process(item, link){
+    var div = _parse_id(item.id).div;
+    var info = link.split(':');
+    // we will call the function given by info[1]
+    if (info[1] && typeof this[info[1]]== 'function'){
+        this[info[1]](div);
+    } else {
+        alert(info[1] + ' is not a function.');
+    }
+}
+
 function node_save(root, command){
     msg('node_save');
     var out = node_get_form_data(root);
@@ -727,11 +745,26 @@ function node_save(root, command){
 
 function node_delete(root, command){
     msg('node_delete');
- //   var form_data = $INFO.getState('#', 'form_data');
+    var parsed_root = _parse_div(root);
+    root = parsed_root.root;
+
     var sent_data = $INFO.getState(root, 'sent_data');
     var node =  $INFO.getState(root, 'node');
     var out = {};
-    var id = sent_data.id;
+    var id;
+    var __id;
+    if (parsed_root.row === null){
+        // single form
+        id = sent_data.id;
+        __id = sent_data.__id;
+    } else {
+        // continuous form
+        id = sent_data[parsed_root.row].id;
+        __id = sent_data[parsed_root.row].__id;
+    }
+    if (__id){
+        out.__id = __id;
+    }
     if (id){
         out.id = id;
     }

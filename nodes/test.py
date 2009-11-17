@@ -240,11 +240,7 @@ class Search(TableNode):
             row['edit'] = ['n:test.%s:edit:__id=%s|Edit' % (table[row['table']],
                                                                row['id']),
                            'n:test.%s:view:__id=%s|View' % (table[row['table']],
-                                                               row['id']),
-                           'n:test.%s:_delete:__id=%s|Delete' % (table[row['table']],
-                                                               row['id'])
-                            ]
-
+                                                               row['id'])                                                  ]
 
         out = node.create_form_data(self.list_fields, self.list_params, data)
 
