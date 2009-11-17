@@ -1,4 +1,4 @@
-from custom_exceptions import InvalidEvent
+from custom_exceptions import InvalidEvent, DependencyError
 from sqlalchemy.orm import attributes
 import sqlalchemy as sa
 from sqlalchemy.sql import func, select, and_, cast
@@ -314,7 +314,17 @@ class DeleteRow(ChangeEvent):
 
     def delete(self, result, base_table_obj, object, session):
 
-        session.delete(base_table_obj)
+        for attrib, relation in result._table.dependant_attributes.iteritems():
+            if relation.type == "onetoone":
+                value = getattr(result, attrib)
+                if value and value <> object:
+                    raise DependencyError("row has dependancy on %s" % value) 
+            else:
+                for value in getattr(result, attrib):
+                    if value <> object:
+                        raise DependencyError("row has dependancy on %s" % value) 
+
+        session.delete(result)
 
     def update(self, result, base_table_obj, object, session):
 

@@ -326,6 +326,7 @@ class Table(object):
         self.check_database()
         return self.database.tables_with_relations(self)
 
+
     @property
     def relation_attributes(self):
         """returns all the attributes names and accociated relation object
@@ -337,6 +338,19 @@ class Table(object):
             else:
                 relation_attributes[relation.sa_options["backref"]] = relation
         return relation_attributes
+
+    @property
+    def dependant_attributes(self):
+        """attributes that would result in a null in the related table if 
+        object was removed"""
+
+        dependant_attributes = {}
+        for table, relation in self.tables_with_relations.iteritems():
+            if relation.table is self and relation.type <> "manytoone" and relation.many_side_not_null:
+                dependant_attributes[relation.name] = relation
+            elif relation.table is not self and relation.type == "manytoone" and relation.many_side_not_null:
+                dependant_attributes[relation.sa_options["backref"]] = relation
+        return dependant_attributes
 
     @property    
     def foriegn_key_columns(self):

@@ -31,7 +31,7 @@ import resultset
 import tables
 import time
 from util import get_paths, get_all_local_data
-from fields import ManyToOne, OneToOne, OneToMany, Integer, CopyTextAfter, CopyTextAfterField
+from fields import ManyToOne, OneToOne, OneToMany, Integer, CopyTextAfter, CopyTextAfterField, DeleteRow
 import fields as field_types
 import boot_tables
 import sessionwrapper
@@ -207,6 +207,8 @@ class Database(object):
             target_field = "name"
 
         title_event = CopyTextAfter("%s_title" % table.name, table.name, field_name = "title", fields = target_field)
+
+
         self.tables["_core_entity"]._add_field_no_persist(title_event)
 
         if self.tables["_core_entity"].persisted:
@@ -223,6 +225,13 @@ class Database(object):
             if self.tables["_core_entity"].persisted:
                 self.fields_to_persist.append(summary_event)
 
+        ## add delete event
+
+        delete_event = DeleteRow("delete_%s" % table.name, table.name)
+        self.tables["_core_entity"]._add_field_no_persist(delete_event)
+
+        if self.tables["_core_entity"].persisted:
+            self.fields_to_persist.append(delete_event)
     
     def _add_table_no_persist(self, table):
 
