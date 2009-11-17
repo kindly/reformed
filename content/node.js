@@ -965,7 +965,7 @@ fn = function(packet, job){
              form = packet.data.data.form;
              data = packet.data.data.data;
              paging = packet.data.data.paging;
-             $('#' + root).html(node_generate_html(form, data, paging, root));
+             $('#' + root).html(node_generate_html(form, data, paging, root)).scrollTop(0);
              $INFO.setState(root, 'node', packet.data.node);
              form_setup(root, form);
              break;
