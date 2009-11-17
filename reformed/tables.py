@@ -436,6 +436,13 @@ class Table(object):
             name = column
             column = defined_columns[column]
             sa_options = column.sa_options
+
+            ## sqlalchemy only accepts strings for server_defaults
+            if isinstance(column, sa.Unicode) and "default" in sa_options:
+                if isinstance(sa_options["default"], basestring):
+                    default = sa_options.pop("default")
+                    sa_options["server_default"] = default
+
             sa_table.append_column(sa.Column(name, column.type, **sa_options))
         if self.primary_key_list:
             primary_keys = tuple(self.primary_key_list)
