@@ -375,9 +375,39 @@ class Table(TableNode):
         entity = self.data.get('entity', False)
         logged = self.data.get('logged', False)
         fields = self.data.get('fields')
+        if table_name in r.tables:
+            self.edit_existing_table(table_name, entity, logged, fields)
+        else:
+            self.create_new_table(table_name, entity, logged, fields)
 
-        print table_name, entity, logged, fields
 
+    def edit_existing_table(self, table_name, entity, logged, fields):
+        # edit the table
+        for field in fields:
+            field_id = field.get('field_id')
+            table = r[table_name]
+            type = field.get('field_type')
+            name = field.get('field_name')
+            if type == 'Text':
+                length = field.get('length')
+            else:
+                length = None
+            mandatory = field.get('mandatory', False)
+            default = field.get('default')
+
+            field_info = dict(length=length, mandatory=mandatory, default=default)
+
+            if field_id:
+                # the field exists so edit it
+                # FIXME make this do something
+                pass
+            else:
+                # add a new field
+                field_class = getattr(table_functions, type)
+                table.add_field(field_class(name, **field_info))
+
+
+    def create_new_table(self, table_name, entity, logged, fields):
 
         table = table_functions.Table(table_name, logged=logged)
 
@@ -422,7 +452,8 @@ class Table(TableNode):
                                    'field_type': value.__class__.__name__,
                                    'mandatory': value.mandatory,
                                    'length': value.length,
-                                   'default': value.default })
+                                   'default': value.default,
+                                   'field_id': value.field_id })
 
         table_data = {'table_name': table_info.name,
                       'entity': table_info.entity,
