@@ -303,3 +303,8 @@ div.form_body > div > input.error {
     width:100%;
 }
 
+.grid_table td input {
+    width:100%;
+
+}
+
