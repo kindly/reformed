@@ -352,8 +352,13 @@ function node_generate_html(form, data, paging, root, read_only){
         local_data.read_only = false;
     }
 
-    local_data.add_new_rows = true;
-    local_data.extra_rows = 1;
+    if (local_data.read_only){
+        local_data.add_new_rows = false;
+        local_data.extra_rows = 0;
+    } else {
+        local_data.add_new_rows = true;
+        local_data.extra_rows = 1;
+    }
     local_data.count = 0;
     local_data.wrap_tag = 'div';
     local_data.show_label = true;
