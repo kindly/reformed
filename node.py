@@ -435,10 +435,10 @@ class TableNode(Node):
         # build the links
         if self.core_table:
             for row in data:
-                row['title'] = '#n:%s:edit:__id=%s|%s' % (self.name, row['id'], row['title']) 
+                row['title'] = 'n:%s:edit:__id=%s|%s' % (self.name, row['id'], row['title']) 
         else:
             for row in data:
-                row['title'] = '#n:%s:edit:id=%s|%s' % (self.name, row['id'], row[self.title_field]) 
+                row['title'] = 'n:%s:edit:id=%s|%s' % (self.name, row['id'], row[self.title_field]) 
 
         out = create_form_data(self.list_fields, self.list_params, data)
 
