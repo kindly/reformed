@@ -198,6 +198,3 @@ class test_database(object):
         session = self.Donkey.Session()
         assert ("_core_entity", "donkey", "donkey" , "OneToOne") in [(a.table_name, a.field_name, a.other, a.type) for a in session.query(self.Donkey.get_class("__field")).all()]
 
-
-
-

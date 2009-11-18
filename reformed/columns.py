@@ -92,7 +92,7 @@ class Column(BaseSchema):
         if onupdate:
             self.sa_options["onupdate"] = onupdate
         mandatory = kw.pop("mandatory", False)
-        if mandatory:
+        if mandatory == True:
             self.sa_options["nullable"] = False
         self.validation = kw.pop("validation", None)
         self.validate = kw.pop("validate", True)
@@ -306,16 +306,13 @@ class Field(object):
         obj.field_id = kw.get("field_id", None)
         obj.default = kw.get("default", None)
         if obj.default:
-            obj.sa_options["server_default"] = obj.default
+            obj.sa_options["default"] = obj.default
         obj.onupdate = kw.get("onupdate", None)
         if obj.onupdate:
             obj.sa_options["onupdate"] = obj.onupdate
         obj.mandatory = kw.get("mandatory", False)
-        if obj.mandatory:
+        if obj.mandatory == True:
             obj.sa_options["nullable"] = False
-        # hack to cascade the nullable but not accidentally create it
-        elif 'mandatory' in kw:
-            obj.sa_options['nullable'] = True
         obj.eager = kw.get("eager", None)
         if obj.eager:
             obj.sa_options["lazy"] = not obj.eager

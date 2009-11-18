@@ -24,7 +24,7 @@ class test_donkey(object):
     @classmethod
     def setUpClass(cls):
         if not hasattr(cls, "engine"):
-            cls.engine = create_engine('sqlite:///:memory:', echo = False)
+            cls.engine = create_engine('sqlite:///:memory:', echo = True)
             #cls.engine = create_engine('sqlite:///:memory:')
         
 #        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
@@ -67,7 +67,7 @@ class test_donkey(object):
                             Table("transactions",
                                    DateTime("date"),
                                    Money("amount"),
-                                   Text("Type", default = "payment")),
+                                   Text("Type", default = u"payment")),
                             Table("email",
                                   Email("email"),
                                   Counter("email_number", base_level = "people"),
@@ -125,21 +125,21 @@ class test_donkey(object):
                              Text("category_name"),
                              Text("category_description"),
                              Text("category_type"),
-                             OneToMany("sub_category", "sub_category", many_side_mandatory = True),
+                             OneToManyEager("sub_category", "sub_category", many_side_mandatory = True),
                              primary_key = 'category_name')
                             )
 
         cls.Donkey.add_table(Table("sub_category",
                              Text("sub_category_name"),
                              Text("sub_category_description"),
-                             OneToMany("sub_sub_category", "sub_sub_category", many_side_mandatory = True),
+                             OneToManyEager("sub_sub_category", "sub_sub_category", many_side_mandatory = True),
                              primary_key = 'category_name,sub_category_name')
                             )
 
         cls.Donkey.add_table(Table("sub_sub_category",
                              Text("sub_sub_category_name"),
                              Text("sub_sub_category_description"),
-                             OneToMany('entity_categories', 'entity_categories',
+                             OneToManyEager('entity_categories', 'entity_categories',
                                        backref = 'category'),
                              primary_key = 'category_name,sub_category_name,'
                                            'sub_sub_category_name')
@@ -313,7 +313,6 @@ class test_basic_input(test_donkey):
         assert get_all_local_data(result, internal = True) == {'contact_summary.people_id': 1, 'giving_date': None, 'contact_summary.transaction_count': 0, 'people.name': u'david', '__table': 'donkey_sponsership', 'contact_summary.membership': None, 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'43 union street es388', 'people.town': None, 'people_id': 1, 'people.postcode': u'es388', 'people.country': None, 'people.address_line_1': u'43 union street', 'people.address_line_2': None, 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'donkey_id': 1, 'amount': Decimal('50'), 'donkey.donkey_type': None, 'donkey.age': 13, 'donkey.name': u'jim'} 
 
 
-
         print get_all_local_data(result, fields = ["donkey_id", "contact_summary.total_amount", "donkey.name"])
         assert get_all_local_data(result, fields = ["donkey_id", "contact_summary.total_amount", "donkey.name"]) == {'contact_summary.total_amount': '0', '__table': 'donkey_sponsership', 'donkey.name': u'jim', 'donkey_id': 1, 'id': 1} 
 
@@ -465,6 +464,7 @@ class test_basic_input(test_donkey):
         cat = SingleRecord(self.Donkey, "category", cat)
 
         assert_raises(custom_exceptions.InvalidData,cat.load)
+
 
     def test_search_internal(self):
 

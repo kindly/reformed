@@ -138,6 +138,7 @@ class Database(object):
         else:
             table_to_drop = self.tables[table]
 
+
         if table_to_drop.logged:
             logger_instance = session.query(self.get_class("__table")).filter_by(table_name = u"_log_%s" % table_to_drop.name).one()
             session.delete(logger_instance)
@@ -249,12 +250,24 @@ class Database(object):
                     break
                 self.add_table(table)
         self.update_sa(reload = True)
-        self.metadata.create_all(self.engine)
-        for table in self.tables.itervalues():
-            if not table.persisted:
-                table.persist()
-        for field in self.fields_to_persist:
-            field.table._persist_extra_field(field)
+
+        session = self.Session()
+
+        try:
+            for table in self.tables.itervalues():
+                if not table.persisted:
+                    table.persist(session)
+            for field in self.fields_to_persist:
+                field.table._persist_extra_field(field, session)
+            self.metadata.create_all(self.engine)
+        except Exception, e:
+            session.rollback()
+            raise
+        else:
+            session._commit()
+        finally:
+            session.close
+
         if self.fields_to_persist:
             self.update_sa(reload = True)
         self.fields_to_persist = []
