@@ -37,7 +37,9 @@ class Table(TableNode):
     list_params = {"form_type": "results"}
 
     fields = [
-        ['table_name', 'textbox', 'table name: '],
+        ['table_name', 'textbox', 'table name:'],
+        ['table_type', 'info', 'type:'],
+        ['summary', 'textbox', 'Summary:'],
         ['entity', 'checkbox', 'entity:'],
         ['logged', 'checkbox', 'logged:'],
         ['fields', 'subform', 'fields']
@@ -77,15 +79,28 @@ class Table(TableNode):
         table_name = str(self.data.get('table_name'))
         entity = self.data.get('entity', False)
         logged = self.data.get('logged', False)
+        summary = self.data.get('summary')
+        if summary == '':
+            summary = None
         fields = self.data.get('fields')
         if table_id:
-            self.edit_existing_table(table_id, table_name, entity, logged, fields)
+            self.edit_existing_table(table_id, table_name, entity, logged, fields, summary)
         else:
-            self.create_new_table(table_name, entity, logged, fields)
+            self.create_new_table(table_name, entity, logged, fields, summary)
 
 
-    def edit_existing_table(self, table_id, table_name, entity, logged, fields):
-        # edit the table
+    def edit_existing_table(self, table_id, table_name, entity, logged, fields, summary):
+
+        # update the table summary
+        session = r.Session()
+        obj = r.get_class('__table')
+        table = session.query(obj).filter_by(id = table_id).one()
+        table.summary = summary
+        session.save_or_update(table)
+        session.commit()
+        session.close()
+
+        # edit the table fields
         for field in fields:
             field_id = field.get('field_id')
             table = r[table_id]
@@ -110,9 +125,9 @@ class Table(TableNode):
                 table.add_field(field_class(name, **field_info))
 
 
-    def create_new_table(self, table_name, entity, logged, fields):
+    def create_new_table(self, table_name, entity, logged, fields, summary):
 
-        table = table_functions.Table(table_name, logged=logged)
+        table = table_functions.Table(table_name, logged=logged, summary = summary)
 
         for field in fields:
             type = field.get('field_type')
@@ -148,8 +163,15 @@ class Table(TableNode):
         self.out = data
 
     def edit(self):
-        table = int(self.data.get('t'))
-        table_info = r[table]
+        table_id = int(self.data.get('t'))
+
+        session = r.Session()
+        obj = r.get_class('__table')
+        table = session.query(obj).filter_by(id = table_id).one()
+        summary = table.summary
+        session.close()
+
+        table_info = r[table_id]
 
         field_data = []
         for (name, value) in table_info.fields.iteritems():
@@ -162,6 +184,8 @@ class Table(TableNode):
                                    'field_id': value.field_id })
 
         table_data = {'table_name': table_info.name,
+                      'table_type' : table_info.table_type,
+                      'summary' : summary,
                       'table_id': table_info.table_id,
                       'entity': table_info.entity,
                       'logged': table_info.logged,
