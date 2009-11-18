@@ -19,7 +19,8 @@ sqllogger = logging.getLogger('sqlalchemy.engine')
 sqllogger.setLevel(logging.info)
 sqllogger.addHandler(sqlhandler)
 
-class test_donkey_persist_sqlite(object):
+
+class test_donkey_persist(object):
 
     persist = True
 
@@ -122,6 +123,9 @@ class test_donkey_persist_sqlite(object):
         cls.session.add(donk2)
         cls.session.commit()
 
+
+class test_donkey_persist_sqlite(test_donkey_persist):
+
         
     @classmethod
     def tearDownClass(cls):
@@ -129,7 +133,6 @@ class test_donkey_persist_sqlite(object):
         cls.session.close()
         
 
-#class test_basic_input(test_donkey_persist):
 
     def test_1_donkey_input(self):
 

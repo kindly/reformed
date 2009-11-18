@@ -138,6 +138,7 @@ class Database(object):
         else:
             table_to_drop = self.tables[table]
 
+
         if table_to_drop.logged:
             logger_instance = session.query(self.get_class("__table")).filter_by(table_name = u"_log_%s" % table_to_drop.name).one()
             session.delete(logger_instance)

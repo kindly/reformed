@@ -164,6 +164,51 @@ class Table(object):
         for name, fields in self.fields:
             pass
 
+    def add_relation(self, field, defer_update_sa = False):
+
+        if not self.persisted:
+            self._add_field_no_persist(field)
+            return
+
+        session = self.database.Session()
+        try:
+            self._add_field_no_persist(field)
+            self._persist_extra_field(field, session)
+            self.database.add_relations()
+            other_table = self.database[field.other]
+            for name, column in self.foriegn_key_columns.iteritems():
+                if column.defined_relation.parent == field:
+                    sa_options = column.sa_options
+                    ## sqlite rubbish
+                    if self.database.engine.name == 'sqlite':
+                        sa_options["server_default"] = "null"
+                    col = sa.Column(name, column.type, **sa_options)
+
+                    col.create(self.sa_table)
+
+            for name, column in other_table.foriegn_key_columns.iteritems():
+                if column.defined_relation.parent == field:
+                    sa_options = column.sa_options
+                    ## sqlite rubbish
+                    if self.database.engine.name == 'sqlite':
+                        sa_options["server_default"] = "null"
+                    col = sa.Column(name, column.type, **sa_options)
+
+                    col.create(other_table.sa_table)
+
+        except Exception, e:
+            session.rollback()
+            if field in self.fields:
+                self.fields.pop(field.name)
+            raise
+        else:
+            session._commit()
+            if not defer_update_sa:
+                self.database.update_sa(reload = True)
+        finally:
+            session.close()
+        return 
+
 
 
     def add_field(self, field, defer_update_sa = False):
