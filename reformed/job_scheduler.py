@@ -30,7 +30,8 @@ class JobScheduler(object):
                                             DateTime("job_ended"),
                                             Text("error", length = 2000),
                                             Text("message", length = 2000),
-                                            Integer("percent"))
+                                            Integer("percent"),
+                                            table_type = "internal")
                                )
 
             rdatabase.persist()

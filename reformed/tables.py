@@ -80,6 +80,7 @@ class Table(object):
         self.entity_relationship = kw.get("entity_relationship", False)
         self.title_field = kw.get("title_field", None)
         self.summary_fields = kw.get("summary_fields", None)
+        self.summary = kw.get("summary", None)
         self.primary_key_list = []
         self.events = []
         self.initial_events = []
@@ -123,6 +124,7 @@ class Table(object):
                 
         __table = self.database.tables["__table"].sa_class()
         __table.table_name = u"%s" % self.name
+        __table.summary = self.summary
         session.add(__table)
 
 
