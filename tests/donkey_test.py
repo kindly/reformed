@@ -24,7 +24,7 @@ class test_donkey(object):
     @classmethod
     def setUpClass(cls):
         if not hasattr(cls, "engine"):
-            cls.engine = create_engine('sqlite:///:memory:', echo = False)
+            cls.engine = create_engine('sqlite:///:memory:', echo = True)
             #cls.engine = create_engine('sqlite:///:memory:')
         
 #        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
@@ -125,21 +125,21 @@ class test_donkey(object):
                              Text("category_name"),
                              Text("category_description"),
                              Text("category_type"),
-                             OneToMany("sub_category", "sub_category", many_side_mandatory = True),
+                             OneToManyEager("sub_category", "sub_category", many_side_mandatory = True),
                              primary_key = 'category_name')
                             )
 
         cls.Donkey.add_table(Table("sub_category",
                              Text("sub_category_name"),
                              Text("sub_category_description"),
-                             OneToMany("sub_sub_category", "sub_sub_category", many_side_mandatory = True),
+                             OneToManyEager("sub_sub_category", "sub_sub_category", many_side_mandatory = True),
                              primary_key = 'category_name,sub_category_name')
                             )
 
         cls.Donkey.add_table(Table("sub_sub_category",
                              Text("sub_sub_category_name"),
                              Text("sub_sub_category_description"),
-                             OneToMany('entity_categories', 'entity_categories',
+                             OneToManyEager('entity_categories', 'entity_categories',
                                        backref = 'category'),
                              primary_key = 'category_name,sub_category_name,'
                                            'sub_sub_category_name')
@@ -464,6 +464,7 @@ class test_basic_input(test_donkey):
         cat = SingleRecord(self.Donkey, "category", cat)
 
         assert_raises(custom_exceptions.InvalidData,cat.load)
+
 
     def test_search_internal(self):
 
