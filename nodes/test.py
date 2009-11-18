@@ -328,6 +328,7 @@ class Table(TableNode):
     list_fields = [
         ['title', 'link', 'title'],
         ['summary', 'info', 'summary'],
+        ['table_type', 'info', 'table_type'],
         ['edit', 'link_list', '']
     ]
     list_params = {"form_type": "results"}
@@ -435,7 +436,10 @@ class Table(TableNode):
     def list(self):
         data = []
         for table_name in r.tables.keys():
-            data.append({'title': "n:test.Table:edit:t=%s|%s" % (r[table_name].table_id, table_name)})
+            # only show editable tables
+            if r[table_name].table_type != 'internal':
+                data.append({'title': "n:test.Table:edit:t=%s|%s" % (r[table_name].table_id, table_name),
+                             'table_type' : r[table_name].table_type})
         data = node.create_form_data(self.list_fields, self.list_params, data)
         self.action = 'form'
         self.out = data
