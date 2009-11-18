@@ -366,22 +366,25 @@ class Table(TableNode):
             self.save()
 
     def save(self):
-
+        try:
+            table_id = int(self.data.get('table_id'))
+        except:
+            table_id = None
         table_name = str(self.data.get('table_name'))
         entity = self.data.get('entity', False)
         logged = self.data.get('logged', False)
         fields = self.data.get('fields')
-        if table_name in r.tables:
-            self.edit_existing_table(table_name, entity, logged, fields)
+        if table_id:
+            self.edit_existing_table(table_id, table_name, entity, logged, fields)
         else:
             self.create_new_table(table_name, entity, logged, fields)
 
 
-    def edit_existing_table(self, table_name, entity, logged, fields):
+    def edit_existing_table(self, table_id, table_name, entity, logged, fields):
         # edit the table
         for field in fields:
             field_id = field.get('field_id')
-            table = r[table_name]
+            table = r[table_id]
             type = field.get('field_type')
             name = field.get('field_name')
             if type == 'Text':
@@ -432,14 +435,14 @@ class Table(TableNode):
     def list(self):
         data = []
         for table_name in r.tables.keys():
-            data.append({'title': "n:test.Table:edit:t=%s|%s" % (table_name, table_name)})
+            data.append({'title': "n:test.Table:edit:t=%s|%s" % (r[table_name].table_id, table_name)})
         data = node.create_form_data(self.list_fields, self.list_params, data)
         self.action = 'form'
         self.out = data
 
     def edit(self):
-        table = self.data.get('t')
-        table_info = r.tables[table]
+        table = int(self.data.get('t'))
+        table_info = r[table]
 
         field_data = []
         for (name, value) in table_info.fields.iteritems():
@@ -452,6 +455,7 @@ class Table(TableNode):
                                    'field_id': value.field_id })
 
         table_data = {'table_name': table_info.name,
+                      'table_id': table_info.table_id,
                       'entity': table_info.entity,
                       'logged': table_info.logged,
                       'fields': field_data}
