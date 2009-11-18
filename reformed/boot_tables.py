@@ -32,22 +32,27 @@ class boot_tables(object):
     def __init__(self):
 
         self.boot_tables = [Table("__table", fields.Text("table_name"),
+                                fields.Text("summary", length=250),
                                 fields.OneToManyEager("table_params", "__table_params" ),
                                 fields.OneToManyEager("field", "__field"),
-                                primary_key = "table_name"
+                                primary_key = "table_name",
+                                table_type = "internal"
                             ),
                             Table("__table_params", fields.Text("item"),
                                 fields.Text("value"),
-                                primary_key = "table_name,item"
+                                primary_key = "table_name,item",
+                                table_type = "internal"
                             ),
                             Table("__field", fields.Text("field_name"),
                                 fields.Text("type"),
                                 fields.Text("other"),
                                 fields.OneToManyEager("field_params", "__field_params"),
-                                primary_key = "field_name,table_name"
+                                primary_key = "field_name,table_name",
+                                table_type = "internal"
                             ),
                             Table("__field_params", fields.Text("item"),
                                 fields.Text("value", length = 1000),
-                                primary_key = "field_name,table_name,item"
+                                primary_key = "field_name,table_name,item",
+                                table_type = "internal"
                             )
                             ]

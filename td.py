@@ -50,31 +50,37 @@ d.add_table(r.Table("email",
 d.add_entity(r.Table("user",
                     r.Text("name"),
                     r.Text("password"),
-                    primary_key = "name"
+                    primary_key = "name",
+                    table_type = "system"
                   )
            )
 
 d.add_table(r.Table("user_group",
                     r.Text("groupname"),
-                    primary_key = "groupname"                 )
+                    primary_key = "groupname",
+                    table_type = "system"
+                  )
            )
 
 d.add_table(r.Table("user_group_user",
                     r.ManyToOne("user", "user"),
-                    r.ManyToOne("user_group", "user_group")
+                    r.ManyToOne("user_group", "user_group"),
+                    table_type = "system"
                  )
            )
 
 d.add_table(r.Table("user_group_permission",
                     r.ManyToOne("user_group", "user_group"),
-                    r.ManyToOne("permissionx", "permission")
+                    r.ManyToOne("permissionx", "permission"),
+                    table_type = "system"
                    )
            )
 
 
 d.add_table(r.Table("permission",
                     r.Text("permission"),
-                    primary_key = 'permission'
+                    primary_key = "permission",
+                    table_type = "system"
                    )
            )
 
@@ -112,11 +118,13 @@ d.add_table(r.Table("paymentdds",
            )
 
 d.add_table(r.Table("_core_lock",
-              r.Text("table_name"),
-              r.Integer("row_id"),
-              r.DateTime("date"),
-              r.UniqueConstraint("unique", "table_name,row_id,date"),
-              logged = False)
+                    r.Text("table_name"),
+                    r.Integer("row_id"),
+                    r.DateTime("date"),
+                    r.UniqueConstraint("unique", "table_name,row_id,date"),
+                    logged = False,
+                    table_type = "internal"
+             )
            )
 
 

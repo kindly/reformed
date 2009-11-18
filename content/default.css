@@ -299,3 +299,12 @@ div.form_body > div > input.error {
     margin-top:0;
 }
 
+.grid_table {
+    width:100%;
+}
+
+.grid_table td input {
+    width:100%;
+
+}
+
