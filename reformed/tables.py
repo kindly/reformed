@@ -444,7 +444,7 @@ class Table(object):
             sa_options = column.sa_options
 
             ## sqlalchemy only accepts strings for server_defaults
-            if isinstance(column, sa.Unicode) and "default" in sa_options:
+            if isinstance(column.type, sa.Unicode) and "default" in sa_options:
                 if isinstance(sa_options["default"], basestring):
                     default = sa_options.pop("default")
                     sa_options["server_default"] = default

@@ -31,10 +31,10 @@ metadata = MetaData()
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
 print 'engine = sqlite:///%s/reformed.sqlite' % this_dir
-engine = create_engine('sqlite:///%s/reformed.sqlite' % this_dir, echo = False)
+#engine = create_engine('sqlite:///%s/reformed.sqlite' % this_dir, echo = False)
 #engine = create_engine('sqlite:///', echo = False)
 #engine = create_engine('mysql://localhost/test_donkey')
-#engine = create_engine('postgres://david:@:5432/test_donkey', echo = False)
+engine = create_engine('postgres://david:@:5432/test_donkey', echo = True)
 metadata.bind = engine
 Session = sessionmaker(bind=engine, autoflush = False)
 
