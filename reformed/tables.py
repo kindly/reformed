@@ -76,6 +76,7 @@ class Table(object):
         self.modified_date = kw.get("modified_date", True)
         self.index = kw.get("index", None)
         self.unique_constraint = kw.get("unique_constraint", None)
+        self.table_type = kw.get("table_type", "user")
         self.entity_relationship = kw.get("entity_relationship", False)
         self.title_field = kw.get("title_field", None)
         self.summary_fields = kw.get("summary_fields", None)
