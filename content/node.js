@@ -110,7 +110,7 @@ function _subform(item, my_id, data, local_data){
     var root = local_data.root + '#' + item.name;
     var paging = null;
     $INFO.newState(root);
-    var out = '<div class="subform" id="' + my_id + '" >'+ item.title + '</br>';
+    var out = '<div class="subform" id="' + my_id + '" >';
     out += node_generate_html(item.params.form, data, paging, root, local_data.read_only);
     out += '</div>';
     return out;
@@ -396,7 +396,9 @@ function node_generate_html(form, data, paging, root, read_only){
     // FORM HEADER
 
     formHTML += '<div class="form_header" >';
-    formHTML += form_info.info.name;
+    if (form.params && form.params.title){
+        formHTML += form.params.title;
+    }
     if (paging){
         formHTML += form_paging_bar(paging);
     }
