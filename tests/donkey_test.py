@@ -67,7 +67,7 @@ class test_donkey(object):
                             Table("transactions",
                                    DateTime("date"),
                                    Money("amount"),
-                                   Text("Type", default = "payment")),
+                                   Text("Type", default = u"payment")),
                             Table("email",
                                   Email("email"),
                                   Counter("email_number", base_level = "people"),

@@ -115,12 +115,11 @@ class Table(object):
     def __repr__(self):
         return "%s - %s" % (self.name, self.columns.keys())
 
-    def persist(self):
+    def persist(self, session):
         """This puts the information about the this objects parameters 
         and its collection of fields into private database tables so that in future they
         no longer need to be explicitely defined"""
                 
-        session = self.database.Session()
         __table = self.database.tables["__table"].sa_class()
         __table.table_name = u"%s" % self.name
         session.add(__table)
@@ -149,17 +148,13 @@ class Table(object):
                 __field.field_params.append(__field_param)
                 session.add(__field_param)
 
-
-
-        session.commit()
+        session._flush()
         self.table_id = __table.id
 
         for field in __table.field:
             self.fields[field.field_name].field_id = field.id
 
-
         self.persisted = True
-        session.close()
 
     def table_diff(self, original_field_list):
 
@@ -168,14 +163,27 @@ class Table(object):
 
 
 
-    def add_field(self, field):
+    def add_field(self, field, defer_update_sa = False):
         """add a Field object to this Table"""
         if self.persisted == True:
+            session = self.database.Session()
             field.check_table(self)
-            self._add_field_by_alter_table(field)
-            self._add_field_no_persist(field)
-            self._persist_extra_field(field)
-            self.database.update_sa(reload = True)
+            try:
+                self._add_field_by_alter_table(field)
+                self._add_field_no_persist(field)
+                self._persist_extra_field(field, session)
+            except Exception, e:
+                session.rollback()
+                if field in self.fields:
+                    self.fields.pop(field.name)
+                raise
+            else:
+                session._commit()
+                if not defer_update_sa:
+                    self.database.update_sa(reload = True)
+            finally:
+                session.close()
+            return 
 
         else:
             self._add_field_no_persist(field)
@@ -189,9 +197,8 @@ class Table(object):
             col = sa.Column(name, column.type, **column.sa_options)
             col.create(self.sa_table)
 
-    def _persist_extra_field(self, field):
+    def _persist_extra_field(self, field, session):
 
-        session = self.database.Session()
         __table = session.query(self.database.get_class("__table")).\
                                 filter_by(table_name = u"%s" % self.name).one()
 
@@ -213,12 +220,11 @@ class Table(object):
 
         session.add(__table)
 
-        session.commit()
+        session._flush()
 
         for field in __table.field:
             self.fields[field.field_name].field_id = field.id
 
-        session.close()
 
     @property    
     def items(self):

@@ -376,7 +376,7 @@ class test_events(test_donkey):
     def zz_delete_entity_test(self):
     
         donkey = self.Donkey.get_instance("donkey")
-        donkey.name = "fresddy"
+        donkey.name = u"fresddy"
         self.session.save(donkey)
         self.session.commit()
 

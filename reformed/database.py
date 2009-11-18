@@ -247,12 +247,24 @@ class Database(object):
                     break
                 self.add_table(table)
         self.update_sa(reload = True)
-        self.metadata.create_all(self.engine)
-        for table in self.tables.itervalues():
-            if not table.persisted:
-                table.persist()
-        for field in self.fields_to_persist:
-            field.table._persist_extra_field(field)
+
+        session = self.Session()
+
+        try:
+            for table in self.tables.itervalues():
+                if not table.persisted:
+                    table.persist(session)
+            for field in self.fields_to_persist:
+                field.table._persist_extra_field(field, session)
+            self.metadata.create_all(self.engine)
+        except Exception, e:
+            session.rollback()
+            raise
+        else:
+            session._commit()
+        finally:
+            session.close
+
         if self.fields_to_persist:
             self.update_sa(reload = True)
         self.fields_to_persist = []
