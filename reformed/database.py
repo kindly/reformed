@@ -173,13 +173,15 @@ class Database(object):
                                   field_types.Text("summary"),
                                   OneToMany("relation",
                                             "relation"),
-                                  table_type = "internal"
+                                  table_type = "internal",
+                                  summary = u'The entity table'
                                   )
 
             relation =  tables.Table("relation",
                                field_types.Text("relation_type"),
                                ManyToOne("_core_entity", "_core_entity", one_way = True),
-                               table_type = "internal"
+                               table_type = "internal",
+                               summary = u'The relation table'
                               )
 
             self.add_table(entity_table)
