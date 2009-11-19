@@ -308,3 +308,7 @@ div.form_body > div > input.error {
 
 }
 
+.link_list a{
+    color:green;
+    font-size:0.8em;
+}
