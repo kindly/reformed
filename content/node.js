@@ -657,7 +657,6 @@ function get_node(node_name, node_command, node_data, change_state){
         $INFO.newState(root);
         $INFO.setState(root, 'node', node_name);
     }
-
     var info = {node: node_name,
                 lastnode: '',  //fixme
                 command: node_command };
@@ -743,7 +742,14 @@ function link_process(item, link){
 function node_save(root, command){
     msg('node_save');
     var out = node_get_form_data(root);
+
     var node =  $INFO.getState(root, 'node');
+    var params = $INFO.getState(root, 'form_data').params
+    if (params && params.extras){
+        for (extra in params.extras){
+            out[extra] = params.extras[extra];
+        }
+    }
  //   alert('node' + node + $.toJSON(out));
     get_node(node, '_save', out, false);
 }
