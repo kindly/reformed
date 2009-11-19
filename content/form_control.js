@@ -167,17 +167,31 @@ $FORM_CONTROL = {
 
 
         link_list: function(item, id, show_label, value){
-            var x = '';
+            var x = '<span class="link_list">';
             for (var i=0; i<value.length; i++){
                 x += $FORM_CONTROL._controls.link(item, id + '__' + i, false, value[i]);
                 x += ' ';
             }
+            x += '</span>';
             return x;
         },
 
         progress: function(item, id, show_label, value){
             var x = (show_label ? '<span class="label">' + item.title + '</span>' : '');
             x += '<div id="' + id + '" class="progressbar"></div>';
+            return x;
+        },
+
+        textarea: function(item, id, show_label, value){
+            // simple textbox
+            var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
+            x += '<textarea id="' + id + '" name="' + id + '" ';
+            x += 'onchange="itemChanged(this)"  ';
+            x += 'onkeyup="itemChanged(this)" >';
+            if (value){
+                x += value;
+            }
+            x += '</textarea>'
             return x;
         },
 
@@ -260,13 +274,18 @@ $FORM_CONTROL = {
             switch (type){
                 case 'list':
                     for (i=0;i<items.length;i++){
-                        x += '<option value="' +  items[i] + '">';
+                        x += '<option value="' +  items[i] + '"';
+                        if (value == items[i]){
+                            x += ' selected="selected" ';
+                        }
+                        x += '>';
                         x += items[i] + '</option>';
                     }
                     break;
                 default:
                     for (i=0;i<items.length;i++){
-                        x += '<option value="' + i + '">';
+                        x += '<option value="' + i + '"';
+                        x += '>';
                         x += items[i] + '</option>';
                     }
                     break;
