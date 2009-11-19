@@ -37,7 +37,7 @@ class Node(object):
         self.bookmark = None
         self.next_node = None
         self.next_data = None
-
+        self.extra_data = None
         self.allowed = self.check_permissions()
 
         self.last_node = data.get('lastnode')
@@ -63,6 +63,32 @@ class Node(object):
             if not set(self.permissions).intersection(user_perms):
                 return False
         return True
+
+    def build_node(self, title, command, data = '', node = None):
+        if not node:
+            node = self.name
+        new_node = 'n:%s:%s:%s' % (node, command, data)
+        if self.extra_data:
+            if data:
+                new_node += '&%s' % self.extra_data
+            else:
+                new_node += self.extra_data
+        if title:
+             new_node = '%s|%s' % (new_node, title)
+        return new_node
+
+
+    def build_function_node(self, title, function, data = '', command = ''):
+        new_node = 'd:%s:%s:%s' % (function, command, data)
+        if self.extra_data:
+            if data:
+                new_node += '&%s' % self.extra_data
+            else:
+                new_node += self.extra_data
+        if title:
+             new_node = '%s|%s' % (new_node, title)
+        return new_node
+
 
     def initialise(self):
         """called first when the node is used"""
@@ -346,7 +372,10 @@ class TableNode(Node):
         try:
             data_out = self.node_search_single(where)
             id = data_out.get('id')
-            self.title = data_out.get(self.title_field)
+            if self.title_field and data_out.has_key(self.title_field):
+                self.title = data_out.get(self.title_field)
+            else:
+                self.title = '%s: %s' % (self.table, id)
 
         except sa.orm.exc.NoResultFound:
             data = None
@@ -361,10 +390,12 @@ class TableNode(Node):
             for code_group_name in self.code_list:
                 data_out[code_group_name] = self.code_data(code_group_name, data_out)
 
+        print '@@@@@', repr(data_out)
         data = create_form_data(self.fields, self.form_params, data_out, read_only)
         self.out = data
         self.action = 'form'
-        self.bookmark = 'n:%s:view:id=%s' % (self.name, id)
+        self.bookmark = self.build_node('', 'view', 'id=%s' %  id)
+
 
     def code_data(self, code_group_name, data_out):
         codes = self.code_groups.get(code_group_name)
@@ -418,7 +449,7 @@ class TableNode(Node):
         limit = self.data.get('l', limit)
         offset = self.data.get('o', 0)
 
-        if self.core_table:
+        if r.reformed[self.table].entity:
             results = r.reformed.search('_core_entity',
                                         where = "%s.id >0" % self.table,
                                         limit = limit,
@@ -433,21 +464,22 @@ class TableNode(Node):
 
         data = results['data']
         # build the links
-        if self.core_table:
+        if r.reformed[self.table].entity:
             for row in data:
-                row['title'] = 'n:%s:edit:__id=%s|%s' % (self.name, row['id'], row['title']) 
-                row['edit'] = ['n:%s:edit:__id=%s|Edit' % (self.name,
-                                                                   row['id']),
-                               'n:%s:view:__id=%s|View' % (self.name,
-                                                                   row['id']),
-                               'd:node_delete::|Delete'
-                                ]
+                row['title'] = self.build_node(row['title'], 'edit', '__id=%s' % row['id'])
+                row['edit'] = [self.build_node('Edit', 'edit', '__id=%s' % row['id']),
+                               self.build_node('View', 'view', '__id=%s' % row['id']),
+                               self.build_function_node('Delete', 'node_delete')
+                              ]
                 # the id is actually the _core_entity id so let's rename it to __id
                 row['__id'] = row['id']
                 del row['id']
         else:
             for row in data:
-                row['title'] = 'n:%s:edit:id=%s|%s' % (self.name, row['id'], row[self.title_field]) 
+                if self.title_field and row.has_key(self.title_field):
+                    row['title'] = self.build_node(row[self.title_field], 'edit', 'id=%s' % row['id'])
+                else:
+                    row['title'] = self.build_node('%s: %s' % (self.table, row['id']), 'edit', 'id=%s' % row['id'])
 
         out = create_form_data(self.list_fields, self.list_params, data)
 
@@ -540,3 +572,7 @@ def validate_data_full(data, validators):
     for (field, validator) in validators:
         validated_data[field] = validate_data(data, field, validator)
     return validated_data
+
+
+
+

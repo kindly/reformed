@@ -72,10 +72,9 @@ class SessionWrapper(object):
         """save or update and validate a sqlalchemy object"""
         obj._validated = True
         self.session.add(obj)
-    
-    def commit(self):
 
-        #print datetime.datetime.now(), "start commit"
+    def _flush(self):
+
         if self.has_entity:
             self.add_entity_instance()
         #print datetime.datetime.now(), "check all validated"
@@ -96,9 +95,16 @@ class SessionWrapper(object):
         self.after_flush_list = []
         for obj in self.session:
             obj._validated = False
-        #print datetime.datetime.now(), "before commit"
+
+    def _commit(self):
+
         self.session.commit()
-        #print datetime.datetime.now(), "after commit"
+    
+    def commit(self):
+
+        self._flush()
+        self._commit()
+
 
     def after_flush(self):
 

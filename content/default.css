@@ -308,3 +308,16 @@ div.form_body > div > input.error {
 
 }
 
+.link_list a{
+    color:green;
+    font-size:0.8em;
+}
+
+#bookmarks li{
+    list-style-type: none;
+    font-size:0.8em;
+    color:darkgreen;
+}
+#bookmarks ol{
+    padding-left:3px;
+}
