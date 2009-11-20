@@ -481,9 +481,19 @@ class Table(object):
         if not self.database.metadata:
             raise NoMetadataError("table not assigned a metadata")
         sa_table = sa.Table(self.name, self.database.metadata)
-        sa_table.append_column(sa.Column("id", sa.Integer, primary_key = True))
+
+
+        if self.primary_key_list:
+            #default = text("coalesce(select max(id) from %s,0) + 1" % (self.name))
+            sa_table.append_column(sa.Column("id", sa.Integer))#, server_default = default))
+        else:
+            sa_table.append_column(sa.Column("id", sa.Integer, primary_key = True))
+
+
         for name, column in self.foriegn_key_columns.iteritems():
             sa_options = column.sa_options
+            if name in self.primary_key_list:
+                sa_options["primary_key"] = True
             sa_table.append_column(sa.Column(name, column.type, **sa_options))
         defined_columns = self.defined_columns
         for column in self.defined_columns_order:
@@ -496,11 +506,13 @@ class Table(object):
                 if isinstance(sa_options["default"], basestring):
                     default = sa_options.pop("default")
                     sa_options["server_default"] = default
+            if name in self.primary_key_list:
+                sa_options["primary_key"] = True
 
             sa_table.append_column(sa.Column(name, column.type, **sa_options))
-        if self.primary_key_list:
-            primary_keys = tuple(self.primary_key_list)
-            sa_table.append_constraint(sa.UniqueConstraint(*primary_keys))
+        #if self.primary_key_list:
+        #    primary_keys = tuple(self.primary_key_list)
+        #    sa_table.append_constraint(sa.UniqueConstraint(*primary_keys))
         if self.foreign_key_constraints:
             for con in self.foreign_key_constraints.itervalues():
                 sa_table.append_constraint(sa.ForeignKeyConstraint(con[0],
@@ -580,8 +592,8 @@ class Table(object):
             for name, column in self.foriegn_key_columns.iteritems():
                 if relation == column.defined_relation:
                     joined_columns.append([name, column.original_column])
-            if not joined_columns:
-                joined_columns.extend([[a, a] for a in self.primary_key_list])
+            #if not joined_columns:
+            #    joined_columns.extend([[a, a] for a in self.primary_key_list])
             if not joined_columns:
                 for name, col in other_rtable.foriegn_key_columns.iteritems():
                     if relation == col.defined_relation:

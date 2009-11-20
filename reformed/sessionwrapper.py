@@ -24,6 +24,7 @@
 ##  funtionality such a as logging and validataion.
 
 from sqlalchemy.orm import attributes 
+from sqlalchemy.sql import text
 import sqlalchemy as sa
 import datetime
 import time
@@ -119,9 +120,20 @@ class SessionWrapper(object):
 
         self.after_flush_list.append([function, params])
 
+    def make_keys(self, object):
+
+        object.id = text("(select coalesce((select max(id) from (select * from %s) poo ),0) + 1)" % (object._table.name))
+        self.session.add(object)
+
+
     def add_events(self):
 
         for obj in self.session.new:
+
+            ## to sort out an id for the named key tables
+            if obj._table.primary_key_list:
+                self.add_after_flush(self.make_keys, (obj,))
+
             for events in obj._table.initial_events:
                 events.insert_action(self, obj)
         for obj in self.session.new:
