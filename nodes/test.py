@@ -320,3 +320,23 @@ class Sponsorship(Node):
             self.action = 'form'
         self.out = data
 
+class AutoFormPlus(TableNode):
+
+    def initialise(self):
+        self.table = self.data.get('table')
+        self.extra_data = 'table=%s' % self.table
+        fields = []
+        field_list = []
+        obj = r.get_instance(self.table)
+        columns = obj._table.schema_info
+        for field in columns.keys():
+            if field not in ['modified_date', 'modified_by','_core_entity_id']:
+                fields.append([field, 'textbox', '%s:' % field])
+                field_list.append(field)
+        self.field_list = field_list
+        self.fields = fields
+        self.form_params =  {"form_type": "normal",
+                             "extras" : {"table": self.table}
+                            }
+
+

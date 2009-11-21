@@ -110,7 +110,7 @@ function _subform(item, my_id, data, local_data){
     var root = local_data.root + '#' + item.name;
     var paging = null;
     $INFO.newState(root);
-    var out = '<div class="subform" id="' + my_id + '" >'+ item.title + '</br>';
+    var out = '<div class="subform" id="' + my_id + '" >';
     out += node_generate_html(item.params.form, data, paging, root, local_data.read_only);
     out += '</div>';
     return out;
@@ -396,7 +396,9 @@ function node_generate_html(form, data, paging, root, read_only){
     // FORM HEADER
 
     formHTML += '<div class="form_header" >';
-    formHTML += form_info.info.name;
+    if (form.params && form.params.title){
+        formHTML += form.params.title;
+    }
     if (paging){
         formHTML += form_paging_bar(paging);
     }
@@ -655,7 +657,6 @@ function get_node(node_name, node_command, node_data, change_state){
         $INFO.newState(root);
         $INFO.setState(root, 'node', node_name);
     }
-
     var info = {node: node_name,
                 lastnode: '',  //fixme
                 command: node_command };
@@ -741,7 +742,14 @@ function link_process(item, link){
 function node_save(root, command){
     msg('node_save');
     var out = node_get_form_data(root);
+
     var node =  $INFO.getState(root, 'node');
+    var params = $INFO.getState(root, 'form_data').params
+    if (params && params.extras){
+        for (extra in params.extras){
+            out[extra] = params.extras[extra];
+        }
+    }
  //   alert('node' + node + $.toJSON(out));
     get_node(node, '_save', out, false);
 }

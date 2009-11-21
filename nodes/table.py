@@ -19,15 +19,16 @@
 ##
 
 
-from node import TableNode, Node, AutoForm
 from .reformed.reformed import reformed as r
 import node
 from .reformed import reformed as table_functions
 
 
-class Table(TableNode):
+class Table(node.TableNode):
 
-    allowed_types = ['Text', 'Email', 'Integer', 'Money', 'DateTime', 'Boolean']
+    allowed_field_types = ['Text', 'Email', 'Integer', 'Money', 'DateTime', 'Boolean']
+    allowed_join_types = ['OneToMany','OneToOne','ManyToOne']
+
     list_fields = [
         ['title', 'link', 'title'],
         ['summary', 'info', 'summary'],
@@ -39,16 +40,18 @@ class Table(TableNode):
     fields = [
         ['table_name', 'textbox', 'table name:'],
         ['table_type', 'info', 'type:'],
-        ['summary', 'textbox', 'Summary:'],
+        ['summary', 'textarea', 'Summary:'],
         ['entity', 'checkbox', 'entity:'],
         ['logged', 'checkbox', 'logged:'],
-        ['fields', 'subform', 'fields']
+        ['fields', 'subform', 'fields'],
+        ['joins', 'subform', 'joins']
     ]
+    form_params ={'title' : 'Table'}
     subforms = {
         'fields':{
             'fields': [
                 ['field_name', 'textbox', 'field name'],
-                ['field_type', 'textbox', 'type', {'autocomplete' : allowed_types, 'auto_options':{'mustMatch':True, 'minChars': 0, 'autoFill':True}}],
+                ['field_type', 'dropdown', 'type', {'values': '|'.join(allowed_field_types), 'type':'list'}],
                 ['length', 'textbox', 'length'],
                 ['mandatory', 'checkbox', 'mandatory'],
                 ['default', 'textbox', 'default']
@@ -56,7 +59,21 @@ class Table(TableNode):
 
             ],
             "params":{
-                "form_type": "grid"
+                "form_type": "grid",
+                "title": 'fields'
+            }
+        },
+
+        'joins':{
+            'fields': [
+                ['field_name', 'textbox', 'join field'],
+                ['join_table', 'textbox', 'join table'],
+                ['join_type', 'dropdown', 'join type', {'values': '|'.join(allowed_join_types), 'type':'list'}],
+
+            ],
+            "params":{
+                "form_type": "grid",
+                "title" : "joins"
             }
         }
     }
@@ -70,6 +87,16 @@ class Table(TableNode):
             self.new()
         elif self.command == '_save':
             self.save()
+        elif self.command == '_delete':
+            self.delete()
+
+    def delete(self):
+        try:
+            table_id = int(self.data.get('id'))
+        except:
+            table_id = None
+        table = r[table_id]
+        r.drop_table(table)
 
     def save(self):
         try:
@@ -83,14 +110,16 @@ class Table(TableNode):
         if summary == '':
             summary = None
         fields = self.data.get('fields')
+        joins = self.data.get('joins')
         if table_id:
-            self.edit_existing_table(table_id, table_name, entity, logged, fields, summary)
+            self.edit_existing_table(table_id, table_name, entity, logged, fields, summary, joins)
         else:
-            self.create_new_table(table_name, entity, logged, fields, summary)
+            self.create_new_table(table_name, entity, logged, fields, summary, joins)
 
 
-    def edit_existing_table(self, table_id, table_name, entity, logged, fields, summary):
+    def edit_existing_table(self, table_id, table_name, entity, logged, fields, summary, joins):
 
+        # FIXME this wants to be a function in reformed.database.py
         # update the table summary
         session = r.Session()
         obj = r.get_class('__table')
@@ -99,14 +128,15 @@ class Table(TableNode):
         session.save_or_update(table)
         session.commit()
         session.close()
+        r[table_id].summary = summary
 
         # edit the table fields
         for field in fields:
             field_id = field.get('field_id')
             table = r[table_id]
-            type = field.get('field_type')
-            name = field.get('field_name')
-            if type == 'Text':
+            field_type = field.get('field_type')
+            field_name = field.get('field_name')
+            if field_type == 'Text':
                 length = field.get('length')
             else:
                 length = None
@@ -121,18 +151,24 @@ class Table(TableNode):
                 pass
             else:
                 # add a new field
-                field_class = getattr(table_functions, type)
-                table.add_field(field_class(name, **field_info))
+                field_class = getattr(table_functions, field_type)
+                table.add_field(field_class(field_name, **field_info))
+        for join in joins:
+            join_type = join.get('join_type')
+            join_table = join.get('join_table')
+            join_name = join.get('field_name')
+            if join_name:
+                join_class = getattr(table_functions, join_type)
+                r[table_id].add_relation(join_class(join_name, join_table))
 
-
-    def create_new_table(self, table_name, entity, logged, fields, summary):
+    def create_new_table(self, table_name, entity, logged, fields, summary, joins):
 
         table = table_functions.Table(table_name, logged=logged, summary = summary)
 
         for field in fields:
-            type = field.get('field_type')
-            name = field.get('field_name')
-            if type == 'Text':
+            field_type = field.get('field_type')
+            field_name = field.get('field_name')
+            if field_type == 'Text':
                 length = field.get('length')
             else:
                 length = None
@@ -140,9 +176,18 @@ class Table(TableNode):
             default = field.get('default')
 
             field_info = dict(length=length, mandatory=mandatory, default=default)
+            field_class = getattr(table_functions, field_type)
 
-            field_class = getattr(table_functions, type)
-            table.add_field(field_class(name, **field_info))
+            if field_name:
+                table.add_field(field_class(field_name, **field_info))
+
+        for join in joins:
+            join_type = join.get('join_type')
+            join_table = join.get('join_table')
+            join_name = join.get('join_name')
+
+            join_class = getattr(table_functions, join_type)
+            table.add_field(join_class(join_name, join_table))
 
         if entity:
             r.add_entity(table)
@@ -155,9 +200,19 @@ class Table(TableNode):
         data = []
         for table_name in r.tables.keys():
             # only show editable tables
+            table = r[table_name]
             if r[table_name].table_type != 'internal':
-                data.append({'title': "n:%s:edit:t=%s|%s" % (self.name, r[table_name].table_id, table_name),
-                             'table_type' : r[table_name].table_type})
+
+                edit = [self.build_node('Edit', 'edit', 't=%s' % table.table_id),
+                        self.build_node('List', 'list', 'table=%s' % table_name, 'test.AutoFormPlus'),
+                        self.build_node('New', 'new', 'table=%s' % table_name, 'test.AutoFormPlus'),
+                        self.build_function_node('Delete','node_delete') ]
+
+                data.append({'title': "n:%s:edit:t=%s|%s" % (self.name, table.table_id, table_name),
+                             'table_type' : table.table_type,
+                             'id' : table.table_id,
+                             'summary': table.summary,
+                             'edit' : edit})
         data = node.create_form_data(self.list_fields, self.list_params, data)
         self.action = 'form'
         self.out = data
@@ -174,14 +229,21 @@ class Table(TableNode):
         table_info = r[table_id]
 
         field_data = []
+        join_data = []
         for (name, value) in table_info.fields.iteritems():
-            if value.__class__.__name__ in self.allowed_types:
+            if value.__class__.__name__ in self.allowed_field_types:
                 field_data.append({'field_name': name,
                                    'field_type': value.__class__.__name__,
                                    'mandatory': value.mandatory,
                                    'length': value.length,
                                    'default': value.default,
                                    'field_id': value.field_id })
+            if value.__class__.__name__ in self.allowed_join_types:
+                join_data.append({'field_name': name,
+                                    'join_table': value.other,
+                                   'join_type': value.__class__.__name__,
+                                   'field_id': value.field_id })
+
 
         table_data = {'table_name': table_info.name,
                       'table_type' : table_info.table_type,
@@ -189,9 +251,10 @@ class Table(TableNode):
                       'table_id': table_info.table_id,
                       'entity': table_info.entity,
                       'logged': table_info.logged,
-                      'fields': field_data}
+                      'fields': field_data,
+                      'joins': join_data}
 
-        data = node.create_form_data(self.fields, None, table_data)
+        data = node.create_form_data(self.fields, self.form_params, table_data)
         self.action = 'form'
         self.out = data
 
