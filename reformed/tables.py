@@ -400,11 +400,39 @@ class Table(object):
 
         dependant_attributes = {}
         for table, relation in self.tables_with_relations.iteritems():
-            if relation.table is self and relation.type <> "manytoone" and relation.many_side_not_null:
+            if relation.table is self and relation.type <> "manytoone":
                 dependant_attributes[relation.name] = relation
-            elif relation.table is not self and relation.type == "manytoone" and relation.many_side_not_null:
+            elif relation.table is not self and relation.type == "manytoone":
                 dependant_attributes[relation.sa_options["backref"]] = relation
         return dependant_attributes
+
+    @property
+    def parent_attributes(self):
+
+        parent_attributes = {}
+        for table, relation in self.tables_with_relations.iteritems():
+            if relation.table is self and relation.type == "manytoone":
+                parent_attributes[relation.name] = relation
+            elif relation.table is not self and relation.type <> "manytoone":
+                parent_attributes[relation.sa_options["backref"]] = relation
+        return parent_attributes
+
+    @property
+    def parent_columns_attributes(self):
+
+        columns = {}
+        for column_name, column in self.foriegn_key_columns.iteritems():
+            if column.original_column <> "id":
+                relation = column.defined_relation
+                if relation.table is self and relation.type == "manytoone":
+                    relation_attribute = relation.name
+                else:
+                    relation_attribute = relation.sa_options["backref"]
+
+                columns[column_name] = relation_attribute
+        return columns
+
+
 
     @property    
     def foriegn_key_columns(self):
@@ -425,27 +453,27 @@ class Table(object):
               (rel.type == "onetoone" and self.name == rel.other) or\
               (rel.type == "manytoone" and self.name == rel.table.name):
                 if database.tables[table].primary_key_columns:
-                    table = database.tables[table]
-                    for name, column in table.primary_key_columns.items():
+                    rtable = database.tables[table]
+                    for name, column in rtable.primary_key_columns.items():
                         new_col = Column(column.type,
                                          name=name,
                                          mandatory = rel.many_side_not_null, 
                                          defined_relation = rel,
                                          original_column = name) 
                         columns[name] = new_col
+
+                if table+"_id" not in columns:
+                    columns[table +'_id'] = Column(sa.Integer,
+                                                   name = table +'_id',
+                                                   mandatory = rel.many_side_not_null,
+                                                   defined_relation= rel,
+                                                   original_column= "id")
                 else:
-                    if table+"_id" not in columns:
-                        columns[table+'_id'] = Column(sa.Integer,
-                                                       name = table+'_id',
-                                                       mandatory = rel.many_side_not_null,
-                                                       defined_relation= rel,
-                                                       original_column= "id")
-                    else:
-                        columns[table+'_id2'] = Column(sa.Integer,
-                                                       name = table+'_id2',
-                                                       mandatory = rel.many_side_not_null,
-                                                       defined_relation= rel,
-                                                       original_column= "id")
+                    columns[table +'_id2'] = Column(sa.Integer,
+                                                   name = table +'_id2',
+                                                   mandatory = rel.many_side_not_null,
+                                                   defined_relation= rel,
+                                                   original_column= "id")
         return columns
 
     @property
@@ -462,7 +490,7 @@ class Table(object):
             other_table_columns=[]
             this_table_columns=[]
             for name, column in self.foriegn_key_columns.iteritems():
-                if column.defined_relation == rel:
+                if column.defined_relation == rel and column.original_column == "id":
                     other_table_columns.append("%s.%s"%\
                                                (table, column.original_column))
                     this_table_columns.append(name)
@@ -482,18 +510,10 @@ class Table(object):
             raise NoMetadataError("table not assigned a metadata")
         sa_table = sa.Table(self.name, self.database.metadata)
 
-
-        if self.primary_key_list:
-            #default = text("coalesce(select max(id) from %s,0) + 1" % (self.name))
-            sa_table.append_column(sa.Column("id", sa.Integer))#, server_default = default))
-        else:
-            sa_table.append_column(sa.Column("id", sa.Integer, primary_key = True))
-
+        sa_table.append_column(sa.Column("id", sa.Integer, primary_key = True))
 
         for name, column in self.foriegn_key_columns.iteritems():
             sa_options = column.sa_options
-            if name in self.primary_key_list:
-                sa_options["primary_key"] = True
             sa_table.append_column(sa.Column(name, column.type, **sa_options))
         defined_columns = self.defined_columns
         for column in self.defined_columns_order:
@@ -506,13 +526,8 @@ class Table(object):
                 if isinstance(sa_options["default"], basestring):
                     default = sa_options.pop("default")
                     sa_options["server_default"] = default
-            if name in self.primary_key_list:
-                sa_options["primary_key"] = True
 
             sa_table.append_column(sa.Column(name, column.type, **sa_options))
-        #if self.primary_key_list:
-        #    primary_keys = tuple(self.primary_key_list)
-        #    sa_table.append_constraint(sa.UniqueConstraint(*primary_keys))
         if self.foreign_key_constraints:
             for con in self.foreign_key_constraints.itervalues():
                 sa_table.append_constraint(sa.ForeignKeyConstraint(con[0],
@@ -590,13 +605,11 @@ class Table(object):
             joined_columns = []
 
             for name, column in self.foriegn_key_columns.iteritems():
-                if relation == column.defined_relation:
+                if relation == column.defined_relation and column.original_column == "id":
                     joined_columns.append([name, column.original_column])
-            #if not joined_columns:
-            #    joined_columns.extend([[a, a] for a in self.primary_key_list])
             if not joined_columns:
                 for name, col in other_rtable.foriegn_key_columns.iteritems():
-                    if relation == col.defined_relation:
+                    if relation == col.defined_relation and col.original_column == "id":
                         joined_columns.append([col.original_column, name])
 
             join_conditions = [] 

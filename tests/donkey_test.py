@@ -391,8 +391,9 @@ class test_basic_input(test_donkey):
 
         results = self.session.query(self.Donkey.t.sub_sub_category).all()
 
+        print [get_all_local_data(a) for a in results]
 
-        assert [get_all_local_data(a) for a in results] == [{'category.category_type': u'wee', 'sub_category.sub_category_name': u'ab', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ab', 'sub_sub_category_name': u'abc', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_sub_category_description': u'this is abc', 'sub_category_name': u'ab', 'category_name': u'a'}]
+        assert [get_all_local_data(a) for a in results] == [{'sub_sub_category_name': u'abc', 'sub_category_id': 1, 'sub_category.sub_category_name': u'ab', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ab', 'category.category_type': u'wee', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_category.category_id': 1, 'sub_sub_category_description': u'this is abc', 'sub_category_name': u'ab', 'category_name': u'a'}]
 
         
         load_local_data(self.Donkey, {"__table": u"sub_sub_category",
@@ -407,7 +408,7 @@ class test_basic_input(test_donkey):
 
         print [get_all_local_data(a) for a in results]
 
-        assert [get_all_local_data(a) for a in results] == [{'category.category_type': u'wee', 'sub_category.sub_category_name': u'ab', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ab', 'sub_sub_category_name': u'abc', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_sub_category_description': u'this is abc', 'sub_category_name': u'ab', 'category_name': u'a'}, {'category.category_type': u'wee', 'sub_category.sub_category_name': u'ac', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ac', 'sub_sub_category_name': u'acc', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_sub_category_description': u'this is acc', 'sub_category_name': u'ac', 'category_name': u'a'}]
+        assert [get_all_local_data(a) for a in results] == [{'sub_sub_category_name': u'abc', 'sub_category_id': 1, 'sub_category.sub_category_name': u'ab', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ab', 'category.category_type': u'wee', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_category.category_id': 1, 'sub_sub_category_description': u'this is abc', 'sub_category_name': u'ab', 'category_name': u'a'}, {'sub_sub_category_name': u'acc', 'sub_category_id': 2, 'sub_category.sub_category_name': u'ac', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ac', 'category.category_type': u'wee', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_category.category_id': 1, 'sub_sub_category_description': u'this is acc', 'sub_category_name': u'ac', 'category_name': u'a'}]
 
 
 
@@ -433,7 +434,7 @@ class test_basic_input(test_donkey):
 
         print [get_all_local_data(a) for a in results][2]
 
-        assert [get_all_local_data(a) for a in results][2]  == {'category.category_type': u'wee', 'sub_category.sub_category_name': u'ac', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ac', 'sub_sub_category_name': u'acd', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_sub_category_description': u'this is acc', 'sub_category_name': u'ac', 'category_name': u'a'}
+        assert [get_all_local_data(a) for a in results][2]  == {'sub_sub_category_name': u'acd', 'sub_category_id': 2, 'sub_category.sub_category_name': u'ac', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ac', 'category.category_type': u'wee', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_category.category_id': 1, 'sub_sub_category_description': u'this is acc', 'sub_category_name': u'ac', 'category_name': u'a'}
 
 
         assert_raises(custom_exceptions.InvalidData,
@@ -524,10 +525,39 @@ class test_basic_input(test_donkey):
 
     def test_dependant_attributes(self):
 
-
         assert self.Donkey["people"].dependant_attributes.keys() == ['contact_summary', 'transactions', 'donkey_sponsership', 'email']
         assert self.Donkey["_core_entity"].dependant_attributes.keys() == ['_membership', 'donkey', 'people', '_relation', 'relation', 'categories']
 
+    def test_parant_col_attributes(self):
+
+        assert self.Donkey["people"].parent_columns_attributes == {}
+
+        assert self.Donkey["__field_params"].parent_columns_attributes == {'field_name': '___field', 'table_name': '___field'}
+
+        assert self.Donkey["entity_categories"].parent_columns_attributes == {'sub_sub_category_name': 'category', 'sub_category_name': 'category', 'category_name': 'category'}
+
+    def test_z_get_values_from_parent(self):
+
+        cat = self.Donkey.get_instance("category")
+        cat.category_name = "go down"
+
+        sub_cat = self.Donkey.get_instance("sub_category")
+        sub_cat.sub_category_name = "and this"
+        cat.sub_category.append(sub_cat)
+
+        sub_sub_cat  = self.Donkey.get_instance("sub_sub_category")      
+        sub_sub_cat.sub_sub_category_name = "wee"
+        sub_cat.sub_sub_category.append(sub_sub_cat)
+
+        self.session.save(cat)
+        self.session.save(sub_cat)
+        self.session.save(sub_sub_cat)
+
+        self.session.commit()
+
+        assert sub_cat.category_name == "go down"
+        assert sub_sub_cat.category_name == "go down"
+        assert sub_sub_cat.sub_category_name == "and this"
 
 
 

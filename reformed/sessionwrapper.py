@@ -78,20 +78,14 @@ class SessionWrapper(object):
 
         if self.has_entity:
             self.add_entity_instance()
-        #print datetime.datetime.now(), "check all validated"
         self.check_all_validated()
-        #print datetime.datetime.now(), "events"
         self.add_events()
-        #print datetime.datetime.now(), "add event"
         self.delete_events()
         self.update_events()
-        #print datetime.datetime.now(), "locked and logged"
         self.add_locked_rows()
         self.add_logged_instances()
-        #print datetime.datetime.now(), "first flush"
         self.session.flush()
         self.after_flush()
-        #print datetime.datetime.now(), "second flush"
         self.session.flush()
         self.after_flush_list = []
         for obj in self.session:
@@ -125,17 +119,33 @@ class SessionWrapper(object):
         object.id = text("(select coalesce((select max(id) from (select * from %s) poo ),0) + 1)" % (object._table.name))
         self.session.add(object)
 
+    def get_value_from_parent(self, object, column):
+
+        parent_attribute = object._table.parent_columns_attributes[column]
+
+        parent_obj = getattr(object, parent_attribute)
+
+        result = getattr(parent_obj, column)
+
+        if result:
+            return result
+        else:
+            return self.get_value_from_parent(parent_obj, column)
+
+
 
     def add_events(self):
 
         for obj in self.session.new:
 
-            ## to sort out an id for the named key tables
-            if obj._table.primary_key_list:
-                self.add_after_flush(self.make_keys, (obj,))
+            ##  special event to get values from parent table
+            for column, property in obj._table.parent_columns_attributes.iteritems():
+                new_value = self.get_value_from_parent(obj, column)
+                setattr(obj, column, new_value )
 
             for events in obj._table.initial_events:
                 events.insert_action(self, obj)
+
         for obj in self.session.new:
             for events in obj._table.events:
                 events.insert_action(self, obj)
