@@ -539,14 +539,14 @@ class test_basic_input(test_donkey):
     def test_z_get_values_from_parent(self):
 
         cat = self.Donkey.get_instance("category")
-        cat.category_name = "go down"
+        cat.category_name = u"go down"
 
         sub_cat = self.Donkey.get_instance("sub_category")
-        sub_cat.sub_category_name = "and this"
+        sub_cat.sub_category_name = u"and this"
         cat.sub_category.append(sub_cat)
 
         sub_sub_cat  = self.Donkey.get_instance("sub_sub_category")      
-        sub_sub_cat.sub_sub_category_name = "wee"
+        sub_sub_cat.sub_sub_category_name = u"wee"
         sub_cat.sub_sub_category.append(sub_sub_cat)
 
         self.session.save(cat)
@@ -555,10 +555,20 @@ class test_basic_input(test_donkey):
 
         self.session.commit()
 
-        assert sub_cat.category_name == "go down"
-        assert sub_sub_cat.category_name == "go down"
-        assert sub_sub_cat.sub_category_name == "and this"
+        assert sub_cat.category_name == u"go down"
+        assert sub_sub_cat.category_name == u"go down"
+        assert sub_sub_cat.sub_category_name == u"and this"
 
+        cat.category_name = u"go down2"
+        sub_cat.sub_category_name = u"and this2"
+
+        self.session.save(cat)
+        self.session.save(sub_cat)
+        self.session.commit()
+
+        assert sub_cat.category_name == u"go down2"
+        assert sub_sub_cat.category_name == u"go down2"
+        assert sub_sub_cat.sub_category_name == u"and this2"
 
 
 class test_after_reload(test_basic_input):

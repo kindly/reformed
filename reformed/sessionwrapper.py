@@ -132,6 +132,17 @@ class SessionWrapper(object):
         else:
             return self.get_value_from_parent(parent_obj, column)
 
+    def update_children(self, obj, attrib, to_update):
+
+
+        for child in getattr(obj, attrib):
+            for col in to_update:
+                value = self.get_value_from_parent(child, col)
+                setattr(child, col, value)
+
+            if child._table.primary_key_list:
+                for attrib in child._table.dependant_attributes:
+                    self.update_children(child, attrib, child._table.primary_key_list)
 
 
     def add_events(self):
@@ -153,6 +164,19 @@ class SessionWrapper(object):
     def update_events(self):
 
         for obj in self.session.dirty:
+
+            ## special event to update children on change
+            if obj._table.primary_key_list:
+                changed = False
+                for column in obj._table.primary_key_list:
+                    a, b, c = attributes.get_history(attributes.instance_state(obj), column,
+                                                  passive = False)
+                    if c:
+                        changed = True
+                if changed:
+                    for attrib in obj._table.dependant_attributes:
+                        self.update_children(obj, attrib, obj._table.primary_key_list)
+
             for events in obj._table.initial_events:
                 events.update_action(self, obj)
         for obj in self.session.dirty:
