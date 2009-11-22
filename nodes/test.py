@@ -324,7 +324,7 @@ class AutoFormPlus(TableNode):
 
     def initialise(self):
         self.table = self.data.get('table')
-        self.extra_data = 'table=%s' % self.table
+        self.extra_data = {'table':self.table}
         fields = []
         field_list = []
         obj = r.get_instance(self.table)
@@ -336,7 +336,7 @@ class AutoFormPlus(TableNode):
         self.field_list = field_list
         self.fields = fields
         self.form_params =  {"form_type": "normal",
-                             "extras" : {"table": self.table}
+                             "extras" : self.extra_data
                             }
 
 

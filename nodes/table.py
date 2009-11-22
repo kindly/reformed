@@ -60,7 +60,8 @@ class Table(node.TableNode):
             ],
             "params":{
                 "form_type": "grid",
-                "title": 'fields'
+                "title": 'fields',
+                "id_field": "field_id"
             }
         },
 
@@ -99,6 +100,10 @@ class Table(node.TableNode):
         r.drop_table(table)
 
     def save(self):
+
+        self.saved = []
+        self.errors = {}
+
         try:
             table_id = int(self.data.get('table_id'))
         except:
@@ -195,6 +200,26 @@ class Table(node.TableNode):
             r.add_table(table)
         r.persist()
 
+        # we need to send data back to the form about the saved items
+
+        # main table info
+        self.saved.append([self.data.get('__root'), r[table_name].table_id])
+        # fields
+        for field in fields:
+            root = field.get('__root')
+            id = 0 # FIXME ned to get the real field_id
+            self.saved.append([root, id])
+
+        # output data
+        out = {}
+        if self.errors:
+            out['errors'] = self.errors
+        if self.saved:
+            out['saved'] = self.saved
+
+        self.out = out
+        self.action = 'save'
+
 
     def list(self):
         data = []
@@ -204,6 +229,7 @@ class Table(node.TableNode):
             if r[table_name].table_type != 'internal':
 
                 edit = [self.build_node('Edit', 'edit', 't=%s' % table.table_id),
+                        self.build_node('Edit table', 'edit', 't=%s' % table.table_id, 'table.Edit'),
                         self.build_node('List', 'list', 'table=%s' % table_name, 'test.AutoFormPlus'),
                         self.build_node('New', 'new', 'table=%s' % table_name, 'test.AutoFormPlus'),
                         self.build_function_node('Delete','node_delete') ]
@@ -258,3 +284,71 @@ class Table(node.TableNode):
         self.action = 'form'
         self.out = data
 
+class Edit(node.TableNode):
+
+    def initialise(self):
+        self.table_id = int(self.data.get('t'))
+        self.extra_data = {"t": self.table_id}
+        fields = []
+        field_list = []
+        obj = r[self.table_id]
+
+        self.table = obj.name
+        columns = obj.schema_info
+        for field in columns.keys():
+            if field not in ['modified_date', 'modified_by','_core_entity_id']:
+                fields.append([field, 'textbox', '%s:' % field])
+                field_list.append(field)
+        self.field_list = field_list
+        self.fields = fields
+        self.form_params =  {"form_type": "grid",
+                             "extras" : self.extra_data
+                            }
+
+    def view(self, read_only=False, limit =100):
+
+        query = self.data.get('q', '')
+        limit = self.data.get('l', limit)
+        offset = self.data.get('o', 0)
+
+        obj = r[self.table_id]
+        results = r.search(obj.name, limit=limit, offset=offset, count=True)
+        data = node.create_form_data(self.fields, self.form_params, results['data'])
+
+        # add the paging info
+        data['paging'] = {'row_count' : results['__count'],
+                         'limit' : limit,
+                         'offset' : offset,
+                         'base_link' : 'n:%s:list:t=%s' % (self.name, self.table_id)}
+
+        self.out = data
+        self.action = 'form'
+
+
+
+    def list(self):
+        self.view()
+
+
+
+    def save(self):
+        self.saved = []
+        self.errors = {}
+
+        session = r.Session()
+
+        self.save_record_rows(session, self.table, self.fields, self.data['data'], [])
+
+
+        session.commit()
+        session.close()
+
+        # output data
+        out = {}
+        if self.errors:
+            out['errors'] = self.errors
+        if self.saved:
+            out['saved'] = self.saved
+
+        self.out = out
+        self.action = 'save'

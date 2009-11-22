@@ -5,7 +5,7 @@
 ##   published by the Free Software Foundation.
 ##
 ##   Reformed is distributed in the hope that it will be useful,
-##   but WITHOUT ANY WARRANTY; without even the implied warranty of
+##   but WITHOUT ANY WARRANTY; without even cthe implied warranty of
 ##   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ##   GNU General Public License for more details.
 ##
@@ -37,7 +37,7 @@ class Node(object):
         self.bookmark = None
         self.next_node = None
         self.next_data = None
-        self.extra_data = None
+        self.extra_data = {}
         self.allowed = self.check_permissions()
 
         self.last_node = data.get('lastnode')
@@ -82,12 +82,20 @@ class Node(object):
         new_node = 'd:%s:%s:%s' % (function, command, data)
         if self.extra_data:
             if data:
-                new_node += '&%s' % self.extra_data
+                new_node += '&%s' % self.build_url_string_from_dict(self.extra_data)
             else:
-                new_node += self.extra_data
+                new_node += self.build_url_string_from_dict(self.extra_data)
         if title:
              new_node = '%s|%s' % (new_node, title)
         return new_node
+
+    def build_url_string_from_dict(self, dict):
+        # returns a url encoded string of a dict
+        # FIXME not safe needs proper encodings
+        out = []
+        for key in dict.keys():
+            out.append('%s=%s' % (key, dict[key]))
+        return '&'.join(out)
 
 
     def initialise(self):
@@ -136,7 +144,6 @@ class TableNode(Node):
         self.setup_code_groups()
         if self.__class__.first_run:
             self.__class__.first_run = False
-            print 'first run'
             self.setup_forms()
 
     def setup_code_groups(self):
@@ -390,7 +397,6 @@ class TableNode(Node):
             for code_group_name in self.code_list:
                 data_out[code_group_name] = self.code_data(code_group_name, data_out)
 
-        print '@@@@@', repr(data_out)
         data = create_form_data(self.fields, self.form_params, data_out, read_only)
         self.out = data
         self.action = 'form'
@@ -430,8 +436,12 @@ class TableNode(Node):
                 self.save_group_codes(session, data)
             session.delete(data)
             session.commit()
-            self.next_node = self.name
-            self.next_data = {'command': 'list'}
+            if self.form_params['form_type'] != 'grid':
+                self.next_data = {'command': 'list', 'data' : self.extra_data}
+                self.next_node = self.name
+            else:
+                self.out = {'deleted': [self.data]}
+                self.action = 'delete'
         except sa.orm.exc.NoResultFound:
             error = 'Record not found.'
             self.out = error
