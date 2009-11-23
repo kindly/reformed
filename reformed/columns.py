@@ -205,6 +205,9 @@ class Relation(BaseSchema):
         cascade = kw.pop("cascade", None)
         if cascade:
             self.sa_options["cascade"] = cascade
+
+        self.foreign_key_name = kw.pop("foreign_key_name", None)
+
         self.many_side_not_null = kw.pop("many_side_not_null", True)
         self.many_side_mandatory = kw.pop("many_side_mandatory", False)
         backref = kw.pop("backref", None)
@@ -239,6 +242,8 @@ class Relation(BaseSchema):
                 self.many_side_mandatory = parent.many_side_mandatory
             if parent.one_way:
                 self.one_way = True
+            if parent.foreign_key_name:
+                self.foreign_key_name = parent.foreign_key_name
 
         if self.name in parent.items.iterkeys():
             raise AttributeError("column already in field definition")
@@ -304,6 +309,9 @@ class Field(object):
         obj.column_order = []
         obj.kw = kw
         obj.field_id = kw.get("field_id", None)
+
+        obj.foreign_key_name = kw.get("foreign_key_name", None)
+
         obj.default = kw.get("default", None)
         if obj.default:
             obj.sa_options["default"] = obj.default

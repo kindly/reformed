@@ -462,7 +462,14 @@ class Table(object):
                                          original_column = name) 
                         columns[name] = new_col
 
-                if table+"_id" not in columns:
+                if rel.foreign_key_name:
+                    columns[rel.foreign_key_name] = Column(sa.Integer,
+                                                   name = rel.foreign_key_name,
+                                                   mandatory = rel.many_side_not_null,
+                                                   defined_relation= rel,
+                                                   original_column= "id")
+
+                elif table+"_id" not in columns:
                     columns[table +'_id'] = Column(sa.Integer,
                                                    name = table +'_id',
                                                    mandatory = rel.many_side_not_null,

@@ -43,7 +43,7 @@ class test_donkey(object):
                                   OneToOne("contact_summary",
                                            "contact_summary"),
                                   OneToMany("transactions",
-                                           "transactions"),
+                                           "transactions", foreign_key_name = "pop"),
                                   entity = True,
                                   summary_fields = "name,address_line_1,postcode"
                                   ),
