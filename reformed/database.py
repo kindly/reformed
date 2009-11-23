@@ -129,6 +129,58 @@ class Database(object):
 
         self._add_table_no_persist(table)
 
+    def rename_table(self, table, new_name, session = None):
+
+        if isinstance(table, tables.Table):
+            table_to_rename = table
+        else:
+            table_to_rename = self.tables[table]
+
+        if session:
+            defer_update = True
+        else:
+            session = self.Session()
+            defer_update = False
+
+        try:
+            field_ids = []
+            for rel in table_to_rename.tables_with_relations.itervalues():
+                if rel.other == table_to_rename.name:
+                    rel.other = new_name
+                    rel.parent.other = new_name
+                    field_ids.append(rel.parent.field_id)
+
+            field_table = self["__field"].sa_class
+            all = session.query(field_table).filter(field_table.id.in_(field_ids)).all() 
+
+            for field in all:
+                field.other = u"%s" % new_name
+                session.save(field)
+
+            table_table = self["__table"].sa_class
+            this_table = session.query(table_table).filter(table_table.id == table_to_rename.table_id).one()
+            this_table.table_name = u"%s" % new_name
+            session.save(this_table)
+            session._flush()
+            if table_to_rename.logged:
+                self.rename_table("_log_%s" % table_to_rename.name, "_log_%s" % new_name, session)
+
+            self.tables.pop(table_to_rename.name)
+            table_to_rename.name = new_name
+            self.tables[new_name] = table_to_rename
+
+            table_to_rename.sa_table.rename(new_name)
+        except Exception, e:
+            session.rollback()
+            raise
+        else:
+            if not defer_update:
+                session._commit()
+                self.update_sa(reload = True)
+        finally:
+            if not defer_update:
+                session.close()
+
     def drop_table(self, table):
 
         session = self.Session()
@@ -278,12 +330,22 @@ class Database(object):
         self.status = "updating"
 
 
-    def load_from_persist(self):
+    def load_from_persist(self, restart = False):
 
         session = self.Session()
+
+        if restart:
+            self.tables = {}
+            self.clear_sa()
+
+        if restart:
+            #old boot table state causes issues
+            boots = boot_tables.boot_tables()
+            self.boot_tables = boots.boot_tables
         
         for table in self.boot_tables:
             self.add_table(table)
+
         self.update_sa()
         self.metadata.create_all(self.engine)
             
@@ -532,7 +594,7 @@ class Database(object):
             
             logging_table.add_field(field)
 
-        logging_table.add_field(Integer("%s_id" % logged_table.name))
+        logging_table.add_field(Integer("_logged_table_id"))
 
         #logging_table.add_field(ManyToOne(logged_table.name+"_logged" 
         #                                 , logged_table.name ))
