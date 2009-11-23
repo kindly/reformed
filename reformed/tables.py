@@ -569,7 +569,7 @@ class Table(object):
                                          )
                 
 
-        SaClass.__name__ = self.name
+        SaClass.__name__ = self.name.encode("ascii")
         self.sa_class = SaClass
 
     def sa_mapper(self):

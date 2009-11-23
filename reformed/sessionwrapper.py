@@ -269,7 +269,7 @@ class SessionWrapper(object):
                 else:
                     setattr(logged_instance, column, getattr(obj, column))
             if changed:
-                setattr(logged_instance, "%s_id" % table.name, obj.id)
+                setattr(logged_instance, "_logged_table_id", obj.id)
                 #setattr(logged_instance, table.name + "_logged", obj)
                 self.add(logged_instance)
 

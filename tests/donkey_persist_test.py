@@ -252,7 +252,8 @@ class test_donkey_persist_sqlite(test_donkey_persist):
     def test_automatic_logging(self):
 
         all_logs = self.session.query(self.Donkey.get_class("_log_donkey")).all()
-        assert (self.jimmi_id, u"jimmii%s" % self.p) in [(a.donkey_id,a.name) for a in all_logs]
+
+        assert (self.jimmi_id, u"jimmii%s" % self.p) in [(a._logged_table_id,a.name) for a in all_logs]
 
     def test_params_load(self):
 
