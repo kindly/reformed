@@ -120,15 +120,32 @@ $INFO = {
 	},
 	
 	
-	getState: function(root, item){
+	getState: function(root, item, search_parent){
 
-		if (root && this._state[root] && 
-		typeof(this._state[root][item]) != 'undefined'){
-			return this._state[root][item];
+        var my_root = _parse_div(root).root;
+		if (my_root && this._state[my_root]){
+            if (typeof(this._state[my_root][item]) != 'undefined'){
+    			return this._state[my_root][item];
+	    	} else {
+                if (!search_parent){
+			        return false;
+                } else {
+                    $INFO.getCallInfo();
+                    // see if we can find the parent and if so look there
+                    var split = my_root.split('#');
+                    if (split.length >1){
+                        var parent_root = '';
+                        for (var i=0; i<split.length -1; i++){
+                             parent_root += split[i] + '#';
+                        }
+                        parent_root = parent_root.substring(0, parent_root.length -1)
+                        return $INFO.getState(parent_root, item);
+                    }
+                }
+            }
 		} else {
-		//	alert('getState:\nnot found\n' + root + ' : ' + item);
-			return false;
-		}
+            alert('state: ' + item + ' not found in ' + root + '\n\n' + $INFO.getCallInfo());
+        }
 	},
 
 	setState: function(root, item, value){
@@ -163,8 +180,95 @@ $INFO = {
 	getStateDebug: function(root){
 		// returns the state for debug purposes
 		return $.toJSON(this._state[root]);
-	}
+	},
 
-};
+    getCallInfo: function(){
+        var callList = 'Call trace\n==========\n'
+        var callerFunc = arguments.callee.caller;
+        var count = 0
+        do {
+        var fn = callerFunc.toString()
+        var callerFuncName = (fn.substring(fn.indexOf("function") + 8, fn.indexOf("("))).replace(/\s/g,'');
+
+        if (callerFuncName == ''){
+            callerFuncName = 'anon';
+        }
+        callList += count + ' => ' + callerFuncName + '\n';
+        if (callerFunc.arguments && callerFunc.arguments.callee.caller !== callerFunc){
+            callerFunc = callerFunc.arguments.callee.caller;
+        } else {
+            callerFunc = null;
+        }
+        count++;
+        } while (count<10 && callerFunc);
+
+        return callList;
+    },
 
 
+getStackTrace : function () {
+
+var mode;
+try {(0)()} catch (e) {
+    mode = e.stack ? 'Firefox' : window.opera ? 'Opera' : 'Other';
+}
+
+switch (mode) {
+    case 'Firefox' : return function () {
+        try {(0)()} catch (e) {
+            return e.stack.replace(/^.*?\n/,'').
+                           replace(/(?:\n@:0)?\s+$/m,'').
+                           replace(/^\(/gm,'{anonymous}(').
+                           split("\n");
+        }
+    };
+
+    case 'Opera' : return function () {
+        try {(0)()} catch (e) {
+            var lines = e.message.split("\n"),
+                ANON = '{anonymous}',
+                lineRE = /Line\s+(\d+).*?in\s+(http\S+)(?:.*?in\s+function\s+(\S+))?/i,
+                i,j,len;
+
+            for (i=4,j=0,len=lines.length; i<len; i+=2) {
+                if (lineRE.test(lines[i])) {
+                    lines[j++] = (RegExp.$3 ?
+                        RegExp.$3 + '()@' + RegExp.$2 + RegExp.$1 :
+                        ANON + RegExp.$2 + ':' + RegExp.$1) +
+                        ' -- ' + lines[i+1].replace(/^\s+/,'');
+                }
+            }
+
+            lines.splice(j,lines.length-j);
+            return lines;
+        }
+    };
+
+    default : return function () {
+        var curr  = arguments.callee.caller,
+            FUNC  = 'function', ANON = "{anonymous}",
+            fnRE  = /function\s*([\w\-$]+)?\s*\(/i,
+            stack = [],j=0,
+            fn,args,i;
+
+        while (curr) {
+            fn    = fnRE.test(curr.toString()) ? RegExp.$1 || ANON : ANON;
+            args  = stack.slice.call(curr.arguments);
+            i     = args.length;
+
+            while (i--) {
+                switch (typeof args[i]) {
+                    case 'string'  : args[i] = '"'+args[i].replace(/"/g,'\\"')+'"'; break;
+                    case 'function': args[i] = FUNC; break;
+                }
+            }
+
+            stack[j++] = fn + '(' + args.join() + ')';
+            curr = curr.caller;
+        }
+
+        return stack;
+    };
+}
+}
+}

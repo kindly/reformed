@@ -793,7 +793,7 @@ function node_delete(root, command){
     var sent_data = $INFO.getState(my_root, 'sent_data');
     // FIXME we don't have the node for subforms yet
     // do we set them up with the correct node or backtrack to their parent?
-    var node =  $INFO.getState(my_root, 'node');
+    var node =  $INFO.getState(my_root, 'node', true);
     var out = {__root: root};
     var id;
     var __id;
@@ -825,6 +825,10 @@ function node_delete(root, command){
     if (form_data && form_data.params && form_data.params.id_field){
         var id_field = form_data.params.id_field;
         out[id_field] = sent_data[parsed_root.row][id_field];
+    }
+
+    if (form_data && form_data.table_name){
+        out['table_name'] = form_data.table_name;
     }
 
     var params = $INFO.getState(my_root, 'form_data').params;
