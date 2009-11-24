@@ -310,7 +310,8 @@ class Field(object):
         obj.kw = kw
         obj.field_id = kw.get("field_id", None)
 
-        obj.foreign_key_name = kw.get("foreign_key_name", None)
+        ## this is popped as we dont want it to appear in field_params
+        obj.foreign_key_name = kw.pop("foreign_key_name", None)
 
         obj.default = kw.get("default", None)
         if obj.default:

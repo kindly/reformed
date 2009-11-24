@@ -141,6 +141,8 @@ class Table(object):
             __field.type = u"%s" % field.__class__.__name__
             if hasattr(field, "other"):
                 __field.other = u"%s" % field.other
+            if field.foreign_key_name:
+                __field.foreign_key_name = u"%s" % field.foreign_key_name
             __table.field.append(__field)
             session.add(__field)
             
@@ -255,6 +257,9 @@ class Table(object):
         __field.type = u"%s" % field.__class__.__name__
         if hasattr(field, "other"):
             __field.other = u"%s" % field.other
+
+        if field.foreign_key_name:
+            __field.foreign_key_name = field.foreign_key_name
         
         for name, param in field.kw.iteritems():
             __field_param = self.database.tables["__field_params"].sa_class()
@@ -475,12 +480,14 @@ class Table(object):
                                                    mandatory = rel.many_side_not_null,
                                                    defined_relation= rel,
                                                    original_column= "id")
+                    rel.foreign_key_name = rel.foreign_key_name or table + '_id'
                 else:
                     columns[table +'_id2'] = Column(sa.Integer,
                                                    name = table +'_id2',
                                                    mandatory = rel.many_side_not_null,
                                                    defined_relation= rel,
                                                    original_column= "id")
+                    rel.foreign_key_name = rel.foreign_key_name or table + '_id2'
         return columns
 
     @property

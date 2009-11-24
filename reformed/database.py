@@ -136,6 +136,7 @@ class Database(object):
         else:
             table_to_rename = self.tables[table]
 
+
         if session:
             defer_update = True
         else:
@@ -143,17 +144,39 @@ class Database(object):
             defer_update = False
 
         try:
-            field_ids = []
-            for rel in table_to_rename.tables_with_relations.itervalues():
+            
+            fields_change_foreign = {}
+            for table, relation in table_to_rename.tables_with_relations.iteritems():
+                for col in self[table[0]].foriegn_key_columns.itervalues():
+                    if col.original_column == "id" and relation == col.defined_relation:
+                        field = relation.parent
+                        field.foreign_key_name = col.name
+                        fields_change_foreign[field.field_id] = col.name
+
+            field_other_change_ids = []
+
+            ## do not put this before previous loop or it will change results
+            for rel in table_to_rename.tables_with_relations.values():
                 if rel.other == table_to_rename.name:
                     rel.other = new_name
                     rel.parent.other = new_name
-                    field_ids.append(rel.parent.field_id)
+                    field_other_change_ids.append(rel.parent.field_id)
+
 
             field_table = self["__field"].sa_class
-            all = session.query(field_table).filter(field_table.id.in_(field_ids)).all() 
 
-            for field in all:
+            filter = field_table.id.in_(fields_change_foreign.keys())
+                                                           
+            all_rename = session.query(field_table).filter(filter).all() 
+
+            for field in all_rename:
+                field.foreign_key_name = u"%s" % fields_change_foreign[field.id]
+                session.save(field)
+
+
+            all_other = session.query(field_table).filter(field_table.id.in_(field_other_change_ids)).all() 
+
+            for field in all_other:
                 field.other = u"%s" % new_name
                 session.save(field)
 
@@ -371,6 +394,10 @@ class Database(object):
                     field_other = field.other.encode("ascii") 
                 else:
                     field_other = field.other
+                if field.foreign_key_name:
+                    foreign_key_name = field.foreign_key_name.encode("ascii") 
+                else:
+                    foreign_key_name = field.foreign_key_name
                 field_kw = {}
                 for field_param in field.field_params:
                     if field_param.value == u"True":
@@ -383,6 +410,7 @@ class Database(object):
 
                 fields.append(getattr(field_types, field.type)(field_name,
                                                               field_other,
+                                                              foreign_key_name = foreign_key_name,
                                                               field_id = field.id,
                                                               **field_kw))
             kw = {}
