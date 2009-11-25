@@ -410,11 +410,14 @@ class Database(object):
             self.persisted = True
             
         self.update_sa()
+        self.validate_database()
         session.close()
 
     def add_relations(self):     #not property for optimisation
         self.relations = []
         for table_name, table_value in self.tables.iteritems():
+            ## make sure fk columns are remade
+            table_value.foriegn_key_columns_current = None
             for rel_name, rel_value in table_value.relations.iteritems():
                 self.relations.append(rel_value)
 

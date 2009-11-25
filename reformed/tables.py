@@ -239,6 +239,37 @@ class Table(object):
         else:
             self._add_field_no_persist(field)
 
+    def rename_field(self, field, new_name):
+
+        if self.database.engine.name == "sqlite":
+            ##FIXME make better exception
+            raise Exception("sqlite cannot alter fields")
+
+        if isinstance(field, basestring):
+            field = self.fields[field]
+
+        session = self.database.Session()
+
+        try:
+            column = field.columns[field.column_order[0]] ##TODO make sure only 1 column in field
+            row = field.get_field_row_from_table(session)
+            row.field_name = u"%s" % new_name
+            session.save(row)
+
+            self.sa_table.c[column.name].alter(name = new_name)
+
+            session._flush()
+        
+        except Exception, e:
+            session.rollback()
+            raise
+        else:
+            session._commit()
+            self.database.load_from_persist(True)
+        finally:
+            session.close()
+
+
     def _add_field_no_persist(self, field):
         """add a Field object to this Table"""
         field._set_parent(self)

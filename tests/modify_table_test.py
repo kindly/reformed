@@ -67,7 +67,7 @@ class test_modify_table_sqlite(object):
         #self.session.add(self.jim)
         #self.session.commit()
 
-    def test_add_relation(self):
+    def test_2_add_relation(self):
 
         table1 =  self.Donkey["moo01%s" % self.randish]
         table2 =  self.Donkey["moo02%s" % self.randish]
@@ -93,7 +93,7 @@ class test_modify_table_sqlite(object):
 
 
 
-    def test_rename_table(self):
+    def test_3_rename_table(self):
 
         table1 = tables.Table("to_rename%s" % self.randish, Text("moo"))
         table2 = tables.Table("to_join%s" % self.randish, Text("moo"))
@@ -128,6 +128,28 @@ class test_modify_table_sqlite(object):
 
 
 
+    def test_4_rename_field(self):
+
+        table1 = tables.Table("rename_field", Text("moo"))
+
+        self.Donkey.add_table(table1)
+        self.Donkey.persist()
+
+        if self.Donkey.engine.name == "sqlite":
+            assert_raises(Exception, table1.rename_field, "moo", "mooed") 
+            return
+
+        table1.rename_field("moo", "mooed") 
+
+        result = validate_database(self.Donkey)
+
+        assert result[0] == []
+        assert result[1] == []
+        assert result[2] == []
+
+
+
+
 
 
 
@@ -139,7 +161,7 @@ class test_modify_table_mysql(test_modify_table_sqlite):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine('mysql://localhost/test_donkey')
+        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
         super(test_modify_table_mysql, cls).setUpClass()
 
 
@@ -147,5 +169,5 @@ class test_modify_table_postgres(test_modify_table_sqlite):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine('postgres://david:@:5432/test_donkey')
+        cls.engine = create_engine('postgres://david:@:5432/test_donkey', echo = True)
         super(test_modify_table_postgres, cls).setUpClass()
