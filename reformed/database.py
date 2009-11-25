@@ -443,6 +443,8 @@ class Database(object):
             for rel_name, rel_value in table_value.relations.iteritems():
                 self.relations.append(rel_value)
 
+
+
     def checkrelations(self):
         for relation in self.relations:
             if relation.other not in self.tables.iterkeys():
@@ -463,12 +465,14 @@ class Database(object):
     def update_sa(self, reload = False, update_tables = True):
         if reload == True and self.status <> "terminated":
             self.status = "updating"
+
+        if reload:
+            self.clear_sa()
+
         if update_tables:
             self.update_tables()
         self.checkrelations()
         self.check_related_order_by()
-        if reload:
-            self.clear_sa()
         self.make_graph()
         try:
             for table in self.tables.itervalues():
@@ -497,6 +501,7 @@ class Database(object):
         sa.orm.clear_mappers()
         self.metadata.clear()
         for table in self.tables.itervalues():
+            table.foriegn_key_columns_current = None
             table.mapper = None
             table.sa_class = None
             table.sa_table = None

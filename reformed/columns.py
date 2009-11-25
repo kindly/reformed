@@ -421,6 +421,13 @@ class Field(object):
 
         return new, removed, difference
 
+    def get_field_row_from_table(self, session):
+        
+        sa_class = self.table.database["__field"].sa_class
+        query = session.query(sa_class)
+        result = query.filter(sa_class.id == self.field_id).one()
+        return result
+
 
     @property
     def items(self):

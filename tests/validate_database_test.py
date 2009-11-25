@@ -8,13 +8,14 @@ import random
 import logging
 import reformed.validate_database
 import migrate.changeset
+from tests.donkey_test import test_donkey
 
 sqlhandler = logging.FileHandler("sql.log")
 sqllogger = logging.getLogger('sqlalchemy.engine')
 sqllogger.setLevel(logging.info)
 sqllogger.addHandler(sqlhandler)
 
-class test_donkey_validate_sqlite(object):
+class test_donkey_validate_sqlite(test_donkey):
 
     persist = True
 
@@ -22,6 +23,14 @@ class test_donkey_validate_sqlite(object):
     def setUpClass(cls):
         if not hasattr(cls, "engine"):
             cls.engine = create_engine('sqlite:///tests/test_donkey.sqlite',echo = True)
+
+        meta_to_drop = sa.MetaData()
+        meta_to_drop.reflect(bind=cls.engine)
+        for table in reversed(meta_to_drop.sorted_tables):
+            table.drop(bind=cls.engine)
+
+        super(test_donkey_validate_sqlite, cls).setUpClass()
+
         cls.meta = sa.MetaData(cls.engine)
         cls.Session = sa.orm.sessionmaker(bind =cls.engine , autoflush = False)
         cls.Donkey = Database("Donkey", 

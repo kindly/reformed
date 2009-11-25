@@ -103,6 +103,7 @@ class Table(object):
             self.add_field(Modified("modified_date"))
             self.add_field(ModifiedBySession("modified_by" ))
 
+        self.foriegn_key_columns_current = None
         #sqlalchemy objects
         self.sa_table = None
         self.sa_class = None
@@ -446,6 +447,8 @@ class Table(object):
         relationship it will return the primary key on the "one"
         side"""
 
+        if self.foriegn_key_columns_current:
+            return self.foriegn_key_columns_current
         
         self.check_database()
         database = self.database
@@ -485,6 +488,9 @@ class Table(object):
                                                    defined_relation= rel,
                                                    original_column= "id")
                     rel.foreign_key_name = rel.foreign_key_name or table + '_id2'
+
+        self.foriegn_key_columns_current = columns
+
         return columns
 
     @property

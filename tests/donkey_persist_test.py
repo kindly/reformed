@@ -9,6 +9,7 @@ import sqlalchemy as sa
 from sqlalchemy import create_engine
 import random
 import time
+from tests.donkey_test import test_donkey
 from reformed.util import get_table_from_instance, load_local_data
 from reformed.validate_database import validate_database
 import logging
@@ -20,14 +21,19 @@ sqllogger.setLevel(logging.info)
 sqllogger.addHandler(sqlhandler)
 
 
-class test_donkey_persist(object):
+class test_donkey_persist(test_donkey):
 
     persist = True
 
     @classmethod
     def setUpClass(cls):
+
         if not hasattr(cls, "engine"):
+            os.system("rm tests/test_donkey.sqlite")
             cls.engine = create_engine('sqlite:///tests/test_donkey.sqlite')
+
+        super(test_donkey_persist, cls).setUpClass()
+
         cls.meta = sa.MetaData()
         cls.Session = sa.orm.sessionmaker(bind =cls.engine , autoflush = False)
         cls.Donkey = Database("Donkey", 
@@ -349,6 +355,8 @@ class test_donkey_persist_mysql(test_donkey_persist_sqlite):
 
     @classmethod
     def setUpClass(cls):
+        os.system("mysqladmin --host=localhost drop test_donkey --force=TRUE")
+        os.system("mysqladmin --host=localhost create test_donkey --force=TRUE")
         cls.engine = create_engine('mysql://localhost/test_donkey')
         super(test_donkey_persist_mysql, cls).setUpClass()
 
@@ -356,5 +364,7 @@ class test_donkey_persist_post(test_donkey_persist_sqlite):
 
     @classmethod
     def setUpClass(cls):
+        os.system("dropdb test_donkey")
+        os.system("createdb test_donkey")
         cls.engine = create_engine('postgres://david:@:5432/test_donkey')
         super(test_donkey_persist_post, cls).setUpClass()
