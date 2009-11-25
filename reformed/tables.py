@@ -279,6 +279,12 @@ class Table(object):
         for field in __table.field:
             self.fields[field.field_name].field_id = field.id
 
+    def get_table_row_from_table(self, session):
+        
+        sa_class = self.database["__table"].sa_class
+        query = session.query(sa_class)
+        result = query.filter(sa_class.id == self.table_id).one()
+        return result
 
     @property    
     def items(self):

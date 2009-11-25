@@ -32,6 +32,11 @@ class test_donkey_persist(test_donkey):
             os.system("rm tests/test_donkey.sqlite")
             cls.engine = create_engine('sqlite:///tests/test_donkey.sqlite')
 
+        meta_to_drop = sa.MetaData()
+        meta_to_drop.reflect(bind=cls.engine)
+        for table in reversed(meta_to_drop.sorted_tables):
+            table.drop(bind=cls.engine)
+
         super(test_donkey_persist, cls).setUpClass()
 
         cls.meta = sa.MetaData()
@@ -355,8 +360,6 @@ class test_donkey_persist_mysql(test_donkey_persist_sqlite):
 
     @classmethod
     def setUpClass(cls):
-        os.system("mysqladmin --host=localhost drop test_donkey --force=TRUE")
-        os.system("mysqladmin --host=localhost create test_donkey --force=TRUE")
         cls.engine = create_engine('mysql://localhost/test_donkey')
         super(test_donkey_persist_mysql, cls).setUpClass()
 
@@ -364,7 +367,5 @@ class test_donkey_persist_post(test_donkey_persist_sqlite):
 
     @classmethod
     def setUpClass(cls):
-        os.system("dropdb test_donkey")
-        os.system("createdb test_donkey")
         cls.engine = create_engine('postgres://david:@:5432/test_donkey')
         super(test_donkey_persist_post, cls).setUpClass()

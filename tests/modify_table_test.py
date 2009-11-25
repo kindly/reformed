@@ -100,32 +100,32 @@ class test_modify_table_sqlite(object):
 
         start = datetime.datetime.now()
 
+        print "before make", self.engine.name,  datetime.datetime.now() - start
         self.Donkey.add_table(table1)
         self.Donkey.add_table(table2)
+        print "mid make", self.engine.name, datetime.datetime.now() - start
         self.Donkey.persist()
+        print "after make", self.engine.name, datetime.datetime.now() - start
 
         table2.add_relation(ManyToOne("to_rename%s" % self.randish,
                                       "to_rename%s" % self.randish))
 
+        print "after add_relation", self.engine.name, datetime.datetime.now() - start
+
+
 
         self.Donkey.rename_table("to_rename%s" % self.randish, "renamed%s" % self.randish) 
 
+        print "after rename", self.engine.name, datetime.datetime.now() - start
 
         result = validate_database(self.Donkey)
 
+        print "after validate", self.engine.name, datetime.datetime.now() - start
 
         assert result[0] == []
         assert result[1] == []
         assert result[2] == []
 
-        self.Donkey.load_from_persist(True)
-
-
-        result = validate_database(self.Donkey)
-
-        assert result[0] == []
-        assert result[1] == []
-        assert result[2] == []
 
 
 

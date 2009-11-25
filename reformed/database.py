@@ -136,7 +136,6 @@ class Database(object):
         else:
             table_to_rename = self.tables[table]
 
-
         if session:
             defer_update = True
         else:
@@ -144,53 +143,29 @@ class Database(object):
             defer_update = False
 
         try:
-            
-            fields_change_foreign = {}
+            #update fields in other tables so that they do not have to change their name
             for relation in table_to_rename.tables_with_relations.itervalues():
                 if relation.foreign_key_table <> table_to_rename.name:
                     field = relation.parent
-                    foriegn_key_name = relation.foriegn_key_id_name
-                    field.foreign_key_name = foriegn_key_name
-                    fields_change_foreign[field.field_id] = foriegn_key_name
+                    foreign_key_name = relation.foriegn_key_id_name
+                    row = field.get_field_row_from_table(session)
+                    row.foreign_key_name = u"%s" % foreign_key_name
+                    session.save(row)
 
-            field_other_change_ids = []
-
-            ## do not put this before previous loop or it will change results
             for rel in table_to_rename.tables_with_relations.values():
                 if rel.other == table_to_rename.name:
-                    rel.other = new_name
-                    rel.parent.other = new_name
-                    field_other_change_ids.append(rel.parent.field_id)
-
-
-            field_table = self["__field"].sa_class
-
-            filter = field_table.id.in_(fields_change_foreign.keys())
-                                                           
-            all_rename = session.query(field_table).filter(filter).all() 
-
-            for field in all_rename:
-                field.foreign_key_name = u"%s" % fields_change_foreign[field.id]
-                session.save(field)
-
-
-            all_other = session.query(field_table).filter(field_table.id.in_(field_other_change_ids)).all() 
-
-            for field in all_other:
-                field.other = u"%s" % new_name
-                session.save(field)
-
-            table_table = self["__table"].sa_class
-            this_table = session.query(table_table).filter(table_table.id == table_to_rename.table_id).one()
-            this_table.table_name = u"%s" % new_name
-            session.save(this_table)
+                    field = rel.parent
+                    row = field.get_field_row_from_table(session)
+                    row.other = u"%s" % new_name
+                    session.save(row)
+            
+            row = table_to_rename.get_table_row_from_table(session)
+            row.table_name = u"%s" % new_name
+            session.save(row)
             session._flush()
+
             if table_to_rename.logged:
                 self.rename_table("_log_%s" % table_to_rename.name, "_log_%s" % new_name, session)
-
-            self.tables.pop(table_to_rename.name)
-            table_to_rename.name = new_name
-            self.tables[new_name] = table_to_rename
 
             table_to_rename.sa_table.rename(new_name)
         except Exception, e:
@@ -199,7 +174,7 @@ class Database(object):
         else:
             if not defer_update:
                 session._commit()
-                self.update_sa(reload = True)
+                self.load_from_persist(True)
         finally:
             if not defer_update:
                 session.close()
