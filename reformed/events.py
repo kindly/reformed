@@ -95,11 +95,7 @@ class ChangeEvent(object):
 
         relation = this_table.relation_attributes[relation_name]
 
-
-        if relation.table == this_table:
-            join_keys = relation.this_table_join_keys
-        if relation.table == other_table:
-            join_keys = relation.this_table_join_keys[::-1]
+        join_keys = relation.join_keys_from_table(this_table.name)
 
         return zip(join_keys[0],join_keys[1])
 

@@ -262,12 +262,18 @@ class Relation(BaseSchema):
          raise ArgumentError("table %s is not part of this relation" % table_name)
     
     @property
-    def foriegn_key_table(self):
+    def foreign_key_table(self):
 
         if self.type == "manytoone":
             return self.table.name
         else:
             return self.other
+
+    @property
+    def foriegn_key_id_name(self):
+
+        return self.join_keys_from_table(self.foreign_key_table)[0][0]
+
     
     def join_keys_from_table(self, table_name):
          
@@ -297,12 +303,12 @@ class Relation(BaseSchema):
         keys_other_table = []
         if self.type in ("manytoone"):
             for name, column in self.table.foriegn_key_columns.iteritems():
-                if column.defined_relation == self:
+                if column.defined_relation == self and column.original_column == "id":
                     keys_this_table.append(name)
                     keys_other_table.append(column.original_column)
         if self.type in ("onetoone", "onetomany"):
             for name, column in self.other_table.foriegn_key_columns.iteritems():
-                if column.defined_relation == self:
+                if column.defined_relation == self and column.original_column == "id":
                     keys_this_table.append(column.original_column)
                     keys_other_table.append(name)
 

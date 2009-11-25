@@ -146,12 +146,12 @@ class Database(object):
         try:
             
             fields_change_foreign = {}
-            for table, relation in table_to_rename.tables_with_relations.iteritems():
-                for col in self[table[0]].foriegn_key_columns.itervalues():
-                    if col.original_column == "id" and relation == col.defined_relation:
-                        field = relation.parent
-                        field.foreign_key_name = col.name
-                        fields_change_foreign[field.field_id] = col.name
+            for relation in table_to_rename.tables_with_relations.itervalues():
+                if relation.foreign_key_table <> table_to_rename.name:
+                    field = relation.parent
+                    foriegn_key_name = relation.foriegn_key_id_name
+                    field.foreign_key_name = foriegn_key_name
+                    fields_change_foreign[field.field_id] = foriegn_key_name
 
             field_other_change_ids = []
 

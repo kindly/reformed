@@ -453,7 +453,7 @@ class Table(object):
         ##  could be made simpler
         for tab, rel in self.tables_with_relations.iteritems():
             table, pos = tab
-            if rel.foriegn_key_table == self.name:
+            if rel.foreign_key_table == self.name:
                 if database.tables[table].primary_key_columns:
                     rtable = database.tables[table]
                     for name, column in rtable.primary_key_columns.items():
