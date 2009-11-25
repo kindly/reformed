@@ -24,6 +24,7 @@
 ##  fields such as name,type, indexes and constraints. 
 
 import sqlalchemy as sa
+import util
 import custom_exceptions 
 
 class BaseSchema(object):
@@ -250,6 +251,36 @@ class Relation(BaseSchema):
         else:
             parent.add_relation(self.name, self)
             self.parent = parent
+
+    def join_type_from_table(self, table_name):
+
+         if self.table.name == table_name:
+             return self.type
+         if self.other == table_name:
+             return util.swap_relations(self.type)
+
+         raise ArgumentError("table %s is not part of this relation" % table_name)
+    
+    @property
+    def foriegn_key_table(self):
+
+        if self.type == "manytoone":
+            return self.table.name
+        else:
+            return self.other
+    
+    def join_keys_from_table(self, table_name):
+         
+         table = self.table.database.tables[table_name]
+
+         if self.parent.table.name == table_name:
+             return self.this_table_join_keys
+         if self.other == table_name:
+             return self.this_table_join_keys[::-1]
+
+         raise ArgumentError("table %s is not part of this relation" % table_name)
+
+        
 
     @property
     def other_table(self):
