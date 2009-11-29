@@ -6,6 +6,7 @@ from reformed.export import json_dump_all_from_table
 from nose.tools import assert_raises
 from tests.donkey_persist_test import test_donkey_persist
 import yaml
+import reformed.custom_exceptions
 import datetime
 import sqlalchemy as sa
 from sqlalchemy import create_engine
@@ -147,9 +148,42 @@ class test_modify_table_sqlite(object):
         assert result[1] == []
         assert result[2] == []
 
+    def test_5_drop_table(self):
+
+        table1 =  self.Donkey["moo01%s" % self.randish]
+
+        assert_raises(custom_exceptions.DependencyError, self.Donkey.drop_table, table1)
+
+        table2 =  self.Donkey["moo02%s" % self.randish]
+
+        self.Donkey.drop_table(table2)
+
+        result = validate_database(self.Donkey)
+
+        assert result[0] == []
+        assert result[1] == []
+        assert result[2] == []
+
+        table4 =  self.Donkey["moo04%s" % self.randish]
+
+        self.Donkey.drop_table(table4)
+
+        result = validate_database(self.Donkey)
+
+        assert result[0] == []
+        assert result[1] == []
+        assert result[2] == []
 
 
+        table1 =  self.Donkey["moo01%s" % self.randish]
 
+        self.Donkey.drop_table(table1)
+
+        result = validate_database(self.Donkey)
+
+        assert result[0] == []
+        assert result[1] == []
+        assert result[2] == []
 
 
 

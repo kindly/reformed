@@ -183,27 +183,41 @@ class Database(object):
 
         session = self.Session()
 
-        if isinstance(table, tables.Table):
-            table_to_drop = table
-        else:
-            table_to_drop = self.tables[table]
+        try:
+            if isinstance(table, tables.Table):
+                table_to_drop = table
+            else:
+                table_to_drop = self.tables[table]
 
+            if table_to_drop.dependant_tables:
+                raise custom_exceptions.DependencyError((
+                    "cannot delete table %s as the following tables"
+                    " depend on it %s" % (table.name, table.dependant_tables)))
+
+            row = table_to_drop.get_table_row_from_table(session)
+            session.delete(row)
+
+            for relation in table_to_drop.tables_with_relations.itervalues():
+                row = relation.parent.get_field_row_from_table(session)
+                session.delete(row)
+
+            session._flush()
+
+            table_to_drop.sa_table.drop()
+            
+        except Exception, e:
+            session.rollback()
+            raise
+        else:
+            session.commit()
+            self.load_from_persist(True)
+            self.add_relations()
+        finally:
+            session.close()
 
         if table_to_drop.logged:
-            logger_instance = session.query(self.get_class("__table")).filter_by(table_name = u"_log_%s" % table_to_drop.name).one()
-            session.delete(logger_instance)
-            self.tables["_log_" + table_to_drop.name].sa_table.drop() 
-            self.tables.pop("_log_" + table_to_drop.name)
-
-        instance = session.query(self.get_class("__table")).filter_by(table_name = u"%s" % table_to_drop.name).one()
-        session.delete(instance)
-        table_to_drop.sa_table.drop()
-        self.tables.pop(table_to_drop.name)
-
-        session.commit()
-        self.add_relations()
-        self.update_sa(reload = True)
-        session.close()
+            self.drop_table(self.tables["_log_" + table_to_drop.name])
+        
 
     @property
     def t(self):
@@ -418,6 +432,7 @@ class Database(object):
         for table_name, table_value in self.tables.iteritems():
             ## make sure fk columns are remade
             table_value.foriegn_key_columns_current = None
+            table_value.add_relations()
             for rel_name, rel_value in table_value.relations.iteritems():
                 self.relations.append(rel_value)
 

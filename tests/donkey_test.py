@@ -522,6 +522,12 @@ class test_basic_input(test_donkey):
         assert self.Donkey["people"].dependant_attributes.keys() == ['contact_summary', 'transactions', 'donkey_sponsership', 'email']
         assert self.Donkey["_core_entity"].dependant_attributes.keys() == ['_membership', 'donkey', 'people', '_relation', 'relation', 'categories']
 
+    def test_dependant_tables(self):
+
+        assert set(self.Donkey["people"].dependant_tables) == set(['contact_summary', 'transactions', 'donkey_sponsership', 'email'])
+
+        assert set(self.Donkey["_core_entity"].dependant_tables) == set(['people', 'entity_categories', 'membership', 'relation', 'donkey', 'relation'])
+
     def test_parant_col_attributes(self):
 
         assert self.Donkey["people"].parent_columns_attributes == {}

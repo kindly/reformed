@@ -451,6 +451,17 @@ class Table(object):
         return dependant_attributes
 
     @property
+    def dependant_tables(self):
+        dependant_tables = []
+
+        for table, relation in self.tables_with_relations.iteritems():
+            if relation.table is self and relation.type <> "manytoone":
+                dependant_tables.append(table[0])
+            elif relation.table is not self and relation.type == "manytoone":
+                dependant_tables.append(table[0])
+        return dependant_tables
+
+    @property
     def parent_attributes(self):
 
         parent_attributes = {}
