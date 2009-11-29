@@ -168,6 +168,7 @@ class TableNode(Node):
                 data = create_form_data(subform.get('fields'), subform.get('params'))
                 data['form']['parent_id'] =  subform.get('parent_id')
                 data['form']['child_id'] =  subform.get('child_id')
+                data['form']['table_name'] =  subform.get('table')
                 self.__class__.subform_data[name] = data
                 field.append(data)
                 self.setup_subforms(name)
@@ -426,9 +427,11 @@ class TableNode(Node):
         else:
             id = self.data.get('__id')
             filter = {'_core_entity_id' : id}
+        # FIXME i'd rather get this data ourself and not rely on the returned info
+        table = self.data.get('table_name', self.table)
 
         session = r.reformed.Session()
-        obj = r.reformed.get_class(self.table)
+        obj = r.reformed.get_class(table)
         try:
             data = session.query(obj).filter_by(**filter).one()
             # code_groups
@@ -436,7 +439,8 @@ class TableNode(Node):
                 self.save_group_codes(session, data)
             session.delete(data)
             session.commit()
-            if self.form_params['form_type'] != 'grid':
+            # FIXME this needs to be handled more nicely
+            if self.form_params['form_type'] != 'grid' and self.table == table:
                 self.next_data = {'command': 'list', 'data' : self.extra_data}
                 self.next_node = self.name
             else:
@@ -446,7 +450,9 @@ class TableNode(Node):
             error = 'Record not found.'
             self.out = error
             self.action = 'general_error'
-        except sa.exc.IntegrityError:
+        except sa.exc.IntegrityError, e:
+            print e
+
             error = 'The record cannot be deleted,\nIt is referenced by another record.'
             self.out = error
             self.action = 'general_error'

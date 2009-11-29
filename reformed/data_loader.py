@@ -311,7 +311,7 @@ class FlatFile(object):
             session.close()
 
 
-    def load(self, validation = True, load_multiprocess = False, batch = 250, messager = None):
+    def load(self, validation = True, load_multiprocess = False, batch = 50, messager = None):
 
         self.validation = validation
 

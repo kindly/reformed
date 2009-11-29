@@ -292,11 +292,10 @@ class Edit(node.TableNode):
         fields = []
         field_list = []
         obj = r[self.table_id]
-
         self.table = obj.name
         columns = obj.schema_info
-        for field in columns.keys():
-            if field not in ['modified_date', 'modified_by','_core_entity_id']:
+        for field in obj.field_order:
+            if field not in ['modified_date', 'modified_by','_core_entity_id'] and field in columns:
                 fields.append([field, 'textbox', '%s:' % field])
                 field_list.append(field)
         self.field_list = field_list
