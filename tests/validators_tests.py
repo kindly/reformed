@@ -34,7 +34,8 @@ class test_validation(test_donkey):
 
     def test_schema_dict(self):
 
-        assert self.Donkey.tables["email"].schema_info == {'modified_date': [{'not_empty': False, 'type': 'DateValidator'}], 'active_email': [{'not_empty': False, 'type': 'Bool'}], 'modified_by': [{'not_empty': False, 'type': 'Int'}], 'people_id': [{'not_empty': False, 'type': 'Int'}], 'email_number': [], 'email': [{'max': 300, 'not_empty': False, 'type': 'UnicodeString'}, {'type': 'Email'}]}
+        print self.Donkey.tables["email"].schema_info
+        assert self.Donkey.tables["email"].schema_info == {'modified_date': [{'not_empty': False, 'type': 'DateValidator'}], 'active_email': [{'not_empty': False, 'type': 'Bool'}], 'modified_by': [{'not_empty': False, 'type': 'Int'}], 'version_id': [{'not_empty': False, 'type': 'Int'}], 'people_id': [{'not_empty': False, 'type': 'Int'}], 'email_number': [], 'email': [{'max': 300, 'not_empty': False, 'type': 'UnicodeString'}, {'type': 'Email'}]}
 
 
     def test_address_validation(self):

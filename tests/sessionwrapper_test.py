@@ -1,4 +1,5 @@
 import donkey_test
+import sqlalchemy as sa
 import reformed.custom_exceptions
 from nose.tools import assert_raises
 import random
@@ -44,6 +45,7 @@ class test_session_wrapper(donkey_test.test_donkey):
         session2.save(person)
 
         session1.commit()
-        assert_raises(reformed.custom_exceptions.LockingError, session2.commit)
+        assert_raises(sa.orm.exc.ConcurrentModificationError, session2.commit)
+
 
 

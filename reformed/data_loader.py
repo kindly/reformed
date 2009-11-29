@@ -303,7 +303,7 @@ class FlatFile(object):
         try:
             session.commit()
             return ChunkStatus(chunk, "committed")
-        except custom_exceptions.LockingError, e:
+        except sa.orm.exc.ConcurrentModificationError, e:
             return ChunkStatus(chunk, "locking error", error = e)
         except Exception, e:
             return ChunkStatus(chunk, "unknown error", error = e)

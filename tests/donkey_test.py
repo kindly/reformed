@@ -24,7 +24,7 @@ class test_donkey(object):
     @classmethod
     def setUpClass(cls):
         if not hasattr(cls, "engine"):
-            cls.engine = create_engine('sqlite:///:memory:')
+            cls.engine = create_engine('sqlite:///:memory:', echo = True)
             #cls.engine = create_engine('sqlite:///:memory:')
         
 #        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
@@ -109,12 +109,6 @@ class test_donkey(object):
                                    ManyToOne("_core_entity", "_core_entity"),
                                    CheckNoTwoNulls("val_duplicate_membership", parent_table = "_core_entity", field = "end_date"),  
                                   ),
-                             Table("_core_lock",
-                                  Text("table_name"),
-                                  Integer("row_id"),
-                                  DateTime("date"),
-                                  UniqueConstraint("unique", "table_name,row_id,date"),
-                                  logged = False),
                         metadata = cls.meta,
                         engine = cls.engine,
                         session = cls.Sess,

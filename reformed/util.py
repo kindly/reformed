@@ -185,7 +185,7 @@ def get_fields_from_obj(obj):
 
     return obj._table.columns.keys() + ["id"]
 
-INTERNAL_TABLES = ("modified_by", "modified_date", "id", "_core_entity_id")
+INTERNAL_FIELDS = ("modified_by", "modified_date", "id", "_core_entity_id", "version_id")
 
 def convert_value(value):
 
@@ -209,7 +209,7 @@ def get_row_data(obj, fields = None, keep_all = False, internal = False, basic =
         if fields and (field not in fields):
             continue
 
-        if field in INTERNAL_TABLES and not keep_all and not fields:
+        if field in INTERNAL_FIELDS and not keep_all and not fields:
             continue
 
         if obj_table == table:

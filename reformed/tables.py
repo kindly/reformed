@@ -33,7 +33,7 @@ from custom_exceptions import NoMetadataError, NoDatabaseError
 import formencode
 from formencode import validators
 from validators import All
-from fields import Modified, ModifiedBySession
+from fields import Modified, ModifiedBySession, Integer
 from util import get_paths, make_local_tables, create_table_path_list, create_table_path
 import logging
 import migrate.changeset
@@ -100,6 +100,7 @@ class Table(object):
             fields._set_parent(self)
 
         if "modified_date" not in self.fields.iterkeys() and self.modified_date:
+            self.add_field(Integer("version_id"))
             self.add_field(Modified("modified_date"))
             self.add_field(ModifiedBySession("modified_by" ))
 
@@ -678,7 +679,8 @@ class Table(object):
 
         self.mapper = mapper(self.sa_class,
                              self.sa_table,
-                             properties = properties)
+                             properties = properties,
+                             version_id_col = self.sa_table.c.version_id)
     
     def make_paths(self):
 

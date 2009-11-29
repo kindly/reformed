@@ -117,16 +117,6 @@ d.add_table(r.Table("paymentdds",
                    )
            )
 
-d.add_table(r.Table("_core_lock",
-                    r.Text("table_name"),
-                    r.Integer("row_id"),
-                    r.DateTime("date"),
-                    r.UniqueConstraint("unique", "table_name,row_id,date"),
-                    logged = False,
-                    table_type = "internal"
-             )
-           )
-
 
 d.persist()
 
