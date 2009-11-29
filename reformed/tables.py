@@ -270,6 +270,38 @@ class Table(object):
         finally:
             session.close()
 
+    def drop_field(self, field):
+
+        if self.database.engine.name == "sqlite":
+            ##FIXME make better exception
+            raise Exception("sqlite cannot alter fields")
+
+        if isinstance(field, basestring):
+            field = self.fields[field]
+
+        session = self.database.Session()
+
+        try:
+            row = field.get_field_row_from_table(session)
+            session.delete(row)
+
+            for column in field.columns.values():
+                self.sa_table.c[column.name].drop()
+
+            session._flush()
+        
+        except Exception, e:
+            session.rollback()
+            raise
+        else:
+            session._commit()
+            self.database.load_from_persist(True)
+        finally:
+            session.close()
+
+
+
+
 
     def _add_field_no_persist(self, field):
         """add a Field object to this Table"""
