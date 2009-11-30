@@ -26,9 +26,9 @@ class test_table_basic(object):
     def test_items(self):
         
         assert self.a.items["col"].name == "col"
-        assert self.a.columns["col"].name == "col"
+        assert self.a.defined_columns["col"].name == "col"
         assert self.a.items["col2"].name == "col2"
-        assert self.a.columns["col2"].name == "col2"
+        assert self.a.defined_columns["col2"].name == "col2"
         assert self.a.items["rel1"].name == "rel1"
         assert self.a.relations["rel1"].name == "rel1"         
     
@@ -55,14 +55,21 @@ class test_table_basic(object):
 class test_table_primary_key(object):
     
     def setUp(self):
+        self.engine = sa.create_engine('sqlite:///:memory:')
+        self.meta1 = sa.MetaData()
+        self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
+        self.Donkey1= Database("Donkey1",
+                             Table("poo",
+                           Text("col"),
+                           Text("col2"),
+                           Text("col3"),
+                           primary_key="col,col2",
+                           ),
+                           metadata = self.meta1,
+                           engine = self.engine,
+                           session = self.Session)
+        self.a = self.Donkey1["poo"]
         
-        self.a = Table("poo",
-                       Text("col"),
-                       Text("col2"),
-                       Text("col3"),
-                       ManyToOne("rel1","table2"),
-                       primary_key="col,col2",
-                       )
         
     def test_primary_key_columns(self):
         

@@ -48,6 +48,8 @@ class test_modify_table_sqlite(object):
     def tearDownClass(cls):
 
         sa.orm.clear_mappers()
+        cls.Donkey.status = "terminated"
+
     
     randish = str(time.time()).replace(".","")
     

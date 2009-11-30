@@ -99,10 +99,10 @@ class Table(object):
         for fields in args:
             fields._set_parent(self)
 
-        if "modified_date" not in self.fields.iterkeys() and self.modified_date:
-            self.add_field(Integer("version_id"))
-            self.add_field(Modified("modified_date"))
-            self.add_field(ModifiedBySession("modified_by" ))
+        if "_modified_date" not in self.fields.iterkeys() and self.modified_date:
+            self.add_field(Integer("_version"))
+            self.add_field(Modified("_modified_date"))
+            self.add_field(ModifiedBySession("_modified_by" ))
 
         self.foriegn_key_columns_current = None
         #sqlalchemy objects
@@ -399,10 +399,12 @@ class Table(object):
         """gathers all columns this table has whether defined here on in
         another tables relation"""
         columns = {}
-        for field in self.fields.itervalues():
-            for name, column in field.columns.iteritems():
-                columns[name] = column
         try:
+            for field in self.fields.itervalues():
+                for name, column in field.columns.iteritems():
+                    if name in self.foriegn_key_columns:
+                        continue
+                    columns[name] = column
             for name, column in self.foriegn_key_columns.iteritems():
                 columns[name] = column
         except NoDatabaseError:
@@ -548,12 +550,17 @@ class Table(object):
                                          original_column = name) 
                         columns[name] = new_col
 
-                if rel.foreign_key_name:
+                if rel.foreign_key_name and rel.foreign_key_name not in self.defined_columns:
                     columns[rel.foreign_key_name] = Column(sa.Integer,
                                                    name = rel.foreign_key_name,
                                                    mandatory = rel.many_side_not_null,
                                                    defined_relation= rel,
                                                    original_column= "id")
+                elif rel.foreign_key_name:
+                    column = self.defined_columns[rel.foreign_key_name]
+                    column.defined_relation = rel
+                    column.original_column = "id"
+                    columns[rel.foreign_key_name] = column
 
                 elif table+"_id" not in columns:
                     columns[table +'_id'] = Column(sa.Integer,
@@ -615,6 +622,8 @@ class Table(object):
             sa_table.append_column(sa.Column(name, column.type, **sa_options))
         defined_columns = self.defined_columns
         for column in self.defined_columns_order:
+            if column in self.foriegn_key_columns:
+                continue
             name = column
             column = defined_columns[column]
             sa_options = column.sa_options
@@ -723,7 +732,7 @@ class Table(object):
         self.mapper = mapper(self.sa_class,
                              self.sa_table,
                              properties = properties,
-                             version_id_col = self.sa_table.c.version_id)
+                             version_id_col = self.sa_table.c._version)
     
     def make_paths(self):
 
@@ -838,6 +847,7 @@ class Table(object):
         
         if chained_validators:
             schema_dict["chained_validators"] = chained_validators
+
 
         self.schema_dict = schema_dict
 

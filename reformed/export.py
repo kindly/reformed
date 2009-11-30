@@ -60,14 +60,14 @@ class SingleObject(object):
         if self.id:
             row["id"] = str(getattr(obj, "id"))
             for column in current_table.columns.iterkeys():
-                if not self.modified and column in ("modified_by", "modified_date"):
+                if not self.modified and column in ("_modified_by", "_modified_date"):
                     continue
                 cell = getattr(obj, column) 
                 if cell:
                     row[column] = str(cell)
         else:
             for column, rcolumn in current_table.columns.iteritems():
-                if not self.modified and column in ("modified_by", "modified_date"):
+                if not self.modified and column in ("_modified_by", "_modified_date"):
                     continue
                 if rcolumn.original_column == "id":
                     continue

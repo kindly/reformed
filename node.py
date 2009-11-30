@@ -538,7 +538,7 @@ class AutoForm(TableNode):
         obj = r.reformed.get_instance(self.table)
         columns = obj._table.schema_info
         for field in columns.keys():
-            if field not in ['modified_date', 'modified_by']:
+            if field not in ['_modified_date', '_modified_by']:
                 fields.append([field, 'textbox', '%s:' % field])
         self.__class__.fields = fields
 

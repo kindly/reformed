@@ -97,7 +97,6 @@ class test_donkey_persist(test_donkey):
         jimpic = file("tests/jim.xcf", mode = "rb").read()
         
         jimimage = cls.Donkey.tables["donkey_pics"].sa_class()
-        jimimage.donkey = cls.jim
         jimimage.pic = jimpic
 
         cls.session.add(cls.david)
@@ -143,7 +142,7 @@ class test_donkey_persist_sqlite(test_donkey_persist):
 
         cls.session.close()
         sa.orm.clear_mappers()
-        
+        cls.Donkey.status = "terminated"
 
 
     def test_1_donkey_input(self):

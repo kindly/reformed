@@ -66,6 +66,9 @@ class SessionWrapper(object):
     def add(self, obj):
         """save or update and validate a sqlalchemy object"""
         obj._table.validate(obj, self.session)
+        ##version_id has to be int
+        if hasattr(obj, "_version") and obj._version:
+            obj._version = int(obj._version)
         obj._validated = True
         self.session.add(obj)
 

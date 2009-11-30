@@ -330,7 +330,7 @@ class AutoFormPlus(TableNode):
         obj = r.get_instance(self.table)
         columns = obj._table.schema_info
         for field in columns.keys():
-            if field not in ['modified_date', 'modified_by','_core_entity_id']:
+            if field not in ['_modified_date', '_modified_by','_core_entity_id']:
                 fields.append([field, 'textbox', '%s:' % field])
                 field_list.append(field)
         self.field_list = field_list

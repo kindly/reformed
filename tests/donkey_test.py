@@ -41,7 +41,7 @@ class test_donkey(object):
                                   OneToMany("donkey_sponsership",
                                             "donkey_sponsership"),
                                   OneToOne("contact_summary",
-                                           "contact_summary"),
+                                           "contact_summary" ),
                                   OneToMany("transactions",
                                            "transactions", foreign_key_name = "pop"),
                                   entity = True,
@@ -78,7 +78,8 @@ class test_donkey(object):
                                   Integer("age", validation = 'Int'),
                                   TextLookupValidated("donkey_type", "donkey_types.donkey_type", filter_field = "donkey_type_type", filter_value = "looks"),
                                   OneToOne("donkey_pics","donkey_pics",
-                                           many_side_not_null = False,
+                                           foreign_key_name = "donkey",
+                                           many_side_not_null = False
                                            ),
                                   OneToMany("donkey_sponsership",
                                             "donkey_sponsership"),
@@ -91,7 +92,8 @@ class test_donkey(object):
                                   Text("donkey_type_type")),
                             Table("donkey_pics",
                                   Binary("pic"),
-                                  Text("pic_name")
+                                  Text("pic_name"),
+                                  Integer("donkey")
                                  ),
                             Table("donkey_sponsership",
                                   Money("amount"),
@@ -202,7 +204,6 @@ class test_donkey(object):
         jimpic = file("tests/jim.xcf", mode = "rb").read()
         
         jimimage = cls.Donkey.tables["donkey_pics"].sa_class()
-        jimimage.donkey = cls.jim
         jimimage.pic = jimpic
 
         cls.session.add(cls.david)
@@ -246,7 +247,7 @@ class test_donkey(object):
     def tearDownClass(cls):
 
         cls.session.close()
-        cls.Donkey.job_scheduler.threadpool.wait()
+        cls.Donkey.status = "terminated"
 
 
 class test_basic_input(test_donkey):
@@ -569,6 +570,26 @@ class test_basic_input(test_donkey):
         assert sub_cat.category_name == u"go down2"
         assert sub_sub_cat.category_name == u"go down2"
         assert sub_sub_cat.sub_category_name == u"and this2"
+
+    def test_zzz_version_id(self):
+
+        donkey = self.Donkey.get_instance("donkey")
+
+        donkey.name = u"poo"
+
+        self.session.save(donkey)
+        self.session.commit()
+        
+        donkey.name = u"poo2"
+        donkey._version = u"1"
+
+        self.session.save(donkey)
+        self.session.commit()
+
+        
+        
+
+
 
 
 class test_after_reload(test_basic_input):

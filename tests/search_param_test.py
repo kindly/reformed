@@ -126,12 +126,12 @@ class TestParserParams(test_donkey):
         assert query.expressions[3].parsed_values == [False]
 
         query = QueryFromStringParam(None, 
-                                   "(donkey.modified_date between {} and ?)"
+                                   "(donkey._modified_date between {} and ?)"
                                    "or (email.active_email = {}"
                                    "and name in ({moo}, ?, {poo}))"
                                    "and donkey_sponsership.id is ?",
                                    pos_args = ["2009-01-01", "pooop", "not null"],
-                                   named_args =  {"donkey.modified_date": "2019-01-01",
+                                   named_args =  {"donkey._modified_date": "2019-01-01",
                                                   "email.active_email": "True",
                                                   "moo": "cow",
                                                   "poo": "man"} 

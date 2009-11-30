@@ -72,14 +72,14 @@ class Unicode(Field):
 class Modified(Field):
     
     def __init__(self, name, *args, **kw):
-        self.modified_date = Column(sa.DateTime,
+        self._modified_date = Column(sa.DateTime,
                                      onupdate=datetime.datetime.now,
                                      default =datetime.datetime.now)
 
 class ModifiedBySession(Field):
     
     def __init__(self, name, *args, **kw):
-        self.modified_by = Column(sa.Integer,
+        self._modified_by = Column(sa.Integer,
                                   onupdate = get_user_id,
                                   default = get_user_id)
 

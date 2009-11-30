@@ -336,7 +336,7 @@ class Field(object):
     def __new__(cls, name, *args, **kw):
 
         obj = object.__new__(cls)
-        obj.name = name
+        obj.name = name.encode("ascii")
         obj.decendants_name = name
         obj.columns = {}
         obj.relations = {}

@@ -185,7 +185,7 @@ def get_fields_from_obj(obj):
 
     return obj._table.columns.keys() + ["id"]
 
-INTERNAL_FIELDS = ("modified_by", "modified_date", "id", "_core_entity_id", "version_id")
+INTERNAL_FIELDS = ("_modified_by", "_modified_date", "id", "_core_entity_id", "_version")
 
 def convert_value(value):
 
