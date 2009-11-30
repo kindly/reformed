@@ -80,7 +80,7 @@ class test_database_default_primary_key(object):
     @classmethod
     def setUpClass(self):
         
-        self.engine = sa.create_engine('sqlite:///:memory:', echo=True)
+        self.engine = sa.create_engine('sqlite:///:memory:')
         self.meta1 = sa.MetaData()
         self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
         self.Donkey1= Database("Donkey1",

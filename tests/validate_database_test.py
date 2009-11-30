@@ -22,7 +22,7 @@ class test_donkey_validate_sqlite(test_donkey):
     @classmethod
     def setUpClass(cls):
         if not hasattr(cls, "engine"):
-            cls.engine = create_engine('sqlite:///tests/test_donkey.sqlite',echo = True)
+            cls.engine = create_engine('sqlite:///tests/test_donkey.sqlite')
 
         meta_to_drop = sa.MetaData()
         meta_to_drop.reflect(bind=cls.engine)
@@ -110,12 +110,12 @@ class test_donkey_validate_mysql(test_donkey_validate_sqlite):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
+        cls.engine = create_engine('mysql://localhost/test_donkey' )
         super(test_donkey_validate_mysql, cls).setUpClass()
 
 class test_donkey_validate_post(test_donkey_validate_sqlite):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine('postgres://david:@:5432/test_donkey', echo = True)
+        cls.engine = create_engine('postgres://david:@:5432/test_donkey')
         super(test_donkey_validate_post, cls).setUpClass()

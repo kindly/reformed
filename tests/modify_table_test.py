@@ -44,6 +44,10 @@ class test_modify_table_sqlite(object):
                         engine = cls.engine,
                         session = cls.Session)
 
+    @classmethod
+    def tearDownClass(cls):
+
+        sa.orm.clear_mappers()
     
     randish = str(time.time()).replace(".","")
     
@@ -204,7 +208,7 @@ class test_modify_table_mysql(test_modify_table_sqlite):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
+        cls.engine = create_engine('mysql://localhost/test_donkey')
         super(test_modify_table_mysql, cls).setUpClass()
 
 
@@ -212,5 +216,5 @@ class test_modify_table_postgres(test_modify_table_sqlite):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine('postgres://david:@:5432/test_donkey', echo = True)
+        cls.engine = create_engine('postgres://david:@:5432/test_donkey')
         super(test_modify_table_postgres, cls).setUpClass()

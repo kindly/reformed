@@ -142,6 +142,7 @@ class test_donkey_persist_sqlite(test_donkey_persist):
     def tearDownClass(cls):
 
         cls.session.close()
+        sa.orm.clear_mappers()
         
 
 

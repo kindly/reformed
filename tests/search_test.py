@@ -17,7 +17,7 @@ class test_query_from_string(donkey_test.test_donkey):
 
         super(cls, test_query_from_string).set_up_inserts()
 
-        cls.Donkey.engine.echo = True
+        #cls.Donkey.engine.echo = True
 
         cls.flatfile = FlatFile(cls.Donkey,
                             "people",
