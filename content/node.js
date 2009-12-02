@@ -45,14 +45,14 @@ function node_load(arg){
     if ($.address.value() == '/' + arg){
         // the address is already set so we need to force the reload
         // as changing the address will not trigger an event
-		node_call_from_string(arg, true, true);
+        node_call_from_string(arg, true, true);
     } else {
         // sets the address which then forces a page load
         var link = arg.split(':');
         if (link[2].substring(0,1) == '_'){
-		    node_call_from_string(arg, true, false);
+            node_call_from_string(arg, true, false);
         } else {
-		$.address.value(arg);
+        $.address.value(arg);
         }
     }
 }
@@ -75,12 +75,12 @@ function node_call_from_string(arg, change_state, insecure){
         if (link.length>3){
             data_hash = convert_url_string_to_hash(link[3]);
         }
-	// if the command starts with a underscore we don't want
-	// to trigger the command from a url change as this can
-	// let dangerous commands be sent via urls
-	if (!insecure || command.substring(0,1) != '_'){
+        // if the command starts with a underscore we don't want
+        // to trigger the command from a url change as this can
+        // let dangerous commands be sent via urls
+        if (!insecure || command.substring(0,1) != '_'){
             get_node(node, command, data_hash, change_state);
-	}
+        }
     }
 }
 

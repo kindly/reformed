@@ -3,7 +3,7 @@
     This file is part of Reformed.
 
     Reformed is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License version 2 as 
+    it under the terms of the GNU General Public License version 2 as
     published by the Free Software Foundation.
 
     Reformed is distributed in the hope that it will be useful,
@@ -15,21 +15,21 @@
     along with Reformed.  If not, see <http://www.gnu.org/licenses/>.
 
     -----------------------------------------------------------------
-    
+
     Reformed
     Copyright (c) 2008-2009 Toby Dacre & David Raznick
-    
+
     reformed.js
     ======
-    
-    A place for lost stuff at the moment but it will eventually hold the 
+
+    A place for lost stuff at the moment but it will eventually hold the
     core functionality eg initialisation
 
     $REFORMED
 
     Public Functions
     ================
-    
+
 */
 
 // this calls init() onload
@@ -59,7 +59,7 @@ function init(){
     $('#main').dblclick(function(event) {
         form_dblclick(event);
     });
-    
+
     // preload the donkey form
 //    $FORM.request('donkey', 'main', 'first');
     $.address.change(page_load);
@@ -127,7 +127,7 @@ function allowedKeys(key){
     // eg arrows cut/paste tab...
 
     if (
-        key.code === 0 || // special key 
+        key.code === 0 || // special key
         key.code == 8 || // backspace
         key.code == 9 || // TAB
         key.ctrl || key.alt // special?
@@ -217,50 +217,50 @@ var $REFORMED = {
     RIGHT_PAD : 2,
 
     _initialisation_list: [],
-/*    
+/*
     registerInitFunction: function(initialtion_function){
         alert (typeof(initialtion_function));
         if (typeof(initialtion_function) != 'undefined'){
             this._initialisation_list.push(initialtion_function)
         }
     },
-    
+
     _initialiseModules: function(){
     alert ('moo');
         for (i=0; i < this._initialisation_list.length; i++){
             this._initialisation_list[i]();
         }
     },
-    
-    
-*/    
+
+
+*/
 
     _module: [ 'FORM_CONTROL', 'JOB', 'INFO'],
-    
+
     _module_loaded: [],
-    
+
     _counter: 0,
-    
+
     init: function(){
         //for (i=0; i < this._module.length; i++){
     //        this._loadModule(this._module[i]);
-    //    }        
+    //    }
         this._loadModule(this._module[this._counter++]);
     },
-    
+
     _initModules: function(){
         for (var i=0; i < this._module.length; i++){
             this._initModule(this._module[i]);
         //    alert(this._module[i] + $('$' + this._module[i]))
-        }    
-//        alert('ready to roll');    
+        }
+//        alert('ready to roll');
     },
-    
+
     _loadModule: function(module){
         $.getScript(module.toLowerCase() + '.js',
                     $REFORMED._scriptLoaded(module));
     },
-    
+
     _scriptLoaded: function(module){
         this._module_loaded.push(module);
         if (this._counter<this._module.length){
@@ -270,34 +270,34 @@ var $REFORMED = {
         //    alert(this._counter);
         }
     },
-    
+
     _checkModuleLoad: function(){
         var number_modules = this._module.length;
         var number_loaded = this._module_loaded.length;
         if (number_modules == number_loaded){
             var moo = setTimeout($REFORMED._checkModules(),250);
-        }    
+        }
     },
-    
+
     _checkModules: function(){
         var count = 0;
         for (var i=0; i < this._module.length; i++){
             if (this._checkModule(this._module[i])){
-                
+
                 count++;
             }
-            
+
         }
 //        alert(count);
         if (count== this._module.length){
-        
+
             this._initModules();
         } else {
             this._counter++;
             //var moo = setTimeout($REFORMED._checkModules(),250);
         }
     },
-    
+
     _checkModule: function(module){
         module = module.toUpperCase();
         if(window['$' + module]){
@@ -307,7 +307,7 @@ var $REFORMED = {
             return false;
         }
     },
-        
+
     _initModule: function(module){
         module = module.toUpperCase();
     //    alert('init ' + module);
@@ -316,11 +316,11 @@ var $REFORMED = {
             window['$' + module]._init();
         }
     },
-    
+
     layout: function(){
 
         var r = $REFORMED;
-        
+
         var app_width = $(window).width();
         var app_height = $(window).height();
 
@@ -339,9 +339,9 @@ var $REFORMED = {
                 resize = true;
             }
         }
-    
 
-    
+
+
         r.layout_set('logo',
                left_margin,
                r.LOGO_PAD,
@@ -368,7 +368,7 @@ var $REFORMED = {
                r.INFO_HEIGHT,
                workspace_width);
 
-        var main_height = app_height - used_height - r.INFO_HEIGHT - 
+        var main_height = app_height - used_height - r.INFO_HEIGHT -
                     r.MAIN_PAD - r.STATUS_HEIGHT - r.STATUS_PAD - r.BOTTOM_PAD;
         used_height += r.INFO_HEIGHT + r.MAIN_PAD;
         r.layout_set('main',
@@ -397,7 +397,7 @@ var $REFORMED = {
         }
 
         position_actions();
-        
+
     },
 
     layout_set: function(id, top_, left, height, width){
@@ -409,18 +409,18 @@ var $REFORMED = {
         var right_offset = 0;
 
     //    top_offset += parseInt($('#' + id).css('padding-top'), 10);
-    //    bottom_offset += parseInt($('#' + id).css('padding-bottom'), 10); 
+    //    bottom_offset += parseInt($('#' + id).css('padding-bottom'), 10);
         top_offset += parseInt($('#' + id).css('border-top-width'), 10);
-        bottom_offset += parseInt($('#' + id).css('border-bottom-width'), 10); 
+        bottom_offset += parseInt($('#' + id).css('border-bottom-width'), 10);
         top_offset += parseInt($('#' + id).css('margin-top'), 10);
-        bottom_offset += parseInt($('#' + id).css('margin-bottom'), 10); 
+        bottom_offset += parseInt($('#' + id).css('margin-bottom'), 10);
 
     //    left_offset += parseInt($('#' + id).css('padding-left'), 10);
-    //    right_offset += parseInt($('#' + id).css('padding-right'), 10); 
+    //    right_offset += parseInt($('#' + id).css('padding-right'), 10);
         left_offset += parseInt($('#' + id).css('border-left-width'), 10);
-        right_offset += parseInt($('#' + id).css('border-right-width'), 10); 
+        right_offset += parseInt($('#' + id).css('border-right-width'), 10);
         left_offset += parseInt($('#' + id).css('margin-left'), 10);
-        right_offset += parseInt($('#' + id).css('margin-right'), 10); 
+        right_offset += parseInt($('#' + id).css('margin-right'), 10);
 
         // adjust the height, width, top and left
         height = height - top_offset - bottom_offset;
@@ -435,7 +435,7 @@ var $REFORMED = {
             'position' : 'absolute' };
         $('#' + id).css(css);
     }
-    
+
 };
 var NUM_ACTION_BUTTONS = 20;
 var NUM_ACTION_ROWS = 4;
@@ -504,7 +504,7 @@ var action_list = ['home',  'save', null, 'delete'];
 
 function action_change(){
     for (var i=0; i<action_list.length; i++){
-        if(action_list[i]){ 
+        if(action_list[i]){
             action_set(i, action_hash[action_list[i]][0]);
         } else {
             action_hide(i);
@@ -517,7 +517,7 @@ function action_change(){
 
 function action_call(action_id){
     // this function fires the event for action button clicks
-    // we get the base object, function to call and the args from the 
+    // we get the base object, function to call and the args from the
     // array action_hash
     var cmd_info = action_hash[action_list[action_id]][1];
     cmd_info[1].apply(cmd_info[0], cmd_info[2]);
