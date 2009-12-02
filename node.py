@@ -235,7 +235,7 @@ class TableNode(Node):
             for field in fields:
                 field_name = field[0]
                 field_type = field[1]
-                if field_name != 'id' and field_type not in ignore_types:
+                if field_name != 'id' and field_type not in ignore_types and field_name != u'version_id':
                     # update/add the value
                     value = data.get(field_name)
                     print '%s = %s' % (field_name, value)
@@ -250,7 +250,7 @@ class TableNode(Node):
             try:
                 session.save_or_update(record_data)
                 session.commit()
-                self.saved.append([root, record_data.id])
+                self.saved.append([root, record_data.id, record_data._version])
                 return record_data
             except fe.Invalid, e:
                 session.rollback()

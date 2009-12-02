@@ -207,8 +207,9 @@ class Table(node.TableNode):
         # fields
         for field in fields:
             root = field.get('__root')
-            id = 0 # FIXME ned to get the real field_id
-            self.saved.append([root, id])
+            id = 0 # FIXME need to get the real field_id & _version
+            version = 1
+            self.saved.append([root, id, version])
 
         # output data
         out = {}
@@ -295,7 +296,7 @@ class Edit(node.TableNode):
         self.table = obj.name
         columns = obj.schema_info
         for field in obj.field_order:
-            if field not in ['_modified_date', '_modified_by','_core_entity_id'] and field in columns:
+            if field not in ['_modified_date', '_modified_by','_core_entity_id', '_version'] and field in columns:
                 fields.append([field, 'textbox', '%s:' % field])
                 field_list.append(field)
         self.field_list = field_list

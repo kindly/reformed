@@ -167,7 +167,7 @@ $FORM_CONTROL = {
 
 
         link_list: function(item, id, show_label, value){
-            var x = '<span class="link_list">';
+            var x = '<span class="link_list" onfocus="itemFocus(this)" >';
             for (var i=0; i<value.length; i++){
                 x += $FORM_CONTROL._controls.link(item, id + '__' + i, false, value[i]);
                 x += ' ';
@@ -200,6 +200,7 @@ $FORM_CONTROL = {
             var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
             x += '<input id="' + id + '" name="' + id + '" type="text" ';
             x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            x += 'onfocus="itemFocus(this)" ';
             x += 'onchange="itemChanged(this)"  ';
             x += 'onkeyup="itemChanged(this)" />';
             return x;
