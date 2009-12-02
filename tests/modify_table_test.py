@@ -30,7 +30,7 @@ class test_modify_table_sqlite(object):
     def setUpClass(cls):
 
         if not hasattr(cls, "engine"):
-            cls.engine = create_engine('sqlite:///tests/test_donkey.sqlite')
+            cls.engine = create_engine('sqlite:///tests/test_donkey.sqlite', echo = True)
 
         meta_to_drop = sa.MetaData()
         meta_to_drop.reflect(bind=cls.engine)
@@ -200,9 +200,12 @@ class test_modify_table_sqlite(object):
         assert result[1] == []
         assert result[2] == []
 
+    def test_6_delete_relation(self):
 
+        table1 = self.Donkey["renamed%s" % self.randish]
+        table2 = self.Donkey["to_join%s" % self.randish]
 
-
+        table2.delete_relation("to_rename%s" % self.randish)
 
 
 
@@ -210,7 +213,7 @@ class test_modify_table_mysql(test_modify_table_sqlite):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine('mysql://localhost/test_donkey')
+        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
         super(test_modify_table_mysql, cls).setUpClass()
 
 
@@ -218,5 +221,5 @@ class test_modify_table_postgres(test_modify_table_sqlite):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine('postgres://david:@:5432/test_donkey')
+        cls.engine = create_engine('postgres://david:@:5432/test_donkey', echo = True)
         super(test_modify_table_postgres, cls).setUpClass()

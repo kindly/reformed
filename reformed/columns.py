@@ -270,10 +270,22 @@ class Relation(BaseSchema):
             return self.other
 
     @property
+    def primary_key_table(self):
+
+        if self.type == "manytoone":
+            return self.other
+        else:
+            return self.table.name
+
+    @property
     def foriegn_key_id_name(self):
 
         return self.join_keys_from_table(self.foreign_key_table)[0][0]
 
+    @property
+    def foreign_key_constraint_name(self):
+
+        return self.table.name + "__" + self.name
     
     def join_keys_from_table(self, table_name):
          
