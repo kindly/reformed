@@ -65,7 +65,7 @@ function init(){
     $.address.change(page_load);
 }
 
-form_active = true;
+var form_active = true;
 
 function form_dblclick(event){
 
@@ -92,17 +92,17 @@ function form_mode(){
 
 
 function page(){
-request = {type:'page'};
-data = {root: 'main'};
-$JOB.add(request, data, 'page', true);
-//$FORM.request('form_item', 'moo', 'first');
+    var request = {type:'page'};
+    var data = {root: 'main'};
+    $JOB.add(request, data, 'page', true);
+    //$FORM.request('form_item', 'moo', 'first');
 }
 
 function get_html(root, file){
-request = {type:'page', file:file};
-data = {root:root};
-$JOB.add(request, data, 'html', true);
-//$FORM.request('form_item', 'moo', 'first');
+    var request = {type:'page', file:file};
+    var data = {root:root};
+    $JOB.add(request, data, 'html', true);
+    //$FORM.request('form_item', 'moo', 'first');
 }
 
 
@@ -249,7 +249,7 @@ var $REFORMED = {
     },
     
     _initModules: function(){
-        for (i=0; i < this._module.length; i++){
+        for (var i=0; i < this._module.length; i++){
             this._initModule(this._module[i]);
         //    alert(this._module[i] + $('$' + this._module[i]))
         }    
@@ -281,7 +281,7 @@ var $REFORMED = {
     
     _checkModules: function(){
         var count = 0;
-        for (i=0; i < this._module.length; i++){
+        for (var i=0; i < this._module.length; i++){
             if (this._checkModule(this._module[i])){
                 
                 count++;
@@ -327,6 +327,7 @@ var $REFORMED = {
         var workspace_start = r.LEFT_PAD + r.SIDE_WIDTH + r.WORKSPACE_PAD;
         var workspace_width = app_width - workspace_start - r.RIGHT_PAD;
         var resize = false;
+        var left_margin;
         if (workspace_width + workspace_start + r.RIGHT_PAD > r.MAX_APP_WIDTH){
             workspace_width = r.MAX_APP_WIDTH - workspace_start - r.RIGHT_PAD;
             left_margin = (app_width - workspace_width - workspace_start)/2;
@@ -402,10 +403,10 @@ var $REFORMED = {
     layout_set: function(id, top_, left, height, width){
 
         // determine the amount of 'space' around the item
-        top_offset = 0;
-        bottom_offset = 0;
-        left_offset = 0;
-        right_offset = 0;
+        var top_offset = 0;
+        var bottom_offset = 0;
+        var left_offset = 0;
+        var right_offset = 0;
 
     //    top_offset += parseInt($('#' + id).css('padding-top'), 10);
     //    bottom_offset += parseInt($('#' + id).css('padding-bottom'), 10); 
@@ -427,7 +428,7 @@ var $REFORMED = {
     //    left += left_offset;
     //    top_ += top_offset;
 
-        css = { 'top' : String(left) + 'px',
+        var css = { 'top' : String(left) + 'px',
             'left' : String(top_) + 'px',
             'height' : String(height) + 'px',
             'width' : String(width) + 'px',
@@ -436,8 +437,8 @@ var $REFORMED = {
     }
     
 };
-NUM_ACTION_BUTTONS = 20;
-NUM_ACTION_ROWS = 4;
+var NUM_ACTION_BUTTONS = 20;
+var NUM_ACTION_ROWS = 4;
 
 function create_actions(){
 
@@ -455,7 +456,8 @@ function position_actions(){
     var cols = Math.ceil(NUM_ACTION_BUTTONS / NUM_ACTION_ROWS);
     var action_width = parseInt(action_m_width/cols, 10);
     var action_height = parseInt(action_m_height/NUM_ACTION_ROWS, 10);
-
+    var action_a_height;
+    var action_a_width;
     for (var i = 0; i < NUM_ACTION_BUTTONS; i++){
         var y = action_height * (i % NUM_ACTION_ROWS);
         var x = action_width * (Math.floor(i/NUM_ACTION_ROWS));
@@ -488,7 +490,7 @@ function action_hide(action_id){
     $('#action' + action_id + '>a').attr('accesskey', '');
 }
 
-action_hash = {
+var action_hash = {
     //previous: [['previous', 'go-previous.png', 'X', 'record'],[$FORM, $FORM._move, ['main#','prev']]],
     //next: [['next', 'go-next.png', 'Y', 'record'],[$FORM, $FORM._move, ['main#','next']]],
 //    new: [['new', 'document-new.png', 'B', 'record'],[$FORM, $FORM._new, ['main']]],
@@ -498,7 +500,7 @@ action_hash = {
 //    donkey: [['donkey', 'go-home.png', 'I', 'general'],[$FORM, $FORM.request, ['donkey', 'main', 'first']]]
 };
 
-action_list = ['home',  'save', null, 'delete']; 
+var action_list = ['home',  'save', null, 'delete'];
 
 function action_change(){
     for (var i=0; i<action_list.length; i++){
@@ -522,7 +524,7 @@ function action_call(action_id){
 }
 
 
-status_message = '';
+var status_message = '';
 function msg(arg){
     status_message = arg + ' - ' + status_message;
     $('#status').html(status_message);

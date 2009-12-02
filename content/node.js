@@ -180,7 +180,7 @@ function _generate_form_html_continuous(form_info, local_data, data){
         num_records = local_data.extra_rows;
     }
     if (num_records){
-        for (i=0; i<num_records; i++){
+        for (var i=0; i<num_records; i++){
             base_id = local_data.root + "(" + i + ")";
             div_id = $INFO.addId(base_id);
 
@@ -200,6 +200,7 @@ function form_grid_header(form, local_data){
     var formHTML = '<thead><tr>';
     local_data.column_count = 0;
     //local_data: count root i wrap_tag show_label
+    var item;
     for (var i=0; i<form.fields.length; i++){
 
         item = form.fields[i];
@@ -230,7 +231,7 @@ function _generate_form_html_grid(form_info, local_data, data){
         num_records = local_data.extra_rows;
     }
     if (num_records){
-        for (i=0; i<num_records; i++){
+        for (var i=0; i<num_records; i++){
             base_id = local_data.root + "(" + i + ")";
             div_id = $INFO.addId(base_id);
 
@@ -432,7 +433,7 @@ function node_generate_html(form, data, paging, root, read_only){
 
     if (form.params && form.params.form_error &&
     form.params.form_error == 'single'){
-        error_id = $INFO.getId(local_data.root) + '__error';
+        var error_id = $INFO.getId(local_data.root) + '__error';
         formHTML += '<div id="' + error_id;
         formHTML += '" class="error_single">&nbsp;</div>';
     }
@@ -467,7 +468,10 @@ function node_generate_html(form, data, paging, root, read_only){
 }
 
 
-
+function _generate_footer_html(local_data){
+    // FIXME this needs implementing
+    return '';
+}
 
 
 
@@ -627,6 +631,8 @@ function itemChanged(item){
 
 function setup_process_params(root, item){
     var value;
+    var options;
+    var id;
     for (var key in item.params){
             if (item.params.hasOwnProperty(key)){
             value = item.params[key];
@@ -692,13 +698,15 @@ function node_get_form_data_for_row(form_data, form_info, row, root){
     var my_root;
     var value;
     var name;
+    var item;
+    var id;
     if (!form_info.clean_rows[row]){
         // the row is dirty so needs to be saved
         var out_row = $INFO.getState(root, 'sent_data')[row];
         if (typeof(out_row) == 'undefined'){
             out_row = {};
         }
-        var my_root = root + '(' + row + ')';
+        my_root = root + '(' + row + ')';
         out_row.__root = my_root;
         for (var i=0; i<form_data.fields.length; i++){
             item = form_data.fields[i];
@@ -715,8 +723,8 @@ function node_get_form_data_for_row(form_data, form_info, row, root){
             // get the parent root (we get no match if we are a top level form)
             var m = String(root).match(/^(.*)#([^#]*)$/);
             if (m){
-                parent_root = m[1];
-                parent_id = $INFO.getState(parent_root, 'sent_data')[form_data.parent_id];
+                var parent_root = m[1];
+                var parent_id = $INFO.getState(parent_root, 'sent_data')[form_data.parent_id];
                 if (parent_id){
                 out_row[form_data.child_id] = parent_id;
                 }
@@ -752,7 +760,10 @@ function node_get_form_data(root){
         var out = $INFO.getState(root, 'sent_data');
         out.__root = root;
         var value;
-        for (i=0; i<form_data.fields.length; i++){
+        var name;
+        var item;
+        var id;
+        for (var i=0; i<form_data.fields.length; i++){
             item = form_data.fields[i];
             name = item.name;
             if (item.type == 'subform'){
@@ -807,7 +818,7 @@ function node_grid_save(root, row){
     row_data = node_get_form_data_for_row(form_data, form_info, row, root);
     if (row_data){
         var out = {};
-        out['data'] = [row_data];
+        out.data = [row_data];
         var params = form_data.params;
         if (params && params.extras){
             for (var extra in params.extras){
@@ -892,7 +903,7 @@ function node_delete(root, command){
     }
 
     if (form_data && form_data.table_name){
-        out['table_name'] = form_data.table_name;
+        out.table_name = form_data.table_name;
     }
 
     var params = $INFO.getState(my_root, 'form_data').params;
@@ -908,7 +919,7 @@ function node_delete(root, command){
 
 
 function node_button(item, node, command){
-    root = _parse_id(item.id).root;
+    var root = _parse_id(item.id).root;
     var out = node_get_form_data(root);
     get_node(node, command, out, false);
 }
@@ -924,9 +935,11 @@ function search_box(){
 function form_show_errors(root, errors){
     // display errors on form for bad rows
     // ensure 'good' rows do not show errors
-    msg('SHOW_ERRORS' + root + $.toJSON(errors))
+    msg('SHOW_ERRORS' + root + $.toJSON(errors));
     var form_root = parse_strip_subform_info(root);
     var form_data = $INFO.getState(form_root, 'form_data');
+    var field_name;
+    var id;
     for (var field in form_data.fields){
         // ignore subforms
         if (form_data.fields[field].type != 'subform'){
@@ -949,6 +962,8 @@ function form_show_errors(root, errors){
 
 function form_process_deleted(deleted){
     // FIXME should check that this is ok to delete
+    var root;
+    var info;
     for (var i=0; i<deleted.length; i++){
         root = deleted[i].__root;
         info = _parse_div(root);
@@ -969,6 +984,8 @@ function form_save_process_saved(saved){
     var inserted_id;
     var div;
     var version;
+    var info;
+
     for (var i=0; i<saved.length; i++){
         div = saved[i][0];
         inserted_id = saved[i][1];
@@ -1026,6 +1043,8 @@ function update_status(root, data){
     }
     var form_root = parse_strip_subform_info(root);
     var form_data = $INFO.getState(form_root, 'form_data');
+    var field_name;
+    var id;
     for (var field in form_data.fields){
         // ignore subforms
         if (form_data.fields[field].type != 'subform'){
@@ -1049,6 +1068,9 @@ function get_status(node, root, call_string){
         node_call_from_string(call_string, false);
     }
 }
+
+
+var status_timer;
 
 function job_processor_status(data, node, root){
 
@@ -1156,7 +1178,7 @@ function itemBlur(){
 }
 
 
-fn = function(packet, job){
+var fn = function(packet, job){
      var root = 'main'; //FIXME
 
      var title = packet.data.title;
@@ -1168,6 +1190,7 @@ fn = function(packet, job){
     if (bookmark){
         bookmark_add(bookmark, title);
     }
+    var data;
      switch (packet.data.action){
          case 'redirect':
              var link = packet.data.link;
@@ -1183,9 +1206,9 @@ fn = function(packet, job){
             $('#' + root).html(page_build(packet.data.data));
             break;
          case 'form':
-             form = packet.data.data.form;
+             var form = packet.data.data.form;
              data = packet.data.data.data;
-             paging = packet.data.data.paging;
+             var paging = packet.data.data.paging;
              $('#' + root).html(node_generate_html(form, data, paging, root)).scrollTop(0);
              $INFO.setState(root, 'node', packet.data.node);
              form_setup(root, form);

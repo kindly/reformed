@@ -138,7 +138,7 @@ $INFO = {
                         for (var i=0; i<split.length -1; i++){
                              parent_root += split[i] + '#';
                         }
-                        parent_root = parent_root.substring(0, parent_root.length -1)
+                        parent_root = parent_root.substring(0, parent_root.length -1);
                         return $INFO.getState(parent_root, item);
                     }
                 }
@@ -183,14 +183,14 @@ $INFO = {
 	},
 
     getCallInfo: function(){
-        var callList = 'Call trace\n==========\n'
+        var callList = 'Call trace\n==========\n';
         var callerFunc = arguments.callee.caller;
-        var count = 0
+        var count = 0;
         do {
-        var fn = callerFunc.toString()
+        var fn = callerFunc.toString();
         var callerFuncName = (fn.substring(fn.indexOf("function") + 8, fn.indexOf("("))).replace(/\s/g,'');
 
-        if (callerFuncName == ''){
+        if (callerFuncName === ''){
             callerFuncName = 'anon';
         }
         callList += count + ' => ' + callerFuncName + '\n';
@@ -209,13 +209,13 @@ $INFO = {
 getStackTrace : function () {
 
 var mode;
-try {(0)()} catch (e) {
+try {(0)();} catch (e) {
     mode = e.stack ? 'Firefox' : window.opera ? 'Opera' : 'Other';
 }
 
 switch (mode) {
     case 'Firefox' : return function () {
-        try {(0)()} catch (e) {
+        try {(0)();} catch (e) {
             return e.stack.replace(/^.*?\n/,'').
                            replace(/(?:\n@:0)?\s+$/m,'').
                            replace(/^\(/gm,'{anonymous}(').
@@ -224,7 +224,7 @@ switch (mode) {
     };
 
     case 'Opera' : return function () {
-        try {(0)()} catch (e) {
+        try {(0)();} catch (e) {
             var lines = e.message.split("\n"),
                 ANON = '{anonymous}',
                 lineRE = /Line\s+(\d+).*?in\s+(http\S+)(?:.*?in\s+function\s+(\S+))?/i,
@@ -271,4 +271,4 @@ switch (mode) {
     };
 }
 }
-}
+};
