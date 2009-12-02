@@ -157,7 +157,7 @@ $FORM_CONTROL = {
             value = split.join('|');
             var x = (show_label ? '<span class="label">' + item.title + '</span>' : '');
             if (link.substring(0,1) == 'n'){
-                x += '<a id="' + id + '" href="#' + link + '">' + (value ? value : '&nbsp;') + '</a>';
+                x += '<a id="' + id + '" href="#" onclick="node_load(\'' + link + '\');return false">' + (value ? value : '&nbsp;') + '</a>';
             }
             if (link.substring(0,1) == 'd'){
                 x += '<a id="' + id + '" href="#" onclick ="link_process(this,\'' + link + '\');return false;">' + (value ? value : '&nbsp;') + '</a>';

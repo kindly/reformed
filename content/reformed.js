@@ -401,33 +401,56 @@ var $REFORMED = {
     },
 
     layout_set: function(id, top_, left, height, width){
-
         // determine the amount of 'space' around the item
+
         var top_offset = 0;
         var bottom_offset = 0;
         var left_offset = 0;
         var right_offset = 0;
-
     //    top_offset += parseInt($('#' + id).css('padding-top'), 10);
     //    bottom_offset += parseInt($('#' + id).css('padding-bottom'), 10);
-        top_offset += parseInt($('#' + id).css('border-top-width'), 10);
-        bottom_offset += parseInt($('#' + id).css('border-bottom-width'), 10);
-        top_offset += parseInt($('#' + id).css('margin-top'), 10);
-        bottom_offset += parseInt($('#' + id).css('margin-bottom'), 10);
+        temp = parseInt($('#' + id).css('border-top-width'), 10);
+        if (!isNaN(temp)){
+            top_offset += temp;
+        }
+        temp = parseInt($('#' + id).css('border-bottom-width'), 10);
+        if (!isNaN(temp)){
+            bottom_offset += temp;
+        }
+        temp = parseInt($('#' + id).css('margin-top'), 10);
+        if (!isNaN(temp)){
+            top_offset += temp;
+        }
+        temp = parseInt($('#' + id).css('margin-bottom'), 10);
+        if (!isNaN(temp)){
+            bottom_offset += temp;
+        }
 
     //    left_offset += parseInt($('#' + id).css('padding-left'), 10);
     //    right_offset += parseInt($('#' + id).css('padding-right'), 10);
-        left_offset += parseInt($('#' + id).css('border-left-width'), 10);
-        right_offset += parseInt($('#' + id).css('border-right-width'), 10);
-        left_offset += parseInt($('#' + id).css('margin-left'), 10);
-        right_offset += parseInt($('#' + id).css('margin-right'), 10);
+        temp = parseInt($('#' + id).css('border-left-width'), 10);
+        if (!isNaN(temp)){
+            left_offset += temp;
+        }
+        temp = parseInt($('#' + id).css('border-right-width'), 10);
+        if (!isNaN(temp)){
+            right_offset += temp;
+        }
+        temp = parseInt($('#' + id).css('margin-left'), 10);
+        if (!isNaN(temp)){
+            left_offset += temp;
+        }
+        temp = parseInt($('#' + id).css('margin-right'), 10);
+        if (!isNaN(temp)){
+            right_offset += temp;
+        }
 
         // adjust the height, width, top and left
-        height = height - top_offset - bottom_offset;
-        width = width - left_offset - right_offset;
+
     //    left += left_offset;
     //    top_ += top_offset;
-
+        height = height - top_offset - bottom_offset;
+        width = width - left_offset - right_offset;
         var css = { 'top' : String(left) + 'px',
             'left' : String(top_) + 'px',
             'height' : String(height) + 'px',
