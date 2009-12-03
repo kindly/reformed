@@ -225,6 +225,7 @@ $FORM_CONTROL = {
             x += '<input id="' + id + '" name="' + id + '" type="password" ';
             x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
             x += 'onchange="itemChanged(this)"  ';
+            x += 'onfocus="itemFocus(this)" ';
             x += 'onkeyup="itemChanged(this)" />';
             return x;
         },
@@ -240,6 +241,7 @@ $FORM_CONTROL = {
                 x += 'checked="checked" ';
             }
             x += 'value="true" class="checkbox" ';
+            x += 'onfocus="itemFocus(this)" ';
             x += 'onchange="itemChanged(this)" />';
             if (show_label && item.reverse){
                 x += $FORM_CONTROL._label(item, id);
@@ -281,7 +283,8 @@ $FORM_CONTROL = {
             // dropdown
             var x = show_label ? $FORM_CONTROL._label(item, id) : '';
             x += '<select id="' + id + '" name="' + id;
-            x += '" onchange="itemChanged(this)" >';
+            x += '" onfocus="itemFocus(this)" ';
+            x += 'onchange="itemChanged(this)" >';
             var type = item.params.type;
             var items = item.params.values.split('|');
             var i;
