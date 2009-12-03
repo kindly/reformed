@@ -67,7 +67,7 @@ $FORM_CONTROL = {
     html: function(item, id, show_label, value, readonly){
         // returns HTML of a control
         if (readonly){
-            return this._controls_readonly['general'](item, id, show_label, value);
+            return this._controls_readonly.general(item, id, show_label, value);
         } else {
             if (this.exists(item.type)){
                 // generate the HTML by calling the function
@@ -152,8 +152,8 @@ $FORM_CONTROL = {
         },
 
         link: function(item, id, show_label, value){
-            split = value.split("|");
-            link = split.shift();
+            var split = value.split("|");
+            var link = split.shift();
             value = split.join('|');
             var x = (show_label ? '<span class="label">' + item.title + '</span>' : '');
             if (link.substring(0,1) == 'n'){
@@ -191,7 +191,7 @@ $FORM_CONTROL = {
             if (value){
                 x += value;
             }
-            x += '</textarea>'
+            x += '</textarea>';
             return x;
         },
 
@@ -256,7 +256,7 @@ $FORM_CONTROL = {
         },
 
         code_group: function(item, id, show_label, value){
-            codes = item.params.codes;
+            var codes = item.params.codes;
             var x = show_label && item.title ? '<p>' + item.title + '</p>' : '';
             x += '<table><tr>';
             for (var i=0; i<codes.length; i++){
@@ -339,16 +339,16 @@ $FORM_CONTROL = {
 
     _code_group_get: function(id){
         var item = _parse_id(id);
-        var form_data = $INFO.getState(item.root, 'form_data')
+        var form_data = $INFO.getState(item.root, 'form_data');
         var form_item = form_data.items[item.control];
         var codes = form_item.params.codes;
-        var out = []
+        var out = [];
         for (var i=0; i<codes.length; i++){
             if ($("#" + id + '__' + i).attr("checked")){
                 out.push(codes[i]);
             }
         }
-        return out
+        return out;
         //info = $("#" + id + '__*').attr("checked");
       //  alert(info);
     },
@@ -364,7 +364,7 @@ $FORM_CONTROL = {
         var item = getItemFromObj(obj);
         if (isDate($(obj).val())){
             // date is good so update our hidden date field
-            date = new Date($(obj).val());
+            var date = new Date($(obj).val());
     //        $("#" + item.root).val(makeUTC(date));
             // update our control to the new date
             datebox_set(item.root, makeUTC(date));
@@ -391,7 +391,7 @@ $FORM_CONTROL = {
     },
 
     _intbox_change: function(obj){
-        if (isNaN(parseInt($(obj).val()))){
+        if (isNaN(parseInt($(obj).val(), 10))){
             $(obj).val('');
         }
         itemChanged(obj);
