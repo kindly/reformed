@@ -300,6 +300,8 @@ class Edit(node.TableNode):
                 # FIXME an easier way to do this would be nice
                 if obj.fields[field].__class__.__name__ == 'Integer':
                     fields.append([field, 'intbox', '%s:' % field])
+                elif obj.fields[field].__class__.__name__ == 'Boolean':
+                    fields.append([field, 'checkbox', '%s:' % field])
                 else:
                     fields.append([field, 'textbox', '%s:' % field])
                 field_list.append(field)
