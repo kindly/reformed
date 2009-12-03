@@ -161,7 +161,7 @@ class Donkey(TableNode):
     table = "donkey"
     fields = [
         ['name', 'textbox', 'name:'],
-        ['age', 'textbox', 'age:']
+        ['age', 'intbox', 'age:']
     ]
     list_title = 'donkey %s'
      

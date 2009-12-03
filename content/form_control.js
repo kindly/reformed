@@ -206,6 +206,19 @@ $FORM_CONTROL = {
             return x;
         },
 
+        intbox: function(item, id, show_label, value){
+            // simple textbox
+            var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
+            x += '<input id="' + id + '" name="' + id + '" type="text" ';
+            x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            x += 'onfocus="itemFocus(this)" ';
+            x += 'onchange="$FORM_CONTROL._intbox_change(this)"  ';
+            x += 'onkeypress="return $FORM_CONTROL._intbox_key(this, event)" ';
+            x += 'onkeyup="$FORM_CONTROL._intbox_key(this, event)" />';
+            return x;
+        },
+
+
         password: function(item, id, show_label, value){
             // simple textbox
             var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
@@ -375,7 +388,26 @@ $FORM_CONTROL = {
             // date is bad
             $(obj).addClass("error");
         }
+    },
+
+    _intbox_change: function(obj){
+        if (isNaN(parseInt($(obj).val()))){
+            $(obj).val('');
+        }
+        itemChanged(obj);
+    },
+
+    _intbox_key: function(obj, event){
+        var key = getKeyPress(event);
+        if ((key.code > 47 && key.code < 59) /* numbers */ ||
+              allowedKeys(key) ){
+            itemChanged(obj);
+            return true;
+        } else {
+            return false;
+        }
     }
+
 
 };
 

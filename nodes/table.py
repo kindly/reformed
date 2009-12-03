@@ -52,7 +52,7 @@ class Table(node.TableNode):
             'fields': [
                 ['field_name', 'textbox', 'field name'],
                 ['field_type', 'dropdown', 'type', {'values': '|'.join(allowed_field_types), 'type':'list'}],
-                ['length', 'textbox', 'length'],
+                ['length', 'intbox', 'length'],
                 ['mandatory', 'checkbox', 'mandatory'],
                 ['default', 'textbox', 'default']
        #         ['unique', 'checkbox', 'unique'],
@@ -297,7 +297,11 @@ class Edit(node.TableNode):
         columns = obj.schema_info
         for field in obj.field_order:
             if field not in ['_modified_date', '_modified_by','_core_entity_id', '_version'] and field in columns:
-                fields.append([field, 'textbox', '%s:' % field])
+                # FIXME an easier way to do this would be nice
+                if obj.fields[field].__class__.__name__ == 'Integer':
+                    fields.append([field, 'intbox', '%s:' % field])
+                else:
+                    fields.append([field, 'textbox', '%s:' % field])
                 field_list.append(field)
         self.field_list = field_list
         self.fields = fields
