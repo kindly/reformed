@@ -253,9 +253,13 @@ tr.inactive input{
 	font-size:80%;
 }
 
+td input.error {
+	background-color:#FFCCEE;
+}
+
 
 div.form_body > div > input.error {
-	background-color:#FFEC8B;
+	background-color:#FFCCEE;
 }
 
 .error_span{
