@@ -302,6 +302,8 @@ class Edit(node.TableNode):
                     fields.append([field, 'intbox', '%s:' % field])
                 elif obj.fields[field].__class__.__name__ == 'Boolean':
                     fields.append([field, 'checkbox', '%s:' % field])
+                elif obj.fields[field].__class__.__name__ == 'DateTime':
+                    fields.append([field, 'datebox', '%s:' % field])
                 else:
                     fields.append([field, 'textbox', '%s:' % field])
                 field_list.append(field)
