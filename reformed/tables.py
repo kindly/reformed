@@ -975,7 +975,12 @@ class ConvertDate(AttributeExtension):
         if isinstance(value, datetime.datetime):
             return value
 
-        return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%SZ')
+        # handle dates with and without microseconds
+        # currently Javascript likes to keep the milliseconds
+        try:
+            return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%fZ')
+        except ValueError:
+            return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%SZ')
 
 class ConvertBoolean(AttributeExtension):
 
