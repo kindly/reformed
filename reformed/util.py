@@ -190,7 +190,8 @@ INTERNAL_FIELDS = ("_modified_by", "_modified_date", "id", "_core_entity_id", "_
 def convert_value(value):
 
     if isinstance(value, datetime.datetime):
-        value = value.strftime('%Y-%m-%dT%H:%M:%SZ')
+        # use .isoformat not .strftime as this allows dates pre 1900
+        value = '%sZ' % value.isoformat()
     if isinstance(value, decimal.Decimal):
         value = str(value)
     return value
