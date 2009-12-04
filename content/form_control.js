@@ -399,6 +399,7 @@ $FORM_CONTROL = {
             // date is bad
             $(obj).addClass("error");
         }
+        itemChanged(obj);
     },
 
     _datebox_key: function(obj, event){
