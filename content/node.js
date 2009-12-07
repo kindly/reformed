@@ -620,7 +620,7 @@ function move_row(root, row, control){
     var id = '#' + $INFO.getId(root + '(' + row + ')#' + control);
     msg(id);
     itemBlur();
-    $(id).focus();
+    $(id).focus().select();
 }
 
 function itemChanged(item, event){
