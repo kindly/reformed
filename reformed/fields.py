@@ -160,11 +160,6 @@ class Numeric(Field):
     def __init__(self, name, *args, **kw):
         self.money = Column(sa.Numeric, use_parent = True)
         
-class Numeric(Field):
-
-    def __init__(self, name, *args, **kw):
-        self.money = Column(sa.Numeric, use_parent = True)
-
 class Email(Field):
     
     def __init__(self, name, *args, **kw):

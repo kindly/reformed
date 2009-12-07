@@ -67,7 +67,7 @@ $FORM_CONTROL = {
     html: function(item, id, show_label, value, readonly){
         // returns HTML of a control
         if (readonly){
-            return this._controls_readonly['general'](item, id, show_label, value);
+            return this._controls_readonly.general(item, id, show_label, value);
         } else {
             if (this.exists(item.type)){
                 // generate the HTML by calling the function
@@ -152,12 +152,12 @@ $FORM_CONTROL = {
         },
 
         link: function(item, id, show_label, value){
-            split = value.split("|");
-            link = split.shift();
+            var split = value.split("|");
+            var link = split.shift();
             value = split.join('|');
             var x = (show_label ? '<span class="label">' + item.title + '</span>' : '');
             if (link.substring(0,1) == 'n'){
-                x += '<a id="' + id + '" href="#' + link + '">' + (value ? value : '&nbsp;') + '</a>';
+                x += '<a id="' + id + '" href="#" onclick="node_load(\'' + link + '\');return false">' + (value ? value : '&nbsp;') + '</a>';
             }
             if (link.substring(0,1) == 'd'){
                 x += '<a id="' + id + '" href="#" onclick ="link_process(this,\'' + link + '\');return false;">' + (value ? value : '&nbsp;') + '</a>';
@@ -167,7 +167,7 @@ $FORM_CONTROL = {
 
 
         link_list: function(item, id, show_label, value){
-            var x = '<span class="link_list">';
+            var x = '<span class="link_list" onfocus="itemFocus(this)" >';
             for (var i=0; i<value.length; i++){
                 x += $FORM_CONTROL._controls.link(item, id + '__' + i, false, value[i]);
                 x += ' ';
@@ -191,7 +191,7 @@ $FORM_CONTROL = {
             if (value){
                 x += value;
             }
-            x += '</textarea>'
+            x += '</textarea>';
             return x;
         },
 
@@ -200,10 +200,24 @@ $FORM_CONTROL = {
             var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
             x += '<input id="' + id + '" name="' + id + '" type="text" ';
             x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            x += 'onfocus="itemFocus(this)" ';
             x += 'onchange="itemChanged(this)"  ';
             x += 'onkeyup="itemChanged(this)" />';
             return x;
         },
+
+        intbox: function(item, id, show_label, value){
+            // simple textbox
+            var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
+            x += '<input id="' + id + '" name="' + id + '" type="text" ';
+            x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            x += 'onfocus="itemFocus(this)" ';
+            x += 'onchange="$FORM_CONTROL._intbox_change(this)"  ';
+            x += 'onkeypress="return $FORM_CONTROL._intbox_key(this, event)" ';
+            x += 'onkeyup="$FORM_CONTROL._intbox_key(this, event)" />';
+            return x;
+        },
+
 
         password: function(item, id, show_label, value){
             // simple textbox
@@ -211,6 +225,7 @@ $FORM_CONTROL = {
             x += '<input id="' + id + '" name="' + id + '" type="password" ';
             x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
             x += 'onchange="itemChanged(this)"  ';
+            x += 'onfocus="itemFocus(this)" ';
             x += 'onkeyup="itemChanged(this)" />';
             return x;
         },
@@ -226,6 +241,7 @@ $FORM_CONTROL = {
                 x += 'checked="checked" ';
             }
             x += 'value="true" class="checkbox" ';
+            x += 'onfocus="itemFocus(this)" ';
             x += 'onchange="itemChanged(this)" />';
             if (show_label && item.reverse){
                 x += $FORM_CONTROL._label(item, id);
@@ -242,7 +258,7 @@ $FORM_CONTROL = {
         },
 
         code_group: function(item, id, show_label, value){
-            codes = item.params.codes;
+            var codes = item.params.codes;
             var x = show_label && item.title ? '<p>' + item.title + '</p>' : '';
             x += '<table><tr>';
             for (var i=0; i<codes.length; i++){
@@ -267,7 +283,8 @@ $FORM_CONTROL = {
             // dropdown
             var x = show_label ? $FORM_CONTROL._label(item, id) : '';
             x += '<select id="' + id + '" name="' + id;
-            x += '" onchange="itemChanged(this)" >';
+            x += '" onfocus="itemFocus(this)" ';
+            x += 'onchange="itemChanged(this)" >';
             var type = item.params.type;
             var items = item.params.values.split('|');
             var i;
@@ -296,14 +313,24 @@ $FORM_CONTROL = {
 
         datebox: function(item, id, show_label, value){
             // datebox
-            // need to add onchange="itemChanged(this)" etc
+            // value is ISO format date so convert to local
+            try
+            {
+                value = Date.ISO(value).toLocaleDateString();
+            }
+            catch(e)
+            {
+                value = '';
+            }
             var x = show_label ? $FORM_CONTROL._label(item, id) : '';
-            x += '<input id="' + id + '__user" name="' + id ;
-            x += '__user" type="text" ';
+            x += '<input id="' + id + '" name="' + id ;
+            x += '" type="text" ';
+            x += 'value="' + value + '" ';
+            x += 'onfocus="itemFocus(this)" ';
+            x += 'onblur="$FORM_CONTROL._datebox_change(this)" ';
             x += 'onchange="$FORM_CONTROL._datebox_change(this)" ';
-            x += 'onkeyup="$FORM_CONTROL._datebox_key(this)" />';
-            x += '<input id="' + id + '" name="' + id;
-            x += '" type="text" class="hidden" />';
+            x += 'onkeydown="return $FORM_CONTROL._datebox_key(this,event)" ';
+            x += 'onkeyup="$FORM_CONTROL._datebox_key(this,event)" />';
             return x;
         }
     },
@@ -325,60 +352,142 @@ $FORM_CONTROL = {
 
     _code_group_get: function(id){
         var item = _parse_id(id);
-        var form_data = $INFO.getState(item.root, 'form_data')
+        var form_data = $INFO.getState(item.root, 'form_data');
         var form_item = form_data.items[item.control];
         var codes = form_item.params.codes;
-        var out = []
+        var out = [];
         for (var i=0; i<codes.length; i++){
             if ($("#" + id + '__' + i).attr("checked")){
                 out.push(codes[i]);
             }
         }
-        return out
+        return out;
         //info = $("#" + id + '__*').attr("checked");
       //  alert(info);
     },
 
     _datebox_set: function(id, value){
-        // this is when the actual date value gets set
-        $("#" + id + "__user").val(UTC2Date(value));
-        $("#" + id).val(value);
+        // set the datebox field from ISO format
+        try
+        {
+            value = Date.ISO(value).toLocaleDateString();
+        }
+        catch(e)
+        {
+            value = '';
+        }
+        $("#" + id).val(my_date);
+    },
+
+    _datebox_get: function(id){
+        var value = $("#" + id).val();
+        value = new Date(value);
+        value = value.toISOString();
+        if (value == 'Invalid Date'){
+            value = '';
+        }
+        return value;
     },
 
     _datebox_change: function (obj){
         // this is when the user date is changed
-        var item = getItemFromObj(obj);
-        if (isDate($(obj).val())){
-            // date is good so update our hidden date field
-            date = new Date($(obj).val());
-    //        $("#" + item.root).val(makeUTC(date));
-            // update our control to the new date
-            datebox_set(item.root, makeUTC(date));
-    //        $(obj).val(date.toLocaleDateString());
+        var value = $(obj).val()
+        if (isDate(value) || value == ''){
+            // date is good
             $(obj).removeClass("error");
         } else {
             // date is bad
-            $("#" + item.root).val('');
             $(obj).addClass("error");
+        }
+        itemChanged(obj);
+    },
+
+    _datebox_key: function(obj, event){
+        var key = getKeyPress(event);
+        if ((key.code > 47 && key.code < 59) /* numbers */ ||
+             (key.code == 191) /* forward slash */ ||
+              allowedKeys(key) ){
+            itemChanged(obj);
+            return true;
+        } else {
+            return false;
         }
     },
 
-    _datebox_key: function(obj){
-        var item = getItemFromObj(obj);
-        if (isDate($(obj).val())){
-            // date is good so update our hidden date field
-            date = new Date($(obj).val());
-            $("#" + item.root).val(makeUTC(date));
-            $(obj).removeClass("error");
+    _intbox_change: function(obj){
+        if (isNaN(parseInt($(obj).val(), 10))){
+            $(obj).val('');
+        }
+        itemChanged(obj);
+    },
+
+    _intbox_key: function(obj, event){
+        var key = getKeyPress(event);
+        if ((key.code > 47 && key.code < 59) /* numbers */ ||
+              allowedKeys(key) ){
+            itemChanged(obj);
+            return true;
         } else {
-            // date is bad
-            $(obj).addClass("error");
+            return false;
         }
     }
+
 
 };
 
 
 
-
+if(!Date.ISO)(function(){"use strict";
+/** ES5 ISO Date Parser Plus toISOString Method
+ * @author          Andrea Giammarchi
+ * @blog            WebReflection
+ * @version         2009-07-04T11:36:25.123Z
+ * @compatibility   Chrome, Firefox, IE 5+, Opera, Safari, WebKit, Others
+ */
+function ISO(s){
+    var m = /^(\d{4})(-(\d{2})(-(\d{2})(T(\d{2}):(\d{2})(:(\d{2})(\.(\d+))?)?(Z|((\+|-)(\d{2}):(\d{2}))))?)?)?$/.exec(s);
+    if(m === null)
+        throw new Error("Invalid ISO String");
+    var d = new Date;
+    d.setUTCFullYear(+m[1]);
+    d.setUTCMonth(m[3] ? (m[3] >> 0) - 1 : 0);
+    d.setUTCDate(m[5] >> 0);
+    d.setUTCHours(m[7] >> 0);
+    d.setUTCMinutes(m[8] >> 0);
+    d.setUTCSeconds(m[10] >> 0);
+    d.setUTCMilliseconds(m[12] >> 0);
+    if(m[13] && m[13] !== "Z"){
+        var h = m[16] >> 0,
+            i = m[17] >> 0,
+            s = m[15] === "+"
+        ;
+        d.setUTCHours((m[7] >> 0) + s ? -h : h);
+        d.setUTCMinutes((m[8] >> 0) + s ? -i : i);
+    };
+    return toISOString(d);
+};
+var toISOString = Date.prototype.toISOString ?
+    function(d){return d}:
+    (function(){
+        function t(i){return i<10?"0"+i:i};
+        function h(i){return i.length<2?"00"+i:i.length<3?"0"+i:3<i.length?Math.round(i/Math.pow(10,i.length-3)):i};
+        function toISOString(){
+            return "".concat(
+                this.getUTCFullYear(), "-",
+                t(this.getUTCMonth() + 1), "-",
+                t(this.getUTCDate()), "T",
+                t(this.getUTCHours()), ":",
+                t(this.getUTCMinutes()), ":",
+                t(this.getUTCSeconds()), ".",
+                h("" + this.getUTCMilliseconds()), "Z"
+            );
+        };
+        return function(d){
+            d.toISOString = toISOString;
+            return d;
+        }
+    })()
+;
+Date.ISO = ISO;
+})();
 

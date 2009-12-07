@@ -52,7 +52,7 @@ class Table(node.TableNode):
             'fields': [
                 ['field_name', 'textbox', 'field name'],
                 ['field_type', 'dropdown', 'type', {'values': '|'.join(allowed_field_types), 'type':'list'}],
-                ['length', 'textbox', 'length'],
+                ['length', 'intbox', 'length'],
                 ['mandatory', 'checkbox', 'mandatory'],
                 ['default', 'textbox', 'default']
        #         ['unique', 'checkbox', 'unique'],
@@ -207,8 +207,9 @@ class Table(node.TableNode):
         # fields
         for field in fields:
             root = field.get('__root')
-            id = 0 # FIXME ned to get the real field_id
-            self.saved.append([root, id])
+            id = 0 # FIXME need to get the real field_id & _version
+            version = 1
+            self.saved.append([root, id, version])
 
         # output data
         out = {}
@@ -295,8 +296,16 @@ class Edit(node.TableNode):
         self.table = obj.name
         columns = obj.schema_info
         for field in obj.field_order:
-            if field not in ['_modified_date', '_modified_by','_core_entity_id'] and field in columns:
-                fields.append([field, 'textbox', '%s:' % field])
+            if field not in ['_modified_date', '_modified_by','_core_entity_id', '_version'] and field in columns:
+                # FIXME an easier way to do this would be nice
+                if obj.fields[field].__class__.__name__ == 'Integer':
+                    fields.append([field, 'intbox', '%s:' % field])
+                elif obj.fields[field].__class__.__name__ == 'Boolean':
+                    fields.append([field, 'checkbox', '%s:' % field])
+                elif obj.fields[field].__class__.__name__ == 'DateTime':
+                    fields.append([field, 'datebox', '%s:' % field])
+                else:
+                    fields.append([field, 'textbox', '%s:' % field])
                 field_list.append(field)
         self.field_list = field_list
         self.fields = fields

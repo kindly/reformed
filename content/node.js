@@ -40,17 +40,19 @@ function node_load(arg){
 /*
     force a page load of the node
 */
+    // as we are reloading the page make sure everything has blured
+    itemBlur();
     if ($.address.value() == '/' + arg){
         // the address is already set so we need to force the reload
         // as changing the address will not trigger an event
-		node_call_from_string(arg, true, true);
+        node_call_from_string(arg, true, true);
     } else {
         // sets the address which then forces a page load
         var link = arg.split(':');
         if (link[2].substring(0,1) == '_'){
-		    node_call_from_string(arg, true, false);
+            node_call_from_string(arg, true, false);
         } else {
-		$.address.value(arg);
+        $.address.value(arg);
         }
     }
 }
@@ -73,12 +75,12 @@ function node_call_from_string(arg, change_state, insecure){
         if (link.length>3){
             data_hash = convert_url_string_to_hash(link[3]);
         }
-	// if the command starts with a underscore we don't want
-	// to trigger the command from a url change as this can
-	// let dangerous commands be sent via urls
-	if (!insecure || command.substring(0,1) != '_'){
+        // if the command starts with a underscore we don't want
+        // to trigger the command from a url change as this can
+        // let dangerous commands be sent via urls
+        if (!insecure || command.substring(0,1) != '_'){
             get_node(node, command, data_hash, change_state);
-	}
+        }
     }
 }
 
@@ -178,7 +180,7 @@ function _generate_form_html_continuous(form_info, local_data, data){
         num_records = local_data.extra_rows;
     }
     if (num_records){
-        for (i=0; i<num_records; i++){
+        for (var i=0; i<num_records; i++){
             base_id = local_data.root + "(" + i + ")";
             div_id = $INFO.addId(base_id);
 
@@ -198,6 +200,7 @@ function form_grid_header(form, local_data){
     var formHTML = '<thead><tr>';
     local_data.column_count = 0;
     //local_data: count root i wrap_tag show_label
+    var item;
     for (var i=0; i<form.fields.length; i++){
 
         item = form.fields[i];
@@ -228,11 +231,11 @@ function _generate_form_html_grid(form_info, local_data, data){
         num_records = local_data.extra_rows;
     }
     if (num_records){
-        for (i=0; i<num_records; i++){
+        for (var i=0; i<num_records; i++){
             base_id = local_data.root + "(" + i + ")";
             div_id = $INFO.addId(base_id);
 
-            formHTML += '<tr id="' + div_id + '">';
+            formHTML += '<tr id="' + div_id + '" >';
             formHTML += _generate_fields_html(form_info.layout, local_data, data[i], i);
             // controls (hide the last rows controls)
             formHTML += add_form_row_controls(base_id, (i + 1 == num_records));
@@ -430,7 +433,7 @@ function node_generate_html(form, data, paging, root, read_only){
 
     if (form.params && form.params.form_error &&
     form.params.form_error == 'single'){
-        error_id = $INFO.getId(local_data.root) + '__error';
+        var error_id = $INFO.getId(local_data.root) + '__error';
         formHTML += '<div id="' + error_id;
         formHTML += '" class="error_single">&nbsp;</div>';
     }
@@ -465,7 +468,10 @@ function node_generate_html(form, data, paging, root, read_only){
 }
 
 
-
+function _generate_footer_html(local_data){
+    // FIXME this needs implementing
+    return '';
+}
 
 
 
@@ -625,6 +631,8 @@ function itemChanged(item){
 
 function setup_process_params(root, item){
     var value;
+    var options;
+    var id;
     for (var key in item.params){
             if (item.params.hasOwnProperty(key)){
             value = item.params[key];
@@ -685,44 +693,58 @@ function get_node(node_name, node_command, node_data, change_state){
     $JOB.add(info, {}, 'node', true);
 }
 
+
+function node_get_form_data_for_row(form_data, form_info, row, root){
+    var my_root;
+    var value;
+    var name;
+    var item;
+    var id;
+    if (!form_info.clean_rows[row]){
+        // the row is dirty so needs to be saved
+        var out_row = $INFO.getState(root, 'sent_data')[row];
+        if (typeof(out_row) == 'undefined'){
+            out_row = {};
+        }
+        my_root = root + '(' + row + ')';
+        out_row.__root = my_root;
+        for (var i=0; i<form_data.fields.length; i++){
+            item = form_data.fields[i];
+            name = item.name;
+            id = $INFO.getId(my_root + '#' + name);
+            value = $FORM_CONTROL.get(id, item.type);
+            if (typeof value == 'undefined'){
+                value = null;
+            }
+            out_row[name] = value;
+        }
+        // check we have any linking data
+        if(!out_row[form_data.child_id]){
+            // get the parent root (we get no match if we are a top level form)
+            var m = String(root).match(/^(.*)#([^#]*)$/);
+            if (m){
+                var parent_root = m[1];
+                var parent_id = $INFO.getState(parent_root, 'sent_data')[form_data.parent_id];
+                if (parent_id){
+                out_row[form_data.child_id] = parent_id;
+                }
+            }
+        }
+        return out_row;
+    }
+    // row was clean so return nothing
+    return null;
+}
+
 function node_get_form_data_rows(root){
     var form_data = $INFO.getState(root, 'form_data');
     var form_info = $INFO.getState(root, 'form_info');
     var out = [];
-    var my_root;
-    var value;
+    var row_data;
     for(var row=0; row<form_info.clean_rows.length; row++){
-        if (!form_info.clean_rows[row]){
-            // the row is dirty so needs to be saved
-            out_row = $INFO.getState(root, 'sent_data')[row];
-            if (typeof(out_row) == 'undefined'){
-                out_row = {};
-            }
-            my_root = root + '(' + row + ')';
-            out_row.__root = my_root;
-            for (var i=0; i<form_data.fields.length; i++){
-                item = form_data.fields[i];
-                name = item.name;
-                id = $INFO.getId(my_root + '#' + name);
-                value = $FORM_CONTROL.get(id, item.type);
-                if (typeof value == 'undefined'){
-                    value = null;
-                }
-                out_row[name] = value;
-            }
-            // check we have any linking data
-            if(!out_row[form_data.child_id]){
-                // get the parent root (we get no match if we are a top level form)
-                var m = String(root).match(/^(.*)#([^#]*)$/);
-                if (m){
-                    parent_root = m[1];
-                    parent_id = $INFO.getState(parent_root, 'sent_data')[form_data.parent_id];
-                    if (parent_id){
-                    out_row[form_data.child_id] = parent_id;
-                    }
-                }
-            }
-            out.push(out_row);
+        row_data = node_get_form_data_for_row(form_data, form_info, row, root);
+        if (row_data){
+            out.push(row_data);
         }
     }
     return out;
@@ -738,7 +760,10 @@ function node_get_form_data(root){
         var out = $INFO.getState(root, 'sent_data');
         out.__root = root;
         var value;
-        for (i=0; i<form_data.fields.length; i++){
+        var name;
+        var item;
+        var id;
+        for (var i=0; i<form_data.fields.length; i++){
             item = form_data.fields[i];
             name = item.name;
             if (item.type == 'subform'){
@@ -769,6 +794,8 @@ function link_process(item, link){
 
 function node_save(root, command){
     msg('node_save');
+
+
     var out = node_get_form_data(root);
 
     var node =  $INFO.getState(root, 'node');
@@ -783,7 +810,55 @@ function node_save(root, command){
     get_node(node, '_save', out, false);
 }
 
+function node_grid_save(root, row){
 
+    var form_data = $INFO.getState(root, 'form_data');
+    var form_info = $INFO.getState(root, 'form_info');
+    var row_data;
+    row_data = node_get_form_data_for_row(form_data, form_info, row, root);
+    if (row_data){
+        var out = {};
+        out.data = [row_data];
+        var params = form_data.params;
+        if (params && params.extras){
+            for (var extra in params.extras){
+                if (params.extras.hasOwnProperty(extra)){
+                    out[extra] = params.extras[extra];
+                }
+            }
+        }
+        var node =  $INFO.getState(root, 'node', true);
+        get_node(node, '_save', out, false);
+    }
+    return out;
+
+
+}
+function autosave(div){
+    msg('autosave: ' + div);
+    // FIXME this is a dirty hack
+    // if this is a subform we should just save the row that is dirty,
+    // instead we are just saving the main record as this will save dirty rows
+    // as part of it's job. This means all the data is resaved etc.
+    // I want to just save the subform row but this needs more
+    // work but for now this will do.
+    if (div.indexOf('#')>0){
+        div = div.substring(0, div.indexOf('#'));
+    }
+
+    msg('autosave: ' + div);
+    var info = _parse_div(div);
+    if (info.grid){
+        // this is a grid
+        node_grid_save(info.root, info.row);
+
+    } else {
+        // this is the main form
+        node_save(div);
+    }
+
+
+}
 
 
 function node_delete(root, command){
@@ -828,7 +903,7 @@ function node_delete(root, command){
     }
 
     if (form_data && form_data.table_name){
-        out['table_name'] = form_data.table_name;
+        out.table_name = form_data.table_name;
     }
 
     var params = $INFO.getState(my_root, 'form_data').params;
@@ -844,7 +919,7 @@ function node_delete(root, command){
 
 
 function node_button(item, node, command){
-    root = _parse_id(item.id).root;
+    var root = _parse_id(item.id).root;
     var out = node_get_form_data(root);
     get_node(node, command, out, false);
 }
@@ -860,8 +935,11 @@ function search_box(){
 function form_show_errors(root, errors){
     // display errors on form for bad rows
     // ensure 'good' rows do not show errors
+    msg('SHOW_ERRORS' + root + $.toJSON(errors));
     var form_root = parse_strip_subform_info(root);
     var form_data = $INFO.getState(form_root, 'form_data');
+    var field_name;
+    var id;
     for (var field in form_data.fields){
         // ignore subforms
         if (form_data.fields[field].type != 'subform'){
@@ -884,6 +962,8 @@ function form_show_errors(root, errors){
 
 function form_process_deleted(deleted){
     // FIXME should check that this is ok to delete
+    var root;
+    var info;
     for (var i=0; i<deleted.length; i++){
         root = deleted[i].__root;
         info = _parse_div(root);
@@ -903,9 +983,13 @@ function form_save_process_saved(saved){
     var state_sent_data;
     var inserted_id;
     var div;
+    var version;
+    var info;
+
     for (var i=0; i<saved.length; i++){
         div = saved[i][0];
         inserted_id = saved[i][1];
+        version = saved[i][2];
 
         info = _parse_div(div);
         // update the state info for this data
@@ -921,6 +1005,7 @@ function form_save_process_saved(saved){
                 }
             } else {
                 state_sent_data.id = inserted_id;
+                state_sent_data._version = version;
             }
         } else {
             // continuous or grid
@@ -931,7 +1016,7 @@ function form_save_process_saved(saved){
                 }
             } else {
                 // this is a new save so lets add the id to the state data
-                state_sent_data[info.row] = {id: inserted_id};
+                state_sent_data[info.row] = {id: inserted_id, _version: version};
             }
         }
         // remove any error messages/css etc
@@ -958,6 +1043,8 @@ function update_status(root, data){
     }
     var form_root = parse_strip_subform_info(root);
     var form_data = $INFO.getState(form_root, 'form_data');
+    var field_name;
+    var id;
     for (var field in form_data.fields){
         // ignore subforms
         if (form_data.fields[field].type != 'subform'){
@@ -981,6 +1068,9 @@ function get_status(node, root, call_string){
         node_call_from_string(call_string, false);
     }
 }
+
+
+var status_timer;
 
 function job_processor_status(data, node, root){
 
@@ -1063,7 +1153,32 @@ function page_build(data){
     }
     return html;
 }
-fn = function(packet, job){
+
+var current_focus = null;
+var current_focus_item = null;
+
+function itemFocus(item){
+    var info = _parse_id(item.id);
+    if (info.div != current_focus){
+        itemBlur();
+        msg('FOCUS ' + info.div);
+        current_focus = info.div;
+    }
+    current_focus_item = info.item;
+}
+
+function itemBlur(){
+    if (current_focus !== null){
+        msg('BLUR ' + current_focus);
+        autosave(current_focus);
+
+    }
+    current_focus = null;
+
+}
+
+
+var fn = function(packet, job){
      var root = 'main'; //FIXME
 
      var title = packet.data.title;
@@ -1075,6 +1190,7 @@ fn = function(packet, job){
     if (bookmark){
         bookmark_add(bookmark, title);
     }
+    var data;
      switch (packet.data.action){
          case 'redirect':
              var link = packet.data.link;
@@ -1090,9 +1206,9 @@ fn = function(packet, job){
             $('#' + root).html(page_build(packet.data.data));
             break;
          case 'form':
-             form = packet.data.data.form;
+             var form = packet.data.data.form;
              data = packet.data.data.data;
-             paging = packet.data.data.paging;
+             var paging = packet.data.data.paging;
              $('#' + root).html(node_generate_html(form, data, paging, root)).scrollTop(0);
              $INFO.setState(root, 'node', packet.data.node);
              form_setup(root, form);
