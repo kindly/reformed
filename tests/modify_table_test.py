@@ -82,6 +82,9 @@ class test_modify_table_sqlite(object):
         table1.add_relation(OneToMany("moo02%s" % self.randish,
                                       "moo02%s" % self.randish))
 
+        table1 =  self.Donkey["moo01%s" % self.randish]
+        table2 =  self.Donkey["moo02%s" % self.randish]
+
         assert hasattr(table1.sa_class(), "moo02%s" % self.randish)
 
         assert not hasattr(table1.sa_class(), "mo02%s" % self.randish)
@@ -90,11 +93,15 @@ class test_modify_table_sqlite(object):
         table1.add_relation(ManyToOne("moo03%s" % self.randish,
                                       "moo03%s" % self.randish))
 
+        table1 =  self.Donkey["moo01%s" % self.randish]
+
         assert hasattr(table1.sa_class(), "moo03%s" % self.randish)
 
 
         table1.add_relation(OneToOne("moo04%s" % self.randish,
                                       "moo04%s" % self.randish))
+
+        table1 =  self.Donkey["moo01%s" % self.randish]
 
         assert hasattr(table1.sa_class(), "moo04%s" % self.randish)
 
@@ -107,27 +114,23 @@ class test_modify_table_sqlite(object):
 
         start = datetime.datetime.now()
 
-        print "before make", self.engine.name,  datetime.datetime.now() - start
         self.Donkey.add_table(table1)
         self.Donkey.add_table(table2)
-        print "mid make", self.engine.name, datetime.datetime.now() - start
         self.Donkey.persist()
-        print "after make", self.engine.name, datetime.datetime.now() - start
+        
+        table2 =  self.Donkey["to_join%s" % self.randish]
 
         table2.add_relation(ManyToOne("to_rename%s" % self.randish,
                                       "to_rename%s" % self.randish))
 
-        print "after add_relation", self.engine.name, datetime.datetime.now() - start
 
 
 
         self.Donkey.rename_table("to_rename%s" % self.randish, "renamed%s" % self.randish) 
 
-        print "after rename", self.engine.name, datetime.datetime.now() - start
 
         result = validate_database(self.Donkey)
 
-        print "after validate", self.engine.name, datetime.datetime.now() - start
 
         assert result[0] == []
         assert result[1] == []

@@ -168,6 +168,26 @@ class Table(object):
         for name, fields in self.fields:
             pass
 
+    def persist_foreign_key_columns(self, session):
+
+        for column in self.foriegn_key_columns.values():
+            original_col = column.original_column
+            name = column.name
+            if original_col == "id" and name not in self.defined_columns:
+                relation = column.defined_relation
+                field = relation.parent
+                new_field = Integer(name, mandatory = field.many_side_not_null)
+
+                self._add_field_no_persist(new_field)
+                self._persist_extra_field(new_field, session)
+
+                if field.table.name.startswith("__"):
+                    continue
+
+                row = field.get_field_row_from_table(session)
+                row.foreign_key_name = unicode(name)
+                session.save(row)
+
     def add_relation(self, field, defer_update_sa = False):
 
         #TODO also add fk constraint
@@ -216,7 +236,7 @@ class Table(object):
         else:
             session._commit()
             if not defer_update_sa:
-                self.database.update_sa(reload = True)
+                self.database.load_from_persist(True)
         finally:
             session.close()
         return 
@@ -233,11 +253,6 @@ class Table(object):
             mandatory = True if relation.many_side_not_null else False
             fk_table = self.database[relation.foreign_key_table]
             pk_table = self.database[relation.primary_key_table]
-
-            field = Integer(relation.foriegn_key_id_name, mandatory = mandatory)
-            fk_table._add_field_no_persist(field)
-            fk_table._persist_extra_field(field, session)
-
 
             row = field.get_field_row_from_table(session)
             session.delete(row)

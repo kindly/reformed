@@ -520,8 +520,11 @@ class test_basic_input(test_donkey):
 
     def test_dependant_attributes(self):
 
-        assert self.Donkey["people"].dependant_attributes.keys() == ['contact_summary', 'transactions', 'donkey_sponsership', 'email']
-        assert self.Donkey["_core_entity"].dependant_attributes.keys() == ['_membership', 'donkey', 'people', '_relation', 'relation', 'categories']
+        print self.Donkey["people"].dependant_attributes.keys()
+
+        assert set(self.Donkey["people"].dependant_attributes.keys()) == set(['contact_summary', 'transactions', 'donkey_sponsership', 'email'])
+
+        assert set(self.Donkey["_core_entity"].dependant_attributes.keys()) == set(['_membership', 'donkey', 'people', '_relation', 'relation', 'categories'])
 
     def test_dependant_tables(self):
 
@@ -585,6 +588,8 @@ class test_basic_input(test_donkey):
 
         self.session.save(donkey)
         self.session.commit()
+
+
 
         
         

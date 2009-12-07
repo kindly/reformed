@@ -325,6 +325,14 @@ class Database(object):
                     table.persist(session)
             for field in self.fields_to_persist:
                 field.table._persist_extra_field(field, session)
+
+            session._flush()
+
+            for table in self.tables.itervalues():
+                table.persist_foreign_key_columns(session)
+
+            session._flush()
+
             self.metadata.create_all(self.engine)
         except Exception, e:
             session.rollback()
@@ -334,8 +342,8 @@ class Database(object):
         finally:
             session.close
 
-        if self.fields_to_persist:
-            self.update_sa(reload = True)
+        self.load_from_persist(True)
+
         self.fields_to_persist = []
         self.persisted = True
 

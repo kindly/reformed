@@ -55,6 +55,7 @@ class TextLookupValidated(Field):
     
     def __init__(self, name, target, *args, **kw):
         self.text = Column(sa.Unicode(100),  use_parent = True)
+        self.other = target
 
         filter_field = kw.get("filter_field", None)
         filter_value = kw.get("filter_value", None)
