@@ -627,16 +627,19 @@ function keyDown(item, event){
     // the default onkeydown event
     // used to move up and down rows with arrow keys in grids
     if (event){
-        var key = getKeyPress(event);
-        msg(key.code);
-        if (key.code == 38 && m.row>0){
-            // up arrow
-            move_row(m.root, m.row -1, m.control);
-        } else {
-            if (key.code == 40){
-                // down arrow
-                // // FIXME want to not just keep creating new rows
-                move_row(m.root, m.row + 1, m.control);
+        var m = _parse_id(item.id);
+        if (m){
+            var key = getKeyPress(event);
+            msg(key.code);
+            if (key.code == 38 && m.row>0){
+                // up arrow
+                move_row(m.root, m.row -1, m.control);
+            } else {
+                if (key.code == 40){
+                    // down arrow
+                    // // FIXME want to not just keep creating new rows
+                    move_row(m.root, m.row + 1, m.control);
+                }
             }
         }
     }
@@ -654,7 +657,7 @@ function itemChanged(item){
         dirty(m.root, m.row, true);
         // validate stuff
         var form_data = $INFO.getState(m.root, 'form_data');
-        errors = validate(form_data.items[m.control].params.validation, $('#' + item.id).val());
+        errors = validate(form_data.items[m.control].params.validation, $('#' + item.id).val(), true);
         if (errors.length > 0){
             form_show_errors_for_item(m.div, m.control, errors);
         } else {

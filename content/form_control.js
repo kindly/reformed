@@ -391,8 +391,8 @@ $FORM_CONTROL = {
 
     _datebox_change: function (obj){
         // this is when the user date is changed
-        var value = $(obj).val()
-        if (isDate(value) || value == ''){
+        var value = $(obj).val();
+        if (isDate(value) || value === ''){
             // date is good
             $(obj).removeClass("error");
         } else {
@@ -461,18 +461,18 @@ var validation_rules = {
 
 };
 
-function validate(rules, value){
+function validate(rules, value, ignore_not_empty){
     var errors = [];
     for (var i=0; i < rules.length; i++){
         rule = rules[i];
         // the first rule states if we allow nulls or not
-        if (i == 0){
-            if (rule.not_empty && value === ''){
+        if (i === 0){
+            if (rule.not_empty && value === '' && ignore_not_empty !== true){
                 return ['must not be null'];
             }
         }
         // validate the rules for the field if we know the validator
-        if (validation_rules[rule.type] != 'undefined'){
+        if (validation_rules[rule.type] !== undefined){
             validation_errors = (validation_rules[rule.type](rule, value));
             if (validation_errors.length){
                 errors.push(validation_errors);
