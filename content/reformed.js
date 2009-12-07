@@ -135,7 +135,9 @@ function allowedKeys(key){
         key.code == 35 || // Home
         key.code == 36 || // End
         key.code == 37 || // Left
+        key.code == 38 || // Up
         key.code == 39 || // Right
+        key.code == 40 || // Down
         key.code == 45 || // Insert
         key.code == 46 || // Delete
         key.code == 144 || // Num Lock

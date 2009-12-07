@@ -616,15 +616,34 @@ function dirty(root, row, state){
     }
 }
 
-function itemChanged(item){
+function move_row(root, row, control){
+    var id = '#' + $INFO.getId(root + '(' + row + ')#' + control);
+    msg(id);
+    itemBlur();
+    $(id).focus();
+}
 
-    msg('itemChanged');
+function itemChanged(item, event){
+
+    msg('itemChanged', + event.key);
     // remove the error css
     $('#' + item.id).removeClass('error');
     // set dirty
     var m = _parse_id(item.id);
-    if (m) {
-        dirty(m.root, m.row, true);
+        if (m) {
+            dirty(m.root, m.row, true);
+        // see if we need to do something
+        if (event){
+            var key = getKeyPress(event);
+            msg(key.code);
+            if (key.code == 38 && m.row>0){
+                move_row(m.root, m.row -1, m.control);
+            } else {
+                if (key.code == 40){
+                    move_row(m.root, m.row + 1, m.control);
+                }
+            }
+        }
     }
 }
 
@@ -700,6 +719,7 @@ function node_get_form_data_for_row(form_data, form_info, row, root){
     var name;
     var item;
     var id;
+    var data_changed = false;
     if (!form_info.clean_rows[row]){
         // the row is dirty so needs to be saved
         var out_row = $INFO.getState(root, 'sent_data')[row];
@@ -716,7 +736,10 @@ function node_get_form_data_for_row(form_data, form_info, row, root){
             if (typeof value == 'undefined'){
                 value = null;
             }
-            out_row[name] = value;
+            if (out_row[name] != value){
+                out_row[name] = value;
+                data_changed = true;
+            }
         }
         // check we have any linking data
         if(!out_row[form_data.child_id]){
@@ -730,7 +753,10 @@ function node_get_form_data_for_row(form_data, form_info, row, root){
                 }
             }
         }
-        return out_row;
+        // only return data if things have changed
+        if (data_changed){
+            return out_row;
+        }
     }
     // row was clean so return nothing
     return null;
@@ -829,8 +855,11 @@ function node_grid_save(root, row){
         }
         var node =  $INFO.getState(root, 'node', true);
         get_node(node, '_save', out, false);
+    } else {
+        // nothing to save so mark it as clean
+        dirty(root, row, false);
     }
-    return out;
+  //  return out;
 
 
 }

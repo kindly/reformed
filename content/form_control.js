@@ -187,7 +187,7 @@ $FORM_CONTROL = {
             var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
             x += '<textarea id="' + id + '" name="' + id + '" ';
             x += 'onchange="itemChanged(this)"  ';
-            x += 'onkeyup="itemChanged(this)" >';
+            x += 'onkeydown="itemChanged(this, event)" >';
             if (value){
                 x += value;
             }
@@ -202,7 +202,7 @@ $FORM_CONTROL = {
             x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
             x += 'onfocus="itemFocus(this)" ';
             x += 'onchange="itemChanged(this)"  ';
-            x += 'onkeyup="itemChanged(this)" />';
+            x += 'onkeydown="itemChanged(this, event)" />';
             return x;
         },
 
@@ -213,8 +213,7 @@ $FORM_CONTROL = {
             x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
             x += 'onfocus="itemFocus(this)" ';
             x += 'onchange="$FORM_CONTROL._intbox_change(this)"  ';
-            x += 'onkeypress="return $FORM_CONTROL._intbox_key(this, event)" ';
-            x += 'onkeyup="$FORM_CONTROL._intbox_key(this, event)" />';
+            x += 'onkeydown="return $FORM_CONTROL._intbox_key(this, event)" />';
             return x;
         },
 
@@ -226,7 +225,7 @@ $FORM_CONTROL = {
             x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
             x += 'onchange="itemChanged(this)"  ';
             x += 'onfocus="itemFocus(this)" ';
-            x += 'onkeyup="itemChanged(this)" />';
+            x += 'onkeydown="itemChanged(this, event)" />';
             return x;
         },
 
@@ -329,8 +328,7 @@ $FORM_CONTROL = {
             x += 'onfocus="itemFocus(this)" ';
             x += 'onblur="$FORM_CONTROL._datebox_change(this)" ';
             x += 'onchange="$FORM_CONTROL._datebox_change(this)" ';
-            x += 'onkeydown="return $FORM_CONTROL._datebox_key(this,event)" ';
-            x += 'onkeyup="$FORM_CONTROL._datebox_key(this,event)" />';
+            x += 'onkeydown="return $FORM_CONTROL._datebox_key(this,event)" />';
             return x;
         }
     },
@@ -407,7 +405,7 @@ $FORM_CONTROL = {
         if ((key.code > 47 && key.code < 59) /* numbers */ ||
              (key.code == 191) /* forward slash */ ||
               allowedKeys(key) ){
-            itemChanged(obj);
+            itemChanged(obj, event);
             return true;
         } else {
             return false;
@@ -425,7 +423,7 @@ $FORM_CONTROL = {
         var key = getKeyPress(event);
         if ((key.code > 47 && key.code < 59) /* numbers */ ||
               allowedKeys(key) ){
-            itemChanged(obj);
+            itemChanged(obj, event);
             return true;
         } else {
             return false;
