@@ -623,26 +623,42 @@ function move_row(root, row, control){
     $(id).focus().select();
 }
 
-function itemChanged(item, event){
+function keyDown(item, event){
+    // the default onkeydown event
+    // used to move up and down rows with arrow keys in grids
+    if (event){
+        var key = getKeyPress(event);
+        msg(key.code);
+        if (key.code == 38 && m.row>0){
+            // up arrow
+            move_row(m.root, m.row -1, m.control);
+        } else {
+            if (key.code == 40){
+                // down arrow
+                // // FIXME want to not just keep creating new rows
+                move_row(m.root, m.row + 1, m.control);
+            }
+        }
+    }
+}
 
-    msg('itemChanged', + event.key);
+
+function itemChanged(item){
+
+    msg('itemChanged');
     // remove the error css
     $('#' + item.id).removeClass('error');
     // set dirty
     var m = _parse_id(item.id);
-        if (m) {
-            dirty(m.root, m.row, true);
-        // see if we need to do something
-        if (event){
-            var key = getKeyPress(event);
-            msg(key.code);
-            if (key.code == 38 && m.row>0){
-                move_row(m.root, m.row -1, m.control);
-            } else {
-                if (key.code == 40){
-                    move_row(m.root, m.row + 1, m.control);
-                }
-            }
+    if (m) {
+        dirty(m.root, m.row, true);
+        // validate stuff
+        var form_data = $INFO.getState(m.root, 'form_data');
+        errors = validate(form_data.items[m.control].params.validation, $('#' + item.id).val());
+        if (errors.length > 0){
+            form_show_errors_for_item(m.div, m.control, errors);
+        } else {
+            form_show_errors_for_item(m.div, m.control, errors);
         }
     }
 }
@@ -712,7 +728,6 @@ function get_node(node_name, node_command, node_data, change_state){
     $JOB.add(info, {}, 'node', true);
 }
 
-
 function node_get_form_data_for_row(form_data, form_info, row, root){
     var my_root;
     var value;
@@ -720,6 +735,9 @@ function node_get_form_data_for_row(form_data, form_info, row, root){
     var item;
     var id;
     var data_changed = false;
+    var data_error = false;
+    var validation;
+    var validation_errors = {};
     if (!form_info.clean_rows[row]){
         // the row is dirty so needs to be saved
         var out_row = $INFO.getState(root, 'sent_data')[row];
@@ -737,8 +755,14 @@ function node_get_form_data_for_row(form_data, form_info, row, root){
                 value = null;
             }
             if (out_row[name] != value){
-                out_row[name] = value;
-                data_changed = true;
+                validation = validate(item.params.validation, value);
+                if (validation.length > 0){
+                    validation_errors[name] = validation;
+                    data_error = true;
+                } else {
+                    out_row[name] = value;
+                    data_changed = true;
+                }
             }
         }
         // check we have any linking data
@@ -753,9 +777,14 @@ function node_get_form_data_for_row(form_data, form_info, row, root){
                 }
             }
         }
+        // any errors?
+        if (data_error){
+            return {errors: validation_errors};
+        }
+
         // only return data if things have changed
         if (data_changed){
-            return out_row;
+            return {data: out_row};
         }
     }
     // row was clean so return nothing
@@ -769,8 +798,12 @@ function node_get_form_data_rows(root){
     var row_data;
     for(var row=0; row<form_info.clean_rows.length; row++){
         row_data = node_get_form_data_for_row(form_data, form_info, row, root);
-        if (row_data){
-            out.push(row_data);
+        // if we get {data:...} back we have a good row
+        // {errors:...} means the row did not validate
+        if (row_data.data){
+            out.push(row_data.data);
+        } else {
+            alert(row_data.errors);
         }
     }
     return out;
@@ -842,9 +875,11 @@ function node_grid_save(root, row){
     var form_info = $INFO.getState(root, 'form_info');
     var row_data;
     row_data = node_get_form_data_for_row(form_data, form_info, row, root);
-    if (row_data){
+    // if {data:...} we have data
+    // {errors:...} there was a validation error
+    if (row_data && row_data.data){
         var out = {};
-        out.data = [row_data];
+        out.data = [row_data.data];
         var params = form_data.params;
         if (params && params.extras){
             for (var extra in params.extras){
@@ -856,8 +891,12 @@ function node_grid_save(root, row){
         var node =  $INFO.getState(root, 'node', true);
         get_node(node, '_save', out, false);
     } else {
-        // nothing to save so mark it as clean
-        dirty(root, row, false);
+        if (row_data && row_data.errors){
+            form_show_errors(root + '(' + row + ')', row_data.errors);
+        } else {
+            // nothing to save so mark it as clean
+            dirty(root, row, false);
+        }
     }
   //  return out;
 
@@ -959,7 +998,22 @@ function search_box(){
     return false;
 }
 
+function form_show_errors_for_item(root, field_name, errors){
+    var id = $INFO.getId(root + '#' + field_name);
+    if (errors.length > 0){
+        // there is an error for this field
+        $('#' + id).addClass('error');
+        $('#' + id + ' + span').remove();
+        $('#' + id).after("<span class='field_error'>ERROR: " + errors.join(', ') + "</span>");
+    } else {
+        // field is good
+        $('#' + id).removeClass('error');
+        $('#' + id + ' + span').remove();
+    }
 
+
+
+}
 
 function form_show_errors(root, errors){
     // display errors on form for bad rows

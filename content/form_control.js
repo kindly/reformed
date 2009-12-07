@@ -202,7 +202,8 @@ $FORM_CONTROL = {
             x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
             x += 'onfocus="itemFocus(this)" ';
             x += 'onchange="itemChanged(this)"  ';
-            x += 'onkeydown="itemChanged(this, event)" />';
+            x += 'onkeyup="itemChanged(this)" ';
+            x += 'onkeydown="keyDown(this, event)" />';
             return x;
         },
 
@@ -213,6 +214,7 @@ $FORM_CONTROL = {
             x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
             x += 'onfocus="itemFocus(this)" ';
             x += 'onchange="$FORM_CONTROL._intbox_change(this)"  ';
+            x += 'onkeyup="itemChanged(this)" ';
             x += 'onkeydown="return $FORM_CONTROL._intbox_key(this, event)" />';
             return x;
         },
@@ -405,7 +407,7 @@ $FORM_CONTROL = {
         if ((key.code > 47 && key.code < 59) /* numbers */ ||
              (key.code == 191) /* forward slash */ ||
               allowedKeys(key) ){
-            itemChanged(obj, event);
+            keyDown(obj, event);
             return true;
         } else {
             return false;
@@ -423,7 +425,7 @@ $FORM_CONTROL = {
         var key = getKeyPress(event);
         if ((key.code > 47 && key.code < 59) /* numbers */ ||
               allowedKeys(key) ){
-            itemChanged(obj, event);
+            keyDown(obj, event);
             return true;
         } else {
             return false;
@@ -432,6 +434,53 @@ $FORM_CONTROL = {
 
 
 };
+
+// the validators we have
+var validation_rules = {
+
+    'UnicodeString' : function(rule, value){
+        var errors = [];
+        if (rule.max && value.length > rule.max){
+            errors.push('cannot be over ' + rule.max + ' chars');
+        }
+        return errors;
+    },
+
+    'Int' : function(rule, value){
+        var errors = [];
+        if (value > 100){
+            errors.push('too big');
+        }
+        if (value == 666){
+            errors.push('evil');
+        }
+        return errors;
+
+    }
+
+
+};
+
+function validate(rules, value){
+    var errors = [];
+    for (var i=0; i < rules.length; i++){
+        rule = rules[i];
+        // the first rule states if we allow nulls or not
+        if (i == 0){
+            if (rule.not_empty && value === ''){
+                return ['must not be null'];
+            }
+        }
+        // validate the rules for the field if we know the validator
+        if (validation_rules[rule.type] != 'undefined'){
+            validation_errors = (validation_rules[rule.type](rule, value));
+            if (validation_errors.length){
+                errors.push(validation_errors);
+            }
+        }
+    }
+    return errors;
+}
 
 
 
