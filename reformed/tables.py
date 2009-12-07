@@ -190,8 +190,6 @@ class Table(object):
 
     def add_relation(self, field, defer_update_sa = False):
 
-        #TODO also add fk constraint
-
         if not self.persisted:
             self._add_field_no_persist(field)
             return
@@ -213,7 +211,8 @@ class Table(object):
                     if self.database.engine.name == 'sqlite':
                         sa_options["server_default"] = "null"
                     col = sa.Column(name, column.type, **sa_options)
-
+                    session._flush()
+                    fk_table.persist_foreign_key_columns(session)
                     col.create(fk_table.sa_table)
 
             for name, con in fk_table.foreign_key_constraints.iteritems():
@@ -413,6 +412,8 @@ class Table(object):
 
         for field in __table.field:
             self.fields[field.field_name].field_id = field.id
+
+        return __field
 
     def get_table_row_from_table(self, session):
         

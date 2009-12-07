@@ -440,6 +440,17 @@ class Field(object):
         result = query.filter(sa_class.id == self.field_id).one()
         return result
 
+    @property
+    def category(self):
+
+        if self.columns:
+            return "field"
+        if self.relations:
+            return "relation"
+        if self.constraints:
+            return "constraint"
+        if self.indexs:
+            return "index"
 
     @property
     def items(self):

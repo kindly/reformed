@@ -76,16 +76,20 @@ class test_modify_table_sqlite(object):
 
     def test_2_add_relation(self):
 
-        table1 =  self.Donkey["moo01%s" % self.randish]
-        table2 =  self.Donkey["moo02%s" % self.randish]
+        table1 = self.Donkey["moo01%s" % self.randish]
 
         table1.add_relation(OneToMany("moo02%s" % self.randish,
                                       "moo02%s" % self.randish))
 
-        table1 =  self.Donkey["moo01%s" % self.randish]
-        table2 =  self.Donkey["moo02%s" % self.randish]
+
+        table1 = self.Donkey["moo01%s" % self.randish]
+        table2 = self.Donkey["moo02%s" % self.randish]
 
         assert hasattr(table1.sa_class(), "moo02%s" % self.randish)
+
+        assert "moo01%s_id" % self.randish in table2.fields
+        assert "moo01%s_id" % self.randish in table2.defined_columns
+        assert not table2.defined_columns["moo01%s_id" % self.randish].sa_options["nullable"]
 
         assert not hasattr(table1.sa_class(), "mo02%s" % self.randish)
 
@@ -94,6 +98,10 @@ class test_modify_table_sqlite(object):
                                       "moo03%s" % self.randish))
 
         table1 =  self.Donkey["moo01%s" % self.randish]
+
+        assert "moo03%s_id" % self.randish in table1.fields
+        assert "moo03%s_id" % self.randish in table1.defined_columns
+        assert not table1.defined_columns["moo03%s_id" % self.randish].sa_options["nullable"]
 
         assert hasattr(table1.sa_class(), "moo03%s" % self.randish)
 
