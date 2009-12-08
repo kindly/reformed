@@ -258,7 +258,7 @@ $FORM_CONTROL = {
             x += 'value="true" class="checkbox" ';
             x += 'onfocus="itemFocus(this)" ';
             x += 'onchange="itemChanged(this)" ';
-            x += 'onkeydown="keyDown(this, event)" />';
+            x += 'onkeydown="keyDown(this, event);return false" />';
             if (show_label && item.reverse){
                 x += $FORM_CONTROL._label(item, id);
             }
