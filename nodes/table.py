@@ -297,15 +297,19 @@ class Edit(node.TableNode):
         columns = obj.schema_info
         for field in obj.field_order:
             if field not in ['_modified_date', '_modified_by','_core_entity_id', '_version'] and field in columns:
+
+                field_schema = obj.schema_info[field]
+                params = {'validation' : field_schema}
                 # FIXME an easier way to do this would be nice
+
                 if obj.fields[field].__class__.__name__ == 'Integer':
-                    fields.append([field, 'intbox', '%s:' % field])
+                    fields.append([field, 'intbox', '%s:' % field, params])
                 elif obj.fields[field].__class__.__name__ == 'Boolean':
-                    fields.append([field, 'checkbox', '%s:' % field])
+                    fields.append([field, 'checkbox', '%s:' % field, params])
                 elif obj.fields[field].__class__.__name__ == 'DateTime':
-                    fields.append([field, 'datebox', '%s:' % field])
+                    fields.append([field, 'datebox', '%s:' % field, params])
                 else:
-                    fields.append([field, 'textbox', '%s:' % field])
+                    fields.append([field, 'textbox', '%s:' % field, params])
                 field_list.append(field)
         self.field_list = field_list
         self.fields = fields
@@ -313,7 +317,7 @@ class Edit(node.TableNode):
                              "extras" : self.extra_data
                             }
 
-    def view(self, read_only=False, limit =100):
+    def view(self, read_only=False, limit =10):
 
         query = self.data.get('q', '')
         limit = self.data.get('l', limit)

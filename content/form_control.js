@@ -103,13 +103,17 @@ $FORM_CONTROL = {
         }
     },
 
-    get: function (id, type){
+    get: function (id, type, dont_update){
         if (typeof(this['_' + type + '_get']) == "undefined"){
             // default get method
-            return $("#" + id).val();
+            var value = $("#" + id).val();
+            if (value == '[NULL]' && $('#' +id).hasClass('null')){
+                value = null;
+            }
+            return value;
         } else {
             // use the special get method for this control
-            return this['_' + type + '_get'](id);
+            return this['_' + type + '_get'](id, dont_update);
         }
     },
 
@@ -187,7 +191,7 @@ $FORM_CONTROL = {
             var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
             x += '<textarea id="' + id + '" name="' + id + '" ';
             x += 'onchange="itemChanged(this)"  ';
-            x += 'onkeyup="itemChanged(this)" >';
+            x += 'onkeydown="itemChanged(this, event)" >';
             if (value){
                 x += value;
             }
@@ -199,10 +203,16 @@ $FORM_CONTROL = {
             // simple textbox
             var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
             x += '<input id="' + id + '" name="' + id + '" type="text" ';
-            x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            if (value === null){
+                x += 'value="[NULL]" class="null" ';
+            } else {
+                x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            }
             x += 'onfocus="itemFocus(this)" ';
+            x += 'onblur="itemBlur(this)" ';
             x += 'onchange="itemChanged(this)"  ';
-            x += 'onkeyup="itemChanged(this)" />';
+            x += 'onkeyup="itemChanged(this)" ';
+            x += 'onkeydown="keyDown(this, event)" />';
             return x;
         },
 
@@ -210,11 +220,16 @@ $FORM_CONTROL = {
             // simple textbox
             var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
             x += '<input id="' + id + '" name="' + id + '" type="text" ';
-            x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            if (value === null || value === ''){
+                x += 'value="[NULL]" class="null" ';
+            } else {
+                x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            }
             x += 'onfocus="itemFocus(this)" ';
+            x += 'onblur="itemBlur(this, true)" ';
             x += 'onchange="$FORM_CONTROL._intbox_change(this)"  ';
-            x += 'onkeypress="return $FORM_CONTROL._intbox_key(this, event)" ';
-            x += 'onkeyup="$FORM_CONTROL._intbox_key(this, event)" />';
+            x += 'onkeyup="itemChanged(this)" ';
+            x += 'onkeydown="return $FORM_CONTROL._intbox_key(this, event)" />';
             return x;
         },
 
@@ -226,7 +241,7 @@ $FORM_CONTROL = {
             x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
             x += 'onchange="itemChanged(this)"  ';
             x += 'onfocus="itemFocus(this)" ';
-            x += 'onkeyup="itemChanged(this)" />';
+            x += 'onkeydown="keyDown(this, event)" />';
             return x;
         },
 
@@ -242,7 +257,8 @@ $FORM_CONTROL = {
             }
             x += 'value="true" class="checkbox" ';
             x += 'onfocus="itemFocus(this)" ';
-            x += 'onchange="itemChanged(this)" />';
+            x += 'onchange="itemChanged(this)" ';
+            x += 'onkeydown="keyDown(this, event)" />';
             if (show_label && item.reverse){
                 x += $FORM_CONTROL._label(item, id);
             }
@@ -325,12 +341,16 @@ $FORM_CONTROL = {
             var x = show_label ? $FORM_CONTROL._label(item, id) : '';
             x += '<input id="' + id + '" name="' + id ;
             x += '" type="text" ';
-            x += 'value="' + value + '" ';
+            if (value === null || value === ''){
+                x += 'value="[NULL]" class="null" ';
+            } else {
+                x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            }
             x += 'onfocus="itemFocus(this)" ';
-            x += 'onblur="$FORM_CONTROL._datebox_change(this)" ';
+            x += 'onblur="itemBlur(this, true)" ';
             x += 'onchange="$FORM_CONTROL._datebox_change(this)" ';
-            x += 'onkeydown="return $FORM_CONTROL._datebox_key(this,event)" ';
-            x += 'onkeyup="$FORM_CONTROL._datebox_key(this,event)" />';
+            x += 'onkeyup="itemChanged(this)" ';
+            x += 'onkeydown="return $FORM_CONTROL._datebox_key(this,event)" />';
             return x;
         }
     },
@@ -376,30 +396,41 @@ $FORM_CONTROL = {
         {
             value = '';
         }
-        $("#" + id).val(my_date);
+        $("#" + id).val(value);
     },
 
-    _datebox_get: function(id){
+    _datebox_get: function(id, dont_update){
         var value = $("#" + id).val();
-        value = new Date(value);
-        value = value.toISOString();
-        if (value == 'Invalid Date'){
-            value = '';
+        if (value === '' || value == '[NULL]'){
+            value = null;
+        } else {
+            value = date_from_value(value);
+            if (value){
+                value = value.toISOString();
+                if (value == 'Invalid Date'){
+                    value = '';
+                } else {
+                    // update the date in case we have changed it
+                    if (dont_update !== true){
+                        $FORM_CONTROL._datebox_set(id,value);
+                    }
+                }
+            }
         }
         return value;
     },
 
     _datebox_change: function (obj){
         // this is when the user date is changed
-        var value = $(obj).val()
-        if (isDate(value) || value == ''){
+        var value = $(obj).val();
+        if (isDate(value) || value === ''){
             // date is good
             $(obj).removeClass("error");
         } else {
             // date is bad
             $(obj).addClass("error");
         }
-        itemChanged(obj);
+        itemChanged(obj, true);
     },
 
     _datebox_key: function(obj, event){
@@ -407,7 +438,7 @@ $FORM_CONTROL = {
         if ((key.code > 47 && key.code < 59) /* numbers */ ||
              (key.code == 191) /* forward slash */ ||
               allowedKeys(key) ){
-            itemChanged(obj);
+            keyDown(obj, event);
             return true;
         } else {
             return false;
@@ -425,7 +456,7 @@ $FORM_CONTROL = {
         var key = getKeyPress(event);
         if ((key.code > 47 && key.code < 59) /* numbers */ ||
               allowedKeys(key) ){
-            itemChanged(obj);
+            keyDown(obj, event);
             return true;
         } else {
             return false;
@@ -434,6 +465,98 @@ $FORM_CONTROL = {
 
 
 };
+
+// FIXME this needs to be in sync with the locale or else dates go crazy
+// maybe need to do own toLocaleString function to get balance
+// or else determine this from the locale being used by probing the date object
+var DATE_FORMAT = 'UK';
+
+function date_from_value(value){
+
+    var day;
+    var month;
+    var year;
+    var parts = value.split('/');
+    if (parts.length == 3){
+        switch(DATE_FORMAT){
+            case 'UK':
+                // UK format (dd/mm/yyyy)
+                year = parseInt(parts[2], 10);
+                month = parseInt(parts[1], 10) - 1;
+                day = parseInt(parts[0], 10);
+                break;
+            case 'US':
+                // US format (mm/dd/yyyy)
+                year = parseInt(parts[2], 10);
+                month = parseInt(parts[0], 10) - 1;
+                day = parseInt(parts[1], 10);
+                break;
+            case 'ISO':
+                // ISO format (yyyy/mm/dd)
+                year = parseInt(parts[0], 10);
+                month = parseInt(parts[1], 10) - 1;
+                day = parseInt(parts[3], 10);
+                break;
+        }
+        if (day){
+            return new Date(year, month, day);
+        }
+    }
+    // not a valid date
+    return '';
+}
+// the validators we have
+var validation_rules = {
+
+    'UnicodeString' : function(rule, value){
+        var errors = [];
+        if (value !== null && rule.max && value.length > rule.max){
+            errors.push('cannot be over ' + rule.max + ' chars');
+        }
+        return errors;
+    },
+
+    'Int' : function(rule, value){
+        var errors = [];
+        if (value > 100){
+            errors.push('too big');
+        }
+        if (value == 666){
+            errors.push('evil');
+        }
+        return errors;
+    },
+
+    'DateValidator' : function(rule, value, currently_selected){
+        var errors = [];
+        if (value === '' && currently_selected !== true){
+            errors.push('not a valid date' + value);
+        }
+        return errors;
+    }
+
+};
+
+function validate(rules, value, currently_selected){
+    var errors = [];
+    for (var i=0; i < rules.length; i++){
+        rule = rules[i];
+        // the first rule states if we allow nulls or not
+        if (i === 0){
+            if (rule.not_empty && value === null && currently_selected !== true){
+                return ['must not be null'];
+            }
+        }
+        // validate the rules for the field if we know the validator
+        if (validation_rules[rule.type] !== undefined){
+            validation_errors = (validation_rules[rule.type](rule, value, currently_selected));
+            if (validation_errors.length){
+                errors.push(validation_errors);
+            }
+        }
+    }
+    return errors;
+}
 
 
 
