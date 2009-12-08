@@ -657,20 +657,24 @@ function keyDown(item, event){
 }
 
 
-function itemChanged(item){
+function itemChanged(item, update_control){
 
     msg('itemChanged');
     // remove the error css
     $('#' + item.id).removeClass('error');
-    // set dirty
     var m = _parse_id(item.id);
     if (m) {
         var errors;
+        // set dirty
         dirty(m.root, m.row, true);
         // validate stuff
         var form_data = $INFO.getState(m.root, 'form_data');
         if (form_data.items[m.control].params && form_data.items[m.control].params.validation){
-            var value = $FORM_CONTROL.get(item.id, form_data.items[m.control].type);
+            var dont_update = true;
+            if (update_control === true){
+                dont_update = false;
+            }
+            var value = $FORM_CONTROL.get(item.id, form_data.items[m.control].type, dont_update);
             errors = validate(form_data.items[m.control].params.validation, value, true);
         } else {
             errors = null;
