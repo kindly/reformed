@@ -70,7 +70,7 @@ class Node(object):
         new_node = 'n:%s:%s:%s' % (node, command, data)
         if self.extra_data:
             if data:
-                new_node += '&%s' % self.extra_data
+                new_node += '&%s' % self.build_url_string_from_dict(self.extra_data)
             else:
                 new_node += self.extra_data
         if title:
