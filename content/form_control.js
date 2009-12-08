@@ -496,7 +496,7 @@ function validate(rules, value, ignore_not_empty){
         rule = rules[i];
         // the first rule states if we allow nulls or not
         if (i === 0){
-            if (rule.not_empty && value === '' && ignore_not_empty !== true){
+            if (rule.not_empty && value === null && ignore_not_empty !== true){
                 return ['must not be null'];
             }
         }
