@@ -198,7 +198,8 @@ function _generate_form_html_continuous(form_info, local_data, data){
 
 function form_grid_header(form, local_data){
     var formHTML = '<thead><tr>';
-    local_data.column_count = 0;
+    local_data.column_count = 1;
+    formHTML += '<td width="10px">&nbsp;</td>';
     //local_data: count root i wrap_tag show_label
     var item;
     for (var i=0; i<form.fields.length; i++){
@@ -236,6 +237,7 @@ function _generate_form_html_grid(form_info, local_data, data){
             div_id = $INFO.addId(base_id);
 
             formHTML += '<tr id="' + div_id + '" >';
+            formHTML += '<td id="' + div_id + '__info">&nbsp;</td>'
             formHTML += _generate_fields_html(form_info.layout, local_data, data[i], i);
             // controls (hide the last rows controls)
             formHTML += add_form_row_controls(base_id, (i + 1 == num_records));
@@ -288,6 +290,7 @@ function add_form_row(root, type){
                       show_label: false,
                       wrap_tag: 'td'};
         formHTML = '<tr id="' + id + '" class="form_body">';
+        formHTML += '<td id="' + id + '__info">&nbsp;</td>'
         formHTML += _generate_fields_html(form_data, local_data, null, row);
         formHTML += add_form_row_controls(root + '(' + row + ')', true);
         formHTML += "</tr>";
@@ -609,6 +612,7 @@ function dirty(root, row, state){
         if(state){
             if(update){
                 $(my_root).addClass("dirty");
+                $(my_root + '__info').html('D');
             }
         } else {
             $(my_root).removeClass("dirty");
@@ -931,6 +935,7 @@ function node_grid_save(root, row){
         } else {
             // nothing to save so mark it as clean
             dirty(root, row, false);
+            $('#' + $INFO.getId(root + '(' + row + ')') + '__info').html('&nbsp;');
         }
     }
   //  return out;
@@ -938,7 +943,7 @@ function node_grid_save(root, row){
 
 }
 function autosave(div){
-    msg('autosave: ' + div);
+  //  msg('autosave: ' + div);
     // FIXME this is a dirty hack
     // if this is a subform we should just save the row that is dirty,
     // instead we are just saving the main record as this will save dirty rows
@@ -1038,11 +1043,17 @@ function form_show_errors_for_item(root, field_name, errors){
         // there is an error for this field
         $('#' + id).addClass('error');
         $('#' + id + ' + span').remove();
-        $('#' + id).after("<span class='field_error'>ERROR: " + errors.join(', ') + "</span>");
+        // show error if normal form
+        if (root.indexOf('(') == -1){
+            $('#' + id).after("<span class='field_error'>ERROR: " + errors.join(', ') + "</span>");
+        }
     } else {
         // field is good
         $('#' + id).removeClass('error');
-        $('#' + id + ' + span').remove();
+        // show error if normal form
+        if (root.indexOf('(') == -1){
+            $('#' + id + ' + span').remove();
+        }
     }
 
 
@@ -1057,6 +1068,15 @@ function form_show_errors(root, errors){
     var form_data = $INFO.getState(form_root, 'form_data');
     var field_name;
     var id;
+    // show error if grid form
+    // FIXME this is not a very good test as it gets continous forms too
+    if (root.indexOf('(') > -1){
+        if (errors){
+            $('#' + $INFO.getId(root) + '__info').html('<span title="' + ($.toJSON(errors)).replace(/"/g,'&quot;') + '">E</span>');
+        } else {
+            $('#' + $INFO.getId(root) + '__info').html('&nbsp;');
+        }
+    }
     for (var field in form_data.fields){
         // ignore subforms
         if (form_data.fields[field].type != 'subform'){
@@ -1065,12 +1085,18 @@ function form_show_errors(root, errors){
             if (errors && errors[field_name]){
                 // there is an error for this field
                 $('#' + id).addClass('error');
-                $('#' + id + ' + span').remove();
-                $('#' + id).after("<span class='field_error'>ERROR: " + errors[field_name] + "</span>");
+                // show error if normal form
+                if (root.indexOf('(') == -1){
+                    $('#' + id + ' + span').remove();
+                    $('#' + id).after("<span class='field_error'>ERROR: " + errors[field_name] + "</span>");
+                }
             } else {
                 // field is good
                 $('#' + id).removeClass('error');
-                $('#' + id + ' + span').remove();
+                // show error if normal form
+                if (root.indexOf('(') == -1){
+                    $('#' + id + ' + span').remove();
+                }
             }
         }
     }
