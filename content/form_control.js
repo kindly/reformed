@@ -404,13 +404,15 @@ $FORM_CONTROL = {
             value = null;
         } else {
             value = date_from_value(value);
-            value = value.toISOString();
-            if (value == 'Invalid Date'){
-                value = '';
-            } else {
-                // update the date in case we have changed it
-                if (dont_update !== true){
-                    $FORM_CONTROL._datebox_set(id,value);
+            if (value){
+                value = value.toISOString();
+                if (value == 'Invalid Date'){
+                    value = '';
+                } else {
+                    // update the date in case we have changed it
+                    if (dont_update !== true){
+                        $FORM_CONTROL._datebox_set(id,value);
+                    }
                 }
             }
         }
@@ -470,6 +472,9 @@ var DATE_FORMAT = 'UK';
 
 function date_from_value(value){
 
+    var day;
+    var month;
+    var year;
     var parts = value.split('/');
     if (parts.length = 3){
         switch(DATE_FORMAT){
@@ -492,7 +497,9 @@ function date_from_value(value){
                 day = parseInt(parts[3]);
                 break;
         }
-        return new Date(year, month, day);
+        if (day){
+            return new Date(year, month, day);
+        }
     }
     // not a valid date
     return '';
