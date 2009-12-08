@@ -669,16 +669,14 @@ function itemChanged(item, update_control){
     var m = _parse_id(item.id);
     if (m) {
         var errors;
-        // set dirty
-        dirty(m.root, m.row, true);
         // validate stuff
         var form_data = $INFO.getState(m.root, 'form_data');
+        var dont_update = true;
+        if (update_control === true){
+            dont_update = false;
+        }
+        var value = $FORM_CONTROL.get(item.id, form_data.items[m.control].type, dont_update);
         if (form_data.items[m.control].params && form_data.items[m.control].params.validation){
-            var dont_update = true;
-            if (update_control === true){
-                dont_update = false;
-            }
-            var value = $FORM_CONTROL.get(item.id, form_data.items[m.control].type, dont_update);
             var rules = form_data.items[m.control].params.validation;
             errors = validate(rules, value, dont_update);
         } else {
@@ -688,6 +686,32 @@ function itemChanged(item, update_control){
             form_show_errors_for_item(m.div, m.control, errors);
         } else {
             form_show_errors_for_item(m.div, m.control, errors);
+        }
+        // set dirty
+        var sent_data = $INFO.getState(m.root, 'sent_data');
+        if (m.row !== null){
+            sent_data = sent_data[m.row];
+        }
+        // FIXME can we only change if needed
+        if (value != sent_data[m.control]){
+            dirty(m.root, m.row, true);
+        } else {
+            // check all fields are clean
+            var id;
+            var my_dirty = false;
+            for (var i=0; i <form_data.fields.length; i++){
+                id = $INFO.getId(m.div + '#' + form_data.fields[i].name);
+                value = $FORM_CONTROL.get(id, form_data.fields[i].type, true);
+                if (value != sent_data[form_data.fields[i].name]){
+                    my_dirty = true;
+                    break;
+                }
+            }
+            if (my_dirty){
+                dirty(m.root, m.row, true);
+            } else {
+                dirty(m.root, m.row, false);
+            }
         }
     }
 }
