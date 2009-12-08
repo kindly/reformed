@@ -675,7 +675,8 @@ function itemChanged(item, update_control){
                 dont_update = false;
             }
             var value = $FORM_CONTROL.get(item.id, form_data.items[m.control].type, dont_update);
-            errors = validate(form_data.items[m.control].params.validation, value, true);
+            var rules = form_data.items[m.control].params.validation;
+            errors = validate(rules, value, dont_update);
         } else {
             errors = null;
         }
@@ -953,7 +954,6 @@ function autosave(div){
     if (info.grid){
         // this is a grid
         node_grid_save(info.root, info.row);
-
     } else {
         // this is the main form
         node_save(div);

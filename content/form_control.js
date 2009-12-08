@@ -346,7 +346,7 @@ $FORM_CONTROL = {
                 x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
             }
             x += 'onfocus="itemFocus(this)" ';
-            x += 'onblur="itemBlur(this, true)" ';
+            x += 'onblur="itemChanged(this, true);itemBlur(this, true)" ';
             x += 'onchange="$FORM_CONTROL._datebox_change(this)" ';
             x += 'onkeyup="itemChanged(this)" ';
             x += 'onkeydown="return $FORM_CONTROL._datebox_key(this,event)" />';
@@ -476,25 +476,25 @@ function date_from_value(value){
     var month;
     var year;
     var parts = value.split('/');
-    if (parts.length = 3){
+    if (parts.length == 3){
         switch(DATE_FORMAT){
             case 'UK':
                 // UK format (dd/mm/yyyy)
                 year = parseInt(parts[2], 10);
                 month = parseInt(parts[1], 10) - 1;
-                day = parseInt(parts[0]);
+                day = parseInt(parts[0], 10);
                 break;
             case 'US':
                 // US format (mm/dd/yyyy)
                 year = parseInt(parts[2], 10);
                 month = parseInt(parts[0], 10) - 1;
-                day = parseInt(parts[1]);
+                day = parseInt(parts[1], 10);
                 break;
             case 'ISO':
                 // ISO format (yyyy/mm/dd)
                 year = parseInt(parts[0], 10);
                 month = parseInt(parts[1], 10) - 1;
-                day = parseInt(parts[3]);
+                day = parseInt(parts[3], 10);
                 break;
         }
         if (day){
@@ -526,29 +526,29 @@ var validation_rules = {
         return errors;
     },
 
-    'DateValidator' : function(rule, value){
+    'DateValidator' : function(rule, value, currently_selected){
         var errors = [];
-        if (value === ''){
-            errors.push('not a valid date');
+        if (value === '' && currently_selected !== true){
+            errors.push('not a valid date' + value);
         }
         return errors;
     }
 
 };
 
-function validate(rules, value, ignore_not_empty){
+function validate(rules, value, currently_selected){
     var errors = [];
     for (var i=0; i < rules.length; i++){
         rule = rules[i];
         // the first rule states if we allow nulls or not
         if (i === 0){
-            if (rule.not_empty && value === null && ignore_not_empty !== true){
+            if (rule.not_empty && value === null && currently_selected !== true){
                 return ['must not be null'];
             }
         }
         // validate the rules for the field if we know the validator
         if (validation_rules[rule.type] !== undefined){
-            validation_errors = (validation_rules[rule.type](rule, value));
+            validation_errors = (validation_rules[rule.type](rule, value, currently_selected));
             if (validation_errors.length){
                 errors.push(validation_errors);
             }
