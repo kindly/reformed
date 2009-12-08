@@ -241,7 +241,7 @@ $FORM_CONTROL = {
             x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
             x += 'onchange="itemChanged(this)"  ';
             x += 'onfocus="itemFocus(this)" ';
-            x += 'onkeydown="itemChanged(this, event)" />';
+            x += 'onkeydown="keyDown(this, event)" />';
             return x;
         },
 
@@ -257,7 +257,8 @@ $FORM_CONTROL = {
             }
             x += 'value="true" class="checkbox" ';
             x += 'onfocus="itemFocus(this)" ';
-            x += 'onchange="itemChanged(this)" />';
+            x += 'onchange="itemChanged(this)" ';
+            x += 'onkeydown="keyDown(this, event)" />';
             if (show_label && item.reverse){
                 x += $FORM_CONTROL._label(item, id);
             }
@@ -346,7 +347,7 @@ $FORM_CONTROL = {
                 x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
             }
             x += 'onfocus="itemFocus(this)" ';
-            x += 'onblur="itemChanged(this, true);itemBlur(this, true)" ';
+            x += 'onblur="itemBlur(this, true)" ';
             x += 'onchange="$FORM_CONTROL._datebox_change(this)" ';
             x += 'onkeyup="itemChanged(this)" ';
             x += 'onkeydown="return $FORM_CONTROL._datebox_key(this,event)" />';
