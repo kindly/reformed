@@ -325,3 +325,7 @@ div.form_body > div > input.error {
 #bookmarks ol{
     padding-left:3px;
 }
+
+.null {
+    color:#CCC;
+}

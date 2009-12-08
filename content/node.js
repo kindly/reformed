@@ -41,7 +41,7 @@ function node_load(arg){
     force a page load of the node
 */
     // as we are reloading the page make sure everything has blured
-    itemBlur();
+    itemsBlurLast();
     if ($.address.value() == '/' + arg){
         // the address is already set so we need to force the reload
         // as changing the address will not trigger an event
@@ -619,7 +619,7 @@ function dirty(root, row, state){
 function move_row(root, row, control){
     var id = '#' + $INFO.getId(root + '(' + row + ')#' + control);
     msg(id);
-    itemBlur();
+    itemsBlurLast();
     $(id).focus().select();
 }
 
@@ -631,6 +631,7 @@ function keyDown(item, event){
         if (m){
             var key = getKeyPress(event);
             msg(key.code);
+            // moving around between cells
             if (key.code == 38 && m.row>0){
                 // up arrow
                 move_row(m.root, m.row -1, m.control);
@@ -639,6 +640,16 @@ function keyDown(item, event){
                     // down arrow
                     // // FIXME want to not just keep creating new rows
                     move_row(m.root, m.row + 1, m.control);
+                }
+            }
+            // [NULL]
+            // use Ctl+Space to toggle NULL values
+            if (key.code == 32 && event.ctrlKey){
+                if ($('#' + item.id).attr('isnull') == 'true'){
+                    $('#' + item.id).attr('isnull', 'false');
+                } else {
+                    $('#' + item.id).attr('isnull', 'true');
+                    $('#' + item.id).val('');
                 }
             }
         }
@@ -654,11 +665,17 @@ function itemChanged(item){
     // set dirty
     var m = _parse_id(item.id);
     if (m) {
+        var errors;
         dirty(m.root, m.row, true);
         // validate stuff
         var form_data = $INFO.getState(m.root, 'form_data');
-        errors = validate(form_data.items[m.control].params.validation, $('#' + item.id).val(), true);
-        if (errors.length > 0){
+        if (form_data.items[m.control].params && form_data.items[m.control].params.validation){
+            var value = $FORM_CONTROL.get(item.id, form_data.items[m.control].type);
+            errors = validate(form_data.items[m.control].params.validation, value, true);
+        } else {
+            errors = null;
+        }
+        if (errors && errors.length > 0){
             form_show_errors_for_item(m.div, m.control, errors);
         } else {
             form_show_errors_for_item(m.div, m.control, errors);
@@ -757,12 +774,20 @@ function node_get_form_data_for_row(form_data, form_info, row, root){
             if (typeof value == 'undefined'){
                 value = null;
             }
+            // only care if the value has changed
             if (out_row[name] != value){
-                validation = validate(item.params.validation, value);
-                if (validation.length > 0){
-                    validation_errors[name] = validation;
-                    data_error = true;
+                if (item.params && item.params.validation){
+                    // validate the item
+                    validation = validate(item.params.validation, value);
+                    if (validation.length > 0){
+                        validation_errors[name] = validation;
+                        data_error = true;
+                    } else {
+                        out_row[name] = value;
+                        data_changed = true;
+                    }
                 } else {
+                    // there are no validation rules so it must be ok
                     out_row[name] = value;
                     data_changed = true;
                 }
@@ -803,10 +828,12 @@ function node_get_form_data_rows(root){
         row_data = node_get_form_data_for_row(form_data, form_info, row, root);
         // if we get {data:...} back we have a good row
         // {errors:...} means the row did not validate
-        if (row_data.data){
+        if (row_data && row_data.data){
             out.push(row_data.data);
         } else {
-            alert(row_data.errors);
+            if (row_data && row_data.errors){
+                alert(row_data.errors);
+            }
         }
     }
     return out;
@@ -1003,7 +1030,7 @@ function search_box(){
 
 function form_show_errors_for_item(root, field_name, errors){
     var id = $INFO.getId(root + '#' + field_name);
-    if (errors.length > 0){
+    if (errors && errors.length > 0){
         // there is an error for this field
         $('#' + id).addClass('error');
         $('#' + id + ' + span').remove();
@@ -1246,14 +1273,30 @@ var current_focus_item = null;
 function itemFocus(item){
     var info = _parse_id(item.id);
     if (info.div != current_focus){
-        itemBlur();
+        itemsBlurLast();
         msg('FOCUS ' + info.div);
         current_focus = info.div;
     }
     current_focus_item = info.item;
+    // deal with [NULL] values
+    if ($('#' + item.id).hasClass('null')){
+        $('#' + item.id).removeClass('null');
+        $('#' + item.id).val('');
+        $('#' + item.id).attr('isnull', 'true');
+
+    }
 }
 
-function itemBlur(){
+function itemBlur(item, blank_is_null){
+     if ($('#' + item.id).val() === '' && (blank_is_null || $('#' + item.id).attr('isnull') == "true")){
+        $('#' + item.id).addClass('null');
+        $('#' + item.id).val('[NULL]');
+    } else {
+        $('#' + item.id).attr('isnull', 'false');
+    }
+}
+
+function itemsBlurLast(){
     if (current_focus !== null){
         msg('BLUR ' + current_focus);
         autosave(current_focus);

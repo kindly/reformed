@@ -106,7 +106,11 @@ $FORM_CONTROL = {
     get: function (id, type){
         if (typeof(this['_' + type + '_get']) == "undefined"){
             // default get method
-            return $("#" + id).val();
+            var value = $("#" + id).val();
+            if (value == '[NULL]' && $('#' +id).hasClass('null')){
+                value = null;
+            }
+            return value;
         } else {
             // use the special get method for this control
             return this['_' + type + '_get'](id);
@@ -199,8 +203,13 @@ $FORM_CONTROL = {
             // simple textbox
             var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
             x += '<input id="' + id + '" name="' + id + '" type="text" ';
-            x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            if (value === null){
+                x += 'value="[NULL]" class="null" ';
+            } else {
+                x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            }
             x += 'onfocus="itemFocus(this)" ';
+            x += 'onblur="itemBlur(this)" ';
             x += 'onchange="itemChanged(this)"  ';
             x += 'onkeyup="itemChanged(this)" ';
             x += 'onkeydown="keyDown(this, event)" />';
@@ -211,8 +220,13 @@ $FORM_CONTROL = {
             // simple textbox
             var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
             x += '<input id="' + id + '" name="' + id + '" type="text" ';
-            x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            if (value === null || value === ''){
+                x += 'value="[NULL]" class="null" ';
+            } else {
+                x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            }
             x += 'onfocus="itemFocus(this)" ';
+            x += 'onblur="itemBlur(this, true)" ';
             x += 'onchange="$FORM_CONTROL._intbox_change(this)"  ';
             x += 'onkeyup="itemChanged(this)" ';
             x += 'onkeydown="return $FORM_CONTROL._intbox_key(this, event)" />';
@@ -326,10 +340,15 @@ $FORM_CONTROL = {
             var x = show_label ? $FORM_CONTROL._label(item, id) : '';
             x += '<input id="' + id + '" name="' + id ;
             x += '" type="text" ';
-            x += 'value="' + value + '" ';
+            if (value === null || value === ''){
+                x += 'value="[NULL]" class="null" ';
+            } else {
+                x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            }
             x += 'onfocus="itemFocus(this)" ';
-            x += 'onblur="$FORM_CONTROL._datebox_change(this)" ';
+            x += 'onblur="itemBlur(this, true)" ';
             x += 'onchange="$FORM_CONTROL._datebox_change(this)" ';
+            x += 'onkeyup="itemChanged(this)" ';
             x += 'onkeydown="return $FORM_CONTROL._datebox_key(this,event)" />';
             return x;
         }
@@ -381,10 +400,14 @@ $FORM_CONTROL = {
 
     _datebox_get: function(id){
         var value = $("#" + id).val();
-        value = new Date(value);
-        value = value.toISOString();
-        if (value == 'Invalid Date'){
-            value = '';
+        if (value === '' || value == '[NULL]'){
+            value = null;
+        } else {
+            value = new Date(value);
+            value = value.toISOString();
+            if (value == 'Invalid Date'){
+                value = '';
+            }
         }
         return value;
     },
@@ -440,7 +463,7 @@ var validation_rules = {
 
     'UnicodeString' : function(rule, value){
         var errors = [];
-        if (rule.max && value.length > rule.max){
+        if (value !== null && rule.max && value.length > rule.max){
             errors.push('cannot be over ' + rule.max + ' chars');
         }
         return errors;
@@ -455,9 +478,15 @@ var validation_rules = {
             errors.push('evil');
         }
         return errors;
+    },
 
+    'DateValidator' : function(rule, value){
+        var errors = [];
+        if (value === ''){
+            errors.push('not a valid date');
+        }
+        return errors;
     }
-
 
 };
 

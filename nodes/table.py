@@ -317,7 +317,7 @@ class Edit(node.TableNode):
                              "extras" : self.extra_data
                             }
 
-    def view(self, read_only=False, limit =1):
+    def view(self, read_only=False, limit =10):
 
         query = self.data.get('q', '')
         limit = self.data.get('l', limit)
