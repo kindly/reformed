@@ -146,6 +146,21 @@ class Table(node.TableNode):
                 field_class = getattr(table_functions, field_type)
                 table.add_field(field_class(field_name, **field_info))
 
+                root = field.get('__root')
+                id = 0 # FIXME need to get the real field_id & _version
+                version = 1
+                self.saved.append([root, id, version])
+
+        # output data
+        out = {}
+        if self.errors:
+            out['errors'] = self.errors
+        if self.saved:
+            out['saved'] = self.saved
+
+        self.out = out
+        self.action = 'save'
+
 
     def create_new_table(self, table_name, entity, logged, fields, summary, joins):
 
