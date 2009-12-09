@@ -190,9 +190,6 @@ class Table(object):
                 self._add_field_no_persist(new_field)
                 self._persist_extra_field(new_field, session)
 
-                if field.table.name.startswith("__"):
-                    continue
-
                 row = field.get_field_row_from_table(session)
                 row.foreign_key_name = unicode(name)
                 session.save(row)
