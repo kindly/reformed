@@ -262,7 +262,6 @@ $FORM_CONTROL = {
             return x;
         },
 
-
         password: function(item, id, show_label, value){
             // simple textbox
             var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
@@ -567,8 +566,23 @@ var validation_rules = {
             errors.push('not a valid date' + value);
         }
         return errors;
-    }
+    },
 
+    'Email' : function(rule, value){
+        var usernameRE = /^[^ \t\n\r@<>()]+$/i;
+        var domainRE = /^(?:[a-z0-9][a-z0-9\-]{0,62}\.)+[a-z]{2,}$/i;
+        var parts = value.split('@');
+        if (parts.length != 2){
+            return ['An email address must contain a single @'];
+        }
+        if (!parts[0].match(usernameRE)){
+            return ['The username portion of the email address is invalid (the portion before the @)'];
+        }
+        if (!parts[1].match(domainRE)){
+            return ['The domain portion of the email address is invalid (the portion after the @)'];
+        }
+        return [];
+    }
 };
 
 function validate(rules, value, currently_selected){
