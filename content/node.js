@@ -682,11 +682,7 @@ function itemChanged(item, update_control){
         } else {
             errors = null;
         }
-        if (errors && errors.length > 0){
-            form_show_errors_for_item(m.div, m.control, errors);
-        } else {
-            form_show_errors_for_item(m.div, m.control, errors);
-        }
+        form_show_errors_for_item(m.div, m.control, errors);
         // set dirty
         var sent_data = $INFO.getState(m.root, 'sent_data');
         if (m.row !== null){
