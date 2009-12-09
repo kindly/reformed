@@ -1074,31 +1074,39 @@ function tooltip_clear(jquery_obj){
     jquery_obj.tooltip();
 }
 
+function item_add_error(jquery_obj, text, tooltip){
+    jquery_obj.addClass('error');
+    if (tooltip){
+        tooltip_add(jquery_obj, text.join(', '));
+    } else {
+        var next = jquery_obj.next();
+        if (next.is('span')){
+            next.remove();
+        }
+        jquery_obj.after("<span class='field_error'>ERROR: " + text.join(', ') + "</span>");
+    }
+}
+
+function item_remove_error(jquery_obj){
+    jquery_obj.removeClass('error');
+    var next = jquery_obj.next();
+    if (next.is('span')){
+        next.remove();
+    }
+    tooltip_clear(jquery_obj);
+}
+
 
 function form_show_errors_for_item(root, field_name, errors){
     var id = $INFO.getId(root + '#' + field_name);
     var jquery_obj = $('#' + id);
     if (errors && errors.length > 0){
         // there is an error for this field
-        jquery_obj.addClass('error');
-        $('#' + id + ' + span').remove();
-        // show error if normal form
-        if (root.indexOf('(') == -1){
-            jquery_obj.after("<span class='field_error'>ERROR: " + errors.join(', ') + "</span>");
-        } else {
-            // grid
-            tooltip_add(jquery_obj, errors.join(', '));
-        }
+        use_tooltip = (root.indexOf('(') > -1);
+        item_add_error(jquery_obj, errors, use_tooltip);
     } else {
         // field is good
-        jquery_obj.removeClass('error');
-        // show error if normal form
-        if (root.indexOf('(') == -1){
-            $('#' + id + ' + span').remove();
-        } else {
-            // grid
-            tooltip_clear(jquery_obj);
-        }
+        item_remove_error(jquery_obj)
     }
 }
 
@@ -1111,6 +1119,7 @@ function form_show_errors(root, errors){
     var form_data = $INFO.getState(form_root, 'form_data');
     var field_name;
     var id;
+    var jquery_obj;
     // show error if grid form
     // FIXME this is not a very good test as it gets continous forms too
     if (root.indexOf('(') > -1){
@@ -1129,21 +1138,14 @@ function form_show_errors(root, errors){
         if (form_data.fields[field].type != 'subform'){
             field_name = form_data.fields[field].name;
             id = $INFO.getId(root + '#' + field_name);
+            jquery_obj = $('#' + id);
             if (errors && errors[field_name]){
                 // there is an error for this field
-                $('#' + id).addClass('error');
-                // show error if normal form
-                if (root.indexOf('(') == -1){
-                    $('#' + id + ' + span').remove();
-                    $('#' + id).after("<span class='field_error'>ERROR: " + errors[field_name] + "</span>");
-                }
+                use_tooltip = (root.indexOf('(') > -1);
+                item_add_error(jquery_obj, [errors[field_name]], use_tooltip)
             } else {
                 // field is good
-                $('#' + id).removeClass('error');
-                // show error if normal form
-                if (root.indexOf('(') == -1){
-                    $('#' + id + ' + span').remove();
-                }
+                item_remove_error(jquery_obj)
             }
         }
     }
