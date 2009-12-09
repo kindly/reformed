@@ -226,3 +226,9 @@ class All(formencode.compound.CompoundValidator):
     def is_empty(self, value):
         # sub-validators should handle emptiness.
         return False
+
+
+class UnicodeString(UnicodeString):
+
+    def is_empty(self, value):
+        return value is None 

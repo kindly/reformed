@@ -32,7 +32,7 @@ from columns import Column
 from custom_exceptions import NoMetadataError, NoDatabaseError
 import formencode
 from formencode import validators
-from validators import All
+from validators import All, UnicodeString
 from fields import Modified, ModifiedBySession, Integer
 from util import get_paths, make_local_tables, create_table_path_list, create_table_path
 import logging
@@ -864,7 +864,7 @@ class Table(object):
                     max = 100
             else:
                 max = 100
-            validators.append(val.UnicodeString(max = max,
+            validators.append(UnicodeString(max = max,
                                                 not_empty = mand))
         elif col_type is sa.Integer or isinstance(col_type, sa.Integer):
             validators.append(val.Int(not_empty = mand))

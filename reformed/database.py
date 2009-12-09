@@ -342,6 +342,8 @@ class Database(object):
         finally:
             session.close
 
+        print "RRRRRREEEEEEEELLLLLLLLLOAD", reload
+
         if reload:
             self.load_from_persist(True)
 

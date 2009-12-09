@@ -73,6 +73,8 @@ class test_modify_table_sqlite(object):
         assert result[1] == []
         assert result[2] == []
 
+        raise
+
         #self.jim = self.Donkey.tables["moo01%s" % self.randish].sa_class()
         #self.jim.moo = u"zjimbobidoobo"
         #self.session.add(self.jim)

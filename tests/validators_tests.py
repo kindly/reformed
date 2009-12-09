@@ -3,6 +3,7 @@ from reformed.tables import *
 from reformed.database import *
 from nose.tools import assert_raises,raises
 import sqlalchemy as sa
+import reformed.validators as val
 import reformed.custom_exceptions
 from tests.donkey_test import test_donkey
 from reformed.data_loader import SingleRecord
@@ -143,4 +144,18 @@ class test_validation(test_donkey):
                       "donkey.name": u"z",
                       "donkey.donkey_type": u"pooey",
                       })
+
+    def test_uniclode(self):
+
+        string_val = val.UnicodeString(not_empty = True)
+
+        assert_raises(fe.Invalid, string_val.to_python, None)
+
+        string_val.to_python(u"")
+
+
+
+
+
+
 
