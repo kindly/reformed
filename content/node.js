@@ -664,8 +664,6 @@ function keyDown(item, event){
 function itemChanged(item, update_control){
 
     msg('itemChanged');
-    // remove the error css
-    $('#' + item.id).removeClass('error');
     var m = _parse_id(item.id);
     if (m) {
         var errors;
@@ -682,8 +680,9 @@ function itemChanged(item, update_control){
         } else {
             errors = null;
         }
+
         form_show_errors_for_item(m.div, m.control, errors);
-        // set dirty
+
         var sent_data = $INFO.getState(m.root, 'sent_data');
         if (m.row !== null){
             if (sent_data[m.row]){
@@ -692,13 +691,14 @@ function itemChanged(item, update_control){
                 sent_data = {};
             }
         }
-        // FIXME can we only change if needed
+        // dirty
+        var my_dirty;
         if (sent_data[m.control] && value != sent_data[m.control]){
-            dirty(m.root, m.row, true);
+            my_dirty = true;
         } else {
             // check all fields are clean
             var id;
-            var my_dirty = false;
+            my_dirty = false;
             for (var i=0; i <form_data.fields.length; i++){
                 id = $INFO.getId(m.div + '#' + form_data.fields[i].name);
                 value = $FORM_CONTROL.get(id, form_data.fields[i].type, true);
@@ -707,11 +707,12 @@ function itemChanged(item, update_control){
                     break;
                 }
             }
-            if (my_dirty){
-                dirty(m.root, m.row, true);
-            } else {
-                dirty(m.root, m.row, false);
-            }
+        }
+        // FIXME can we only change if needed
+        if (my_dirty){
+            dirty(m.root, m.row, true);
+        } else {
+            dirty(m.root, m.row, false);
         }
     }
 }
