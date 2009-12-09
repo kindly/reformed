@@ -190,10 +190,13 @@ $FORM_CONTROL = {
             // simple textbox
             var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
             x += '<textarea id="' + id + '" name="' + id + '" ';
+            x += 'onfocus="itemFocus(this)" ';
+            x += 'onblur="itemBlur(this)" ';
             x += 'onchange="itemChanged(this)"  ';
-            x += 'onkeydown="itemChanged(this, event)" >';
+            x += 'onkeyup="itemChanged(this)" ';
+            x += 'onkeydown="keyDown(this, event)" />';
             if (value){
-                x += value;
+                x += $FORM_CONTROL._clean_value(value);
             }
             x += '</textarea>';
             return x;
@@ -207,6 +210,10 @@ $FORM_CONTROL = {
                 x += 'value="[NULL]" class="null" ';
             } else {
                 x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            }
+            // set max length if specified
+            if (item.params && item.params.validation && item.params.validation && item.params.validation[0] && item.params.validation[0].max){
+                x += 'maxlength="' + item.params.validation[0].max + '" ';
             }
             x += 'onfocus="itemFocus(this)" ';
             x += 'onblur="itemBlur(this)" ';
@@ -225,6 +232,7 @@ $FORM_CONTROL = {
             } else {
                 x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
             }
+            x += 'maxlength="10" ';
             x += 'onfocus="itemFocus(this)" ';
             x += 'onblur="itemBlur(this, true)" ';
             x += 'onchange="$FORM_CONTROL._intbox_change(this)"  ';
@@ -239,6 +247,10 @@ $FORM_CONTROL = {
             var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
             x += '<input id="' + id + '" name="' + id + '" type="password" ';
             x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            // set max length if specified
+            if (item.params && item.params.validation && item.params.validation && item.params.validation[0] && item.params.validation[0].max){
+                x += 'maxlength="' + item.params.validation[0].max + '" ';
+            }
             x += 'onchange="itemChanged(this)"  ';
             x += 'onfocus="itemFocus(this)" ';
             x += 'onkeydown="keyDown(this, event)" />';
@@ -346,6 +358,7 @@ $FORM_CONTROL = {
             } else {
                 x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
             }
+            x += 'maxlength="10" ';
             x += 'onfocus="itemFocus(this)" ';
             x += 'onblur="itemBlur(this, true)" ';
             x += 'onchange="$FORM_CONTROL._datebox_change(this)" ';
@@ -518,11 +531,11 @@ var validation_rules = {
 
     'Int' : function(rule, value){
         var errors = [];
-        if (value > 100){
-            errors.push('too big');
+        if (value > 2147483647){
+            errors.push('maximum integer size is 2,147,483,647');
         }
-        if (value == 666){
-            errors.push('evil');
+        if (value < -2147483648){
+            errors.push('minimum integer size is -2,147,483,648');
         }
         return errors;
     },
