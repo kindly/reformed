@@ -322,22 +322,40 @@ class Sponsorship(Node):
 
 class AutoFormPlus(TableNode):
 
+    field_type_2_input = {
+        'Integer' : 'intbox',
+        'Boolean' : 'checkbox',
+        'DateTime' : 'datebox',
+        'Date' : 'datebox',
+        'Email' : 'emailbox',
+        'Text' : 'textbox'
+    }
+
     def initialise(self):
         self.table = self.data.get('table')
         self.extra_data = {'table':self.table}
         fields = []
         field_list = []
-        obj = r.get_instance(self.table)
-        columns = obj._table.schema_info
+        obj = r[self.table]
+        columns = obj.schema_info
         for field in columns.keys():
             if field not in ['_modified_date', '_modified_by','_core_entity_id', '_version']:
-                fields.append([field, 'textbox', '%s:' % field])
+                if field in columns:
+                    field_schema = obj.schema_info[field]
+                    params = {'validation' : field_schema}
+                    try:
+                        field_type = obj.fields[field].__class__.__name__
+                        if field_type in self.field_type_2_input:
+                            fields.append([field, self.field_type_2_input[field_type], '%s:' % field, params])
+                    except:
+                        fields.append([field, 'textbox', '%s:' % field, params])
+
                 field_list.append(field)
         self.field_list = field_list
         self.fields = fields
         self.form_params =  {"form_type": "normal",
                              "extras" : self.extra_data,
-                             "title" : obj._table.name
+                             "title" : obj.name
                             }
 
 
