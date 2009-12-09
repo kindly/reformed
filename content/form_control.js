@@ -238,7 +238,7 @@ $FORM_CONTROL = {
             }
             x += 'onfocus="itemFocus(this)" ';
             x += 'onblur="itemBlur(this)" ';
-            x += 'onchange="itemChanged(this)"  ';
+            x += 'onchange="itemChanged(this, true)"  ';
             x += 'onkeyup="itemChanged(this)" ';
             x += 'onkeydown="keyDown(this, event)" />';
             return x;
@@ -561,14 +561,20 @@ var validation_rules = {
     },
 
     'DateValidator' : function(rule, value, currently_selected){
+        if (currently_selected === true){
+            return []
+        }
         var errors = [];
-        if (value === '' && currently_selected !== true){
+        if (value === ''){
             errors.push('not a valid date' + value);
         }
         return errors;
     },
 
-    'Email' : function(rule, value){
+    'Email' : function(rule, value, currently_selected){
+        if (currently_selected === true){
+            return []
+        }
         var usernameRE = /^[^ \t\n\r@<>()]+$/i;
         var domainRE = /^(?:[a-z0-9][a-z0-9\-]{0,62}\.)+[a-z]{2,}$/i;
         var parts = value.split('@');
