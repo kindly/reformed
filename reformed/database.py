@@ -342,10 +342,9 @@ class Database(object):
         finally:
             session.close
 
-        print "RRRRRREEEEEEEELLLLLLLLLOAD", reload
 
-        if reload:
-            self.load_from_persist(True)
+        self.load_from_persist(True)
+
 
         self.fields_to_persist = []
         self.persisted = True
@@ -357,36 +356,30 @@ class Database(object):
 
         session = self.Session()
 
-        if restart:
-            self.tables = {}
-            self.clear_sa()
-
-        if restart:
-            #old boot table state causes issues
-            boots = boot_tables.boot_tables()
-            self.boot_tables = boots.boot_tables
+        self.tables = {}
+        self.clear_sa()
+        #old boot table state causes issues
+        boots = boot_tables.boot_tables()
+        self.boot_tables = boots.boot_tables
         
         for table in self.boot_tables:
             self.add_table(table)
 
         self.update_sa()
         self.metadata.create_all(self.engine)
-            
+
         all_tables = session.query(self.tables["__table"].sa_class).all()
-        
 
-
+        self.tables = {}
+        self.clear_sa()
+            
         ## only persist boot tables if first time
         if not all_tables:
             self.persist()
             self.persisted = False #make sure database is not seen as persisted
+            return
 
         for row in all_tables:
-            if row.table_name.endswith(u"__table")  or\
-               row.table_name.endswith(u"__table_params")  or\
-               row.table_name.endswith(u"__field")  or\
-               row.table_name.endswith(u"__field_params"):
-                continue
             fields = []
             for field in row.field:
                 field_name = field.field_name.encode("ascii")

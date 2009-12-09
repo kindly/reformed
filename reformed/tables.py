@@ -393,9 +393,10 @@ class Table(object):
 
     def _persist_extra_field(self, field, session):
 
-        self.current_order = self.current_order + 1
-        field.kw["order"] = self.current_order
-        field.order = self.current_order
+        if field.category == "field":
+            self.current_order = self.current_order + 1
+            field.kw["order"] = self.current_order
+            field.order = self.current_order
 
         __table = session.query(self.database.get_class("__table")).\
                                 filter_by(table_name = u"%s" % self.name).one()

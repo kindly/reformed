@@ -62,8 +62,7 @@ class test_modify_table_sqlite(object):
         self.Donkey.persist()
 
         for table in self.Donkey.tables.values():
-            if not table.name.count("__") > 0:
-                assert None not in [field.order for field in table.fields.values()]
+            assert None not in [field.order for field in table.fields.values() if field.category == "field"]
 
         self.Donkey.load_from_persist(True)
 
@@ -73,7 +72,6 @@ class test_modify_table_sqlite(object):
         assert result[1] == []
         assert result[2] == []
 
-        raise
 
         #self.jim = self.Donkey.tables["moo01%s" % self.randish].sa_class()
         #self.jim.moo = u"zjimbobidoobo"
@@ -88,8 +86,7 @@ class test_modify_table_sqlite(object):
                                       "moo02%s" % self.randish))
 
         for table in self.Donkey.tables.values():
-            if not table.name.count("__") > 0:
-                assert None not in [field.order for field in table.fields.values()]
+            assert None not in [field.order for field in table.fields.values() if field.category == "field"]
 
 
         table1 = self.Donkey["moo01%s" % self.randish]
@@ -124,10 +121,7 @@ class test_modify_table_sqlite(object):
         assert hasattr(table1.sa_class(), "moo04%s" % self.randish)
 
         for table in self.Donkey.tables.values():
-            if not table.name.count("__") > 0:
-                assert None not in [field.order for field in table.fields.values()]
-
-
+            assert None not in [field.order for field in table.fields.values() if field.category == "field"]
 
 
     def test_3_rename_table(self):
