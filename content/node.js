@@ -690,10 +690,14 @@ function itemChanged(item, update_control){
         // set dirty
         var sent_data = $INFO.getState(m.root, 'sent_data');
         if (m.row !== null){
-            sent_data = sent_data[m.row];
+            if (sent_data[m.row]){
+                sent_data = sent_data[m.row];
+            } else {
+                sent_data = {};
+            }
         }
         // FIXME can we only change if needed
-        if (value != sent_data[m.control]){
+        if (sent_data[m.control] && value != sent_data[m.control]){
             dirty(m.root, m.row, true);
         } else {
             // check all fields are clean
@@ -1353,8 +1357,12 @@ function itemBlur(item, blank_is_null){
 function itemsBlurLast(){
     if (current_focus !== null){
         msg('BLUR ' + current_focus);
-        autosave(current_focus);
-
+        // check if autosave disabled
+        var info = _parse_div(current_focus);
+        var form_data = $INFO.getState(info.root, 'form_data');
+        if (!(form_data && form_data.params && form_data.params.noautosave && form_data.params.noautosave == true)){
+            autosave(current_focus);
+        }
     }
     current_focus = null;
 

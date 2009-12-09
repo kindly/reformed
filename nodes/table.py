@@ -46,7 +46,7 @@ class Table(node.TableNode):
         ['fields', 'subform', 'fields'],
         ['joins', 'subform', 'joins']
     ]
-    form_params ={'title' : 'Table'}
+    form_params ={'title' : 'Table', 'noautosave' : True}
     subforms = {
         'fields':{
             'fields': [
@@ -61,7 +61,8 @@ class Table(node.TableNode):
             "params":{
                 "form_type": "grid",
                 "title": 'fields',
-                "id_field": "field_id"
+                "id_field": "field_id",
+                'noautosave' : True
             }
         },
 
