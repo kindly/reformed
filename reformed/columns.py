@@ -362,6 +362,10 @@ class Field(object):
         ## this is popped as we dont want it to appear in field_params
         obj.foreign_key_name = kw.pop("foreign_key_name", None)
 
+        obj.order = kw.get("order", None)
+        if obj.order:
+            obj.order = int(obj.order)
+
         obj.default = kw.get("default", None)
         if obj.default:
             obj.sa_options["default"] = obj.default
@@ -449,7 +453,7 @@ class Field(object):
             return "relation"
         if self.constraints:
             return "constraint"
-        if self.indexs:
+        if self.indexes:
             return "index"
 
     @property

@@ -342,7 +342,8 @@ class Database(object):
         finally:
             session.close
 
-        self.load_from_persist(True)
+        if reload:
+            self.load_from_persist(True)
 
         self.fields_to_persist = []
         self.persisted = True
@@ -426,6 +427,11 @@ class Database(object):
 
         for table in self.tables.itervalues():
             table.persisted = True
+
+            orders = [field.order for field in table.fields.values() if field.order]
+
+            if orders:
+                table.current_order = max(orders)
 
         # for first time do not say database is persisted
         if all_tables:

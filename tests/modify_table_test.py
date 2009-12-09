@@ -61,6 +61,10 @@ class test_modify_table_sqlite(object):
         self.Donkey.add_table(tables.Table("moo04%s" % self.randish, Text("moo")))
         self.Donkey.persist()
 
+        for table in self.Donkey.tables.values():
+            if not table.name.count("__") > 0:
+                assert None not in [field.order for field in table.fields.values()]
+
         self.Donkey.load_from_persist(True)
 
         result = validate_database(self.Donkey)
@@ -80,6 +84,10 @@ class test_modify_table_sqlite(object):
 
         table1.add_relation(OneToMany("moo02%s" % self.randish,
                                       "moo02%s" % self.randish))
+
+        for table in self.Donkey.tables.values():
+            if not table.name.count("__") > 0:
+                assert None not in [field.order for field in table.fields.values()]
 
 
         table1 = self.Donkey["moo01%s" % self.randish]
@@ -112,6 +120,11 @@ class test_modify_table_sqlite(object):
         table1 =  self.Donkey["moo01%s" % self.randish]
 
         assert hasattr(table1.sa_class(), "moo04%s" % self.randish)
+
+        for table in self.Donkey.tables.values():
+            if not table.name.count("__") > 0:
+                assert None not in [field.order for field in table.fields.values()]
+
 
 
 
@@ -224,7 +237,7 @@ class test_modify_table_mysql(test_modify_table_sqlite):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
+        cls.engine = create_engine('mysql://localhost/test_donkey')
         super(test_modify_table_mysql, cls).setUpClass()
 
 
@@ -232,5 +245,5 @@ class test_modify_table_postgres(test_modify_table_sqlite):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine('postgres://david:@:5432/test_donkey', echo = True)
+        cls.engine = create_engine('postgres://david:@:5432/test_donkey')
         super(test_modify_table_postgres, cls).setUpClass()

@@ -67,6 +67,7 @@ class Table(object):
         self.field_list = args
         self.fields = {}
         self.field_order = []
+        self.current_order = 0
         self.primary_key = kw.get("primary_key", None)
         #persisted should be private
         self.persisted = kw.get("persisted", False)
@@ -123,6 +124,14 @@ class Table(object):
         """This puts the information about the this objects parameters 
         and its collection of fields into private database tables so that in future they
         no longer need to be explicitely defined"""
+
+        for field_name in self.field_order:
+            field = self.fields[field_name]
+            if field.category == "field":
+                self.current_order = self.current_order + 1
+                field.kw["order"] = self.current_order
+                field.order = self.current_order
+            
                 
         __table = self.database.tables["__table"].sa_class()
         __table.table_name = u"%s" % self.name
@@ -383,6 +392,10 @@ class Table(object):
             col.create(self.sa_table)
 
     def _persist_extra_field(self, field, session):
+
+        self.current_order = self.current_order + 1
+        field.kw["order"] = self.current_order
+        field.order = self.current_order
 
         __table = session.query(self.database.get_class("__table")).\
                                 filter_by(table_name = u"%s" % self.name).one()
