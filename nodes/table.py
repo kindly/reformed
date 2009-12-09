@@ -280,15 +280,21 @@ class Edit(node.TableNode):
         obj = r[self.table_id]
         self.table = obj.name
         columns = obj.schema_info
-        for field in obj.field_order:
-            if field not in ['_modified_date', '_modified_by','_core_entity_id', '_version'] and field in columns:
-                field_schema = obj.schema_info[field]
-                params = {'validation' : field_schema}
-                field_type = obj.fields[field].__class__.__name__
-                print field_type
-                if field_type in self.field_type_2_input:
-                    fields.append([field, self.field_type_2_input[field_type], '%s:' % field, params])
-
+        for field in columns.keys():
+            if field not in ['_modified_date', '_modified_by','_core_entity_id', '_version']:
+                if field in columns:
+                    field_schema = obj.schema_info[field]
+                    params = {'validation' : field_schema}
+                    try:
+                        field_type = obj.fields[field].__class__.__name__
+                        if field_type in self.field_type_2_input:
+                            fields.append([field, self.field_type_2_input[field_type], '%s:' % field, params])
+                        else:
+                            fields.append([field, 'textbox', '%s:' % field, params])
+                    except:
+                        fields.append([field, 'textbox', '%s:' % field, params])
+                else:
+                    fields.append([field, 'textbox', '%s:' % field])
                 field_list.append(field)
         self.field_list = field_list
         self.fields = fields
