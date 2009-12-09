@@ -234,19 +234,13 @@ class Table(node.TableNode):
         field_data = []
         join_data = []
         for (name, value) in table_info.fields.iteritems():
-            if value.__class__.__name__ in self.allowed_field_types:
+            if value.__class__.__name__ in self.allowed_field_types and name[0] != '_':
                 field_data.append({'field_name': name,
                                    'field_type': value.__class__.__name__,
                                    'mandatory': value.mandatory,
                                    'length': value.length,
                                    'default': value.default,
                                    'field_id': value.field_id })
-            if value.__class__.__name__ in self.allowed_join_types:
-                join_data.append({'field_name': name,
-                                    'join_table': value.other,
-                                   'join_type': value.__class__.__name__,
-                                   'field_id': value.field_id })
-
 
         table_data = {'table_name': table_info.name,
                       'table_type' : table_info.table_type,
@@ -254,8 +248,7 @@ class Table(node.TableNode):
                       'table_id': table_info.table_id,
                       'entity': table_info.entity,
                       'logged': table_info.logged,
-                      'fields': field_data,
-                      'joins': join_data}
+                      'fields': field_data}
 
         data = node.create_form_data(self.fields, self.form_params, table_data)
         self.action = 'form'
