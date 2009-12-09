@@ -133,7 +133,9 @@ class Table(node.TableNode):
             mandatory = field.get('mandatory', False)
             default = field.get('default')
 
-            field_info = dict(length=length, mandatory=mandatory, default=default)
+            field_info = dict(mandatory=mandatory, default=default)
+            if length:
+                field_info['length'] = length
 
             if field_id:
                 # the field exists so edit it
@@ -162,6 +164,7 @@ class Table(node.TableNode):
             field_info = dict(mandatory=mandatory, default=default)
             if length:
                 field_info['length'] = length
+
             field_class = getattr(table_functions, field_type)
 
             if field_name:
@@ -260,6 +263,15 @@ class Table(node.TableNode):
 
 class Edit(node.TableNode):
 
+    field_type_2_input = {
+        'Integer' : 'intbox',
+        'Boolean' : 'checkbox',
+        'DateTime' : 'datebox',
+        'Date' : 'datebox',
+        'Email' : 'emailbox',
+        'Text' : 'textbox'
+    }
+
     def initialise(self):
         self.table_id = int(self.data.get('t'))
         self.extra_data = {"t": self.table_id}
@@ -272,18 +284,11 @@ class Edit(node.TableNode):
             if field not in ['_modified_date', '_modified_by','_core_entity_id', '_version'] and field in columns:
                 field_schema = obj.schema_info[field]
                 params = {'validation' : field_schema}
-                # FIXME an easier way to do this would be nice
+                field_type = obj.fields[field].__class__.__name__
+                print field_type
+                if field_type in self.field_type_2_input:
+                    fields.append([field, self.field_type_2_input[field_type], '%s:' % field, params])
 
-                if obj.fields[field].__class__.__name__ == 'Integer':
-                    fields.append([field, 'intbox', '%s:' % field, params])
-                elif obj.fields[field].__class__.__name__ == 'Boolean':
-                    fields.append([field, 'checkbox', '%s:' % field, params])
-                elif obj.fields[field].__class__.__name__ == 'DateTime':
-                    fields.append([field, 'datebox', '%s:' % field, params])
-                elif obj.fields[field].__class__.__name__ == 'Email':
-                    fields.append([field, 'emailbox', '%s:' % field, params])
-                else:
-                    fields.append([field, 'textbox', '%s:' % field, params])
                 field_list.append(field)
         self.field_list = field_list
         self.fields = fields
