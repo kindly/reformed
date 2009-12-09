@@ -389,7 +389,10 @@ class Field(object):
             obj.field_validation = r"%s" % obj.field_validation.encode("ascii")
         obj.order_by = kw.get("order_by", None)
         obj.length = kw.get("length", None)
-        if obj.length:
+        ## ignore length if empty string 
+        if not obj.length:
+            kw.pop("length", None)
+        else:
             obj.length = int(obj.length)
         obj.many_side_not_null = kw.get("many_side_not_null", True)
         obj.many_side_mandatory = kw.get("many_side_mandatory", False)
