@@ -223,6 +223,27 @@ $FORM_CONTROL = {
             return x;
         },
 
+        emailbox: function(item, id, show_label, value){
+            // simple textbox
+            var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
+            x += '<input id="' + id + '" name="' + id + '" type="text" ';
+            if (value === null){
+                x += 'value="[NULL]" class="null" ';
+            } else {
+                x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            }
+            // set max length if specified
+            if (item.params && item.params.validation && item.params.validation && item.params.validation[0] && item.params.validation[0].max){
+                x += 'maxlength="' + item.params.validation[0].max + '" ';
+            }
+            x += 'onfocus="itemFocus(this)" ';
+            x += 'onblur="itemBlur(this)" ';
+            x += 'onchange="itemChanged(this)"  ';
+            x += 'onkeyup="itemChanged(this)" ';
+            x += 'onkeydown="keyDown(this, event)" />';
+            return x;
+        },
+
         intbox: function(item, id, show_label, value){
             // simple textbox
             var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
