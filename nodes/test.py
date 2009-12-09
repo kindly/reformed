@@ -336,7 +336,8 @@ class AutoFormPlus(TableNode):
         self.field_list = field_list
         self.fields = fields
         self.form_params =  {"form_type": "normal",
-                             "extras" : self.extra_data
+                             "extras" : self.extra_data,
+                             "title" : obj._table.name
                             }
 
 
