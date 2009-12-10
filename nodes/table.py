@@ -293,9 +293,9 @@ class Edit(node.TableNode):
                 if field in columns:
                     field_schema = obj.schema_info[field]
                     params = {'validation' : field_schema}
-                    if obj.fields[field].default:
-                        params['default'] =  obj.fields[field].default
                     try:
+                        if obj.fields[field].default:
+                            params['default'] =  obj.fields[field].default
                         field_type = obj.fields[field].__class__.__name__
                         if field_type in self.field_type_2_input:
                             fields.append([field, self.field_type_2_input[field_type], '%s:' % field, params])
