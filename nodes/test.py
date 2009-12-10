@@ -200,7 +200,7 @@ class People(TableNode):
         ['address_line_1', 'textbox', 'address:'],
         ['address_line_2', 'textbox', 'town:'],
         ['postcode', 'textbox', 'postcode:'],
-        ['dob', 'textbox', 'dob:'],
+        ['dob', 'datebox', 'dob:'],
         ['active', 'checkbox', 'active:'],
         ['email', 'subform', 'email'],
         ['sponsorship', 'subform', 'sponsorship']
