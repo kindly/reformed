@@ -294,6 +294,7 @@ $FORM_CONTROL = {
             }
             x += 'value="true" class="checkbox" ';
             x += 'onfocus="itemFocus(this)" ';
+            x += 'onblur="itemBlur(this)" ';
             x += 'onchange="itemChanged(this)" ';
             x += 'onkeydown="keyDown(this, event);return false" />';
             if (show_label && item.reverse){
@@ -334,9 +335,13 @@ $FORM_CONTROL = {
 
         dropdown: function(item, id, show_label, value){
             // dropdown
+            // FIXME there is no up/down row navigation for this control:w
+            //
+            // keypress event does not give me access to the key pressed
             var x = show_label ? $FORM_CONTROL._label(item, id) : '';
-            x += '<select id="' + id + '" name="' + id;
-            x += '" onfocus="itemFocus(this)" ';
+            x += '<select id="' + id + '" name="' + id + '" ';
+            x += 'onfocus="itemFocus(this)" ';
+            x += 'onblur="itemBlur(this)" ';
             x += 'onchange="itemChanged(this)" >';
             var type = item.params.type;
             var items = item.params.values.split('|');
@@ -420,8 +425,6 @@ $FORM_CONTROL = {
             }
         }
         return out;
-        //info = $("#" + id + '__*').attr("checked");
-      //  alert(info);
     },
 
     _datebox_set: function(id, value){
