@@ -507,11 +507,11 @@ function _parse_div(item){
     if(m){
         var grid;
         var root = m[1] ;
-        if (typeof(root) == "undefined"){
+        if (root === undefined){
             root = '';
         }
         var row = m[3];
-        if (typeof(row) != "undefined" && row !== ''){
+        if (row !== undefined && row !== ''){
             row = parseInt(row, 10);
             grid = true;
         } else {
@@ -535,11 +535,11 @@ function _parse_item(item){
     if(m){
         var grid;
         var root = m[1] ;
-        if (typeof(root) == "undefined"){
+        if (root === undefined){
             root = '';
         }
         var row = m[3];
-        if (typeof(row) != "undefined" && row !== ''){
+        if (row !== undefined && row !== ''){
             row = parseInt(row, 10);
             grid = true;
         } else {
@@ -547,7 +547,7 @@ function _parse_item(item){
             grid = false;
         }
         var control = m[4];
-        if (typeof(control) == "undefined" || control === ''){
+        if (control === undefined || control === ''){
             control = null;
         }
         var div;
@@ -804,7 +804,7 @@ function node_get_form_data_for_row(form_data, form_info, row, root){
     if (!form_info.clean_rows[row]){
         // the row is dirty so needs to be saved
         var out_row = $INFO.getState(root, 'sent_data')[row];
-        if (typeof(out_row) == 'undefined'){
+        if (out_row === undefined){
             out_row = {};
         }
         my_root = root + '(' + row + ')';
@@ -814,7 +814,7 @@ function node_get_form_data_for_row(form_data, form_info, row, root){
             name = item.name;
             id = $INFO.getId(my_root + '#' + name);
             value = $FORM_CONTROL.get(id, item.type);
-            if (typeof value == 'undefined'){
+            if (value === undefined){
                 value = null;
             }
             // only care if the value has changed
@@ -903,7 +903,7 @@ function node_get_form_data(root){
             } else {
                 id = $INFO.getId(root + '#' + name);
                 value = $FORM_CONTROL.get(id, item.type);
-                if (typeof value == 'undefined'){
+                if (value === undefined){
                     value = null;
                 }
                 out[name] = value;

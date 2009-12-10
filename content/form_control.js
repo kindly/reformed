@@ -81,7 +81,7 @@ $FORM_CONTROL = {
 
     exists: function (type){
         // returns true if we have this control type
-        if (typeof(this._controls[type]) != "undefined"){
+        if (this._controls[type] !== undefined){
             // control exists
             return true;
         } else {
@@ -91,7 +91,7 @@ $FORM_CONTROL = {
 
     set: function (type, id, value){
         msg('set');
-        if (typeof(this['_' + type + '_set']) == "undefined"){
+        if (this['_' + type + '_set'] === undefined){
             // default set method
             var item = $("#" + id);
             item.val([value]);
@@ -104,7 +104,7 @@ $FORM_CONTROL = {
     },
 
     get: function (id, type, dont_update){
-        if (typeof(this['_' + type + '_get']) == "undefined"){
+        if (this['_' + type + '_get'] == undefined){
             // default get method
             var value = $("#" + id).val();
             if (value == '[NULL]' && $('#' +id).hasClass('null')){
