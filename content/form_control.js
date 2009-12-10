@@ -390,7 +390,7 @@ $FORM_CONTROL = {
             x += 'maxlength="10" ';
             x += 'onfocus="itemFocus(this)" ';
             x += 'onblur="itemBlur(this, true)" ';
-            x += 'onchange="$FORM_CONTROL._datebox_change(this)" ';
+            x += 'onchange="itemChanged(this, true)" ';
             x += 'onkeyup="itemChanged(this)" ';
             x += 'onkeydown="return $FORM_CONTROL._datebox_key(this,event)" />';
             return x;
@@ -458,19 +458,6 @@ $FORM_CONTROL = {
             }
         }
         return value;
-    },
-
-    _datebox_change: function (obj){
-        // this is when the user date is changed
-        var value = $(obj).val();
-        if (isDate(value) || value === ''){
-            // date is good
-            $(obj).removeClass("error");
-        } else {
-            // date is bad
-            $(obj).addClass("error");
-        }
-        itemChanged(obj, true);
     },
 
     _datebox_key: function(obj, event){
