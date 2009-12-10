@@ -144,10 +144,15 @@ function _generate_fields_html(form, local_data, data, row_count){
             formHTML += _subform(item, my_id, data[item.name], local_data);
         } else {
             // get value
-            if (data && typeof(data[item.name]) != 'undefined'){
+            if (data && data[item.name] !== undefined){
                 value = data[item.name];
             } else {
-                value = '';
+                // no data so use default for field if it exists
+                if (item.params && item.params.default){
+                    value = item.params.default;
+                } else {
+                    value = null;
+                }
             }
             // add item
             if (local_data.form_type != 'results' || value){

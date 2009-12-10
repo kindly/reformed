@@ -293,6 +293,8 @@ class Edit(node.TableNode):
                 if field in columns:
                     field_schema = obj.schema_info[field]
                     params = {'validation' : field_schema}
+                    if obj.fields[field].default:
+                        params['default'] =  obj.fields[field].default
                     try:
                         field_type = obj.fields[field].__class__.__name__
                         if field_type in self.field_type_2_input:
