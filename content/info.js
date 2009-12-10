@@ -170,6 +170,13 @@ $INFO = {
     newState: function(root, type){
 
         if (root){
+            // remove existing state and any children
+            for (var state in this._state){
+                if (state.substring(0, root.length) == root){
+                    delete this._state[state];
+                }
+            }
+            //add the new state
             this._state[root] = {};
             this._state[root].type = type;
         } else {
