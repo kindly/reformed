@@ -335,8 +335,7 @@ $FORM_CONTROL = {
 
         dropdown: function(item, id, show_label, value){
             // dropdown
-            // FIXME there is no up/down row navigation for this control:w
-            //
+            // FIXME there is no up/down row navigation for this control
             // keypress event does not give me access to the key pressed
             var x = show_label ? $FORM_CONTROL._label(item, id) : '';
             x += '<select id="' + id + '" name="' + id + '" ';
