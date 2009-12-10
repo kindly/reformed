@@ -199,17 +199,19 @@ function _generate_form_html_continuous(form_info, local_data, data){
 function form_grid_header(form, local_data){
     var formHTML = '<thead><tr>';
     local_data.column_count = 1;
-    formHTML += '<td width="10px">&nbsp;</td>';
+    formHTML += '<th width="10px">&nbsp;</th>';
     //local_data: count root i wrap_tag show_label
     var item;
     for (var i=0; i<form.fields.length; i++){
 
         item = form.fields[i];
-        formHTML += '<td>' + item.title + '</td>';
+        formHTML += '<th>' + item.title + '</th>';
         local_data.column_count++;
     }
-    // add extra colun for controls
-    formHTML += '<td>controls</td>';
+    // add extra column for controls
+    if(!local_data.read_only){
+        formHTML += '<th>controls</th>';
+    }
     formHTML += '</tr></thead>';
     return formHTML;
 }
@@ -239,8 +241,10 @@ function _generate_form_html_grid(form_info, local_data, data){
             formHTML += '<tr id="' + div_id + '" >';
             formHTML += '<td id="' + div_id + '__info">&nbsp;</td>'
             formHTML += _generate_fields_html(form_info.layout, local_data, data[i], i);
-            // controls (hide the last rows controls)
-            formHTML += add_form_row_controls(base_id, (i + 1 == num_records));
+            if(!local_data.read_only){
+                // controls (hide the last rows controls)
+                formHTML += add_form_row_controls(base_id, (i + local_data.extra_rows == num_records));
+            }
             formHTML += "</tr>";
         }
     }
@@ -1092,8 +1096,9 @@ function item_remove_error(jquery_obj){
     var next = jquery_obj.next();
     if (next.is('span')){
         next.remove();
+    } else {
+        tooltip_clear(jquery_obj);
     }
-    tooltip_clear(jquery_obj);
 }
 
 
@@ -1101,11 +1106,9 @@ function form_show_errors_for_item(root, field_name, errors){
     var id = $INFO.getId(root + '#' + field_name);
     var jquery_obj = $('#' + id);
     if (errors && errors.length > 0){
-        // there is an error for this field
         use_tooltip = (root.indexOf('(') > -1);
         item_add_error(jquery_obj, errors, use_tooltip);
     } else {
-        // field is good
         item_remove_error(jquery_obj)
     }
 }
@@ -1133,6 +1136,7 @@ function form_show_errors(root, errors){
             tooltip_clear(jquery_obj);
         }
     }
+    var use_tooltip = (root.indexOf('(') > -1);
     for (var field in form_data.fields){
         // ignore subforms
         if (form_data.fields[field].type != 'subform'){
@@ -1140,11 +1144,8 @@ function form_show_errors(root, errors){
             id = $INFO.getId(root + '#' + field_name);
             jquery_obj = $('#' + id);
             if (errors && errors[field_name]){
-                // there is an error for this field
-                use_tooltip = (root.indexOf('(') > -1);
                 item_add_error(jquery_obj, [errors[field_name]], use_tooltip)
             } else {
-                // field is good
                 item_remove_error(jquery_obj)
             }
         }
