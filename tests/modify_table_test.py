@@ -157,7 +157,7 @@ class test_modify_table_sqlite(object):
 
     def test_4_rename_drop_field(self):
 
-        table1 = tables.Table("rename_field", Text("moo"), Text("man"))
+        table1 = tables.Table("rename_field", Text("man"), Text("moo"), Text("man2"), Text("man3"), Text("man4"))
 
         self.Donkey.add_table(table1)
         self.Donkey.persist()
@@ -181,6 +181,11 @@ class test_modify_table_sqlite(object):
         assert result[0] == []
         assert result[1] == []
         assert result[2] == []
+
+        table1 = self.Donkey["rename_field"]
+        
+        assert set([field.order for field in table1.fields.values() if field.category == "field"]) == set([1,2,3,4])
+
 
 
     def test_5_drop_table(self):

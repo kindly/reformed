@@ -362,9 +362,8 @@ class Field(object):
         ## this is popped as we dont want it to appear in field_params
         obj.foreign_key_name = kw.pop("foreign_key_name", None)
 
-        obj.order = kw.get("order", None)
-        if obj.order:
-            obj.order = int(obj.order)
+        obj.order = kw.pop("order", None)
+
 
         obj.default = kw.get("default", None)
         if obj.default:
@@ -450,6 +449,8 @@ class Field(object):
     @property
     def category(self):
 
+        if self.columns and self.name.startswith("_"):
+            return "internal"
         if self.columns:
             return "field"
         if self.relations:

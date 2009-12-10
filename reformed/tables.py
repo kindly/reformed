@@ -38,6 +38,7 @@ from util import get_paths, make_local_tables, create_table_path_list, create_ta
 import logging
 import migrate.changeset
 import datetime
+from search import Search
 from sqlalchemy.orm import column_property
 from sqlalchemy.orm.interfaces import AttributeExtension
 
@@ -129,7 +130,6 @@ class Table(object):
             field = self.fields[field_name]
             if field.category == "field":
                 self.current_order = self.current_order + 1
-                field.kw["order"] = self.current_order
                 field.order = self.current_order
             
                 
@@ -154,6 +154,8 @@ class Table(object):
                 __field.other = u"%s" % field.other
             if field.foreign_key_name:
                 __field.foreign_key_name = u"%s" % field.foreign_key_name
+            if field.order:
+                __field.order = field.order
             __table.field.append(__field)
             session.add(__field)
             
@@ -360,11 +362,27 @@ class Table(object):
         try:
             row = field.get_field_row_from_table(session)
             session.delete(row)
+            session._flush()
+
+            query = Search(self.database, 
+                           "__field",
+                           session,
+                           "table_name = ? and order is ?",
+                           values = [self.name, "not null"]).search()
+
+            query.order_by(self.database["__field"].sa_class.order)
+
+
+            for num, obj in enumerate(query.all()):
+                obj.order = num + 1
+                session.save(obj)
+
+
+            session._flush()
+            
 
             for column in field.columns.values():
                 self.sa_table.c[column.name].drop()
-
-            session._flush()
         
         except Exception, e:
             session.rollback()
@@ -392,7 +410,6 @@ class Table(object):
 
         if field.category == "field":
             self.current_order = self.current_order + 1
-            field.kw["order"] = self.current_order
             field.order = self.current_order
 
         __table = session.query(self.database.get_class("__table")).\
@@ -406,6 +423,9 @@ class Table(object):
 
         if field.foreign_key_name:
             __field.foreign_key_name = field.foreign_key_name
+
+        if field.order:
+            __field.order = field.order
         
         for name, param in field.kw.iteritems():
             __field_param = self.database.tables["__field_params"].sa_class()

@@ -387,10 +387,12 @@ class Database(object):
                     field_other = field.other.encode("ascii") 
                 else:
                     field_other = field.other
+
                 if field.foreign_key_name:
                     foreign_key_name = field.foreign_key_name.encode("ascii") 
                 else:
                     foreign_key_name = field.foreign_key_name
+
                 field_kw = {}
                 for field_param in field.field_params:
                     if field_param.value == u"True":
@@ -404,6 +406,7 @@ class Database(object):
                 fields.append(getattr(field_types, field.type)(field_name,
                                                               field_other,
                                                               foreign_key_name = foreign_key_name,
+                                                              order = field.order, 
                                                               field_id = field.id,
                                                               **field_kw))
             kw = {}
