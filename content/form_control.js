@@ -410,8 +410,8 @@ $FORM_CONTROL = {
 
     _code_group_get: function(id){
         var item = _parse_id(id);
-        var form_data = $INFO.getState(item.root, 'form_data');
-        var form_item = form_data.items[item.control];
+        var form_info = $INFO.getState(item.root, 'form_info');
+        var form_item = form_info.form_data.items[item.control];
         var codes = form_item.params.codes;
         var out = [];
         for (var i=0; i<codes.length; i++){
