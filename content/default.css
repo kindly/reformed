@@ -110,16 +110,16 @@ border-style:solid;
 border-color:#DDD;
 }
 
-th{
-}
 
-thead tr th{
+th{
 color:#666;
 background-color:#EEF;
 border-right:1px solid #DDD;
 border-bottom:1px solid #DDD;
 border-left:0;
 border-top:0;
+overflow:hidden;
+font-size:0.8em;
 }
 
 
