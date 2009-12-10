@@ -43,10 +43,9 @@ class Table(node.TableNode):
         ['summary', 'textarea', 'Summary:'],
         ['entity', 'checkbox', 'entity:'],
         ['logged', 'checkbox', 'logged:'],
-        ['fields', 'subform', 'fields'],
-        ['joins', 'subform', 'joins']
+        ['fields', 'subform', 'fields']
     ]
-    form_params ={'title' : 'Table'}
+    form_params ={'title' : 'Table', 'noautosave' : True}
     subforms = {
         'fields':{
             'fields': [
@@ -55,26 +54,12 @@ class Table(node.TableNode):
                 ['length', 'intbox', 'length'],
                 ['mandatory', 'checkbox', 'mandatory'],
                 ['default', 'textbox', 'default']
-       #         ['unique', 'checkbox', 'unique'],
-
             ],
             "params":{
                 "form_type": "grid",
                 "title": 'fields',
-                "id_field": "field_id"
-            }
-        },
-
-        'joins':{
-            'fields': [
-                ['field_name', 'textbox', 'join field'],
-                ['join_table', 'textbox', 'join table'],
-                ['join_type', 'dropdown', 'join type', {'values': '|'.join(allowed_join_types), 'type':'list'}],
-
-            ],
-            "params":{
-                "form_type": "grid",
-                "title" : "joins"
+                "id_field": "field_id",
+                'noautosave' : True
             }
         }
     }
@@ -148,7 +133,9 @@ class Table(node.TableNode):
             mandatory = field.get('mandatory', False)
             default = field.get('default')
 
-            field_info = dict(length=length, mandatory=mandatory, default=default)
+            field_info = dict(mandatory=mandatory, default=default)
+            if length:
+                field_info['length'] = length
 
             if field_id:
                 # the field exists so edit it
@@ -158,13 +145,7 @@ class Table(node.TableNode):
                 # add a new field
                 field_class = getattr(table_functions, field_type)
                 table.add_field(field_class(field_name, **field_info))
-        for join in joins:
-            join_type = join.get('join_type')
-            join_table = join.get('join_table')
-            join_name = join.get('field_name')
-            if join_name:
-                join_class = getattr(table_functions, join_type)
-                r[table_id].add_relation(join_class(join_name, join_table))
+
 
     def create_new_table(self, table_name, entity, logged, fields, summary, joins):
 
@@ -180,19 +161,14 @@ class Table(node.TableNode):
             mandatory = field.get('mandatory', False)
             default = field.get('default')
 
-            field_info = dict(length=length, mandatory=mandatory, default=default)
+            field_info = dict(mandatory=mandatory, default=default)
+            if length:
+                field_info['length'] = length
+
             field_class = getattr(table_functions, field_type)
 
             if field_name:
                 table.add_field(field_class(field_name, **field_info))
-
-        for join in joins:
-            join_type = join.get('join_type')
-            join_table = join.get('join_table')
-            join_name = join.get('join_name')
-
-            join_class = getattr(table_functions, join_type)
-            table.add_field(join_class(join_name, join_table))
 
         if entity:
             r.add_entity(table)
@@ -287,6 +263,15 @@ class Table(node.TableNode):
 
 class Edit(node.TableNode):
 
+    field_type_2_input = {
+        'Integer' : 'intbox',
+        'Boolean' : 'checkbox',
+        'DateTime' : 'datebox',
+        'Date' : 'datebox',
+        'Email' : 'emailbox',
+        'Text' : 'textbox'
+    }
+
     def initialise(self):
         self.table_id = int(self.data.get('t'))
         self.extra_data = {"t": self.table_id}
@@ -295,21 +280,21 @@ class Edit(node.TableNode):
         obj = r[self.table_id]
         self.table = obj.name
         columns = obj.schema_info
-        for field in obj.field_order:
-            if field not in ['_modified_date', '_modified_by','_core_entity_id', '_version'] and field in columns:
-
-                field_schema = obj.schema_info[field]
-                params = {'validation' : field_schema}
-                # FIXME an easier way to do this would be nice
-
-                if obj.fields[field].__class__.__name__ == 'Integer':
-                    fields.append([field, 'intbox', '%s:' % field, params])
-                elif obj.fields[field].__class__.__name__ == 'Boolean':
-                    fields.append([field, 'checkbox', '%s:' % field, params])
-                elif obj.fields[field].__class__.__name__ == 'DateTime':
-                    fields.append([field, 'datebox', '%s:' % field, params])
+        for field in columns.keys():
+            if field not in ['_modified_date', '_modified_by','_core_entity_id', '_version']:
+                if field in columns:
+                    field_schema = obj.schema_info[field]
+                    params = {'validation' : field_schema}
+                    try:
+                        field_type = obj.fields[field].__class__.__name__
+                        if field_type in self.field_type_2_input:
+                            fields.append([field, self.field_type_2_input[field_type], '%s:' % field, params])
+                        else:
+                            fields.append([field, 'textbox', '%s:' % field, params])
+                    except:
+                        fields.append([field, 'textbox', '%s:' % field, params])
                 else:
-                    fields.append([field, 'textbox', '%s:' % field, params])
+                    fields.append([field, 'textbox', '%s:' % field])
                 field_list.append(field)
         self.field_list = field_list
         self.fields = fields

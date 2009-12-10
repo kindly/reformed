@@ -664,8 +664,6 @@ function keyDown(item, event){
 function itemChanged(item, update_control){
 
     msg('itemChanged');
-    // remove the error css
-    $('#' + item.id).removeClass('error');
     var m = _parse_id(item.id);
     if (m) {
         var errors;
@@ -682,23 +680,25 @@ function itemChanged(item, update_control){
         } else {
             errors = null;
         }
-        if (errors && errors.length > 0){
-            form_show_errors_for_item(m.div, m.control, errors);
-        } else {
-            form_show_errors_for_item(m.div, m.control, errors);
-        }
-        // set dirty
+
+        form_show_errors_for_item(m.div, m.control, errors);
+
         var sent_data = $INFO.getState(m.root, 'sent_data');
         if (m.row !== null){
-            sent_data = sent_data[m.row];
+            if (sent_data[m.row]){
+                sent_data = sent_data[m.row];
+            } else {
+                sent_data = {};
+            }
         }
-        // FIXME can we only change if needed
-        if (value != sent_data[m.control]){
-            dirty(m.root, m.row, true);
+        // dirty
+        var my_dirty;
+        if (sent_data[m.control] && value != sent_data[m.control]){
+            my_dirty = true;
         } else {
             // check all fields are clean
             var id;
-            var my_dirty = false;
+            my_dirty = false;
             for (var i=0; i <form_data.fields.length; i++){
                 id = $INFO.getId(m.div + '#' + form_data.fields[i].name);
                 value = $FORM_CONTROL.get(id, form_data.fields[i].type, true);
@@ -707,11 +707,12 @@ function itemChanged(item, update_control){
                     break;
                 }
             }
-            if (my_dirty){
-                dirty(m.root, m.row, true);
-            } else {
-                dirty(m.root, m.row, false);
-            }
+        }
+        // FIXME can we only change if needed
+        if (my_dirty){
+            dirty(m.root, m.row, true);
+        } else {
+            dirty(m.root, m.row, false);
         }
     }
 }
@@ -1061,28 +1062,54 @@ function search_box(){
     return false;
 }
 
+
+function tooltip_add(jquery_obj, text){
+    jquery_obj.attr('title', text);
+    jquery_obj.tooltip();
+}
+
+
+function tooltip_clear(jquery_obj){
+    jquery_obj.attr('title', '');
+    jquery_obj.tooltip();
+}
+
+function item_add_error(jquery_obj, text, tooltip){
+    jquery_obj.addClass('error');
+    if (tooltip){
+        tooltip_add(jquery_obj, text.join(', '));
+    } else {
+        var next = jquery_obj.next();
+        if (next.is('span')){
+            next.remove();
+        }
+        jquery_obj.after("<span class='field_error'>ERROR: " + text.join(', ') + "</span>");
+    }
+}
+
+function item_remove_error(jquery_obj){
+    jquery_obj.removeClass('error');
+    var next = jquery_obj.next();
+    if (next.is('span')){
+        next.remove();
+    }
+    tooltip_clear(jquery_obj);
+}
+
+
 function form_show_errors_for_item(root, field_name, errors){
     var id = $INFO.getId(root + '#' + field_name);
+    var jquery_obj = $('#' + id);
     if (errors && errors.length > 0){
         // there is an error for this field
-        $('#' + id).addClass('error');
-        $('#' + id + ' + span').remove();
-        // show error if normal form
-        if (root.indexOf('(') == -1){
-            $('#' + id).after("<span class='field_error'>ERROR: " + errors.join(', ') + "</span>");
-        }
+        use_tooltip = (root.indexOf('(') > -1);
+        item_add_error(jquery_obj, errors, use_tooltip);
     } else {
         // field is good
-        $('#' + id).removeClass('error');
-        // show error if normal form
-        if (root.indexOf('(') == -1){
-            $('#' + id + ' + span').remove();
-        }
+        item_remove_error(jquery_obj)
     }
-
-
-
 }
+
 
 function form_show_errors(root, errors){
     // display errors on form for bad rows
@@ -1092,13 +1119,18 @@ function form_show_errors(root, errors){
     var form_data = $INFO.getState(form_root, 'form_data');
     var field_name;
     var id;
+    var jquery_obj;
     // show error if grid form
     // FIXME this is not a very good test as it gets continous forms too
     if (root.indexOf('(') > -1){
+        var jquery_obj = $('#' + $INFO.getId(root) + '__info');
         if (errors){
-            $('#' + $INFO.getId(root) + '__info').html('<span title="' + ($.toJSON(errors)).replace(/"/g,'&quot;') + '">E</span>');
+            jquery_obj.html('E');
+            var error = ($.toJSON(errors)).replace(/"/g,'&quot;');
+            tooltip_add(jquery_obj, error);
         } else {
-            $('#' + $INFO.getId(root) + '__info').html('&nbsp;');
+            jquery_obj.html('&nbsp;');
+            tooltip_clear(jquery_obj);
         }
     }
     for (var field in form_data.fields){
@@ -1106,21 +1138,14 @@ function form_show_errors(root, errors){
         if (form_data.fields[field].type != 'subform'){
             field_name = form_data.fields[field].name;
             id = $INFO.getId(root + '#' + field_name);
+            jquery_obj = $('#' + id);
             if (errors && errors[field_name]){
                 // there is an error for this field
-                $('#' + id).addClass('error');
-                // show error if normal form
-                if (root.indexOf('(') == -1){
-                    $('#' + id + ' + span').remove();
-                    $('#' + id).after("<span class='field_error'>ERROR: " + errors[field_name] + "</span>");
-                }
+                use_tooltip = (root.indexOf('(') > -1);
+                item_add_error(jquery_obj, [errors[field_name]], use_tooltip)
             } else {
                 // field is good
-                $('#' + id).removeClass('error');
-                // show error if normal form
-                if (root.indexOf('(') == -1){
-                    $('#' + id + ' + span').remove();
-                }
+                item_remove_error(jquery_obj)
             }
         }
     }
@@ -1353,8 +1378,12 @@ function itemBlur(item, blank_is_null){
 function itemsBlurLast(){
     if (current_focus !== null){
         msg('BLUR ' + current_focus);
-        autosave(current_focus);
-
+        // check if autosave disabled
+        var info = _parse_div(current_focus);
+        var form_data = $INFO.getState(info.root, 'form_data');
+        if (!(form_data && form_data.params && form_data.params.noautosave && form_data.params.noautosave == true)){
+            autosave(current_focus);
+        }
     }
     current_focus = null;
 
