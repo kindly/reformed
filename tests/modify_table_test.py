@@ -30,7 +30,7 @@ class test_modify_table_sqlite(object):
     def setUpClass(cls):
 
         if not hasattr(cls, "engine"):
-            cls.engine = create_engine('sqlite:///tests/test_donkey.sqlite')
+            cls.engine = create_engine('sqlite:///tests/test_donkey.sqlite', echo = True)
 
         meta_to_drop = sa.MetaData()
         meta_to_drop.reflect(bind=cls.engine)
@@ -61,6 +61,9 @@ class test_modify_table_sqlite(object):
         self.Donkey.add_table(tables.Table("moo04%s" % self.randish, Text("moo")))
         self.Donkey.persist()
 
+        for table in self.Donkey.tables.values():
+            assert None not in [field.order for field in table.fields.values() if field.category == "field"]
+
         self.Donkey.load_from_persist(True)
 
         result = validate_database(self.Donkey)
@@ -69,6 +72,7 @@ class test_modify_table_sqlite(object):
         assert result[1] == []
         assert result[2] == []
 
+
         #self.jim = self.Donkey.tables["moo01%s" % self.randish].sa_class()
         #self.jim.moo = u"zjimbobidoobo"
         #self.session.add(self.jim)
@@ -76,13 +80,23 @@ class test_modify_table_sqlite(object):
 
     def test_2_add_relation(self):
 
-        table1 =  self.Donkey["moo01%s" % self.randish]
-        table2 =  self.Donkey["moo02%s" % self.randish]
+        table1 = self.Donkey["moo01%s" % self.randish]
 
         table1.add_relation(OneToMany("moo02%s" % self.randish,
                                       "moo02%s" % self.randish))
 
+        for table in self.Donkey.tables.values():
+            assert None not in [field.order for field in table.fields.values() if field.category == "field"]
+
+
+        table1 = self.Donkey["moo01%s" % self.randish]
+        table2 = self.Donkey["moo02%s" % self.randish]
+
         assert hasattr(table1.sa_class(), "moo02%s" % self.randish)
+
+        assert "moo01%s_id" % self.randish in table2.fields
+        assert "moo01%s_id" % self.randish in table2.defined_columns
+        assert not table2.defined_columns["moo01%s_id" % self.randish].sa_options["nullable"]
 
         assert not hasattr(table1.sa_class(), "mo02%s" % self.randish)
 
@@ -90,14 +104,24 @@ class test_modify_table_sqlite(object):
         table1.add_relation(ManyToOne("moo03%s" % self.randish,
                                       "moo03%s" % self.randish))
 
+        table1 =  self.Donkey["moo01%s" % self.randish]
+
+        assert "moo03%s_id" % self.randish in table1.fields
+        assert "moo03%s_id" % self.randish in table1.defined_columns
+        assert not table1.defined_columns["moo03%s_id" % self.randish].sa_options["nullable"]
+
         assert hasattr(table1.sa_class(), "moo03%s" % self.randish)
 
 
         table1.add_relation(OneToOne("moo04%s" % self.randish,
                                       "moo04%s" % self.randish))
 
+        table1 =  self.Donkey["moo01%s" % self.randish]
+
         assert hasattr(table1.sa_class(), "moo04%s" % self.randish)
 
+        for table in self.Donkey.tables.values():
+            assert None not in [field.order for field in table.fields.values() if field.category == "field"]
 
 
     def test_3_rename_table(self):
@@ -107,27 +131,23 @@ class test_modify_table_sqlite(object):
 
         start = datetime.datetime.now()
 
-        print "before make", self.engine.name,  datetime.datetime.now() - start
         self.Donkey.add_table(table1)
         self.Donkey.add_table(table2)
-        print "mid make", self.engine.name, datetime.datetime.now() - start
         self.Donkey.persist()
-        print "after make", self.engine.name, datetime.datetime.now() - start
+        
+        table2 =  self.Donkey["to_join%s" % self.randish]
 
         table2.add_relation(ManyToOne("to_rename%s" % self.randish,
                                       "to_rename%s" % self.randish))
 
-        print "after add_relation", self.engine.name, datetime.datetime.now() - start
 
 
 
         self.Donkey.rename_table("to_rename%s" % self.randish, "renamed%s" % self.randish) 
 
-        print "after rename", self.engine.name, datetime.datetime.now() - start
 
         result = validate_database(self.Donkey)
 
-        print "after validate", self.engine.name, datetime.datetime.now() - start
 
         assert result[0] == []
         assert result[1] == []
@@ -137,7 +157,7 @@ class test_modify_table_sqlite(object):
 
     def test_4_rename_drop_field(self):
 
-        table1 = tables.Table("rename_field", Text("moo"), Text("man"))
+        table1 = tables.Table("rename_field", Text("man"), Text("moo"), Text("man2"), Text("man3"), Text("man4"))
 
         self.Donkey.add_table(table1)
         self.Donkey.persist()
@@ -161,6 +181,11 @@ class test_modify_table_sqlite(object):
         assert result[0] == []
         assert result[1] == []
         assert result[2] == []
+
+        table1 = self.Donkey["rename_field"]
+        
+        assert set([field.order for field in table1.fields.values() if field.category == "field"]) == set([1,2,3,4])
+
 
 
     def test_5_drop_table(self):
@@ -200,9 +225,12 @@ class test_modify_table_sqlite(object):
         assert result[1] == []
         assert result[2] == []
 
+    def test_6_delete_relation(self):
 
+        table1 = self.Donkey["renamed%s" % self.randish]
+        table2 = self.Donkey["to_join%s" % self.randish]
 
-
+        table2.delete_relation("to_rename%s" % self.randish)
 
 
 

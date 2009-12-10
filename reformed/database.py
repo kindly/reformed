@@ -325,6 +325,14 @@ class Database(object):
                     table.persist(session)
             for field in self.fields_to_persist:
                 field.table._persist_extra_field(field, session)
+
+            session._flush()
+
+            for table in self.tables.itervalues():
+                table.persist_foreign_key_columns(session)
+
+            session._flush()
+
             self.metadata.create_all(self.engine)
         except Exception, e:
             session.rollback()
@@ -334,8 +342,10 @@ class Database(object):
         finally:
             session.close
 
-        if self.fields_to_persist:
-            self.update_sa(reload = True)
+
+        self.load_from_persist(True)
+
+
         self.fields_to_persist = []
         self.persisted = True
 
@@ -346,36 +356,30 @@ class Database(object):
 
         session = self.Session()
 
-        if restart:
-            self.tables = {}
-            self.clear_sa()
-
-        if restart:
-            #old boot table state causes issues
-            boots = boot_tables.boot_tables()
-            self.boot_tables = boots.boot_tables
+        self.tables = {}
+        self.clear_sa()
+        #old boot table state causes issues
+        boots = boot_tables.boot_tables()
+        self.boot_tables = boots.boot_tables
         
         for table in self.boot_tables:
             self.add_table(table)
 
         self.update_sa()
         self.metadata.create_all(self.engine)
-            
+
         all_tables = session.query(self.tables["__table"].sa_class).all()
-        
 
-
+        self.tables = {}
+        self.clear_sa()
+            
         ## only persist boot tables if first time
         if not all_tables:
             self.persist()
             self.persisted = False #make sure database is not seen as persisted
+            return
 
         for row in all_tables:
-            if row.table_name.endswith(u"__table")  or\
-               row.table_name.endswith(u"__table_params")  or\
-               row.table_name.endswith(u"__field")  or\
-               row.table_name.endswith(u"__field_params"):
-                continue
             fields = []
             for field in row.field:
                 field_name = field.field_name.encode("ascii")
@@ -383,10 +387,12 @@ class Database(object):
                     field_other = field.other.encode("ascii") 
                 else:
                     field_other = field.other
+
                 if field.foreign_key_name:
                     foreign_key_name = field.foreign_key_name.encode("ascii") 
                 else:
                     foreign_key_name = field.foreign_key_name
+
                 field_kw = {}
                 for field_param in field.field_params:
                     if field_param.value == u"True":
@@ -400,6 +406,7 @@ class Database(object):
                 fields.append(getattr(field_types, field.type)(field_name,
                                                               field_other,
                                                               foreign_key_name = foreign_key_name,
+                                                              order = field.order, 
                                                               field_id = field.id,
                                                               **field_kw))
             kw = {}
@@ -418,6 +425,11 @@ class Database(object):
 
         for table in self.tables.itervalues():
             table.persisted = True
+
+            orders = [field.order for field in table.fields.values() if field.order]
+
+            if orders:
+                table.current_order = max(orders)
 
         # for first time do not say database is persisted
         if all_tables:

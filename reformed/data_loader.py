@@ -466,6 +466,14 @@ class SingleRecord(object):
         self.session.commit()
         self.session.close()
 
+    def make_obj(self, session):
+
+        self.get_all_obj(session)
+        self.add_all_values_to_obj()
+        self.save_all_objs(session)
+
+        return self.all_obj
+
     def get_key_info(self, key):
 
         if self.flat_file:

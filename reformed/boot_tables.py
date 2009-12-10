@@ -47,6 +47,7 @@ class boot_tables(object):
                                 fields.Text("type"),
                                 fields.Text("other"),
                                 fields.Text("foreign_key_name"),
+                                fields.Integer("order"),
                                 fields.OneToManyEager("field_params", "__field_params"),
                                 primary_key = "field_name,table_name",
                                 table_type = "internal"

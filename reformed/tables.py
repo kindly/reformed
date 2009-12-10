@@ -32,12 +32,13 @@ from columns import Column
 from custom_exceptions import NoMetadataError, NoDatabaseError
 import formencode
 from formencode import validators
-from validators import All
+from validators import All, UnicodeString
 from fields import Modified, ModifiedBySession, Integer
 from util import get_paths, make_local_tables, create_table_path_list, create_table_path
 import logging
 import migrate.changeset
 import datetime
+from search import Search
 from sqlalchemy.orm import column_property
 from sqlalchemy.orm.interfaces import AttributeExtension
 
@@ -67,6 +68,7 @@ class Table(object):
         self.field_list = args
         self.fields = {}
         self.field_order = []
+        self.current_order = 0
         self.primary_key = kw.get("primary_key", None)
         #persisted should be private
         self.persisted = kw.get("persisted", False)
@@ -123,6 +125,13 @@ class Table(object):
         """This puts the information about the this objects parameters 
         and its collection of fields into private database tables so that in future they
         no longer need to be explicitely defined"""
+
+        for field_name in self.field_order:
+            field = self.fields[field_name]
+            if field.category == "field":
+                self.current_order = self.current_order + 1
+                field.order = self.current_order
+            
                 
         __table = self.database.tables["__table"].sa_class()
         __table.table_name = u"%s" % self.name
@@ -145,6 +154,8 @@ class Table(object):
                 __field.other = u"%s" % field.other
             if field.foreign_key_name:
                 __field.foreign_key_name = u"%s" % field.foreign_key_name
+            if field.order:
+                __field.order = field.order
             __table.field.append(__field)
             session.add(__field)
             
@@ -168,6 +179,23 @@ class Table(object):
         for name, fields in self.fields:
             pass
 
+    def persist_foreign_key_columns(self, session):
+
+        for column in self.foriegn_key_columns.values():
+            original_col = column.original_column
+            name = column.name
+            if original_col == "id" and name not in self.defined_columns:
+                relation = column.defined_relation
+                field = relation.parent
+                new_field = Integer(name, mandatory = field.many_side_not_null)
+
+                self._add_field_no_persist(new_field)
+                self._persist_extra_field(new_field, session)
+
+                row = field.get_field_row_from_table(session)
+                row.foreign_key_name = unicode(name)
+                session.save(row)
+
     def add_relation(self, field, defer_update_sa = False):
 
         if not self.persisted:
@@ -179,26 +207,33 @@ class Table(object):
             self._add_field_no_persist(field)
             self._persist_extra_field(field, session)
             self.database.add_relations()
-            other_table = self.database[field.other]
-            for name, column in self.foriegn_key_columns.iteritems():
+
+            name, relation = field.relations.copy().popitem()
+            fk_table = self.database[relation.foreign_key_table]
+            pk_table = self.database[relation.primary_key_table]
+
+            for name, column in fk_table.foriegn_key_columns.iteritems():
                 if column.defined_relation.parent == field:
                     sa_options = column.sa_options
                     ## sqlite rubbish
                     if self.database.engine.name == 'sqlite':
                         sa_options["server_default"] = "null"
                     col = sa.Column(name, column.type, **sa_options)
+                    session._flush()
+                    fk_table.persist_foreign_key_columns(session)
+                    col.create(fk_table.sa_table)
 
-                    col.create(self.sa_table)
+            for name, con in fk_table.foreign_key_constraints.iteritems():
 
-            for name, column in other_table.foriegn_key_columns.iteritems():
-                if column.defined_relation.parent == field:
-                    sa_options = column.sa_options
-                    ## sqlite rubbish
-                    if self.database.engine.name == 'sqlite':
-                        sa_options["server_default"] = "null"
-                    col = sa.Column(name, column.type, **sa_options)
+                if self.database.engine.name == 'sqlite':
+                    break
 
-                    col.create(other_table.sa_table)
+                fk_const = migrate.changeset.constraint.ForeignKeyConstraint(con[0], 
+                                                   con[1], name = name, table = fk_table.sa_table)
+
+                if name == relation.foreign_key_constraint_name:
+                    fk_const.create()
+
 
         except Exception, e:
             session.rollback()
@@ -208,11 +243,54 @@ class Table(object):
         else:
             session._commit()
             if not defer_update_sa:
-                self.database.update_sa(reload = True)
+                self.database.load_from_persist(True)
         finally:
             session.close()
         return 
+    
+    def delete_relation(self, field):
 
+        if isinstance(field, basestring):
+            field = self.fields[field]
+        name, relation = field.relations.copy().popitem()
+
+        session = self.database.Session()
+
+        try:
+            mandatory = True if relation.many_side_not_null else False
+            fk_table = self.database[relation.foreign_key_table]
+            pk_table = self.database[relation.primary_key_table]
+
+            row = field.get_field_row_from_table(session)
+            session.delete(row)
+
+            session._flush()
+
+            for name, con in fk_table.foreign_key_constraints.iteritems():
+                
+                #fk_const = sa.ForeignKeyConstraint([fk_table.sa_table.c[con[0][0]]], 
+                #                                   [pk_table.sa_table.c[con[1][0]]], name = name)
+
+                fk_const = migrate.changeset.constraint.ForeignKeyConstraint(con[0], 
+                                                   con[1], name = name, table = fk_table.sa_table)
+
+                if name == relation.foreign_key_constraint_name:
+                    fk_const.drop()
+
+            #for constraint in fk_table.sa_table.constraints:
+            #    if constraint.name == relation.foreign_key_constraint_name:
+            #        constraint.drop()
+
+        except Exception, e:
+            session.rollback()
+            raise
+        else:
+            session._commit()
+            self.database.load_from_persist(True)
+        finally:
+            session.close()
+        
+                
 
 
     def add_field(self, field, defer_update_sa = False):
@@ -284,11 +362,27 @@ class Table(object):
         try:
             row = field.get_field_row_from_table(session)
             session.delete(row)
+            session._flush()
+
+            query = Search(self.database, 
+                           "__field",
+                           session,
+                           "table_name = ? and order is ?",
+                           values = [self.name, "not null"]).search()
+
+            query.order_by(self.database["__field"].sa_class.order)
+
+
+            for num, obj in enumerate(query.all()):
+                obj.order = num + 1
+                session.save(obj)
+
+
+            session._flush()
+            
 
             for column in field.columns.values():
                 self.sa_table.c[column.name].drop()
-
-            session._flush()
         
         except Exception, e:
             session.rollback()
@@ -314,6 +408,10 @@ class Table(object):
 
     def _persist_extra_field(self, field, session):
 
+        if field.category == "field":
+            self.current_order = self.current_order + 1
+            field.order = self.current_order
+
         __table = session.query(self.database.get_class("__table")).\
                                 filter_by(table_name = u"%s" % self.name).one()
 
@@ -325,6 +423,9 @@ class Table(object):
 
         if field.foreign_key_name:
             __field.foreign_key_name = field.foreign_key_name
+
+        if field.order:
+            __field.order = field.order
         
         for name, param in field.kw.iteritems():
             __field_param = self.database.tables["__field_params"].sa_class()
@@ -342,6 +443,8 @@ class Table(object):
 
         for field in __table.field:
             self.fields[field.field_name].field_id = field.id
+
+        return __field
 
     def get_table_row_from_table(self, session):
         
@@ -600,8 +703,8 @@ class Table(object):
                                                (table, column.original_column))
                     this_table_columns.append(name)
             if other_table_columns:
-                fk_constraints[(table, rel.name)] = [this_table_columns,
-                                                    other_table_columns]
+                fk_constraints[rel.foreign_key_constraint_name] = [this_table_columns,
+                                                                  other_table_columns]
         return fk_constraints
 
     def make_sa_table(self):
@@ -635,10 +738,12 @@ class Table(object):
                     sa_options["server_default"] = default
 
             sa_table.append_column(sa.Column(name, column.type, **sa_options))
+
         if self.foreign_key_constraints:
-            for con in self.foreign_key_constraints.itervalues():
-                sa_table.append_constraint(sa.ForeignKeyConstraint(con[0],
-                                                                   con[1]))
+            for name, con in self.foreign_key_constraints.iteritems():
+                fk_const = sa.ForeignKeyConstraint(con[0], con[1], name = name)
+                sa_table.append_constraint(fk_const)
+
         for name, index in self.indexes.iteritems():
             ind = [sa_table.columns[col.strip()] for col in index.fields.split(",")]
             if index.type == "unique":
@@ -777,7 +882,7 @@ class Table(object):
                     max = 100
             else:
                 max = 100
-            validators.append(val.UnicodeString(max = max,
+            validators.append(UnicodeString(max = max,
                                                 not_empty = mand))
         elif col_type is sa.Integer or isinstance(col_type, sa.Integer):
             validators.append(val.Int(not_empty = mand))

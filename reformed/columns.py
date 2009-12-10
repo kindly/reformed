@@ -270,10 +270,22 @@ class Relation(BaseSchema):
             return self.other
 
     @property
+    def primary_key_table(self):
+
+        if self.type == "manytoone":
+            return self.other
+        else:
+            return self.table.name
+
+    @property
     def foriegn_key_id_name(self):
 
         return self.join_keys_from_table(self.foreign_key_table)[0][0]
 
+    @property
+    def foreign_key_constraint_name(self):
+
+        return self.table.name + "__" + self.name
     
     def join_keys_from_table(self, table_name):
          
@@ -350,6 +362,9 @@ class Field(object):
         ## this is popped as we dont want it to appear in field_params
         obj.foreign_key_name = kw.pop("foreign_key_name", None)
 
+        obj.order = kw.pop("order", None)
+
+
         obj.default = kw.get("default", None)
         if obj.default:
             obj.sa_options["default"] = obj.default
@@ -373,7 +388,10 @@ class Field(object):
             obj.field_validation = r"%s" % obj.field_validation.encode("ascii")
         obj.order_by = kw.get("order_by", None)
         obj.length = kw.get("length", None)
-        if obj.length:
+        ## ignore length if empty string 
+        if not obj.length:
+            kw.pop("length", None)
+        else:
             obj.length = int(obj.length)
         obj.many_side_not_null = kw.get("many_side_not_null", True)
         obj.many_side_mandatory = kw.get("many_side_mandatory", False)
@@ -428,6 +446,19 @@ class Field(object):
         result = query.filter(sa_class.id == self.field_id).one()
         return result
 
+    @property
+    def category(self):
+
+        if self.columns and self.name.startswith("_"):
+            return "internal"
+        if self.columns:
+            return "field"
+        if self.relations:
+            return "relation"
+        if self.constraints:
+            return "constraint"
+        if self.indexes:
+            return "index"
 
     @property
     def items(self):
