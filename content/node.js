@@ -111,6 +111,9 @@ function _wrap(arg, tag){
 }
 
 function _subform(item, my_id, data, local_data){
+    /*
+     * returns the HTML for a subform
+     */
     var root = local_data.root + '#' + item.name;
     var paging = null;
     $INFO.newState(root);
@@ -127,7 +130,7 @@ function _generate_fields_html(form, local_data, data, row_count){
     var i;
     var value = '';
     var item;
-    //local_data: count root i wrap_tag show_label
+    var temp;
     for (i=0; i<form.fields.length; i++){
 
         item = form.fields[i];
@@ -156,7 +159,7 @@ function _generate_fields_html(form, local_data, data, row_count){
             }
             // add item
             if (local_data.form_type != 'results' || value){
-                var temp = $FORM_CONTROL.html(item, my_id, local_data.show_label, value, local_data.read_only);
+                temp = $FORM_CONTROL.html(item, my_id, local_data.show_label, value, local_data.read_only);
                 formHTML += _wrap(temp, local_data.wrap_tag);
             }
         }
@@ -164,12 +167,6 @@ function _generate_fields_html(form, local_data, data, row_count){
     return formHTML;
 }
 
-function _generate_form_html_normal(form_info, local_data, data){
-// local_data: count root i wrap_tag show_label
-    var formHTML = _generate_fields_html(form_info.layout, local_data, data, null);
-
-    return formHTML;
-}
 
 function _generate_form_html_continuous(form_info, local_data, data){
 // local_data: count root i wrap_tag show_label
@@ -352,6 +349,7 @@ function form_paging_bar(data){
     html = _wrap(html, 'p');
     return html;
 }
+
 function node_generate_html(form, data, paging, root, read_only){
     msg('node_generate_html: ');
     if (!data){
@@ -452,8 +450,7 @@ function node_generate_html(form, data, paging, root, read_only){
     switch (local_data.form_type){
         case 'action':
         case 'normal':
-    // count root i wrap_tag show_label
-            formHTML += _generate_form_html_normal(form_info, local_data, data);//########### @@@@@@
+            formHTML += _generate_fields_html(form_info.layout, local_data, data)
             break;
         case 'grid':
             formHTML += _generate_form_html_grid(form_info, local_data, data);
