@@ -123,6 +123,18 @@ $FORM_CONTROL = {
         return x;
     },
 
+    _build_maxlength: function(item){
+        // creates the maxlength=.. attribute used in many controls
+        if (item.params &&
+          item.params.validation &&
+          item.params.validation[0] &&
+          item.params.validation[0].max){
+            return 'maxlength="' + item.params.validation[0].max + '" ';
+        } else {
+            return '';
+        }
+    },
+
     _unknown: function(item, id){
         var x = '<span>unknown control: &lt;' + item.type + '&gt; for ';
         x += item.title + '</span>';
@@ -211,10 +223,7 @@ $FORM_CONTROL = {
             } else {
                 x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
             }
-            // set max length if specified
-            if (item.params && item.params.validation && item.params.validation && item.params.validation[0] && item.params.validation[0].max){
-                x += 'maxlength="' + item.params.validation[0].max + '" ';
-            }
+            x += $FORM_CONTROL._build_maxlength(item);
             x += 'onfocus="itemFocus(this)" ';
             x += 'onblur="itemBlur(this)" ';
             x += 'onchange="itemChanged(this)"  ';
@@ -232,10 +241,7 @@ $FORM_CONTROL = {
             } else {
                 x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
             }
-            // set max length if specified
-            if (item.params && item.params.validation && item.params.validation && item.params.validation[0] && item.params.validation[0].max){
-                x += 'maxlength="' + item.params.validation[0].max + '" ';
-            }
+            x += $FORM_CONTROL._build_maxlength(item);
             x += 'onfocus="itemFocus(this)" ';
             x += 'onblur="itemBlur(this)" ';
             x += 'onchange="itemChanged(this, true)"  ';
@@ -262,15 +268,14 @@ $FORM_CONTROL = {
             return x;
         },
 
+
         password: function(item, id, show_label, value){
             // simple textbox
             var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
             x += '<input id="' + id + '" name="' + id + '" type="password" ';
             x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
             // set max length if specified
-            if (item.params && item.params.validation && item.params.validation && item.params.validation[0] && item.params.validation[0].max){
-                x += 'maxlength="' + item.params.validation[0].max + '" ';
-            }
+            x += $FORM_CONTROL._build_maxlength(item);
             x += 'onchange="itemChanged(this)"  ';
             x += 'onfocus="itemFocus(this)" ';
             x += 'onkeydown="keyDown(this, event)" />';
