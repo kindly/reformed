@@ -200,7 +200,7 @@ class People(TableNode):
         ['address_line_1', 'textbox', 'address:'],
         ['address_line_2', 'textbox', 'town:'],
         ['postcode', 'textbox', 'postcode:'],
-        ['dob', 'textbox', 'dob:'],
+        ['dob', 'datebox', 'dob:'],
         ['active', 'checkbox', 'active:'],
         ['email', 'subform', 'email'],
         ['sponsorship', 'subform', 'sponsorship']
@@ -229,18 +229,19 @@ class Search(TableNode):
                            )
         data = results['data']
 
-        #FIXME botch to get table info also realy need to get the node not just guess it
-        table = {8:'Donkey',12:'People',14:'User'}
         for row in data:
-            row['title'] = 'n:test.%s:view:__id=%s|%s: %s' % (table[row['table']],
+            # FIXME want nicer way of getting the table name
+            table_name = r[row['table']].name
+            table_name = table_name[0].upper() + table_name[1:]
+            row['title'] = 'n:test.%s:view:__id=%s|%s: %s' % (table_name,
                                                                row['id'],
-                                                               table[row['table']],
+                                                               table_name,
                                                                row['title'])
 
-            row['edit'] = ['n:test.%s:edit:__id=%s|Edit' % (table[row['table']],
+            row['edit'] = ['n:test.%s:edit:__id=%s|Edit' % (table_name,
                                                                row['id']),
-                           'n:test.%s:view:__id=%s|View' % (table[row['table']],
-                                                               row['id'])                                                  ]
+                           'n:test.%s:view:__id=%s|View' % (table_name,
+                                                           row['id'])                                                  ]
 
         out = node.create_form_data(self.list_fields, self.list_params, data)
 

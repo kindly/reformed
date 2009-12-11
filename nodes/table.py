@@ -146,6 +146,21 @@ class Table(node.TableNode):
                 field_class = getattr(table_functions, field_type)
                 table.add_field(field_class(field_name, **field_info))
 
+                root = field.get('__root')
+                id = 0 # FIXME need to get the real field_id & _version
+                version = 1
+                self.saved.append([root, id, version])
+
+        # output data
+        out = {}
+        if self.errors:
+            out['errors'] = self.errors
+        if self.saved:
+            out['saved'] = self.saved
+
+        self.out = out
+        self.action = 'save'
+
 
     def create_new_table(self, table_name, entity, logged, fields, summary, joins):
 
@@ -234,19 +249,13 @@ class Table(node.TableNode):
         field_data = []
         join_data = []
         for (name, value) in table_info.fields.iteritems():
-            if value.__class__.__name__ in self.allowed_field_types:
+            if value.__class__.__name__ in self.allowed_field_types and name[0] != '_':
                 field_data.append({'field_name': name,
                                    'field_type': value.__class__.__name__,
                                    'mandatory': value.mandatory,
                                    'length': value.length,
                                    'default': value.default,
                                    'field_id': value.field_id })
-            if value.__class__.__name__ in self.allowed_join_types:
-                join_data.append({'field_name': name,
-                                    'join_table': value.other,
-                                   'join_type': value.__class__.__name__,
-                                   'field_id': value.field_id })
-
 
         table_data = {'table_name': table_info.name,
                       'table_type' : table_info.table_type,
@@ -254,8 +263,7 @@ class Table(node.TableNode):
                       'table_id': table_info.table_id,
                       'entity': table_info.entity,
                       'logged': table_info.logged,
-                      'fields': field_data,
-                      'joins': join_data}
+                      'fields': field_data}
 
         data = node.create_form_data(self.fields, self.form_params, table_data)
         self.action = 'form'
@@ -286,6 +294,8 @@ class Edit(node.TableNode):
                     field_schema = obj.schema_info[field]
                     params = {'validation' : field_schema}
                     try:
+                        if obj.fields[field].default:
+                            params['default'] =  obj.fields[field].default
                         field_type = obj.fields[field].__class__.__name__
                         if field_type in self.field_type_2_input:
                             fields.append([field, self.field_type_2_input[field_type], '%s:' % field, params])

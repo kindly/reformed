@@ -81,7 +81,7 @@ $FORM_CONTROL = {
 
     exists: function (type){
         // returns true if we have this control type
-        if (typeof(this._controls[type]) != "undefined"){
+        if (this._controls[type] !== undefined){
             // control exists
             return true;
         } else {
@@ -91,7 +91,7 @@ $FORM_CONTROL = {
 
     set: function (type, id, value){
         msg('set');
-        if (typeof(this['_' + type + '_set']) == "undefined"){
+        if (this['_' + type + '_set'] === undefined){
             // default set method
             var item = $("#" + id);
             item.val([value]);
@@ -104,7 +104,7 @@ $FORM_CONTROL = {
     },
 
     get: function (id, type, dont_update){
-        if (typeof(this['_' + type + '_get']) == "undefined"){
+        if (this['_' + type + '_get'] == undefined){
             // default get method
             var value = $("#" + id).val();
             if (value == '[NULL]' && $('#' +id).hasClass('null')){
@@ -121,6 +121,18 @@ $FORM_CONTROL = {
         var x = '<label id="' + id + '__label" for="' + id ;
         x += '" class="label" >' + item.title + '</label>';
         return x;
+    },
+
+    _build_maxlength: function(item){
+        // creates the maxlength=.. attribute used in many controls
+        if (item.params &&
+          item.params.validation &&
+          item.params.validation[0] &&
+          item.params.validation[0].max){
+            return 'maxlength="' + item.params.validation[0].max + '" ';
+        } else {
+            return '';
+        }
     },
 
     _unknown: function(item, id){
@@ -211,10 +223,7 @@ $FORM_CONTROL = {
             } else {
                 x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
             }
-            // set max length if specified
-            if (item.params && item.params.validation && item.params.validation && item.params.validation[0] && item.params.validation[0].max){
-                x += 'maxlength="' + item.params.validation[0].max + '" ';
-            }
+            x += $FORM_CONTROL._build_maxlength(item);
             x += 'onfocus="itemFocus(this)" ';
             x += 'onblur="itemBlur(this)" ';
             x += 'onchange="itemChanged(this)"  ';
@@ -232,13 +241,10 @@ $FORM_CONTROL = {
             } else {
                 x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
             }
-            // set max length if specified
-            if (item.params && item.params.validation && item.params.validation && item.params.validation[0] && item.params.validation[0].max){
-                x += 'maxlength="' + item.params.validation[0].max + '" ';
-            }
+            x += $FORM_CONTROL._build_maxlength(item);
             x += 'onfocus="itemFocus(this)" ';
             x += 'onblur="itemBlur(this)" ';
-            x += 'onchange="itemChanged(this)"  ';
+            x += 'onchange="itemChanged(this, true)"  ';
             x += 'onkeyup="itemChanged(this)" ';
             x += 'onkeydown="keyDown(this, event)" />';
             return x;
@@ -269,9 +275,7 @@ $FORM_CONTROL = {
             x += '<input id="' + id + '" name="' + id + '" type="password" ';
             x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
             // set max length if specified
-            if (item.params && item.params.validation && item.params.validation && item.params.validation[0] && item.params.validation[0].max){
-                x += 'maxlength="' + item.params.validation[0].max + '" ';
-            }
+            x += $FORM_CONTROL._build_maxlength(item);
             x += 'onchange="itemChanged(this)"  ';
             x += 'onfocus="itemFocus(this)" ';
             x += 'onkeydown="keyDown(this, event)" />';
@@ -290,6 +294,7 @@ $FORM_CONTROL = {
             }
             x += 'value="true" class="checkbox" ';
             x += 'onfocus="itemFocus(this)" ';
+            x += 'onblur="itemBlur(this)" ';
             x += 'onchange="itemChanged(this)" ';
             x += 'onkeydown="keyDown(this, event);return false" />';
             if (show_label && item.reverse){
@@ -330,9 +335,12 @@ $FORM_CONTROL = {
 
         dropdown: function(item, id, show_label, value){
             // dropdown
+            // FIXME there is no up/down row navigation for this control
+            // keypress event does not give me access to the key pressed
             var x = show_label ? $FORM_CONTROL._label(item, id) : '';
-            x += '<select id="' + id + '" name="' + id;
-            x += '" onfocus="itemFocus(this)" ';
+            x += '<select id="' + id + '" name="' + id + '" ';
+            x += 'onfocus="itemFocus(this)" ';
+            x += 'onblur="itemBlur(this)" ';
             x += 'onchange="itemChanged(this)" >';
             var type = item.params.type;
             var items = item.params.values.split('|');
@@ -382,7 +390,7 @@ $FORM_CONTROL = {
             x += 'maxlength="10" ';
             x += 'onfocus="itemFocus(this)" ';
             x += 'onblur="itemBlur(this, true)" ';
-            x += 'onchange="$FORM_CONTROL._datebox_change(this)" ';
+            x += 'onchange="itemChanged(this, true)" ';
             x += 'onkeyup="itemChanged(this)" ';
             x += 'onkeydown="return $FORM_CONTROL._datebox_key(this,event)" />';
             return x;
@@ -406,8 +414,8 @@ $FORM_CONTROL = {
 
     _code_group_get: function(id){
         var item = _parse_id(id);
-        var form_data = $INFO.getState(item.root, 'form_data');
-        var form_item = form_data.items[item.control];
+        var form_info = $INFO.getState(item.root, 'form_info');
+        var form_item = form_info.form_data.items[item.control];
         var codes = form_item.params.codes;
         var out = [];
         for (var i=0; i<codes.length; i++){
@@ -416,8 +424,6 @@ $FORM_CONTROL = {
             }
         }
         return out;
-        //info = $("#" + id + '__*').attr("checked");
-      //  alert(info);
     },
 
     _datebox_set: function(id, value){
@@ -452,19 +458,6 @@ $FORM_CONTROL = {
             }
         }
         return value;
-    },
-
-    _datebox_change: function (obj){
-        // this is when the user date is changed
-        var value = $(obj).val();
-        if (isDate(value) || value === ''){
-            // date is good
-            $(obj).removeClass("error");
-        } else {
-            // date is bad
-            $(obj).addClass("error");
-        }
-        itemChanged(obj, true);
     },
 
     _datebox_key: function(obj, event){
@@ -562,13 +555,34 @@ var validation_rules = {
     },
 
     'DateValidator' : function(rule, value, currently_selected){
+        if (currently_selected === true){
+            return []
+        }
         var errors = [];
-        if (value === '' && currently_selected !== true){
+        if (value === ''){
             errors.push('not a valid date' + value);
         }
         return errors;
-    }
+    },
 
+    'Email' : function(rule, value, currently_selected){
+        if (currently_selected === true){
+            return []
+        }
+        var usernameRE = /^[^ \t\n\r@<>()]+$/i;
+        var domainRE = /^(?:[a-z0-9][a-z0-9\-]{0,62}\.)+[a-z]{2,}$/i;
+        var parts = value.split('@');
+        if (parts.length != 2){
+            return ['An email address must contain a single @'];
+        }
+        if (!parts[0].match(usernameRE)){
+            return ['The username portion of the email address is invalid (the portion before the @)'];
+        }
+        if (!parts[1].match(domainRE)){
+            return ['The domain portion of the email address is invalid (the portion after the @)'];
+        }
+        return [];
+    }
 };
 
 function validate(rules, value, currently_selected){

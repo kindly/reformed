@@ -52,13 +52,6 @@
         item:    (string) the state to be updated
         value:    (string/int/bool) the new value
 
-    setStateArray: function(root, item, row, value)
-        sets the state type for array item of an object
-        root:    (string) the id of the object on the HTML page
-        item:    (string) the state to be updated
-        row:    (int) the array index
-        value:    (string/int/bool) the new value
-
     newState: function(root, type)
         sets the type of object in root and initialises state
         root:    (string) the id of the object on the HTML page
@@ -157,19 +150,16 @@ $INFO = {
         }
     },
 
-    setStateArray: function(root, item, row, value){
-        //FIXME clean this up
-        if (row === null){
-            row = 0;
-        }
-    //FIXME this don't work
-    //    var form_info = $FORM._get_form_info(root);
-    //    form_info.info[item][row] = value;
-    },
-
     newState: function(root, type){
 
         if (root){
+            // remove existing state and any children
+            for (var state in this._state){
+                if (state.substring(0, root.length) == root){
+                    delete this._state[state];
+                }
+            }
+            //add the new state
             this._state[root] = {};
             this._state[root].type = type;
         } else {

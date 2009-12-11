@@ -111,15 +111,6 @@ function get_html(root, file){
 
 // THESE ARE FROM formcontrol.js
 
-function isDate(sDate) {
-    // THIS DATE VALIDATION SUCKS :(
-    var scratch = new Date(sDate);
-    if (scratch.toString() == "NaN" || scratch.toString() == "Invalid Date") {
-        return false;
-    } else {
-        return true;
-    }
-}
 
 function allowedKeys(key){
 
