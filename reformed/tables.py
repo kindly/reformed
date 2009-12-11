@@ -34,6 +34,7 @@ import formencode
 from formencode import validators
 from validators import All, UnicodeString
 from fields import Modified, ModifiedBySession, Integer
+import fields
 from util import get_paths, make_local_tables, create_table_path_list, create_table_path
 import logging
 import migrate.changeset
@@ -393,6 +394,74 @@ class Table(object):
         finally:
             session.close()
 
+    def alter_field(self, field, **kw):
+
+
+        if isinstance(field, basestring):
+            field = self.fields[field]
+
+        if field.category <> "field":
+            raise Exception(("only fields representing database"
+                            "fields can be altered"))
+
+        session = self.database.Session()
+
+        try:
+            field_type = kw.pop("type", None)
+
+            row = field.get_field_row_from_table(session)
+
+            new_kw = field.kw.copy()
+            new_kw.update(kw)
+            new_kw["order"] = field.order
+
+
+            if field_type:
+                if isinstance(field_type, basestring):
+                    field_type = getattr(fields, field_type)
+                new_field = field_type(field.name, **new_kw)
+            else:
+                new_field = field.__class__(field.name, **new_kw)
+
+            _, column = new_field.columns.copy().popitem()
+
+            sa_options = column.sa_options
+
+            # sqlalchemy only accepts strings for server_defaults
+            #if isinstance(column.type, sa.Unicode) and "default" in sa_options:
+            #    if isinstance(sa_options["default"], basestring):
+            #        default = sa_options.pop("default")
+            #        sa_options["server_default"] = default
+
+
+            for param in row.field_params:
+                session.delete(param)
+
+            for name, param in new_field.kw.iteritems():
+                __field_param = self.database.get_instance("__field_params")
+                __field_param.item = u"%s" % name
+                __field_param.value = u"%s" % str(param) 
+                row.field_params.append(__field_param)
+                session.add(__field_param)
+            row.type = unicode(new_field.__class__.__name__)
+            session.add(row)
+
+            session._flush()
+
+            col = self.sa_table.c[column.name]
+            col.alter(sa.Column(column.name, column.type, **sa_options))
+
+        except Exception, e:
+            session.rollback()
+            raise
+        else:
+            session._commit()
+            self.database.load_from_persist(True)
+        finally:
+            session.close()
+
+
+
 
 
 
@@ -732,10 +801,10 @@ class Table(object):
             sa_options = column.sa_options
 
             ## sqlalchemy only accepts strings for server_defaults
-            if isinstance(column.type, sa.Unicode) and "default" in sa_options:
-                if isinstance(sa_options["default"], basestring):
-                    default = sa_options.pop("default")
-                    sa_options["server_default"] = default
+            #if isinstance(column.type, sa.Unicode) and "default" in sa_options:
+            #    if isinstance(sa_options["default"], basestring):
+            #        default = sa_options.pop("default")
+            #        sa_options["server_default"] = default
 
             sa_table.append_column(sa.Column(name, column.type, **sa_options))
 
