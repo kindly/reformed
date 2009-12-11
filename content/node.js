@@ -749,6 +749,11 @@ function form_setup(root, form_data){
     // do any setting up of the form
     var item;
     var id;
+
+    var form_type = $INFO.getState(root, 'form_info').form_type;
+    if (form_type == 'grid'){
+        $('#' + $INFO.getId(root) + ' table').grid();
+    }
     for (var i=0; i<form_data.fields.length; i++){
             item = form_data.fields[i];
             if (item.params){
