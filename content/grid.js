@@ -1,3 +1,29 @@
+/*
+
+    This file is part of Reformed.
+
+    Reformed is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 2 as
+    published by the Free Software Foundation.
+
+    Reformed is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Reformed.  If not, see <http://www.gnu.org/licenses/>.
+
+    -----------------------------------------------------------------
+
+    Reformed
+    Copyright (c) 2008-2009 Toby Dacre & David Raznick
+
+    JQuery grid resize plugin
+
+*/
+
+
 (function($) {
 	
 $.fn.extend({
@@ -13,8 +39,9 @@ $.Grid = function(input){
 
     var headers = $(input).find('th');
     for (i = 1; i < headers.size(); i++){
-        // put the contents in a divso that it can slid under the resizer
+        // put the contents in a div so that it can slid under the resizer
         // and add the resizer
+        // ignore the first column
         headers.eq(i).wrapInner('<div></div>').append(new $.Grid.Resizer(i));
         // set the width of the heading div to stop the resizer being knocked to the next line
         w = headers.eq(i).width();
@@ -44,6 +71,7 @@ $.Grid.Resizer = function(col){
     }
 
     function move(e){
+        // resize
         if (drag){
             th = control.parent();
             var old_width = th.outerWidth();
@@ -65,7 +93,7 @@ $.Grid.Resizer = function(col){
             widths[col] = new_width;
 
             // resize table
-            var table = th.parent().parent().parent();
+            var table = th.parent('table');
             var table_width = table.width() + (new_width - old_width);
             table.width(table_width);
 
