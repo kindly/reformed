@@ -68,9 +68,7 @@ class test_modify_table_sqlite(object):
 
         result = validate_database(self.Donkey)
 
-        assert result[0] == []
-        assert result[1] == []
-        assert result[2] == []
+        assert not any([result[num] for num in range(0,3)])
 
 
         #self.jim = self.Donkey.tables["moo01%s" % self.randish].sa_class()
@@ -149,15 +147,13 @@ class test_modify_table_sqlite(object):
         result = validate_database(self.Donkey)
 
 
-        assert result[0] == []
-        assert result[1] == []
-        assert result[2] == []
+        assert not any([result[num] for num in range(0,3)])
 
 
 
     def test_4_rename_drop_field(self):
 
-        table1 = tables.Table("rename_field", Text("man"), Text("moo"), Text("man2"), Text("man3"), Text("man4"))
+        table1 = tables.Table("rename_field", Text("man"), Text("moo"), Integer("man2"), Text("man3"), Text("man4"))
 
         self.Donkey.add_table(table1)
         self.Donkey.persist()
@@ -170,21 +166,35 @@ class test_modify_table_sqlite(object):
 
         result = validate_database(self.Donkey)
 
-        assert result[0] == []
-        assert result[1] == []
-        assert result[2] == []
+        assert not any([result[num] for num in range(0,3)])
 
         table1.drop_field("man") 
 
         result = validate_database(self.Donkey)
 
-        assert result[0] == []
-        assert result[1] == []
-        assert result[2] == []
+        assert not any([result[num] for num in range(0,3)])
 
         table1 = self.Donkey["rename_field"]
         
         assert set([field.order for field in table1.fields.values() if field.category == "field"]) == set([1,2,3,4])
+
+        table1.alter_field("man2", type = "Text", mandatory = True, default = "wee", validation = "Email")
+
+        table1 = self.Donkey["rename_field"]
+
+        assert table1.fields["man2"].field_validation == "Email"
+
+        table1.alter_field("man2", type = "Text", mandatory = True, default = "wee", validation = "__.*")
+        
+        result = validate_database(self.Donkey)
+
+        assert not any([result[num] for num in range(0,3)])
+
+        table1 = self.Donkey["rename_field"]
+
+        assert table1.fields["man2"].field_validation == "__.*"
+
+
 
 
 
@@ -200,9 +210,7 @@ class test_modify_table_sqlite(object):
 
         result = validate_database(self.Donkey)
 
-        assert result[0] == []
-        assert result[1] == []
-        assert result[2] == []
+        assert not any([result[num] for num in range(0,3)])
 
         table4 =  self.Donkey["moo04%s" % self.randish]
 
@@ -210,10 +218,7 @@ class test_modify_table_sqlite(object):
 
         result = validate_database(self.Donkey)
 
-        assert result[0] == []
-        assert result[1] == []
-        assert result[2] == []
-
+        assert not any([result[num] for num in range(0,3)])
 
         table1 =  self.Donkey["moo01%s" % self.randish]
 
@@ -221,9 +226,7 @@ class test_modify_table_sqlite(object):
 
         result = validate_database(self.Donkey)
 
-        assert result[0] == []
-        assert result[1] == []
-        assert result[2] == []
+        assert not any([result[num] for num in range(0,3)])
 
     def test_6_delete_relation(self):
 
@@ -238,7 +241,7 @@ class test_modify_table_mysql(test_modify_table_sqlite):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine('mysql://localhost/test_donkey')
+        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
         super(test_modify_table_mysql, cls).setUpClass()
 
 
@@ -246,5 +249,5 @@ class test_modify_table_postgres(test_modify_table_sqlite):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine('postgres://david:@:5432/test_donkey')
+        cls.engine = create_engine('postgres://david:@:5432/test_donkey', echo = True)
         super(test_modify_table_postgres, cls).setUpClass()

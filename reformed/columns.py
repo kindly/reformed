@@ -357,7 +357,7 @@ class Field(object):
         obj.sa_options = {}
         obj.column_order = []
         obj.kw = kw
-        obj.field_id = kw.get("field_id", None)
+        obj.field_id = kw.pop("field_id", None)
 
         ## this is popped as we dont want it to appear in field_params
         obj.foreign_key_name = kw.pop("foreign_key_name", None)
