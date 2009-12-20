@@ -164,13 +164,12 @@ $.Autocompleter = function(input, options) {
 		if (!config.mouseDownOnSelect) {
 			hideResults();
 		}
-	}).click(function() {
+	}).click(function(event) {
 		// show select when clicking in a focused field
 		if ( hasFocus++ > 1 && !select.visible() ) {
-			onChange(0, true);
             // need to start dropdown request for all fields to be shown
-            config.dropdownRequest = true
-		}
+			onChange(0, true);
+		  }
 	}).bind("search", function() {
 		// TODO why not just specifying both arguments?
 		var fn = (arguments.length > 1) ? arguments[1] : null;
@@ -663,6 +662,9 @@ $.Autocompleter.Select = function (options, input, select, config) {
 	}
 	
 	function limitNumberOfItems(available) {
+        if (options.dropdown){
+            return available;
+        }
 		return options.max && options.max < available
 			? options.max
 			: available;
@@ -685,11 +687,10 @@ $.Autocompleter.Select = function (options, input, select, config) {
 		listItems = list.find("li");
 
         if (options.dropdown && config.dropdownRequest){
-            listItems.slice(active, active+1).addClass(CLASSES.ACTIVE);
-            config.dropdownRequest = false
+            moveSelect(0)
         }
 
-		if ( options.selectFirst ) {
+        else if ( options.selectFirst ) {
 			listItems.slice(0, 1).addClass(CLASSES.ACTIVE);
 			active = 0;
 		}
@@ -747,6 +748,8 @@ $.Autocompleter.Select = function (options, input, select, config) {
                 if (!options.dropdown || !config.dropdownRequest){
                     list.scrollTop(0);
                 }
+                config.dropdownRequest = false;
+
                 list.css({
 					maxHeight: options.scrollHeight,
 					overflow: 'auto'
