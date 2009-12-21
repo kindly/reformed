@@ -130,6 +130,10 @@ border-left:0;
 border-right:0;
 border-top:0;
 font-size:12px;
+overflow:hidden;
+height:1em;
+text-overflow:ellipsis;
+white-space:nowrap;
 }
 
 tfoot tr td{
@@ -306,7 +310,7 @@ div.form_body > div > input.error {
     width:100%;
 }
 
-.grid_table td input {
+td input {
     width:100%;
 
 }
@@ -332,10 +336,49 @@ div.form_body > div > input.error {
 
 /* GRID */
 
-.resizer {
+.t_resizer {
     float: right;
     cursor:e-resize;
     width:10px;
     height:15px;
     background-color:transparent;
+    z-index:2;
+    position:relative;
+}
+
+.t_header {
+    z-index:1;
+    position:relative;
+    margin-right:15px
+}
+
+.t_selected_cell {
+    background-color: #FCF;
+}
+
+.t_edited_cell {
+    padding: 0;
+}
+td.dirty {
+    font-weight:bold;
+}
+
+tr.dirty {
+    background-color:#FFC;
+}
+
+tr.current {
+    background-color: #CCF;
+}
+
+td {
+    font-family: verdana;
+    font-size:0.8em;
+    padding:3px;
+}
+
+td input {
+    margin : 0;
+    border-color:#999;
+    font-family: verdana;
 }
