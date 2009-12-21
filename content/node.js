@@ -107,9 +107,13 @@ function convert_url_string_to_hash(arg){
 }
 
 
-function _wrap(arg, tag){
+function _wrap(arg, tag, my_class){
     // this wraps the item in <tag> tags
-    return '<' + tag + '>' + arg + '</' + tag + '>';
+    if (my_class){
+        return '<' + tag + ' class="' + my_class + '" >' + arg + '</' + tag + '>';
+    } else {
+        return '<' + tag + '>' + arg + '</' + tag + '>';
+    }
 }
 
 function _subform(item, my_id, data, local_data){
@@ -161,8 +165,21 @@ function _generate_fields_html(form, local_data, data, row_count){
             }
             // add item
             if (local_data.form_type != 'results' || value){
-                temp = $FORM_CONTROL.html(item, my_id, local_data.show_label, value, local_data.read_only);
-                formHTML += _wrap(temp, local_data.wrap_tag);
+                if (local_data.form_type == 'grid'){
+                    //  grid
+                    if (value === null){
+                        formHTML += _wrap('[NULL]', local_data.wrap_tag, 'null');
+                    } else {
+                        if (item.type == 'datebox'){
+                            value = Date.ISO(value).toLocaleDateString();
+                        }
+                        formHTML += _wrap(value, local_data.wrap_tag);
+                    }
+                } else {
+                    // not grid
+                    temp = $FORM_CONTROL.html(item, my_id, local_data.show_label, value, local_data.read_only);
+                    formHTML += _wrap(temp, local_data.wrap_tag);
+                }
             }
         }
     }
@@ -243,7 +260,7 @@ function _generate_form_html_grid(form_info, local_data, data){
             div_id = $INFO.addId(base_id);
 
             formHTML += '<tr id="' + div_id + '" >';
-            formHTML += '<td id="' + div_id + '__info">&nbsp;</td>'
+            formHTML += '<td id="' + div_id + '__info">' + i + '</td>'
             formHTML += _generate_fields_html(form_info.layout, local_data, data[i], i);
             if(!local_data.read_only){
                 // controls (hide the last rows controls)
@@ -752,7 +769,7 @@ function form_setup(root, form_data){
 
     var form_type = $INFO.getState(root, 'form_info').form_type;
     if (form_type == 'grid'){
-        $('#' + $INFO.getId(root) + ' table').grid();
+        $('#' + $INFO.getId(root) + ' table').grid(form_data);
     }
     for (var i=0; i<form_data.fields.length; i++){
             item = form_data.fields[i];
@@ -1431,9 +1448,13 @@ var fn = function(packet, job){
              var form = packet.data.data.form;
              data = packet.data.data.data;
              var paging = packet.data.data.paging;
-             $('#' + root).html(node_generate_html(form, data, paging, root)).scrollTop(0);
+             if (form.params.form_type != 'grid'){
+                $('#' + root).html(node_generate_html(form, data, paging, root)).scrollTop(0);
+                form_setup(root, form);
+             } else {
+                $('#' + root).grid(form, data);
+             }
              $INFO.setState(root, 'node', packet.data.node);
-             form_setup(root, form);
              break;
          case 'save_error':
             data = packet.data.data;

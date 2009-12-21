@@ -460,12 +460,13 @@ $FORM_CONTROL = {
         return value;
     },
 
-    _datebox_key: function(obj, event){
-        var key = getKeyPress(event);
-        if ((key.code > 47 && key.code < 59) /* numbers */ ||
-             (key.code == 191) /* forward slash */ ||
-              allowedKeys(key) ){
-            keyDown(obj, event);
+    _datebox_key: function(e){
+        var key = e.keyCode;
+        if ((key > 47 && key < 59) /* numbers */ ||
+             (key == 191) /* forward slash */ ||
+              allowedKeys2(e) ){
+
+      //      keyDown(obj, event);
             return true;
         } else {
             return false;
@@ -479,11 +480,12 @@ $FORM_CONTROL = {
         itemChanged(obj);
     },
 
-    _intbox_key: function(obj, event){
-        var key = getKeyPress(event);
-        if ((key.code > 47 && key.code < 59) /* numbers */ ||
-              allowedKeys(key) ){
-            keyDown(obj, event);
+    _intbox_key: function(e){
+        var key = e.keyCode;
+        if ((key > 47 && key < 59) /* numbers */
+             ||  allowedKeys2(e) )
+        {
+          //  keyDown(obj, event);
             return true;
         } else {
             return false;
@@ -499,6 +501,10 @@ $FORM_CONTROL = {
 var DATE_FORMAT = 'UK';
 
 function date_from_value(value){
+
+    if (!value){
+        return '';
+    }
 
     var day;
     var month;
@@ -525,8 +531,16 @@ function date_from_value(value){
                 day = parseInt(parts[3], 10);
                 break;
         }
-        if (day){
-            return new Date(year, month, day);
+        if (day !== undefined){
+            var new_date = new Date();
+            new_date.setUTCFullYear(year);
+            new_date.setUTCMonth(month);
+            new_date.setUTCDate(day);
+            new_date.setUTCHours(0);
+            new_date.setUTCMinutes(0);
+            new_date.setUTCSeconds(0);
+            new_date.setUTCMilliseconds(0);
+            return new_date;
         }
     }
     // not a valid date

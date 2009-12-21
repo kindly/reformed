@@ -309,10 +309,11 @@ class Edit(node.TableNode):
         self.field_list = field_list
         self.fields = fields
         self.form_params =  {"form_type": "grid",
-                             "extras" : self.extra_data
+                             "extras" : self.extra_data,
+                             "read_only" : True
                             }
 
-    def view(self, read_only=False, limit =10):
+    def view(self, read_only=False, limit = 100):
 
         query = self.data.get('q', '')
         limit = self.data.get('l', limit)
