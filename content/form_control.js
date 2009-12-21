@@ -620,6 +620,12 @@ function validate(rules, value, currently_selected){
     return errors;
 }
 
+function is_empty(obj) {
+    for(var key in obj) {
+        return false;
+    }
+    return true;
+}
 
 
 if(!Date.ISO)(function(){"use strict";

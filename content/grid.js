@@ -66,10 +66,10 @@ $.Grid = function(input, form_data, grid_data){
 
 
     function auto_resize(e){
-        var $x = $(e.target).parent();
+        var $item = $(e.target).parent();
         var col;
-        if ($x[0].nodeName == 'TH'){
-            col = $x.parent().children().index($x);
+        if ($item[0].nodeName == 'TH'){
+            col = $item.parent().children().index($item);
         }
         column_widths[col] = 100;
         resize_table();
@@ -99,7 +99,7 @@ $.Grid = function(input, form_data, grid_data){
 
     // create the table
     $.Grid.Build(input, form_data, grid_data);
-    
+
     var $drag_col;
     var drag_col;
 
@@ -136,15 +136,15 @@ $.Grid.Movement = function(input, form_data, grid_data){
     }
 
     function click(e){
-        var $x = $(e.target);
-        if ($x[0].nodeName == 'TD'){
-            var $p = $x.parent('tr');
-            row = $p.parent().children().index($p) + 1;
-            var this_col = $x.parent().children().index($x);
+        var $item = $(e.target);
+        if ($item[0].nodeName == 'TD'){
+            var $row = $item.parent('tr');
+            row = $row.parent().children().index($row) + 1;
+            var this_col = $item.parent().children().index($item);
             if (this_col !== 0){
                 // this is a valid cell
                 col = this_col;
-                selected($x, $p);
+                selected($item, $row);
             } else {
                 // we have selected the row but not a valid cell
                 move();
@@ -171,16 +171,10 @@ $.Grid.Movement = function(input, form_data, grid_data){
     }
 
     function check_row_dirty(){
-        var found = false;
-        // we need to know if there is a dirty item
-        // unfortunately something as simple as .length won't work here
-        for (var key in dirty_items[current.row]){
+        if (!is_empty(row_info[current.row])){
             current.dirty = true;
             current.$row.addClass('dirty');
-            found = true;
-            break;
-        }
-        if (!found){
+        } else {
             current.$row.removeClass('dirty');
             current.dirty = false;
         }
@@ -189,29 +183,25 @@ $.Grid.Movement = function(input, form_data, grid_data){
     function make_normal(){
         // return the item to it's normal state
         var value = util.make_normal(current.$item, current.field);
-
         if (value === current.value){
             // not changed
             current.$item.removeClass('dirty');
-            if (dirty_items[current.row][current.field.name]){
-                delete dirty_items[current.row][current.field.name];
+            if (row_info[current.row][current.field.name]){
+                delete row_info[current.row][current.field.name];
+                if (is_empty(row_info[current.row])){
+                    delete row_info[current.row];
+                }
             }
             check_row_dirty();
         } else {
             // has changed
-            dirty_items[current.row][current.field.name] = true;
+            row_info[current.row][current.field.name] = value;
             current.dirty = true;
             current.$item.addClass('dirty');
             current.$row.addClass('dirty');
-            // add to new_data store
-            if (!new_data[current.row]){
-                new_data[current.row] = {};
-            }
-            new_data[current.row][current.field.name] = value;
-            if (console){
-                console.log('changed was; ' + current.value + ', now: ' + value);
-            }
-        } 
+
+            console.log('changed was; ' + current.value + ', now: ' + value);
+        }
 
         current.$item.removeClass('t_edited_cell');
         current.$item.addClass('t_selected_cell');
@@ -222,32 +212,31 @@ $.Grid.Movement = function(input, form_data, grid_data){
         var node = 'table.Edit';
         var out = {};
         if (console){
-            console.log('autosave: ' + new_data[current.row]);
+            console.log('autosave: ' + row_info[current.row]);
         }
         //get_node(node, '_save', out, false);
     }
 
     function row_blur(){
         if (current.dirty){
-            dirty_rows[current.row] = current.$row;
             autosave();
         } else {
-            if (dirty_rows[current.row]){
-                delete dirty_rows[current.row];
-                current.$row.removeClass('dirty');
+            if (row_info[current.row]){
+                delete row_info[current.row];
             }
         }
         current.$row.removeClass('current');
     }
 
     function row_focus(){
-        if (!dirty_items[current.row]){
-            dirty_items[current.row] = {};
-        }
-        if (dirty_rows[current.row]){
+        if (!row_info[current.row]){
+            row_info[current.row] = {};
+            current.dirty = false;
+        } else {
             current.dirty = true;
-            current.$row.addClass('dirty');
         }
+        console.log(row_info);
+        console.log(row_info);
     }
 
     function selected($new_item, $new_row){
@@ -391,7 +380,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
     function null_toggle($item){
         // do toggling of [NULL] and ''
-        var $item_parent = $item.parent()
+        var $item_parent = $item.parent();
         if ($item_parent.hasClass('null')){
             $item_parent.removeClass('null');
         } else {
@@ -407,9 +396,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
     var total_rows;
     var edit_mode = false;
 
-    var dirty_rows = {};
-    var dirty_items = [];
-    var new_data = {};
+    var row_info = {};
 
     // details of the currently selected control
     var current = {
@@ -445,7 +432,7 @@ $.Grid.Build = function(input, form_data, grid_data){
         var html = [];
         html.push('<thead><tr>');
         html.push('<th width="30px">&nbsp;</th>');
-        
+
         var i = num_fields;
         do {
             html.push('<th width="100px"><div class="t_header">' + form_data.fields[num_fields - i].title + '</div></th>');
@@ -561,8 +548,8 @@ $.Util.make_editable = function($item, field){
 $.Util.make_normal = function($item, field){
     // return the item to it's normal state
     // and return it's value
-    var value = update_value = $item.find('input').val().trim();
-
+    var value = $item.find('input').val().trim();
+    var update_value = value;
     // check for nulls
     if (value === ''){
        if ($item.hasClass('null')){
@@ -588,7 +575,13 @@ $.Util.make_normal = function($item, field){
                 value = true;
             } else {
                 value = false;
-            }Amato
+            }
+            update_value = value;
+            break;
+        case 'intbox':
+            if (value !== null){
+                value = parseInt(value, 10);
+            }
             update_value = value;
             break;
     }
