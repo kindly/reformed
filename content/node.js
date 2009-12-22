@@ -157,8 +157,8 @@ function _generate_fields_html(form, local_data, data, row_count){
                 value = data[item.name];
             } else {
                 // no data so use default for field if it exists
-                if (item.params && item.params.default){
-                    value = item.params.default;
+                if (item.params && item.params["default"]){
+                    value = item.params["default"];
                 } else {
                     value = null;
                 }
