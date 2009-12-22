@@ -29,7 +29,7 @@ $.fn.extend({
 		options.formatMatch = options.formatMatch || options.formatItem;
 		
 		return this.each(function() {
-			new $.Autocompleter(this, options);
+			$.Autocompleter(this, options);
 		});
 	},
 	result: function(handler) {
@@ -103,6 +103,7 @@ $.Autocompleter = function(input, options) {
 				if ( select.visible() ) {
 					select.prev();
 				} else {
+                    config.dropdownRequest = true;
 					onChange(0, true);
 				}
 				break;
@@ -112,6 +113,7 @@ $.Autocompleter = function(input, options) {
 				if ( select.visible() ) {
 					select.next();
 				} else {
+                    config.dropdownRequest = true;
 					onChange(0, true);
 				}
 				break;
@@ -169,7 +171,7 @@ $.Autocompleter = function(input, options) {
 		if ( hasFocus++ > 1 && !select.visible() ) {
             // need to start dropdown request for all fields to be shown
 			onChange(0, true);
-		  }
+		}
 	}).bind("search", function() {
 		// TODO why not just specifying both arguments?
 		var fn = (arguments.length > 1) ? arguments[1] : null;
@@ -191,6 +193,9 @@ $.Autocompleter = function(input, options) {
 		});
 	}).bind("flushCache", function() {
 		cache.flush();
+	}).bind("dropdown", function() {
+        config.dropdownRequest = true
+        onChange(0, true);
 	}).bind("setOptions", function() {
 		$.extend(options, arguments[1]);
 		// if we've updated the data, repopulate
