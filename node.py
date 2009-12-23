@@ -5,7 +5,7 @@
 ##   published by the Free Software Foundation.
 ##
 ##   Reformed is distributed in the hope that it will be useful,
-##   but WITHOUT ANY WARRANTY; without even the implied warranty of
+##   but WITHOUT ANY WARRANTY; without even cthe implied warranty of
 ##   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ##   GNU General Public License for more details.
 ##
@@ -37,7 +37,7 @@ class Node(object):
         self.bookmark = None
         self.next_node = None
         self.next_data = None
-        self.extra_data = None
+        self.extra_data = {}
         self.allowed = self.check_permissions()
 
         self.last_node = data.get('lastnode')
@@ -70,7 +70,7 @@ class Node(object):
         new_node = 'n:%s:%s:%s' % (node, command, data)
         if self.extra_data:
             if data:
-                new_node += '&%s' % self.extra_data
+                new_node += '&%s' % self.build_url_string_from_dict(self.extra_data)
             else:
                 new_node += self.extra_data
         if title:
@@ -82,12 +82,20 @@ class Node(object):
         new_node = 'd:%s:%s:%s' % (function, command, data)
         if self.extra_data:
             if data:
-                new_node += '&%s' % self.extra_data
+                new_node += '&%s' % self.build_url_string_from_dict(self.extra_data)
             else:
-                new_node += self.extra_data
+                new_node += self.build_url_string_from_dict(self.extra_data)
         if title:
              new_node = '%s|%s' % (new_node, title)
         return new_node
+
+    def build_url_string_from_dict(self, dict):
+        # returns a url encoded string of a dict
+        # FIXME not safe needs proper encodings
+        out = []
+        for key in dict.keys():
+            out.append('%s=%s' % (key, dict[key]))
+        return '&'.join(out)
 
 
     def initialise(self):
@@ -136,7 +144,6 @@ class TableNode(Node):
         self.setup_code_groups()
         if self.__class__.first_run:
             self.__class__.first_run = False
-            print 'first run'
             self.setup_forms()
 
     def setup_code_groups(self):
@@ -161,6 +168,7 @@ class TableNode(Node):
                 data = create_form_data(subform.get('fields'), subform.get('params'))
                 data['form']['parent_id'] =  subform.get('parent_id')
                 data['form']['child_id'] =  subform.get('child_id')
+                data['form']['table_name'] =  subform.get('table')
                 self.__class__.subform_data[name] = data
                 field.append(data)
                 self.setup_subforms(name)
@@ -227,7 +235,7 @@ class TableNode(Node):
             for field in fields:
                 field_name = field[0]
                 field_type = field[1]
-                if field_name != 'id' and field_type not in ignore_types:
+                if field_name != 'id' and field_type not in ignore_types and field_name != u'version_id':
                     # update/add the value
                     value = data.get(field_name)
                     print '%s = %s' % (field_name, value)
@@ -242,7 +250,7 @@ class TableNode(Node):
             try:
                 session.save_or_update(record_data)
                 session.commit()
-                self.saved.append([root, record_data.id])
+                self.saved.append([root, record_data.id, record_data._version])
                 return record_data
             except fe.Invalid, e:
                 session.rollback()
@@ -390,7 +398,6 @@ class TableNode(Node):
             for code_group_name in self.code_list:
                 data_out[code_group_name] = self.code_data(code_group_name, data_out)
 
-        print '@@@@@', repr(data_out)
         data = create_form_data(self.fields, self.form_params, data_out, read_only)
         self.out = data
         self.action = 'form'
@@ -420,9 +427,11 @@ class TableNode(Node):
         else:
             id = self.data.get('__id')
             filter = {'_core_entity_id' : id}
+        # FIXME i'd rather get this data ourself and not rely on the returned info
+        table = self.data.get('table_name', self.table)
 
         session = r.reformed.Session()
-        obj = r.reformed.get_class(self.table)
+        obj = r.reformed.get_class(table)
         try:
             data = session.query(obj).filter_by(**filter).one()
             # code_groups
@@ -430,13 +439,20 @@ class TableNode(Node):
                 self.save_group_codes(session, data)
             session.delete(data)
             session.commit()
-            self.next_node = self.name
-            self.next_data = {'command': 'list'}
+            # FIXME this needs to be handled more nicely
+            if self.form_params['form_type'] != 'grid' and self.table == table:
+                self.next_data = {'command': 'list', 'data' : self.extra_data}
+                self.next_node = self.name
+            else:
+                self.out = {'deleted': [self.data]}
+                self.action = 'delete'
         except sa.orm.exc.NoResultFound:
             error = 'Record not found.'
             self.out = error
             self.action = 'general_error'
-        except sa.exc.IntegrityError:
+        except sa.exc.IntegrityError, e:
+            print e
+
             error = 'The record cannot be deleted,\nIt is referenced by another record.'
             self.out = error
             self.action = 'general_error'
@@ -522,7 +538,7 @@ class AutoForm(TableNode):
         obj = r.reformed.get_instance(self.table)
         columns = obj._table.schema_info
         for field in columns.keys():
-            if field not in ['modified_date', 'modified_by']:
+            if field not in ['_modified_date', '_modified_by']:
                 fields.append([field, 'textbox', '%s:' % field])
         self.__class__.fields = fields
 

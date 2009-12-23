@@ -13,7 +13,7 @@ from sqlalchemy import and_
 
 logger = logging.getLogger('reformed.main')
 
-POOL_SIZE = 10
+POOL_SIZE = 5
 POLL_INTERVAL = 10
 
 class JobScheduler(object):

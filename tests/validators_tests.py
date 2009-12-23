@@ -3,6 +3,7 @@ from reformed.tables import *
 from reformed.database import *
 from nose.tools import assert_raises,raises
 import sqlalchemy as sa
+import reformed.validators as val
 import reformed.custom_exceptions
 from tests.donkey_test import test_donkey
 from reformed.data_loader import SingleRecord
@@ -34,7 +35,8 @@ class test_validation(test_donkey):
 
     def test_schema_dict(self):
 
-        assert self.Donkey.tables["email"].schema_info == {'modified_date': [{'not_empty': False, 'type': 'DateValidator'}], 'active_email': [{'not_empty': False, 'type': 'Bool'}], 'modified_by': [{'not_empty': False, 'type': 'Int'}], 'people_id': [{'not_empty': False, 'type': 'Int'}], 'email_number': [], 'email': [{'max': 300, 'not_empty': False, 'type': 'UnicodeString'}, {'type': 'Email'}]}
+        print self.Donkey.tables["email"].schema_info
+        assert self.Donkey.tables["email"].schema_info == {'active_email': [{'not_empty': False, 'type': 'Bool'}], '_version': [{'not_empty': False, 'type': 'Int'}], '_modified_by': [{'not_empty': False, 'type': 'Int'}], '_modified_date': [{'not_empty': False, 'type': 'DateValidator'}], 'people_id': [{'not_empty': False, 'type': 'Int'}], 'email_number': [], 'email': [{'max': 300, 'not_empty': False, 'type': 'UnicodeString'}, {'type': 'Email'}]}
 
 
     def test_address_validation(self):
@@ -142,4 +144,18 @@ class test_validation(test_donkey):
                       "donkey.name": u"z",
                       "donkey.donkey_type": u"pooey",
                       })
+
+    def test_uniclode(self):
+
+        string_val = val.UnicodeString(not_empty = True)
+
+        assert_raises(fe.Invalid, string_val.to_python, None)
+
+        string_val.to_python(u"")
+
+
+
+
+
+
 

@@ -47,9 +47,4 @@ reformed = Database("reformed",
                     )
 
 
-reformed.job_scheduler.add_job("delete_lock", 
-                               "delete_lock_tables",
-                               "1000"
-                               )
-
 

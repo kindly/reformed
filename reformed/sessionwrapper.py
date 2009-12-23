@@ -24,6 +24,7 @@
 ##  funtionality such a as logging and validataion.
 
 from sqlalchemy.orm import attributes 
+from sqlalchemy.sql import text
 import sqlalchemy as sa
 import datetime
 import time
@@ -65,6 +66,9 @@ class SessionWrapper(object):
     def add(self, obj):
         """save or update and validate a sqlalchemy object"""
         obj._table.validate(obj, self.session)
+        ##version_id has to be int
+        if hasattr(obj, "_version") and obj._version:
+            obj._version = int(obj._version)
         obj._validated = True
         self.session.add(obj)
 
@@ -77,20 +81,13 @@ class SessionWrapper(object):
 
         if self.has_entity:
             self.add_entity_instance()
-        #print datetime.datetime.now(), "check all validated"
         self.check_all_validated()
-        #print datetime.datetime.now(), "events"
         self.add_events()
-        #print datetime.datetime.now(), "add event"
         self.delete_events()
         self.update_events()
-        #print datetime.datetime.now(), "locked and logged"
-        self.add_locked_rows()
         self.add_logged_instances()
-        #print datetime.datetime.now(), "first flush"
         self.session.flush()
         self.after_flush()
-        #print datetime.datetime.now(), "second flush"
         self.session.flush()
         self.after_flush_list = []
         for obj in self.session:
@@ -119,11 +116,49 @@ class SessionWrapper(object):
 
         self.after_flush_list.append([function, params])
 
+    def make_keys(self, object):
+
+        object.id = text("(select coalesce((select max(id) from (select * from %s) poo ),0) + 1)" % (object._table.name))
+        self.session.add(object)
+
+    def get_value_from_parent(self, object, column):
+
+        parent_attribute = object._table.parent_columns_attributes[column]
+
+        parent_obj = getattr(object, parent_attribute)
+
+        result = getattr(parent_obj, column)
+
+        if result:
+            return result
+        else:
+            return self.get_value_from_parent(parent_obj, column)
+
+    def update_children(self, obj, attrib, to_update):
+
+
+        for child in getattr(obj, attrib):
+            for col in to_update:
+                value = self.get_value_from_parent(child, col)
+                setattr(child, col, value)
+
+            if child._table.primary_key_list:
+                for attrib in child._table.dependant_attributes:
+                    self.update_children(child, attrib, child._table.primary_key_list)
+
+
     def add_events(self):
 
         for obj in self.session.new:
+
+            ##  special event to get values from parent table
+            for column, property in obj._table.parent_columns_attributes.iteritems():
+                new_value = self.get_value_from_parent(obj, column)
+                setattr(obj, column, new_value )
+
             for events in obj._table.initial_events:
                 events.insert_action(self, obj)
+
         for obj in self.session.new:
             for events in obj._table.events:
                 events.insert_action(self, obj)
@@ -131,6 +166,19 @@ class SessionWrapper(object):
     def update_events(self):
 
         for obj in self.session.dirty:
+
+            ## special event to update children on change
+            if obj._table.primary_key_list:
+                changed = False
+                for column in obj._table.primary_key_list:
+                    a, b, c = attributes.get_history(attributes.instance_state(obj), column,
+                                                  passive = False)
+                    if c:
+                        changed = True
+                if changed:
+                    for attrib in obj._table.dependant_attributes:
+                        self.update_children(obj, attrib, obj._table.primary_key_list)
+
             for events in obj._table.initial_events:
                 events.update_action(self, obj)
         for obj in self.session.dirty:
@@ -145,53 +193,6 @@ class SessionWrapper(object):
         for obj in self.session.deleted:
             for events in obj._table.events:
                 events.delete_action(self, obj)
-
-    def add_locked_rows(self):
-
-        if "_core_lock" not in self.database.tables:
-            return
-        
-        to_check = []
-
-        for obj in self.session.dirty:
-
-            table = get_table_from_instance(obj, self.database)
-            
-            changed = False
-            for column in table.columns.keys():
-                a, b, c = attributes.get_history(attributes.instance_state(obj), column,
-                                              passive = False)
-                if c:
-                    changed = True
-            if changed:
-                to_check.append(obj)
-
-        for obj in self.session.deleted:
-            if obj._table.name == "_core_lock":
-                continue
-            to_check.append(obj)
-
-        for row in to_check:
-            lock = self.database.get_instance("_core_lock")
-            lock.row_id = row.id
-            lock.date = row.modified_date
-        
-            ## hack to make sure times are unique for mysql
-            if lock.date == datetime.datetime.now().replace(microsecond = 0):
-                time.sleep(1)
-
-            lock.table_name = u"%s" % row._table.name
-            self.session.add(lock)
-
-            try:
-                #FIXME need to find a better way to flush locking rows
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    self.session.flush([lock])
-            except sa.exc.IntegrityError:
-                self.session.rollback()
-                raise custom_exceptions.LockingError(
-                    "object %s has been modified" % row, row)
 
     def check_all_validated(self):
 
@@ -223,7 +224,7 @@ class SessionWrapper(object):
                 else:
                     setattr(logged_instance, column, getattr(obj, column))
             if changed:
-                setattr(logged_instance, "%s_id" % table.name, obj.id)
+                setattr(logged_instance, "_logged_table_id", obj.id)
                 #setattr(logged_instance, table.name + "_logged", obj)
                 self.add(logged_instance)
 

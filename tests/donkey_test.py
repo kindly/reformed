@@ -24,7 +24,7 @@ class test_donkey(object):
     @classmethod
     def setUpClass(cls):
         if not hasattr(cls, "engine"):
-            cls.engine = create_engine('sqlite:///:memory:', echo = True)
+            cls.engine = create_engine('sqlite:///:memory:' )
             #cls.engine = create_engine('sqlite:///:memory:')
         
 #        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
@@ -41,9 +41,9 @@ class test_donkey(object):
                                   OneToMany("donkey_sponsership",
                                             "donkey_sponsership"),
                                   OneToOne("contact_summary",
-                                           "contact_summary"),
+                                           "contact_summary" ),
                                   OneToMany("transactions",
-                                           "transactions"),
+                                           "transactions", foreign_key_name = "pop"),
                                   entity = True,
                                   summary_fields = "name,address_line_1,postcode"
                                   ),
@@ -78,7 +78,8 @@ class test_donkey(object):
                                   Integer("age", validation = 'Int'),
                                   TextLookupValidated("donkey_type", "donkey_types.donkey_type", filter_field = "donkey_type_type", filter_value = "looks"),
                                   OneToOne("donkey_pics","donkey_pics",
-                                           many_side_not_null = False,
+                                           foreign_key_name = "donkey",
+                                           many_side_not_null = False
                                            ),
                                   OneToMany("donkey_sponsership",
                                             "donkey_sponsership"),
@@ -91,7 +92,8 @@ class test_donkey(object):
                                   Text("donkey_type_type")),
                             Table("donkey_pics",
                                   Binary("pic"),
-                                  Text("pic_name")
+                                  Text("pic_name"),
+                                  Integer("donkey")
                                  ),
                             Table("donkey_sponsership",
                                   Money("amount"),
@@ -109,12 +111,6 @@ class test_donkey(object):
                                    ManyToOne("_core_entity", "_core_entity"),
                                    CheckNoTwoNulls("val_duplicate_membership", parent_table = "_core_entity", field = "end_date"),  
                                   ),
-                             Table("_core_lock",
-                                  Text("table_name"),
-                                  Integer("row_id"),
-                                  DateTime("date"),
-                                  UniqueConstraint("unique", "table_name,row_id,date"),
-                                  logged = False),
                         metadata = cls.meta,
                         engine = cls.engine,
                         session = cls.Sess,
@@ -208,7 +204,6 @@ class test_donkey(object):
         jimpic = file("tests/jim.xcf", mode = "rb").read()
         
         jimimage = cls.Donkey.tables["donkey_pics"].sa_class()
-        jimimage.donkey = cls.jim
         jimimage.pic = jimpic
 
         cls.session.add(cls.david)
@@ -252,7 +247,7 @@ class test_donkey(object):
     def tearDownClass(cls):
 
         cls.session.close()
-        cls.Donkey.job_scheduler.threadpool.wait()
+        cls.Donkey.status = "terminated"
 
 
 class test_basic_input(test_donkey):
@@ -391,8 +386,9 @@ class test_basic_input(test_donkey):
 
         results = self.session.query(self.Donkey.t.sub_sub_category).all()
 
+        print [get_all_local_data(a) for a in results]
 
-        assert [get_all_local_data(a) for a in results] == [{'category.category_type': u'wee', 'sub_category.sub_category_name': u'ab', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ab', 'sub_sub_category_name': u'abc', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_sub_category_description': u'this is abc', 'sub_category_name': u'ab', 'category_name': u'a'}]
+        assert [get_all_local_data(a) for a in results] == [{'sub_sub_category_name': u'abc', 'sub_category_id': 1, 'sub_category.sub_category_name': u'ab', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ab', 'category.category_type': u'wee', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_category.category_id': 1, 'sub_sub_category_description': u'this is abc', 'sub_category_name': u'ab', 'category_name': u'a'}]
 
         
         load_local_data(self.Donkey, {"__table": u"sub_sub_category",
@@ -407,7 +403,7 @@ class test_basic_input(test_donkey):
 
         print [get_all_local_data(a) for a in results]
 
-        assert [get_all_local_data(a) for a in results] == [{'category.category_type': u'wee', 'sub_category.sub_category_name': u'ab', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ab', 'sub_sub_category_name': u'abc', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_sub_category_description': u'this is abc', 'sub_category_name': u'ab', 'category_name': u'a'}, {'category.category_type': u'wee', 'sub_category.sub_category_name': u'ac', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ac', 'sub_sub_category_name': u'acc', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_sub_category_description': u'this is acc', 'sub_category_name': u'ac', 'category_name': u'a'}]
+        assert [get_all_local_data(a) for a in results] == [{'sub_sub_category_name': u'abc', 'sub_category_id': 1, 'sub_category.sub_category_name': u'ab', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ab', 'category.category_type': u'wee', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_category.category_id': 1, 'sub_sub_category_description': u'this is abc', 'sub_category_name': u'ab', 'category_name': u'a'}, {'sub_sub_category_name': u'acc', 'sub_category_id': 2, 'sub_category.sub_category_name': u'ac', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ac', 'category.category_type': u'wee', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_category.category_id': 1, 'sub_sub_category_description': u'this is acc', 'sub_category_name': u'ac', 'category_name': u'a'}]
 
 
 
@@ -433,7 +429,7 @@ class test_basic_input(test_donkey):
 
         print [get_all_local_data(a) for a in results][2]
 
-        assert [get_all_local_data(a) for a in results][2]  == {'category.category_type': u'wee', 'sub_category.sub_category_name': u'ac', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ac', 'sub_sub_category_name': u'acd', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_sub_category_description': u'this is acc', 'sub_category_name': u'ac', 'category_name': u'a'}
+        assert [get_all_local_data(a) for a in results][2]  == {'sub_sub_category_name': u'acd', 'sub_category_id': 2, 'sub_category.sub_category_name': u'ac', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ac', 'category.category_type': u'wee', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_category.category_id': 1, 'sub_sub_category_description': u'this is acc', 'sub_category_name': u'ac', 'category_name': u'a'}
 
 
         assert_raises(custom_exceptions.InvalidData,
@@ -524,9 +520,79 @@ class test_basic_input(test_donkey):
 
     def test_dependant_attributes(self):
 
+        print self.Donkey["people"].dependant_attributes.keys()
 
-        assert self.Donkey["people"].dependant_attributes.keys() == ['contact_summary', 'transactions', 'donkey_sponsership', 'email']
-        assert self.Donkey["_core_entity"].dependant_attributes.keys() == ['_membership', 'donkey', 'people', '_relation', 'relation', 'categories']
+        assert set(self.Donkey["people"].dependant_attributes.keys()) == set(['contact_summary', 'transactions', 'donkey_sponsership', 'email'])
+
+        assert set(self.Donkey["_core_entity"].dependant_attributes.keys()) == set(['_membership', 'donkey', 'people', '_relation', 'relation', 'categories'])
+
+    def test_dependant_tables(self):
+
+        assert set(self.Donkey["people"].dependant_tables) == set(['contact_summary', 'transactions', 'donkey_sponsership', 'email'])
+
+        assert set(self.Donkey["_core_entity"].dependant_tables) == set(['people', 'entity_categories', 'membership', 'relation', 'donkey', 'relation'])
+
+    def test_parant_col_attributes(self):
+
+        assert self.Donkey["people"].parent_columns_attributes == {}
+
+        assert self.Donkey["__field_params"].parent_columns_attributes == {'field_name': '___field', 'table_name': '___field'}
+
+        assert self.Donkey["entity_categories"].parent_columns_attributes == {'sub_sub_category_name': 'category', 'sub_category_name': 'category', 'category_name': 'category'}
+
+    def test_z_get_values_from_parent(self):
+
+        cat = self.Donkey.get_instance("category")
+        cat.category_name = u"go down"
+
+        sub_cat = self.Donkey.get_instance("sub_category")
+        sub_cat.sub_category_name = u"and this"
+        cat.sub_category.append(sub_cat)
+
+        sub_sub_cat  = self.Donkey.get_instance("sub_sub_category")      
+        sub_sub_cat.sub_sub_category_name = u"wee"
+        sub_cat.sub_sub_category.append(sub_sub_cat)
+
+        self.session.save(cat)
+        self.session.save(sub_cat)
+        self.session.save(sub_sub_cat)
+
+        self.session.commit()
+
+        assert sub_cat.category_name == u"go down"
+        assert sub_sub_cat.category_name == u"go down"
+        assert sub_sub_cat.sub_category_name == u"and this"
+
+        cat.category_name = u"go down2"
+        sub_cat.sub_category_name = u"and this2"
+
+        self.session.save(cat)
+        self.session.save(sub_cat)
+        self.session.commit()
+
+        assert sub_cat.category_name == u"go down2"
+        assert sub_sub_cat.category_name == u"go down2"
+        assert sub_sub_cat.sub_category_name == u"and this2"
+
+    def test_zzz_version_id(self):
+
+        donkey = self.Donkey.get_instance("donkey")
+
+        donkey.name = u"poo"
+
+        self.session.save(donkey)
+        self.session.commit()
+        
+        donkey.name = u"poo2"
+        donkey._version = u"1"
+
+        self.session.save(donkey)
+        self.session.commit()
+
+
+
+        
+        
 
 
 

@@ -24,6 +24,8 @@ class Search(object):
         self.tables = kw.get("tables", [table])
         self.fields = kw.get("fields", None)
 
+        self.base_tables = kw.get("base_tables", None)
+
         if self.fields:
             self.tables = util.split_table_fields(self.fields, table).keys()
 
@@ -35,7 +37,12 @@ class Search(object):
         self.aliased_name_path = {} 
         self.create_aliased_path()
 
-        self.search_base = self.session.query(self.database.get_class(self.table))
+        if self.base_tables:
+            base_tables = [self.database.get_class(self.table)]
+            base_tables.extend([self.database.get_class(table) for table in self.base_tables]) 
+            self.search_base = self.session.query(*base_tables)
+        else:
+            self.search_base = self.session.query(self.database.get_class(self.table))
 
         if self.eager_tables:
             for eager_join in self.eager_tables:

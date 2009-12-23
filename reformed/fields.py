@@ -55,6 +55,7 @@ class TextLookupValidated(Field):
     
     def __init__(self, name, target, *args, **kw):
         self.text = Column(sa.Unicode(100),  use_parent = True)
+        self.other = target
 
         filter_field = kw.get("filter_field", None)
         filter_value = kw.get("filter_value", None)
@@ -72,14 +73,14 @@ class Unicode(Field):
 class Modified(Field):
     
     def __init__(self, name, *args, **kw):
-        self.modified_date = Column(sa.DateTime,
+        self._modified_date = Column(sa.DateTime,
                                      onupdate=datetime.datetime.now,
                                      default =datetime.datetime.now)
 
 class ModifiedBySession(Field):
     
     def __init__(self, name, *args, **kw):
-        self.modified_by = Column(sa.Integer,
+        self._modified_by = Column(sa.Integer,
                                   onupdate = get_user_id,
                                   default = get_user_id)
 
@@ -160,11 +161,6 @@ class Numeric(Field):
     def __init__(self, name, *args, **kw):
         self.money = Column(sa.Numeric, use_parent = True)
         
-class Numeric(Field):
-
-    def __init__(self, name, *args, **kw):
-        self.money = Column(sa.Numeric, use_parent = True)
-
 class Email(Field):
     
     def __init__(self, name, *args, **kw):

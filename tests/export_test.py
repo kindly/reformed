@@ -22,7 +22,8 @@ class test_export_database(test_donkey):
 
         person = session.query(self.Donkey.get_class("people")).first()
 
-        assert SingleObject(person, self.Donkey).data == {'donkey_sponsership': [{'_donkey': [{'age': '13', 'name': 'jim'}], 'amount': '50'}], 'address_line_1': '43 union street', 'name': 'david', 'postcode': 'es388'}
+        print SingleObject(person, self.Donkey).data 
+        assert SingleObject(person, self.Donkey).data == {'donkey_sponsership': [{'_donkey': [{'age': '13', 'name': 'jim', '_version': '1'}], 'amount': '50', '_version': '1'}], 'address_line_1': '43 union street', 'postcode': 'es388', 'name': 'david', '_version': '1'}
 
         assert SingleRecord(self.Donkey, "people", SingleObject(person, self.Donkey).data).load() == None
 

@@ -3,7 +3,7 @@
     This file is part of Reformed.
 
     Reformed is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License version 2 as 
+    it under the terms of the GNU General Public License version 2 as
     published by the Free Software Foundation.
 
     Reformed is distributed in the hope that it will be useful,
@@ -15,21 +15,21 @@
     along with Reformed.  If not, see <http://www.gnu.org/licenses/>.
 
     -----------------------------------------------------------------
-    
+
     Reformed
     Copyright (c) 2008-2009 Toby Dacre & David Raznick
-    
+
     reformed.js
     ======
-    
-    A place for lost stuff at the moment but it will eventually hold the 
+
+    A place for lost stuff at the moment but it will eventually hold the
     core functionality eg initialisation
 
     $REFORMED
 
     Public Functions
     ================
-    
+
 */
 
 // this calls init() onload
@@ -56,16 +56,13 @@ function init(){
     $(document).ready($REFORMED.layout);
     $(window).resize($REFORMED.layout);
 
-    $('#main').dblclick(function(event) {
-        form_dblclick(event);
-    });
-    
+
     // preload the donkey form
 //    $FORM.request('donkey', 'main', 'first');
     $.address.change(page_load);
 }
 
-form_active = true;
+var form_active = true;
 
 function form_dblclick(event){
 
@@ -92,17 +89,17 @@ function form_mode(){
 
 
 function page(){
-request = {type:'page'};
-data = {root: 'main'};
-$JOB.add(request, data, 'page', true);
-//$FORM.request('form_item', 'moo', 'first');
+    var request = {type:'page'};
+    var data = {root: 'main'};
+    $JOB.add(request, data, 'page', true);
+    //$FORM.request('form_item', 'moo', 'first');
 }
 
 function get_html(root, file){
-request = {type:'page', file:file};
-data = {root:root};
-$JOB.add(request, data, 'html', true);
-//$FORM.request('form_item', 'moo', 'first');
+    var request = {type:'page', file:file};
+    var data = {root:root};
+    $JOB.add(request, data, 'html', true);
+    //$FORM.request('form_item', 'moo', 'first');
 }
 
 
@@ -110,14 +107,33 @@ $JOB.add(request, data, 'html', true);
 // UTILS
 
 // THESE ARE FROM formcontrol.js
+function allowedKeys2(key){
 
-function isDate(sDate) {
-    // THIS DATE VALIDATION SUCKS :(
-    var scratch = new Date(sDate);
-    if (scratch.toString() == "NaN" || scratch.toString() == "Invalid Date") {
-        return false;
-    } else {
+    // this returns true for allowed key presses
+    // eg arrows cut/paste tab...
+
+    if (
+        key.keyCode === 0 || // special key
+        key.keyCode == 8 || // backspace
+        key.keyCode == 9 || // TAB
+        key.keyCode == 13 || // Return
+        key.keyCode == 20 || // Caps Lock
+        key.keyCode == 27 || // Escape
+        key.keyCode == 35 || // Home
+        key.keyCode == 36 || // End
+        key.keyCode == 37 || // Left
+        key.keyCode == 38 || // Up
+        key.keyCode == 39 || // Right
+        key.keyCode == 40 || // Down
+        key.keyCode == 45 || // Insert
+        key.keyCode == 46 || // Delete
+        key.keyCode == 144 || // Num Lock
+        key.keyCode == 145 || // Scroll Lock
+        key.ctrlKey || key.altKey // special?
+       ){
         return true;
+    } else {
+        return false;
     }
 }
 
@@ -127,9 +143,21 @@ function allowedKeys(key){
     // eg arrows cut/paste tab...
 
     if (
-        key.code === 0 || // special key 
+        key.code === 0 || // special key
         key.code == 8 || // backspace
         key.code == 9 || // TAB
+        key.code == 20 || // Caps Lock
+        key.code == 27 || // Escape
+        key.code == 35 || // Home
+        key.code == 36 || // End
+        key.code == 37 || // Left
+        key.code == 38 || // Up
+        key.code == 39 || // Right
+        key.code == 40 || // Down
+        key.code == 45 || // Insert
+        key.code == 46 || // Delete
+        key.code == 144 || // Num Lock
+        key.code == 145 || // Scroll Lock
         key.ctrl || key.alt // special?
        ){
         return true;
@@ -217,50 +245,50 @@ var $REFORMED = {
     RIGHT_PAD : 2,
 
     _initialisation_list: [],
-/*    
+/*
     registerInitFunction: function(initialtion_function){
         alert (typeof(initialtion_function));
         if (typeof(initialtion_function) != 'undefined'){
             this._initialisation_list.push(initialtion_function)
         }
     },
-    
+
     _initialiseModules: function(){
     alert ('moo');
         for (i=0; i < this._initialisation_list.length; i++){
             this._initialisation_list[i]();
         }
     },
-    
-    
-*/    
+
+
+*/
 
     _module: [ 'FORM_CONTROL', 'JOB', 'INFO'],
-    
+
     _module_loaded: [],
-    
+
     _counter: 0,
-    
+
     init: function(){
         //for (i=0; i < this._module.length; i++){
     //        this._loadModule(this._module[i]);
-    //    }        
+    //    }
         this._loadModule(this._module[this._counter++]);
     },
-    
+
     _initModules: function(){
-        for (i=0; i < this._module.length; i++){
+        for (var i=0; i < this._module.length; i++){
             this._initModule(this._module[i]);
         //    alert(this._module[i] + $('$' + this._module[i]))
-        }    
-//        alert('ready to roll');    
+        }
+//        alert('ready to roll');
     },
-    
+
     _loadModule: function(module){
         $.getScript(module.toLowerCase() + '.js',
                     $REFORMED._scriptLoaded(module));
     },
-    
+
     _scriptLoaded: function(module){
         this._module_loaded.push(module);
         if (this._counter<this._module.length){
@@ -270,34 +298,34 @@ var $REFORMED = {
         //    alert(this._counter);
         }
     },
-    
+
     _checkModuleLoad: function(){
         var number_modules = this._module.length;
         var number_loaded = this._module_loaded.length;
         if (number_modules == number_loaded){
             var moo = setTimeout($REFORMED._checkModules(),250);
-        }    
+        }
     },
-    
+
     _checkModules: function(){
         var count = 0;
-        for (i=0; i < this._module.length; i++){
+        for (var i=0; i < this._module.length; i++){
             if (this._checkModule(this._module[i])){
-                
+
                 count++;
             }
-            
+
         }
 //        alert(count);
         if (count== this._module.length){
-        
+
             this._initModules();
         } else {
             this._counter++;
             //var moo = setTimeout($REFORMED._checkModules(),250);
         }
     },
-    
+
     _checkModule: function(module){
         module = module.toUpperCase();
         if(window['$' + module]){
@@ -307,7 +335,7 @@ var $REFORMED = {
             return false;
         }
     },
-        
+
     _initModule: function(module){
         module = module.toUpperCase();
     //    alert('init ' + module);
@@ -316,17 +344,18 @@ var $REFORMED = {
             window['$' + module]._init();
         }
     },
-    
+
     layout: function(){
 
         var r = $REFORMED;
-        
+
         var app_width = $(window).width();
         var app_height = $(window).height();
 
         var workspace_start = r.LEFT_PAD + r.SIDE_WIDTH + r.WORKSPACE_PAD;
         var workspace_width = app_width - workspace_start - r.RIGHT_PAD;
         var resize = false;
+        var left_margin;
         if (workspace_width + workspace_start + r.RIGHT_PAD > r.MAX_APP_WIDTH){
             workspace_width = r.MAX_APP_WIDTH - workspace_start - r.RIGHT_PAD;
             left_margin = (app_width - workspace_width - workspace_start)/2;
@@ -338,9 +367,9 @@ var $REFORMED = {
                 resize = true;
             }
         }
-    
 
-    
+
+
         r.layout_set('logo',
                left_margin,
                r.LOGO_PAD,
@@ -367,7 +396,7 @@ var $REFORMED = {
                r.INFO_HEIGHT,
                workspace_width);
 
-        var main_height = app_height - used_height - r.INFO_HEIGHT - 
+        var main_height = app_height - used_height - r.INFO_HEIGHT -
                     r.MAIN_PAD - r.STATUS_HEIGHT - r.STATUS_PAD - r.BOTTOM_PAD;
         used_height += r.INFO_HEIGHT + r.MAIN_PAD;
         r.layout_set('main',
@@ -396,48 +425,71 @@ var $REFORMED = {
         }
 
         position_actions();
-        
+
     },
 
     layout_set: function(id, top_, left, height, width){
-
         // determine the amount of 'space' around the item
-        top_offset = 0;
-        bottom_offset = 0;
-        left_offset = 0;
-        right_offset = 0;
 
+        var top_offset = 0;
+        var bottom_offset = 0;
+        var left_offset = 0;
+        var right_offset = 0;
     //    top_offset += parseInt($('#' + id).css('padding-top'), 10);
-    //    bottom_offset += parseInt($('#' + id).css('padding-bottom'), 10); 
-        top_offset += parseInt($('#' + id).css('border-top-width'), 10);
-        bottom_offset += parseInt($('#' + id).css('border-bottom-width'), 10); 
-        top_offset += parseInt($('#' + id).css('margin-top'), 10);
-        bottom_offset += parseInt($('#' + id).css('margin-bottom'), 10); 
+    //    bottom_offset += parseInt($('#' + id).css('padding-bottom'), 10);
+        temp = parseInt($('#' + id).css('border-top-width'), 10);
+        if (!isNaN(temp)){
+            top_offset += temp;
+        }
+        temp = parseInt($('#' + id).css('border-bottom-width'), 10);
+        if (!isNaN(temp)){
+            bottom_offset += temp;
+        }
+        temp = parseInt($('#' + id).css('margin-top'), 10);
+        if (!isNaN(temp)){
+            top_offset += temp;
+        }
+        temp = parseInt($('#' + id).css('margin-bottom'), 10);
+        if (!isNaN(temp)){
+            bottom_offset += temp;
+        }
 
     //    left_offset += parseInt($('#' + id).css('padding-left'), 10);
-    //    right_offset += parseInt($('#' + id).css('padding-right'), 10); 
-        left_offset += parseInt($('#' + id).css('border-left-width'), 10);
-        right_offset += parseInt($('#' + id).css('border-right-width'), 10); 
-        left_offset += parseInt($('#' + id).css('margin-left'), 10);
-        right_offset += parseInt($('#' + id).css('margin-right'), 10); 
+    //    right_offset += parseInt($('#' + id).css('padding-right'), 10);
+        temp = parseInt($('#' + id).css('border-left-width'), 10);
+        if (!isNaN(temp)){
+            left_offset += temp;
+        }
+        temp = parseInt($('#' + id).css('border-right-width'), 10);
+        if (!isNaN(temp)){
+            right_offset += temp;
+        }
+        temp = parseInt($('#' + id).css('margin-left'), 10);
+        if (!isNaN(temp)){
+            left_offset += temp;
+        }
+        temp = parseInt($('#' + id).css('margin-right'), 10);
+        if (!isNaN(temp)){
+            right_offset += temp;
+        }
 
         // adjust the height, width, top and left
-        height = height - top_offset - bottom_offset;
-        width = width - left_offset - right_offset;
+
     //    left += left_offset;
     //    top_ += top_offset;
-
-        css = { 'top' : String(left) + 'px',
+        height = height - top_offset - bottom_offset;
+        width = width - left_offset - right_offset;
+        var css = { 'top' : String(left) + 'px',
             'left' : String(top_) + 'px',
             'height' : String(height) + 'px',
             'width' : String(width) + 'px',
             'position' : 'absolute' };
         $('#' + id).css(css);
     }
-    
+
 };
-NUM_ACTION_BUTTONS = 20;
-NUM_ACTION_ROWS = 4;
+var NUM_ACTION_BUTTONS = 20;
+var NUM_ACTION_ROWS = 4;
 
 function create_actions(){
 
@@ -455,7 +507,8 @@ function position_actions(){
     var cols = Math.ceil(NUM_ACTION_BUTTONS / NUM_ACTION_ROWS);
     var action_width = parseInt(action_m_width/cols, 10);
     var action_height = parseInt(action_m_height/NUM_ACTION_ROWS, 10);
-
+    var action_a_height;
+    var action_a_width;
     for (var i = 0; i < NUM_ACTION_BUTTONS; i++){
         var y = action_height * (i % NUM_ACTION_ROWS);
         var x = action_width * (Math.floor(i/NUM_ACTION_ROWS));
@@ -488,7 +541,7 @@ function action_hide(action_id){
     $('#action' + action_id + '>a').attr('accesskey', '');
 }
 
-action_hash = {
+var action_hash = {
     //previous: [['previous', 'go-previous.png', 'X', 'record'],[$FORM, $FORM._move, ['main#','prev']]],
     //next: [['next', 'go-next.png', 'Y', 'record'],[$FORM, $FORM._move, ['main#','next']]],
 //    new: [['new', 'document-new.png', 'B', 'record'],[$FORM, $FORM._new, ['main']]],
@@ -498,11 +551,11 @@ action_hash = {
 //    donkey: [['donkey', 'go-home.png', 'I', 'general'],[$FORM, $FORM.request, ['donkey', 'main', 'first']]]
 };
 
-action_list = ['home',  'save', null, 'delete']; 
+var action_list = ['home',  'save', null, 'delete'];
 
 function action_change(){
     for (var i=0; i<action_list.length; i++){
-        if(action_list[i]){ 
+        if(action_list[i]){
             action_set(i, action_hash[action_list[i]][0]);
         } else {
             action_hide(i);
@@ -515,14 +568,14 @@ function action_change(){
 
 function action_call(action_id){
     // this function fires the event for action button clicks
-    // we get the base object, function to call and the args from the 
+    // we get the base object, function to call and the args from the
     // array action_hash
     var cmd_info = action_hash[action_list[action_id]][1];
     cmd_info[1].apply(cmd_info[0], cmd_info[2]);
 }
 
 
-status_message = '';
+var status_message = '';
 function msg(arg){
     status_message = arg + ' - ' + status_message;
     $('#status').html(status_message);

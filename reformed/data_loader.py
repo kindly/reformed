@@ -303,7 +303,7 @@ class FlatFile(object):
         try:
             session.commit()
             return ChunkStatus(chunk, "committed")
-        except custom_exceptions.LockingError, e:
+        except sa.orm.exc.ConcurrentModificationError, e:
             return ChunkStatus(chunk, "locking error", error = e)
         except Exception, e:
             return ChunkStatus(chunk, "unknown error", error = e)
@@ -311,7 +311,7 @@ class FlatFile(object):
             session.close()
 
 
-    def load(self, validation = True, load_multiprocess = False, batch = 250, messager = None):
+    def load(self, validation = True, load_multiprocess = False, batch = 50, messager = None):
 
         self.validation = validation
 
@@ -465,6 +465,14 @@ class SingleRecord(object):
 
         self.session.commit()
         self.session.close()
+
+    def make_obj(self, session):
+
+        self.get_all_obj(session)
+        self.add_all_values_to_obj()
+        self.save_all_objs(session)
+
+        return self.all_obj
 
     def get_key_info(self, key):
 

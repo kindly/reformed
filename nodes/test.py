@@ -161,7 +161,7 @@ class Donkey(TableNode):
     table = "donkey"
     fields = [
         ['name', 'textbox', 'name:'],
-        ['age', 'textbox', 'age:']
+        ['age', 'intbox', 'age:']
     ]
     list_title = 'donkey %s'
      
@@ -200,7 +200,7 @@ class People(TableNode):
         ['address_line_1', 'textbox', 'address:'],
         ['address_line_2', 'textbox', 'town:'],
         ['postcode', 'textbox', 'postcode:'],
-        ['dob', 'textbox', 'dob:'],
+        ['dob', 'datebox', 'dob:'],
         ['active', 'checkbox', 'active:'],
         ['email', 'subform', 'email'],
         ['sponsorship', 'subform', 'sponsorship']
@@ -229,18 +229,19 @@ class Search(TableNode):
                            )
         data = results['data']
 
-        #FIXME botch to get table info also realy need to get the node not just guess it
-        table = {8:'Donkey',12:'People',14:'User'}
         for row in data:
-            row['title'] = 'n:test.%s:view:__id=%s|%s: %s' % (table[row['table']],
+            # FIXME want nicer way of getting the table name
+            table_name = r[row['table']].name
+            table_name = table_name[0].upper() + table_name[1:]
+            row['title'] = 'n:test.%s:view:__id=%s|%s: %s' % (table_name,
                                                                row['id'],
-                                                               table[row['table']],
+                                                               table_name,
                                                                row['title'])
 
-            row['edit'] = ['n:test.%s:edit:__id=%s|Edit' % (table[row['table']],
+            row['edit'] = ['n:test.%s:edit:__id=%s|Edit' % (table_name,
                                                                row['id']),
-                           'n:test.%s:view:__id=%s|View' % (table[row['table']],
-                                                               row['id'])                                                  ]
+                           'n:test.%s:view:__id=%s|View' % (table_name,
+                                                           row['id'])                                                  ]
 
         out = node.create_form_data(self.list_fields, self.list_params, data)
 
@@ -322,21 +323,40 @@ class Sponsorship(Node):
 
 class AutoFormPlus(TableNode):
 
+    field_type_2_input = {
+        'Integer' : 'intbox',
+        'Boolean' : 'checkbox',
+        'DateTime' : 'datebox',
+        'Date' : 'datebox',
+        'Email' : 'emailbox',
+        'Text' : 'textbox'
+    }
+
     def initialise(self):
         self.table = self.data.get('table')
-        self.extra_data = 'table=%s' % self.table
+        self.extra_data = {'table':self.table}
         fields = []
         field_list = []
-        obj = r.get_instance(self.table)
-        columns = obj._table.schema_info
+        obj = r[self.table]
+        columns = obj.schema_info
         for field in columns.keys():
-            if field not in ['modified_date', 'modified_by','_core_entity_id']:
-                fields.append([field, 'textbox', '%s:' % field])
+            if field not in ['_modified_date', '_modified_by','_core_entity_id', '_version']:
+                if field in columns:
+                    field_schema = obj.schema_info[field]
+                    params = {'validation' : field_schema}
+                    try:
+                        field_type = obj.fields[field].__class__.__name__
+                        if field_type in self.field_type_2_input:
+                            fields.append([field, self.field_type_2_input[field_type], '%s:' % field, params])
+                    except:
+                        fields.append([field, 'textbox', '%s:' % field, params])
+
                 field_list.append(field)
         self.field_list = field_list
         self.fields = fields
         self.form_params =  {"form_type": "normal",
-                             "extras" : {"table": self.table}
+                             "extras" : self.extra_data,
+                             "title" : obj.name
                             }
 
 

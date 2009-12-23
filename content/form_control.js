@@ -67,7 +67,7 @@ $FORM_CONTROL = {
     html: function(item, id, show_label, value, readonly){
         // returns HTML of a control
         if (readonly){
-            return this._controls_readonly['general'](item, id, show_label, value);
+            return this._controls_readonly.general(item, id, show_label, value);
         } else {
             if (this.exists(item.type)){
                 // generate the HTML by calling the function
@@ -81,7 +81,7 @@ $FORM_CONTROL = {
 
     exists: function (type){
         // returns true if we have this control type
-        if (typeof(this._controls[type]) != "undefined"){
+        if (this._controls[type] !== undefined){
             // control exists
             return true;
         } else {
@@ -91,7 +91,7 @@ $FORM_CONTROL = {
 
     set: function (type, id, value){
         msg('set');
-        if (typeof(this['_' + type + '_set']) == "undefined"){
+        if (this['_' + type + '_set'] === undefined){
             // default set method
             var item = $("#" + id);
             item.val([value]);
@@ -103,13 +103,17 @@ $FORM_CONTROL = {
         }
     },
 
-    get: function (id, type){
-        if (typeof(this['_' + type + '_get']) == "undefined"){
+    get: function (id, type, dont_update){
+        if (this['_' + type + '_get'] == undefined){
             // default get method
-            return $("#" + id).val();
+            var value = $("#" + id).val();
+            if (value == '[NULL]' && $('#' +id).hasClass('null')){
+                value = null;
+            }
+            return value;
         } else {
             // use the special get method for this control
-            return this['_' + type + '_get'](id);
+            return this['_' + type + '_get'](id, dont_update);
         }
     },
 
@@ -117,6 +121,18 @@ $FORM_CONTROL = {
         var x = '<label id="' + id + '__label" for="' + id ;
         x += '" class="label" >' + item.title + '</label>';
         return x;
+    },
+
+    _build_maxlength: function(item){
+        // creates the maxlength=.. attribute used in many controls
+        if (item.params &&
+          item.params.validation &&
+          item.params.validation[0] &&
+          item.params.validation[0].max){
+            return 'maxlength="' + item.params.validation[0].max + '" ';
+        } else {
+            return '';
+        }
     },
 
     _unknown: function(item, id){
@@ -152,12 +168,12 @@ $FORM_CONTROL = {
         },
 
         link: function(item, id, show_label, value){
-            split = value.split("|");
-            link = split.shift();
+            var split = value.split("|");
+            var link = split.shift();
             value = split.join('|');
             var x = (show_label ? '<span class="label">' + item.title + '</span>' : '');
             if (link.substring(0,1) == 'n'){
-                x += '<a id="' + id + '" href="#' + link + '">' + (value ? value : '&nbsp;') + '</a>';
+                x += '<a id="' + id + '" href="#" onclick="node_load(\'' + link + '\');return false">' + (value ? value : '&nbsp;') + '</a>';
             }
             if (link.substring(0,1) == 'd'){
                 x += '<a id="' + id + '" href="#" onclick ="link_process(this,\'' + link + '\');return false;">' + (value ? value : '&nbsp;') + '</a>';
@@ -167,7 +183,7 @@ $FORM_CONTROL = {
 
 
         link_list: function(item, id, show_label, value){
-            var x = '<span class="link_list">';
+            var x = '<span class="link_list" onfocus="itemFocus(this)" >';
             for (var i=0; i<value.length; i++){
                 x += $FORM_CONTROL._controls.link(item, id + '__' + i, false, value[i]);
                 x += ' ';
@@ -186,12 +202,15 @@ $FORM_CONTROL = {
             // simple textbox
             var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
             x += '<textarea id="' + id + '" name="' + id + '" ';
+            x += 'onfocus="itemFocus(this)" ';
+            x += 'onblur="itemBlur(this)" ';
             x += 'onchange="itemChanged(this)"  ';
-            x += 'onkeyup="itemChanged(this)" >';
+            x += 'onkeyup="itemChanged(this)" ';
+            x += 'onkeydown="keyDown(this, event)" />';
             if (value){
-                x += value;
+                x += $FORM_CONTROL._clean_value(value);
             }
-            x += '</textarea>'
+            x += '</textarea>';
             return x;
         },
 
@@ -199,19 +218,67 @@ $FORM_CONTROL = {
             // simple textbox
             var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
             x += '<input id="' + id + '" name="' + id + '" type="text" ';
-            x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            if (value === null){
+                x += 'value="[NULL]" class="null" ';
+            } else {
+                x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            }
+            x += $FORM_CONTROL._build_maxlength(item);
+            x += 'onfocus="itemFocus(this)" ';
+            x += 'onblur="itemBlur(this)" ';
             x += 'onchange="itemChanged(this)"  ';
-            x += 'onkeyup="itemChanged(this)" />';
+            x += 'onkeyup="itemChanged(this)" ';
+            x += 'onkeydown="keyDown(this, event)" />';
             return x;
         },
+
+        emailbox: function(item, id, show_label, value){
+            // simple textbox
+            var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
+            x += '<input id="' + id + '" name="' + id + '" type="text" ';
+            if (value === null){
+                x += 'value="[NULL]" class="null" ';
+            } else {
+                x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            }
+            x += $FORM_CONTROL._build_maxlength(item);
+            x += 'onfocus="itemFocus(this)" ';
+            x += 'onblur="itemBlur(this)" ';
+            x += 'onchange="itemChanged(this, true)"  ';
+            x += 'onkeyup="itemChanged(this)" ';
+            x += 'onkeydown="keyDown(this, event)" />';
+            return x;
+        },
+
+        intbox: function(item, id, show_label, value){
+            // simple textbox
+            var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
+            x += '<input id="' + id + '" name="' + id + '" type="text" ';
+            if (value === null || value === ''){
+                x += 'value="[NULL]" class="null" ';
+            } else {
+                x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            }
+            x += 'maxlength="10" ';
+            x += 'onfocus="itemFocus(this)" ';
+            x += 'onblur="itemBlur(this, true)" ';
+            x += 'onchange="$FORM_CONTROL._intbox_change(this)"  ';
+            x += 'onkeyup="itemChanged(this)" ';
+            x += 'onkeydown="return $FORM_CONTROL._intbox_key(this, event)" />';
+            return x;
+        },
+
 
         password: function(item, id, show_label, value){
             // simple textbox
             var x = (show_label ? $FORM_CONTROL._label(item, id) : '');
             x += '<input id="' + id + '" name="' + id + '" type="password" ';
             x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            // set max length if specified
+            x += $FORM_CONTROL._build_maxlength(item);
             x += 'onchange="itemChanged(this)"  ';
-            x += 'onkeyup="itemChanged(this)" />';
+            x += 'onfocus="itemFocus(this)" ';
+            x += 'onkeydown="keyDown(this, event)" />';
             return x;
         },
 
@@ -226,7 +293,10 @@ $FORM_CONTROL = {
                 x += 'checked="checked" ';
             }
             x += 'value="true" class="checkbox" ';
-            x += 'onchange="itemChanged(this)" />';
+            x += 'onfocus="itemFocus(this)" ';
+            x += 'onblur="itemBlur(this)" ';
+            x += 'onchange="itemChanged(this)" ';
+            x += 'onkeydown="keyDown(this, event);return false" />';
             if (show_label && item.reverse){
                 x += $FORM_CONTROL._label(item, id);
             }
@@ -242,7 +312,7 @@ $FORM_CONTROL = {
         },
 
         code_group: function(item, id, show_label, value){
-            codes = item.params.codes;
+            var codes = item.params.codes;
             var x = show_label && item.title ? '<p>' + item.title + '</p>' : '';
             x += '<table><tr>';
             for (var i=0; i<codes.length; i++){
@@ -265,9 +335,13 @@ $FORM_CONTROL = {
 
         dropdown: function(item, id, show_label, value){
             // dropdown
+            // FIXME there is no up/down row navigation for this control
+            // keypress event does not give me access to the key pressed
             var x = show_label ? $FORM_CONTROL._label(item, id) : '';
-            x += '<select id="' + id + '" name="' + id;
-            x += '" onchange="itemChanged(this)" >';
+            x += '<select id="' + id + '" name="' + id + '" ';
+            x += 'onfocus="itemFocus(this)" ';
+            x += 'onblur="itemBlur(this)" ';
+            x += 'onchange="itemChanged(this)" >';
             var type = item.params.type;
             var items = item.params.values.split('|');
             var i;
@@ -296,14 +370,29 @@ $FORM_CONTROL = {
 
         datebox: function(item, id, show_label, value){
             // datebox
-            // need to add onchange="itemChanged(this)" etc
+            // value is ISO format date so convert to local
+            try
+            {
+                value = Date.ISO(value).toLocaleDateString();
+            }
+            catch(e)
+            {
+                value = '';
+            }
             var x = show_label ? $FORM_CONTROL._label(item, id) : '';
-            x += '<input id="' + id + '__user" name="' + id ;
-            x += '__user" type="text" ';
-            x += 'onchange="$FORM_CONTROL._datebox_change(this)" ';
-            x += 'onkeyup="$FORM_CONTROL._datebox_key(this)" />';
-            x += '<input id="' + id + '" name="' + id;
-            x += '" type="text" class="hidden" />';
+            x += '<input id="' + id + '" name="' + id ;
+            x += '" type="text" ';
+            if (value === null || value === ''){
+                x += 'value="[NULL]" class="null" ';
+            } else {
+                x += 'value="' + $FORM_CONTROL._clean_value(value) + '" ';
+            }
+            x += 'maxlength="10" ';
+            x += 'onfocus="itemFocus(this)" ';
+            x += 'onblur="itemBlur(this, true)" ';
+            x += 'onchange="itemChanged(this, true)" ';
+            x += 'onkeyup="itemChanged(this)" ';
+            x += 'onkeydown="return $FORM_CONTROL._datebox_key(this,event)" />';
             return x;
         }
     },
@@ -325,60 +414,271 @@ $FORM_CONTROL = {
 
     _code_group_get: function(id){
         var item = _parse_id(id);
-        var form_data = $INFO.getState(item.root, 'form_data')
-        var form_item = form_data.items[item.control];
+        var form_info = $INFO.getState(item.root, 'form_info');
+        var form_item = form_info.form_data.items[item.control];
         var codes = form_item.params.codes;
-        var out = []
+        var out = [];
         for (var i=0; i<codes.length; i++){
             if ($("#" + id + '__' + i).attr("checked")){
                 out.push(codes[i]);
             }
         }
-        return out
-        //info = $("#" + id + '__*').attr("checked");
-      //  alert(info);
+        return out;
     },
 
     _datebox_set: function(id, value){
-        // this is when the actual date value gets set
-        $("#" + id + "__user").val(UTC2Date(value));
+        // set the datebox field from ISO format
+        try
+        {
+            value = Date.ISO(value).toLocaleDateString();
+        }
+        catch(e)
+        {
+            value = '';
+        }
         $("#" + id).val(value);
     },
 
-    _datebox_change: function (obj){
-        // this is when the user date is changed
-        var item = getItemFromObj(obj);
-        if (isDate($(obj).val())){
-            // date is good so update our hidden date field
-            date = new Date($(obj).val());
-    //        $("#" + item.root).val(makeUTC(date));
-            // update our control to the new date
-            datebox_set(item.root, makeUTC(date));
-    //        $(obj).val(date.toLocaleDateString());
-            $(obj).removeClass("error");
+    _datebox_get: function(id, dont_update){
+        var value = $("#" + id).val();
+        if (value === '' || value == '[NULL]'){
+            value = null;
         } else {
-            // date is bad
-            $("#" + item.root).val('');
-            $(obj).addClass("error");
+            value = date_from_value(value);
+            if (value){
+                value = value.toISOString();
+                if (value == 'Invalid Date'){
+                    value = '';
+                } else {
+                    // update the date in case we have changed it
+                    if (dont_update !== true){
+                        $FORM_CONTROL._datebox_set(id,value);
+                    }
+                }
+            }
+        }
+        return value;
+    },
+
+    _datebox_key: function(e){
+        var key = e.keyCode;
+        if ((key > 47 && key < 59) /* numbers */ ||
+             (key == 191) /* forward slash */ ||
+              allowedKeys2(e) ){
+
+      //      keyDown(obj, event);
+            return true;
+        } else {
+            return false;
         }
     },
 
-    _datebox_key: function(obj){
-        var item = getItemFromObj(obj);
-        if (isDate($(obj).val())){
-            // date is good so update our hidden date field
-            date = new Date($(obj).val());
-            $("#" + item.root).val(makeUTC(date));
-            $(obj).removeClass("error");
+    _intbox_change: function(obj){
+        if (isNaN(parseInt($(obj).val(), 10))){
+            $(obj).val('');
+        }
+        itemChanged(obj);
+    },
+
+    _intbox_key: function(e){
+        var key = e.keyCode;
+        if ((key > 47 && key < 59) /* numbers */
+             ||  allowedKeys2(e) )
+        {
+          //  keyDown(obj, event);
+            return true;
         } else {
-            // date is bad
-            $(obj).addClass("error");
+            return false;
         }
     }
 
+
 };
 
+// FIXME this needs to be in sync with the locale or else dates go crazy
+// maybe need to do own toLocaleString function to get balance
+// or else determine this from the locale being used by probing the date object
+var DATE_FORMAT = 'UK';
+
+function date_from_value(value){
+
+    if (!value){
+        return '';
+    }
+
+    var day;
+    var month;
+    var year;
+    var parts = value.split('/');
+    if (parts.length == 3){
+        switch(DATE_FORMAT){
+            case 'UK':
+                // UK format (dd/mm/yyyy)
+                year = parseInt(parts[2], 10);
+                month = parseInt(parts[1], 10) - 1;
+                day = parseInt(parts[0], 10);
+                break;
+            case 'US':
+                // US format (mm/dd/yyyy)
+                year = parseInt(parts[2], 10);
+                month = parseInt(parts[0], 10) - 1;
+                day = parseInt(parts[1], 10);
+                break;
+            case 'ISO':
+                // ISO format (yyyy/mm/dd)
+                year = parseInt(parts[0], 10);
+                month = parseInt(parts[1], 10) - 1;
+                day = parseInt(parts[3], 10);
+                break;
+        }
+        if (day !== undefined){
+            var new_date = new Date();
+            new_date.setUTCFullYear(year);
+            new_date.setUTCMonth(month);
+            new_date.setUTCDate(day);
+            new_date.setUTCHours(0);
+            new_date.setUTCMinutes(0);
+            new_date.setUTCSeconds(0);
+            new_date.setUTCMilliseconds(0);
+            return new_date;
+        }
+    }
+    // not a valid date
+    return '';
+}
+// the validators we have
+var validation_rules = {
+
+    'UnicodeString' : function(rule, value){
+        var errors = [];
+        if (value !== null && rule.max && value.length > rule.max){
+            errors.push('cannot be over ' + rule.max + ' chars');
+        }
+        return errors;
+    },
+
+    'Int' : function(rule, value){
+        var errors = [];
+        if (value > 2147483647){
+            errors.push('maximum integer size is 2,147,483,647');
+        }
+        if (value < -2147483648){
+            errors.push('minimum integer size is -2,147,483,648');
+        }
+        return errors;
+    },
+
+    'DateValidator' : function(rule, value, currently_selected){
+        if (currently_selected === true){
+            return []
+        }
+        var errors = [];
+        if (value === ''){
+            errors.push('not a valid date' + value);
+        }
+        return errors;
+    },
+
+    'Email' : function(rule, value, currently_selected){
+        if (currently_selected === true){
+            return []
+        }
+        var usernameRE = /^[^ \t\n\r@<>()]+$/i;
+        var domainRE = /^(?:[a-z0-9][a-z0-9\-]{0,62}\.)+[a-z]{2,}$/i;
+        var parts = value.split('@');
+        if (parts.length != 2){
+            return ['An email address must contain a single @'];
+        }
+        if (!parts[0].match(usernameRE)){
+            return ['The username portion of the email address is invalid (the portion before the @)'];
+        }
+        if (!parts[1].match(domainRE)){
+            return ['The domain portion of the email address is invalid (the portion after the @)'];
+        }
+        return [];
+    }
+};
+
+function validate(rules, value, currently_selected){
+    var errors = [];
+    for (var i=0; i < rules.length; i++){
+        rule = rules[i];
+        // the first rule states if we allow nulls or not
+        if (i === 0){
+            if (rule.not_empty && value === null && currently_selected !== true){
+                return ['must not be null'];
+            }
+        }
+        // validate the rules for the field if we know the validator
+        if (validation_rules[rule.type] !== undefined){
+            validation_errors = (validation_rules[rule.type](rule, value, currently_selected));
+            if (validation_errors.length){
+                errors.push(validation_errors);
+            }
+        }
+    }
+    return errors;
+}
+
+function is_empty(obj) {
+    for(var key in obj) {
+        return false;
+    }
+    return true;
+}
 
 
-
+if(!Date.ISO)(function(){"use strict";
+/** ES5 ISO Date Parser Plus toISOString Method
+ * @author          Andrea Giammarchi
+ * @blog            WebReflection
+ * @version         2009-07-04T11:36:25.123Z
+ * @compatibility   Chrome, Firefox, IE 5+, Opera, Safari, WebKit, Others
+ */
+function ISO(s){
+    var m = /^(\d{4})(-(\d{2})(-(\d{2})(T(\d{2}):(\d{2})(:(\d{2})(\.(\d+))?)?(Z|((\+|-)(\d{2}):(\d{2}))))?)?)?$/.exec(s);
+    if(m === null)
+        throw new Error("Invalid ISO String");
+    var d = new Date;
+    d.setUTCFullYear(+m[1]);
+    d.setUTCMonth(m[3] ? (m[3] >> 0) - 1 : 0);
+    d.setUTCDate(m[5] >> 0);
+    d.setUTCHours(m[7] >> 0);
+    d.setUTCMinutes(m[8] >> 0);
+    d.setUTCSeconds(m[10] >> 0);
+    d.setUTCMilliseconds(m[12] >> 0);
+    if(m[13] && m[13] !== "Z"){
+        var h = m[16] >> 0,
+            i = m[17] >> 0,
+            s = m[15] === "+"
+        ;
+        d.setUTCHours((m[7] >> 0) + s ? -h : h);
+        d.setUTCMinutes((m[8] >> 0) + s ? -i : i);
+    };
+    return toISOString(d);
+};
+var toISOString = Date.prototype.toISOString ?
+    function(d){return d}:
+    (function(){
+        function t(i){return i<10?"0"+i:i};
+        function h(i){return i.length<2?"00"+i:i.length<3?"0"+i:3<i.length?Math.round(i/Math.pow(10,i.length-3)):i};
+        function toISOString(){
+            return "".concat(
+                this.getUTCFullYear(), "-",
+                t(this.getUTCMonth() + 1), "-",
+                t(this.getUTCDate()), "T",
+                t(this.getUTCHours()), ":",
+                t(this.getUTCMinutes()), ":",
+                t(this.getUTCSeconds()), ".",
+                h("" + this.getUTCMilliseconds()), "Z"
+            );
+        };
+        return function(d){
+            d.toISOString = toISOString;
+            return d;
+        }
+    })()
+;
+Date.ISO = ISO;
+})();
 

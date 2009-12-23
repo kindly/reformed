@@ -26,9 +26,9 @@ class test_table_basic(object):
     def test_items(self):
         
         assert self.a.items["col"].name == "col"
-        assert self.a.columns["col"].name == "col"
+        assert self.a.defined_columns["col"].name == "col"
         assert self.a.items["col2"].name == "col2"
-        assert self.a.columns["col2"].name == "col2"
+        assert self.a.defined_columns["col2"].name == "col2"
         assert self.a.items["rel1"].name == "rel1"
         assert self.a.relations["rel1"].name == "rel1"         
     
@@ -55,14 +55,21 @@ class test_table_basic(object):
 class test_table_primary_key(object):
     
     def setUp(self):
+        self.engine = sa.create_engine('sqlite:///:memory:')
+        self.meta1 = sa.MetaData()
+        self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
+        self.Donkey1= Database("Donkey1",
+                             Table("poo",
+                           Text("col"),
+                           Text("col2"),
+                           Text("col3"),
+                           primary_key="col,col2",
+                           ),
+                           metadata = self.meta1,
+                           engine = self.engine,
+                           session = self.Session)
+        self.a = self.Donkey1["poo"]
         
-        self.a = Table("poo",
-                       Text("col"),
-                       Text("col2"),
-                       Text("col3"),
-                       ManyToOne("rel1","table2"),
-                       primary_key="col,col2",
-                       )
         
     def test_primary_key_columns(self):
         
@@ -80,7 +87,7 @@ class test_database_default_primary_key(object):
     @classmethod
     def setUpClass(self):
         
-        self.engine = sa.create_engine('sqlite:///:memory:', echo=True)
+        self.engine = sa.create_engine('sqlite:///:memory:')
         self.meta1 = sa.MetaData()
         self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
         self.Donkey1= Database("Donkey1",
@@ -158,8 +165,6 @@ class test_database_primary_key(object):
 
         self.peopletable = self.Donkey.tables["people"].sa_table
         self.emailtable = self.Donkey.tables["email"].sa_table
-        self.name2 = self.emailtable.columns["name2"].foreign_keys.pop()
-        self.name = self.emailtable.columns["name"].foreign_keys.pop()
         self.email = self.Donkey.tables["email"].sa_class()
         self.email2 = self.Donkey.tables["email"].sa_class()
         self.email3 = self.Donkey.tables["email"].sa_class()
@@ -219,8 +224,6 @@ class test_database_primary_key(object):
         assert self.emailtable.columns.has_key("name2")
         assert self.emailtable.columns.has_key("email")
         assert self.emailtable.columns["id"].primary_key is True
-        assert self.name.target_fullname == "people.name"
-        assert self.name2.target_fullname == "people.name2"
 
     def test_index(self):
 
@@ -268,18 +271,6 @@ class test_database_primary_key(object):
         assert hasattr(self.people,"Email")
         assert hasattr(self.email,"_people")
 
-    def test_foreign_key_constraints(self):
-
-        assert self.Donkey.tables["email"].\
-                foreign_key_constraints[("people", "Email")] in\
-               ([["name" ,"name2"],["people.name" ,"people.name2"]],
-                [["name2" ,"name"],["people.name2" ,"people.name"]])
-
-        
-        assert self.Donkey.tables["address"].\
-                foreign_key_constraints[("people", "address")] in\
-               ([["name" ,"name2"],["people.name" ,"people.name2"]],
-                [["name2" ,"name"],["people.name2" ,"people.name"]])
 
     def test_validation_from_field_types(self):
 
@@ -297,10 +288,12 @@ class test_database_primary_key(object):
 
         
         assert self.Donkey.tables["email"].validation_schema.to_python(
-                                             {"email": "pop@david.com",
+                                                {"people_id" : 1,
+                                              "email": "pop@david.com",
                                               "name2" :"david",
                                               "name" : "david"})==\
-                                             {"email": "pop@david.com",
+                                             {"people_id" : 1,
+                                              "email": "pop@david.com",
                                               "name2" :"david",
                                               "name" : "david"}
                                                 
@@ -309,12 +302,14 @@ class test_database_primary_key(object):
                                              {"email": "popdavid.com"})
 
         assert self.Donkey.tables["address"].validation_schema.to_python(
-                                          {"address_line_1": "56 moreland",
+                                          {"people_id" : 1,
+                                          "address_line_1": "56 moreland",
                                            "address_line_2": "essex",
                                            "postcode" : "IG5 0dp",
                                            "name2" :"david",
                                            "name" : "david"})==\
-                                          {"address_line_1": "56 moreland",
+                                          {"people_id" : 1,
+                                          "address_line_1": "56 moreland",
                                            "address_line_2": "essex",
                                            "postcode" : "IG5 0dp",
                                            "name2" :"david",

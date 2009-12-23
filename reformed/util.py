@@ -185,12 +185,15 @@ def get_fields_from_obj(obj):
 
     return obj._table.columns.keys() + ["id"]
 
-INTERNAL_TABLES = ("modified_by", "modified_date", "id", "_core_entity_id")
+INTERNAL_FIELDS = ("_modified_by", "_modified_date", "id", "_core_entity_id", "_version")
 
 def convert_value(value):
 
     if isinstance(value, datetime.datetime):
-        value = value.strftime('%Y-%m-%dT%H:%M:%SZ')
+        # use .isoformat not .strftime as this allows dates pre 1900
+        value = '%sZ' % value.isoformat()
+        if len(value) == 20:
+            value = '%s.000Z' % value[:19]
     if isinstance(value, decimal.Decimal):
         value = str(value)
     return value
@@ -209,7 +212,7 @@ def get_row_data(obj, fields = None, keep_all = False, internal = False, basic =
         if fields and (field not in fields):
             continue
 
-        if field in INTERNAL_TABLES and not keep_all and not fields:
+        if field in INTERNAL_FIELDS and not keep_all and not fields:
             continue
 
         if obj_table == table:
@@ -223,7 +226,7 @@ def get_row_data(obj, fields = None, keep_all = False, internal = False, basic =
             row_data[field_name] = value
         else:
             row_data[field_name] = convert_value(value)
-        
+
     if fields and obj_table == table:
         row_data["id"] = obj.id
 

@@ -110,18 +110,17 @@ border-style:solid;
 border-color:#DDD;
 }
 
-th{
-}
 
-thead tr th{
+th{
 color:#666;
 background-color:#EEF;
 border-right:1px solid #DDD;
 border-bottom:1px solid #DDD;
 border-left:0;
 border-top:0;
+overflow:hidden;
+font-size:0.8em;
 }
-
 
 td {
 vertical-align:top;
@@ -131,6 +130,10 @@ border-left:0;
 border-right:0;
 border-top:0;
 font-size:12px;
+overflow:hidden;
+height:1em;
+text-overflow:ellipsis;
+white-space:nowrap;
 }
 
 tfoot tr td{
@@ -253,9 +256,13 @@ tr.inactive input{
 	font-size:80%;
 }
 
+td input.error {
+	background-color:#FFCCEE;
+}
+
 
 div.form_body > div > input.error {
-	background-color:#FFEC8B;
+	background-color:#FFCCEE;
 }
 
 .error_span{
@@ -303,7 +310,7 @@ div.form_body > div > input.error {
     width:100%;
 }
 
-.grid_table td input {
+td input {
     width:100%;
 
 }
@@ -320,4 +327,110 @@ div.form_body > div > input.error {
 }
 #bookmarks ol{
     padding-left:3px;
+}
+
+.null {
+    color:#CCC;
+}
+
+
+/* GRID */
+
+.t_resizer {
+    float: right;
+    cursor:e-resize;
+    width:10px;
+    height:15px;
+    background-color:transparent;
+    z-index:2;
+    position:relative;
+}
+
+.t_header {
+    z-index:1;
+    position:relative;
+    margin-right:15px
+}
+
+.t_selected_cell {
+    background-color: #FCF;
+}
+
+.t_edited_cell {
+    padding: 0;
+}
+td.dirty {
+    font-weight:bold;
+}
+
+tr.dirty {
+    background-color:#FFC;
+}
+
+tr.current {
+    background-color: #CCF;
+}
+
+td {
+    font-family: verdana;
+    font-size:0.8em;
+    padding:3px;
+}
+
+td input {
+    margin : 0;
+    border-color:#999;
+    font-family: verdana;
+}
+
+.scroller {
+    border:1px solid #666;
+    background-color:#DDD;
+    float:left;
+}
+
+.scroller-main {
+    overflow:scroll;
+    height:200px;
+    width:500px;
+    float:left;
+}
+
+.scroller-side {
+    overflow:hidden;
+    height:184px;
+    width:30px;
+    float:left;
+}
+
+.scroller-side table {
+    width:100%;
+}
+
+.scroller-head {
+    margin-left:30px;
+    overflow:hidden;
+    width:486px;
+}
+
+th{
+
+border-right:1px solid #DDD;
+border-bottom:1px solid #DDD;
+border-left:0;
+border-top:0;
+}
+
+td {
+vertical-align:top;
+border-bottom:1px solid #DDD;
+border-left:0;
+border-right:0;
+border-right:1px solid #DDD;
+border-top:0;
+font-size:12px;
+overflow:hidden;
+height:1em;
+text-overflow:ellipsis;
+white-space:nowrap;
 }

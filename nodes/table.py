@@ -43,37 +43,23 @@ class Table(node.TableNode):
         ['summary', 'textarea', 'Summary:'],
         ['entity', 'checkbox', 'entity:'],
         ['logged', 'checkbox', 'logged:'],
-        ['fields', 'subform', 'fields'],
-        ['joins', 'subform', 'joins']
+        ['fields', 'subform', 'fields']
     ]
-    form_params ={'title' : 'Table'}
+    form_params ={'title' : 'Table', 'noautosave' : True}
     subforms = {
         'fields':{
             'fields': [
                 ['field_name', 'textbox', 'field name'],
                 ['field_type', 'dropdown', 'type', {'values': '|'.join(allowed_field_types), 'type':'list'}],
-                ['length', 'textbox', 'length'],
+                ['length', 'intbox', 'length'],
                 ['mandatory', 'checkbox', 'mandatory'],
                 ['default', 'textbox', 'default']
-       #         ['unique', 'checkbox', 'unique'],
-
             ],
             "params":{
                 "form_type": "grid",
-                "title": 'fields'
-            }
-        },
-
-        'joins':{
-            'fields': [
-                ['field_name', 'textbox', 'join field'],
-                ['join_table', 'textbox', 'join table'],
-                ['join_type', 'dropdown', 'join type', {'values': '|'.join(allowed_join_types), 'type':'list'}],
-
-            ],
-            "params":{
-                "form_type": "grid",
-                "title" : "joins"
+                "title": 'fields',
+                "id_field": "field_id",
+                'noautosave' : True
             }
         }
     }
@@ -99,6 +85,10 @@ class Table(node.TableNode):
         r.drop_table(table)
 
     def save(self):
+
+        self.saved = []
+        self.errors = {}
+
         try:
             table_id = int(self.data.get('table_id'))
         except:
@@ -143,7 +133,9 @@ class Table(node.TableNode):
             mandatory = field.get('mandatory', False)
             default = field.get('default')
 
-            field_info = dict(length=length, mandatory=mandatory, default=default)
+            field_info = dict(mandatory=mandatory, default=default)
+            if length:
+                field_info['length'] = length
 
             if field_id:
                 # the field exists so edit it
@@ -153,13 +145,22 @@ class Table(node.TableNode):
                 # add a new field
                 field_class = getattr(table_functions, field_type)
                 table.add_field(field_class(field_name, **field_info))
-        for join in joins:
-            join_type = join.get('join_type')
-            join_table = join.get('join_table')
-            join_name = join.get('field_name')
-            if join_name:
-                join_class = getattr(table_functions, join_type)
-                r[table_id].add_relation(join_class(join_name, join_table))
+
+                root = field.get('__root')
+                id = 0 # FIXME need to get the real field_id & _version
+                version = 1
+                self.saved.append([root, id, version])
+
+        # output data
+        out = {}
+        if self.errors:
+            out['errors'] = self.errors
+        if self.saved:
+            out['saved'] = self.saved
+
+        self.out = out
+        self.action = 'save'
+
 
     def create_new_table(self, table_name, entity, logged, fields, summary, joins):
 
@@ -175,25 +176,41 @@ class Table(node.TableNode):
             mandatory = field.get('mandatory', False)
             default = field.get('default')
 
-            field_info = dict(length=length, mandatory=mandatory, default=default)
+            field_info = dict(mandatory=mandatory, default=default)
+            if length:
+                field_info['length'] = length
+
             field_class = getattr(table_functions, field_type)
 
             if field_name:
                 table.add_field(field_class(field_name, **field_info))
-
-        for join in joins:
-            join_type = join.get('join_type')
-            join_table = join.get('join_table')
-            join_name = join.get('join_name')
-
-            join_class = getattr(table_functions, join_type)
-            table.add_field(join_class(join_name, join_table))
 
         if entity:
             r.add_entity(table)
         else:
             r.add_table(table)
         r.persist()
+
+        # we need to send data back to the form about the saved items
+
+        # main table info
+        self.saved.append([self.data.get('__root'), r[table_name].table_id])
+        # fields
+        for field in fields:
+            root = field.get('__root')
+            id = 0 # FIXME need to get the real field_id & _version
+            version = 1
+            self.saved.append([root, id, version])
+
+        # output data
+        out = {}
+        if self.errors:
+            out['errors'] = self.errors
+        if self.saved:
+            out['saved'] = self.saved
+
+        self.out = out
+        self.action = 'save'
 
 
     def list(self):
@@ -204,6 +221,7 @@ class Table(node.TableNode):
             if r[table_name].table_type != 'internal':
 
                 edit = [self.build_node('Edit', 'edit', 't=%s' % table.table_id),
+                        self.build_node('Edit table', 'edit', 't=%s' % table.table_id, 'table.Edit'),
                         self.build_node('List', 'list', 'table=%s' % table_name, 'test.AutoFormPlus'),
                         self.build_node('New', 'new', 'table=%s' % table_name, 'test.AutoFormPlus'),
                         self.build_function_node('Delete','node_delete') ]
@@ -231,19 +249,13 @@ class Table(node.TableNode):
         field_data = []
         join_data = []
         for (name, value) in table_info.fields.iteritems():
-            if value.__class__.__name__ in self.allowed_field_types:
+            if value.__class__.__name__ in self.allowed_field_types and name[0] != '_':
                 field_data.append({'field_name': name,
                                    'field_type': value.__class__.__name__,
                                    'mandatory': value.mandatory,
                                    'length': value.length,
                                    'default': value.default,
                                    'field_id': value.field_id })
-            if value.__class__.__name__ in self.allowed_join_types:
-                join_data.append({'field_name': name,
-                                    'join_table': value.other,
-                                   'join_type': value.__class__.__name__,
-                                   'field_id': value.field_id })
-
 
         table_data = {'table_name': table_info.name,
                       'table_type' : table_info.table_type,
@@ -251,10 +263,100 @@ class Table(node.TableNode):
                       'table_id': table_info.table_id,
                       'entity': table_info.entity,
                       'logged': table_info.logged,
-                      'fields': field_data,
-                      'joins': join_data}
+                      'fields': field_data}
 
         data = node.create_form_data(self.fields, self.form_params, table_data)
         self.action = 'form'
         self.out = data
 
+class Edit(node.TableNode):
+
+    field_type_2_input = {
+        'Integer' : 'intbox',
+        'Boolean' : 'checkbox',
+        'DateTime' : 'datebox',
+        'Date' : 'datebox',
+        'Email' : 'emailbox',
+        'Text' : 'textbox'
+    }
+
+    def initialise(self):
+        self.table_id = int(self.data.get('t'))
+        self.extra_data = {"t": self.table_id}
+        fields = []
+        field_list = []
+        obj = r[self.table_id]
+        self.table = obj.name
+        columns = obj.schema_info
+        for field in columns.keys():
+            if field not in ['_modified_date', '_modified_by','_core_entity_id', '_version']:
+                if field in columns:
+                    field_schema = obj.schema_info[field]
+                    params = {'validation' : field_schema}
+                    try:
+                        if obj.fields[field].default:
+                            params['default'] =  obj.fields[field].default
+                        field_type = obj.fields[field].__class__.__name__
+                        if field_type in self.field_type_2_input:
+                            fields.append([field, self.field_type_2_input[field_type], '%s:' % field, params])
+                        else:
+                            fields.append([field, 'textbox', '%s:' % field, params])
+                    except:
+                        fields.append([field, 'textbox', '%s:' % field, params])
+                else:
+                    fields.append([field, 'textbox', '%s:' % field])
+                field_list.append(field)
+        self.field_list = field_list
+        self.fields = fields
+        self.form_params =  {"form_type": "grid",
+                             "extras" : self.extra_data,
+                             "read_only" : True
+                            }
+
+    def view(self, read_only=False, limit = 100):
+
+        query = self.data.get('q', '')
+        limit = self.data.get('l', limit)
+        offset = self.data.get('o', 0)
+
+        obj = r[self.table_id]
+        results = r.search(obj.name, limit=limit, offset=offset, count=True)
+        data = node.create_form_data(self.fields, self.form_params, results['data'])
+
+        # add the paging info
+        data['paging'] = {'row_count' : results['__count'],
+                         'limit' : limit,
+                         'offset' : offset,
+                         'base_link' : 'n:%s:list:t=%s' % (self.name, self.table_id)}
+
+        self.out = data
+        self.action = 'form'
+
+
+
+    def list(self):
+        self.view()
+
+
+
+    def save(self):
+        self.saved = []
+        self.errors = {}
+
+        session = r.Session()
+
+        self.save_record_rows(session, self.table, self.fields, self.data['data'], [])
+
+
+        session.commit()
+        session.close()
+
+        # output data
+        out = {}
+        if self.errors:
+            out['errors'] = self.errors
+        if self.saved:
+            out['saved'] = self.saved
+
+        self.out = out
+        self.action = 'save'

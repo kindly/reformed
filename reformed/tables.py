@@ -32,12 +32,14 @@ from columns import Column
 from custom_exceptions import NoMetadataError, NoDatabaseError
 import formencode
 from formencode import validators
-from validators import All
-from fields import Modified, ModifiedBySession
+from validators import All, UnicodeString
+from fields import Modified, ModifiedBySession, Integer
+import fields
 from util import get_paths, make_local_tables, create_table_path_list, create_table_path
 import logging
 import migrate.changeset
 import datetime
+from search import Search
 from sqlalchemy.orm import column_property
 from sqlalchemy.orm.interfaces import AttributeExtension
 
@@ -67,6 +69,7 @@ class Table(object):
         self.field_list = args
         self.fields = {}
         self.field_order = []
+        self.current_order = 0
         self.primary_key = kw.get("primary_key", None)
         #persisted should be private
         self.persisted = kw.get("persisted", False)
@@ -99,10 +102,12 @@ class Table(object):
         for fields in args:
             fields._set_parent(self)
 
-        if "modified_date" not in self.fields.iterkeys() and self.modified_date:
-            self.add_field(Modified("modified_date"))
-            self.add_field(ModifiedBySession("modified_by" ))
+        if "_modified_date" not in self.fields.iterkeys() and self.modified_date:
+            self.add_field(Integer("_version"))
+            self.add_field(Modified("_modified_date"))
+            self.add_field(ModifiedBySession("_modified_by" ))
 
+        self.foriegn_key_columns_current = None
         #sqlalchemy objects
         self.sa_table = None
         self.sa_class = None
@@ -121,6 +126,13 @@ class Table(object):
         """This puts the information about the this objects parameters 
         and its collection of fields into private database tables so that in future they
         no longer need to be explicitely defined"""
+
+        for field_name in self.field_order:
+            field = self.fields[field_name]
+            if field.category == "field":
+                self.current_order = self.current_order + 1
+                field.order = self.current_order
+            
                 
         __table = self.database.tables["__table"].sa_class()
         __table.table_name = u"%s" % self.name
@@ -141,6 +153,10 @@ class Table(object):
             __field.type = u"%s" % field.__class__.__name__
             if hasattr(field, "other"):
                 __field.other = u"%s" % field.other
+            if field.foreign_key_name:
+                __field.foreign_key_name = u"%s" % field.foreign_key_name
+            if field.order:
+                __field.order = field.order
             __table.field.append(__field)
             session.add(__field)
             
@@ -164,6 +180,23 @@ class Table(object):
         for name, fields in self.fields:
             pass
 
+    def persist_foreign_key_columns(self, session):
+
+        for column in self.foriegn_key_columns.values():
+            original_col = column.original_column
+            name = column.name
+            if original_col == "id" and name not in self.defined_columns:
+                relation = column.defined_relation
+                field = relation.parent
+                new_field = Integer(name, mandatory = field.many_side_not_null)
+
+                self._add_field_no_persist(new_field)
+                self._persist_extra_field(new_field, session)
+
+                row = field.get_field_row_from_table(session)
+                row.foreign_key_name = unicode(name)
+                session.save(row)
+
     def add_relation(self, field, defer_update_sa = False):
 
         if not self.persisted:
@@ -175,26 +208,33 @@ class Table(object):
             self._add_field_no_persist(field)
             self._persist_extra_field(field, session)
             self.database.add_relations()
-            other_table = self.database[field.other]
-            for name, column in self.foriegn_key_columns.iteritems():
+
+            name, relation = field.relations.copy().popitem()
+            fk_table = self.database[relation.foreign_key_table]
+            pk_table = self.database[relation.primary_key_table]
+
+            for name, column in fk_table.foriegn_key_columns.iteritems():
                 if column.defined_relation.parent == field:
                     sa_options = column.sa_options
                     ## sqlite rubbish
                     if self.database.engine.name == 'sqlite':
                         sa_options["server_default"] = "null"
                     col = sa.Column(name, column.type, **sa_options)
+                    session._flush()
+                    fk_table.persist_foreign_key_columns(session)
+                    col.create(fk_table.sa_table)
 
-                    col.create(self.sa_table)
+            for name, con in fk_table.foreign_key_constraints.iteritems():
 
-            for name, column in other_table.foriegn_key_columns.iteritems():
-                if column.defined_relation.parent == field:
-                    sa_options = column.sa_options
-                    ## sqlite rubbish
-                    if self.database.engine.name == 'sqlite':
-                        sa_options["server_default"] = "null"
-                    col = sa.Column(name, column.type, **sa_options)
+                if self.database.engine.name == 'sqlite':
+                    break
 
-                    col.create(other_table.sa_table)
+                fk_const = migrate.changeset.constraint.ForeignKeyConstraint(con[0], 
+                                                   con[1], name = name, table = fk_table.sa_table)
+
+                if name == relation.foreign_key_constraint_name:
+                    fk_const.create()
+
 
         except Exception, e:
             session.rollback()
@@ -204,11 +244,54 @@ class Table(object):
         else:
             session._commit()
             if not defer_update_sa:
-                self.database.update_sa(reload = True)
+                self.database.load_from_persist(True)
         finally:
             session.close()
         return 
+    
+    def delete_relation(self, field):
 
+        if isinstance(field, basestring):
+            field = self.fields[field]
+        name, relation = field.relations.copy().popitem()
+
+        session = self.database.Session()
+
+        try:
+            mandatory = True if relation.many_side_not_null else False
+            fk_table = self.database[relation.foreign_key_table]
+            pk_table = self.database[relation.primary_key_table]
+
+            row = field.get_field_row_from_table(session)
+            session.delete(row)
+
+            session._flush()
+
+            for name, con in fk_table.foreign_key_constraints.iteritems():
+                
+                #fk_const = sa.ForeignKeyConstraint([fk_table.sa_table.c[con[0][0]]], 
+                #                                   [pk_table.sa_table.c[con[1][0]]], name = name)
+
+                fk_const = migrate.changeset.constraint.ForeignKeyConstraint(con[0], 
+                                                   con[1], name = name, table = fk_table.sa_table)
+
+                if name == relation.foreign_key_constraint_name:
+                    fk_const.drop()
+
+            #for constraint in fk_table.sa_table.constraints:
+            #    if constraint.name == relation.foreign_key_constraint_name:
+            #        constraint.drop()
+
+        except Exception, e:
+            session.rollback()
+            raise
+        else:
+            session._commit()
+            self.database.load_from_persist(True)
+        finally:
+            session.close()
+        
+                
 
 
     def add_field(self, field, defer_update_sa = False):
@@ -236,6 +319,153 @@ class Table(object):
         else:
             self._add_field_no_persist(field)
 
+    def rename_field(self, field, new_name):
+
+        if self.database.engine.name == "sqlite":
+            ##FIXME make better exception
+            raise Exception("sqlite cannot alter fields")
+
+        if isinstance(field, basestring):
+            field = self.fields[field]
+
+        session = self.database.Session()
+
+        try:
+            column = field.columns[field.column_order[0]] ##TODO make sure only 1 column in field
+            row = field.get_field_row_from_table(session)
+            row.field_name = u"%s" % new_name
+            session.save(row)
+
+            self.sa_table.c[column.name].alter(name = new_name)
+
+            session._flush()
+        
+        except Exception, e:
+            session.rollback()
+            raise
+        else:
+            session._commit()
+            self.database.load_from_persist(True)
+        finally:
+            session.close()
+
+    def drop_field(self, field):
+
+        if self.database.engine.name == "sqlite":
+            ##FIXME make better exception
+            raise Exception("sqlite cannot alter fields")
+
+        if isinstance(field, basestring):
+            field = self.fields[field]
+
+        session = self.database.Session()
+
+        try:
+            row = field.get_field_row_from_table(session)
+            session.delete(row)
+            session._flush()
+
+            query = Search(self.database, 
+                           "__field",
+                           session,
+                           "table_name = ? and order is ?",
+                           values = [self.name, "not null"]).search()
+
+            query.order_by(self.database["__field"].sa_class.order)
+
+
+            for num, obj in enumerate(query.all()):
+                obj.order = num + 1
+                session.save(obj)
+
+
+            session._flush()
+            
+
+            for column in field.columns.values():
+                self.sa_table.c[column.name].drop()
+        
+        except Exception, e:
+            session.rollback()
+            raise
+        else:
+            session._commit()
+            self.database.load_from_persist(True)
+        finally:
+            session.close()
+
+    def alter_field(self, field, **kw):
+
+
+        if isinstance(field, basestring):
+            field = self.fields[field]
+
+        if field.category <> "field":
+            raise Exception(("only fields representing database"
+                            "fields can be altered"))
+
+        session = self.database.Session()
+
+        try:
+            field_type = kw.pop("type", None)
+
+            row = field.get_field_row_from_table(session)
+
+            new_kw = field.kw.copy()
+            new_kw.update(kw)
+            new_kw["order"] = field.order
+
+
+            if field_type:
+                if isinstance(field_type, basestring):
+                    field_type = getattr(fields, field_type)
+                new_field = field_type(field.name, **new_kw)
+            else:
+                new_field = field.__class__(field.name, **new_kw)
+
+            _, column = new_field.columns.copy().popitem()
+
+            sa_options = column.sa_options
+
+            # sqlalchemy only accepts strings for server_defaults
+            #if isinstance(column.type, sa.Unicode) and "default" in sa_options:
+            #    if isinstance(sa_options["default"], basestring):
+            #        default = sa_options.pop("default")
+            #        sa_options["server_default"] = default
+
+
+            for param in row.field_params:
+                session.delete(param)
+
+            for name, param in new_field.kw.iteritems():
+                __field_param = self.database.get_instance("__field_params")
+                __field_param.item = u"%s" % name
+                __field_param.value = u"%s" % str(param) 
+                row.field_params.append(__field_param)
+                session.add(__field_param)
+            row.type = unicode(new_field.__class__.__name__)
+            session.add(row)
+
+            session._flush()
+
+            col = self.sa_table.c[column.name]
+            col.alter(sa.Column(column.name, column.type, **sa_options))
+
+        except Exception, e:
+            session.rollback()
+            raise
+        else:
+            session._commit()
+            self.database.load_from_persist(True)
+        finally:
+            session.close()
+
+
+
+
+
+
+
     def _add_field_no_persist(self, field):
         """add a Field object to this Table"""
         field._set_parent(self)
@@ -247,6 +477,10 @@ class Table(object):
 
     def _persist_extra_field(self, field, session):
 
+        if field.category == "field":
+            self.current_order = self.current_order + 1
+            field.order = self.current_order
+
         __table = session.query(self.database.get_class("__table")).\
                                 filter_by(table_name = u"%s" % self.name).one()
 
@@ -255,6 +489,12 @@ class Table(object):
         __field.type = u"%s" % field.__class__.__name__
         if hasattr(field, "other"):
             __field.other = u"%s" % field.other
+
+        if field.foreign_key_name:
+            __field.foreign_key_name = field.foreign_key_name
+
+        if field.order:
+            __field.order = field.order
         
         for name, param in field.kw.iteritems():
             __field_param = self.database.tables["__field_params"].sa_class()
@@ -273,6 +513,14 @@ class Table(object):
         for field in __table.field:
             self.fields[field.field_name].field_id = field.id
 
+        return __field
+
+    def get_table_row_from_table(self, session):
+        
+        sa_class = self.database["__table"].sa_class
+        query = session.query(sa_class)
+        result = query.filter(sa_class.id == self.table_id).one()
+        return result
 
     @property    
     def items(self):
@@ -323,10 +571,12 @@ class Table(object):
         """gathers all columns this table has whether defined here on in
         another tables relation"""
         columns = {}
-        for field in self.fields.itervalues():
-            for name, column in field.columns.iteritems():
-                columns[name] = column
         try:
+            for field in self.fields.itervalues():
+                for name, column in field.columns.iteritems():
+                    if name in self.foriegn_key_columns:
+                        continue
+                    columns[name] = column
             for name, column in self.foriegn_key_columns.iteritems():
                 columns[name] = column
         except NoDatabaseError:
@@ -400,11 +650,50 @@ class Table(object):
 
         dependant_attributes = {}
         for table, relation in self.tables_with_relations.iteritems():
-            if relation.table is self and relation.type <> "manytoone" and relation.many_side_not_null:
+            if relation.table is self and relation.type <> "manytoone":
                 dependant_attributes[relation.name] = relation
-            elif relation.table is not self and relation.type == "manytoone" and relation.many_side_not_null:
+            elif relation.table is not self and relation.type == "manytoone":
                 dependant_attributes[relation.sa_options["backref"]] = relation
         return dependant_attributes
+
+    @property
+    def dependant_tables(self):
+        dependant_tables = []
+
+        for table, relation in self.tables_with_relations.iteritems():
+            if relation.table is self and relation.type <> "manytoone":
+                dependant_tables.append(table[0])
+            elif relation.table is not self and relation.type == "manytoone":
+                dependant_tables.append(table[0])
+        return dependant_tables
+
+    @property
+    def parent_attributes(self):
+
+        parent_attributes = {}
+        for table, relation in self.tables_with_relations.iteritems():
+            if relation.table is self and relation.type == "manytoone":
+                parent_attributes[relation.name] = relation
+            elif relation.table is not self and relation.type <> "manytoone":
+                parent_attributes[relation.sa_options["backref"]] = relation
+        return parent_attributes
+
+    @property
+    def parent_columns_attributes(self):
+
+        columns = {}
+        for column_name, column in self.foriegn_key_columns.iteritems():
+            if column.original_column <> "id":
+                relation = column.defined_relation
+                if relation.table is self and relation.type == "manytoone":
+                    relation_attribute = relation.name
+                else:
+                    relation_attribute = relation.sa_options["backref"]
+
+                columns[column_name] = relation_attribute
+        return columns
+
+
 
     @property    
     def foriegn_key_columns(self):
@@ -413,6 +702,8 @@ class Table(object):
         relationship it will return the primary key on the "one"
         side"""
 
+        if self.foriegn_key_columns_current:
+            return self.foriegn_key_columns_current
         
         self.check_database()
         database = self.database
@@ -420,32 +711,46 @@ class Table(object):
         ##  could be made simpler
         for tab, rel in self.tables_with_relations.iteritems():
             table, pos = tab
-            #use pos
-            if (rel.type == "onetomany" and self.name == rel.other) or\
-              (rel.type == "onetoone" and self.name == rel.other) or\
-              (rel.type == "manytoone" and self.name == rel.table.name):
+            if rel.foreign_key_table == self.name:
                 if database.tables[table].primary_key_columns:
-                    table = database.tables[table]
-                    for name, column in table.primary_key_columns.items():
+                    rtable = database.tables[table]
+                    for name, column in rtable.primary_key_columns.items():
                         new_col = Column(column.type,
                                          name=name,
                                          mandatory = rel.many_side_not_null, 
                                          defined_relation = rel,
                                          original_column = name) 
                         columns[name] = new_col
+
+                if rel.foreign_key_name and rel.foreign_key_name not in self.defined_columns:
+                    columns[rel.foreign_key_name] = Column(sa.Integer,
+                                                   name = rel.foreign_key_name,
+                                                   mandatory = rel.many_side_not_null,
+                                                   defined_relation= rel,
+                                                   original_column= "id")
+                elif rel.foreign_key_name:
+                    column = self.defined_columns[rel.foreign_key_name]
+                    column.defined_relation = rel
+                    column.original_column = "id"
+                    columns[rel.foreign_key_name] = column
+
+                elif table+"_id" not in columns:
+                    columns[table +'_id'] = Column(sa.Integer,
+                                                   name = table +'_id',
+                                                   mandatory = rel.many_side_not_null,
+                                                   defined_relation= rel,
+                                                   original_column= "id")
+                    rel.foreign_key_name = rel.foreign_key_name or table + '_id'
                 else:
-                    if table+"_id" not in columns:
-                        columns[table+'_id'] = Column(sa.Integer,
-                                                       name = table+'_id',
-                                                       mandatory = rel.many_side_not_null,
-                                                       defined_relation= rel,
-                                                       original_column= "id")
-                    else:
-                        columns[table+'_id2'] = Column(sa.Integer,
-                                                       name = table+'_id2',
-                                                       mandatory = rel.many_side_not_null,
-                                                       defined_relation= rel,
-                                                       original_column= "id")
+                    columns[table +'_id2'] = Column(sa.Integer,
+                                                   name = table +'_id2',
+                                                   mandatory = rel.many_side_not_null,
+                                                   defined_relation= rel,
+                                                   original_column= "id")
+                    rel.foreign_key_name = rel.foreign_key_name or table + '_id2'
+
+        self.foriegn_key_columns_current = columns
+
         return columns
 
     @property
@@ -462,13 +767,13 @@ class Table(object):
             other_table_columns=[]
             this_table_columns=[]
             for name, column in self.foriegn_key_columns.iteritems():
-                if column.defined_relation == rel:
+                if column.defined_relation == rel and column.original_column == "id":
                     other_table_columns.append("%s.%s"%\
                                                (table, column.original_column))
                     this_table_columns.append(name)
             if other_table_columns:
-                fk_constraints[(table, rel.name)] = [this_table_columns,
-                                                    other_table_columns]
+                fk_constraints[rel.foreign_key_constraint_name] = [this_table_columns,
+                                                                  other_table_columns]
         return fk_constraints
 
     def make_sa_table(self):
@@ -481,30 +786,33 @@ class Table(object):
         if not self.database.metadata:
             raise NoMetadataError("table not assigned a metadata")
         sa_table = sa.Table(self.name, self.database.metadata)
+
         sa_table.append_column(sa.Column("id", sa.Integer, primary_key = True))
+
         for name, column in self.foriegn_key_columns.iteritems():
             sa_options = column.sa_options
             sa_table.append_column(sa.Column(name, column.type, **sa_options))
         defined_columns = self.defined_columns
         for column in self.defined_columns_order:
+            if column in self.foriegn_key_columns:
+                continue
             name = column
             column = defined_columns[column]
             sa_options = column.sa_options
 
             ## sqlalchemy only accepts strings for server_defaults
-            if isinstance(column.type, sa.Unicode) and "default" in sa_options:
-                if isinstance(sa_options["default"], basestring):
-                    default = sa_options.pop("default")
-                    sa_options["server_default"] = default
+            #if isinstance(column.type, sa.Unicode) and "default" in sa_options:
+            #    if isinstance(sa_options["default"], basestring):
+            #        default = sa_options.pop("default")
+            #        sa_options["server_default"] = default
 
             sa_table.append_column(sa.Column(name, column.type, **sa_options))
-        if self.primary_key_list:
-            primary_keys = tuple(self.primary_key_list)
-            sa_table.append_constraint(sa.UniqueConstraint(*primary_keys))
+
         if self.foreign_key_constraints:
-            for con in self.foreign_key_constraints.itervalues():
-                sa_table.append_constraint(sa.ForeignKeyConstraint(con[0],
-                                                                   con[1]))
+            for name, con in self.foreign_key_constraints.iteritems():
+                fk_const = sa.ForeignKeyConstraint(con[0], con[1], name = name)
+                sa_table.append_constraint(fk_const)
+
         for name, index in self.indexes.iteritems():
             ind = [sa_table.columns[col.strip()] for col in index.fields.split(",")]
             if index.type == "unique":
@@ -542,7 +850,7 @@ class Table(object):
                                          )
                 
 
-        SaClass.__name__ = self.name
+        SaClass.__name__ = self.name.encode("ascii")
         self.sa_class = SaClass
 
     def sa_mapper(self):
@@ -578,13 +886,11 @@ class Table(object):
             joined_columns = []
 
             for name, column in self.foriegn_key_columns.iteritems():
-                if relation == column.defined_relation:
+                if relation == column.defined_relation and column.original_column == "id":
                     joined_columns.append([name, column.original_column])
             if not joined_columns:
-                joined_columns.extend([[a, a] for a in self.primary_key_list])
-            if not joined_columns:
                 for name, col in other_rtable.foriegn_key_columns.iteritems():
-                    if relation == col.defined_relation:
+                    if relation == col.defined_relation and col.original_column == "id":
                         joined_columns.append([col.original_column, name])
 
             join_conditions = [] 
@@ -599,7 +905,8 @@ class Table(object):
 
         self.mapper = mapper(self.sa_class,
                              self.sa_table,
-                             properties = properties)
+                             properties = properties,
+                             version_id_col = self.sa_table.c._version)
     
     def make_paths(self):
 
@@ -644,7 +951,7 @@ class Table(object):
                     max = 100
             else:
                 max = 100
-            validators.append(val.UnicodeString(max = max,
+            validators.append(UnicodeString(max = max,
                                                 not_empty = mand))
         elif col_type is sa.Integer or isinstance(col_type, sa.Integer):
             validators.append(val.Int(not_empty = mand))
@@ -714,6 +1021,7 @@ class Table(object):
         
         if chained_validators:
             schema_dict["chained_validators"] = chained_validators
+
 
         self.schema_dict = schema_dict
 
@@ -841,7 +1149,12 @@ class ConvertDate(AttributeExtension):
         if isinstance(value, datetime.datetime):
             return value
 
-        return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%SZ')
+        # handle dates with and without microseconds
+        # currently Javascript likes to keep the milliseconds
+        try:
+            return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%fZ')
+        except ValueError:
+            return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%SZ')
 
 class ConvertBoolean(AttributeExtension):
 

@@ -9,6 +9,7 @@ import sqlalchemy as sa
 from sqlalchemy import create_engine
 import random
 import time
+from tests.donkey_test import test_donkey
 from reformed.util import get_table_from_instance, load_local_data
 from reformed.validate_database import validate_database
 import logging
@@ -20,14 +21,24 @@ sqllogger.setLevel(logging.info)
 sqllogger.addHandler(sqlhandler)
 
 
-class test_donkey_persist(object):
+class test_donkey_persist(test_donkey):
 
     persist = True
 
     @classmethod
     def setUpClass(cls):
+
         if not hasattr(cls, "engine"):
+            os.system("rm tests/test_donkey.sqlite")
             cls.engine = create_engine('sqlite:///tests/test_donkey.sqlite')
+
+        meta_to_drop = sa.MetaData()
+        meta_to_drop.reflect(bind=cls.engine)
+        for table in reversed(meta_to_drop.sorted_tables):
+            table.drop(bind=cls.engine)
+
+        super(test_donkey_persist, cls).setUpClass()
+
         cls.meta = sa.MetaData()
         cls.Session = sa.orm.sessionmaker(bind =cls.engine , autoflush = False)
         cls.Donkey = Database("Donkey", 
@@ -86,7 +97,6 @@ class test_donkey_persist(object):
         jimpic = file("tests/jim.xcf", mode = "rb").read()
         
         jimimage = cls.Donkey.tables["donkey_pics"].sa_class()
-        jimimage.donkey = cls.jim
         jimimage.pic = jimpic
 
         cls.session.add(cls.david)
@@ -131,7 +141,8 @@ class test_donkey_persist_sqlite(test_donkey_persist):
     def tearDownClass(cls):
 
         cls.session.close()
-        
+        sa.orm.clear_mappers()
+        cls.Donkey.status = "terminated"
 
 
     def test_1_donkey_input(self):
@@ -252,7 +263,8 @@ class test_donkey_persist_sqlite(test_donkey_persist):
     def test_automatic_logging(self):
 
         all_logs = self.session.query(self.Donkey.get_class("_log_donkey")).all()
-        assert (self.jimmi_id, u"jimmii%s" % self.p) in [(a.donkey_id,a.name) for a in all_logs]
+
+        assert (self.jimmi_id, u"jimmii%s" % self.p) in [(a._logged_table_id,a.name) for a in all_logs]
 
     def test_params_load(self):
 
@@ -348,12 +360,12 @@ class test_donkey_persist_mysql(test_donkey_persist_sqlite):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
+        cls.engine = create_engine('mysql://localhost/test_donkey')
         super(test_donkey_persist_mysql, cls).setUpClass()
 
 class test_donkey_persist_post(test_donkey_persist_sqlite):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine('postgres://david:@:5432/test_donkey', echo = True)
+        cls.engine = create_engine('postgres://david:@:5432/test_donkey')
         super(test_donkey_persist_post, cls).setUpClass()

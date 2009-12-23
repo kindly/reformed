@@ -24,6 +24,7 @@
 ##  fields such as name,type, indexes and constraints. 
 
 import sqlalchemy as sa
+import util
 import custom_exceptions 
 
 class BaseSchema(object):
@@ -205,6 +206,9 @@ class Relation(BaseSchema):
         cascade = kw.pop("cascade", None)
         if cascade:
             self.sa_options["cascade"] = cascade
+
+        self.foreign_key_name = kw.pop("foreign_key_name", None)
+
         self.many_side_not_null = kw.pop("many_side_not_null", True)
         self.many_side_mandatory = kw.pop("many_side_mandatory", False)
         backref = kw.pop("backref", None)
@@ -239,12 +243,62 @@ class Relation(BaseSchema):
                 self.many_side_mandatory = parent.many_side_mandatory
             if parent.one_way:
                 self.one_way = True
+            if parent.foreign_key_name:
+                self.foreign_key_name = parent.foreign_key_name
 
         if self.name in parent.items.iterkeys():
             raise AttributeError("column already in field definition")
         else:
             parent.add_relation(self.name, self)
             self.parent = parent
+
+    def join_type_from_table(self, table_name):
+
+         if self.table.name == table_name:
+             return self.type
+         if self.other == table_name:
+             return util.swap_relations(self.type)
+
+         raise ArgumentError("table %s is not part of this relation" % table_name)
+    
+    @property
+    def foreign_key_table(self):
+
+        if self.type == "manytoone":
+            return self.table.name
+        else:
+            return self.other
+
+    @property
+    def primary_key_table(self):
+
+        if self.type == "manytoone":
+            return self.other
+        else:
+            return self.table.name
+
+    @property
+    def foriegn_key_id_name(self):
+
+        return self.join_keys_from_table(self.foreign_key_table)[0][0]
+
+    @property
+    def foreign_key_constraint_name(self):
+
+        return self.table.name + "__" + self.name
+    
+    def join_keys_from_table(self, table_name):
+         
+         table = self.table.database.tables[table_name]
+
+         if self.parent.table.name == table_name:
+             return self.this_table_join_keys
+         if self.other == table_name:
+             return self.this_table_join_keys[::-1]
+
+         raise ArgumentError("table %s is not part of this relation" % table_name)
+
+        
 
     @property
     def other_table(self):
@@ -261,12 +315,12 @@ class Relation(BaseSchema):
         keys_other_table = []
         if self.type in ("manytoone"):
             for name, column in self.table.foriegn_key_columns.iteritems():
-                if column.defined_relation == self:
+                if column.defined_relation == self and column.original_column == "id":
                     keys_this_table.append(name)
                     keys_other_table.append(column.original_column)
         if self.type in ("onetoone", "onetomany"):
             for name, column in self.other_table.foriegn_key_columns.iteritems():
-                if column.defined_relation == self:
+                if column.defined_relation == self and column.original_column == "id":
                     keys_this_table.append(column.original_column)
                     keys_other_table.append(name)
 
@@ -294,7 +348,7 @@ class Field(object):
     def __new__(cls, name, *args, **kw):
 
         obj = object.__new__(cls)
-        obj.name = name
+        obj.name = name.encode("ascii")
         obj.decendants_name = name
         obj.columns = {}
         obj.relations = {}
@@ -303,7 +357,14 @@ class Field(object):
         obj.sa_options = {}
         obj.column_order = []
         obj.kw = kw
-        obj.field_id = kw.get("field_id", None)
+        obj.field_id = kw.pop("field_id", None)
+
+        ## this is popped as we dont want it to appear in field_params
+        obj.foreign_key_name = kw.pop("foreign_key_name", None)
+
+        obj.order = kw.pop("order", None)
+
+
         obj.default = kw.get("default", None)
         if obj.default:
             obj.sa_options["default"] = obj.default
@@ -327,7 +388,10 @@ class Field(object):
             obj.field_validation = r"%s" % obj.field_validation.encode("ascii")
         obj.order_by = kw.get("order_by", None)
         obj.length = kw.get("length", None)
-        if obj.length:
+        ## ignore length if empty string 
+        if not obj.length:
+            kw.pop("length", None)
+        else:
             obj.length = int(obj.length)
         obj.many_side_not_null = kw.get("many_side_not_null", True)
         obj.many_side_mandatory = kw.get("many_side_mandatory", False)
@@ -375,6 +439,26 @@ class Field(object):
 
         return new, removed, difference
 
+    def get_field_row_from_table(self, session):
+        
+        sa_class = self.table.database["__field"].sa_class
+        query = session.query(sa_class)
+        result = query.filter(sa_class.id == self.field_id).one()
+        return result
+
+    @property
+    def category(self):
+
+        if self.columns and self.name.startswith("_"):
+            return "internal"
+        if self.columns:
+            return "field"
+        if self.relations:
+            return "relation"
+        if self.constraints:
+            return "constraint"
+        if self.indexes:
+            return "index"
 
     @property
     def items(self):
