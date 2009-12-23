@@ -490,8 +490,12 @@ $.Grid.Build = function(input, form_data, grid_data){
     function create(){
         $(input).empty();
         var $div = $('<div class="scroller"></div>');
-        $div.append(header());
-        $div.append(selectors());
+
+        $head = $(header());
+        $div.append($head);
+
+        $side = $(selectors());
+        $div.append($side);
 
         $main = $(body());
         $main.scroll(scroll);
