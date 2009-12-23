@@ -29,7 +29,7 @@ $.fn.extend({
 		options.formatMatch = options.formatMatch || options.formatItem;
 		
 		return this.each(function() {
-			new $.Autocompleter(this, options);
+			$.Autocompleter(this, options);
 		});
 	},
 	result: function(handler) {
@@ -73,7 +73,8 @@ $.Autocompleter = function(input, options) {
 	var hasFocus = 0;
 	var lastKeyPressCode;
 	var config = {
-		mouseDownOnSelect: false
+		mouseDownOnSelect: false,
+		dropdownRequest: false
 	};
 	var select = $.Autocompleter.Select(options, input, selectCurrent, config);
 	
@@ -92,6 +93,7 @@ $.Autocompleter = function(input, options) {
 		// a keypress means the input has focus
 		// avoids issue where input had focus before the autocomplete was applied
 		hasFocus = 1;
+        config.dropdownRequest = false
 		// track last key pressed
 		lastKeyPressCode = event.keyCode;
 		switch(event.keyCode) {
@@ -101,6 +103,7 @@ $.Autocompleter = function(input, options) {
 				if ( select.visible() ) {
 					select.prev();
 				} else {
+                    config.dropdownRequest = true;
 					onChange(0, true);
 				}
 				break;
@@ -110,6 +113,7 @@ $.Autocompleter = function(input, options) {
 				if ( select.visible() ) {
 					select.next();
 				} else {
+                    config.dropdownRequest = true;
 					onChange(0, true);
 				}
 				break;
@@ -162,9 +166,10 @@ $.Autocompleter = function(input, options) {
 		if (!config.mouseDownOnSelect) {
 			hideResults();
 		}
-	}).click(function() {
+	}).click(function(event) {
 		// show select when clicking in a focused field
 		if ( hasFocus++ > 1 && !select.visible() ) {
+            // need to start dropdown request for all fields to be shown
 			onChange(0, true);
 		}
 	}).bind("search", function() {
@@ -188,6 +193,9 @@ $.Autocompleter = function(input, options) {
 		});
 	}).bind("flushCache", function() {
 		cache.flush();
+	}).bind("dropdown", function() {
+        config.dropdownRequest = true
+        onChange(0, true);
 	}).bind("setOptions", function() {
 		$.extend(options, arguments[1]);
 		// if we've updated the data, repopulate
@@ -344,7 +352,7 @@ $.Autocompleter = function(input, options) {
 	function request(term, success, failure) {
 		if (!options.matchCase)
 			term = term.toLowerCase();
-		var data = cache.load(term);
+		var data = cache.load(term, config.dropdownRequest);
 		// recieve the cached data
 		if (data && data.length) {
 			success(term, data);
@@ -419,6 +427,7 @@ $.Autocompleter.defaults = {
 	mustMatch: false,
 	extraParams: {},
 	selectFirst: true,
+    dropdown: false,
 	formatItem: function(row) { return row[0]; },
 	formatMatch: null,
 	autoFill: false,
@@ -522,14 +531,14 @@ $.Autocompleter.Cache = function(options) {
 		flush: flush,
 		add: add,
 		populate: populate,
-		load: function(q) {
+		load: function(q, dropdownRequest) {
 			if (!options.cacheLength || !length)
 				return null;
 			/* 
 			 * if dealing w/local data and matchContains than we must make sure
 			 * to loop through all the data collections looking for matches
 			 */
-			if( !options.url && options.matchContains ){
+			if( !options.url && (options.matchContains || (options.dropdown && dropdownRequest))){
 				// track all matches
 				var csub = [];
 				// loop through all the data grids for matches
@@ -539,9 +548,13 @@ $.Autocompleter.Cache = function(options) {
 					if( k.length > 0 ){
 						var c = data[k];
 						$.each(c, function(i, x) {
-							// if we've got a match, add it to the array
-							if (matchSubset(x.value, q)) {
+                            // if we have a dropdown 
+                            if (options.dropdown && dropdownRequest) {
 								csub.push(x);
+                            }
+							// if we've got a match, add it to the array
+                            else if (matchSubset(x.value, q)) {
+								 csub.push(x);
 							}
 						});
 					}
@@ -654,6 +667,9 @@ $.Autocompleter.Select = function (options, input, select, config) {
 	}
 	
 	function limitNumberOfItems(available) {
+        if (options.dropdown){
+            return available;
+        }
 		return options.max && options.max < available
 			? options.max
 			: available;
@@ -670,9 +686,16 @@ $.Autocompleter.Select = function (options, input, select, config) {
 				continue;
 			var li = $("<li/>").html( options.highlight(formatted, term) ).addClass(i%2 == 0 ? "ac_even" : "ac_odd").appendTo(list)[0];
 			$.data(li, "ac_data", data[i]);
+            if ($(input).val() === data[i].result && options.dropdown && config.dropdownRequest)
+                active = i
 		}
 		listItems = list.find("li");
-		if ( options.selectFirst ) {
+
+        if (options.dropdown && config.dropdownRequest){
+            moveSelect(0)
+        }
+
+        else if ( options.selectFirst ) {
 			listItems.slice(0, 1).addClass(CLASSES.ACTIVE);
 			active = 0;
 		}
@@ -727,7 +750,11 @@ $.Autocompleter.Select = function (options, input, select, config) {
 				left: offset.left
 			}).show();
             if(options.scroll) {
-                list.scrollTop(0);
+                if (!options.dropdown || !config.dropdownRequest){
+                    list.scrollTop(0);
+                }
+                config.dropdownRequest = false;
+
                 list.css({
 					maxHeight: options.scrollHeight,
 					overflow: 'auto'
