@@ -35,23 +35,62 @@ $.fn.extend({
 
 $.Grid = function(input, form_data, grid_data){
 
-    function start(e){
+    function start_grid_resize(e){
         // begin resizing
-        $drag_col = $(e.target).parent();
-        drag_col = $drag_col.parent().children().index($drag_col);
-        $(document).mousemove(move).mouseup(end);
+        $(document).mousemove(move_grid_resize).mouseup(end_grid_resize);
         return false;
     }
 
-    function end(){
+    function end_grid_resize(){
         // end resizing
-        $(document).unbind('mousemove', move); 
-        $(document).unbind('mouseup', end); 
+        $(document).unbind('mousemove', move_grid_resize);
+        $(document).unbind('mouseup', end_grid_resize);
+        return false;
+    }
+
+
+    function move_grid_resize(e){
+        // resize
+        var pos = $grid.offset();
+        var new_height = e.clientY - pos.top;
+        var new_width = e.clientX - pos.left;
+        if (new_width < $.Grid.MIN_GRID_WIDTH){
+            new_width = $.Grid.MIN_GRID_WIDTH;
+        }
+        if (new_height < $.Grid.MIN_GRID_HEIGHT){
+            new_height = $.Grid.MIN_GRID_HEIGHT;
+        }
+        // only update if we need to resize
+        if (grid_size.width != new_width || grid_size.height != new_height){
+            grid_size.width = new_width;
+            grid_size.height = new_height;
+            // remove any pending resize
+            if (resize_grid_timeout){
+                clearTimeout(resize_grid_timeout);
+            }
+            resize_grid_timeout = setTimeout(resize_grid, 50);
+        }
+        return false;
+    }
+
+
+    function start_column_resize(e){
+        // begin resizing
+        $drag_col = $(e.target).parent();
+        drag_col = $drag_col.parent().children().index($drag_col);
+        $(document).mousemove(move_column_resize).mouseup(end_column_resize);
+        return false;
+    }
+
+    function end_column_resize(){
+        // end resizing
+        $(document).unbind('mousemove', move_column_resize);
+        $(document).unbind('mouseup', end_column_resize);
         $drag_col = null;
         return false;
     }
 
-    function move(e){
+    function move_column_resize(e){
         // resize
         if ($drag_col){
             var new_width = Math.floor(e.clientX - $drag_col.offset().left + 15);
@@ -59,7 +98,11 @@ $.Grid = function(input, form_data, grid_data){
                 new_width = $.Grid.MIN_COLUMN_SIZE;
             }
             column_widths[drag_col] = new_width;
-            resize_table();
+            // remove any pending resize
+            if (resize_column_timeout){
+                clearTimeout(resize_column_timeout);
+            }
+            resize_column_timeout = setTimeout(resize_table_columns, 50);
         }
         return false;
     }
@@ -72,7 +115,7 @@ $.Grid = function(input, form_data, grid_data){
             col = $item.parent().children().index($item);
         }
         column_widths[col] = 100;
-        resize_table();
+        resize_table_columns();
     }
 
 
@@ -91,9 +134,29 @@ $.Grid = function(input, form_data, grid_data){
             }
         }
     }
+    function resize_grid(){
+        var width = grid_size.width;
+        var height = grid_size.height;
+        $grid.width(width).height(height);
+        //console.log($grid_head);
+        $grid_main.css({top : $.Util.Size.GRID_HEADER_H,
+                        left : $.Grid.SIDE_COLUMN_WIDTH,
+                        width : width - $.Grid.SIDE_COLUMN_WIDTH,
+                        height : height - $.Util.Size.GRID_HEADER_H});
+        $grid_head.css({top:0, left:$.Grid.SIDE_COLUMN_WIDTH});
+        $grid_head.width(width - $.Grid.SIDE_COLUMN_WIDTH - $.Util.Size.SCROLLBAR_WIDTH);
 
+        $grid_side.css({top:$.Util.Size.GRID_HEADER_H, left:0});
+        $grid_side.height(height - $.Util.Size.GRID_HEADER_H - $.Util.Size.SCROLLBAR_WIDTH);
+        $grid_side.width($.Grid.SIDE_COLUMN_WIDTH);
 
-    function resize_table(){
+        $grid_resizer.css({top:height - 15,
+                           left: width - 15});
+
+       // $grid.
+    }
+
+    function resize_table_columns(){
         // resize table
         var t_width = 0;
         for (var i = 0, n = column_widths.length; i < n; i++){
@@ -118,11 +181,25 @@ $.Grid = function(input, form_data, grid_data){
         grid_data = [];
     }
 
+
+    var resize_grid_timeout;
+    var resize_column_timeout;
+
+
+    var grid_size = {width : 500, height : 300};
     // create the table
     $.Grid.Build(input, form_data, grid_data);
 
+
+    var $grid = $(input).find('div.scroller');
+    var $grid_side = $grid.find('div.scroller-side');
+    var $grid_head = $grid.find('div.scroller-head');
+    var $grid_main = $grid.find('div.scroller-main');
+    var $grid_resizer = $grid.find('div.scroller-resizer');
     var $main = $(input).find('div.scroller-main table');
     var $head = $(input).find('div.scroller-head table');
+
+    resize_grid();
 
     var $drag_col;
     var drag_col;
@@ -131,21 +208,23 @@ $.Grid = function(input, form_data, grid_data){
     var column_widths_main = [];
     var column_widths_header = [];
     get_column_widths();
-    resize_table();
+    resize_table_columns();
 
     // add resizers
     var headers = $head.find('th');
     for (var i = 0, n=headers.size() ; i < n ; i++){
         // add the resizer
-        headers.eq(i).dblclick(auto_resize).prepend($('<div class="t_resizer" ></div>').mousedown(start));
+        headers.eq(i).dblclick(auto_resize).prepend($('<div class="t_resizer" ></div>').mousedown(start_column_resize));
     }
-
+    $grid_resizer.mousedown(start_grid_resize);
     // add grid movement functionality
     $.Grid.Movement(input, form_data, grid_data);
 };
 
 $.Grid.MIN_COLUMN_SIZE = 25;
-
+$.Grid.MIN_GRID_HEIGHT = 50;
+$.Grid.MIN_GRID_WIDTH = 100;
+$.Grid.SIDE_COLUMN_WIDTH = 50;
 
 $.Grid.Movement = function(input, form_data, grid_data){
 
@@ -282,7 +361,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
     function make_cell_viewable(){
         // FIXME cache values and clean up
         // some minor adjustments needed
-        // plus remove magic number
+        // FIXME do complete rewrite as logic has gone for a walk ;)
         var div_pos = $scroll_div.position();
         var div_top = div_pos.top;
         var div_left = div_pos.left;
@@ -291,16 +370,25 @@ $.Grid.Movement = function(input, form_data, grid_data){
         var cell_top = cell_pos.top - div_top;
         var cell_left = cell_pos.left - div_left;
 
+        var s = $.Util.Size.SCROLLBAR_WIDTH;
+        var height = $scroll_div.innerHeight() - s;
+        var width = $scroll_div.innerWidth() - s;
+        var h = $.Util.Size.GRID_BODY_H;
+        var h2 = $.Util.Size.GRID_HEADER_H;
+        var w = current.$item.outerWidth();
+        var top = $scroll_div.scrollTop();
+        var left = $scroll_div.scrollLeft();
+
         if (cell_top < 0){
-            $scroll_div.scrollTop($scroll_div.scrollTop() + cell_top);
-        } else if (cell_top + current.$item.height() > $scroll_div.height() - 20){
-            $scroll_div.scrollTop($scroll_div.scrollTop() - $scroll_div.height() + cell_top + current.$item.height() + 20)
+            $scroll_div.scrollTop(top + cell_top + s + (h-h2));
+        } else if (cell_top + h > height + (h-h2)){
+            $scroll_div.scrollTop(top - height + cell_top + h + s + (h-h2))
         }
 
         if (cell_left < 0){
-            $scroll_div.scrollLeft($scroll_div.scrollLeft() + cell_left);
-        } else if (cell_left + current.$item.width() > $scroll_div.innerWidth() - 20){
-            $scroll_div.scrollLeft($scroll_div.scrollLeft() - $scroll_div.innerWidth() + cell_left + current.$item.width());
+            $scroll_div.scrollLeft(left + cell_left + div_left);
+        } else if (cell_left + w > width){
+            $scroll_div.scrollLeft(left - width + cell_left + w + div_left);
         }
     }
 
@@ -509,6 +597,8 @@ $.Grid.Build = function(input, form_data, grid_data){
         $main = $(body());
         $main.scroll(scroll);
         $div.append($main);
+
+        $div.append('<div class="scroller-resizer"></div>');
 
         $(input).append($div);
     }
@@ -729,8 +819,8 @@ $.Util.Size.get = function(){
         var w1 = $div.find('div').width();
         $div.css('overflow-y', 'scroll');
         var w2 = $div.find('div').width();
-        $div.remove()
         $.Util.Size.SCROLLBAR_WIDTH = w1 - w2;
+        $div.remove()
     }
 
     function grid(){
@@ -754,6 +844,7 @@ $.Util.Size.get = function(){
 
         $.Util.Size.GRID_COL_RESIZE_DIFF = $.Util.Size.GRID_HEADER_BORDER_W - $.Util.Size.GRID_BODY_BORDER_W;
         $.Util.Size.GRID_COL_EDIT_DIFF = $.Util.Size.GRID_BODY_BORDER_W_EDIT - $.Util.Size.GRID_BODY_BORDER_W;
+        $div.remove()
     }
 
 

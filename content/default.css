@@ -386,21 +386,17 @@ td input {
 .scroller {
     border:1px solid #666;
     background-color:#DDD;
-    float:left;
+    position:absolute;
 }
 
 .scroller-main {
     overflow:scroll;
-    height:200px;
-    width:500px;
-    float:left;
+    position:absolute;
 }
 
 .scroller-side {
     overflow:hidden;
-    height:184px;
-    width:30px;
-    float:left;
+    position:absolute;
 }
 
 .scroller-side table {
@@ -408,9 +404,15 @@ td input {
 }
 
 .scroller-head {
-    margin-left:30px;
     overflow:hidden;
-    width:486px;
+    position:absolute;
+}
+.scroller-resizer {
+    background-color:transparent;
+    width:15px;
+    height:15px;
+    cursor:se-resize;
+    position:absolute;
 }
 
 th{
