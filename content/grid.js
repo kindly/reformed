@@ -68,7 +68,7 @@ $.Grid = function(input, form_data, grid_data){
             if (resize_grid_timeout){
                 clearTimeout(resize_grid_timeout);
             }
-            resize_grid_timeout = setTimeout(resize_grid, 50);
+            resize_grid_timeout = setTimeout(resize_grid, 25);
         }
         return false;
     }
@@ -102,7 +102,7 @@ $.Grid = function(input, form_data, grid_data){
             if (resize_column_timeout){
                 clearTimeout(resize_column_timeout);
             }
-            resize_column_timeout = setTimeout(resize_table_columns, 50);
+            resize_column_timeout = setTimeout(resize_table_columns, 25);
         }
         return false;
     }
@@ -359,9 +359,10 @@ $.Grid.Movement = function(input, form_data, grid_data){
     }
 
     function make_cell_viewable(){
-        // FIXME cache values and clean up
-        // some minor adjustments needed
         // FIXME do complete rewrite as logic has gone for a walk ;)
+        // however it appears to function correctly so is
+        // good for checking any new approach against
+        // but completely unreadable
         var div_pos = $scroll_div.position();
         var div_top = div_pos.top;
         var div_left = div_pos.left;
@@ -381,13 +382,13 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
         if (cell_top < 0){
             $scroll_div.scrollTop(top + cell_top + s + (h-h2));
-        } else if (cell_top + h > height + (h-h2)){
+        } else if (cell_top + (h * 2) > height + (h-h2)){
             $scroll_div.scrollTop(top - height + cell_top + h + s + (h-h2))
         }
 
         if (cell_left < 0){
             $scroll_div.scrollLeft(left + cell_left + div_left);
-        } else if (cell_left + w > width){
+        } else if (cell_left + w + s + s > width){
             $scroll_div.scrollLeft(left - width + cell_left + w + div_left);
         }
     }
