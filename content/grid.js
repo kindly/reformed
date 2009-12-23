@@ -90,7 +90,6 @@ $.Grid = function(input, form_data, grid_data){
                 column_widths[i] = column_widths_header[i];
             }
         }
-        console.log(column_widths);
     }
 
 
@@ -107,7 +106,7 @@ $.Grid = function(input, form_data, grid_data){
         var $head_cols = $head.find('th');
         var $main_cols = $main.find('tr').eq(0).find('td');
         for (i = 0, n = column_widths.length; i < n; i++){
-                $head_cols.eq(i).width(column_widths[i] + 2);
+                $head_cols.eq(i).width(column_widths[i] - $.Util.Size.GRID_COL_RESIZE_DIFF);
                 $main_cols.eq(i).width(column_widths[i]);
         }
     }
@@ -201,6 +200,11 @@ $.Grid.Movement = function(input, form_data, grid_data){
     function make_editable(){
         // make the cell editable
         current.$control = util.make_editable(current.$item, current.field);
+        // if this is the first row we need to adjust the width to compensate for
+        // any differences in the padding etc
+        if (current.row === 0){
+            current.$item.width(current.$item.width() - $.Util.Size.GRID_COL_EDIT_DIFF);
+        }
         current.value = grid_data[current.row][current.field.name];
     }
 
@@ -215,6 +219,11 @@ $.Grid.Movement = function(input, form_data, grid_data){
     function make_normal(){
         // return the item to it's normal state
         var value = util.make_normal(current.$item, current.field);
+        // if this is the first row we need to adjust the width to compensate for
+        // any differences in the padding etc
+        if (current.row === 0){
+            current.$item.width(current.$item.width() + $.Util.Size.GRID_COL_EDIT_DIFF);
+        }
         if (value === current.value){
             // not changed
             current.$item.removeClass('dirty');
@@ -233,7 +242,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
             current.$row.addClass('dirty');
             current.$side.addClass('dirty');
 
-            console.log('changed was; ' + current.value + ', now: ' + value);
+//            console.log('changed was; ' + current.value + ', now: ' + value);
         }
         current.$control = undefined;
     }
@@ -705,4 +714,55 @@ $.Util.make_normal = function($item, field){
     return value;
 };
 
+// $.Util.Size
+// this is used to calculate and store size related info
+// needed to get placements correct etc
+$.Util.Size = {};
+
+$.Util.Size.get = function(){
+
+
+    function scrollbar(){
+        // get width of scrollbar
+        var $div = $('<div style="overflow:hidden; width:50px; height:50px; position:absolute; left:-100px; top:0px;"><div style="height:60px;"></div></div>');
+        $('body').append($div);
+        var w1 = $div.find('div').width();
+        $div.css('overflow-y', 'scroll');
+        var w2 = $div.find('div').width();
+        $div.remove()
+        $.Util.Size.SCROLLBAR_WIDTH = w1 - w2;
+    }
+
+    function grid(){
+        // get interesting stuff about grid cells
+        // needed for acurate resizing
+        var $div = $('<div style="overflow:hidden; width:100px; height:100px; position:absolute; left:-200px; top:0px;"></div>');
+        $div.append('<table class="grid"><thead><tr><th>head</th></tr></thead><tbody><tr><td>body</td></tr><tr><td class="t_edited_cell">body</td></tr></tbody></table>');
+        $('body').append($div);
+
+        var $x = $div.find('th');
+        $.Util.Size.GRID_HEADER_BORDER_W = $x.outerWidth() - $x.width();
+        $.Util.Size.GRID_HEADER_H = $x.outerHeight();
+
+        var $x = $div.find('td').eq(0);
+        $.Util.Size.GRID_BODY_BORDER_W = $x.outerWidth() - $x.width();
+        $.Util.Size.GRID_BODY_H = $x.outerHeight();
+
+        var $x = $div.find('td').eq(1);
+        $.Util.Size.GRID_BODY_BORDER_W_EDIT = $x.outerWidth() - $x.width();
+        $.Util.Size.GRID_BODY_H_EDIT = $x.outerHeight();
+
+        $.Util.Size.GRID_COL_RESIZE_DIFF = $.Util.Size.GRID_HEADER_BORDER_W - $.Util.Size.GRID_BODY_BORDER_W;
+        $.Util.Size.GRID_COL_EDIT_DIFF = $.Util.Size.GRID_BODY_BORDER_W_EDIT - $.Util.Size.GRID_BODY_BORDER_W;
+    }
+
+
+    scrollbar();
+    grid();
+
+};
+
 })(jQuery);
+
+// get our size calculations
+$(document).ready($.Util.Size.get);
