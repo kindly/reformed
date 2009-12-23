@@ -75,10 +75,20 @@ $.Grid = function(input, form_data, grid_data){
         resize_table();
     }
 
+
     function get_column_widths(){
-        var $cols = $main.find('tr').eq(0).find('td');
-        for (var i = 0; i < $cols.size(); i++){
-            column_widths[i] = $cols.eq(i).width();
+        var $cols_main = $main.find('tr').eq(0).find('td');
+        var $cols_head = $head.find('th');
+        for (var i = 0, n = $cols_head.size(); i < n; i++){
+            // get column widths for the headers and main table
+            column_widths_main[i] = $cols_main.eq(i).width();
+            column_widths_header[i] = $cols_head.eq(i).width();
+            // store the higher value in column_widths
+            if (column_widths_main[i] > column_widths_header[i]){
+                column_widths[i] = column_widths_main[i];
+            } else {
+                column_widths[i] = column_widths_header[i];
+            }
         }
         console.log(column_widths);
     }
@@ -105,6 +115,10 @@ $.Grid = function(input, form_data, grid_data){
     // remove any previous bound events
     $(document).unbind();
 
+    if (!grid_data){
+        grid_data = [];
+    }
+
     // create the table
     $.Grid.Build(input, form_data, grid_data);
 
@@ -115,6 +129,8 @@ $.Grid = function(input, form_data, grid_data){
     var drag_col;
 
     var column_widths = [];
+    var column_widths_main = [];
+    var column_widths_header = [];
     get_column_widths();
     resize_table();
 
@@ -474,23 +490,10 @@ $.Grid.Build = function(input, form_data, grid_data){
     function create(){
         $(input).empty();
         var $div = $('<div class="scroller"></div>');
-        var html = '';
-        html += '<div class="scroller-head"><table>';
-        html += header().join('');
-        html += '</table></div>';
-        $head = $(html);
-        $div.append($head);
+        $div.append(header());
+        $div.append(selectors());
 
-        html = '<div class="scroller-side"><table>';
-        html += selectors().join('');
-        html += '</table></div>';
-        $side = $(html);
-        $div.append($side);
-
-        html = '<div class="scroller-main"><table>';
-        html += body().join('');
-        html += '</table></div>';
-        $main = $(html);
+        $main = $(body());
         $main.scroll(scroll);
         $div.append($main);
 
@@ -512,14 +515,17 @@ $.Grid.Build = function(input, form_data, grid_data){
 
     function header(){
         var html = [];
+        html.push('<div class="scroller-head"><table class="t_grid">');
         html.push('<thead><tr>');
 
-        var i = num_fields;
-        do {
-            html.push('<th><div class="t_header">' + form_data.fields[num_fields - i].title + '</div></th>');
-        } while (--i);
+        for (var i = 0; i < num_fields; i++){
+            html.push('<th><div class="t_header">');
+            html.push(form_data.fields[i].title);
+            html.push('</div></th>');
+        }
         html.push('</tr></thead>');
-        return html;
+        html.push('</table></div>');
+        return html.join('');
     }
 
     function footer(){
@@ -532,29 +538,33 @@ $.Grid.Build = function(input, form_data, grid_data){
 
     function selectors(){
         var html = [];
+        html.push('<div class="scroller-side"><table class="t_grid">');
         html.push('<tbody>');
         for (var i = 0, n = grid_data.length; i < n ; i++){
             html.push('<tr><td>' + i + '</td></tr>');
         }
         html.push('</tbody>');
-        return html;
+        html.push('</table></div>');
+        return html.join('');
     }
 
     function body(){
         var html = [];
+        html.push('<div class="scroller-main"><table class="t_grid">');
         html.push('<tbody>');
         for (var i = 0, n = grid_data.length; i < n ; i++){
             html.push(row(grid_data[i], i));
         }
         html.push('</tbody>');
-        return html;
+        html.push('</table></div>');
+        return html.join('');
     }
 
     function row(row_data, row_number){
         var html = [];
         var item, value;
         html.push('<tr class="form_body">');
-        for (var i = 0; i<num_fields; i++){
+        for (var i = 0; i < num_fields; i++){
             item = form_data.fields[i];
             if (row_data && row_data[item.name] !== null){
                 value = row_data[item.name];
