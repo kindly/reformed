@@ -1448,11 +1448,11 @@ var fn = function(packet, job){
              var form = packet.data.data.form;
              data = packet.data.data.data;
              var paging = packet.data.data.paging;
-             if (form.params.form_type != 'grid'){
+             if (form.params && form.params.form_type == 'grid'){
+                $('#' + root).grid(form, data);
+             } else {
                 $('#' + root).html(node_generate_html(form, data, paging, root)).scrollTop(0);
                 form_setup(root, form);
-             } else {
-                $('#' + root).grid(form, data);
              }
              $INFO.setState(root, 'node', packet.data.node);
              break;
