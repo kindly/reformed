@@ -481,6 +481,30 @@ $.Grid.Movement = function(input, form_data, grid_data){
         move();
     }
 
+    function tab_right(){
+        col++;
+        if (col >= total_cols){
+            col = 0;
+            row++;
+            if (row >= total_rows){
+                row = total_rows - 1;
+            }
+        }
+        move();
+    }
+
+    function tab_left(){
+        col--;
+        if (col < 0){
+            col = total_cols - 1;
+            row--;
+            if (row < 0){
+                row = 0;
+            }
+        }
+        move();
+    }
+
     function move_down(){
         row++;
         if(row >= total_rows){
@@ -499,8 +523,8 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
     // general key bindings
     var keys = {
-        '9': move_right,
-        '9s': move_left,
+        '9': tab_right,
+        '9s': tab_left,
         '38s': move_up,
         '40s': move_down,
         '13' : edit_mode_on,
