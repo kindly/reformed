@@ -539,7 +539,7 @@ class AutoForm(TableNode):
         columns = obj._table.schema_info
         for field in columns.keys():
             if field not in ['_modified_date', '_modified_by']:
-                fields.append([field, 'textbox', '%s:' % field])
+                fields.append([field, 'Text', '%s:' % field])
         self.__class__.fields = fields
 
 

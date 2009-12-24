@@ -703,8 +703,11 @@ $.Grid.Build = function(input, form_data, grid_data){
                     value = null;
                 }
             }
-            if (item.type == 'datebox'){
-                value = Date.ISO(value).toLocaleDateString();
+            switch (item.type){
+                case 'DateTime':
+                case 'Date':
+                    value = Date.ISO(value).toLocaleDateString();
+                    break;
             }
             if (value === null){
                 html.push('<td class="null">[NULL]</td>');
@@ -746,11 +749,12 @@ $.Util.control_setup = function($control, field){
     // but start by removing any existing bound events
     $control.unbind();
     switch (field.type){
-        case 'intbox':
+        case 'Integer':
             $control.change($FORM_CONTROL._intbox_change);
             $control.keydown($FORM_CONTROL._intbox_key);
             break;
-        case 'datebox':
+        case 'DateTime':
+        case 'Date':
             $control.keydown($FORM_CONTROL._datebox_key);
             break;
     }
@@ -787,7 +791,8 @@ $.Util.make_normal = function($item, field){
 
     // special controls
     switch (field.type){
-        case 'datebox':
+        case 'DateTime':
+        case 'Date':
             value = date_from_value(value);
             if (value){
                 update_value = value.toLocaleDateString();
@@ -796,7 +801,7 @@ $.Util.make_normal = function($item, field){
                 value = null;
             }
             break;
-        case 'checkbox':
+        case 'Boolean':
             if (value == 'true'){
                 value = true;
             } else {
@@ -804,7 +809,7 @@ $.Util.make_normal = function($item, field){
             }
             update_value = value;
             break;
-        case 'intbox':
+        case 'Integer':
             if (value !== null){
                 value = parseInt(value, 10);
             }

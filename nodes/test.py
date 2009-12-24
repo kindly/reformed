@@ -117,7 +117,7 @@ class UserGroup(TableNode):
     core_table = False
     title_field = 'groupname'
     fields = [
-        ['groupname', 'textbox', 'groupname:'],
+        ['groupname', 'Text', 'groupname:'],
         ['permission', 'code_group', 'permission:']
     ]
     code_groups = {'permission':{
@@ -141,8 +141,8 @@ class User(TableNode):
 
     table = "user"
     fields = [
-        ['name', 'textbox', 'name:'],
-        ['password', 'textbox', 'password:'],
+        ['name', 'Text', 'name:'],
+        ['password', 'Text', 'password:'],
         ['usergroup', 'code_group', 'usergroups:']
     ]
     list_title = 'user %s'
@@ -160,8 +160,8 @@ class Donkey(TableNode):
 
     table = "donkey"
     fields = [
-        ['name', 'textbox', 'name:'],
-        ['age', 'intbox', 'age:']
+        ['name', 'Text', 'name:'],
+        ['age', 'Integer', 'age:']
     ]
     list_title = 'donkey %s'
      
@@ -172,7 +172,7 @@ class People(TableNode):
     subforms = {
         'email':{
             'fields': [
-                ['email', 'textbox', 'email:']
+                ['email', 'Text', 'email:']
             ],
             "parent_id": "id",
             "child_id": "people_id",
@@ -183,8 +183,8 @@ class People(TableNode):
         },
         'sponsorship':{
             'fields': [
-                ['amount', 'textbox', 'amount:'],
-                ['donkey.name', 'textbox', 'donkey:']
+                ['amount', 'Text', 'amount:'],
+                ['donkey.name', 'Text', 'donkey:']
             ],
             "parent_id": "id",
             "child_id": "people_id",
@@ -196,12 +196,12 @@ class People(TableNode):
     }
 
     fields = [
-        ['name', 'textbox', 'name:'],
-        ['address_line_1', 'textbox', 'address:'],
-        ['address_line_2', 'textbox', 'town:'],
-        ['postcode', 'textbox', 'postcode:'],
-        ['dob', 'datebox', 'dob:'],
-        ['active', 'checkbox', 'active:'],
+        ['name', 'Text', 'name:'],
+        ['address_line_1', 'Text', 'address:'],
+        ['address_line_2', 'Text', 'town:'],
+        ['postcode', 'Text', 'postcode:'],
+        ['dob', 'Date', 'dob:'],
+        ['active', 'Boolean', 'active:'],
         ['email', 'subform', 'email'],
         ['sponsorship', 'subform', 'sponsorship']
     ]
@@ -258,7 +258,7 @@ class Search(TableNode):
 class Login(Node):
 
     fields = [
-        ['name', 'textbox', 'username:'],
+        ['name', 'Text', 'username:'],
         ['password', 'password', 'password:'],
         ['button', 'submit', 'moo', {'action': 'next', 'node': 'test.Login'}]
     ]
@@ -296,12 +296,12 @@ class Sponsorship(Node):
 
         fields = [
             ['info', 'info', 'please enter the id'],
-            ['person', 'textbox', 'person id:', {'autocomplete': '/ajax/people/name'}],
+            ['person', 'Text', 'person id:', {'autocomplete': '/ajax/people/name'}],
             ['button', 'submit', 'moo', {'action': 'next', 'node': 'test.Sponsorship'}]
         ]
         fields2 = [
             ['info', 'info', 'please enter the donkey id'],
-            ['donkey', 'textbox', 'donkey id:'],
+            ['donkey', 'Text', 'donkey id:'],
             ['button', 'submit', 'moo', {'action': 'next', 'node': 'test.Sponsorship'}]
         ]
         validations = [
@@ -346,10 +346,9 @@ class AutoFormPlus(TableNode):
                     params = {'validation' : field_schema}
                     try:
                         field_type = obj.fields[field].__class__.__name__
-                        if field_type in self.field_type_2_input:
-                            fields.append([field, self.field_type_2_input[field_type], '%s:' % field, params])
+                        fields.append([field, field_type, '%s:' % field, params])
                     except:
-                        fields.append([field, 'textbox', '%s:' % field, params])
+                        fields.append([field, 'Text', '%s:' % field, params])
 
                 field_list.append(field)
         self.field_list = field_list

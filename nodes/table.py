@@ -38,22 +38,22 @@ class Table(node.TableNode):
     list_params = {"form_type": "results"}
 
     fields = [
-        ['table_name', 'textbox', 'table name:'],
+        ['table_name', 'Text', 'table name:'],
         ['table_type', 'info', 'type:'],
-        ['summary', 'textarea', 'Summary:'],
-        ['entity', 'checkbox', 'entity:'],
-        ['logged', 'checkbox', 'logged:'],
+        ['summary', 'Text', 'Summary:'],
+        ['entity', 'Boolean', 'entity:'],
+        ['logged', 'Boolean', 'logged:'],
         ['fields', 'subform', 'fields']
     ]
     form_params ={'title' : 'Table', 'noautosave' : True}
     subforms = {
         'fields':{
             'fields': [
-                ['field_name', 'textbox', 'field name'],
+                ['field_name', 'Text', 'field name'],
                 ['field_type', 'dropdown', 'type', {'values': '|'.join(allowed_field_types), 'type':'list'}],
-                ['length', 'intbox', 'length'],
-                ['mandatory', 'checkbox', 'mandatory'],
-                ['default', 'textbox', 'default']
+                ['length', 'Integer', 'length'],
+                ['mandatory', 'Boolean', 'mandatory'],
+                ['default', 'Text', 'default']
             ],
             "params":{
                 "form_type": "grid",
@@ -271,15 +271,6 @@ class Table(node.TableNode):
 
 class Edit(node.TableNode):
 
-    field_type_2_input = {
-        'Integer' : 'intbox',
-        'Boolean' : 'checkbox',
-        'DateTime' : 'datebox',
-        'Date' : 'datebox',
-        'Email' : 'emailbox',
-        'Text' : 'textbox'
-    }
-
     def initialise(self):
         self.table_id = int(self.data.get('t'))
         self.extra_data = {"t": self.table_id}
@@ -297,14 +288,11 @@ class Edit(node.TableNode):
                         if obj.fields[field].default:
                             params['default'] =  obj.fields[field].default
                         field_type = obj.fields[field].__class__.__name__
-                        if field_type in self.field_type_2_input:
-                            fields.append([field, self.field_type_2_input[field_type], '%s:' % field, params])
-                        else:
-                            fields.append([field, 'textbox', '%s:' % field, params])
+                        fields.append([field, field_type, '%s:' % field, params])
                     except:
-                        fields.append([field, 'textbox', '%s:' % field, params])
+                        fields.append([field, 'Text', '%s:' % field, params])
                 else:
-                    fields.append([field, 'textbox', '%s:' % field])
+                    fields.append([field, 'Text', '%s:' % field])
                 field_list.append(field)
         self.field_list = field_list
         self.fields = fields
