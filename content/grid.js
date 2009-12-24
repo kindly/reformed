@@ -872,10 +872,34 @@ $.Util.Size.get = function(){
         $div.remove()
     }
 
-
     scrollbar();
     grid();
 
+};
+
+$.Util.selectStyleSheet = function (title, url){
+    // disable all style sheets with the given title
+    // enable the one with the correct url ending
+    // if not found try to load it.
+    var $style_sheets = $('link[title]');
+    var style_sheet;
+    var found = false;
+    for (var i = 0, n = $style_sheets.size(); i < n; i++){
+        style_sheet = $style_sheets[i];
+        if (style_sheet.title == title){
+            if (style_sheet.href.search(url + '$') == -1){
+                style_sheet.disabled = true;
+            } else {
+                found = true;
+                style_sheet.disabled = false;
+            };
+        }
+    }
+    if (!found){
+        console.log('load ' + url);
+        $('head').append($('<link media="screen" title="'+ title + '" href="' + url + '" type="text/css" rel="alternate stylesheet"/>'));
+    }
+    $.Util.Size.get();
 };
 
 })(jQuery);

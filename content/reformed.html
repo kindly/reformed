@@ -4,30 +4,16 @@
 <link rel="stylesheet" type="text/css" href="jquery/jquery.autocomplete.css" />
 <link rel="stylesheet" type="text/css" href="jquery/jquery-ui-1.7.2.custom.css" />
 <link rel="stylesheet" type="text/css" href="jquery/jquery.tooltip.css" />
-<style>
-body > div {
-	border:0; /* 1px solid #000; */
-	background-color:#EEE;
-}
-body {
-	height:100%;
-	margin:0;
-	padding:0;
-	border:0;
-}
-#logo, #action, #status, #info {
-	overflow:hidden;
-}
-#main, #sidebar {
-	overflow:auto;
-}
-</style>
+
+<link media="screen" title="size" href="css/size3.css" type="text/css" rel="stylesheet"/>
+
 <script src="jquery/jquery-1.3.2.min.js"></script>
 <script src="jquery/jquery.json.js"></script>
 <script src="jquery/jquery.autocomplete.js"></script>
 <script src="jquery/jquery-ui-1.7.2.custom.min.js"></script>
 <script src="jquery/jquery.address-1.0.min.js"></script>
 <script src="jquery/jquery.tooltip.pack.js"></script>
+<script src="jquery/jquery.stylesheetToggle.js"></script>
 
 <script src="grid.js"></script>
 
@@ -44,9 +30,20 @@ body {
 <div id='logo'><img src="logo.png"  width="126" height="125" /></div>
 
 <div id='sidebar'>
+
+
+<div style='font-size:12px'>
+<span onclick="$.Util.selectStyleSheet('size', 'css/size1.css');" style="font-size:8px">A</span>
+<span onclick="$.Util.selectStyleSheet('size', 'css/size2.css');" style="font-size:10px">A</span>
+<span onclick="$.Util.selectStyleSheet('size', 'css/size3.css');" style="font-size:12px">A</span>
+<span onclick="$.Util.selectStyleSheet('size', 'css/size4.css');" style="font-size:14px">A</span>
+<span onclick="$.Util.selectStyleSheet('size', 'css/size5.css');" style="font-size:16px">A</span>
+</div>
+
 <form action='' onsubmit="return search_box();">
 <input type='text' name='search' id='search' />
 </form>
+
 <ul>
 <li><span onclick="node_load('n:table.Table:new')">new table</span></li>
 <li><span onclick="node_load('n:table.Table:list')">table</span></li>

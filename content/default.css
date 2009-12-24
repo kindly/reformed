@@ -1,4 +1,19 @@
-
+div {
+	border:0; /* 1px solid #000; */
+	background-color:#EEE;
+}
+body {
+	height:100%;
+	margin:0;
+	padding:0;
+	border:0;
+}
+#logo, #action, #status, #info {
+	overflow:hidden;
+}
+#main, #sidebar {
+	overflow:auto;
+}
 
 .label {
 	color:darkblue;
@@ -34,7 +49,6 @@ div {
 .error_single {
 	color:#D33;
 	font-weight:bold;
-	font-size:75%;
 }
 
 
@@ -59,7 +73,6 @@ div {
 }
 
 .form_header > button {
-	font-size:50%;
 	margin-left:25px;
 }
 
@@ -79,14 +92,12 @@ input, select{
 }
 
 .form_data{
-	font-size:75%;
 	margin-left:50px;
 }
 
 .form_data input {
 	background-color:#F08080;
 	width:50px;
-	font-size:75%;
 }
 
 .ctl {
@@ -119,7 +130,6 @@ border-bottom:1px solid #DDD;
 border-left:0;
 border-top:0;
 overflow:hidden;
-font-size:0.8em;
 }
 
 td {
@@ -129,11 +139,12 @@ border-bottom:1px solid #DDD;
 border-left:0;
 border-right:0;
 border-top:0;
-font-size:12px;
+
 overflow:hidden;
 height:1em;
 text-overflow:ellipsis;
 white-space:nowrap;
+
 }
 
 tfoot tr td{
@@ -155,9 +166,6 @@ width:200px;
 text-align:center;
 background-color:#EEF;
 border-right:1px solid #DDD;
-}
-td.t_id button{
-font-size:80%;
 }
 
 tr.dirtyv td{
@@ -207,7 +215,6 @@ tr.inactive input{
 .hidden{
 	background-color:#AAA;
 	width:25px;
-	font-size:10px;
 }
 
 .action{
@@ -240,7 +247,6 @@ tr.inactive input{
 	text-align:center;
 	margin:0px;
 	font-style:italic;
-	font-size:75%;
 }
 
 .command{
@@ -252,9 +258,7 @@ tr.inactive input{
 	text-decoration:underline;
 }
 
-#status {
-	font-size:80%;
-}
+
 
 td input.error {
 	background-color:#FFCCEE;
@@ -266,7 +270,6 @@ div.form_body > div > input.error {
 }
 
 .error_span{
-    font-size:75%;
     color:#3a3;
 }
 
@@ -277,7 +280,6 @@ div.form_body > div > input.error {
 
 .list_summary {
     color:#3A3;
-    font-size:75%;
 }
 
 .list {
@@ -290,10 +292,6 @@ div.form_body > div > input.error {
 
 .page_section_title{
     font-weight:bold;
-    font-size:1.2em;
-}
-.page_section_summary{
-    font-size:0.8em;
 }
 
 .page_section li{
@@ -317,12 +315,10 @@ td input {
 
 .link_list a{
     color:green;
-    font-size:0.8em;
 }
 
 #bookmarks li{
     list-style-type: none;
-    font-size:0.8em;
     color:darkgreen;
 }
 #bookmarks ol{
@@ -373,7 +369,6 @@ tr.current {
 
 td {
     font-family: verdana;
-    font-size:0.8em;
     padding:3px;
 }
 
@@ -430,7 +425,6 @@ border-left:0;
 border-right:0;
 border-right:1px solid #DDD;
 border-top:0;
-font-size:12px;
 overflow:hidden;
 height:1em;
 text-overflow:ellipsis;
