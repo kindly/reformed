@@ -782,8 +782,6 @@ $.Util.make_normal = function($item, field){
     if (value === ''){
        if ($item.hasClass('null')){
            value = null;
-       } else {
-           update_value = '';
        }
     }
 
