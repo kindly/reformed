@@ -430,3 +430,21 @@ height:1em;
 text-overflow:ellipsis;
 white-space:nowrap;
 }
+
+
+.but_dd {
+background-color:red;
+float:right;
+height:100%;
+position:relative;
+width:20px;
+}
+.data {
+background-color:transparent;
+border:0 none;
+margin:0 20px 0 0;
+padding:0;
+position:relative;
+overflow:hidden;
+}
+

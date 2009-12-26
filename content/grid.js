@@ -219,6 +219,12 @@ $.Grid = function(input, form_data, grid_data){
     $grid_resizer.mousedown(start_grid_resize);
     // add grid movement functionality
     $.Grid.Movement(input, form_data, grid_data);
+
+    $(input).addClass('grid_holder');
+    $(input).bind('refresh', function (){
+        console.log('refresh');
+        resize_grid();
+    });
 };
 
 $.Grid.MIN_COLUMN_SIZE = 25;
@@ -256,6 +262,19 @@ $.Grid.Movement = function(input, form_data, grid_data){
     function click_main(e){
         // click in the main table body
         var $item = $(e.target);
+        var fn_finalise;
+        // if this control is complex eg. dropdown.
+        if ($item[0].nodeName == 'DIV'){
+            if ($item.hasClass('data')){
+                $item = $item.parent();
+            } else if ($item.hasClass('but_dd')){
+                $item = $item.parent();
+                fn_finalise = function(){
+                    var $input = $item.find('input');
+                    $input.trigger('dropdown');
+                }
+            }
+        }
         if ($item[0].nodeName == 'TD'){
             var $row = $item.parent('tr');
             row = $row.parent().children().index($row);
@@ -263,6 +282,9 @@ $.Grid.Movement = function(input, form_data, grid_data){
             var this_col = $item.parent().children().index($item);
             col = this_col;
             selected($item, $row, $row_side);
+        }
+        if (fn_finalise){
+            fn_finalise();
         }
         return false;
     }
@@ -278,7 +300,14 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
     function make_editable(){
         // make the cell editable
-        current.$control = util.make_editable(current.$item, current.field);
+        var $item = current.$item;
+
+        // is this a complex control
+        if (current.field.params && current.field.params.control == 'dropdown'){
+            $item = $item.find('div.data');
+        }
+
+        current.$control = util.make_editable($item, current.field);
         // if this is the first row we need to adjust the width to compensate for
         // any differences in the padding etc
         if (current.row === 0){
@@ -297,7 +326,12 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
     function make_normal(){
         // return the item to it's normal state
-        var value = util.make_normal(current.$item, current.field);
+        var $item = current.$item;
+        if (current.field.params && current.field.params.control == 'dropdown'){
+            $item = $item.find('div.data');
+        }
+        console.log($item);
+        var value = util.make_normal($item, current.field);
         // if this is the first row we need to adjust the width to compensate for
         // any differences in the padding etc
         if (current.row === 0){
@@ -703,16 +737,26 @@ $.Grid.Build = function(input, form_data, grid_data){
                     value = null;
                 }
             }
+            // correct data value if needed
             switch (item.type){
                 case 'DateTime':
                 case 'Date':
                     value = Date.ISO(value).toLocaleDateString();
                     break;
             }
-            if (value === null){
-                html.push('<td class="null">[NULL]</td>');
-            } else {
-                html.push('<td>' + value + '</td>');
+            if (item.params && item.params.control == 'dropdown'){
+                if (value === null){
+                    html.push('<td class="null"><div class="but_dd"/><div class="data">[NULL]</div></td>');
+                } else {
+                    html.push('<td><div class="but_dd"/><div class="data">' + value + '</div></td>');
+                }
+            }
+            else {
+                if (value === null){
+                    html.push('<td class="null">[NULL]</td>');
+                } else {
+                    html.push('<td>' + value + '</td>');
+                }
             }
         }
         html.push('</tr>');
@@ -758,6 +802,20 @@ $.Util.control_setup = function($control, field){
             $control.keydown($FORM_CONTROL._datebox_key);
             break;
     }
+    if (field.params && field.params.control == 'dropdown'){
+        $control.autocomplete(['true', 'false'], {'dropdown':true});
+    }
+};
+
+$.Util.control_takedown = function($control, field){
+    // add any events needed by the control
+    // but start by removing any existing bound events
+    $control.unbind();
+    if (field.params && field.params.control == 'dropdown'){
+        console.log('take_down' + field.type)
+        //  $control.trigger('unautocomplete');
+        $(':input').trigger('unautocomplete');
+    }
 };
 
 $.Util.make_editable = function($item, field){
@@ -780,7 +838,9 @@ $.Util.make_editable = function($item, field){
 $.Util.make_normal = function($item, field){
     // return the item to it's normal state
     // and return it's value
-    var value = $item.find('input').val().trim();
+    var $control = $item.find('input');
+    $.Util.control_takedown($control, field);
+    var value = $control.val().trim();
     var update_value = value;
     // check for nulls
     if (value === ''){
@@ -788,7 +848,6 @@ $.Util.make_normal = function($item, field){
            value = null;
        }
     }
-
     // special controls
     switch (field.type){
         case 'DateTime':
@@ -931,7 +990,7 @@ $.Util.selectStyleSheet = function (title, url){
         console.log('load ' + url);
         $('head').append($('<link media="screen" title="'+ title + '" href="' + url + '" type="text/css" rel="alternate stylesheet"/>'));
     }
-    $.Util.Size.get();
+    update_onloaded();
 };
 
 })(jQuery);

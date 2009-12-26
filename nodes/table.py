@@ -288,6 +288,9 @@ class Edit(node.TableNode):
                         if obj.fields[field].default:
                             params['default'] =  obj.fields[field].default
                         field_type = obj.fields[field].__class__.__name__
+                        # dirty hack to get a dropdown test
+                        if field_type == 'Boolean':
+                            params['control'] = 'dropdown'
                         fields.append([field, field_type, '%s:' % field, params])
                     except:
                         fields.append([field, 'Text', '%s:' % field, params])
