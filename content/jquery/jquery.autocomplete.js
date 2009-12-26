@@ -194,7 +194,8 @@ $.Autocompleter = function(input, options) {
 	}).bind("flushCache", function() {
 		cache.flush();
 	}).bind("dropdown", function() {
-        config.dropdownRequest = true
+        input.focus();
+        config.dropdownRequest = true;
         onChange(0, true);
 	}).bind("setOptions", function() {
 		$.extend(options, arguments[1]);
@@ -417,7 +418,7 @@ $.Autocompleter.defaults = {
 	inputClass: "ac_input",
 	resultsClass: "ac_results",
 	loadingClass: "ac_loading",
-	minChars: 1,
+	minChars: 0,
 	delay: 400,
 	matchCase: false,
 	matchSubset: true,
