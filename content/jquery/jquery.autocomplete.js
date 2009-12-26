@@ -203,6 +203,7 @@ $.Autocompleter = function(input, options) {
 		if ( "data" in arguments[1] )
 			cache.populate();
 	}).bind("unautocomplete", function() {
+        hideResults();
 		select.unbind();
 		$input.unbind();
 		$(input.form).unbind(".autocomplete");
