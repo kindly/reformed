@@ -1,8 +1,15 @@
 td, body, input, select, textarea, th {
 	font-size:1.2em;
+    font-family: verdana;
 }
 
 td input{
     font-size:1em;
 }
 
+/* this is a horrible hack to let us know if the stylesheet has been loaded
+ * the font-family needs to be set to the name of the stylesheet in double quotes
+ */
+#styleSheetCheck{
+    font-family:"css/size4.css";
+}

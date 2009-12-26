@@ -884,6 +884,35 @@ $.Util.selectStyleSheet = function (title, url){
     // disable all style sheets with the given title
     // enable the one with the correct url ending
     // if not found try to load it.
+    function update_onloaded(){
+
+        function update(){
+            // refresh the sizes of elements
+            $.Util.Size.get();
+            // update any grids
+            $('div.grid_holder').trigger('refresh');
+        }
+
+        function check_loaded(){
+            if ((--tries < 0) || $('#styleSheetCheck').css('font-family') == '"' + url + '"'){
+                // stylesheet has loaded
+                // remove our special div
+                $('#styleSheetCheck').remove();
+                update();
+            } else {
+                // wait and try again
+                setTimeout(check_loaded, 50);
+            }
+        }
+
+        var tries = 50; //number of attempts before giving up
+
+        // add a special div that has the font-family set to the file name in the new stylesheet
+        $('body').append('<div id="styleSheetCheck" style="display:none"></div>');
+        check_loaded();
+    }
+
+
     var $style_sheets = $('link[title]');
     var style_sheet;
     var found = false;
