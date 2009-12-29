@@ -138,7 +138,6 @@ $.Grid = function(input, form_data, grid_data){
         var width = grid_size.width;
         var height = grid_size.height;
         $grid.width(width).height(height);
-        //console.log($grid_head);
         $grid_main.css({top : $.Util.Size.GRID_HEADER_H,
                         left : $.Grid.SIDE_COLUMN_WIDTH,
                         width : width - $.Grid.SIDE_COLUMN_WIDTH,
@@ -222,7 +221,6 @@ $.Grid = function(input, form_data, grid_data){
 
     $(input).addClass('grid_holder');
     $(input).bind('refresh', function (){
-        console.log('refresh');
         resize_grid();
     });
 };
@@ -326,7 +324,6 @@ $.Grid.Movement = function(input, form_data, grid_data){
         if (current.field.params && current.field.params.control == 'dropdown'){
             $item = $item.find('div.data');
         }
-        console.log($item);
         var value = util.make_normal($item, current.field);
         // if this is the first row we need to adjust the width to compensate for
         // any differences in the padding etc
@@ -351,7 +348,6 @@ $.Grid.Movement = function(input, form_data, grid_data){
             current.$row.addClass('dirty');
             current.$side.addClass('dirty');
 
-//            console.log('changed was; ' + current.value + ', now: ' + value);
         }
         current.$control = undefined;
     }
