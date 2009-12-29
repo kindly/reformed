@@ -237,8 +237,8 @@ $.Grid.Movement = function(input, form_data, grid_data){
     function init(){
         total_rows = $main.find('tr').size();
         total_cols = $main.find('tr').eq(0).children().size();
-        $main.click(click_main).keydown(keydown).dblclick(dblclick);
-        $side.click(click_side).dblclick(dblclick);
+        $main.click(click_main).keydown(keydown);
+        $side.click(click_side);
 
         focus();
         if (edit_mode){
@@ -275,6 +275,10 @@ $.Grid.Movement = function(input, form_data, grid_data){
                 }
             }
         }
+        // switch on edit mode if needed
+        if (!edit_mode){
+            edit_mode_on();
+        }
         if ($item[0].nodeName == 'TD'){
             var $row = $item.parent('tr');
             row = $row.parent().children().index($row);
@@ -285,14 +289,6 @@ $.Grid.Movement = function(input, form_data, grid_data){
         }
         if (fn_finalise){
             fn_finalise();
-        }
-        return false;
-    }
-
-    function dblclick(e){
-        // switch on edit mode if needed
-        if (!edit_mode){
-            edit_mode_on();
         }
         return false;
     }
