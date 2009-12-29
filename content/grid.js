@@ -806,12 +806,10 @@ $.Util.control_setup = function($control, field){
 $.Util.control_takedown = function($control, field){
     // add any events needed by the control
     // but start by removing any existing bound events
-    $control.unbind();
     if (field.params && field.params.control == 'dropdown'){
-        console.log('take_down' + field.type)
-        //  $control.trigger('unautocomplete');
-        $(':input').trigger('unautocomplete');
+        $control.unautocomplete();
     }
+    $control.unbind();
 };
 
 $.Util.make_editable = function($item, field){
