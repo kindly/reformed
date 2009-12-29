@@ -136,29 +136,34 @@ $.Grid = function(input, form_data, grid_data){
     }
     function resize_grid(){
         var foot_height = $.Util.Size.GRID_FOOTER_H;
+        var head_height = $.Util.Size.GRID_HEADER_H;
+        var side_width = $.Grid.SIDE_COLUMN_WIDTH;
+        var scrollbar_width = $.Util.Size.SCROLLBAR_WIDTH;
         var width = grid_size.width;
         var height = grid_size.height;
         $grid.width(width).height(height);
-        $grid_main.css({top : $.Util.Size.GRID_HEADER_H,
-                        left : $.Grid.SIDE_COLUMN_WIDTH,
-                        width : width - $.Grid.SIDE_COLUMN_WIDTH,
-                        height : height - $.Util.Size.GRID_HEADER_H - foot_height});
-        $grid_head.css({top:0, left:$.Grid.SIDE_COLUMN_WIDTH});
-        $grid_head.width(width - $.Grid.SIDE_COLUMN_WIDTH - $.Util.Size.SCROLLBAR_WIDTH);
 
-        $grid_side.css({top:$.Util.Size.GRID_HEADER_H, left:0});
-        $grid_side.height(height - $.Util.Size.GRID_HEADER_H - $.Util.Size.SCROLLBAR_WIDTH - foot_height);
-        $grid_side.width($.Grid.SIDE_COLUMN_WIDTH);
+        $grid_main.css({top : head_height,
+                        left : side_width,
+                        width : width - side_width,
+                        height : height - head_height - foot_height});
 
-        $grid_foot.css({top: height - foot_height,
-                        left:0,
-                        width: width,
-                        height: foot_height});
+        $grid_head.css({top : 0,
+                        left : side_width,
+                        width : width - side_width - scrollbar_width});
 
-        $grid_resizer.css({top:height - 15,
-                           left: width - 15});
+        $grid_side.css({top : head_height,
+                        left : 0,
+                        height : height - head_height - scrollbar_width - foot_height,
+                        width : side_width});
 
-       // $grid.
+        $grid_foot.css({top : height - foot_height,
+                        left : 0,
+                        width : width,
+                        height : foot_height});
+
+        $grid_resizer.css({top : height - 15,
+                           left : width - 15});
     }
 
     function resize_table_columns(){
