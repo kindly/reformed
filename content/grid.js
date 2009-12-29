@@ -923,7 +923,7 @@ $.Util.Size.get = function(){
     function grid(){
         // get interesting stuff about grid cells
         // needed for acurate resizing
-        var $div = $('<div style="overflow:hidden; width:100px; height:100px; position:absolute; left:200px; top:0px;"></div>');
+        var $div = $('<div style="overflow:hidden; width:100px; height:100px; position:absolute; left:-200px; top:0px;"></div>');
         $div.append('<table class="grid"><thead><tr><th>head</th></tr></thead><tbody><tr><td>body</td></tr><tr><td class="t_edited_cell">body</td></tr></tbody></table><div class="scroller-foot">foot</div>');
         $('body').append($div);
 
@@ -944,7 +944,7 @@ $.Util.Size.get = function(){
 
         $.Util.Size.GRID_COL_RESIZE_DIFF = $.Util.Size.GRID_HEADER_BORDER_W - $.Util.Size.GRID_BODY_BORDER_W;
         $.Util.Size.GRID_COL_EDIT_DIFF = $.Util.Size.GRID_BODY_BORDER_W_EDIT - $.Util.Size.GRID_BODY_BORDER_W;
-    //    $div.remove()
+        $div.remove()
     }
 
     scrollbar();
