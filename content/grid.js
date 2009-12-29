@@ -135,19 +135,25 @@ $.Grid = function(input, form_data, grid_data){
         }
     }
     function resize_grid(){
+        var foot_height = $.Util.Size.GRID_FOOTER_H;
         var width = grid_size.width;
         var height = grid_size.height;
         $grid.width(width).height(height);
         $grid_main.css({top : $.Util.Size.GRID_HEADER_H,
                         left : $.Grid.SIDE_COLUMN_WIDTH,
                         width : width - $.Grid.SIDE_COLUMN_WIDTH,
-                        height : height - $.Util.Size.GRID_HEADER_H});
+                        height : height - $.Util.Size.GRID_HEADER_H - foot_height});
         $grid_head.css({top:0, left:$.Grid.SIDE_COLUMN_WIDTH});
         $grid_head.width(width - $.Grid.SIDE_COLUMN_WIDTH - $.Util.Size.SCROLLBAR_WIDTH);
 
         $grid_side.css({top:$.Util.Size.GRID_HEADER_H, left:0});
-        $grid_side.height(height - $.Util.Size.GRID_HEADER_H - $.Util.Size.SCROLLBAR_WIDTH);
+        $grid_side.height(height - $.Util.Size.GRID_HEADER_H - $.Util.Size.SCROLLBAR_WIDTH - foot_height);
         $grid_side.width($.Grid.SIDE_COLUMN_WIDTH);
+
+        $grid_foot.css({top: height - foot_height,
+                        left:0,
+                        width: width,
+                        height: foot_height});
 
         $grid_resizer.css({top:height - 15,
                            left: width - 15});
@@ -194,6 +200,7 @@ $.Grid = function(input, form_data, grid_data){
     var $grid_side = $grid.find('div.scroller-side');
     var $grid_head = $grid.find('div.scroller-head');
     var $grid_main = $grid.find('div.scroller-main');
+    var $grid_foot = $grid.find('div.scroller-foot');
     var $grid_resizer = $grid.find('div.scroller-resizer');
     var $main = $(input).find('div.scroller-main table');
     var $head = $(input).find('div.scroller-head table');
@@ -632,6 +639,7 @@ $.Grid.Build = function(input, form_data, grid_data){
     var $side;
     var $head;
     var $main;
+    var $foot;
     var left = 0;
     var top = 0;
 
@@ -648,6 +656,9 @@ $.Grid.Build = function(input, form_data, grid_data){
         $main = $(body());
         $main.scroll(scroll);
         $div.append($main);
+
+        $foot = $(foot());
+        $div.append($foot);
 
         $div.append('<div class="scroller-resizer"></div>');
 
@@ -680,6 +691,10 @@ $.Grid.Build = function(input, form_data, grid_data){
         html.push('</tr></thead>');
         html.push('</table></div>');
         return html.join('');
+    }
+
+    function foot(){
+        return '<div class="scroller-foot">footer</div>';
     }
 
     function footer(){
@@ -903,8 +918,8 @@ $.Util.Size.get = function(){
     function grid(){
         // get interesting stuff about grid cells
         // needed for acurate resizing
-        var $div = $('<div style="overflow:hidden; width:100px; height:100px; position:absolute; left:-200px; top:0px;"></div>');
-        $div.append('<table class="grid"><thead><tr><th>head</th></tr></thead><tbody><tr><td>body</td></tr><tr><td class="t_edited_cell">body</td></tr></tbody></table>');
+        var $div = $('<div style="overflow:hidden; width:100px; height:100px; position:absolute; left:200px; top:0px;"></div>');
+        $div.append('<table class="grid"><thead><tr><th>head</th></tr></thead><tbody><tr><td>body</td></tr><tr><td class="t_edited_cell">body</td></tr></tbody></table><div class="scroller-foot">foot</div>');
         $('body').append($div);
 
         var $x = $div.find('th');
@@ -919,9 +934,12 @@ $.Util.Size.get = function(){
         $.Util.Size.GRID_BODY_BORDER_W_EDIT = $x.outerWidth() - $x.width();
         $.Util.Size.GRID_BODY_H_EDIT = $x.outerHeight();
 
+        var $x = $div.find('div.scroller-foot');
+        $.Util.Size.GRID_FOOTER_H = $x.outerHeight();
+
         $.Util.Size.GRID_COL_RESIZE_DIFF = $.Util.Size.GRID_HEADER_BORDER_W - $.Util.Size.GRID_BODY_BORDER_W;
         $.Util.Size.GRID_COL_EDIT_DIFF = $.Util.Size.GRID_BODY_BORDER_W_EDIT - $.Util.Size.GRID_BODY_BORDER_W;
-        $div.remove()
+    //    $div.remove()
     }
 
     scrollbar();

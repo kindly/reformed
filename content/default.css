@@ -402,6 +402,12 @@ td input {
     overflow:hidden;
     position:absolute;
 }
+
+.scroller-foot {
+    overflow:hidden;
+    position:absolute;
+}
+
 .scroller-resizer {
     background-color:transparent;
     width:15px;
