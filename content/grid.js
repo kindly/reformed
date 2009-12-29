@@ -27,13 +27,13 @@
 (function($) {
 	
 $.fn.extend({
-	grid: function(form_data, grid_data) {
+	grid: function(form_data, grid_data, paging_data) {
 		
-		$.Grid(this, form_data, grid_data);
+		$.Grid(this, form_data, grid_data, paging_data);
 	}
 });
 
-$.Grid = function(input, form_data, grid_data){
+$.Grid = function(input, form_data, grid_data, paging_data){
 
     function start_grid_resize(e){
         // begin resizing
@@ -198,7 +198,7 @@ $.Grid = function(input, form_data, grid_data){
 
     var grid_size = {width : 500, height : 300};
     // create the table
-    $.Grid.Build(input, form_data, grid_data);
+    $.Grid.Build(input, form_data, grid_data, paging_data);
 
 
     var $grid = $(input).find('div.scroller');
@@ -644,7 +644,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
 };
 
-$.Grid.Build = function(input, form_data, grid_data){
+$.Grid.Build = function(input, form_data, grid_data, paging_data){
 
     var $side;
     var $head;
@@ -704,7 +704,10 @@ $.Grid.Build = function(input, form_data, grid_data){
     }
 
     function foot(){
-        return '<div class="scroller-foot">footer</div>';
+        var html = '<div class="scroller-foot">';
+        html += $.Util.paging_bar(paging_data);
+        html += '</div>';
+        return html
     }
 
     function footer(){
@@ -905,6 +908,50 @@ $.Util.make_normal = function($item, field){
     }
     return value;
 };
+
+$.Util.paging_bar = function (data){
+
+    var PAGING_SIZE = 5;
+    var html ='paging: ';
+    var offset = data.offset;
+    var limit = data.limit;
+    var count = data.row_count;
+    var base = data.base_link;
+
+    var pages = Math.ceil(count/limit);
+    var current = Math.floor(offset/limit);
+
+    if (current>0){
+        html += '<a href="#/' + base + '&o=0&l=' + limit +'">|&lt;</a> ';
+        html += '<a href="#/' + base + '&o=' + (current-1) * limit + '&l=' + limit +'">&lt;</a> ';
+    } else {
+        html += '|&lt; ';
+        html += '&lt; ';
+    }
+    for (var i=0; i < pages; i++){
+        if (i == current){
+            html += (i+1) + ' ';
+        } else {
+            if ( Math.abs(current-i)<PAGING_SIZE ||
+                 (i<(PAGING_SIZE*2)-1 && current<PAGING_SIZE) ||
+                 (pages-i<(PAGING_SIZE*2) && current>pages-PAGING_SIZE)
+            ){
+                html += '<a href="#/' + base + '&o=' + i * limit + '&l=' + limit +'">' + (i+1) + '</a> ';
+            }
+        }
+    }
+    if (current<pages - 1){
+        html += '<a href="#/' + base + '&o=' + (current + 1) * limit + '&l=' + limit +'">&gt;</a> ';
+        html += '<a href="#/' + base + '&o=' + (pages - 1) * limit + '&l=' + limit +'">&gt;|</a> ';
+    } else {
+        html += '&gt; ';
+        html += '&gt;| ';
+    }
+
+    html += 'page ' + (current+1) + ' of ' + pages;
+    return html;
+};
+
 
 // $.Util.Size
 // this is used to calculate and store size related info

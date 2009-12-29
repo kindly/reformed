@@ -1449,7 +1449,7 @@ var fn = function(packet, job){
              data = packet.data.data.data;
              var paging = packet.data.data.paging;
              if (form.params && form.params.form_type == 'grid'){
-                $('#' + root).grid(form, data);
+                $('#' + root).grid(form, data, paging);
              } else {
                 $('#' + root).html(node_generate_html(form, data, paging, root)).scrollTop(0);
                 form_setup(root, form);
