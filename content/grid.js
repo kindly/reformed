@@ -307,16 +307,18 @@ $.Grid.Movement = function(input, form_data, grid_data){
     function make_editable(){
         // make the cell editable
         var $item = current.$item;
+        // is this a complex control?
+        var complex_control = (current.field.params && current.field.params.control == 'dropdown');
 
-        // is this a complex control
-        if (current.field.params && current.field.params.control == 'dropdown'){
+        if (complex_control){
             $item = $item.find('div.data');
         }
 
         current.$control = util.make_editable($item, current.field);
         // if this is the first row we need to adjust the width to compensate for
         // any differences in the padding etc
-        if (current.row === 0){
+        // don't do this for complex conrols as they do thier own wrapping
+        if (current.row === 0 && !complex_control){
             current.$item.width(current.$item.width() - $.Util.Size.GRID_COL_EDIT_DIFF);
         }
         current.value = grid_data[current.row][current.field.name];
@@ -333,13 +335,16 @@ $.Grid.Movement = function(input, form_data, grid_data){
     function make_normal(){
         // return the item to it's normal state
         var $item = current.$item;
-        if (current.field.params && current.field.params.control == 'dropdown'){
+        // is this a complex control?
+        var complex_control = (current.field.params && current.field.params.control == 'dropdown');
+        if (complex_control){
             $item = $item.find('div.data');
         }
         var value = util.make_normal($item, current.field);
         // if this is the first row we need to adjust the width to compensate for
         // any differences in the padding etc
-        if (current.row === 0){
+        // don't do this for complex conrols as they do thier own wrapping
+        if (current.row === 0 && !complex_control){
             current.$item.width(current.$item.width() + $.Util.Size.GRID_COL_EDIT_DIFF);
         }
         if (value === current.value){
@@ -758,9 +763,9 @@ $.Grid.Build = function(input, form_data, grid_data){
             }
             if (item.params && item.params.control == 'dropdown'){
                 if (value === null){
-                    html.push('<td class="null"><div class="but_dd"/><div class="data">[NULL]</div></td>');
+                    html.push('<td class="null complex"><div class="but_dd"/><div class="data">[NULL]</div></td>');
                 } else {
-                    html.push('<td><div class="but_dd"/><div class="data">' + value + '</div></td>');
+                    html.push('<td class="complex"><div class="but_dd"/><div class="data">' + value + '</div></td>');
                 }
             }
             else {
