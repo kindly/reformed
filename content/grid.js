@@ -214,7 +214,7 @@ $.Grid = function(input, form_data, grid_data){
     var headers = $head.find('th');
     for (var i = 0, n=headers.size() ; i < n ; i++){
         // add the resizer
-        headers.eq(i).dblclick(auto_resize).prepend($('<div class="t_resizer" ></div>').mousedown(start_column_resize));
+        headers.eq(i).prepend($('<div class="t_resizer" ></div>').mousedown(start_column_resize).dblclick(auto_resize));
     }
     $grid_resizer.mousedown(start_grid_resize);
     // add grid movement functionality
