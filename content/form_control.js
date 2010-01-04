@@ -682,3 +682,8 @@ var toISOString = Date.prototype.toISOString ?
 Date.ISO = ISO;
 })();
 
+// string trim() function
+if(!String.trim){
+    String.prototype.trim = function() { return this.replace(/^\s*((?:[\S\s]*\S)?)\s*$/, '$1'); };
+}
+

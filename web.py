@@ -1,3 +1,24 @@
+##   This file is part of Reformed.
+##
+##   Reformed is free software: you can redistribute it and/or modify
+##   it under the terms of the GNU General Public License version 2 as
+##   published by the Free Software Foundation.
+##
+##   Reformed is distributed in the hope that it will be useful,
+##   but WITHOUT ANY WARRANTY; without even the implied warranty of
+##   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+##   GNU General Public License for more details.
+##
+##   You should have received a copy of the GNU General Public License
+##   along with Reformed.  If not, see <http://www.gnu.org/licenses/>.
+##
+##   -----------------------------------------------------------------
+##
+##   Reformed
+##   Copyright (c) 2008-2010 Toby Dacre & David Raznick
+##
+
+
 import os
 import os.path
 import sys
@@ -19,7 +40,7 @@ def session(environ):
     if global_session.session.get('user_id') == None:
         global_session.session['user_id'] = 0
         global_session.session['permissions'] = []
-        print 'new session'
+
 
 # I'd like to put this in the WebApplication class but it
 # doesn't like the decorator if I do :(
@@ -37,7 +58,7 @@ def process_autocomplete(environ, start_response):
     request = environ['PATH_INFO'].split("/")[2:]
     q = str(formdata.getvalue('q'))
     limit = int(formdata.getvalue('limit'))
-    print 'q=%s, limit=%s' % (q, limit)
+
     start_response('200 OK', [('Content-Type', 'text/html')])
 
     return lookup.table_lookup(q, limit, request, http_session)
@@ -58,27 +79,21 @@ def process_node(environ, start_response):
     except:
         body = {}
 
-    moo = interface.Interface()
+    node_interface = interface.Interface()
 
-    moo.add_command(head, body)
-    moo.process()
-    data = moo.output
+    node_interface.add_command(head, body)
+    node_interface.process()
+    data = node_interface.output
 
     start_response('200 OK', [('Content-Type', 'text/html')])
     try:
-        print json.dumps(data, sort_keys=False, indent=4)
-        print 'length %s bytes' % len(json.dumps(data, sort_keys=True, indent=4))
-        print 'condenced length %s bytes' % len(json.dumps(data, separators=(',',':')))
-        print 'SESSION\n%s' % global_session.session
-        print 'DONE'
         return [json.dumps(data, separators=(',',':'))]
     except TypeError:
         # we had a problem with the JSON conversion
-        print traceback.format_exc()
         # let's send the error to the front-end
         error_msg = 'JSON OUTPUT FAIL\n\n%s' % traceback.format_exc()
         info = {'action': 'general_error',
-                'node' : 'moo',
+                'node' : 'JSON error',
                 'data' : error_msg}
         data = [{'data' : info, 'type' : 'node'}]
         return [json.dumps(data,  separators=(',',':'))]
@@ -90,10 +105,9 @@ class WebApplication(object):
     def static(self, environ, start_response, path):
         """Serve static content"""
 
-        print "STATIC %s" % path
         root = os.path.dirname(os.path.abspath(__file__))
         path = '%s/content/%s' % (root, path) # does this work in windows?
-        print path
+
         if os.path.isfile(path):
             stat = os.stat(path)
             mimetype = mimetypes.guess_type(path)[0] or 'application/octet-stream'
@@ -121,7 +135,6 @@ class WebApplication(object):
                 start_response('304 Not Modified', headers)
                 return []
             else:
-                print path
                 start_response('200 OK', headers)
                 f = open(path, 'rb')
                 return wsgiref.util.FileWrapper(f)

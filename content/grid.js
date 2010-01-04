@@ -27,13 +27,13 @@
 (function($) {
 	
 $.fn.extend({
-	grid: function(form_data, grid_data) {
+	grid: function(form_data, grid_data, paging_data) {
 		
-		$.Grid(this, form_data, grid_data);
+		$.Grid(this, form_data, grid_data, paging_data);
 	}
 });
 
-$.Grid = function(input, form_data, grid_data){
+$.Grid = function(input, form_data, grid_data, paging_data){
 
     function start_grid_resize(e){
         // begin resizing
@@ -198,7 +198,7 @@ $.Grid = function(input, form_data, grid_data){
 
     var grid_size = {width : 500, height : 300};
     // create the table
-    $.Grid.Build(input, form_data, grid_data);
+    $.Grid.Build(input, form_data, grid_data, paging_data);
 
 
     var $grid = $(input).find('div.scroller');
@@ -307,16 +307,18 @@ $.Grid.Movement = function(input, form_data, grid_data){
     function make_editable(){
         // make the cell editable
         var $item = current.$item;
+        // is this a complex control?
+        var complex_control = (current.field.params && current.field.params.control == 'dropdown');
 
-        // is this a complex control
-        if (current.field.params && current.field.params.control == 'dropdown'){
+        if (complex_control){
             $item = $item.find('div.data');
         }
 
         current.$control = util.make_editable($item, current.field);
         // if this is the first row we need to adjust the width to compensate for
         // any differences in the padding etc
-        if (current.row === 0){
+        // don't do this for complex conrols as they do thier own wrapping
+        if (current.row === 0 && !complex_control){
             current.$item.width(current.$item.width() - $.Util.Size.GRID_COL_EDIT_DIFF);
         }
         current.value = grid_data[current.row][current.field.name];
@@ -333,13 +335,16 @@ $.Grid.Movement = function(input, form_data, grid_data){
     function make_normal(){
         // return the item to it's normal state
         var $item = current.$item;
-        if (current.field.params && current.field.params.control == 'dropdown'){
+        // is this a complex control?
+        var complex_control = (current.field.params && current.field.params.control == 'dropdown');
+        if (complex_control){
             $item = $item.find('div.data');
         }
         var value = util.make_normal($item, current.field);
         // if this is the first row we need to adjust the width to compensate for
         // any differences in the padding etc
-        if (current.row === 0){
+        // don't do this for complex conrols as they do thier own wrapping
+        if (current.row === 0 && !complex_control){
             current.$item.width(current.$item.width() + $.Util.Size.GRID_COL_EDIT_DIFF);
         }
         if (value === current.value){
@@ -639,7 +644,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
 };
 
-$.Grid.Build = function(input, form_data, grid_data){
+$.Grid.Build = function(input, form_data, grid_data, paging_data){
 
     var $side;
     var $head;
@@ -655,10 +660,12 @@ $.Grid.Build = function(input, form_data, grid_data){
         $head = $(header());
         $div.append($head);
 
-        $side = $(selectors());
+        rows = build_rows();
+
+        $side = $(rows.selectors);
         $div.append($side);
 
-        $main = $(body());
+        $main = $(rows.body);
         $main.scroll(scroll);
         $div.append($main);
 
@@ -699,7 +706,10 @@ $.Grid.Build = function(input, form_data, grid_data){
     }
 
     function foot(){
-        return '<div class="scroller-foot">footer</div>';
+        var html = '<div class="scroller-foot">';
+        html += $.Util.paging_bar(paging_data);
+        html += '</div>';
+        return html
     }
 
     function footer(){
@@ -710,28 +720,28 @@ $.Grid.Build = function(input, form_data, grid_data){
         return html;
     }
 
-    function selectors(){
-        var html = [];
-        html.push('<div class="scroller-side"><table class="t_grid">');
-        html.push('<tbody>');
-        for (var i = 0, n = grid_data.length; i < n ; i++){
-            html.push('<tr><td>' + i + '</td></tr>');
-        }
-        html.push('</tbody>');
-        html.push('</table></div>');
-        return html.join('');
-    }
+    function build_rows(){
+        var body_html = [];
+        var selectors_html = [];
 
-    function body(){
-        var html = [];
-        html.push('<div class="scroller-main"><table class="t_grid">');
-        html.push('<tbody>');
+        body_html.push('<div class="scroller-main"><table class="t_grid">');
+        body_html.push('<tbody>');
+
+        selectors_html.push('<div class="scroller-side"><table class="t_grid">');
+        selectors_html.push('<tbody>');
+
         for (var i = 0, n = grid_data.length; i < n ; i++){
-            html.push(row(grid_data[i], i));
+            body_html.push(row(grid_data[i], i));
+            selectors_html.push('<tr><td>' + i + '</td></tr>');
         }
-        html.push('</tbody>');
-        html.push('</table></div>');
-        return html.join('');
+        body_html.push('</tbody>');
+        body_html.push('</table></div>');
+
+        selectors_html.push('</tbody>');
+        selectors_html.push('</table></div>');
+
+        return {body : body_html.join(''),
+                selectors : selectors_html.join('')};
     }
 
     function row(row_data, row_number){
@@ -758,9 +768,9 @@ $.Grid.Build = function(input, form_data, grid_data){
             }
             if (item.params && item.params.control == 'dropdown'){
                 if (value === null){
-                    html.push('<td class="null"><div class="but_dd"/><div class="data">[NULL]</div></td>');
+                    html.push('<td class="null complex"><div class="but_dd"/><div class="data">[NULL]</div></td>');
                 } else {
-                    html.push('<td><div class="but_dd"/><div class="data">' + value + '</div></td>');
+                    html.push('<td class="complex"><div class="but_dd"/><div class="data">' + value + '</div></td>');
                 }
             }
             else {
@@ -900,6 +910,50 @@ $.Util.make_normal = function($item, field){
     }
     return value;
 };
+
+$.Util.paging_bar = function (data){
+
+    var PAGING_SIZE = 5;
+    var html ='paging: ';
+    var offset = data.offset;
+    var limit = data.limit;
+    var count = data.row_count;
+    var base = data.base_link;
+
+    var pages = Math.ceil(count/limit);
+    var current = Math.floor(offset/limit);
+
+    if (current>0){
+        html += '<a href="#" onclick="node_load(\'' + base + '&o=0&l=' + limit +'\');return false;">|&lt;</a> ';
+        html += '<a href="#" onclick="node_load(\'' + base + '&o=' + (current-1) * limit + '&l=' + limit +'\');return false;">&lt;</a> ';
+    } else {
+        html += '|&lt; ';
+        html += '&lt; ';
+    }
+    for (var i=0; i < pages; i++){
+        if (i == current){
+            html += (i+1) + ' ';
+        } else {
+            if ( Math.abs(current-i)<PAGING_SIZE ||
+                 (i<(PAGING_SIZE*2)-1 && current<PAGING_SIZE) ||
+                 (pages-i<(PAGING_SIZE*2) && current>pages-PAGING_SIZE)
+            ){
+                html += '<a href="#" onclick="node_load(\'' + base + '&o=' + i * limit + '&l=' + limit +'\');return false;">' + (i+1) + '</a> ';
+            }
+        }
+    }
+    if (current<pages - 1){
+        html += '<a href="#" onclick="node_load(\'' + base + '&o=' + (current+1) * limit + '&l=' + limit +'\');return false;">&gt;</a> ';
+        html += '<a href="#" onclick="node_load(\'' + base + '&o=' + (pages-1) * limit + '&l=' + limit +'\');return false;">&gt;|</a> ';
+    } else {
+        html += '&gt; ';
+        html += '&gt;| ';
+    }
+
+    html += 'page ' + (current+1) + ' of ' + pages;
+    return html;
+};
+
 
 // $.Util.Size
 // this is used to calculate and store size related info
