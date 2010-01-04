@@ -141,7 +141,6 @@ border-right:0;
 border-top:0;
 
 overflow:hidden;
-height:1em;
 text-overflow:ellipsis;
 white-space:nowrap;
 
@@ -432,7 +431,6 @@ border-right:0;
 border-right:1px solid #DDD;
 border-top:0;
 overflow:hidden;
-height:1em;
 text-overflow:ellipsis;
 white-space:nowrap;
 }
@@ -441,7 +439,7 @@ white-space:nowrap;
 td div.but_dd {
 background-color:red;
 float:right;
-height:100%;
+height:1em;
 position:relative;
 width:20px;
 }
@@ -465,3 +463,7 @@ td.complex.t_edited_cell div.data {
     padding:0;
 }
 
+
+td, body, input, select, textarea, th {
+    font-family: arial, verdana;
+}
