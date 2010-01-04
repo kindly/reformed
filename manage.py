@@ -99,7 +99,7 @@ def run():
         #print "Serving HTTP on %s port %s ..." % httpd.socket.getsockname()
 
         try:
-            httpserver.serve(application, port = 8000)
+            httpserver.serve(application, port = 8000, host = "10.0.0.5")
             #httpd.serve_forever()
         except KeyboardInterrupt:
             pass

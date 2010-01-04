@@ -428,7 +428,7 @@ class TableNode(Node):
         if self.get_bookmarks: 
             self.bookmark = r.reformed.search("bookmarks", "user_id = ?", values = [user])["data"]
         else:
-            self.bookmark = node
+            self.bookmark = result
 
 
 

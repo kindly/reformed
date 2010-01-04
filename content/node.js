@@ -1437,7 +1437,7 @@ var fn = function(packet, job){
                bookmark_add(bookmark[i].bookmark, bookmark[i].title);
             }
         } else {
-            bookmark_add(bookmark, title);
+            bookmark_add(bookmark.bookmark, bookmark.title);
         }
     }
     var data;
