@@ -58,11 +58,11 @@ def process_node(environ, start_response):
     except:
         body = {}
 
-    moo = interface.Interface()
+    node_interface = interface.Interface()
 
-    moo.add_command(head, body)
-    moo.process()
-    data = moo.output
+    node_interface.add_command(head, body)
+    node_interface.process()
+    data = node_interface.output
 
     start_response('200 OK', [('Content-Type', 'text/html')])
     try:
@@ -72,7 +72,7 @@ def process_node(environ, start_response):
         # let's send the error to the front-end
         error_msg = 'JSON OUTPUT FAIL\n\n%s' % traceback.format_exc()
         info = {'action': 'general_error',
-                'node' : 'moo',
+                'node' : 'JSON error',
                 'data' : error_msg}
         data = [{'data' : info, 'type' : 'node'}]
         return [json.dumps(data,  separators=(',',':'))]
