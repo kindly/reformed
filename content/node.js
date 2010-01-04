@@ -54,7 +54,7 @@ function node_load(arg){
         if (link[2].substring(0,1) == '_'){
             node_call_from_string(arg, true, false);
         } else {
-        $.address.value(arg);
+            $.address.value(arg);
         }
     }
 }
