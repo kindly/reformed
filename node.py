@@ -412,7 +412,7 @@ class TableNode(Node):
 
         try:
             result = r.reformed.search_single("bookmarks", "user_id = ? and bookmark = ?", values = [user, node])
-            result["accessed_date"] = datetime.datetime.now()
+            result["accessed_date"] = util.convert_value(datetime.datetime.now())
             result["title"] = self.title
         except custom_exceptions.SingleResultError:
             result = {"__table": "bookmarks",
@@ -421,7 +421,7 @@ class TableNode(Node):
                       "bookmark": node,
                       "title": self.title,
                       "entity_table": table_id,
-                      "accessed_date": datetime.datetime.now()}
+                      "accessed_date": util.convert_value(datetime.datetime.now())}
 
         util.load_local_data(r.reformed, result)
 
