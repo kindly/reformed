@@ -924,8 +924,8 @@ $.Util.paging_bar = function (data){
     var current = Math.floor(offset/limit);
 
     if (current>0){
-        html += '<a href="#/' + base + '&o=0&l=' + limit +'">|&lt;</a> ';
-        html += '<a href="#/' + base + '&o=' + (current-1) * limit + '&l=' + limit +'">&lt;</a> ';
+        html += '<a href="#" onclick="node_load(\'' + base + '&o=0&l=' + limit +'\');return false;">|&lt;</a> ';
+        html += '<a href="#" onclick="node_load(\'' + base + '&o=' + (current-1) * limit + '&l=' + limit +'\');return false;">&lt;</a> ';
     } else {
         html += '|&lt; ';
         html += '&lt; ';
@@ -938,13 +938,13 @@ $.Util.paging_bar = function (data){
                  (i<(PAGING_SIZE*2)-1 && current<PAGING_SIZE) ||
                  (pages-i<(PAGING_SIZE*2) && current>pages-PAGING_SIZE)
             ){
-                html += '<a href="#/' + base + '&o=' + i * limit + '&l=' + limit +'">' + (i+1) + '</a> ';
+                html += '<a href="#" onclick="node_load(\'' + base + '&o=' + i * limit + '&l=' + limit +'\');return false;">' + (i+1) + '</a> ';
             }
         }
     }
     if (current<pages - 1){
-        html += '<a href="#/' + base + '&o=' + (current + 1) * limit + '&l=' + limit +'">&gt;</a> ';
-        html += '<a href="#/' + base + '&o=' + (pages - 1) * limit + '&l=' + limit +'">&gt;|</a> ';
+        html += '<a href="#" onclick="node_load(\'' + base + '&o=' + (current+1) * limit + '&l=' + limit +'\');return false;">&gt;</a> ';
+        html += '<a href="#" onclick="node_load(\'' + base + '&o=' + (pages-1) * limit + '&l=' + limit +'\');return false;">&gt;|</a> ';
     } else {
         html += '&gt; ';
         html += '&gt;| ';
