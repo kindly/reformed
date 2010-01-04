@@ -19,7 +19,7 @@ def session(environ):
     if global_session.session.get('user_id') == None:
         global_session.session['user_id'] = 0
         global_session.session['permissions'] = []
-        print 'new session'
+
 
 # I'd like to put this in the WebApplication class but it
 # doesn't like the decorator if I do :(
@@ -37,7 +37,7 @@ def process_autocomplete(environ, start_response):
     request = environ['PATH_INFO'].split("/")[2:]
     q = str(formdata.getvalue('q'))
     limit = int(formdata.getvalue('limit'))
-    print 'q=%s, limit=%s' % (q, limit)
+
     start_response('200 OK', [('Content-Type', 'text/html')])
 
     return lookup.table_lookup(q, limit, request, http_session)
@@ -66,15 +66,9 @@ def process_node(environ, start_response):
 
     start_response('200 OK', [('Content-Type', 'text/html')])
     try:
-        print json.dumps(data, sort_keys=False, indent=4)
-        print 'length %s bytes' % len(json.dumps(data, sort_keys=True, indent=4))
-        print 'condenced length %s bytes' % len(json.dumps(data, separators=(',',':')))
-        print 'SESSION\n%s' % global_session.session
-        print 'DONE'
         return [json.dumps(data, separators=(',',':'))]
     except TypeError:
         # we had a problem with the JSON conversion
-        print traceback.format_exc()
         # let's send the error to the front-end
         error_msg = 'JSON OUTPUT FAIL\n\n%s' % traceback.format_exc()
         info = {'action': 'general_error',
@@ -90,10 +84,9 @@ class WebApplication(object):
     def static(self, environ, start_response, path):
         """Serve static content"""
 
-        print "STATIC %s" % path
         root = os.path.dirname(os.path.abspath(__file__))
         path = '%s/content/%s' % (root, path) # does this work in windows?
-        print path
+
         if os.path.isfile(path):
             stat = os.stat(path)
             mimetype = mimetypes.guess_type(path)[0] or 'application/octet-stream'
@@ -121,7 +114,6 @@ class WebApplication(object):
                 start_response('304 Not Modified', headers)
                 return []
             else:
-                print path
                 start_response('200 OK', headers)
                 f = open(path, 'rb')
                 return wsgiref.util.FileWrapper(f)
