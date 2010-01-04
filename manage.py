@@ -72,6 +72,10 @@ def undump():
     from reformed.reformed import reformed
     load_json_from_file('data/users.json', reformed, 'user')
 
+def reloader():
+    import paste.reloader
+    paste.reloader.install()
+
 def run():
     print 'starting webserver'
     import beaker.middleware
@@ -82,18 +86,21 @@ def run():
         from wsgiref.handlers import BaseCGIHandler
         BaseCGIHandler(sys.stdin, sys.stdout, sys.stderr, os.environ).run(http.app)
     else:
-        from wsgiref.simple_server import WSGIServer, WSGIRequestHandler
-        httpd = WSGIServer(('', 8000), WSGIRequestHandler)
+
+        from paste import httpserver
+        #from wsgiref.simple_server import WSGIServer, WSGIRequestHandler
+        #httpd = WSGIServer(('', 8000), WSGIRequestHandler)
         application = web.WebApplication()
         
         application = beaker.middleware.SessionMiddleware(application, {"session.type": "memory",
                                                                         "session.auto": True})
 
-        httpd.set_app(application)
+        #httpd.set_app(application)
+        #print "Serving HTTP on %s port %s ..." % httpd.socket.getsockname()
 
-        print "Serving HTTP on %s port %s ..." % httpd.socket.getsockname()
         try:
-            httpd.serve_forever()
+            httpserver.serve(application, port = 8000)
+            #httpd.serve_forever()
         except KeyboardInterrupt:
             pass
 
@@ -113,6 +120,9 @@ if __name__ == "__main__":
         if "run" not in sys.argv:
             load_data()
         load = True
+   if 'reload' in sys.argv:
+        reloader()
+        run()
    if 'run' in sys.argv:
         run()
    if 'test' in sys.argv:
