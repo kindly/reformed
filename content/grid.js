@@ -660,10 +660,12 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
         $head = $(header());
         $div.append($head);
 
-        $side = $(selectors());
+        rows = build_rows();
+
+        $side = $(rows.selectors);
         $div.append($side);
 
-        $main = $(body());
+        $main = $(rows.body);
         $main.scroll(scroll);
         $div.append($main);
 
@@ -718,28 +720,28 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
         return html;
     }
 
-    function selectors(){
-        var html = [];
-        html.push('<div class="scroller-side"><table class="t_grid">');
-        html.push('<tbody>');
-        for (var i = 0, n = grid_data.length; i < n ; i++){
-            html.push('<tr><td>' + i + '</td></tr>');
-        }
-        html.push('</tbody>');
-        html.push('</table></div>');
-        return html.join('');
-    }
+    function build_rows(){
+        var body_html = [];
+        var selectors_html = [];
 
-    function body(){
-        var html = [];
-        html.push('<div class="scroller-main"><table class="t_grid">');
-        html.push('<tbody>');
+        body_html.push('<div class="scroller-main"><table class="t_grid">');
+        body_html.push('<tbody>');
+
+        selectors_html.push('<div class="scroller-side"><table class="t_grid">');
+        selectors_html.push('<tbody>');
+
         for (var i = 0, n = grid_data.length; i < n ; i++){
-            html.push(row(grid_data[i], i));
+            body_html.push(row(grid_data[i], i));
+            selectors_html.push('<tr><td>' + i + '</td></tr>');
         }
-        html.push('</tbody>');
-        html.push('</table></div>');
-        return html.join('');
+        body_html.push('</tbody>');
+        body_html.push('</table></div>');
+
+        selectors_html.push('</tbody>');
+        selectors_html.push('</table></div>');
+
+        return {body : body_html.join(''),
+                selectors : selectors_html.join('')};
     }
 
     function row(row_data, row_number){
