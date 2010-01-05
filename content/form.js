@@ -61,6 +61,34 @@ $.Form.Movement = function(input, form_data, row_data){
         } else {
             edit_mode_off();
         }
+        $input.bind('save', function (){
+            save();
+        });
+    }
+
+    function save(){
+        console.log('save');
+        if (current.dirty){
+            // get our data to save
+            var save_data = {};
+            for (var item in row_data){
+                save_data[item] = row_data[item];
+            }
+            for (var item in row_info){
+                save_data[item] = row_info[item];
+            }
+            // any extra data needed from the form
+            params = form_data.params;
+            if (params && params.extras){
+                for (var extra in params.extras){
+                    if (params.extras.hasOwnProperty(extra)){
+                        save_data[extra] = params.extras[extra];
+                    }
+                }
+            }
+            console.log(save_data);
+            get_node('test.AutoFormPlus', '_save', save_data, false);
+        }
     }
 
     function form_mousedown(e){
@@ -81,6 +109,37 @@ $.Form.Movement = function(input, form_data, row_data){
 
 
 
+    function make_editable(){
+        // make the cell editable
+        var $item = current.$item;
+        // is this a complex control?
+        var complex_control = (current.field.params && current.field.params.control == 'dropdown');
+
+        if (complex_control){
+            for (var item in row_info){
+                save_data[item] = row_info[item];
+            }
+        }
+    }
+
+    function form_mousedown(e){
+        var actioned = false;
+        var item = e.target;
+        // switch on edit mode if needed
+        if (!edit_mode){
+            edit_mode_on();
+        }
+        if (item.nodeName == 'SPAN'){
+            var $field = $(item).parent('p');
+            var $item = $field.find('span').eq(1);
+            // which field?
+            field_number = $input.children().index($field);
+            selected($item, $field);
+            actioned = true;
+        }
+        return !actioned;
+    }
+
 
 
     function make_editable(){
@@ -96,9 +155,13 @@ $.Form.Movement = function(input, form_data, row_data){
         current.$control = util.make_editable($item, current.field);
         current.value = row_data[current.field.name];
     }
-/*
- *check_row_dirty
- */
+
+    function check_row_dirty(){
+        if (is_empty(row_info[current.row])){
+            current.dirty = false;
+        }
+    }
+
     function make_normal(){
         // return the item to it's normal state
         var $item = current.$item;
@@ -115,7 +178,7 @@ $.Form.Movement = function(input, form_data, row_data){
             if (row_info[current.field.name]){
                 delete row_info[current.field.name];
              }
-   //         check_row_dirty();
+            check_row_dirty();
         } else {
             // has changed
             row_info[current.field.name] = value;
