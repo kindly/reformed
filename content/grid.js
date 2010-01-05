@@ -275,6 +275,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
     function click_main(e){
         // click in the main table body
+        var actioned = false;
         var $item = $(e.target);
         var fn_finalise;
         // if this control is complex eg. dropdown.
@@ -300,11 +301,12 @@ $.Grid.Movement = function(input, form_data, grid_data){
             var this_col = $item.parent().children().index($item);
             col = this_col;
             selected($item, $row, $row_side);
+            actioned = true;
         }
         if (fn_finalise){
             fn_finalise();
         }
-        return false;
+        return !actioned;
     }
 
 
