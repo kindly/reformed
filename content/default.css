@@ -85,11 +85,7 @@ button {
 	lborder-color:#DDD;
 }
 
-input, select{
-	border:1px solid #DDD;
-	color:#333;
-    float:left;
-}
+
 
 .form_data{
 	margin-left:50px;
@@ -306,10 +302,14 @@ div.form_body > div > input.error {
 .grid_table {
     width:100%;
 }
+input {
+	border:1px solid #DDD;
+	color:#333;
+}
 
 td input {
     width:100%;
-
+    float:left;
 }
 
 .link_list a{
