@@ -467,3 +467,20 @@ td.complex.t_edited_cell div.data {
 td, body, input, select, textarea, th {
     font-family: arial, verdana;
 }
+
+span.form_label {
+    font-weight:bold;
+}
+
+.f_selected_cell {
+    background-color: #FCF;
+}
+
+.f_edited_cell {
+    padding: 0;
+    background-color: #CCF;
+}
+
+span.f_cell.dirty {
+    font-weight:bold;
+}
