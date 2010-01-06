@@ -22,6 +22,7 @@ import nodes
 import traceback
 import imp
 import sys
+import paste
 
 
 def node(data, caller):

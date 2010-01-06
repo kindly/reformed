@@ -20,8 +20,10 @@
 
 import reformed.reformed as r
 import reformed.util as util
+from reformed import custom_exceptions
 import formencode as fe
 import sqlalchemy as sa
+import datetime
 from global_session import global_session
 
 class Node(object):
@@ -38,6 +40,7 @@ class Node(object):
         self.next_node = None
         self.next_data = None
         self.extra_data = {}
+        self.get_bookmarks = data.get("get_bookmarks", False)
         self.allowed = self.check_permissions()
 
         self.last_node = data.get('lastnode')
@@ -401,7 +404,32 @@ class TableNode(Node):
         data = create_form_data(self.fields, self.form_params, data_out, read_only)
         self.out = data
         self.action = 'form'
-        self.bookmark = self.build_node('', 'view', 'id=%s' %  id)
+
+
+        table_id = r.reformed[data_out.get("__table")].table_id
+        node = self.build_node('', 'view', 'id=%s' %  id)
+        user = global_session.session['user_id'] 
+
+        try:
+            result = r.reformed.search_single("bookmarks", "user_id = ? and bookmark = ?", values = [user, node])
+            result["accessed_date"] = util.convert_value(datetime.datetime.now())
+            result["title"] = self.title
+        except custom_exceptions.SingleResultError:
+            result = {"__table": "bookmarks",
+                      "entity_id": id,
+                      "user_id": user,
+                      "bookmark": node,
+                      "title": self.title,
+                      "entity_table": table_id,
+                      "accessed_date": util.convert_value(datetime.datetime.now())}
+
+        util.load_local_data(r.reformed, result)
+
+        if self.get_bookmarks: 
+            self.bookmark = r.reformed.search("bookmarks", "user_id = ?", values = [user])["data"]
+        else:
+            self.bookmark = result
+
 
 
     def code_data(self, code_group_name, data_out):

@@ -808,6 +808,11 @@ function get_node(node_name, node_command, node_data, change_state){
     if (node_data){
         info.data = node_data;
     }
+
+    if (bookmark_array.length === 0){
+        info.get_bookmarks = true
+    }
+
     $JOB.add(info, {}, 'node', true);
 }
 
@@ -1312,8 +1317,8 @@ function job_processor_status(data, node, root){
 }
 
 var bookmark_array = [];
-var BOOKMARKS_SHOW_MAX = 3;
-var BOOKMARK_ARRAY_MAX = 3;
+var BOOKMARKS_SHOW_MAX = 6;
+var BOOKMARK_ARRAY_MAX = 6;
 
 function bookmark_add(link, title){
     // remove the item if already in the list
@@ -1427,7 +1432,13 @@ var fn = function(packet, job){
 
     var bookmark = packet.data.bookmark;
     if (bookmark){
-        bookmark_add(bookmark, title);
+        if (typeof bookmark === "object"){
+            for (i = 0; i < bookmark.length; i++){
+               bookmark_add(bookmark[i].bookmark, bookmark[i].title);
+            }
+        } else {
+            bookmark_add(bookmark.bookmark, bookmark.title);
+        }
     }
     var data;
      switch (packet.data.action){

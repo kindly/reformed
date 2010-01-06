@@ -194,7 +194,8 @@ $.Autocompleter = function(input, options) {
 	}).bind("flushCache", function() {
 		cache.flush();
 	}).bind("dropdown", function() {
-        input.focus();
+       // input.focus();
+		hasFocus = 1;
         config.dropdownRequest = true;
         onChange(0, true);
 	}).bind("setOptions", function() {
@@ -522,7 +523,12 @@ $.Autocompleter.Cache = function(options) {
 	}
 	
 	// populate any existing data
-	setTimeout(populate, 25);
+    //
+    if (options.dropdown === true){
+        populate()
+    } else {
+        setTimeout(populate, 25);
+    }
 	
 	function flush(){
 		data = {};
