@@ -85,11 +85,7 @@ button {
 	lborder-color:#DDD;
 }
 
-input, select{
-	border:1px solid #DDD;
-	color:#333;
-    float:left;
-}
+
 
 .form_data{
 	margin-left:50px;
@@ -141,7 +137,6 @@ border-right:0;
 border-top:0;
 
 overflow:hidden;
-height:1em;
 text-overflow:ellipsis;
 white-space:nowrap;
 
@@ -307,10 +302,14 @@ div.form_body > div > input.error {
 .grid_table {
     width:100%;
 }
+input {
+	border:1px solid #DDD;
+	color:#333;
+}
 
 td input {
     width:100%;
-
+    float:left;
 }
 
 .link_list a{
@@ -432,7 +431,6 @@ border-right:0;
 border-right:1px solid #DDD;
 border-top:0;
 overflow:hidden;
-height:1em;
 text-overflow:ellipsis;
 white-space:nowrap;
 }
@@ -441,7 +439,7 @@ white-space:nowrap;
 td div.but_dd {
 background-color:red;
 float:right;
-height:100%;
+height:1em;
 position:relative;
 width:20px;
 }
@@ -465,3 +463,24 @@ td.complex.t_edited_cell div.data {
     padding:0;
 }
 
+
+td, body, input, select, textarea, th {
+    font-family: arial, verdana;
+}
+
+span.form_label {
+    font-weight:bold;
+}
+
+.f_selected_cell {
+    background-color: #FCF;
+}
+
+.f_edited_cell {
+    padding: 0;
+    background-color: #CCF;
+}
+
+span.f_cell.dirty {
+    font-weight:bold;
+}
