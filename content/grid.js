@@ -576,14 +576,18 @@ $.Grid.Movement = function(input, form_data, grid_data){
         '9s': tab_left,
         '38s': move_up,
         '40s': move_down,
-        '13' : edit_mode_on,
         '27' : edit_mode_off,
         '27s' : edit_mode_off
 
     };
 
+    var edit_keys = {
+        '13' : edit_mode_off
+    };
+
     // these key bindings are only valid in non edit mode
     var non_edit_keys = {
+        '13' : edit_mode_on,
         '39': move_right,
         '37': move_left,
         '38': move_up,
@@ -598,6 +602,10 @@ $.Grid.Movement = function(input, form_data, grid_data){
             return false;
         } else if (!edit_mode && non_edit_keys[key] !== undefined){
             non_edit_keys[key]();
+            e.preventDefault();
+            return false;
+        } else if (edit_mode && edit_keys[key] !== undefined){
+            edit_keys[key]();
             e.preventDefault();
             return false;
         } else if (key == '32c'){
