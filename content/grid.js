@@ -771,6 +771,8 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
                 case 'Date':
                     value = Date.ISO(value).toLocaleDateString();
                     break;
+                default:
+                    value = HTML_Encode(value);
             }
             if (item.params && item.params.control == 'dropdown'){
                 if (value === null){
@@ -791,6 +793,7 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
         return html.join('');
     }
 
+    var HTML_Encode = $.Util.HTML_Encode;
     var num_fields = form_data.fields.length;
     create();
 };
@@ -1066,7 +1069,17 @@ $.Util.selectStyleSheet = function (title, url){
     update_onloaded();
 };
 
+$.Util.HTML_Encode = function (arg) {
+    // encode html
+    // replace & " < > with html entity
+    if (typeof arg != 'string'){
+        return arg;
+    }
+    return arg.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+};
+
 })(jQuery);
+
 
 // get our size calculations
 $(document).ready($.Util.Size.get);

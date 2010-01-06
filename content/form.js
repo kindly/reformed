@@ -371,6 +371,8 @@ $.Form.Build = function(input, form_data, row_data, paging_data){
                 case 'Date':
                     value = Date.ISO(value).toLocaleDateString();
                     break;
+                default:
+                    value = HTML_Encode(value);
             }
             if (item.params && item.params.control == 'dropdown'){
                 if (value === null){
@@ -391,6 +393,7 @@ $.Form.Build = function(input, form_data, row_data, paging_data){
         return html.join('');
     }
 
+    var HTML_Encode = $.Util.HTML_Encode;
     $(input).html(build_form());
 
 };
