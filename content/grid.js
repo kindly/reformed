@@ -834,6 +834,14 @@ $.Util.get_keystroke = function (e){
     return key;
 };
 
+$.Util.clone_hash_shallow = function (arg){
+    var new_hash = {}
+    for (var item in arg){
+        new_hash[item] = arg[item];
+    }
+    return new_hash;
+};
+
 $.Util.control_setup = function($control, field){
     // add any events needed by the control
     // but start by removing any existing bound events
