@@ -43,6 +43,9 @@ $.Form = function(input, form_data, row_data, paging_data){
 
 
 
+    // remove any previous bound events
+    $(document).unbind();
+    $(input).unbind();
 
     $.Form.Build(input, form_data, row_data, paging_data);
     $.Form.Movement(input, form_data, row_data);
