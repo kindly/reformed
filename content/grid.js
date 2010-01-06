@@ -806,7 +806,14 @@ $.Util.get_keystroke = function (e){
     // make a simple key code string
     // eg          tab => 8
     //      ctrl + tab => 8c
-    var key = String(e.keyCode);
+    // alpha keys return the UPPER CASE letter plus any modifier
+    // eg A, Ac, As
+    var key = e.keyCode;
+    if (key > 64 && key < 91){ // a-z
+        key = String.fromCharCode(key);
+    } else {
+        key = String(key);
+    }
     if (e.shiftKey){
         key += 's';
     }
