@@ -1078,6 +1078,20 @@ $.Util.HTML_Encode = function (arg) {
     return arg.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 };
 
+$.Util.FormDataNormalize = function (form_data) {
+    // add parameters if not
+    if (!form_data.params){
+        form_data.params = {};
+    }
+    // make hash of the fields
+    form_data.items = {};
+    for (var i = 0, n = form_data.fields.length; i < n; i++){
+        var field = form_data.fields[i];
+        form_data.items[field.name] = field;
+    }
+    return form_data;
+};
+
 })(jQuery);
 
 
