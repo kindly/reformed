@@ -378,9 +378,9 @@ $.Grid.Movement = function(input, form_data, grid_data){
     function autosave(){
         var node = 'table.Edit';
         var out = {};
-        if (console){
-            console.log('autosave: ' + row_info[current.row]);
-        }
+    //    if (console){
+    //        console.log('autosave: ' + row_info[current.row]);
+   //     }
         //get_node(node, '_save', out, false);
     }
 
