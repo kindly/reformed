@@ -48,6 +48,9 @@ $.Form = function(input, form_data, row_data, paging_data){
     var $form = $('<div class="f_form"></div>');
     $input.append($form);
 
+    if (!row_data){
+        row_data = {};
+    }
 
     $.Form.Build($form, form_data, row_data, paging_data);
     $.Form.Movement($form, form_data, row_data);
@@ -132,7 +135,7 @@ $.Form.Movement = function($input, form_data, row_data){
     }
 
     function save_update(data, obj_data){
-        if (row_data.id !== 0){
+        if (row_data.id){
             // check if the id has changed (it shouldn't)
             if (row_data.id != data[1]){
                 alert('something went wrong the id has changed during the save');
@@ -147,11 +150,9 @@ $.Form.Movement = function($input, form_data, row_data){
 
         // update the row_data with the stuff that was saved
         for (var field in obj_data){
-            if (row_data[field]){
-                row_data[field] = obj_data[field];
-            }
+            row_data[field] = obj_data[field];
         }
-        
+
         // form is now clean
         current.dirty = false;
         dirty = false;
@@ -282,7 +283,6 @@ $.Form.Movement = function($input, form_data, row_data){
             }
             current.dirty = true;
             current.$item.addClass('dirty');
-            
         }
         current.$control = undefined;
     }
@@ -487,7 +487,7 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
             // label
             html.push('<span class="form_label">' + item.title + '</span>');
 
-            if (row_data && row_data[item.name] !== null){
+            if (row_data && row_data[item.name] !== undefined){
                 value = row_data[item.name];
             } else {
                 if (item.params && item.params['default']){
