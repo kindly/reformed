@@ -406,7 +406,7 @@ class TableNode(Node):
         self.action = 'form'
 
 
-        table_id = r.reformed[data_out.get("__table")].table_id
+        table_name = r.reformed[data_out.get("__table")].name
         node = self.build_node('', 'view', 'id=%s' %  id)
         user = global_session.session['user_id'] 
 
@@ -420,7 +420,7 @@ class TableNode(Node):
                       "user_id": user,
                       "bookmark": node,
                       "title": self.title,
-                      "entity_table": table_id,
+                      "entity_table": table_name,
                       "accessed_date": util.convert_value(datetime.datetime.now())}
 
         util.load_local_data(r.reformed, result)
