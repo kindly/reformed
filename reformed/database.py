@@ -559,6 +559,9 @@ class Database(object):
 
         :param params: a dict with the keys as the replacement to inside the curly
         brackets i.e key name will replace {name} in query.
+
+        :param order_by: a string in the same form as a sql order by 
+        ie 'name desc, donkey.name, donkey.age desc'  (name in base table) 
         """
 
         session = self.Session()

@@ -426,7 +426,11 @@ class TableNode(Node):
         util.load_local_data(r.reformed, result)
 
         if self.get_bookmarks: 
-            self.bookmark = r.reformed.search("bookmarks", "user_id = ?", values = [user])["data"]
+            self.bookmark = r.reformed.search("bookmarks", 
+                                              "user_id = ?",
+                                              values = [user], 
+                                              order_by = "accessed_date",
+                                              limit = 10)["data"]
         else:
             self.bookmark = result
 

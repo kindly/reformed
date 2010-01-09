@@ -1333,7 +1333,6 @@ function bookmark_add(bookmark){
         bookmark_array.splice(BOOKMARK_ARRAY_MAX - 1, 1);
     }
     bookmark_array.unshift(bookmark);
-    bookmark_display();
 }
 
 function bookmark_display(){
@@ -1474,6 +1473,7 @@ var fn = function(packet, job){
         } else {
             bookmark_add(bookmark);
         }
+        bookmark_display();
     }
     var data;
      switch (packet.data.action){

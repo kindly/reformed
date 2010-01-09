@@ -23,6 +23,7 @@ class Search(object):
 
         self.tables = kw.get("tables", [table])
         self.fields = kw.get("fields", None)
+        self.order_by = kw.get("order_by", None)
 
         self.base_tables = kw.get("base_tables", None)
 
@@ -65,6 +66,32 @@ class Search(object):
 
         return local_tables
 
+    def order_by_clauses(self):
+        clauses_list = self.order_by.strip().split(",")
+        clauses = []
+        for clause in clauses_list:
+            parts = clause.split()
+            if len(parts) == 1:
+                ordering = "asc"
+            else:
+                ordering = parts[1] 
+            field_parts = parts[0].split(".")
+            if len(field_parts) == 1:
+                table = self.table
+                field = field_parts[0]
+            else:
+                table = field_parts[0]
+                field = field_parts[1]
+
+            # the table is got from here as we need the aliased one
+            table = getattr(self.database.t, table)
+
+            if ordering == "desc":
+                clauses.append(getattr(table, field).desc())
+            else:
+                clauses.append(getattr(table, field))
+        return clauses
+
 
     def add_query(self, *args, **kw):
 
@@ -87,16 +114,28 @@ class Search(object):
     def search(self, exclude_mode = None):
 
         if len(self.queries) == 0:
-            return self.search_base
+            query = self.search_base
+            if self.order_by:
+                clauses = self.order_by_clauses()
+                query = query.order_by(*clauses)
+
+            return query
 
         first_query = self.queries[0][0]
 
         if len(self.queries) == 1:
             ## if query contains a onetomany make the whole query a distinct
+            query = first_query.add_conditions(self.search_base)
+
             for table in first_query.inner_joins.union(first_query.outer_joins):
                 if table != self.table and table not in self.rtable.local_tables:
-                    return first_query.add_conditions(self.search_base).distinct()
-            return first_query.add_conditions(self.search_base)
+                    query = query.distinct()
+
+            if self.order_by:
+                clauses = self.order_by_clauses()
+                query = query.order_by(*clauses)
+
+            return query
 
         query_base = self.session.query(self.database.get_class(self.table).id)
 
@@ -136,11 +175,17 @@ class Search(object):
 
         main_subquery = main_subquery.subquery()
 
+        query = self.search_base.join((main_subquery, main_subquery.c.id == self.database.get_class(self.table).id))
         ### if first query has a one to many distict the query
         for table in first_query.inner_joins.union(first_query.outer_joins):
             if table != self.table and table not in self.rtable.local_tables:
-                return self.search_base.join((main_subquery, main_subquery.c.id == self.database.get_class(self.table).id)).distinct()
-        return self.search_base.join((main_subquery, main_subquery.c.id == self.database.get_class(self.table).id))
+                query = query.distinct()
+
+        if self.order_by:
+            clauses = self.order_by_clauses()
+            query = query.order_by(*clauses)
+
+        return query
 
             
     def exclude(self, query, current_excepts, exclude_mode):
