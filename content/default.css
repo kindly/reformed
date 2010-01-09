@@ -481,6 +481,14 @@ span.form_label {
     background-color: #CCF;
 }
 
+.f_error {
+    background-color:#C33;
+}
+
+div.f_form.dirty{
+    background-color:#CFF;
+}
+
 span.f_cell.dirty {
     font-weight:bold;
 }

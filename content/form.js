@@ -40,23 +40,28 @@ $.fn.extend({
 
 $.Form = function(input, form_data, row_data, paging_data){
 
+    $input = $(input)
+    // remove any existing items from the input
+    $input.children().trigger('custom', ['unbind_all']).remove();
+
+    // make our div that everything will hang off
+    var $form = $('<div class="f_form"></div>');
+    $input.append($form);
 
 
-
-    // remove any previous bound events
-    $(document).unbind();
-    $(input).unbind();
-
-    $.Form.Build(input, form_data, row_data, paging_data);
-    $.Form.Movement(input, form_data, row_data);
+    $.Form.Build($form, form_data, row_data, paging_data);
+    $.Form.Movement($form, form_data, row_data);
 };
 
-$.Form.Movement = function(input, form_data, row_data){
+$.Form.Movement = function($input, form_data, row_data){
 
     function init(){
 
+        // remove any previous bound events
+        unbind_all();
+
         total_fields = form_data.fields.length;
-        $input.mousedown(form_mousedown).keydown(keydown);
+        $input.mousedown(form_mousedown);
 
         focus();
         if (edit_mode){
@@ -64,21 +69,33 @@ $.Form.Movement = function(input, form_data, row_data){
         } else {
             edit_mode_off();
         }
-        $input.bind('save', function (){
-            save();
+        $input.bind('custom', function (e, type, data){
+            custom_event(e, type, data);
         });
+
+        $(document).keydown(keydown);
+    }
+
+    function unbind_all(){
+        console.log('unbind');
+        $input.unbind();
+        $(document).unbind('keydown', keydown);
     }
 
     function save(){
         console.log('save');
+        // make the form non-edit
+        edit_mode_off();
         if (current.dirty){
             // get our data to save
             var save_data = {};
             for (var item in row_data){
                 save_data[item] = row_data[item];
             }
+            var copy_of_row_info = {};
             for (var item in row_info){
                 save_data[item] = row_info[item];
+                copy_of_row_info[item] = row_info[item];
             }
             // any extra data needed from the form
             params = form_data.params;
@@ -89,8 +106,80 @@ $.Form.Movement = function(input, form_data, row_data){
                     }
                 }
             }
-            console.log(save_data);
-            get_node('test.AutoFormPlus', '_save', save_data, false);
+            get_node_return('test.AutoFormPlus', '_save', save_data, $input, copy_of_row_info); //FIXME node_name
+        }
+    }
+
+    function remove_all_errors(){
+        // remove error spans
+        $input.find('span.f_error').remove();
+        // remove any error classes
+        $input.find('p.f_error').removeClass('f_error');
+    }
+
+    function save_errors(errors){
+        remove_all_errors();
+        var index;
+        var $item;
+        for (var field in errors){
+            index = form_data.items[field].index;
+            $item = $input.find('p').eq(index);
+            // add the error span
+            $item.append('<span class="f_error">ERROR: ' + errors[field] + '</span>');
+            // add error class
+            $item.addClass('f_error');
+        }
+    }
+
+    function save_update(data, obj_data){
+        if (row_data.id !== 0){
+            // check if the id has changed (it shouldn't)
+            if (row_data.id != data[1]){
+                alert('something went wrong the id has changed during the save');
+                return;
+            }
+        } else {
+            // update id
+            row_data.id = data[1];
+        }
+        // update _version
+        row_data._version = data[2];
+
+        // update the row_data with the stuff that was saved
+        for (var field in obj_data){
+            if (row_data[field]){
+                row_data[field] = obj_data[field];
+            }
+        }
+        
+        // form is now clean
+        current.dirty = false;
+        dirty = false;
+        remove_all_errors();
+        $input.removeClass('dirty');
+        $input.find('span.f_cell.dirty').removeClass('dirty');
+    }
+
+    function save_return(data){
+        console.log('return');
+        console.log(data);
+        // errors
+        if (data.errors && data.errors.null){
+            save_errors(data.errors.null);
+        }
+        // saves
+        if (data.saved){
+            save_update(data.saved[0], data.obj_data); // single form so only want first saved item
+        }
+    }
+
+
+    function custom_event(e, type, data){
+        console.log('event triggered: ' + type);
+        if (custom_events[type]){
+            custom_events[type](data, e);
+        } else {
+            alert('event: <' + type + '> has no handler');
         }
     }
 
@@ -160,8 +249,10 @@ $.Form.Movement = function(input, form_data, row_data){
     }
 
     function check_row_dirty(){
-        if (is_empty(row_info[current.row])){
+        if (is_empty(row_info)){
             current.dirty = false;
+            dirty = false;
+            $input.removeClass('dirty');
         }
     }
 
@@ -185,8 +276,13 @@ $.Form.Movement = function(input, form_data, row_data){
         } else {
             // has changed
             row_info[current.field.name] = value;
+            if (!dirty){
+                $input.addClass('dirty');
+                dirty = true;
+            }
             current.dirty = true;
             current.$item.addClass('dirty');
+            
         }
         current.$control = undefined;
     }
@@ -199,14 +295,12 @@ $.Form.Movement = function(input, form_data, row_data){
             current.$item.removeClass('f_edited_cell');
         }
         edit_mode = false;
-        $(document).keydown(keydown);
     }
 
     function edit_mode_on(){
         // turn on edit mode
         if (!edit_mode){
             edit_mode = true;
-            $(document).unbind('keydown', keydown);
             make_editable(current.$item);
             current.$item.addClass('f_edited_cell');
             current.$item.removeClass('f_selected_cell');
@@ -277,26 +371,41 @@ make_cell_viewable
         move();
     }
 
+    function undo_field_change(){
+        // revert the control to the origional sent value
+        if (edit_mode){
+            var value = row_data[current.field.name]
+            var $item = current.$control;
+            $item.val(value);
+            make_null($item, (value === null));
+        }
+    }
+
     // general key bindings
     var keys = {
  //       '9': tab_right,
  //       '9s': tab_left,
         '38s': move_up,
         '40s': move_down,
-        '13' : edit_mode_on,
         '27' : edit_mode_off,
         '27s' : edit_mode_off
 
     };
 
-    // these key bindings are only valid in non edit mode
+    // these key bindings are only valid in edit mode
+    var edit_keys = {
+        '13' : edit_mode_off,
+        'Uc': undo_field_change
+    };
+
+    // these key bindings are only valid in non-edit mode
     var non_edit_keys = {
   //      '39': move_right,
   //      '37': move_left,
+        '13' : edit_mode_on,
         '38': move_up,
         '40': move_down
     };
-
     function keydown(e){
         var key = util.get_keystroke(e);
         if (keys[key] !== undefined){
@@ -307,16 +416,23 @@ make_cell_viewable
             non_edit_keys[key]();
             e.preventDefault();
             return false;
+        } else if (edit_mode && edit_keys[key] !== undefined){
+            edit_keys[key]();
+            e.preventDefault();
+            return false;
         } else if (key == '32c'){
             // toggle [NULL]
             null_toggle($(e.target));
+            e.preventDefault();
+            return false;
         }
     }
 
-    function null_toggle($item){
-        // do toggling of [NULL] and ''
+
+    function make_null($item, isnull){
+        // mark item as null
         var $item_parent = $item.parent();
-        if ($item_parent.hasClass('null')){
+        if (!isnull){
             $item_parent.removeClass('null');
         } else {
             $item_parent.addClass('null');
@@ -324,13 +440,28 @@ make_cell_viewable
         }
     }
 
-    var $input = $(input);
+    function null_toggle($item){
+        // do toggling of [NULL] and ''
+        var $item_parent = $item.parent();
+        make_null($item, !$item_parent.hasClass('null'));
+    }
+
+
+    // custom events
+    var custom_events = {
+        'save' : save,
+        'save_return' : save_return,
+        'unbind_all' : unbind_all
+    };
+
+
     var edit_mode = false;
-    var row_info = [];
+    var dirty = false;
+    var row_info = {};
     var current = {$control : undefined,
                    $item : undefined,
                    $field : undefined,
-                   field : form_data.fields[0],
+                   field : undefined,
                    dirty : false,
                    field_number : undefined,
                    value : undefined};
@@ -343,7 +474,7 @@ make_cell_viewable
 };
 
 
-$.Form.Build = function(input, form_data, row_data, paging_data){
+$.Form.Build = function($input, form_data, row_data, paging_data){
 
     function build_form(){
         var html = [];
@@ -369,8 +500,12 @@ $.Form.Build = function(input, form_data, row_data, paging_data){
             switch (item.type){
                 case 'DateTime':
                 case 'Date':
-                    value = Date.ISO(value).toLocaleDateString();
+                    if (value !== null){
+                        value = Date.ISO(value).toLocaleDateString();
+                    }
                     break;
+                default:
+                    value = HTML_Encode(value);
             }
             if (item.params && item.params.control == 'dropdown'){
                 if (value === null){
@@ -391,7 +526,8 @@ $.Form.Build = function(input, form_data, row_data, paging_data){
         return html.join('');
     }
 
-    $(input).html(build_form());
+    var HTML_Encode = $.Util.HTML_Encode;
+    $input.html(build_form());
 
 };
 

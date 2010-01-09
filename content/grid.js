@@ -576,14 +576,18 @@ $.Grid.Movement = function(input, form_data, grid_data){
         '9s': tab_left,
         '38s': move_up,
         '40s': move_down,
-        '13' : edit_mode_on,
         '27' : edit_mode_off,
         '27s' : edit_mode_off
 
     };
 
+    var edit_keys = {
+        '13' : edit_mode_off
+    };
+
     // these key bindings are only valid in non edit mode
     var non_edit_keys = {
+        '13' : edit_mode_on,
         '39': move_right,
         '37': move_left,
         '38': move_up,
@@ -598,6 +602,10 @@ $.Grid.Movement = function(input, form_data, grid_data){
             return false;
         } else if (!edit_mode && non_edit_keys[key] !== undefined){
             non_edit_keys[key]();
+            e.preventDefault();
+            return false;
+        } else if (edit_mode && edit_keys[key] !== undefined){
+            edit_keys[key]();
             e.preventDefault();
             return false;
         } else if (key == '32c'){
@@ -771,6 +779,8 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
                 case 'Date':
                     value = Date.ISO(value).toLocaleDateString();
                     break;
+                default:
+                    value = HTML_Encode(value);
             }
             if (item.params && item.params.control == 'dropdown'){
                 if (value === null){
@@ -791,6 +801,7 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
         return html.join('');
     }
 
+    var HTML_Encode = $.Util.HTML_Encode;
     var num_fields = form_data.fields.length;
     create();
 };
@@ -803,7 +814,14 @@ $.Util.get_keystroke = function (e){
     // make a simple key code string
     // eg          tab => 8
     //      ctrl + tab => 8c
-    var key = String(e.keyCode);
+    // alpha keys return the UPPER CASE letter plus any modifier
+    // eg A, Ac, As
+    var key = e.keyCode;
+    if (key > 64 && key < 91){ // a-z
+        key = String.fromCharCode(key);
+    } else {
+        key = String(key);
+    }
     if (e.shiftKey){
         key += 's';
     }
@@ -814,6 +832,14 @@ $.Util.get_keystroke = function (e){
         key += 'a';
     }
     return key;
+};
+
+$.Util.clone_hash_shallow = function (arg){
+    var new_hash = {}
+    for (var item in arg){
+        new_hash[item] = arg[item];
+    }
+    return new_hash;
 };
 
 $.Util.control_setup = function($control, field){
@@ -1066,7 +1092,32 @@ $.Util.selectStyleSheet = function (title, url){
     update_onloaded();
 };
 
+$.Util.HTML_Encode = function (arg) {
+    // encode html
+    // replace & " < > with html entity
+    if (typeof arg != 'string'){
+        return arg;
+    }
+    return arg.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+};
+
+$.Util.FormDataNormalize = function (form_data) {
+    // add parameters if not
+    if (!form_data.params){
+        form_data.params = {};
+    }
+    // make hash of the fields
+    form_data.items = {};
+    for (var i = 0, n = form_data.fields.length; i < n; i++){
+        var field = form_data.fields[i];
+        field.index = i;
+        form_data.items[field.name] = field;
+    }
+    return form_data;
+};
+
 })(jQuery);
+
 
 // get our size calculations
 $(document).ready($.Util.Size.get);

@@ -816,6 +816,21 @@ function get_node(node_name, node_command, node_data, change_state){
     $JOB.add(info, {}, 'node', true);
 }
 
+function get_node_return(node_name, node_command, node_data, $obj, obj_data){
+    // works like get_node but adds a jquery item to call on the return
+    // we also drop the state stuff as we will deal with that better
+    // when needed
+    var info = {node: node_name,
+                lastnode: '',  //fixme
+                command: node_command };
+
+    if (node_data){
+        info.data = node_data;
+    }
+    $JOB.add(info, {obj : $obj, obj_data : obj_data}, 'node', true);
+}
+
+
 function node_get_form_data_for_row(form_info, row, root){
     var my_root;
     var value;
@@ -950,8 +965,8 @@ function link_process(item, link){
 
 function node_save(root, command){
     msg('node_save');
-
-
+    $('#main').find('div').trigger('custom', ['save']); //FIXME these wantto be found properly
+/*
     var out = node_get_form_data(root);
 
     var node =  $INFO.getState(root, 'node');
@@ -964,6 +979,7 @@ function node_save(root, command){
         }
     }
     get_node(node, '_save', out, false);
+    */
 }
 
 function node_grid_save(root, row){
@@ -1492,6 +1508,7 @@ var fn = function(packet, job){
             break;
          case 'form':
              var form = packet.data.data.form;
+             form = $.Util.FormDataNormalize(form);
              data = packet.data.data.data;
              var paging = packet.data.data.paging;
              if (form.params && form.params.form_type == 'grid'){
@@ -1510,13 +1527,19 @@ var fn = function(packet, job){
             break;
          case 'save':
             data = packet.data.data;
-            // errors
-            if (data.errors){
-                form_save_process_errors(data.errors);
-            }
-            // saved records
-            if (data.saved){
-                form_save_process_saved(data.saved);
+            if (job && job.obj){
+                // copy the obj_data that was saved with the job
+                data.obj_data = job.obj_data;
+                job.obj.trigger('custom', ['save_return', data]);
+            } else {
+                // errors
+                if (data.errors){
+                    form_save_process_errors(data.errors);
+                }
+                // saved records
+                if (data.saved){
+                    form_save_process_saved(data.saved);
+                }
             }
             break;
          case 'delete':
