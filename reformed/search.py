@@ -24,6 +24,7 @@ class Search(object):
         self.tables = kw.get("tables", [table])
         self.fields = kw.get("fields", None)
         self.order_by = kw.get("order_by", None)
+        self.distinct_many = kw.get("distinct_many", True)
 
         self.base_tables = kw.get("base_tables", None)
 
@@ -129,7 +130,8 @@ class Search(object):
 
             for table in first_query.inner_joins.union(first_query.outer_joins):
                 if table != self.table and table not in self.rtable.local_tables:
-                    query = query.distinct()
+                    if self.distinct_many:
+                        query = query.distinct()
 
             if self.order_by:
                 clauses = self.order_by_clauses()
@@ -179,7 +181,8 @@ class Search(object):
         ### if first query has a one to many distict the query
         for table in first_query.inner_joins.union(first_query.outer_joins):
             if table != self.table and table not in self.rtable.local_tables:
-                query = query.distinct()
+                if self.distinct_many:
+                    query = query.distinct()
 
         if self.order_by:
             clauses = self.order_by_clauses()

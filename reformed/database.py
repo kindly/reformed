@@ -578,31 +578,57 @@ class Database(object):
             offset = 0
         keep_all = kw.get("keep_all", True)
         internal = kw.get("internal", False)
-        query = search.Search(self, table_name, session, where, *args, **kw).search()
         tables = kw.get("tables", [table_name])
-
         fields = kw.get("fields", None)
+
+        one_to_many_tables = [] 
+
+        for table in tables:
+            if table == table_name:
+                continue
+            if table not in self[table_name].local_tables:
+                one_to_many_tables.append(self.aliases[table])
+
+        if one_to_many_tables:
+            kw["distinct_many"] = True
+        query = search.Search(self, table_name, session, where, *args, **kw).search()
+
+        for cls in one_to_many_tables:
+            query = query.add_entity(cls)
 
         if fields:
             tables = None
 
-        if limit:
-            result = query[offset: offset + limit]
-        else:
-            result = query.all()
 
         try:
-            data = [get_all_local_data(obj, 
+            if limit:
+                results = query[offset: offset + limit]
+            else:
+                results = query.all()
+
+
+            data = []
+            for result in results:
+                if one_to_many_tables:
+                    obj = result[0]
+                    extra_obj = result[1:]
+                else:
+                    obj = result
+                    extra_obj = None
+
+                data.append(get_all_local_data(obj, 
                                        tables = tables, 
                                        fields = fields,
                                        internal = internal, 
                                        keep_all = keep_all, 
-                                       allow_system = True) for obj in result]
-            results = {"data": data}
+                                       allow_system = True,
+                                       extra_obj = extra_obj)) 
+
+            wrapped_results = {"data": data}
 
             if count:
-                results["__count"] = query.count()
-            return results    
+                wrapped_results["__count"] = query.count()
+            return wrapped_results    
         except Exception, e:
             session.rollback()
             raise
