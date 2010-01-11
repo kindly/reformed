@@ -195,9 +195,13 @@ $.Autocompleter = function(input, options) {
 		cache.flush();
 	}).bind("dropdown", function() {
        // input.focus();
-		hasFocus = 1;
-        config.dropdownRequest = true;
-        onChange(0, true);
+		if (!select.visible() ) {
+            hasFocus = 1;
+            config.dropdownRequest = true;
+            onChange(0, true);
+        } else {
+            select.hide()
+        }
 	}).bind("setOptions", function() {
 		$.extend(options, arguments[1]);
 		// if we've updated the data, repopulate

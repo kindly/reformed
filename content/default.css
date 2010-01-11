@@ -437,7 +437,9 @@ white-space:nowrap;
 
 
 td div.but_dd {
-background-color:red;
+/*background-color:red;*/
+background-color:transparent;
+background-image:url('bullet_arrow_down.png');
 float:right;
 height:1em;
 position:relative;
