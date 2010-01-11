@@ -68,7 +68,7 @@ class test_modify_table_sqlite(object):
 
         result = validate_database(self.Donkey)
 
-        assert not any([result[num] for num in range(0,3)])
+        assert not any([result[num] for num in range(0,4)])
 
 
         #self.jim = self.Donkey.tables["moo01%s" % self.randish].sa_class()
@@ -147,7 +147,7 @@ class test_modify_table_sqlite(object):
         result = validate_database(self.Donkey)
 
 
-        assert not any([result[num] for num in range(0,3)])
+        assert not any([result[num] for num in range(0,4)])
 
 
 
@@ -166,13 +166,13 @@ class test_modify_table_sqlite(object):
 
         result = validate_database(self.Donkey)
 
-        assert not any([result[num] for num in range(0,3)])
+        assert not any([result[num] for num in range(0,4)])
 
         table1.drop_field("man") 
 
         result = validate_database(self.Donkey)
 
-        assert not any([result[num] for num in range(0,3)])
+        assert not any([result[num] for num in range(0,4)])
 
         table1 = self.Donkey["rename_field"]
         
@@ -188,7 +188,7 @@ class test_modify_table_sqlite(object):
         
         result = validate_database(self.Donkey)
 
-        assert not any([result[num] for num in range(0,3)])
+        assert not any([result[num] for num in range(0,4)])
 
         table1 = self.Donkey["rename_field"]
 
@@ -210,7 +210,7 @@ class test_modify_table_sqlite(object):
 
         result = validate_database(self.Donkey)
 
-        assert not any([result[num] for num in range(0,3)])
+        assert not any([result[num] for num in range(0,4)])
 
         table4 =  self.Donkey["moo04%s" % self.randish]
 
@@ -218,7 +218,7 @@ class test_modify_table_sqlite(object):
 
         result = validate_database(self.Donkey)
 
-        assert not any([result[num] for num in range(0,3)])
+        assert not any([result[num] for num in range(0,4)])
 
         table1 =  self.Donkey["moo01%s" % self.randish]
 
@@ -226,7 +226,7 @@ class test_modify_table_sqlite(object):
 
         result = validate_database(self.Donkey)
 
-        assert not any([result[num] for num in range(0,3)])
+        assert not any([result[num] for num in range(0,4)])
 
     def test_6_delete_relation(self):
 
@@ -234,6 +234,22 @@ class test_modify_table_sqlite(object):
         table2 = self.Donkey["to_join%s" % self.randish]
 
         table2.delete_relation("to_rename%s" % self.randish)
+
+    def test_7_add_remove_index(self):
+
+        table1 = self.Donkey["renamed%s" % self.randish]
+        table1.add_index(Index("moooed", "moo"))
+
+        result = validate_database(self.Donkey)
+        assert not any([result[num] for num in range(0,4)])
+
+        table1 = self.Donkey["renamed%s" % self.randish]
+
+        table1.delete_index("moooed")
+        assert not any([result[num] for num in range(0,4)])
+
+
+
 
 
 
