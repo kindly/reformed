@@ -25,6 +25,7 @@ import sys
 import mimetypes
 import beaker
 import cgi
+import webob
 import traceback
 import wsgiref.util
 import json
@@ -65,17 +66,14 @@ def process_autocomplete(environ, start_response):
 
 def process_node(environ, start_response):
 
-
     session(environ)
 
-    formdata = cgi.FieldStorage(fp=environ['wsgi.input'],
-                        environ=environ,
-                        keep_blank_values=1)
+    request = webob.Request(environ)
 
-    head = str(formdata.getvalue('head'))
+    head = request.params["head"]
 
     try:
-        body = json.loads(str(formdata.getvalue('body')))
+        body = json.loads(request.params["body"])
     except:
         body = {}
 
