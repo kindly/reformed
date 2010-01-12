@@ -51,9 +51,18 @@ $.Form = function(input, form_data, row_data, paging_data){
     if (!row_data){
         row_data = {};
     }
-
-    $.Form.Build($form, form_data, row_data, paging_data);
-    $.Form.Movement($form, form_data, row_data);
+    if (!row_data.length){
+        $.Form.Build($form, form_data, row_data, paging_data);
+        $.Form.Movement($form, form_data, row_data);
+        $form.trigger('custom', ['register_events', {}]);
+    } else {
+        for (var i = 0, n = row_data.length; i < n; i++){
+        var $sub = $('<div class="f_form_continuous"></div>');
+        $form.append($sub);
+        $.Form.Build($sub, form_data, row_data[i], paging_data);
+        $.Form.Movement($sub, form_data, row_data[i]);
+        }
+    }
 };
 
 $.Form.Movement = function($input, form_data, row_data){
@@ -126,7 +135,7 @@ $.Form.Movement = function($input, form_data, row_data){
         var $item;
         for (var field in errors){
             index = form_data.items[field].index;
-            $item = $input.find('p').eq(index);
+            $item = $input.find('div').eq(index);
             // add the error span
             $item.append('<span class="f_error">ERROR: ' + errors[field] + '</span>');
             // add error class
@@ -173,6 +182,11 @@ $.Form.Movement = function($input, form_data, row_data){
             save_update(data.saved[0], data.obj_data); // single form so only want first saved item
         }
     }
+    function register_events(data, e){
+        console.log('registering');
+        $.Util.Event_Delegator('register', {keydown:keydown, blur:blur})
+        focus();
+    }
 
 
     function custom_event(e, type, data){
@@ -191,7 +205,7 @@ $.Form.Movement = function($input, form_data, row_data){
             edit_mode_on();
         }
         if (item.nodeName == 'SPAN'){
-            var $field = $(item).parent('p');
+            var $field = $(item).parent('div');
             var $item = $field.find('span').eq(1);
             // which field?
             field_number = $input.children().index($field);
@@ -223,7 +237,7 @@ $.Form.Movement = function($input, form_data, row_data){
             edit_mode_on();
         }
         if (item.nodeName == 'SPAN'){
-            var $field = $(item).parent('p');
+            var $field = $(item).parent('div');
             var $item = $field.find('span').eq(1);
             // which field?
             field_number = $input.children().index($field);
@@ -476,13 +490,9 @@ make_cell_viewable
 
 $.Form.Build = function($input, form_data, row_data, paging_data){
 
-    function build_form(){
-        var html = [];
-        num_fields = form_data.fields.length;
-        for (var i = 0; i < num_fields; i++){
-            item = form_data.fields[i];
-
-            html.push('<p>');
+    function build_input(item){
+            var html = [];
+            html.push('<div>');
 
             // label
             html.push('<span class="form_label">' + item.title + '</span>');
@@ -521,13 +531,81 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
                     html.push('<span class="f_cell">' + value + '</span>');
                 }
             }
-            html.push('</p>');
+            html.push('</div>');
+            return html.join('');
+
+    }
+    function link(value){
+        var split = value.split("|");
+        var link = split.shift();
+        value = split.join('|');
+  //      var x = (show_label ? '<span class="label">' + item.title + '</span>' : '');
+        var x = '';
+        if (link.substring(0,1) == 'n'){
+            x += '<a href="#" onclick="node_load(\'' + link + '\');return false">' + (value ? value : '&nbsp;') + '</a>';
+        }
+        if (link.substring(0,1) == 'd'){
+            x += '<a href="#" onclick ="link_process(this,\'' + link + '\');return false;">' + (value ? value : '&nbsp;') + '</a>';
+        }
+        return x;
+    }
+
+    function build_control(item){
+        var html = [];
+        var value = row_data[item.name];
+
+        html.push('<div>');
+        switch (item.params.control){
+            case 'info':
+                if (value){
+                    html.push(value);
+                }
+                break;
+            case 'link':
+                html.push(link(value));
+                break;
+            case 'link_list':
+                for (var i = 0, n = value.length; i < n; i++){
+                    html.push(link(value[i]));
+                    html.push(' ');
+                }
+                break;
+            case 'subform':
+                html.push('<div class="SUBFORM"></div>');
+                subforms.push({item: item, data: value})
+                break;
+            default:
+
+                html.push(item.params.control);
+        }
+        html.push('</div>');
+
+        return html.join('');
+    }
+
+    function build_form(){
+        var html = [];
+        num_fields = form_data.fields.length;
+        for (var i = 0; i < num_fields; i++){
+            item = form_data.fields[i];
+            if (!(item.params && item.params.control)){
+                html.push(build_input(item));
+            } else {
+                html.push(build_control(item));
+            }
         }
         return html.join('');
     }
 
+    var subforms = [];
     var HTML_Encode = $.Util.HTML_Encode;
     $input.html(build_form());
+
+    // subforms
+    var $subforms = $input.find('div.SUBFORM');
+    for (var i = 0, n = subforms.length; i < n; i ++){
+        $subforms.eq(i).form(subforms[i].item.params.form, subforms[i].data);
+    }
 
 };
 
