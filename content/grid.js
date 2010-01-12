@@ -1120,8 +1120,58 @@ $.Util.FormDataNormalize = function (form_data) {
     return form_data;
 };
 
+$.Util.Event_Delegator_Store = {};
+
+$.Util.Event_Delegator = function (command, data){
+
+
+    function clear(){
+        info.keydown = undefined;
+        if (data.blur){
+            console.log('blurrrrr');
+            data.blur();
+        }
+        info.blur = undefined;
+    }
+
+    function register(){
+        clear();
+        if (data.keydown){
+            info.keydown = data.keydown;
+        }
+        if (data.blur){
+            info.blur = data.blur;
+        }
+    }
+
+    var info = $.Util.Event_Delegator_Store;
+
+    switch (command){
+        case 'register':
+            register();
+            break;
+        case 'clear':
+            clear();
+            break;
+    }
+};
+
+$.Util.Event_Delegator_keydown = function (e){
+    var keydown = $.Util.Event_Delegator_Store.keydown;
+    if (keydown){
+        keydown(e);
+    } else {
+        console.log('no bound keydown');
+    }
+};
+
+
+
+
 })(jQuery);
 
 
 // get our size calculations
 $(document).ready($.Util.Size.get);
+//trap keyboard events
+$(document).keydown($.Util.Event_Delegator_keydown);
