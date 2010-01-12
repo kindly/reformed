@@ -721,7 +721,9 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
 
     function foot(){
         var html = '<div class="scroller-foot">';
-        html += $.Util.paging_bar(paging_data);
+        if (paging_data){
+            html += $.Util.paging_bar(paging_data);
+        }
         html += '</div>';
         return html
     }
