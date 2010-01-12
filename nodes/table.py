@@ -50,7 +50,7 @@ class Table(node.TableNode):
         'fields':{
             'fields': [
                 ['field_name', 'Text', 'field name'],
-                ['field_type', 'dropdown', 'type', {'values': '|'.join(allowed_field_types), 'type':'list'}],
+                ['field_type', 'Text', 'type', {'autocomplete': allowed_field_types, 'type':'list', 'control' : 'dropdown'}],
                 ['length', 'Integer', 'length'],
                 ['mandatory', 'Boolean', 'mandatory'],
                 ['default', 'Text', 'default']
