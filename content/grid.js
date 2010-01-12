@@ -861,7 +861,7 @@ $.Util.control_setup = function($control, field){
             break;
     }
     if (field.params && field.params.control == 'dropdown'){
-        $control.autocomplete(['true', 'false'], {'dropdown':true});
+        $control.autocomplete(field.params.autocomplete, {'dropdown':true});
     }
 };
 
