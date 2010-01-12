@@ -172,6 +172,7 @@ class TableNode(Node):
                 data['form']['parent_id'] =  subform.get('parent_id')
                 data['form']['child_id'] =  subform.get('child_id')
                 data['form']['table_name'] =  subform.get('table')
+                data['control'] = 'subform'
                 self.__class__.subform_data[name] = data
                 field.append(data)
                 self.setup_subforms(name)
