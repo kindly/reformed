@@ -75,7 +75,6 @@ $.Form.Movement = function($input, form_data, row_data){
         total_fields = form_data.fields.length;
         $input.mousedown(form_mousedown);
 
-        focus();
         if (edit_mode){
             edit_mode_on();
         } else {
@@ -84,14 +83,11 @@ $.Form.Movement = function($input, form_data, row_data){
         $input.bind('custom', function (e, type, data){
             custom_event(e, type, data);
         });
-
-        $(document).keydown(keydown);
     }
 
     function unbind_all(){
         console.log('unbind');
         $input.unbind();
-        $(document).unbind('keydown', keydown);
     }
 
     function save(){
@@ -142,6 +138,7 @@ $.Form.Movement = function($input, form_data, row_data){
             $item.addClass('f_error');
         }
     }
+
 
     function save_update(data, obj_data){
         if (row_data.id){
@@ -196,24 +193,8 @@ $.Form.Movement = function($input, form_data, row_data){
         } else {
             alert('event: <' + type + '> has no handler');
         }
+        e.stopPropagation();
     }
-
-    function form_mousedown(e){
-        var item = e.target;
-        // switch on edit mode if needed
-        if (!edit_mode){
-            edit_mode_on();
-        }
-        if (item.nodeName == 'SPAN'){
-            var $field = $(item).parent('div');
-            var $item = $field.find('span').eq(1);
-            // which field?
-            field_number = $input.children().index($field);
-            selected($item, $field);
-        }
-        return false;
-    }
-
 
 
     function make_editable(){
@@ -362,27 +343,98 @@ make_cell_viewable
         move();
     }
 
-    function move(){
+    function blur(){
+        // put the grid out of focus
+        if (edit_mode){
+            edit_mode_off();
+        }
+        if (current.$item){
+        current.$item.removeClass('f_selected_cell');
+        }
+    }
+
+
+    function move(direction){
         // find the cell and select it
-        var $row = $input.find('p').eq(field_number);
-        var $item = $row.children().eq(1);
-        selected($item, $row);
+        var $row = $input.children('div').eq(field_number);
+        if (form_data.fields[field_number].type == 'subform'){
+            var current_edit_mode;
+            if (edit_mode_cache !== undefined){
+                current_edit_mode = edit_mode_cache;
+            } else {
+                current_edit_mode = edit_mode;
+            }
+            blur();
+            if (direction == 'up'){
+                move_event = 'field_end';
+            } else {
+                move_event = 'field_top';
+            }
+            $row.find('div.f_form_continuous').eq(0).trigger('custom',[move_event, {edit_mode: current_edit_mode}]);
+            return false;
+        } else {
+            var $item = $row.children().eq(1);
+            selected($item, $row);
+            return true;
+        }
+    }
+
+
+    function move_parent(event_type){
+        var $parent = $input.parent('div.f_form');
+        if ($parent.parent().hasClass('SUBFORM')){
+            // is a subform
+            var index = $parent.children().index($input);
+            var new_index;
+            if (event_type == 'field_up'){
+                new_index = index - 1;
+            } else if (event_type == 'field_down'){
+                new_index = index + 1;
+            }
+            var current_edit_mode = edit_mode;
+            blur();
+
+            var $new_item = $parent.children().eq(new_index);
+            if ($new_item.length === 0){
+                $new_item = $parent.parent().parent().parent();
+            } else {
+                if (event_type == 'field_up'){
+                    event_type = 'field_end';
+                } else if (event_type == 'field_down'){
+                    event_type = 'field_top';
+                }
+            }
+
+            $new_item.trigger('custom', [event_type, {edit_mode: current_edit_mode}]);
+        } else {
+            // main form
+            if (event_type == 'field_up'){
+                event_type = 'field_end';
+            } else if (event_type == 'field_down'){
+                event_type = 'field_top';
+            }
+            $input.trigger('custom', [event_type, {edit_mode: current_edit_mode}]);
+        }
     }
 
     function move_down(){
         field_number++;
         if(field_number >= total_fields){
             field_number = total_fields - 1;
+            move_parent('field_down');
+        } else {
+            return move('down');
         }
-        move();
     }
 
     function move_up(){
         field_number--;
         if(field_number < 0){
             field_number = 0;
+            move_parent('field_up');
+        } else {
+            return move('up');
         }
-        move();
     }
 
     function undo_field_change(){
@@ -395,10 +447,47 @@ make_cell_viewable
         }
     }
 
+    function field_top(data, e){
+        field_number = 0;
+        if (move('top')){
+            field_move(data, e);
+        }
+    }
+    function field_end(data, e){
+        field_number = total_fields - 1;
+        if (move('end')){
+            field_move(data);
+        }
+    }
+    function field_up(data, e){
+        // called when a sub element returns control
+        edit_mode_cache = data.edit_mode;
+        if (move_up()){
+            field_move(data);
+        }
+        edit_mode_cache = undefined;
+    }
+
+    function field_down(data, e){
+        // called when a sub element returns control
+        edit_mode_cache = data.edit_mode;
+        if (move_down()){
+            field_move(data);
+        }
+        edit_mode_cache = undefined;
+    }
+
+    function field_move(data){
+        register_events();
+        if (data.edit_mode){
+            edit_mode_on();
+        }
+    }
+
     // general key bindings
     var keys = {
- //       '9': tab_right,
- //       '9s': tab_left,
+        '9': move_down,
+        '9s': move_up,
         '38s': move_up,
         '40s': move_down,
         '27' : edit_mode_off,
@@ -465,11 +554,17 @@ make_cell_viewable
     var custom_events = {
         'save' : save,
         'save_return' : save_return,
-        'unbind_all' : unbind_all
+        'unbind_all' : unbind_all,
+        'register_events' : register_events,
+        'field_top' : field_top,
+        'field_end' : field_end,
+        'field_up' : field_up,
+        'field_down' : field_down
     };
 
 
     var edit_mode = false;
+    var edit_mode_cache; /* used for passing edit modes between subforms etc */
     var dirty = false;
     var row_info = {};
     var current = {$control : undefined,
