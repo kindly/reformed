@@ -135,9 +135,9 @@ class TableNode(Node):
     first_run = True
 
     list_fields = [
-        ['title', 'link', 'title'],
-        ['summary', 'info', 'summary'],
-        ['edit', 'link_list', '']
+        ['title', 'link', 'title', {'control' : 'link'}],
+        ['summary', 'info', 'summary', {'control' : 'info'}],
+        ['edit', 'link_list', '', {'control' : 'link_list'}]
     ]
     list_params = {"form_type": "results"}
 
