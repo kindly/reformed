@@ -44,7 +44,9 @@ $.Form = function(input, form_data, row_data, paging_data){
     // remove any existing items from the input
     var $children = $input.children()
     for (var i = 0, n = $children.size(); i < n; i++){
-            $children.eq(i).data('command')('unbind_all');
+            if ($children.eq(i).data('command')){
+                $children.eq(i).data('command')('unbind_all');
+            }
     }
     $children.remove();
     $children = null;
