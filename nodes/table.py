@@ -291,6 +291,7 @@ class Edit(node.TableNode):
                         # dirty hack to get a dropdown test
                         if field_type == 'Boolean':
                             params['control'] = 'dropdown'
+                            params['autocomplete'] = ['true', 'false']
                         fields.append([field, field_type, '%s:' % field, params])
                     except:
                         fields.append([field, 'Text', '%s:' % field, params])
