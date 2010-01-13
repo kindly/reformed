@@ -180,8 +180,6 @@ $.Form.Movement = function($input, form_data, row_data){
         }
     }
     function register_events(data, e){
-        console.log('registering');
-        $.Util.Event_Delegator('register', {keydown:keydown, blur:blur})
         focus();
     }
 
@@ -213,18 +211,24 @@ $.Form.Movement = function($input, form_data, row_data){
     function form_mousedown(e){
         var actioned = false;
         var item = e.target;
-        // switch on edit mode if needed
-        if (!edit_mode){
-            edit_mode_on();
-        }
         if (item.nodeName == 'SPAN'){
             var $field = $(item).parent('div');
             var $item = $field.find('span').eq(1);
             // which field?
             field_number = $input.children().index($field);
-            selected($item, $field);
-            actioned = true;
+            if (field_number >= 0){
+                // switch on edit mode if needed
+                if (!edit_mode){
+                    edit_mode_on();
+                }
+                selected($item, $field);
+                if (!form_in_focus){
+                    focus();
+                }
+                actioned = true;
+            }
         }
+
         return !actioned;
     }
 
@@ -296,9 +300,12 @@ $.Form.Movement = function($input, form_data, row_data){
         // turn on edit mode
         if (!edit_mode){
             edit_mode = true;
-            make_editable(current.$item);
-            current.$item.addClass('f_edited_cell');
-            current.$item.removeClass('f_selected_cell');
+            // update current item if there is one;
+            if (current.$item){
+                make_editable(current.$item);
+                current.$item.addClass('f_edited_cell');
+                current.$item.removeClass('f_selected_cell');
+            }
         }
     }
 /*
@@ -328,7 +335,6 @@ make_cell_viewable
 
             current.field = form_data.fields[field_number];
             current.$item = $new_item;
-
             if (edit_mode){
                 current.$item.addClass('f_edited_cell');
                 make_editable();
@@ -340,7 +346,11 @@ make_cell_viewable
 
     function focus(){
         // put the grid in focus
-        move();
+        if (!form_in_focus){
+            move();
+            $.Util.Event_Delegator('register', {keydown:keydown, blur:blur})
+            form_in_focus = true;
+        }
     }
 
     function blur(){
@@ -349,8 +359,9 @@ make_cell_viewable
             edit_mode_off();
         }
         if (current.$item){
-        current.$item.removeClass('f_selected_cell');
+            current.$item.removeClass('f_selected_cell');
         }
+        form_in_focus = false;
     }
 
 
@@ -566,6 +577,7 @@ make_cell_viewable
     var edit_mode = false;
     var edit_mode_cache; /* used for passing edit modes between subforms etc */
     var dirty = false;
+    var form_in_focus = false;
     var row_info = {};
     var current = {$control : undefined,
                    $item : undefined,
