@@ -713,7 +713,11 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
     // subforms
     var $subforms = $input.find('div.SUBFORM');
     for (var i = 0, n = subforms.length; i < n; i ++){
-        $subforms.eq(i).form(subforms[i].item.params.form, subforms[i].data);
+        if (subforms[i].item.params.form.params.form_type == 'grid'){
+            $subforms.eq(i).grid(subforms[i].item.params.form, subforms[i].data);
+        } else {
+            $subforms.eq(i).form(subforms[i].item.params.form, subforms[i].data);
+        }
     }
 
 };
