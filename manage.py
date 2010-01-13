@@ -29,7 +29,7 @@ from reformed.util import get_dir
 
 def create():
     print 'creating database structure'
-    import td
+    import sample_schema
 
 def load_data():
     print 'loading data'
