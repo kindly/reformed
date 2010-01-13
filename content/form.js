@@ -377,12 +377,11 @@ make_cell_viewable
                 current_edit_mode = edit_mode;
             }
             blur();
-            if (direction == 'up'){
-                move_event = 'field_end';
+            if (direction == 'up' || direction == 'end'){
+                $row.find('div.f_form_continuous:last').data('command')('field_end', {edit_mode: current_edit_mode});
             } else {
-                move_event = 'field_top';
+                $row.find('div.f_form_continuous:first').data('command')('field_top', {edit_mode: current_edit_mode});
             }
-            $row.find('div.f_form_continuous').eq(0).data('command')(move_event, {edit_mode: current_edit_mode});
             return false;
         } else {
             var $item = $row.children().eq(1);
