@@ -77,7 +77,6 @@ class Table(object):
         self.logged = kw.get("logged", True)
         self.validated = kw.get("validated", True)
         self.modified_date = kw.get("modified_date", True)
-        self.index = kw.get("index", None)
         self.unique_constraint = kw.get("unique_constraint", None)
         self.table_type = kw.get("table_type", "user")
         self.entity_relationship = kw.get("entity_relationship", False)
@@ -89,18 +88,14 @@ class Table(object):
         self.initial_events = []
         if self.primary_key:
             self.primary_key_list = self.primary_key.split(",")
-        self.index_list  = []
-        if self.index:
-            self.index_list = [column_list.split(",") for column_list in
-                               self.index.split(";")]
         self.unique_constraint_list  = []
         if self.unique_constraint:
             self.unique_constraint_list = [column_list.split(",") 
                                            for column_list in
                                            self.unique_constraint.split(";")]
 
-        for fields in args:
-            fields._set_parent(self)
+        for field in args:
+            field._set_parent(self)
 
         if "_modified_date" not in self.fields.iterkeys() and self.modified_date:
             self.add_field(Integer("_version"))
@@ -174,11 +169,6 @@ class Table(object):
             self.fields[field.field_name].field_id = field.id
 
         self.persisted = True
-
-    def table_diff(self, original_field_list):
-
-        for name, fields in self.fields:
-            pass
 
     def persist_foreign_key_columns(self, session):
 
@@ -290,9 +280,54 @@ class Table(object):
             self.database.load_from_persist(True)
         finally:
             session.close()
-        
-                
 
+    def add_index(self, field, defer_update_sa = False):
+
+        session = self.database.Session()
+        try:
+            self._add_field_no_persist(field)
+            self._persist_extra_field(field, session)
+
+            name, index = field.indexes.popitem()
+
+            ind = [self.sa_table.columns[col.strip()] for col in index.fields.split(",")]
+            if index.type == "unique":
+                sa.Index(index.name, *ind, unique = True).create()
+            else:
+                sa.Index(index.name, *ind).create()
+
+        except Exception, e:
+            session.rollback()
+            raise
+        else:
+            session._commit()
+            self.database.load_from_persist(True)
+        finally:
+            session.close()
+
+    def delete_index(self, index):
+
+        if isinstance(index, basestring):
+            field = self.fields[index]
+
+        session = self.database.Session()
+        try:
+            row = field.get_field_row_from_table(session)
+            session.delete(row)
+            for sa_index in self.sa_table.indexes:
+                if sa_index.name == field.name:
+                    sa_index.drop()
+
+
+        except Exception, e:
+            session.rollback()
+            raise
+        else:
+            session._commit()
+            self.database.load_from_persist(True)
+        finally:
+            session.close()
+        
 
     def add_field(self, field, defer_update_sa = False):
         """add a Field object to this Table"""
@@ -300,9 +335,9 @@ class Table(object):
             session = self.database.Session()
             field.check_table(self)
             try:
-                self._add_field_by_alter_table(field)
                 self._add_field_no_persist(field)
                 self._persist_extra_field(field, session)
+                self._add_field_by_alter_table(field)
             except Exception, e:
                 session.rollback()
                 if field in self.fields:

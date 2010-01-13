@@ -281,22 +281,39 @@ def split_table_fields(field_list, table_name):
     return table_field_dict
 
 
-def get_all_local_data(obj, internal = False, fields = None, tables = None, allow_system = False, keep_all = False):
+def get_all_local_data(obj, **kw):
+
+    internal = kw.pop("internal", False)
+    fields = kw.pop("fields", False)
+    tables = kw.pop("tables", False)
+    allow_system = kw.pop("allow_system", False)
+    keep_all = kw.pop("keep_all", False)
+    extra_obj = kw.pop("extra_obj", None)
+    extra_fields = kw.pop("extra_fields", None)
 
     table = obj._table
 
     if fields:
-        return get_row_with_fields(obj, fields, internal = internal)
-    if tables:
-        return get_row_with_table(obj, tables, keep_all = keep_all, internal = internal)
-
-    all_local_tables = table.local_tables.keys() + [table.name]
-
-    if allow_system:
-        return get_row_with_table(obj, all_local_tables, keep_all = keep_all, internal = internal)
+        row = get_row_with_fields(obj, fields, internal = internal)
+    elif tables:
+        row = get_row_with_table(obj, tables, keep_all = keep_all, internal = internal)
+    elif allow_system:
+        all_local_tables = table.local_tables.keys() + [table.name]
+        row = get_row_with_table(obj, all_local_tables, keep_all = keep_all, internal = internal)
     else:
+        all_local_tables = table.local_tables.keys() + [table.name]
         local_tables = [table for table in all_local_tables if not table.startswith("_")]
-        return get_row_with_table(obj, local_tables, keep_all = keep_all, internal = internal)
+        row = get_row_with_table(obj, local_tables, keep_all = keep_all, internal = internal)
+
+    if extra_obj:
+        for obj in extra_obj:
+            table_name = obj._table
+            data = get_row_data(obj, fields = fields, internal = internal, table = table.name)
+            row.update(data)
+    if extra_fields:
+        row.update(extra_fields)
+
+    return row
 
 def get_row_with_table(obj, tables, keep_all = True, internal = False):
 

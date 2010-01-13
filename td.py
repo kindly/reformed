@@ -122,7 +122,7 @@ d.add_table(r.Table("bookmarks",
                     r.Integer("user_id"),
                     r.Text("bookmark"),
                     r.Text("title"),
-                    r.Integer("entity_table"),
+                    r.Text("entity_table"),
                     r.DateTime("accessed_date")
                    )
            )

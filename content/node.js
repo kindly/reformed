@@ -1336,10 +1336,10 @@ var bookmark_array = [];
 var BOOKMARKS_SHOW_MAX = 6;
 var BOOKMARK_ARRAY_MAX = 6;
 
-function bookmark_add(link, title){
+function bookmark_add(bookmark){
     // remove the item if already in the list
     for (var i=0; i<bookmark_array.length; i++){
-        if (bookmark_array[i][0]==link){
+        if (bookmark_array[i].bookmark==bookmark.bookmark){
             bookmark_array.splice(i, 1);
             break;
         }
@@ -1348,19 +1348,53 @@ function bookmark_add(link, title){
     if (bookmark_array.length >= BOOKMARK_ARRAY_MAX){
         bookmark_array.splice(BOOKMARK_ARRAY_MAX - 1, 1);
     }
-    bookmark_array.unshift([link, title]);
-    bookmark_display();
+    bookmark_array.unshift(bookmark);
 }
 
 function bookmark_display(){
+    categories = [];
+    category_items = {};
+
+    for(var i=0; i<bookmark_array.length && i<BOOKMARKS_SHOW_MAX; i++){
+        entity_table = bookmark_array[i].entity_table
+        if (category_items[entity_table] === undefined){
+            categories.push(entity_table);
+            category_items[entity_table] = []
+        }
+
+        html  = '<li class ="bookmark-item-' + entity_table + '">';
+        html += '<span onclick="node_load(\'' + bookmark_array[i].bookmark + '\')">';
+        html += bookmark_array[i].title + '</span>';
+        html += '</li>';
+
+        category_items[entity_table].push(html);
+    }
+
+    var html = '<ol class = "bookmark">';
+    for(var i=0; i<categories.length; i++){
+        category = categories[i];
+        html += '<li class ="bookmark-category-title-' + category + '">';
+        html += category;
+        html += '</li>';
+        html += '<ol class ="bookmark-category-list-' + category + '">';
+        html += category_items[category].join('\n');
+        html += '</ol>';
+    }
+
+    html += '</ol>';
+
+
+/*
     var html = '<ol>';
     for(var i=0; i<bookmark_array.length && i<BOOKMARKS_SHOW_MAX; i++){
         html += '<li>';
-        html += '<span onclick="node_load(\'' + bookmark_array[i][0] + '\')">';
-        html += bookmark_array[i][1] + '</span>';
+        html += '<span onclick="node_load(\'' + bookmark_array[i].bookmark + '\')">';
+        html += bookmark_array[i].title + '</span>';
         html += '</li>';
     }
     html += '</ol>';
+*/
+
 
     $('#bookmarks').html(html);
 }
@@ -1448,13 +1482,14 @@ var fn = function(packet, job){
 
     var bookmark = packet.data.bookmark;
     if (bookmark){
-        if (typeof bookmark === "object"){
+        if ($.isArray(bookmark)){
             for (i = 0; i < bookmark.length; i++){
-               bookmark_add(bookmark[i].bookmark, bookmark[i].title);
+               bookmark_add(bookmark[i]);
             }
         } else {
-            bookmark_add(bookmark.bookmark, bookmark.title);
+            bookmark_add(bookmark);
         }
+        bookmark_display();
     }
     var data;
      switch (packet.data.action){
