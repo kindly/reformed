@@ -42,7 +42,12 @@ $.Form = function(input, form_data, row_data, paging_data){
 
     $input = $(input)
     // remove any existing items from the input
-    $input.children().trigger('custom', ['unbind_all']).remove();
+    var $children = $input.children()
+    for (var i = 0, n = $children.size(); i < n; i++){
+            $children.eq(i).data('command')('unbind_all');
+    }
+    $children.remove();
+    $children = null;
 
     // make our div that everything will hang off
     var $form = $('<div class="f_form"></div>');
@@ -54,7 +59,7 @@ $.Form = function(input, form_data, row_data, paging_data){
     if (!row_data.length){
         $.Form.Build($form, form_data, row_data, paging_data);
         $.Form.Movement($form, form_data, row_data);
-        $form.trigger('custom', ['register_events', {}]);
+        $form.data('command')('register_events');
     } else {
         for (var i = 0, n = row_data.length; i < n; i++){
         var $sub = $('<div class="f_form_continuous"></div>');
@@ -80,10 +85,9 @@ $.Form.Movement = function($input, form_data, row_data){
         } else {
             edit_mode_off();
         }
-        $input.bind('custom', function (e, type, data){
-            custom_event(e, type, data);
-        });
+        $input.data('command', command_caller);
     }
+
 
     function unbind_all(){
         console.log('unbind');
@@ -183,17 +187,14 @@ $.Form.Movement = function($input, form_data, row_data){
         focus();
     }
 
-
-    function custom_event(e, type, data){
-        console.log('event triggered: ' + type);
-        if (custom_events[type]){
-            custom_events[type](data, e);
+    function command_caller(type, data){
+        console.log('command triggered: ' + type);
+        if (custom_commands[type]){
+            custom_commands[type](data);
         } else {
-            alert('event: <' + type + '> has no handler');
+            alert('command: <' + type + '> has no handler');
         }
-        e.stopPropagation();
     }
-
 
     function make_editable(){
         // make the cell editable
@@ -381,7 +382,7 @@ make_cell_viewable
             } else {
                 move_event = 'field_top';
             }
-            $row.find('div.f_form_continuous').eq(0).trigger('custom',[move_event, {edit_mode: current_edit_mode}]);
+            $row.find('div.f_form_continuous').eq(0).data('command')(move_event, {edit_mode: current_edit_mode});
             return false;
         } else {
             var $item = $row.children().eq(1);
@@ -416,7 +417,7 @@ make_cell_viewable
                 }
             }
 
-            $new_item.trigger('custom', [event_type, {edit_mode: current_edit_mode}]);
+            $new_item.data('command')(event_type, {edit_mode: current_edit_mode});
         } else {
             // main form
             if (event_type == 'field_up'){
@@ -424,7 +425,7 @@ make_cell_viewable
             } else if (event_type == 'field_down'){
                 event_type = 'field_top';
             }
-            $input.trigger('custom', [event_type, {edit_mode: current_edit_mode}]);
+            $input.data('command')(event_type, {edit_mode: current_edit_mode});
         }
     }
 
@@ -562,7 +563,7 @@ make_cell_viewable
 
 
     // custom events
-    var custom_events = {
+    var custom_commands = {
         'save' : save,
         'save_return' : save_return,
         'unbind_all' : unbind_all,
