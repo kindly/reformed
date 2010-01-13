@@ -1128,7 +1128,6 @@ $.Util.Event_Delegator = function (command, data){
     function clear(){
         info.keydown = undefined;
         if (info.blur){
-            console.log('blurrrrr');
             info.blur();
         }
         info.blur = undefined;
