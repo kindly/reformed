@@ -379,10 +379,20 @@ make_cell_viewable
                 current_edit_mode = edit_mode;
             }
             blur();
+            var subform_type = form_data.fields[field_number].params.form.params.form_type;
+            var div_class;
+            switch (subform_type){
+                case 'grid':
+                    div_class = 'grid_holder';
+                    break;
+                default:
+                    div_class = 'f_form_continuous';
+                    break;
+            }
             if (direction == 'up' || direction == 'end'){
-                $row.find('div.f_form_continuous:last').data('command')('field_end', {edit_mode: current_edit_mode});
+                $row.find('div.' + div_class + ':last').data('command')('field_end', {edit_mode: current_edit_mode});
             } else {
-                $row.find('div.f_form_continuous:first').data('command')('field_top', {edit_mode: current_edit_mode});
+                $row.find('div.' + div_class + ':first').data('command')('field_top', {edit_mode: current_edit_mode});
             }
             return false;
         } else {

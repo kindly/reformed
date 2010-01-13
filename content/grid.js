@@ -188,8 +188,20 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         }
     }
 
-    // remove any previous bound events
-    $(document).unbind();
+
+    // remove any existing items from the input
+    var $children = $(input).children()
+    for (var i = 0, n = $children.size(); i < n; i++){
+            if ($children.eq(i).data('command')){
+                $children.eq(i).data('command')('unbind_all');
+            }
+    }
+    $children.remove();
+    $children = null;
+
+    // add holder for our form
+    var $form = $('<div class="f_form">moo</div>');
+    $(input).append($form);
 
     if (!grid_data){
         grid_data = [];
@@ -202,17 +214,17 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 
     var grid_size = {width : 500, height : 300};
     // create the table
-    $.Grid.Build(input, form_data, grid_data, paging_data);
+    $.Grid.Build($form, form_data, grid_data, paging_data);
 
 
-    var $grid = $(input).find('div.scroller');
+    var $grid = $form.find('div.scroller');
     var $grid_side = $grid.find('div.scroller-side');
     var $grid_head = $grid.find('div.scroller-head');
     var $grid_main = $grid.find('div.scroller-main');
     var $grid_foot = $grid.find('div.scroller-foot');
     var $grid_resizer = $grid.find('div.scroller-resizer');
-    var $main = $(input).find('div.scroller-main table');
-    var $head = $(input).find('div.scroller-head table');
+    var $main = $form.find('div.scroller-main table');
+    var $head = $form.find('div.scroller-head table');
 
     resize_grid();
 
@@ -233,12 +245,14 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     }
     $grid_resizer.mousedown(start_grid_resize);
     // add grid movement functionality
-    $.Grid.Movement(input, form_data, grid_data);
+    $.Grid.Movement($form, form_data, grid_data);
 
-    $(input).addClass('grid_holder');
-    $(input).bind('refresh', function (){
-        resize_grid();
-    });
+    $form.addClass('grid_holder');
+
+    // if top level form then goive focus
+    if (!$form.parent().hasClass('SUBFORM')){
+        $form.data('command')('focus');
+    }
 };
 
 $.Grid.MIN_COLUMN_SIZE = 25;
@@ -251,19 +265,39 @@ $.Grid.Movement = function(input, form_data, grid_data){
     function init(){
         total_rows = $main.find('tr').size();
         total_cols = $main.find('tr').eq(0).children().size();
-        $main.mousedown(click_main).keydown(keydown);
+        $main.mousedown(click_main);
         $side.mousedown(click_side);
+        $input.data('command', command_caller);
+    }
 
-        focus();
-        if (edit_mode){
-            edit_mode_on();
+    function unbind_all(){
+        console.log('unbind');
+        $input.unbind();
+    }
+
+
+    var custom_commands = {
+        'field_top' : field_top,
+        'field_end' : field_end,
+        'unbind_all' : unbind_all,
+        'blur' : blur,
+        'focus' : focus
+    };
+
+    function command_caller(type, data){
+        console.log('command triggered: ' + type);
+        if (custom_commands[type]){
+            custom_commands[type](data);
         } else {
-            edit_mode_off();
+            alert('command: <' + type + '> has no handler');
         }
     }
 
     function click_side(e){
         // click on the side selector
+        if (!form_in_focus){
+            focus();
+        }
         var $item = $(e.target);
         if ($item[0].nodeName == 'TD'){
             var $row = $item.parent('tr');
@@ -275,6 +309,9 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
     function click_main(e){
         // click in the main table body
+        if (!form_in_focus){
+            focus();
+        }
         var actioned = false;
         var $item = $(e.target);
         var fn_finalise;
@@ -356,7 +393,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
         if (value === current.value){
             // not changed
             current.$item.removeClass('dirty');
-            if (row_info[current.row][current.field.name]){
+            if (row_info[current.row] && row_info[current.row][current.field.name]){
                 delete row_info[current.row][current.field.name];
                 if (is_empty(row_info[current.row])){
                     delete row_info[current.row];
@@ -392,8 +429,10 @@ $.Grid.Movement = function(input, form_data, grid_data){
                 delete row_info[current.row];
             }
         }
-        current.$row.removeClass('current');
-        current.$side.removeClass('current');
+        if (current.$row[0]){
+            current.$row.removeClass('current');
+            current.$side.removeClass('current');
+        }
     }
 
     function row_focus(){
@@ -451,7 +490,6 @@ $.Grid.Movement = function(input, form_data, grid_data){
                 }
                 current.$item.removeClass('t_selected_cell');
                 current.$item.removeClass('t_edited_cell');
-
             }
             if($new_row[0] != current.$row[0]){
                 if (current.$row[0] !== undefined){
@@ -487,14 +525,12 @@ $.Grid.Movement = function(input, form_data, grid_data){
             current.$item.removeClass('t_edited_cell');
         }
         edit_mode = false;
-        $(document).keydown(keydown);
     }
 
     function edit_mode_on(){
         // turn on edit mode
         if (!edit_mode){
             edit_mode = true;
-            $(document).unbind('keydown', keydown);
             make_editable(current.$item);
             current.$item.addClass('t_edited_cell');
             current.$item.removeClass('t_selected_cell');
@@ -503,7 +539,52 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
     function focus(){
         // put the grid in focus
-        move();
+        if (!form_in_focus){
+            if (edit_mode){
+                edit_mode_on();
+            } else {
+                edit_mode_off();
+            }
+            $.Util.Event_Delegator('register', {keydown:keydown, blur:blur})
+            form_in_focus = true;
+            move();
+        }
+    }
+
+    function blur(){
+        row_blur();
+        // put the grid out of focus
+        if (edit_mode){
+            edit_mode_off();
+        }
+        if (current.$item[0]){
+            current.$item.removeClass('t_selected_cell');
+        }
+        current.$item = [undefined];
+        current.$row = [undefined];
+
+        form_in_focus = false;
+    }
+
+    function move_parent(event_type){
+        var $parent = $input.parent();
+        if ($parent.hasClass('SUBFORM')){
+            // is a subform
+            var $new_item = $parent.parent().parent();
+
+            var current_edit_mode = edit_mode;
+            $.Util.Event_Delegator('clear');
+         //   blur();
+            $new_item.data('command')(event_type, {edit_mode: current_edit_mode});
+        } else {
+            // main form
+            if (event_type == 'field_up'){
+                event_type = 'field_end';
+            } else if (event_type == 'field_down'){
+                event_type = 'field_top';
+            }
+            $input.data('command')(event_type, {edit_mode: current_edit_mode});
+        }
     }
 
     function move(){
@@ -537,6 +618,8 @@ $.Grid.Movement = function(input, form_data, grid_data){
             row++;
             if (row >= total_rows){
                 row = total_rows - 1;
+                move_parent('field_down');
+                return;
             }
         }
         move();
@@ -549,6 +632,8 @@ $.Grid.Movement = function(input, form_data, grid_data){
             row--;
             if (row < 0){
                 row = 0;
+                move_parent('field_up');
+                return;
             }
         }
         move();
@@ -570,6 +655,24 @@ $.Grid.Movement = function(input, form_data, grid_data){
         move();
     }
 
+    function field_top(data){
+        row = 0;
+        col = 0;
+        field_move(data);
+    }
+
+    function field_end(data){
+        row = total_rows - 1;
+        col = total_cols -1;
+        field_move(data);
+    }
+
+    function field_move(data){
+        focus();
+        if (data.edit_mode){
+            edit_mode_on();
+        }
+    }
     // general key bindings
     var keys = {
         '9': tab_right,
@@ -626,16 +729,18 @@ $.Grid.Movement = function(input, form_data, grid_data){
     }
 
     // useful objects
-    var $main = $(input).find('div.scroller-main table');
-    var $head = $(input).find('div.scroller-head table');
-    var $side = $(input).find('div.scroller-side table');
-    var $scroll_div = $(input).find('div.scroller-main')
+    var $input = $(input);
+    var $main = $input.find('div.scroller-main table');
+    var $head = $input.find('div.scroller-head table');
+    var $side = $input.find('div.scroller-side table');
+    var $scroll_div = $input.find('div.scroller-main')
 
     var row = 0;
     var col = 0;
     var total_cols;
     var total_rows;
     var edit_mode = false;
+    var form_in_focus = false;
 
     var row_info = {};
 
