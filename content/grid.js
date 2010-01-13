@@ -435,7 +435,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
             $scroll_div.scrollTop(top - height + cell_top + h + s + (h-h2))
         }
 
-        if (cell_left < 0){
+        if (cell_left + div_left < 0){
             $scroll_div.scrollLeft(left + cell_left + div_left);
         } else if (cell_left + w + s + s > width){
             $scroll_div.scrollLeft(left - width + cell_left + w + div_left);
