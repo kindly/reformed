@@ -252,7 +252,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
         total_rows = $main.find('tr').size();
         total_cols = $main.find('tr').eq(0).children().size();
         $main.mousedown(click_main).keydown(keydown);
-        $side.click(click_side);
+        $side.mousedown(click_side);
 
         focus();
         if (edit_mode){
