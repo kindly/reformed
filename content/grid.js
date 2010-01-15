@@ -80,6 +80,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 
     function start_column_resize(e){
         // begin resizing
+        current = $form.data('command')('get_current');
         $drag_col = $(e.target).parent();
         drag_col = $drag_col.parent().children().index($drag_col);
         $(document).mousemove(move_column_resize).mouseup(end_column_resize);
@@ -91,6 +92,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         $(document).unbind('mousemove', move_column_resize);
         $(document).unbind('mouseup', end_column_resize);
         $drag_col = null;
+        current = undefined;
         return false;
     }
 
@@ -179,12 +181,18 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         $head.width(t_width);
         $main.width(t_width);
 
+
         // restore column widths
         var $head_cols = $head.find('th');
         var $main_cols = $main.find('tr').eq(0).find('td');
         for (i = 0, n = column_widths.length; i < n; i++){
                 $head_cols.eq(i).width(column_widths[i] - $.Util.Size.GRID_COL_RESIZE_DIFF);
-                $main_cols.eq(i).width(column_widths[i]);
+                if (current && current.editing && current.row === 0 && current.col === i && !current.complex_control){
+                    // control is on first row and being edited for this column
+                    $main_cols.eq(i).width(column_widths[i] - $.Util.Size.GRID_COL_EDIT_DIFF);
+                } else {
+                    $main_cols.eq(i).width(column_widths[i]);
+                }
         }
     }
 
@@ -226,16 +234,14 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     var $main = $form.find('div.scroller-main table');
     var $head = $form.find('div.scroller-head table');
 
-    resize_grid();
 
     var $drag_col;
     var drag_col;
-
+    var current;  // place to store current selection info for column resizing
     var column_widths = [];
     var column_widths_main = [];
     var column_widths_header = [];
     get_column_widths();
-    resize_table_columns();
 
     // add resizers
     var headers = $head.find('th');
@@ -247,6 +253,8 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     // add grid movement functionality
     $.Grid.Movement($form, form_data, grid_data);
 
+    resize_grid();
+    resize_table_columns();
     $form.addClass('grid_holder');
 
     // if top level form then give focus
