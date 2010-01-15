@@ -249,7 +249,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 
     $form.addClass('grid_holder');
 
-    // if top level form then goive focus
+    // if top level form then give focus
     if (!$form.parent().hasClass('SUBFORM')){
         $form.data('command')('focus');
     }
