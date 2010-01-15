@@ -1159,7 +1159,10 @@ $.Util.selectStyleSheet = function (title, url){
             // refresh the sizes of elements
             $.Util.Size.get();
             // update any grids
-            $('div.GRID').data('resize')();
+            var $grids = $('div.GRID');
+            for (var i = 0, n = $grids.size(); i < n; i++){
+                $grids.eq(i).data('resize')();
+            }
         }
 
         function check_loaded(){
