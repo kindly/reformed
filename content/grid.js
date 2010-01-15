@@ -283,15 +283,21 @@ $.Grid.Movement = function(input, form_data, grid_data){
         'field_end' : field_end,
         'unbind_all' : unbind_all,
         'blur' : blur,
-        'focus' : focus
+        'focus' : focus,
+        'get_current' : get_current
     };
+
+    function get_current(){
+        return (current);
+    }
 
     function command_caller(type, data){
         console.log('command triggered: ' + type);
         if (custom_commands[type]){
-            custom_commands[type](data);
+            return custom_commands[type](data);
         } else {
             alert('command: <' + type + '> has no handler');
+            return false;
         }
     }
 
