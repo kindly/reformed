@@ -126,6 +126,8 @@ border-bottom:1px solid #DDD;
 border-left:0;
 border-top:0;
 overflow:hidden;
+text-overflow:ellipsis;
+white-space:nowrap;
 }
 
 td {
