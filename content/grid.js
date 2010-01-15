@@ -200,7 +200,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     $children = null;
 
     // add holder for our form
-    var $form = $('<div class="f_form">moo</div>');
+    var $form = $('<div class="f_form GRID"></div>');
     $(input).append($form);
 
     if (!grid_data){
@@ -253,6 +253,8 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     if (!$form.parent().hasClass('SUBFORM')){
         $form.data('command')('focus');
     }
+    // add resize function so remotely accessable
+    $form.data('resize', resize_grid);
 };
 
 $.Grid.MIN_COLUMN_SIZE = 25;
@@ -1157,7 +1159,7 @@ $.Util.selectStyleSheet = function (title, url){
             // refresh the sizes of elements
             $.Util.Size.get();
             // update any grids
-            $('div.grid_holder').trigger('refresh');
+            $('div.GRID').data('resize')();
         }
 
         function check_loaded(){
