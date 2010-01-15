@@ -369,14 +369,12 @@ tr.current {
 }
 
 td {
-    font-family: verdana;
     padding:3px;
 }
 
 td input {
     margin : 0;
     border-color:#999;
-    font-family: verdana;
 }
 
 .scroller {
@@ -470,7 +468,7 @@ td.complex.t_edited_cell div.data {
 
 
 td, body, input, select, textarea, th {
-    font-family: arial, verdana;
+    font-family: monospace, arial, verdana;
 }
 
 span.form_label {
