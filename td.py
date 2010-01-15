@@ -20,111 +20,116 @@
 
 
 import reformed.reformed as r
+from reformed.database import table, entity
+from reformed.fields import *
 
 
-d = r.reformed
+d =  r.reformed
 
 
-d.add_entity(r.Table("people",
-                    r.Text("name", mandatory = True, length = 50),
-                    r.DateTime("dob"),
-                    r.Boolean("active"),
-                    r.Address("supporter_address"),
-                    r.OneToMany("email","email",
-                              order_by = "email",
-                              eager = True),
-                    r.OneToMany("donkey_sponsorship",
-                              "donkey_sponsorship",
-                              many_side_not_null = False
-                               ),
-                    summary_fields = "name,address_line_1,postcode"
+entity("people",d,
 
-                   )
-           )
+    Text("name", mandatory = True, length = 50),
+    DateTime("dob"),
+    Boolean("active"),
+    Address("supporter_address"),
+    OneToMany("email","email",
+              order_by = "email",
+              eager = True),
+    OneToMany("donkey_sponsorship",
+              "donkey_sponsorship",
+              many_side_not_null = False
+               ),
 
-d.add_table(r.Table("email",
-                    r.Email("email")
-                   )
-           )
+    summary_fields = "name,address_line_1,postcode"
+)
 
-d.add_entity(r.Table("user",
-                    r.Text("name"),
-                    r.Text("password"),
-                    primary_key = "name",
-                    table_type = "system"
-                  )
-           )
+table("email",d,
 
-d.add_table(r.Table("user_group",
-                    r.Text("groupname"),
-                    primary_key = "groupname",
-                    table_type = "system"
-                  )
-           )
+    Email("email")
+)
 
-d.add_table(r.Table("user_group_user",
-                    r.ManyToOne("user", "user"),
-                    r.ManyToOne("user_group", "user_group"),
-                    table_type = "system"
-                 )
-           )
+entity("user",d,
 
-d.add_table(r.Table("user_group_permission",
-                    r.ManyToOne("user_group", "user_group"),
-                    r.ManyToOne("permissionx", "permission"),
-                    table_type = "system"
-                   )
-           )
+    Text("name"),
+    Text("password"),
+
+    primary_key = "name",
+    table_type = "system"
+)
+
+table("user_group",d,
+
+    Text("groupname"),
+
+    primary_key = "groupname",
+    table_type = "system"
+)
+
+table("user_group_user",d,
+
+    ManyToOne("user", "user"),
+    ManyToOne("user_group", "user_group"),
+
+    table_type = "system"
+)
+
+table("user_group_permission",d,
+
+    ManyToOne("user_group", "user_group"),
+    ManyToOne("permissionx", "permission"),
+      
+    table_type = "system"
+)
 
 
-d.add_table(r.Table("permission",
-                    r.Text("permission"),
-                    primary_key = "permission",
-                    table_type = "system"
-                   )
-           )
+table("permission",d,
 
-d.add_entity(r.Table("donkey",
-                    r.Text("name"), #validation = '__^[a-zA-Z0-9 ]*$'),
-                    r.Integer("age", validation = 'Int'),
-                    r.OneToOne("donkey_pics","donkey_pics",
-                             many_side_not_null = False
-                             ),
-                    r.OneToMany("donkey_sponsorship",
-                              "donkey_sponsorship",
-                                many_side_not_null = False),
-                    summary_fields = "name,age"
-                   )
-           )
+    Text("permission"),
 
-d.add_table(r.Table("donkey_pics",
-                    r.Binary("pic"),
-                    r.Text("pic_name")
-                   )
-           )
+    primary_key = "permission",
+    table_type = "system"
+)
 
-d.add_table(r.Table("donkey_sponsorship",
-                    r.Money("amount"),
-                    r.Date("giving_date"),
-                    entity_relationship = True
-                   )
-           )
+entity("donkey",d,
 
-d.add_table(r.Table("paymentdds",
-                    r.Date("giving_date"),
-                    r.Money("amount"),
-                    r.Text("source")
-                   )
-           )
+    Text("name"), #validation = '__^[a-zA-Z0-9 ]*$'),
+    Integer("age", validation = 'Int'),
+    OneToOne("donkey_pics","donkey_pics",many_side_not_null = False),
+    OneToMany("donkey_sponsorship", "donkey_sponsorship", many_side_not_null = False),
 
-d.add_table(r.Table("bookmarks",
-                    r.Integer("entity_id"),
-                    r.Integer("user_id"),
-                    r.Text("bookmark"),
-                    r.Text("title"),
-                    r.Text("entity_table"),
-                    r.DateTime("accessed_date")
-                   )
-           )
+    summary_fields = "name,age"
+)
+
+table("donkey_pics",d,
+
+    Binary("pic"),
+    Text("pic_name")
+)
+
+table("donkey_sponsorship",d,
+
+    Money("amount"),
+    Date("giving_date"),
+
+    entity_relationship = True
+)
+
+table("paymentdds",d,
+
+    Date("giving_date"),
+    Money("amount"),
+    Text("source")
+)
+
+table("bookmarks",d,
+
+    Integer("entity_id"),
+    Integer("user_id"),
+    Text("bookmark"),
+    Text("title"),
+    Text("entity_table"),
+    DateTime("accessed_date")
+)
 
 d.persist()

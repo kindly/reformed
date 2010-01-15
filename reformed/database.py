@@ -757,11 +757,12 @@ class ManagerThread(threading.Thread):
                     self.database.scheduler_thread.join()
                 break
             time.sleep(1)
-                
         
+def table(name, database, *args, **kw):
+    """helper to add table to database args and keywords same as Table definition"""
+    database.add_table(tables.Table(name, *args, **kw))
 
-
-
-
-
+def entity(name, database, *args, **kw):
+    """helper to add entity to database args and keywords same as Table definition"""
+    database.add_entity(tables.Table(name, *args, **kw))
 
