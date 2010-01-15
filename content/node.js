@@ -708,8 +708,7 @@ function node_delete(root, command){
 
 
 function node_button(item, node, command){
-    var root = _parse_id(item.id).root;
-    var out = node_get_form_data(root);
+    var out = $('#main div.f_form').data('command')('get_form_data');
     get_node(node, command, out, false);
 }
 
@@ -889,28 +888,11 @@ function update_status(root, data){
     if (data && data.percent === null){
          data.percent = 0;
     }
-    var form_root = parse_strip_subform_info(root);
-    var form_data = $INFO.getState(form_root, 'form_info').form_data;
-    var field_name;
-    var id;
-    for (var field in form_data.fields){
-        // ignore subforms
-        if (form_data.fields[field].type != 'subform'){
-            field_name = form_data.fields[field].name;
-            id = $INFO.getId(root + '#' + field_name);
-            if (data[field_name]){
-                if (form_data.fields[field].type == 'info'){
-                    $('#' + id).html(data[field_name]);
-                }
-                if (form_data.fields[field].type == 'progress'){
-                    $('#' + id).progressbar('option', 'value', data[field_name]);
-                }
-            }
-        }
-    }
+    $('#' + root + ' div.f_form').data('command')('update', data);
 }
 
 function get_status(node, root, call_string){
+    //FIXME get rid of $INFO references
     var current_node = $INFO.getState(root, 'node');
     if (node == current_node){
         node_call_from_string(call_string, false);
@@ -921,13 +903,12 @@ function get_status(node, root, call_string){
 var status_timer;
 
 function job_processor_status(data, node, root){
-
+    //FIXME get rid of $INFO references
     if (node == $INFO.getState(root, 'node')){
         // display the message form if it exists
         if (data.form){
-            $('#' + root).html(node_generate_html(data.form, null, null, root));
-            form_setup(root, data.form);
-            $INFO.setState(root, 'node', node);
+            data.form = $.Util.FormDataNormalize(data.form);
+            $('#' + root).form(data.form, null, null);
         }
         // show info on form
         if (data.status){

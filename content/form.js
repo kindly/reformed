@@ -96,31 +96,40 @@ $.Form.Movement = function($input, form_data, row_data){
         $input.unbind();
     }
 
+    function get_form_data(){
+        // get our data to save
+        var save_data = {};
+        for (var item in row_data){
+            save_data[item] = row_data[item];
+        }
+        var copy_of_row_info = {};
+        for (var item in row_info){
+            save_data[item] = row_info[item];
+            copy_of_row_info[item] = row_info[item];
+        }
+        // any extra data needed from the form
+        params = form_data.params;
+        if (params && params.extras){
+            for (var extra in params.extras){
+                if (params.extras.hasOwnProperty(extra)){
+                    save_data[extra] = params.extras[extra];
+                }
+            }
+        }
+        return [save_data, copy_of_row_info];
+    }
+
+    function get_form_data_remote(){
+        return get_form_data()[0];
+    }
+
     function save(){
         console.log('save');
         // make the form non-edit
         edit_mode_off();
         if (current.dirty){
-            // get our data to save
-            var save_data = {};
-            for (var item in row_data){
-                save_data[item] = row_data[item];
-            }
-            var copy_of_row_info = {};
-            for (var item in row_info){
-                save_data[item] = row_info[item];
-                copy_of_row_info[item] = row_info[item];
-            }
-            // any extra data needed from the form
-            params = form_data.params;
-            if (params && params.extras){
-                for (var extra in params.extras){
-                    if (params.extras.hasOwnProperty(extra)){
-                        save_data[extra] = params.extras[extra];
-                    }
-                }
-            }
-            get_node_return('test.AutoFormPlus', '_save', save_data, $input, copy_of_row_info); //FIXME node_name
+            var info = get_form_data();
+            get_node_return('test.AutoFormPlus', '_save', info[0], $input, info[1]); //FIXME node_name
         }
     }
 
@@ -189,12 +198,21 @@ $.Form.Movement = function($input, form_data, row_data){
         focus();
     }
 
+    function update(data){
+        // fixme this needs lots of functionality adding
+        var $form_items = $input.children('div');
+        for (var i = 0, n = $form_items.size(); i < n; i++){
+            $form_items.eq(i).children('span').eq(1).html(data[form_data.fields[i].name]);
+        }
+    }
+
     function command_caller(type, data){
         console.log('command triggered: ' + type);
         if (custom_commands[type]){
-            custom_commands[type](data);
+            return custom_commands[type](data);
         } else {
             alert('command: <' + type + '> has no handler');
+            return false;
         }
     }
 
@@ -579,6 +597,8 @@ make_cell_viewable
         'save_return' : save_return,
         'unbind_all' : unbind_all,
         'register_events' : register_events,
+        'get_form_data' : get_form_data_remote,
+        'update' : update,
         'field_top' : field_top,
         'field_end' : field_end,
         'field_up' : field_up,
@@ -676,6 +696,14 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
         return x;
     }
 
+    function button(item, value){
+        var class_list = 'button';
+        if (item.params.css){
+            class_list += ' ' + item.params.css;
+        }
+        return '<button class="' + class_list + '" onclick="node_button(this, \'' + item.params.node + '\', \'' + item.params.action + '\');return false">' + item.title + '</button>';
+    }
+
     function build_control(item){
         var html = [];
         var value = row_data[item.name];
@@ -686,6 +714,9 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
                 if (value){
                     html.push(value);
                 }
+                break;
+            case 'button':
+                html.push(button(item, value));
                 break;
             case 'link':
                 html.push(link(item, value));
