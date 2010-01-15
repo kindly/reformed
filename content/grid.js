@@ -1243,6 +1243,9 @@ $.Util.FormDataNormalize = function (form_data) {
         var field = form_data.fields[i];
         field.index = i;
         form_data.items[field.name] = field;
+        if (!field.params){
+            field.params = {};
+        }
     }
     return form_data;
 };
