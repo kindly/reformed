@@ -619,7 +619,7 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
             if (row_data && row_data[item.name] !== undefined){
                 value = row_data[item.name];
             } else {
-                if (item.params && item.params['default']){
+                if (item.params['default']){
                     value = item.params['default'];
                 } else {
                     value = null;
@@ -636,35 +636,42 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
                 default:
                     value = HTML_Encode(value);
             }
-            if (item.params && item.params.control == 'dropdown'){
-                if (value === null){
-                    html.push('<span class="f_cell null complex"><span class="but_dd"/><span class="data">[NULL]</span></span>');
-                } else {
-                    html.push('<span class="f_cell complex"><span class="but_dd"/><span class="data">' + value + '</span></span>');
-                }
+            var class_list = 'f_cell';
+            if (value === null){
+                value = '[NULL]';
+                class_list += ' null';
+            }
+
+            if (item.params.css){
+                class_list += ' ' + item.params.css;
+            }
+
+            if (item.params.control == 'dropdown'){
+                html.push('<span class="' + class_list + ' complex"><span class="but_dd"/><span class="data">' + value + '</span></span>');
             }
             else {
-                if (value === null){
-                    html.push('<span class="f_cell null">[NULL]</span>');
-                } else {
-                    html.push('<span class="f_cell">' + value + '</span>');
-                }
+                html.push('<span class="' + class_list + '">' + value + '</span>');
             }
+
             html.push('</div>');
             return html.join('');
 
     }
-    function link(value){
+    function link(item, value){
+        var class_list = 'link';
+        if (item.params.css){
+            class_list += ' ' + item.params.css;
+        }
         var split = value.split("|");
         var link = split.shift();
         value = split.join('|');
   //      var x = (show_label ? '<span class="label">' + item.title + '</span>' : '');
         var x = '';
         if (link.substring(0,1) == 'n'){
-            x += '<a href="#" onclick="node_load(\'' + link + '\');return false">' + (value ? value : '&nbsp;') + '</a>';
+            x += '<a href="#" class="' + class_list + '" onclick="node_load(\'' + link + '\');return false">' + (value ? value : '&nbsp;') + '</a>';
         }
         if (link.substring(0,1) == 'd'){
-            x += '<a href="#" onclick ="link_process(this,\'' + link + '\');return false;">' + (value ? value : '&nbsp;') + '</a>';
+            x += '<a href="#" class="' + class_list + '" onclick ="link_process(this,\'' + link + '\');return false;">' + (value ? value : '&nbsp;') + '</a>';
         }
         return x;
     }
@@ -681,11 +688,11 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
                 }
                 break;
             case 'link':
-                html.push(link(value));
+                html.push(link(item, value));
                 break;
             case 'link_list':
                 for (var i = 0, n = value.length; i < n; i++){
-                    html.push(link(value[i]));
+                    html.push(link(item, value[i]));
                     html.push(' ');
                 }
                 break;
@@ -694,7 +701,6 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
                 subforms.push({item: item, data: value})
                 break;
             default:
-
                 html.push(item.params.control);
         }
         html.push('</div>');
