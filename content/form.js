@@ -348,7 +348,7 @@ make_cell_viewable
     }
 
     function focus(){
-        // put the grid in focus
+        // put the form in focus
         if (!form_in_focus){
             move();
             $.Util.Event_Delegator('register', {keydown:keydown, blur:blur})
