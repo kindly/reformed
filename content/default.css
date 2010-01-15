@@ -495,3 +495,17 @@ div.f_form.dirty{
 span.f_cell.dirty {
     font-weight:bold;
 }
+
+.form_title {
+    font-weight:bold;
+}
+.f_form_continuous{
+    border-bottom: 1px solid green;
+    margin-bottom:5px;
+    padding-bottom:5px;
+}
+
+.link {
+    color:green;
+    font-size:0.8em;
+}
