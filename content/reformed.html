@@ -44,7 +44,7 @@
 <span onclick="$.Util.selectStyleSheet('size', 'css/size5.css');" style="font-size:16px">A</span>
 </div>
 
-<form action='' onsubmit="return search_box();">
+<form action='' onclick="$.Util.Event_Delegator('clear');" onsubmit="return search_box();">
 <input type='text' name='search' id='search' />
 </form>
 
