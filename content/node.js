@@ -573,7 +573,7 @@ function link_process(item, link){
 
 function node_save(root, command){
     msg('node_save');
-    $('#main').find('div').trigger('custom', ['save']); //FIXME these wantto be found properly
+    $('#main').find('div').data('command')('save'); //FIXME these want to be found properly
 /*
     var out = node_get_form_data(root);
 
