@@ -532,12 +532,14 @@ $.Grid.Movement = function(input, form_data, grid_data){
             current.$item.removeClass('t_edited_cell');
         }
         edit_mode = false;
+        current.editing = false;
     }
 
     function edit_mode_on(){
         // turn on edit mode
         if (!edit_mode){
             edit_mode = true;
+            current.editing = true;
             make_editable(current.$item);
             current.$item.addClass('t_edited_cell');
             current.$item.removeClass('t_selected_cell');
@@ -762,6 +764,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
         value : undefined,
         field : undefined,
         $control : undefined,
+        editing : false,
         complex_control : undefined
     };
 
