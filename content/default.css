@@ -440,6 +440,7 @@ td div.but_dd {
 /*background-color:red;*/
 background-color:transparent;
 background-image:url('bullet_arrow_down.png');
+background-repeat:no-repeat;
 float:right;
 height:1em;
 position:relative;
