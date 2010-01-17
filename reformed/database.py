@@ -30,6 +30,7 @@ import search
 import resultset
 import tables
 import time
+from collections import defaultdict
 from util import get_paths, get_all_local_data
 from fields import ManyToOne, OneToOne, OneToMany, Integer, CopyTextAfter, CopyTextAfterField, DeleteRow
 import fields as field_types
@@ -144,20 +145,22 @@ class Database(object):
 
         try:
             #update fields in other tables so that they do not have to change their name
-            for relation in table_to_rename.tables_with_relations.itervalues():
-                if relation.foreign_key_table <> table_to_rename.name:
-                    field = relation.parent
-                    foreign_key_name = relation.foriegn_key_id_name
-                    row = field.get_field_row_from_table(session)
-                    row.foreign_key_name = u"%s" % foreign_key_name
-                    session.save(row)
+            for relations in table_to_rename.tables_with_relations.itervalues():
+                for relation in relations:
+                    if relation.foreign_key_table <> table_to_rename.name:
+                        field = relation.parent
+                        foreign_key_name = relation.foriegn_key_id_name
+                        row = field.get_field_row_from_table(session)
+                        row.foreign_key_name = u"%s" % foreign_key_name
+                        session.save(row)
 
-            for rel in table_to_rename.tables_with_relations.values():
-                if rel.other == table_to_rename.name:
-                    field = rel.parent
-                    row = field.get_field_row_from_table(session)
-                    row.other = u"%s" % new_name
-                    session.save(row)
+            for relations in table_to_rename.tables_with_relations.values():
+                for rel in relations:
+                    if rel.other == table_to_rename.name:
+                        field = rel.parent
+                        row = field.get_field_row_from_table(session)
+                        row.other = u"%s" % new_name
+                        session.save(row)
             
             row = table_to_rename.get_table_row_from_table(session)
             row.table_name = u"%s" % new_name
@@ -197,9 +200,10 @@ class Database(object):
             row = table_to_drop.get_table_row_from_table(session)
             session.delete(row)
 
-            for relation in table_to_drop.tables_with_relations.itervalues():
-                row = relation.parent.get_field_row_from_table(session)
-                session.delete(row)
+            for relations in table_to_drop.tables_with_relations.itervalues():
+                for relation in relations:
+                    row = relation.parent.get_field_row_from_table(session)
+                    session.delete(row)
 
             session._flush()
 
@@ -528,12 +532,12 @@ class Database(object):
             
 
     def tables_with_relations(self, table):
-        relations = {}
+        relations = defaultdict(list)
         for n, v in table.relations.iteritems():
-            relations[(v.other, "here")] = v
+            relations[(v.other, "here")].append(v)
         for v in self.relations:
             if v.other == table.name:
-                relations[(v.table.name, "other")] = v
+                relations[(v.table.name, "other")].append(v)
         return relations
 
     def result_set(self, search):

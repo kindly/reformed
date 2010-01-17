@@ -671,11 +671,12 @@ class Table(object):
         """returns all the attributes names and accociated relation object
         that appear on the sqlalchemy object"""
         relation_attributes = {}
-        for relation in self.tables_with_relations.values():
-            if relation.table is self:
-                relation_attributes[relation.name] = relation
-            else:
-                relation_attributes[relation.sa_options["backref"]] = relation
+        for relations in self.tables_with_relations.values():
+            for relation in relations:
+                if relation.table is self:
+                    relation_attributes[relation.name] = relation
+                else:
+                    relation_attributes[relation.sa_options["backref"]] = relation
         return relation_attributes
 
     @property
@@ -684,33 +685,36 @@ class Table(object):
         object was removed"""
 
         dependant_attributes = {}
-        for table, relation in self.tables_with_relations.iteritems():
-            if relation.table is self and relation.type <> "manytoone":
-                dependant_attributes[relation.name] = relation
-            elif relation.table is not self and relation.type == "manytoone":
-                dependant_attributes[relation.sa_options["backref"]] = relation
+        for table, relations in self.tables_with_relations.iteritems():
+            for relation in relations:
+                if relation.table is self and relation.type <> "manytoone":
+                    dependant_attributes[relation.name] = relation
+                elif relation.table is not self and relation.type == "manytoone":
+                    dependant_attributes[relation.sa_options["backref"]] = relation
         return dependant_attributes
 
     @property
     def dependant_tables(self):
         dependant_tables = []
 
-        for table, relation in self.tables_with_relations.iteritems():
-            if relation.table is self and relation.type <> "manytoone":
-                dependant_tables.append(table[0])
-            elif relation.table is not self and relation.type == "manytoone":
-                dependant_tables.append(table[0])
+        for table, relations in self.tables_with_relations.iteritems():
+            for relation in relations:
+                if relation.table is self and relation.type <> "manytoone":
+                    dependant_tables.append(table[0])
+                elif relation.table is not self and relation.type == "manytoone":
+                    dependant_tables.append(table[0])
         return dependant_tables
 
     @property
     def parent_attributes(self):
 
         parent_attributes = {}
-        for table, relation in self.tables_with_relations.iteritems():
-            if relation.table is self and relation.type == "manytoone":
-                parent_attributes[relation.name] = relation
-            elif relation.table is not self and relation.type <> "manytoone":
-                parent_attributes[relation.sa_options["backref"]] = relation
+        for table, relations in self.tables_with_relations.iteritems():
+            for relation in relations:
+                if relation.table is self and relation.type == "manytoone":
+                    parent_attributes[relation.name] = relation
+                elif relation.table is not self and relation.type <> "manytoone":
+                    parent_attributes[relation.sa_options["backref"]] = relation
         return parent_attributes
 
     @property
@@ -744,45 +748,46 @@ class Table(object):
         database = self.database
         columns={}
         ##  could be made simpler
-        for tab, rel in self.tables_with_relations.iteritems():
+        for tab, relations in self.tables_with_relations.iteritems():
             table, pos = tab
-            if rel.foreign_key_table == self.name:
-                if database.tables[table].primary_key_columns:
-                    rtable = database.tables[table]
-                    for name, column in rtable.primary_key_columns.items():
-                        new_col = Column(column.type,
-                                         name=name,
-                                         mandatory = rel.many_side_not_null, 
-                                         defined_relation = rel,
-                                         original_column = name) 
-                        columns[name] = new_col
+            for rel in relations:
+                if rel.foreign_key_table == self.name:
+                    if database.tables[table].primary_key_columns:
+                        rtable = database.tables[table]
+                        for name, column in rtable.primary_key_columns.items():
+                            new_col = Column(column.type,
+                                             name=name,
+                                             mandatory = rel.many_side_not_null, 
+                                             defined_relation = rel,
+                                             original_column = name) 
+                            columns[name] = new_col
 
-                if rel.foreign_key_name and rel.foreign_key_name not in self.defined_columns:
-                    columns[rel.foreign_key_name] = Column(sa.Integer,
-                                                   name = rel.foreign_key_name,
-                                                   mandatory = rel.many_side_not_null,
-                                                   defined_relation= rel,
-                                                   original_column= "id")
-                elif rel.foreign_key_name:
-                    column = self.defined_columns[rel.foreign_key_name]
-                    column.defined_relation = rel
-                    column.original_column = "id"
-                    columns[rel.foreign_key_name] = column
+                    if rel.foreign_key_name and rel.foreign_key_name not in self.defined_columns:
+                        columns[rel.foreign_key_name] = Column(sa.Integer,
+                                                       name = rel.foreign_key_name,
+                                                       mandatory = rel.many_side_not_null,
+                                                       defined_relation= rel,
+                                                       original_column= "id")
+                    elif rel.foreign_key_name:
+                        column = self.defined_columns[rel.foreign_key_name]
+                        column.defined_relation = rel
+                        column.original_column = "id"
+                        columns[rel.foreign_key_name] = column
 
-                elif table+"_id" not in columns:
-                    columns[table +'_id'] = Column(sa.Integer,
-                                                   name = table +'_id',
-                                                   mandatory = rel.many_side_not_null,
-                                                   defined_relation= rel,
-                                                   original_column= "id")
-                    rel.foreign_key_name = rel.foreign_key_name or table + '_id'
-                else:
-                    columns[table +'_id2'] = Column(sa.Integer,
-                                                   name = table +'_id2',
-                                                   mandatory = rel.many_side_not_null,
-                                                   defined_relation= rel,
-                                                   original_column= "id")
-                    rel.foreign_key_name = rel.foreign_key_name or table + '_id2'
+                    elif table+"_id" not in columns:
+                        columns[table +'_id'] = Column(sa.Integer,
+                                                       name = table +'_id',
+                                                       mandatory = rel.many_side_not_null,
+                                                       defined_relation= rel,
+                                                       original_column= "id")
+                        rel.foreign_key_name = rel.foreign_key_name or table + '_id'
+                    else:
+                        columns[table +'_id2'] = Column(sa.Integer,
+                                                       name = table +'_id2',
+                                                       mandatory = rel.many_side_not_null,
+                                                       defined_relation= rel,
+                                                       original_column= "id")
+                        rel.foreign_key_name = rel.foreign_key_name or table + '_id2'
 
         self.foriegn_key_columns_current = columns
 
@@ -797,18 +802,19 @@ class Table(object):
         fk_constraints = {}
         self.check_database()
         ##  could be made simpler
-        for tab, rel in self.tables_with_relations.iteritems():
+        for tab, relations in self.tables_with_relations.iteritems():
             table, pos = tab
-            other_table_columns=[]
-            this_table_columns=[]
-            for name, column in self.foriegn_key_columns.iteritems():
-                if column.defined_relation == rel and column.original_column == "id":
-                    other_table_columns.append("%s.%s"%\
-                                               (table, column.original_column))
-                    this_table_columns.append(name)
-            if other_table_columns:
-                fk_constraints[rel.foreign_key_constraint_name] = [this_table_columns,
-                                                                  other_table_columns]
+            for rel in relations:
+                other_table_columns=[]
+                this_table_columns=[]
+                for name, column in self.foriegn_key_columns.iteritems():
+                    if column.defined_relation == rel and column.original_column == "id":
+                        other_table_columns.append("%s.%s"%\
+                                                   (table, column.original_column))
+                        this_table_columns.append(name)
+                if other_table_columns:
+                    fk_constraints[rel.foreign_key_constraint_name] = [this_table_columns,
+                                                                      other_table_columns]
         return fk_constraints
 
     def make_sa_table(self):
@@ -1045,14 +1051,15 @@ class Table(object):
                 schema_dict[attribute] = validator
 
         # many side mandatory validators
-        for tab, rel in self.tables_with_relations.iteritems():
-            if not rel.many_side_mandatory:
-                continue
-            table, pos = tab
-            if rel.type in ("onetomany", "onetone") and pos == "here":
-                schema_dict[rel.name] = validators.FancyValidator(not_empty = True)
-            if rel.type == "manytoone" and pos == "other":
-                schema_dict[rel.sa_options["backref"]] = validators.FancyValidator(not_empty = True)
+        for tab, relations in self.tables_with_relations.iteritems():
+            for rel in relations:
+                if not rel.many_side_mandatory:
+                    continue
+                table, pos = tab
+                if rel.type in ("onetomany", "onetone") and pos == "here":
+                    schema_dict[rel.name] = validators.FancyValidator(not_empty = True)
+                if rel.type == "manytoone" and pos == "other":
+                    schema_dict[rel.sa_options["backref"]] = validators.FancyValidator(not_empty = True)
         
         if chained_validators:
             schema_dict["chained_validators"] = chained_validators

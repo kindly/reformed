@@ -71,13 +71,13 @@ class test_database(object):
         d = self.Donkey
 
         assert d.tables_with_relations(self.Donkey.tables["people"])\
-                                             [("email","here")].table.name == "people"
+                                             [("email","here")][0].table.name == "people"
         assert d.tables_with_relations(self.Donkey.tables["email"])\
-                                             [("people","other")].table.name == "people"
+                                             [("people","other")][0].table.name == "people"
         assert d.tables_with_relations(self.Donkey.tables["people"])\
-                                             [("email","here")].type == "onetomany"
+                                             [("email","here")][0].type == "onetomany"
         assert d.tables_with_relations(self.Donkey.tables["email"])\
-                                             [("people","other")].type == "onetomany"
+                                             [("people","other")][0].type == "onetomany"
 
     def test_database_persist_tables(self):
 
