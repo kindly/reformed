@@ -30,7 +30,7 @@ class Table(node.TableNode):
     allowed_join_types = ['OneToMany','OneToOne','ManyToOne']
 
     list_fields = [
-        ['title', 'link', 'title', {'control' : 'link'}],
+        ['title', 'link', 'title', {'control' : 'link', 'css' : 'form_title'}],
         ['summary', 'info', 'summary', {'control' : 'info'}],
         ['table_type', 'info', 'table_type', {'control' : 'info'}],
         ['edit', 'link_list', '', {'control' : 'link_list'}]
@@ -291,6 +291,7 @@ class Edit(node.TableNode):
                         # dirty hack to get a dropdown test
                         if field_type == 'Boolean':
                             params['control'] = 'dropdown'
+                            params['autocomplete'] = ['true', 'false']
                         fields.append([field, field_type, '%s:' % field, params])
                     except:
                         fields.append([field, 'Text', '%s:' % field, params])

@@ -126,6 +126,8 @@ border-bottom:1px solid #DDD;
 border-left:0;
 border-top:0;
 overflow:hidden;
+text-overflow:ellipsis;
+white-space:nowrap;
 }
 
 td {
@@ -335,7 +337,7 @@ td input {
     float: right;
     cursor:e-resize;
     width:10px;
-    height:15px;
+    height:50px;
     background-color:transparent;
     z-index:2;
     position:relative;
@@ -367,14 +369,12 @@ tr.current {
 }
 
 td {
-    font-family: verdana;
     padding:3px;
 }
 
 td input {
     margin : 0;
     border-color:#999;
-    font-family: verdana;
 }
 
 .scroller {
@@ -440,6 +440,7 @@ td div.but_dd {
 /*background-color:red;*/
 background-color:transparent;
 background-image:url('bullet_arrow_down.png');
+background-repeat:no-repeat;
 float:right;
 height:1em;
 position:relative;
@@ -467,7 +468,7 @@ td.complex.t_edited_cell div.data {
 
 
 td, body, input, select, textarea, th {
-    font-family: arial, verdana;
+    font-family: monospace, arial, verdana;
 }
 
 span.form_label {
@@ -493,4 +494,18 @@ div.f_form.dirty{
 
 span.f_cell.dirty {
     font-weight:bold;
+}
+
+.form_title {
+    font-weight:bold;
+}
+.f_form_continuous{
+    border-bottom: 1px solid green;
+    margin-bottom:5px;
+    padding-bottom:5px;
+}
+
+.link {
+    color:green;
+    font-size:0.8em;
 }

@@ -42,7 +42,14 @@ $.Form = function(input, form_data, row_data, paging_data){
 
     $input = $(input)
     // remove any existing items from the input
-    $input.children().trigger('custom', ['unbind_all']).remove();
+    var $children = $input.children()
+    for (var i = 0, n = $children.size(); i < n; i++){
+            if ($children.eq(i).data('command')){
+                $children.eq(i).data('command')('unbind_all');
+            }
+    }
+    $children.remove();
+    $children = null;
 
     // make our div that everything will hang off
     var $form = $('<div class="f_form"></div>');
@@ -54,7 +61,7 @@ $.Form = function(input, form_data, row_data, paging_data){
     if (!row_data.length){
         $.Form.Build($form, form_data, row_data, paging_data);
         $.Form.Movement($form, form_data, row_data);
-        $form.trigger('custom', ['register_events', {}]);
+        $form.data('command')('register_events');
     } else {
         for (var i = 0, n = row_data.length; i < n; i++){
         var $sub = $('<div class="f_form_continuous"></div>');
@@ -80,14 +87,40 @@ $.Form.Movement = function($input, form_data, row_data){
         } else {
             edit_mode_off();
         }
-        $input.bind('custom', function (e, type, data){
-            custom_event(e, type, data);
-        });
+        $input.data('command', command_caller);
     }
+
 
     function unbind_all(){
         console.log('unbind');
         $input.unbind();
+    }
+
+    function get_form_data(){
+        // get our data to save
+        var save_data = {};
+        for (var item in row_data){
+            save_data[item] = row_data[item];
+        }
+        var copy_of_row_info = {};
+        for (var item in row_info){
+            save_data[item] = row_info[item];
+            copy_of_row_info[item] = row_info[item];
+        }
+        // any extra data needed from the form
+        params = form_data.params;
+        if (params && params.extras){
+            for (var extra in params.extras){
+                if (params.extras.hasOwnProperty(extra)){
+                    save_data[extra] = params.extras[extra];
+                }
+            }
+        }
+        return [save_data, copy_of_row_info];
+    }
+
+    function get_form_data_remote(){
+        return get_form_data()[0];
     }
 
     function save(){
@@ -95,26 +128,8 @@ $.Form.Movement = function($input, form_data, row_data){
         // make the form non-edit
         edit_mode_off();
         if (current.dirty){
-            // get our data to save
-            var save_data = {};
-            for (var item in row_data){
-                save_data[item] = row_data[item];
-            }
-            var copy_of_row_info = {};
-            for (var item in row_info){
-                save_data[item] = row_info[item];
-                copy_of_row_info[item] = row_info[item];
-            }
-            // any extra data needed from the form
-            params = form_data.params;
-            if (params && params.extras){
-                for (var extra in params.extras){
-                    if (params.extras.hasOwnProperty(extra)){
-                        save_data[extra] = params.extras[extra];
-                    }
-                }
-            }
-            get_node_return('test.AutoFormPlus', '_save', save_data, $input, copy_of_row_info); //FIXME node_name
+            var info = get_form_data();
+            get_node_return('test.AutoFormPlus', '_save', info[0], $input, info[1]); //FIXME node_name
         }
     }
 
@@ -180,22 +195,26 @@ $.Form.Movement = function($input, form_data, row_data){
         }
     }
     function register_events(data, e){
-        console.log('registering');
-        $.Util.Event_Delegator('register', {keydown:keydown, blur:blur})
         focus();
     }
 
-
-    function custom_event(e, type, data){
-        console.log('event triggered: ' + type);
-        if (custom_events[type]){
-            custom_events[type](data, e);
-        } else {
-            alert('event: <' + type + '> has no handler');
+    function update(data){
+        // fixme this needs lots of functionality adding
+        var $form_items = $input.children('div');
+        for (var i = 0, n = $form_items.size(); i < n; i++){
+            $form_items.eq(i).children('span').eq(1).html(data[form_data.fields[i].name]);
         }
-        e.stopPropagation();
     }
 
+    function command_caller(type, data){
+        console.log('command triggered: ' + type);
+        if (custom_commands[type]){
+            return custom_commands[type](data);
+        } else {
+            alert('command: <' + type + '> has no handler');
+            return false;
+        }
+    }
 
     function make_editable(){
         // make the cell editable
@@ -213,18 +232,24 @@ $.Form.Movement = function($input, form_data, row_data){
     function form_mousedown(e){
         var actioned = false;
         var item = e.target;
-        // switch on edit mode if needed
-        if (!edit_mode){
-            edit_mode_on();
-        }
         if (item.nodeName == 'SPAN'){
             var $field = $(item).parent('div');
             var $item = $field.find('span').eq(1);
             // which field?
             field_number = $input.children().index($field);
-            selected($item, $field);
-            actioned = true;
+            if (field_number >= 0){
+                // switch on edit mode if needed
+                if (!edit_mode){
+                    edit_mode_on();
+                }
+                selected($item, $field);
+                if (!form_in_focus){
+                    focus();
+                }
+                actioned = true;
+            }
         }
+
         return !actioned;
     }
 
@@ -296,9 +321,12 @@ $.Form.Movement = function($input, form_data, row_data){
         // turn on edit mode
         if (!edit_mode){
             edit_mode = true;
-            make_editable(current.$item);
-            current.$item.addClass('f_edited_cell');
-            current.$item.removeClass('f_selected_cell');
+            // update current item if there is one;
+            if (current.$item){
+                make_editable(current.$item);
+                current.$item.addClass('f_edited_cell');
+                current.$item.removeClass('f_selected_cell');
+            }
         }
     }
 /*
@@ -328,7 +356,6 @@ make_cell_viewable
 
             current.field = form_data.fields[field_number];
             current.$item = $new_item;
-
             if (edit_mode){
                 current.$item.addClass('f_edited_cell');
                 make_editable();
@@ -339,8 +366,12 @@ make_cell_viewable
     }
 
     function focus(){
-        // put the grid in focus
-        move();
+        // put the form in focus
+        if (!form_in_focus){
+            move();
+            $.Util.Event_Delegator('register', {keydown:keydown, blur:blur})
+            form_in_focus = true;
+        }
     }
 
     function blur(){
@@ -349,8 +380,9 @@ make_cell_viewable
             edit_mode_off();
         }
         if (current.$item){
-        current.$item.removeClass('f_selected_cell');
+            current.$item.removeClass('f_selected_cell');
         }
+        form_in_focus = false;
     }
 
 
@@ -365,12 +397,21 @@ make_cell_viewable
                 current_edit_mode = edit_mode;
             }
             blur();
-            if (direction == 'up'){
-                move_event = 'field_end';
-            } else {
-                move_event = 'field_top';
+            var subform_type = form_data.fields[field_number].params.form.params.form_type;
+            var div_class;
+            switch (subform_type){
+                case 'grid':
+                    div_class = 'grid_holder';
+                    break;
+                default:
+                    div_class = 'f_form_continuous';
+                    break;
             }
-            $row.find('div.f_form_continuous').eq(0).trigger('custom',[move_event, {edit_mode: current_edit_mode}]);
+            if (direction == 'up' || direction == 'end'){
+                $row.find('div.' + div_class + ':last').data('command')('field_end', {edit_mode: current_edit_mode});
+            } else {
+                $row.find('div.' + div_class + ':first').data('command')('field_top', {edit_mode: current_edit_mode});
+            }
             return false;
         } else {
             var $item = $row.children().eq(1);
@@ -405,7 +446,7 @@ make_cell_viewable
                 }
             }
 
-            $new_item.trigger('custom', [event_type, {edit_mode: current_edit_mode}]);
+            $new_item.data('command')(event_type, {edit_mode: current_edit_mode});
         } else {
             // main form
             if (event_type == 'field_up'){
@@ -413,7 +454,7 @@ make_cell_viewable
             } else if (event_type == 'field_down'){
                 event_type = 'field_top';
             }
-            $input.trigger('custom', [event_type, {edit_mode: current_edit_mode}]);
+            $input.data('command')(event_type, {edit_mode: current_edit_mode});
         }
     }
 
@@ -551,11 +592,13 @@ make_cell_viewable
 
 
     // custom events
-    var custom_events = {
+    var custom_commands = {
         'save' : save,
         'save_return' : save_return,
         'unbind_all' : unbind_all,
         'register_events' : register_events,
+        'get_form_data' : get_form_data_remote,
+        'update' : update,
         'field_top' : field_top,
         'field_end' : field_end,
         'field_up' : field_up,
@@ -566,6 +609,7 @@ make_cell_viewable
     var edit_mode = false;
     var edit_mode_cache; /* used for passing edit modes between subforms etc */
     var dirty = false;
+    var form_in_focus = false;
     var row_info = {};
     var current = {$control : undefined,
                    $item : undefined,
@@ -595,7 +639,7 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
             if (row_data && row_data[item.name] !== undefined){
                 value = row_data[item.name];
             } else {
-                if (item.params && item.params['default']){
+                if (item.params['default']){
                     value = item.params['default'];
                 } else {
                     value = null;
@@ -612,37 +656,52 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
                 default:
                     value = HTML_Encode(value);
             }
-            if (item.params && item.params.control == 'dropdown'){
-                if (value === null){
-                    html.push('<span class="f_cell null complex"><span class="but_dd"/><span class="data">[NULL]</span></span>');
-                } else {
-                    html.push('<span class="f_cell complex"><span class="but_dd"/><span class="data">' + value + '</span></span>');
-                }
+            var class_list = 'f_cell';
+            if (value === null){
+                value = '[NULL]';
+                class_list += ' null';
+            }
+
+            if (item.params.css){
+                class_list += ' ' + item.params.css;
+            }
+
+            if (item.params.control == 'dropdown'){
+                html.push('<span class="' + class_list + ' complex"><span class="but_dd"/><span class="data">' + value + '</span></span>');
             }
             else {
-                if (value === null){
-                    html.push('<span class="f_cell null">[NULL]</span>');
-                } else {
-                    html.push('<span class="f_cell">' + value + '</span>');
-                }
+                html.push('<span class="' + class_list + '">' + value + '</span>');
             }
+
             html.push('</div>');
             return html.join('');
 
     }
-    function link(value){
+    function link(item, value){
+        var class_list = 'link';
+        if (item.params.css){
+            class_list += ' ' + item.params.css;
+        }
         var split = value.split("|");
         var link = split.shift();
         value = split.join('|');
   //      var x = (show_label ? '<span class="label">' + item.title + '</span>' : '');
         var x = '';
         if (link.substring(0,1) == 'n'){
-            x += '<a href="#" onclick="node_load(\'' + link + '\');return false">' + (value ? value : '&nbsp;') + '</a>';
+            x += '<a href="#" class="' + class_list + '" onclick="node_load(\'' + link + '\');return false">' + (value ? value : '&nbsp;') + '</a>';
         }
         if (link.substring(0,1) == 'd'){
-            x += '<a href="#" onclick ="link_process(this,\'' + link + '\');return false;">' + (value ? value : '&nbsp;') + '</a>';
+            x += '<a href="#" class="' + class_list + '" onclick ="link_process(this,\'' + link + '\');return false;">' + (value ? value : '&nbsp;') + '</a>';
         }
         return x;
+    }
+
+    function button(item, value){
+        var class_list = 'button';
+        if (item.params.css){
+            class_list += ' ' + item.params.css;
+        }
+        return '<button class="' + class_list + '" onclick="node_button(this, \'' + item.params.node + '\', \'' + item.params.action + '\');return false">' + item.title + '</button>';
     }
 
     function build_control(item){
@@ -656,12 +715,15 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
                     html.push(value);
                 }
                 break;
+            case 'button':
+                html.push(button(item, value));
+                break;
             case 'link':
-                html.push(link(value));
+                html.push(link(item, value));
                 break;
             case 'link_list':
                 for (var i = 0, n = value.length; i < n; i++){
-                    html.push(link(value[i]));
+                    html.push(link(item, value[i]));
                     html.push(' ');
                 }
                 break;
@@ -670,7 +732,6 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
                 subforms.push({item: item, data: value})
                 break;
             default:
-
                 html.push(item.params.control);
         }
         html.push('</div>');
@@ -699,7 +760,11 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
     // subforms
     var $subforms = $input.find('div.SUBFORM');
     for (var i = 0, n = subforms.length; i < n; i ++){
-        $subforms.eq(i).form(subforms[i].item.params.form, subforms[i].data);
+        if (subforms[i].item.params.form.params.form_type == 'grid'){
+            $subforms.eq(i).grid(subforms[i].item.params.form, subforms[i].data);
+        } else {
+            $subforms.eq(i).form(subforms[i].item.params.form, subforms[i].data);
+        }
     }
 
 };
