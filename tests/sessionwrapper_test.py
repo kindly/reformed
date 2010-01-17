@@ -35,12 +35,12 @@ class test_session_wrapper(donkey_test.test_donkey):
     def test_zz_locking(self):
 
         session1 = self.Donkey.Session()
-        person = session1.query(self.Donkey.t.people).first()
+        person = session1.query(self.Donkey.aliases["people"]).first()
         person.name = u"poo"
         session1.save(person)
         
         session2 = self.Donkey.Session()
-        person = session2.query(self.Donkey.t.people).first()
+        person = session2.query(self.Donkey.aliases["people"]).first()
         person.name = u"poo"
         session2.save(person)
 

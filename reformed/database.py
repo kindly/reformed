@@ -228,6 +228,24 @@ class Database(object):
             setattr(tables, name, table) 
         return tables
 
+    def add_relation_table(self, table):
+        if "_core_entity" not in self.tables:
+            raise custom_exceptions.NoTableAddError("table %s cannot be added as there is"
+                                                    "no entity table in the database"
+                                                    % table.name)
+
+        relation_from_table = ManyToOne("_core_entity", "_core_entity", one_way = True) 
+        self.add_table(table)
+        table._add_field_no_persist(relation_from_table)
+
+
+        relation_to_table = OneToMany(table.name, table.name )
+        self.tables["_core_entity"]._add_field_no_persist(relation_to_table)
+
+        if self.tables["_core_entity"].persisted:
+            self.fields_to_persist.append(relation_to_table)
+
+
     def add_entity_table(self):
 
         if "_core_entity" not in self.tables:
@@ -235,21 +253,11 @@ class Database(object):
                                   field_types.Integer("table"),
                                   field_types.Text("title"),
                                   field_types.Text("summary"),
-                                  OneToMany("relation",
-                                            "relation"),
                                   table_type = "internal",
                                   summary = u'The entity table'
                                   )
 
-            relation =  tables.Table("relation",
-                               field_types.Text("relation_type"),
-                               ManyToOne("_core_entity", "_core_entity", one_way = True),
-                               table_type = "internal",
-                               summary = u'The relation table'
-                              )
-
             self.add_table(entity_table)
-            self.add_table(relation)
 
 
     def add_entity(self, table):
@@ -765,4 +773,8 @@ def table(name, database, *args, **kw):
 def entity(name, database, *args, **kw):
     """helper to add entity to database args and keywords same as Table definition"""
     database.add_entity(tables.Table(name, *args, **kw))
+
+def relation(name, database, *args, **kw):
+    """helper to add entity to database args and keywords same as Table definition"""
+    database.add_relation_table(tables.Table(name, *args, **kw))
 

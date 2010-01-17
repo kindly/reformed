@@ -55,7 +55,7 @@ class test_events(test_donkey):
 
         transaction = self.Donkey.get_instance("transactions")
 
-        first = self.session.query(self.Donkey.t.people).first()
+        first = self.session.query(self.Donkey.aliases["people"]).first()
 
         transaction.amount = 10
         transaction._people = first
@@ -66,7 +66,7 @@ class test_events(test_donkey):
         assert first.contact_summary.total_amount == 10
        # assert first.contact_summary.transaction_count == 1
 
-        first = self.session.query(self.Donkey.t.people).first()
+        first = self.session.query(self.Donkey.aliases["people"]).first()
 
         transaction2 = self.Donkey.get_instance("transactions")
         transaction2.amount = 10
@@ -148,7 +148,7 @@ class test_events(test_donkey):
 
     def test_maxdate_action(self):
 
-        person = self.session.query(self.Donkey.t.people).first()
+        person = self.session.query(self.Donkey.aliases["people"]).first()
         entity = person._entity
         membership1 = self.Donkey.get_instance("membership")
         membership1.start_date = datetime.datetime(2009,05,02)
@@ -160,7 +160,7 @@ class test_events(test_donkey):
 
         assert entity.people.contact_summary.membership == datetime.datetime(2013,06,02)
 
-        person2 = self.session.query(self.Donkey.t.people).first()
+        person2 = self.session.query(self.Donkey.aliases["people"]).first()
         entity2 = person._entity
         membership2 = self.Donkey.get_instance("membership")
         membership2.start_date = datetime.datetime(2009,05,02)
@@ -172,7 +172,7 @@ class test_events(test_donkey):
 
         assert entity.people.contact_summary.membership == datetime.datetime(2013,07,02) 
 
-        person3 = self.session.query(self.Donkey.t.people).first()
+        person3 = self.session.query(self.Donkey.aliases["people"]).first()
         entity3 = person._entity
         membership3 = self.Donkey.get_instance("membership")
         membership3.start_date = datetime.datetime(2009,05,02)
@@ -193,7 +193,7 @@ class test_events(test_donkey):
 
         assert entity.people.contact_summary.membership == datetime.datetime(2013,06,02)
 
-        person4 = self.session.query(self.Donkey.t.people).first()
+        person4 = self.session.query(self.Donkey.aliases["people"]).first()
         entity4 = person._entity
         membership4 = self.Donkey.get_instance("membership")
         membership4.start_date = datetime.datetime(2010,05,02)
@@ -213,7 +213,7 @@ class test_events(test_donkey):
 
     def test_copy_text(self):
 
-        person = self.session.query(self.Donkey.t.people).first()
+        person = self.session.query(self.Donkey.aliases["people"]).first()
 
         assert person.contact_summary.address == "43 union street es388"
 
@@ -260,8 +260,8 @@ class test_events(test_donkey):
 
     def test_add_category(self):
 
-        person = self.session.query(self.Donkey.t.people).first()
-        subsub_category = self.session.query(self.Donkey.t.sub_sub_category).first()
+        person = self.session.query(self.Donkey.aliases["people"]).first()
+        subsub_category = self.session.query(self.Donkey.aliases["sub_sub_category"]).first()
 
         entity_categories = self.Donkey.get_instance("entity_categories")
         entity_categories.category = subsub_category
@@ -282,7 +282,7 @@ class test_events(test_donkey):
         assert person.contact_summary.categories == "this is a this is ab this is abc"
 
 
-        subsub_category = self.session.query(self.Donkey.t.sub_sub_category)[1]
+        subsub_category = self.session.query(self.Donkey.aliases["sub_sub_category"])[1]
 
         entity_categories = self.Donkey.get_instance("entity_categories")
         entity_categories.category = subsub_category
@@ -311,15 +311,15 @@ class test_events(test_donkey):
 
         self.Donkey.tables["contact_summary"].update_all_initial_events()
 
-        all_people = self.session.query(self.Donkey.t.people).all()
+        all_people = self.session.query(self.Donkey.aliases["people"]).all()
 
-        all_summary = self.session.query(self.Donkey.t.contact_summary).all()
+        all_summary = self.session.query(self.Donkey.aliases["contact_summary"]).all()
 
         self.session.expire_all()
 
         assert len(all_summary) == len(all_people)
         assert all([person.contact_summary.total_amount == 0 for person in all_people])
-        person = self.session.query(self.Donkey.t.people).first()
+        person = self.session.query(self.Donkey.aliases["people"]).first()
 
         assert person.contact_summary.categories is None
 
@@ -327,7 +327,7 @@ class test_events(test_donkey):
 
         self.session.expire_all()
 
-        person = self.session.query(self.Donkey.t.people).first()
+        person = self.session.query(self.Donkey.aliases["people"]).first()
 
         assert person.contact_summary.categories == "this is a this is ab this is abc this is aabc this is aab this is aa"
         assert person.contact_summary.total_amount == 35
@@ -358,13 +358,13 @@ class test_events(test_donkey):
     def test_entity_title_summary(self):
 
 
-        person = self.session.query(self.Donkey.t.people).first()
+        person = self.session.query(self.Donkey.aliases["people"]).first()
 
         assert person.name == person._entity.title
 
         assert person._entity.summary == "name: david -- address_line_1: 43 union street -- postcode: es399"
 
-        donkey = self.session.query(self.Donkey.t.donkey).first()
+        donkey = self.session.query(self.Donkey.aliases["donkey"]).first()
 
         print donkey._entity.title
         print donkey.name
@@ -392,7 +392,7 @@ class test_events(test_donkey):
                       "id = ?",
                       values = [entity_id])
 
-        person = self.session.query(self.Donkey.t.people).first()
+        person = self.session.query(self.Donkey.aliases["people"]).first()
 
         self.session.delete(person)
 
