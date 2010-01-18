@@ -241,16 +241,17 @@ class Database(object):
         table.relationship = True
         table.kw["relationship"] = True
 
-        relation_from_table = ManyToOne("_core_entity", "_core_entity", one_way = True) 
         self.add_table(table)
-        table._add_field_no_persist(relation_from_table)
 
+        primary = OneToMany("primary", table.name, backref = "_primary")
+        secondary = OneToMany("secondary", table.name, backref = "_secondary" )
 
-        relation_to_table = OneToMany(table.name, table.name )
-        self.tables["_core_entity"]._add_field_no_persist(relation_to_table)
+        self.tables["_core_entity"]._add_field_no_persist(primary)
+        self.tables["_core_entity"]._add_field_no_persist(secondary)
 
         if self.tables["_core_entity"].persisted:
-            self.fields_to_persist.append(relation_to_table)
+            self.fields_to_persist.append(primary)
+            self.fields_to_persist.append(secondary)
 
 
     def add_entity_table(self):
@@ -714,13 +715,13 @@ class Database(object):
         if self.graph is not None and len(self.graph.nodes()) == len(self.tables):
             return
 
-        gr = nx.DiGraph()
+        gr = nx.MultiDiGraph()
 
         for table in self.tables.keys():
             gr.add_node(table)
 
         for rel in self.relations:
-            gr.add_edge(rel.table.name, rel.other, {"relation" : rel})
+            gr.add_edge(rel.table.name, rel.other, None, {"relation" : rel})
 
         self.graph = gr
 
@@ -734,11 +735,13 @@ class Database(object):
             unique_aliases = set()
             paths = get_paths(self.graph, root_table)
             unique_aliases.update([(root_table,)])
-            for key, value in paths.iteritems():
-                table, join, one_ways, relation = value
-                unique_aliases.update([tuple(one_ways + [table])])
+            for key, edge in paths.iteritems():
+                one_ways = edge.relationship
+                unique_aliases.update([tuple(one_ways + [edge.node])])
             for key, value in self.tables.iteritems():
                 unique_aliases.update([(key,)])
+
+            print unique_aliases
             
             for item in unique_aliases:
                 if len(item) == 1:

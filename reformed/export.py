@@ -85,7 +85,8 @@ class SingleObject(object):
     def make_list(self, obj, key):
 
         list = []
-        table, join, one_ways = self.paths[key]
+        edge = self.paths[key]
+        table, join = edge.node, edge.join
         if table.startswith("_log_") and not self.log:
             return list
         if table.startswith("_core_"):

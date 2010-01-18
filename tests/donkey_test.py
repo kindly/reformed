@@ -6,7 +6,7 @@ import sqlalchemy as sa
 import reformed.custom_exceptions
 from reformed.data_loader import SingleRecord
 from sqlalchemy import create_engine
-from reformed.util import get_table_from_instance, create_data_dict, make_local_tables, get_all_local_data, load_local_data
+from reformed.util import get_paths, get_table_from_instance, create_data_dict, make_local_tables, get_all_local_data, load_local_data
 import datetime
 from decimal import Decimal
 import formencode as fe
@@ -285,9 +285,12 @@ class test_basic_input(test_donkey):
 
         pprint.pprint(self.Donkey.tables["people"].table_path)
 
-        assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey")][:3] == ["donkey", "manytoone", []]
-        assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey", "donkey_pics",)][:3] == ["donkey_pics", "onetoone", []]
-        assert self.Donkey.tables["donkey"].paths[("donkey_sponsership", "_people", "email")][:3] == ["email", "onetomany", []]
+        assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey")].node == "donkey"
+        assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey")].join == "manytoone"
+        assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey", "donkey_pics",)].node == "donkey_pics"
+        assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey", "donkey_pics",)].join == "onetoone"
+        assert self.Donkey.tables["donkey"].paths[("donkey_sponsership", "_people", "email")].node == "email"
+        assert self.Donkey.tables["donkey"].paths[("donkey_sponsership", "_people", "email")].join == "onetomany"
 
     def test_z_make_table_paths(self):
 
@@ -324,21 +327,21 @@ class test_basic_input(test_donkey):
     def test_local_tables(self):
 
         print make_local_tables(self.Donkey.tables["people"].paths)
+
+        assert make_local_tables(self.Donkey.tables["people"].paths) == [{'_core_entity': ('_entity',), 'contact_summary': ('contact_summary',)}, {'transactions': ('transactions',), 'email': ('email',), 'entity_categories': ('_entity', 'categories'), 'membership': ('_entity', '_membership'), 'relation': ('_entity', 'primary'), 'donkey_sponsership': ('donkey_sponsership',)}] 
+
+
+        print make_local_tables(self.Donkey.tables["donkey"].paths)
+        assert make_local_tables(self.Donkey.tables["donkey"].paths) == [{'_core_entity': ('_entity',), 'donkey_pics': ('donkey_pics',)}, {'entity_categories': ('_entity', 'categories'), 'membership': ('_entity', '_membership'), 'relation': ('_entity', 'primary'), 'donkey_sponsership': ('donkey_sponsership',)}] 
         
-
-
-        assert make_local_tables(self.Donkey.tables["people"].paths) == [{'_core_entity': ('_entity',), 'contact_summary': ('contact_summary',)}, {'transactions': ('transactions',), 'donkey_sponsership': ('donkey_sponsership',), 'entity_categories': ('_entity', 'categories'), 'membership': ('_entity', '_membership'), 'relation': ('_entity', 'relation'), 'email': ('email',)}] 
-
-
-        assert make_local_tables(self.Donkey.tables["donkey"].paths) == [{'_core_entity': ('_entity',), 'donkey_pics': ('donkey_pics',)}, {'entity_categories': ('_entity', 'categories'), 'membership': ('_entity', '_membership'), 'relation': ('_entity', 'relation'), 'donkey_sponsership': ('donkey_sponsership',)}] 
-        
+##FIXME need these to be corrected
 
         print self.Donkey.tables["relation"].local_tables 
-        assert self.Donkey.tables["relation"].local_tables == {'donkey': ('__core_entity', 'donkey'), 'relation_donkey': ('_core_entity', 'donkey'), 'people': ('__core_entity', 'people'), 'relation_contact_summary': ('_core_entity', 'people', 'contact_summary'), 'donkey_pics': ('__core_entity', 'donkey', 'donkey_pics'), 'contact_summary': ('__core_entity', 'people', 'contact_summary'), '_core_entity': ('__core_entity',), 'relation_people': ('_core_entity', 'people'), 'relation__core_entity': ('_core_entity',), 'relation_donkey_pics': ('_core_entity', 'donkey', 'donkey_pics')} 
+        assert self.Donkey.tables["relation"].local_tables == {'relation_contact_summary': ('_secondary', 'people', 'contact_summary'), 'relation_people': ('_secondary', 'people'), 'relation__core_entity': ('_secondary',), 'relation_donkey': ('_secondary', 'donkey'), 'relation_donkey_pics': ('_secondary', 'donkey', 'donkey_pics')} 
 
         print self.Donkey.tables["relation"].one_to_many_tables
 
-        assert self.Donkey.tables["relation"].one_to_many_tables == {'transactions': ('__core_entity', 'people', 'transactions'), 'relation_transactions': ('_core_entity', 'people', 'transactions'), 'relation_entity_categories': ('_core_entity', 'categories'), 'donkey_sponsership': ('__core_entity', 'donkey', 'donkey_sponsership'), 'entity_categories': ('__core_entity', 'categories'), 'membership': ('__core_entity', '_membership'), 'relation_membership': ('_core_entity', '_membership'), 'relation_relation': ('_core_entity', 'relation'), 'relation_donkey_sponsership': ('_core_entity', 'people', 'donkey_sponsership'), 'relation_email': ('_core_entity', 'people', 'email'), 'email': ('__core_entity', 'people', 'email')}
+        assert self.Donkey.tables["relation"].one_to_many_tables == {'relation_membership': ('_secondary', '_membership'), 'relation_transactions': ('_secondary', 'people', 'transactions'), 'relation_entity_categories': ('_secondary', 'categories'), 'relation_email': ('_secondary', 'people', 'email'), 'relation_donkey_sponsership': ('_secondary', 'donkey', 'donkey_sponsership')}
         
     def test_zz_add_local(self):
 
@@ -533,11 +536,12 @@ class test_basic_input(test_donkey):
 
     def test_dependant_attributes(self):
 
-        print self.Donkey["people"].dependant_attributes.keys()
 
         assert set(self.Donkey["people"].dependant_attributes.keys()) == set(['contact_summary', 'transactions', 'donkey_sponsership', 'email'])
 
-        assert set(self.Donkey["_core_entity"].dependant_attributes.keys()) == set(['_membership', 'donkey', 'people', '_relation', 'relation', 'categories'])
+        print self.Donkey["_core_entity"].dependant_attributes.keys()
+
+        assert set(self.Donkey["_core_entity"].dependant_attributes.keys()) == set(['_membership', 'donkey', 'people', 'primary', u'categories', 'secondary'])
 
     def test_dependant_tables(self):
 

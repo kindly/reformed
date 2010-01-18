@@ -78,6 +78,15 @@ class Table(object):
         self.entity = kw.get("entity", False)
         self.relationship = kw.get("relationship", False)
         self.lookup = kw.get("lookup", False)
+        
+        valid_entities = kw.get("valid_entities", "").strip().split(",")
+        self.valid_entities = [] if valid_entities == [""] else valid_entities
+
+        valid_entities1 = kw.get("valid_entities1", "").strip().split(",")
+        self.valid_entities1 = [] if valid_entities1 == [""] else valid_entities1
+
+        valid_entities2 = kw.get("valid_entities2", "").strip().split(",")
+        self.valid_entities2 = [] if valid_entities2 == [""] else valid_entities2
 
 
         self.logged = kw.get("logged", True)
@@ -693,6 +702,7 @@ class Table(object):
         dependant_attributes = {}
         for table, relations in self.tables_with_relations.iteritems():
             for relation in relations:
+                print relation, table
                 if relation.table is self and relation.type <> "manytoone":
                     dependant_attributes[relation.name] = relation
                 elif relation.table is not self and relation.type == "manytoone":
