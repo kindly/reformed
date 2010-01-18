@@ -482,7 +482,7 @@ class SingleRecord(object):
             parent_key = self.flat_file.parent_key[key]
             relation_name = key[-2]
         else:
-            table, join, one_ways = get_key_data(key, self.database, self.table)
+            table, join, one_ways, relation = get_key_data(key, self.database, self.table)
             parent_key = get_parent_key(key, self.all_rows)
             relation_name = key[-2]
 

@@ -238,6 +238,9 @@ class Database(object):
                                                     "no entity table in the database"
                                                     % table.name)
 
+        table.relationship = True
+        table.kw["relationship"] = True
+
         relation_from_table = ManyToOne("_core_entity", "_core_entity", one_way = True) 
         self.add_table(table)
         table._add_field_no_persist(relation_from_table)
@@ -732,7 +735,7 @@ class Database(object):
             paths = get_paths(self.graph, root_table)
             unique_aliases.update([(root_table,)])
             for key, value in paths.iteritems():
-                table, join, one_ways = value
+                table, join, one_ways, relation = value
                 unique_aliases.update([tuple(one_ways + [table])])
             for key, value in self.tables.iteritems():
                 unique_aliases.update([(key,)])

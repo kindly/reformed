@@ -281,10 +281,13 @@ class test_basic_input(test_donkey):
 
 
     def test_table_paths(self):
+        import pprint
 
-        assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey")] == ["donkey", "manytoone", []]
-        assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey", "donkey_pics",)] == ["donkey_pics", "onetoone", []]
-        assert self.Donkey.tables["donkey"].paths[("donkey_sponsership", "_people", "email")] == ["email", "onetomany", []]
+        pprint.pprint(self.Donkey.tables["people"].table_path)
+
+        assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey")][:3] == ["donkey", "manytoone", []]
+        assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey", "donkey_pics",)][:3] == ["donkey_pics", "onetoone", []]
+        assert self.Donkey.tables["donkey"].paths[("donkey_sponsership", "_people", "email")][:3] == ["email", "onetomany", []]
 
     def test_z_make_table_paths(self):
 

@@ -73,7 +73,13 @@ class Table(object):
         self.primary_key = kw.get("primary_key", None)
         #persisted should be private
         self.persisted = kw.get("persisted", False)
+
+        # table types
         self.entity = kw.get("entity", False)
+        self.relationship = kw.get("relationship", False)
+        self.lookup = kw.get("lookup", False)
+
+
         self.logged = kw.get("logged", True)
         self.validated = kw.get("validated", True)
         self.modified_date = kw.get("modified_date", True)

@@ -212,7 +212,7 @@ class Search(object):
     def create_aliased_path(self):
         
         for item in self.table_paths_list:
-            key, table_name, relation, one_ways = item
+            key, table_name, relation, one_ways, relation = item
             new_name = "_".join(one_ways + [table_name])
             self.aliased_name_path[new_name] = list(key)
 
