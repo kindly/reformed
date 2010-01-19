@@ -98,27 +98,29 @@ def get_next_relation(gr, path_dict, edge):
     
     for edge in gr.out_edges(node, data = True):
         node1, node2, relation = edge
+            
         relation = relation["relation"]
         rtables = relation.table.database.tables
+        new_table = rtables[node2]
         if rtables[node1].lookup and not rtables[node2].lookup:
             continue
         if len(tables) > 1 and rtables[node2].entity and rtables[tables[-1]].name == "_core_entity" and rtables[tables[-2]].entity:
             continue
         if len(tables) > 1 and check_two_entities(tables, node2, rtables):
             continue
+
+
         if rtables[node2].relationship:
             last_ent = last_entity(tables, rtables)
-            if not last_ent and relation.name <> "primary":
+            if not last_ent and not relation.name.endswith("primary"):
                 continue
             valid_entities1 = rtables[node2].valid_entities1
             valid_entities2 = rtables[node2].valid_entities2
-            print valid_entities1, valid_entities2, relation, last_ent
 
-
-            if relation.name == "primary":
+            if relation.name.endswith("primary"):
                 if valid_entities1 and last_ent not in valid_entities1:
                     continue
-            if relation.name != "primary":
+            if not relation.name.endswith("primary"):
                 if valid_entities2 and last_ent not in valid_entities2:
                     continue
                 if last_ent in valid_entities1 or not valid_entities1:

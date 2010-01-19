@@ -122,6 +122,11 @@ class test_donkey(object):
                                           )
                                      )
 
+        cls.Donkey.add_relation_table(Table("donkey_relation",
+                                     valid_entities1 = "people",
+                                     valid_entities2 = "donkey")
+                                     )
+
         cls.Donkey.add_table(Table("category",
                              Text("category_name"),
                              Text("category_description"),
@@ -328,11 +333,11 @@ class test_basic_input(test_donkey):
 
         print make_local_tables(self.Donkey.tables["people"].paths)
 
-        assert make_local_tables(self.Donkey.tables["people"].paths) == [{'_core_entity': ('_entity',), 'contact_summary': ('contact_summary',)}, {'transactions': ('transactions',), 'email': ('email',), 'entity_categories': ('_entity', 'categories'), 'membership': ('_entity', '_membership'), 'relation': ('_entity', 'primary'), 'donkey_sponsership': ('donkey_sponsership',)}] 
+        assert make_local_tables(self.Donkey.tables["people"].paths) == [{'_core_entity': ('_entity',), 'contact_summary': ('contact_summary',)}, {'donkey_relation': ('_entity', 'donkey_relation_primary'), 'transactions': ('transactions',), 'donkey_sponsership': ('donkey_sponsership',), 'entity_categories': ('_entity', 'categories'), 'membership': ('_entity', '_membership'), 'relation': ('_entity', 'relation_primary'), 'email': ('email',)}] 
 
 
         print make_local_tables(self.Donkey.tables["donkey"].paths)
-        assert make_local_tables(self.Donkey.tables["donkey"].paths) == [{'_core_entity': ('_entity',), 'donkey_pics': ('donkey_pics',)}, {'entity_categories': ('_entity', 'categories'), 'membership': ('_entity', '_membership'), 'relation': ('_entity', 'primary'), 'donkey_sponsership': ('donkey_sponsership',)}] 
+        assert make_local_tables(self.Donkey.tables["donkey"].paths) == [{'_core_entity': ('_entity',), 'donkey_pics': ('donkey_pics',)}, {'donkey_relation': ('_entity', 'donkey_relation_secondary'), 'entity_categories': ('_entity', 'categories'), 'membership': ('_entity', '_membership'), 'relation': ('_entity', 'relation_primary'), 'donkey_sponsership': ('donkey_sponsership',)}] 
         
 ##FIXME need these to be corrected
 
@@ -541,13 +546,15 @@ class test_basic_input(test_donkey):
 
         print self.Donkey["_core_entity"].dependant_attributes.keys()
 
-        assert set(self.Donkey["_core_entity"].dependant_attributes.keys()) == set(['_membership', 'donkey', 'people', 'primary', u'categories', 'secondary'])
+        assert set(self.Donkey["_core_entity"].dependant_attributes.keys()) == set(['_membership', 'donkey', 'people', 'relation_primary', 'donkey_relation_secondary', 'relation_secondary', u'categories', 'donkey_relation_primary'])
 
     def test_dependant_tables(self):
 
         assert set(self.Donkey["people"].dependant_tables) == set(['contact_summary', 'transactions', 'donkey_sponsership', 'email'])
 
-        assert set(self.Donkey["_core_entity"].dependant_tables) == set(['people', 'entity_categories', 'membership', 'relation', 'donkey', 'relation'])
+        print set(self.Donkey["_core_entity"].dependant_tables)
+
+        assert set(self.Donkey["_core_entity"].dependant_tables) == set(['donkey_relation', 'donkey', 'people', 'entity_categories', 'membership', 'relation'])
 
     def test_parant_col_attributes(self):
 

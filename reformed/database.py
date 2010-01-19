@@ -243,8 +243,8 @@ class Database(object):
 
         self.add_table(table)
 
-        primary = OneToMany("primary", table.name, backref = "_primary")
-        secondary = OneToMany("secondary", table.name, backref = "_secondary" )
+        primary = OneToMany("%s_primary" % table.name, table.name, backref = "_primary")
+        secondary = OneToMany("%s_secondary" % table.name, table.name, backref = "_secondary")
 
         self.tables["_core_entity"]._add_field_no_persist(primary)
         self.tables["_core_entity"]._add_field_no_persist(secondary)
