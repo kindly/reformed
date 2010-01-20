@@ -1110,7 +1110,7 @@ var fn = function(packet, job){
             if (job && job.obj){
                 // copy the obj_data that was saved with the job
                 data.obj_data = job.obj_data;
-                job.obj.trigger('custom', ['save_return', data]);
+                job.obj.data('command')('save_return', data);
             } else {
                 // errors
                 if (data.errors){
