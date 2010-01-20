@@ -32,6 +32,10 @@ $.fn.extend({
 
 	form: function(form_data, grid_data, paging_data){
 		$.Form(this, form_data, grid_data, paging_data);
+	},
+
+	input_form: function(form_data, grid_data){
+		$.InputForm(this, form_data, grid_data);
 	}
 
 });
@@ -768,5 +772,236 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
     }
 
 };
+
+
+$.InputForm = function(input, form_data, row_data){
+    $input = $(input)
+    // remove any existing items from the input
+    var $children = $input.children()
+    for (var i = 0, n = $children.size(); i < n; i++){
+            if ($children.eq(i).data('command')){
+                $children.eq(i).data('command')('unbind_all');
+            }
+    }
+    $children.remove();
+    $children = null;
+
+    // make our div that everything will hang off
+    var $form = $('<div class="INPUT_FORM"></div>');
+    $input.append($form);
+
+    if (!row_data){
+        row_data = {};
+    }
+
+    if (!row_data.length){
+        $.InputForm.Build($form, form_data, row_data);
+        $.InputForm.Interaction($form, form_data, row_data);
+        $form.data('command')('register_events');
+    }
+};
+$.InputForm.Interaction = function($input, form_data, row_data){
+
+    function init(){
+
+        // remove any previous bound events
+        unbind_all();
+
+        total_fields = form_data.fields.length;
+        $input.data('command', command_caller);
+    }
+
+
+    function unbind_all(){
+        console.log('unbind');
+        $input.unbind();
+    }
+
+    function register_events(){
+    }
+
+    function get_form_data(){
+        // get our data to save
+        var save_data = {};
+        for (var item in row_data){
+            save_data[item] = row_data[item];
+        }
+        var copy_of_row_info = {};
+        var item;
+        for (var i = 0, n = form_data.fields.length; i < n; i++){
+            item = form_data.fields[i];
+            value =$('#rf_' + item.name).val();
+            if (value !== undefined){
+                save_data[item.name] = value;
+                copy_of_row_info[item.name] = value;
+            }
+        }
+        // any extra data needed from the form
+        params = form_data.params;
+        if (params && params.extras){
+            for (var extra in params.extras){
+                if (params.extras.hasOwnProperty(extra)){
+                    save_data[extra] = params.extras[extra];
+                }
+            }
+        }
+        return [save_data, copy_of_row_info];
+    }
+    function get_form_data_remote(){
+        return get_form_data()[0];
+    }
+    function command_caller(type, data){
+        console.log('command triggered: ' + type);
+        if (custom_commands[type]){
+            return custom_commands[type](data);
+        } else {
+            alert('command: <' + type + '> has no handler');
+            return false;
+        }
+    }
+
+    // custom events
+    var custom_commands = {
+        'unbind_all' : unbind_all,
+        'register_events' : register_events,
+        'get_form_data' : get_form_data_remote
+    };
+
+    init();
+};
+
+
+$.InputForm.Build = function($input, form_data, row_data, paging_data){
+
+    function build_input(item){
+            var html = [];
+            html.push('<div>');
+
+            // label
+            html.push('<label class="form_label" for="rf_' + item.name + '">' + item.title + '</label>');
+
+            if (row_data && row_data[item.name] !== undefined){
+                value = row_data[item.name];
+            } else {
+                if (item.params['default']){
+                    value = item.params['default'];
+                } else {
+                    value = null;
+                }
+            }
+            // correct data value if needed
+            switch (item.type){
+                case 'DateTime':
+                case 'Date':
+                    if (value !== null){
+                        value = Date.ISO(value).toLocaleDateString();
+                    }
+                    break;
+                default:
+                    value = HTML_Encode(value);
+            }
+            var class_list = 'f_cell';
+            if (value === null){
+                value = '';
+      //          class_list += ' null';
+            }
+
+            if (item.params.css){
+                class_list += ' ' + item.params.css;
+            }
+
+            if (item.params.control == 'dropdown'){
+                html.push('<span class="' + class_list + ' complex"><span class="but_dd"/><span class="data">' + value + '</span></span>');
+            }
+            else {
+                html.push('<input id="rf_' + item.name + '" class="' + class_list + '" value="' + value + '" />');
+            }
+
+            html.push('</div>');
+            return html.join('');
+
+    }
+    function link(item, value){
+        var class_list = 'link';
+        if (item.params.css){
+            class_list += ' ' + item.params.css;
+        }
+        var split = value.split("|");
+        var link = split.shift();
+        value = split.join('|');
+  //      var x = (show_label ? '<span class="label">' + item.title + '</span>' : '');
+        var x = '';
+        if (link.substring(0,1) == 'n'){
+            x += '<a href="#" class="' + class_list + '" onclick="node_load(\'' + link + '\');return false">' + (value ? value : '&nbsp;') + '</a>';
+        }
+        if (link.substring(0,1) == 'd'){
+            x += '<a href="#" class="' + class_list + '" onclick ="link_process(this,\'' + link + '\');return false;">' + (value ? value : '&nbsp;') + '</a>';
+        }
+        return x;
+    }
+
+    function button(item, value){
+        var class_list = 'button';
+        if (item.params.css){
+            class_list += ' ' + item.params.css;
+        }
+        return '<button class="' + class_list + '" onclick="node_button_input_form(this, \'' + item.params.node + '\', \'' + item.params.action + '\');return false">' + item.title + '</button>';
+    }
+
+    function build_control(item){
+        var html = [];
+        var value = row_data[item.name];
+
+        html.push('<div>');
+        switch (item.params.control){
+            case 'info':
+                if (value){
+                    html.push(value);
+                }
+                break;
+            case 'button':
+                html.push(button(item, value));
+                break;
+            case 'link':
+                html.push(link(item, value));
+                break;
+            case 'link_list':
+                for (var i = 0, n = value.length; i < n; i++){
+                    html.push(link(item, value[i]));
+                    html.push(' ');
+                }
+                break;
+            case 'subform':
+                html.push('<div class="SUBFORM"></div>');
+                subforms.push({item: item, data: value})
+                break;
+            default:
+                html.push(item.params.control);
+        }
+        html.push('</div>');
+
+        return html.join('');
+    }
+
+    function build_form(){
+        var html = [];
+        num_fields = form_data.fields.length;
+        for (var i = 0; i < num_fields; i++){
+            item = form_data.fields[i];
+            if (!(item.params && item.params.control)){
+                html.push(build_input(item));
+            } else {
+                html.push(build_control(item));
+            }
+        }
+        return html.join('');
+    }
+
+    var HTML_Encode = $.Util.HTML_Encode;
+    $input.html(build_form());
+
+
+};
+
 
 })(jQuery);

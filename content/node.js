@@ -712,6 +712,13 @@ function node_button(item, node, command){
     get_node(node, command, out, false);
 }
 
+function node_button_input_form(item, node, command){
+    var out = $('#main div.INPUT_FORM').data('command')('get_form_data');
+    get_node(node, command, out, false);
+}
+
+
+
 function search_box(){
     var node = 'n:test.Search::q=' + $('#search').val();
     node_load(node);
@@ -1102,6 +1109,8 @@ var fn = function(packet, job){
              var paging = packet.data.data.paging;
              if (form.params.form_type == 'grid'){
                 $('#' + root).grid(form, data, paging);
+             } else if (form.params.form_type == 'action'){
+                $('#' + root).input_form(form, data, paging);
              } else {
                 $('#' + root).form(form, data, paging);
              }
