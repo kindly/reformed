@@ -477,7 +477,7 @@ $FORM_CONTROL = {
         if (isNaN(parseInt($(obj).val(), 10))){
             $(obj).val('');
         }
-        itemChanged(obj);
+     //   itemChanged(obj);
     },
 
     _intbox_key: function(e){
