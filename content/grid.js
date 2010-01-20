@@ -1232,11 +1232,12 @@ $.Util.HTML_Encode = function (arg) {
     return arg.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 };
 
-$.Util.FormDataNormalize = function (form_data) {
+$.Util.FormDataNormalize = function (form_data, node) {
     // add parameters if not
     if (!form_data.params){
         form_data.params = {};
     }
+    form_data.node = node;
     // make hash of the fields
     form_data.items = {};
     for (var i = 0, n = form_data.fields.length; i < n; i++){
