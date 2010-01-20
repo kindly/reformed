@@ -81,7 +81,7 @@ class Database(object):
                 self.add_entity(table)
             else:
                 self.add_table(table)
-        self.persist()
+        #self.persist()
         self.status = "active"
         #self.job_scheduler = job_scheduler.JobScheduler(self)
         self.manager_thread = ManagerThread(self, threading.currentThread())
@@ -734,20 +734,17 @@ class Database(object):
         if root_table:
             unique_aliases = set()
             paths = get_paths(self.graph, root_table)
-            unique_aliases.update([(root_table,)])
+            unique_aliases.update([root_table])
             for key, edge in paths.iteritems():
-                one_ways = edge.relationship
-                unique_aliases.update([tuple(one_ways + [edge.node])])
+                unique_aliases.update([edge.name])
             for key, value in self.tables.iteritems():
-                unique_aliases.update([(key,)])
+                unique_aliases.update([key])
 
-            print unique_aliases
-            
             for item in unique_aliases:
-                if len(item) == 1:
-                    aliases[item[0]] = self.get_class(item[0])
+                if len(item.split(".")) == 1:
+                    aliases[item] = self.get_class(item)
                 else:
-                    aliases["_".join(item)] = sa.orm.aliased(self.get_class(item[-1]))
+                    aliases[item] = sa.orm.aliased(self.get_class(item.split(".")[-1]))
         else:
             for key, value in self.tables.iteritems():
                 aliases[key] = value.sa_class

@@ -213,7 +213,7 @@ class Search(object):
         
         for item in self.table_paths_list:
             key, edge = item
-            new_name = "_".join(edge.relationship + [edge.node])
+            new_name = edge.name
             self.aliased_name_path[new_name] = list(key)
 
 class QueryFromString(object):

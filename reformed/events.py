@@ -51,6 +51,7 @@ class ChangeEvent(object):
         else:
             self.base_table = self.database.tables[self.base_level]
 
+        print self.base_table, self.base_table.table_path
         relation_path, self.relation_type = self.base_table.table_path[self.table.name]
         if len(relation_path) > 1:
             raise InvalidEvent(("updated table can not be more then one"

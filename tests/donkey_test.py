@@ -31,91 +31,98 @@ class test_donkey(object):
         cls.meta = sa.MetaData()
         cls.Sess = sa.orm.sessionmaker(bind =cls.engine, autoflush = False)
         cls.Donkey = Database("Donkey", 
-                            Table("people",
-                                  Text("name", mandatory = True, length = 30),
-                                  Address("supporter_address"),
-                                  OneToMany("email","email", 
-                                            order_by = "email",
-                                            eager = True, 
-                                            cascade = "all, delete-orphan"),
-                                  OneToMany("donkey_sponsership",
-                                            "donkey_sponsership"),
-                                  OneToOne("contact_summary",
-                                           "contact_summary" ),
-                                  OneToMany("transactions",
-                                           "transactions", foreign_key_name = "pop"),
-                                  entity = True,
-                                  summary_fields = "name,address_line_1,postcode"
-                                  ),
-                            Table("contact_summary",
-                                  SumDecimal("total_amount", "transactions.amount", base_level = "people"),
-                                  AddRow("new_row", "people", initial_event = True),
-                                  CountRows("transaction_count", "transactions.id", base_level = "people"),
-                                  MaxDate("membership", "membership", base_level = "people"),
-                                  CopyText("email", "email", 
-                                           base_level = "people", 
-                                           fields = "email,email", 
-                                           update_when_flag = "active_email",
-                                           counter = "email_number"),
-                                  CopyTextAfter("address", "people",
-                                                base_level = "people",
-                                                fields = "address_line_1,postcode",
-                                                changed_flag = "modified"),
-                                  Boolean("modified", default = True),
-                                  logged = False, validated = False
-                                 ),
-                            Table("transactions",
-                                   DateTime("date"),
-                                   Money("amount"),
-                                   Text("Type", default = u"payment")),
-                            Table("email",
-                                  Email("email"),
-                                  Counter("email_number", base_level = "people"),
-                                  Boolean("active_email", default = True)
-                                 ),
-                            Table("donkey", 
-                                  Text("name", validation = '__^[a-zA-Z0-9]*$'),
-                                  Integer("age", validation = 'Int'),
-                                  TextLookupValidated("donkey_type", "donkey_types.donkey_type", filter_field = "donkey_type_type", filter_value = "looks"),
-                                  OneToOne("donkey_pics","donkey_pics",
-                                           foreign_key_name = "donkey",
-                                           many_side_not_null = False
-                                           ),
-                                  OneToMany("donkey_sponsership",
-                                            "donkey_sponsership"),
-                                  Index("idx_name", "name"),
-                                  summary_fields = "name,age",
-                                  entity = True
-                                 ),
-                            Table("donkey_types",
-                                  Text("donkey_type"),
-                                  Text("donkey_type_type")),
-                            Table("donkey_pics",
-                                  Binary("pic"),
-                                  Text("pic_name"),
-                                  Integer("donkey")
-                                 ),
-                            Table("donkey_sponsership",
-                                  Money("amount"),
-                                  DateTime("giving_date"),
-                                  entity_relationship = True
-                                 ),
-                            Table("payments",
-                                  DateTime("giving_date"),
-                                  Money("amount"),
-                                  Text("source")
-                                 ),
-                             Table("membership",
-                                   DateTime("start_date", mandatory = True),
-                                   DateTime("end_date" ),
-                                   ManyToOne("_core_entity", "_core_entity"),
-                                   CheckNoTwoNulls("val_duplicate_membership", parent_table = "_core_entity", field = "end_date"),  
-                                  ),
                         metadata = cls.meta,
                         engine = cls.engine,
                         session = cls.Sess,
                         entity = True
                         )
+
+
+        entity("people", cls.Donkey,
+              Text("name", mandatory = True, length = 30),
+              Address("supporter_address"),
+              OneToMany("email","email", 
+                        order_by = "email",
+                        eager = True, 
+                        cascade = "all, delete-orphan"),
+              OneToMany("donkey_sponsership",
+                        "donkey_sponsership"),
+              OneToOne("contact_summary",
+                       "contact_summary" ),
+              OneToMany("transactions",
+                       "transactions", foreign_key_name = "pop"),
+              ManyToOne("gender", "code", foreign_key_name = "gender_id", backref = "gender", many_side_not_null = False), ##enumeration look up table
+              ManyToOne("over_18", "code", foreign_key_name = "over_18_id", backref = "over_18", many_side_not_null = False), ##enumeration look up table
+
+              entity = True,
+              summary_fields = "name,address_line_1,postcode"
+              )
+
+        table("contact_summary", cls.Donkey,
+              SumDecimal("total_amount", "transactions.amount", base_level = "people"),
+              AddRow("new_row", "people", initial_event = True),
+              CountRows("transaction_count", "transactions.id", base_level = "people"),
+              MaxDate("membership", "membership", base_level = "people"),
+              CopyText("email", "email", 
+                       base_level = "people", 
+                       fields = "email,email", 
+                       update_when_flag = "active_email",
+                       counter = "email_number"),
+              CopyTextAfter("address", "people",
+                            base_level = "people",
+                            fields = "address_line_1,postcode",
+                            changed_flag = "modified"),
+              Boolean("modified", default = True),
+              logged = False, validated = False
+             )
+
+        table("transactions", cls.Donkey,
+               DateTime("date"),
+               Money("amount"),
+               Text("Type", default = u"payment"))
+        table("email", cls.Donkey,
+              Email("email"),
+              Counter("email_number", base_level = "people"),
+              Boolean("active_email", default = True)
+             )
+        entity("donkey", cls.Donkey,
+              Text("name", validation = '__^[a-zA-Z0-9]*$'),
+              Integer("age", validation = 'Int'),
+              TextLookupValidated("donkey_type", "donkey_types.donkey_type", filter_field = "donkey_type_type", filter_value = "looks"),
+              OneToOne("donkey_pics","donkey_pics",
+                       foreign_key_name = "donkey",
+                       many_side_not_null = False
+                       ),
+              OneToMany("donkey_sponsership",
+                        "donkey_sponsership"),
+              Index("idx_name", "name"),
+              summary_fields = "name,age",
+              entity = True
+             )
+        table("donkey_types", cls.Donkey,
+              Text("donkey_type"),
+              Text("donkey_type_type")),
+        table("donkey_pics", cls.Donkey,
+              Binary("pic"),
+              Text("pic_name"),
+              Integer("donkey")
+             )
+        table("donkey_sponsership", cls.Donkey,
+              Money("amount"),
+              DateTime("giving_date"),
+              entity_relationship = True
+             )
+        table("payments", cls.Donkey,
+              DateTime("giving_date"),
+              Money("amount"),
+              Text("source")
+             )
+        table("membership", cls.Donkey,
+               DateTime("start_date", mandatory = True),
+               DateTime("end_date" ),
+               ManyToOne("_core_entity", "_core_entity"),
+               CheckNoTwoNulls("val_duplicate_membership", parent_table = "_core_entity", field = "end_date"),  
+              )
 
         cls.Donkey.add_relation_table(Table("relation",
                              Text("relation_type")
@@ -159,6 +166,17 @@ class test_donkey(object):
                                        backref = "categories"),
                              CheckOverLappingDates("check_dates", parent_table = "_core_entity"))
                             )
+
+        table("code", cls.Donkey,
+           Text("type"), ## name of relationship
+           Text("code"), 
+           Text("desctiption", length = 2000),
+           Created("created_date"), ## when data was gathered
+           CreatedBy("created_by"),
+
+           lookup = True
+
+        ) 
 
 
 
@@ -319,10 +337,10 @@ class test_basic_input(test_donkey):
 
         result = self.session.query(self.Donkey.tables["donkey_sponsership"].sa_class).first()
 
+
         print get_all_local_data(result, internal = True)
 
-
-        assert get_all_local_data(result, internal = True) == {'contact_summary.people_id': 1, 'giving_date': None, 'contact_summary.transaction_count': 0, 'people.name': u'david', '__table': 'donkey_sponsership', 'contact_summary.membership': None, 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'43 union street es388', 'people.town': None, 'people_id': 1, 'people.postcode': u'es388', 'people.country': None, 'people.address_line_1': u'43 union street', 'people.address_line_2': None, 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'donkey_id': 1, 'amount': Decimal('50'), 'donkey.donkey_type': None, 'donkey.age': 13, 'donkey.name': u'jim'} 
+        assert get_all_local_data(result, internal = True) == {'contact_summary.people_id': 1, 'giving_date': None, 'contact_summary.transaction_count': 0, 'people.name': u'david', '__table': 'donkey_sponsership', 'contact_summary.membership': None, 'people.address_line_1': u'43 union street', 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'43 union street es388', 'people.town': None, 'people_id': 1, 'people.postcode': u'es388', 'people.country': None, 'people.address_line_2': None, 'people.over_18_id': None, 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'amount': Decimal('50'), 'donkey_id': 1, 'people.gender_id': None, 'donkey.donkey_type': None, 'donkey.age': 13, 'donkey.name': u'jim'} 
 
 
         print get_all_local_data(result, fields = ["donkey_id", "contact_summary.total_amount", "donkey.name"])
@@ -333,7 +351,7 @@ class test_basic_input(test_donkey):
 
         print make_local_tables(self.Donkey.tables["people"].paths)
 
-        assert make_local_tables(self.Donkey.tables["people"].paths) == [{'_core_entity': ('_entity',), 'contact_summary': ('contact_summary',)}, {'donkey_relation': ('_entity', 'donkey_relation_primary'), 'transactions': ('transactions',), 'donkey_sponsership': ('donkey_sponsership',), 'entity_categories': ('_entity', 'categories'), 'membership': ('_entity', '_membership'), 'relation': ('_entity', 'relation_primary'), 'email': ('email',)}] 
+        assert make_local_tables(self.Donkey.tables["people"].paths) == [{'_core_entity': ('_entity',), 'contact_summary': ('contact_summary',), 'over_18.code': ('over_18',), 'gender.code': ('gender',)}, {'donkey_relation': ('_entity', 'donkey_relation_primary'), 'transactions': ('transactions',), 'email': ('email',), 'entity_categories': ('_entity', 'categories'), 'membership': ('_entity', '_membership'), 'relation': ('_entity', 'relation_primary'), 'donkey_sponsership': ('donkey_sponsership',)}] 
 
 
         print make_local_tables(self.Donkey.tables["donkey"].paths)
@@ -342,11 +360,11 @@ class test_basic_input(test_donkey):
 ##FIXME need these to be corrected
 
         print self.Donkey.tables["relation"].local_tables 
-        assert self.Donkey.tables["relation"].local_tables == {'relation_contact_summary': ('_secondary', 'people', 'contact_summary'), 'relation_people': ('_secondary', 'people'), 'relation__core_entity': ('_secondary',), 'relation_donkey': ('_secondary', 'donkey'), 'relation_donkey_pics': ('_secondary', 'donkey', 'donkey_pics')} 
+        assert self.Donkey.tables["relation"].local_tables == {'relation.over_18.code': ('_secondary', 'people', 'over_18'), 'relation.donkey': ('_secondary', 'donkey'), 'relation.people': ('_secondary', 'people'), 'relation.contact_summary': ('_secondary', 'people', 'contact_summary'), 'relation.gender.code': ('_secondary', 'people', 'gender'), 'relation._core_entity': ('_secondary',), 'relation.donkey_pics': ('_secondary', 'donkey', 'donkey_pics')} 
 
         print self.Donkey.tables["relation"].one_to_many_tables
 
-        assert self.Donkey.tables["relation"].one_to_many_tables == {'relation_membership': ('_secondary', '_membership'), 'relation_transactions': ('_secondary', 'people', 'transactions'), 'relation_entity_categories': ('_secondary', 'categories'), 'relation_email': ('_secondary', 'people', 'email'), 'relation_donkey_sponsership': ('_secondary', 'donkey', 'donkey_sponsership')}
+        assert self.Donkey.tables["relation"].one_to_many_tables == {'relation.entity_categories': ('_secondary', 'categories'), 'relation.email': ('_secondary', 'people', 'email'), 'relation.donkey_sponsership': ('_secondary', 'donkey', 'donkey_sponsership'), 'relation.transactions': ('_secondary', 'people', 'transactions'), 'relation.membership': ('_secondary', '_membership')}
         
     def test_zz_add_local(self):
 
@@ -391,7 +409,7 @@ class test_basic_input(test_donkey):
 
 
         print get_all_local_data(a, internal = True)
-        assert get_all_local_data(a, internal = True) == {'contact_summary.people_id': 2, 'giving_date': None, 'contact_summary.transaction_count': 0, 'people.name': u'fred', '__table': 'donkey_sponsership', 'contact_summary.membership': None,  'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'poo1010101 fred', 'people.town': None, 'people_id': 2, 'people.postcode': u'fred', 'people.country': None, 'people.address_line_1': u'poo1010101', 'people.address_line_2': u'poop', 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'donkey_id': 12, 'amount': Decimal('711110'), 'donkey.donkey_type': None, 'donkey.age': 12,  'donkey.name': None}
+        assert get_all_local_data(a, internal = True) == {'contact_summary.people_id': 2, 'giving_date': None, 'contact_summary.transaction_count': 0, 'people.name': u'fred', '__table': 'donkey_sponsership', 'contact_summary.membership': None, 'people.address_line_1': u'poo1010101', 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'poo1010101 fred', 'people.town': None, 'people_id': 2, 'people.postcode': u'fred', 'people.country': None, 'people.address_line_2': u'poop', 'people.over_18_id': None, 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'amount': Decimal('711110'), 'donkey_id': 12, 'people.gender_id': None, 'donkey.donkey_type': None, 'donkey.age': 12, 'donkey.name': None}
         
     def test_import_catagory_data(self):
 

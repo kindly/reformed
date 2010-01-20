@@ -702,7 +702,6 @@ class Table(object):
         dependant_attributes = {}
         for table, relations in self.tables_with_relations.iteritems():
             for relation in relations:
-                print relation, table
                 if relation.table is self and relation.type <> "manytoone":
                     dependant_attributes[relation.name] = relation
                 elif relation.table is not self and relation.type == "manytoone":
