@@ -1090,7 +1090,7 @@ var fn = function(packet, job){
             break;
          case 'form':
              var form = packet.data.data.form;
-             form = $.Util.FormDataNormalize(form);
+             form = $.Util.FormDataNormalize(form, packet.data.node);
              data = packet.data.data.data;
              var paging = packet.data.data.paging;
              if (form.params.form_type == 'grid'){
