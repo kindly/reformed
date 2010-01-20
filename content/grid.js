@@ -140,6 +140,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             }
         }
     }
+
     function resize_grid(){
         var foot_height = $.Util.Size.GRID_FOOTER_H;
         var head_height = $.Util.Size.GRID_HEADER_H;
@@ -147,7 +148,49 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         var scrollbar_width = $.Util.Size.SCROLLBAR_WIDTH;
         var width = grid_size.width;
         var height = grid_size.height;
+        var main_height = $main.height();
+        var main_width = $main.width();
+
         $grid.width(width).height(height);
+
+        // Css for $grid_main.
+        // There may be scroll bars or not, so see if we need them.
+        var grid_main_css = {top : head_height,
+                             left : side_width,
+                             width : width - side_width,
+                             height : height - head_height - foot_height}
+
+        var right_scrollbar = 0;
+        var bottom_scrollbar = 0;
+
+        // This is horrible, but if there are scroll bars added
+        // we need to see if this effects things.
+        if (main_height + head_height + foot_height > height){
+            right_scrollbar = 1;
+        }
+        if (main_width + side_width + (scrollbar_width * right_scrollbar) > width){
+            bottom_scrollbar = 1;
+            if (main_height + head_height + foot_height + scrollbar_width > height){
+                    right_scrollbar = 1;
+                    if (main_width + side_width + scrollbar_width > width){
+                        bottom_scrollbar = 1;
+                    }
+            }
+        }
+
+        if (right_scrollbar === 0){
+            grid_main_css['overflow-y'] = 'hidden';
+        } else {
+            grid_main_css['overflow-y'] = 'auto';
+        }
+
+        if (bottom_scrollbar === 0){
+            grid_main_css['overflow-x'] = 'hidden';
+        } else {
+            grid_main_css['overflow-x'] = 'auto';
+        }
+
+        $grid_main.css(grid_main_css);
 
         $grid_main.css({top : head_height,
                         left : side_width,
@@ -156,11 +199,11 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 
         $grid_head.css({top : 0,
                         left : side_width,
-                        width : width - side_width - scrollbar_width});
+                        width : width - side_width - (scrollbar_width * right_scrollbar)});
 
         $grid_side.css({top : head_height,
                         left : 0,
-                        height : height - head_height - scrollbar_width - foot_height,
+                        height : height - head_height - (scrollbar_width * bottom_scrollbar) - foot_height,
                         width : side_width});
 
         $grid_foot.css({top : height - foot_height,
