@@ -36,8 +36,11 @@ $.fn.extend({
 
 	input_form: function(form_data, grid_data){
 		$.InputForm(this, form_data, grid_data);
-	}
+	},
 
+	status_form: function(){
+		$.StatusForm(this);
+	}
 });
 
 
@@ -1003,5 +1006,71 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
 
 };
 
+$.StatusForm = function(input){
+    $input = $(input)
+    // remove any existing items from the input
+    var $children = $input.children()
+    for (var i = 0, n = $children.size(); i < n; i++){
+            if ($children.eq(i).data('command')){
+                $children.eq(i).data('command')('unbind_all');
+            }
+    }
+    $children.remove();
+    $children = null;
+
+    // make our div that everything will hang off
+    var $form = $('<div class="STATUS_FORM"></div>');
+    $input.append($form);
+
+
+
+//   $form.data('command')('register_events');
+    var html = [];
+
+    html.push('<p>STATUS</p>');
+    html.push('<p>Job #: <div id="status_job_id"></div></p>');
+    html.push('<p>Started: <div id="status_job_started"></div></p>');
+    html.push('<p>Message: <div id="status_job_message"></div></p>');
+    html.push('<p>Progress: <div id="status_job_progress"></div></p>');
+
+    $form.html(html.join(''));
+    $("#status_job_progress").progressbar();
+
+    $form.data('command', command_caller);
+
+    function update_status(data){
+        $('#status_job_id').text(data.jobId);
+        $('#status_job_started').text(data.start);
+        $('#status_job_message').text(data.message);
+        if (data.percent === null){
+            data.percent = 0;
+        }
+        $('#status_job_progress').progressbar('value', data.percent);
+    }
+
+    function unbind_all(){
+        console.log('unbind');
+        $input.unbind();
+    }
+
+    // custom events
+    var custom_commands = {
+        'unbind_all' : unbind_all,
+//        'register_events' : register_events,
+        'update' : update_status
+    };
+
+    function command_caller(type, data){
+        console.log('command triggered: ' + type);
+        if (custom_commands[type]){
+            return custom_commands[type](data);
+        } else {
+            alert('command: <' + type + '> has no handler');
+            return false;
+        }
+    }
+
+
+};
 
 })(jQuery);

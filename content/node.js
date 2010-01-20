@@ -890,41 +890,27 @@ function form_save_process_errors(errors){
     }
 }
 
-function update_status(root, data){
 
-    if (data && data.percent === null){
-         data.percent = 0;
-    }
-    $('#' + root + ' div.f_form').data('command')('update', data);
-}
-
-function get_status(node, root, call_string){
-    //FIXME get rid of $INFO references
-    var current_node = $INFO.getState(root, 'node');
-    if (node == current_node){
-        node_call_from_string(call_string, false);
-    }
+function get_status(call_string){
+    node_call_from_string(call_string, false);
 }
 
 
 var status_timer;
 
 function job_processor_status(data, node, root){
-    //FIXME get rid of $INFO references
-    if (node == $INFO.getState(root, 'node')){
-        // display the message form if it exists
-        if (data.form){
-            data.form = $.Util.FormDataNormalize(data.form);
-            $('#' + root).form(data.form, null, null);
-        }
-        // show info on form
-        if (data.status){
-            update_status(root, data.status);
-        }
-        // set data refresh if job not finished
-        if (!data.status || !data.status.end){
-            status_timer = setTimeout("get_status('" + node + "','" + root + "','/n:" + node + ":status:id=" + data.jobId + "')",1000);
-        }
+    // display the message form if it exists
+    if (data.form){
+     //   data.form = $.Util.FormDataNormalize(data.form);
+        $('#' + root).status_form();
+    }
+    // show info on form
+    if (data.status){
+        $('div.STATUS_FORM').data('command')('update', data.status);
+    }
+    // set data refresh if job not finished
+    if (!data.status || !data.status.end){
+        status_timer = setTimeout("get_status('/n:" + node + ":status:id=" + data.jobId + "')",1000);
     }
 }
 
