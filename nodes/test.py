@@ -260,7 +260,7 @@ class Login(Node):
     fields = [
         ['name', 'Text', 'username:'],
         ['password', 'password', 'password:'],
-        ['button', 'submit', 'moo', {'action': 'next', 'node': 'test.Login'}]
+        ['button', 'submit', 'moo', {'control' : 'button', 'action': 'next', 'node': 'test.Login'}]
     ]
     form_params =  {"form_type": "action"}
     validations = [
@@ -278,7 +278,7 @@ class Login(Node):
                 self.action = 'general_error'
                 self.out = 'wrong guess'
         else:
-            data = node.create_form_data(self.fields)
+            data = node.create_form_data(self.fields, self.form_params)
             self.action = 'form'
             self.out = data
 
