@@ -117,6 +117,7 @@ class Table(node.TableNode):
         table.summary = summary
         session.save_or_update(table)
         session.commit()
+        self.saved.append(['', table.id, table._version])
         session.close()
         r[table_id].summary = summary
 
@@ -265,7 +266,11 @@ class Table(node.TableNode):
                       'logged': table_info.logged,
                       'fields': field_data}
 
-        data = node.create_form_data(self.fields, self.form_params, table_data)
+        # add the table extra param (need a copy to not infect the shared data)
+        form_params = self.form_params.copy()
+        form_params['extras'] = {'table' : table_id}
+
+        data = node.create_form_data(self.fields, form_params, table_data)
         self.action = 'form'
         self.out = data
 
