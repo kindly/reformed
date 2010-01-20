@@ -69,6 +69,16 @@ class Unicode(Field):
     def __init__(self, name, *args, **kw):
         self.text = Column(sa.Unicode(100), use_parent = True)
 
+class Created(Field):
+    
+    def __init__(self, name, *args, **kw):
+        self.created_date = Column(sa.DateTime,
+                                   default =datetime.datetime.now)
+
+class CreatedBy(Field):
+    def __init__(self, name, *args, **kw):
+        self.created_by = Column(sa.DateTime,
+                                 default = get_user_id)
 
 class Modified(Field):
     

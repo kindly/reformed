@@ -437,7 +437,7 @@ class test_flat_file(donkey_test.test_donkey):
         
         session = self.Donkey.Session()
 
-        count_before = session.query(self.Donkey.t.people).count()
+        count_before = session.query(self.Donkey.aliases["people"]).count()
 
         flatfile = FlatFile(self.Donkey,
                             "people",
@@ -445,7 +445,7 @@ class test_flat_file(donkey_test.test_donkey):
 
         chunk_status = flatfile.load_chunk([0,250])
 
-        count_after = session.query(self.Donkey.t.people).count()
+        count_after = session.query(self.Donkey.aliases["people"]).count()
 
         assert count_before + 250 == count_after
 

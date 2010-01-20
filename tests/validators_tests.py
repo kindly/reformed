@@ -78,8 +78,8 @@ class test_validation(test_donkey):
 
     def test_zzzz_overlapping_date_validation(self):
 
-        entity = self.session.query(self.Donkey.t._core_entity).first()
-        category = self.session.query(self.Donkey.t.sub_sub_category).first()
+        entity = self.session.query(self.Donkey.aliases["_core_entity"]).first()
+        category = self.session.query(self.Donkey.aliases["sub_sub_category"]).first()
 
         cat1 = self.Donkey.get_instance("entity_categories")
         cat1.start_date = datetime.datetime(2009,04,02)
@@ -110,7 +110,7 @@ class test_validation(test_donkey):
 
     def test_zzzzz_two_nulls_validation(self):
 
-        entity = self.session.query(self.Donkey.t._core_entity).first()
+        entity = self.session.query(self.Donkey.aliases["_core_entity"]).first()
         membership1 = self.Donkey.get_instance("membership")
         membership1.start_date = datetime.datetime(2009,05,02)
         membership1._core_entity = entity

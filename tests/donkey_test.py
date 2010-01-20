@@ -117,6 +117,11 @@ class test_donkey(object):
                         entity = True
                         )
 
+        cls.Donkey.add_relation_table(Table("relation",
+                             Text("relation_type")
+                                          )
+                                     )
+
         cls.Donkey.add_table(Table("category",
                              Text("category_name"),
                              Text("category_description"),
@@ -149,6 +154,7 @@ class test_donkey(object):
                                        backref = "categories"),
                              CheckOverLappingDates("check_dates", parent_table = "_core_entity"))
                             )
+
 
 
         cls.Donkey.persist()
@@ -313,7 +319,11 @@ class test_basic_input(test_donkey):
 
         
     def test_local_tables(self):
+
+        print make_local_tables(self.Donkey.tables["people"].paths)
         
+
+
         assert make_local_tables(self.Donkey.tables["people"].paths) == [{'_core_entity': ('_entity',), 'contact_summary': ('contact_summary',)}, {'transactions': ('transactions',), 'donkey_sponsership': ('donkey_sponsership',), 'entity_categories': ('_entity', 'categories'), 'membership': ('_entity', '_membership'), 'relation': ('_entity', 'relation'), 'email': ('email',)}] 
 
 
@@ -366,7 +376,7 @@ class test_basic_input(test_donkey):
                                       "people.address_line_1" : u"poo1010101",
                                       "people.address_line_2" : u"poop"})
 
-        a = self.session.query(self.Donkey.t.donkey_sponsership).filter_by(amount = 711110).one()
+        a = self.session.query(self.Donkey.aliases["donkey_sponsership"]).filter_by(amount = 711110).one()
 
 
         print get_all_local_data(a, internal = True)
@@ -384,7 +394,7 @@ class test_basic_input(test_donkey):
                                       "sub_sub_category.sub_sub_category_description": u"this is abc"}
                        )
 
-        results = self.session.query(self.Donkey.t.sub_sub_category).all()
+        results = self.session.query(self.Donkey.aliases["sub_sub_category"]).all()
 
         print [get_all_local_data(a) for a in results]
 
@@ -399,7 +409,7 @@ class test_basic_input(test_donkey):
                                       "sub_sub_category.sub_sub_category_description": u"this is acc"}
                        )
 
-        results = self.session.query(self.Donkey.t.sub_sub_category).all()
+        results = self.session.query(self.Donkey.aliases["sub_sub_category"]).all()
 
         print [get_all_local_data(a) for a in results]
 
@@ -425,7 +435,7 @@ class test_basic_input(test_donkey):
                                       "sub_sub_category.sub_sub_category_description": u"this is acc"}
                        )
 
-        results = self.session.query(self.Donkey.t.sub_sub_category).all()
+        results = self.session.query(self.Donkey.aliases["sub_sub_category"]).all()
 
         print [get_all_local_data(a) for a in results][2]
 
@@ -490,7 +500,7 @@ class test_basic_input(test_donkey):
 
     def test_default(self):
 
-        a = self.session.query(self.Donkey.t.people).first()
+        a = self.session.query(self.Donkey.aliases["people"]).first()
 
         b = self.Donkey.get_instance("transactions")
         b.amount = 0
