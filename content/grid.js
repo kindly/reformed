@@ -821,6 +821,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
     };
 
     var util = $.Util;
+    var util_size = $.Util.Size;
 
     init();
 
