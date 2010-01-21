@@ -237,6 +237,8 @@ $.Grid = function(input, form_data, grid_data, paging_data){
                     $main_cols.eq(i).width(column_widths[i]);
                 }
         }
+        // Resize grid in case we need to add/remove scroll bars.
+        resize_grid()
     }
 
 
