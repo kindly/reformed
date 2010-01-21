@@ -142,10 +142,10 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     }
 
     function resize_grid(){
-        var foot_height = $.Util.Size.GRID_FOOTER_H;
-        var head_height = $.Util.Size.GRID_HEADER_H;
+        var foot_height = util_size.GRID_FOOTER_H;
+        var head_height = util_size.GRID_HEADER_H;
         var side_width = $.Grid.SIDE_COLUMN_WIDTH;
-        var scrollbar_width = $.Util.Size.SCROLLBAR_WIDTH;
+        var scrollbar_width = util_size.SCROLLBAR_WIDTH;
         var width = grid_size.width;
         var height = grid_size.height;
         var main_height = $main.height();
@@ -229,10 +229,10 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         var $head_cols = $head.find('th');
         var $main_cols = $main.find('tr').eq(0).find('td');
         for (i = 0, n = column_widths.length; i < n; i++){
-                $head_cols.eq(i).width(column_widths[i] - $.Util.Size.GRID_COL_RESIZE_DIFF);
+                $head_cols.eq(i).width(column_widths[i] - util_size.GRID_COL_RESIZE_DIFF);
                 if (current && current.editing && current.row === 0 && current.col === i && !current.complex_control){
                     // control is on first row and being edited for this column
-                    $main_cols.eq(i).width(column_widths[i] - $.Util.Size.GRID_COL_EDIT_DIFF);
+                    $main_cols.eq(i).width(column_widths[i] - util_size.GRID_COL_EDIT_DIFF);
                 } else {
                     $main_cols.eq(i).width(column_widths[i]);
                 }
@@ -267,6 +267,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     // create the table
     $.Grid.Build($form, form_data, grid_data, paging_data);
 
+    var util_size = $.Util.Size;
 
     var $grid = $form.find('div.scroller');
     var $grid_side = $grid.find('div.scroller-side');
@@ -419,7 +420,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
         // any differences in the padding etc
         // don't do this for complex conrols as they do thier own wrapping
         if (current.row === 0 && !current.complex_control){
-            current.$item.width(current.$item.width() - $.Util.Size.GRID_COL_EDIT_DIFF);
+            current.$item.width(current.$item.width() - util_size.GRID_COL_EDIT_DIFF);
         }
         current.value = grid_data[current.row][current.field.name];
     }
@@ -444,7 +445,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
         // any differences in the padding etc
         // don't do this for complex conrols as they do thier own wrapping
         if (current.row === 0 && !current.complex_control){
-            current.$item.width(current.$item.width() + $.Util.Size.GRID_COL_EDIT_DIFF);
+            current.$item.width(current.$item.width() + util_size.GRID_COL_EDIT_DIFF);
         }
         if (value === current.value){
             // not changed
@@ -515,11 +516,11 @@ $.Grid.Movement = function(input, form_data, grid_data){
         var cell_top = cell_pos.top - div_top;
         var cell_left = cell_pos.left - div_left;
 
-        var s = $.Util.Size.SCROLLBAR_WIDTH;
+        var s = util_size.SCROLLBAR_WIDTH;
         var height = $scroll_div.innerHeight() - s;
         var width = $scroll_div.innerWidth() - s;
-        var h = $.Util.Size.GRID_BODY_H;
-        var h2 = $.Util.Size.GRID_HEADER_H;
+        var h = util_size.GRID_BODY_H;
+        var h2 = util_size.GRID_HEADER_H;
         var w = current.$item.outerWidth();
         var top = $scroll_div.scrollTop();
         var left = $scroll_div.scrollLeft();
@@ -1173,7 +1174,7 @@ $.Util.Size.get = function(){
         var w1 = $div.find('div').width();
         $div.css('overflow-y', 'scroll');
         var w2 = $div.find('div').width();
-        $.Util.Size.SCROLLBAR_WIDTH = w1 - w2;
+        util_size.SCROLLBAR_WIDTH = w1 - w2;
         $div.remove()
     }
 
@@ -1185,25 +1186,26 @@ $.Util.Size.get = function(){
         $('body').append($div);
 
         var $x = $div.find('th');
-        $.Util.Size.GRID_HEADER_BORDER_W = $x.outerWidth() - $x.width();
-        $.Util.Size.GRID_HEADER_H = $x.outerHeight();
+        util_size.GRID_HEADER_BORDER_W = $x.outerWidth() - $x.width();
+        util_size.GRID_HEADER_H = $x.outerHeight();
 
         var $x = $div.find('td').eq(0);
-        $.Util.Size.GRID_BODY_BORDER_W = $x.outerWidth() - $x.width();
-        $.Util.Size.GRID_BODY_H = $x.outerHeight();
+        util_size.GRID_BODY_BORDER_W = $x.outerWidth() - $x.width();
+        util_size.GRID_BODY_H = $x.outerHeight();
 
         var $x = $div.find('td').eq(1);
-        $.Util.Size.GRID_BODY_BORDER_W_EDIT = $x.outerWidth() - $x.width();
-        $.Util.Size.GRID_BODY_H_EDIT = $x.outerHeight();
+        util_size.GRID_BODY_BORDER_W_EDIT = $x.outerWidth() - $x.width();
+        util_size.GRID_BODY_H_EDIT = $x.outerHeight();
 
         var $x = $div.find('div.scroller-foot');
-        $.Util.Size.GRID_FOOTER_H = $x.outerHeight();
+        util_size.GRID_FOOTER_H = $x.outerHeight();
 
-        $.Util.Size.GRID_COL_RESIZE_DIFF = $.Util.Size.GRID_HEADER_BORDER_W - $.Util.Size.GRID_BODY_BORDER_W;
-        $.Util.Size.GRID_COL_EDIT_DIFF = $.Util.Size.GRID_BODY_BORDER_W_EDIT - $.Util.Size.GRID_BODY_BORDER_W;
+        util_size.GRID_COL_RESIZE_DIFF = util_size.GRID_HEADER_BORDER_W - util_size.GRID_BODY_BORDER_W;
+        util_size.GRID_COL_EDIT_DIFF = util_size.GRID_BODY_BORDER_W_EDIT - util_size.GRID_BODY_BORDER_W;
         $div.remove()
     }
 
+    var util_size = $.Util.Size;
     scrollbar();
     grid();
 
