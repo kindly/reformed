@@ -899,14 +899,6 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
         return html
     }
 
-    function footer(){
-        var html = [];
-        html.push('<tfoot><tr>');
-        html.push('<td colspan="' + (num_fields + 1) + '">&nbsp;</td>');
-        html.push('</tr></tfoot>');
-        return html;
-    }
-
     function build_rows(){
         var body_html = [];
         var selectors_html = [];
