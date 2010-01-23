@@ -231,16 +231,14 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         var $head_cols = $head.find('th');
         var $main_cols = $main.find('tr').eq(0).find('td');
         for (i = 0, n = column_widths.length; i < n; i++){
-                $head_cols.eq(i).width(column_widths[i] - util_size.GRID_COL_RESIZE_DIFF);
-                if (current && current.editing && current.row === 0 && current.col === i && !current.complex_control){
-                    // control is on first row and being edited for this column
-                    $main_cols.eq(i).width(column_widths[i] - util_size.GRID_COL_EDIT_DIFF);
-                } else {
-                    $main_cols.eq(i).width(column_widths[i]);
-                }
+            $head_cols.eq(i).width(column_widths[i] - util_size.GRID_COL_RESIZE_DIFF);
+            if (current && current.editing && current.row === 0 && current.col === i && !current.complex_control){
+                // control is on first row and being edited for this column
+                $main_cols.eq(i).width(column_widths[i] - util_size.GRID_COL_EDIT_DIFF);
+            } else {
+                $main_cols.eq(i).width(column_widths[i]);
+            }
         }
-        // Resize grid in case we need to add/remove scroll bars.
-        resize_grid()
     }
 
 
