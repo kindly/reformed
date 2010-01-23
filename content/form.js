@@ -353,9 +353,9 @@ make_cell_viewable
 
             }
             if($new_field != current.$field){
-                if (current.$field !== undefined){
+       //         if (current.$field !== undefined){
        //             row_blur();
-                }
+       //         }
                 current.$field = $new_field;
                 current.field_number = field_number;
        //         row_focus();
