@@ -380,7 +380,7 @@ td input {
 .scroller {
     border:1px solid #666;
     background-color:#DDD;
-    position:absolute;
+    position:relative;
 }
 
 .scroller-main {
