@@ -27,47 +27,11 @@
 <script src="node.js" ></script>
 <script src="reformed.js"></script>
 
+<script src="layout.js"></script>
+
 </head>
 
 <body>
-
-<div id='logo'><img src="logo.png"  width="126" height="125" /></div>
-
-<div id='sidebar'>
-
-
-<div style='font-size:12px'>
-<span onclick="$.Util.selectStyleSheet('size', 'css/size1.css');" style="font-size:8px">A</span>
-<span onclick="$.Util.selectStyleSheet('size', 'css/size2.css');" style="font-size:10px">A</span>
-<span onclick="$.Util.selectStyleSheet('size', 'css/size3.css');" style="font-size:12px">A</span>
-<span onclick="$.Util.selectStyleSheet('size', 'css/size4.css');" style="font-size:14px">A</span>
-<span onclick="$.Util.selectStyleSheet('size', 'css/size5.css');" style="font-size:16px">A</span>
-</div>
-
-<form action='' onclick="$.Util.Event_Delegator('clear');" onsubmit="return search_box();">
-<input type='text' name='search' id='search' />
-</form>
-
-<ul>
-<li><span onclick="node_load('n:table.Table:new')">new table</span></li>
-<li><span onclick="node_load('n:table.Table:list')">table</span></li>
-<li><span onclick="node_load('n:test.Permission:list')">perm</span></li>
-<li><span onclick="node_load('n:test.Permission:new')">new perm</span></li>
-<li><span onclick="node_load('n:test.UserGroup:list')">usergroup</span></li>
-<li><span onclick="node_load('n:test.UserGroup:new')">new usergroup</span></li>
-<li><span onclick="node_load('n:test.Sponsorship:')">sponsor</span></li>
-<li><span onclick="node_load('n:test.Login:')">login</span></li>
-<li><span onclick="$JOB.add({}, {}, 'reload', true)" ><b>reload</b></span></li>
-<li><span onclick="get_node('test.DataLoader', 'load', {file:'data.csv', table:'people'})" ><b>load people</b></span></li>
-<li><span onclick="node_call_from_string('/n:test.DataLoader:load:file=donkeys.csv&table=donkey', true)" ><b>load donkeys</b></span></li>
-</ul>
-<div id="bookmarks"></div>
-</div>
-
-<div id='action'>action</div>
-<div id='info'>info</div>
-<div id='main'></div>
-<div id='status'>status</div>
 
 </body>
 </html>
