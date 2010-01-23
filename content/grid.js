@@ -148,6 +148,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         var head_height = util_size.GRID_HEADER_H;
         var side_width = $.Grid.SIDE_COLUMN_WIDTH;
         var scrollbar_width = util_size.SCROLLBAR_WIDTH;
+        var title_height = util_size.GRID_TITLE_H;
         var width = grid_size.width;
         var height = grid_size.height;
         var main_height = $main.height();
@@ -194,24 +195,29 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 
         $grid_main.css(grid_main_css);
 
-        $grid_main.css({top : head_height,
+        $grid_main.css({top : head_height + title_height,
                         left : side_width,
                         width : width - side_width,
-                        height : height - head_height - foot_height});
+                        height : height - head_height - foot_height - title_height});
 
-        $grid_head.css({top : 0,
+        $grid_head.css({top : title_height,
                         left : side_width,
                         width : width - side_width - (scrollbar_width * right_scrollbar)});
 
-        $grid_side.css({top : head_height,
+        $grid_side.css({top : head_height + title_height,
                         left : 0,
-                        height : height - head_height - (scrollbar_width * bottom_scrollbar) - foot_height,
+                        height : height - head_height - (scrollbar_width * bottom_scrollbar) - foot_height - title_height,
                         width : side_width});
 
         $grid_foot.css({top : height - foot_height,
                         left : 0,
                         width : width,
                         height : foot_height});
+
+        $grid_title.css({top : 0,
+                        left : 0,
+                        width : width,
+                        height : title_height});
 
         $grid_resizer.css({top : height - 15,
                            left : width - 15});
@@ -276,6 +282,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     var $grid_head = $grid.find('div.scroller-head');
     var $grid_main = $grid.find('div.scroller-main');
     var $grid_foot = $grid.find('div.scroller-foot');
+    var $grid_title = $grid.find('div.scroller-title');
     var $grid_resizer = $grid.find('div.scroller-resizer');
     var $main = $form.find('div.scroller-main table');
     var $head = $form.find('div.scroller-head table');
@@ -842,6 +849,9 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
         $(input).empty();
         var $div = $('<div class="scroller"></div>');
 
+        $title = $(title());
+        $div.append($title);
+
         $head = $(header());
         $div.append($head);
 
@@ -888,6 +898,10 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
         html.push('</tr></thead>');
         html.push('</table></div>');
         return html.join('');
+    }
+
+    function title(){
+        return '<div class="scroller-title">title</div>';
     }
 
     function foot(){
@@ -1203,7 +1217,7 @@ $.Util.Size.get = function(){
         // get interesting stuff about grid cells
         // needed for acurate resizing
         var $div = $('<div style="overflow:hidden; width:100px; height:100px; position:absolute; left:-200px; top:0px;"></div>');
-        $div.append('<table class="grid"><thead><tr><th>head</th></tr></thead><tbody><tr><td>body</td></tr><tr><td class="t_edited_cell">body</td></tr></tbody></table><div class="scroller-foot">foot</div>');
+        $div.append('<div class="scroller-title">head</div><table class="grid"><thead><tr><th>head</th></tr></thead><tbody><tr><td>body</td></tr><tr><td class="t_edited_cell">body</td></tr></tbody></table><div class="scroller-foot">foot</div>');
         $('body').append($div);
 
         var $x = $div.find('th');
@@ -1217,6 +1231,9 @@ $.Util.Size.get = function(){
         var $x = $div.find('td').eq(1);
         util_size.GRID_BODY_BORDER_W_EDIT = $x.outerWidth() - $x.width();
         util_size.GRID_BODY_H_EDIT = $x.outerHeight();
+
+        var $x = $div.find('div.scroller-title');
+        util_size.GRID_TITLE_H = $x.outerHeight();
 
         var $x = $div.find('div.scroller-foot');
         util_size.GRID_FOOTER_H = $x.outerHeight();
