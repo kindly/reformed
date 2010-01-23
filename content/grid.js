@@ -93,6 +93,8 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         $(document).unbind('mouseup', end_column_resize);
         $drag_col = null;
         current = undefined;
+        // Resize grid in case we need to add/remove scroll bars.
+        resize_grid();
         return false;
     }
 
