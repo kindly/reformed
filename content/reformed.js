@@ -566,11 +566,11 @@ function action_change(){
     }
 }
 
-function action_call(action_id){
+function action_call(action_name){
     // this function fires the event for action button clicks
     // we get the base object, function to call and the args from the
     // array action_hash
-    var cmd_info = action_hash[action_list[action_id]][1];
+    var cmd_info = action_hash[action_name][1];
     cmd_info[1].apply(cmd_info[0], cmd_info[2]);
 }
 
