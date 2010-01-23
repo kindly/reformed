@@ -1206,7 +1206,7 @@ $.Util.Size.get = function(){
         $div.css('overflow-y', 'scroll');
         var w2 = $div.find('div').width();
         util_size.SCROLLBAR_WIDTH = w1 - w2;
-        $div.remove()
+        $div.remove();
     }
 
     function grid(){
@@ -1233,7 +1233,7 @@ $.Util.Size.get = function(){
 
         util_size.GRID_COL_RESIZE_DIFF = util_size.GRID_HEADER_BORDER_W - util_size.GRID_BODY_BORDER_W;
         util_size.GRID_COL_EDIT_DIFF = util_size.GRID_BODY_BORDER_W_EDIT - util_size.GRID_BODY_BORDER_W;
-        $div.remove()
+        $div.remove();
     }
 
     var util_size = $.Util.Size;
