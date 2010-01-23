@@ -183,13 +183,13 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         if (right_scrollbar === 0){
             grid_main_css['overflow-y'] = 'hidden';
         } else {
-            grid_main_css['overflow-y'] = 'auto';
+            grid_main_css['overflow-y'] = 'scroll';
         }
 
         if (bottom_scrollbar === 0){
             grid_main_css['overflow-x'] = 'hidden';
         } else {
-            grid_main_css['overflow-x'] = 'auto';
+            grid_main_css['overflow-x'] = 'scroll';
         }
 
         $grid_main.css(grid_main_css);
