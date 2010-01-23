@@ -1188,6 +1188,15 @@ $.Util.Size = {};
 
 $.Util.Size.get = function(){
 
+    function action_button(){
+        // get size of action buttons
+        var $div = $('<div style="overflow:hidden; width:100px; height:100px; position:absolute; left:-200px; top:0px;"></div>');
+        $div.append('<div class="action"><a href="#"><span class="command">button</span><span class="shortcut">A</span></a></div>');
+        $('body').append($div);
+        var $x = $div.find('div.action');
+        util_size.ACTION_BUTTON_H = $x.outerHeight();
+        $div.remove();
+    }
 
     function scrollbar(){
         // get width of scrollbar
@@ -1228,6 +1237,7 @@ $.Util.Size.get = function(){
     }
 
     var util_size = $.Util.Size;
+    action_button();
     scrollbar();
     grid();
 
