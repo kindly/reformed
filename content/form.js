@@ -136,7 +136,7 @@ $.Form.Movement = function($input, form_data, row_data){
         edit_mode_off();
         if (current.dirty){
             var info = get_form_data();
-            get_node_return(form_data.node, '_save', info[0], $input, info[1]); //FIXME node_name
+            get_node_return(form_data.node, '_save', info[0], $input, info[1]);
         }
     }
 
