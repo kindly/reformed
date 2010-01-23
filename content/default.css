@@ -8,12 +8,6 @@ body {
 	padding:0;
 	border:0;
 }
-#logo, #action, #status, #info {
-	overflow:hidden;
-}
-#main, #sidebar {
-	overflow:auto;
-}
 
 .label {
 	color:darkblue;
