@@ -1163,6 +1163,23 @@ $.Util.paging_bar = function (data){
     return html;
 };
 
+$.Util.Position = function ($item, top, left, height, width){
+    // position an element absolutely on the screen
+    var css = {position : 'absolute'};
+    if (top){
+        css.top = top;
+    }
+    if (left){
+        css.left = left;
+    }
+    if (height){
+        css.height = height;
+    }
+    if (width){
+        css.width = width;
+    }
+    $item.css(css);
+};
 
 // $.Util.Size
 // this is used to calculate and store size related info
