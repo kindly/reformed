@@ -712,6 +712,13 @@ function node_button(item, node, command){
     get_node(node, command, out, false);
 }
 
+function node_button_input_form(item, node, command){
+    var out = $('#main div.INPUT_FORM').data('command')('get_form_data');
+    get_node(node, command, out, false);
+}
+
+
+
 function search_box(){
     var node = 'n:test.Search::q=' + $('#search').val();
     node_load(node);
@@ -883,41 +890,27 @@ function form_save_process_errors(errors){
     }
 }
 
-function update_status(root, data){
 
-    if (data && data.percent === null){
-         data.percent = 0;
-    }
-    $('#' + root + ' div.f_form').data('command')('update', data);
-}
-
-function get_status(node, root, call_string){
-    //FIXME get rid of $INFO references
-    var current_node = $INFO.getState(root, 'node');
-    if (node == current_node){
-        node_call_from_string(call_string, false);
-    }
+function get_status(call_string){
+    node_call_from_string(call_string, false);
 }
 
 
 var status_timer;
 
 function job_processor_status(data, node, root){
-    //FIXME get rid of $INFO references
-    if (node == $INFO.getState(root, 'node')){
-        // display the message form if it exists
-        if (data.form){
-            data.form = $.Util.FormDataNormalize(data.form);
-            $('#' + root).form(data.form, null, null);
-        }
-        // show info on form
-        if (data.status){
-            update_status(root, data.status);
-        }
-        // set data refresh if job not finished
-        if (!data.status || !data.status.end){
-            status_timer = setTimeout("get_status('" + node + "','" + root + "','/n:" + node + ":status:id=" + data.jobId + "')",1000);
-        }
+    // display the message form if it exists
+    if (data.form){
+     //   data.form = $.Util.FormDataNormalize(data.form);
+        $('#' + root).status_form();
+    }
+    // show info on form
+    if (data.status){
+        $('div.STATUS_FORM').data('command')('update', data.status);
+    }
+    // set data refresh if job not finished
+    if (!data.status || !data.status.end){
+        status_timer = setTimeout("get_status('/n:" + node + ":status:id=" + data.jobId + "')",1000);
     }
 }
 
@@ -1060,6 +1053,11 @@ function itemsBlurLast(){
 
 }
 
+function grid_add_row(){
+    console.log('add_row');
+    $('#main div.GRID').data('command')('add_row');
+}
+
 
 var fn = function(packet, job){
      var root = 'main'; //FIXME
@@ -1097,11 +1095,13 @@ var fn = function(packet, job){
             break;
          case 'form':
              var form = packet.data.data.form;
-             form = $.Util.FormDataNormalize(form);
+             form = $.Util.FormDataNormalize(form, packet.data.node);
              data = packet.data.data.data;
              var paging = packet.data.data.paging;
              if (form.params.form_type == 'grid'){
                 $('#' + root).grid(form, data, paging);
+             } else if (form.params.form_type == 'action'){
+                $('#' + root).input_form(form, data, paging);
              } else {
                 $('#' + root).form(form, data, paging);
              }
@@ -1115,7 +1115,7 @@ var fn = function(packet, job){
             if (job && job.obj){
                 // copy the obj_data that was saved with the job
                 data.obj_data = job.obj_data;
-                job.obj.trigger('custom', ['save_return', data]);
+                job.obj.data('command')('save_return', data);
             } else {
                 // errors
                 if (data.errors){

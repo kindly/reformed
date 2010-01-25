@@ -85,7 +85,7 @@ def process_node(environ, start_response):
 
     start_response('200 OK', [('Content-Type', 'text/html')])
     try:
-        return [json.dumps(data, separators=(',',':'))]
+        return [json.dumps(data, sort_keys=False, indent=4)]#, separators=(',',':'))]
     except TypeError:
         # we had a problem with the JSON conversion
         # let's send the error to the front-end

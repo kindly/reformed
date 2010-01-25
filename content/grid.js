@@ -93,6 +93,8 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         $(document).unbind('mouseup', end_column_resize);
         $drag_col = null;
         current = undefined;
+        // Resize grid in case we need to add/remove scroll bars.
+        resize_grid();
         return false;
     }
 
@@ -140,33 +142,85 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             }
         }
     }
+
     function resize_grid(){
-        var foot_height = $.Util.Size.GRID_FOOTER_H;
-        var head_height = $.Util.Size.GRID_HEADER_H;
+        var foot_height = util_size.GRID_FOOTER_H;
+        var head_height = util_size.GRID_HEADER_H;
         var side_width = $.Grid.SIDE_COLUMN_WIDTH;
-        var scrollbar_width = $.Util.Size.SCROLLBAR_WIDTH;
+        var scrollbar_width = util_size.SCROLLBAR_WIDTH;
+        var title_height = util_size.GRID_TITLE_H;
         var width = grid_size.width;
         var height = grid_size.height;
+        var main_height = $main.height();
+        var main_width = $main.width();
+
         $grid.width(width).height(height);
 
-        $grid_main.css({top : head_height,
+        // Css for $grid_main.
+        // There may be scroll bars or not, so see if we need them.
+        var grid_main_css = {top : head_height,
+                             left : side_width,
+                             width : width - side_width,
+                             height : height - head_height - foot_height}
+
+        var right_scrollbar = 0;
+        var bottom_scrollbar = 0;
+
+        // This is horrible, but if there are scroll bars added
+        // we need to see if this effects things.
+        if (main_height + head_height + foot_height > height){
+            right_scrollbar = 1;
+        }
+        if (main_width + side_width + (scrollbar_width * right_scrollbar) > width){
+            bottom_scrollbar = 1;
+            if (main_height + head_height + foot_height + scrollbar_width > height){
+                    right_scrollbar = 1;
+                    if (main_width + side_width + scrollbar_width > width){
+                        bottom_scrollbar = 1;
+                    }
+            }
+        }
+
+        if (right_scrollbar === 0){
+            grid_main_css['overflow-y'] = 'hidden';
+        } else {
+            grid_main_css['overflow-y'] = 'scroll';
+        }
+
+        if (bottom_scrollbar === 0){
+            grid_main_css['overflow-x'] = 'hidden';
+        } else {
+            grid_main_css['overflow-x'] = 'scroll';
+        }
+
+        // pass the scrollbar settings to movement
+        $form.data('command')('set_scrollbars', {scrollbar_bottom : (bottom_scrollbar == 1),
+                                                  scrollbar_side : (right_scrollbar == 1)});
+        $grid_main.css(grid_main_css);
+
+        $grid_main.css({top : head_height + title_height,
                         left : side_width,
                         width : width - side_width,
-                        height : height - head_height - foot_height});
+                        height : height - head_height - foot_height - title_height});
 
-        $grid_head.css({top : 0,
+        $grid_head.css({top : title_height,
                         left : side_width,
-                        width : width - side_width - scrollbar_width});
+                        width : width - side_width - (scrollbar_width * right_scrollbar)});
 
-        $grid_side.css({top : head_height,
+        $grid_side.css({top : head_height + title_height,
                         left : 0,
-                        height : height - head_height - scrollbar_width - foot_height,
+                        height : height - head_height - (scrollbar_width * bottom_scrollbar) - foot_height - title_height,
                         width : side_width});
 
         $grid_foot.css({top : height - foot_height,
                         left : 0,
                         width : width,
                         height : foot_height});
+
+        $grid_title.css({top : 0,
+                        left : 0,
+                        width : width,
+                        height : title_height});
 
         $grid_resizer.css({top : height - 15,
                            left : width - 15});
@@ -186,13 +240,13 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         var $head_cols = $head.find('th');
         var $main_cols = $main.find('tr').eq(0).find('td');
         for (i = 0, n = column_widths.length; i < n; i++){
-                $head_cols.eq(i).width(column_widths[i] - $.Util.Size.GRID_COL_RESIZE_DIFF);
-                if (current && current.editing && current.row === 0 && current.col === i && !current.complex_control){
-                    // control is on first row and being edited for this column
-                    $main_cols.eq(i).width(column_widths[i] - $.Util.Size.GRID_COL_EDIT_DIFF);
-                } else {
-                    $main_cols.eq(i).width(column_widths[i]);
-                }
+            $head_cols.eq(i).width(column_widths[i] - util_size.GRID_COL_RESIZE_DIFF);
+            if (current && current.editing && current.row === 0 && current.col === i && !current.complex_control){
+                // control is on first row and being edited for this column
+                $main_cols.eq(i).width(column_widths[i] - util_size.GRID_COL_EDIT_DIFF);
+            } else {
+                $main_cols.eq(i).width(column_widths[i]);
+            }
         }
     }
 
@@ -224,12 +278,14 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     // create the table
     $.Grid.Build($form, form_data, grid_data, paging_data);
 
+    var util_size = $.Util.Size;
 
     var $grid = $form.find('div.scroller');
     var $grid_side = $grid.find('div.scroller-side');
     var $grid_head = $grid.find('div.scroller-head');
     var $grid_main = $grid.find('div.scroller-main');
     var $grid_foot = $grid.find('div.scroller-foot');
+    var $grid_title = $grid.find('div.scroller-title');
     var $grid_resizer = $grid.find('div.scroller-resizer');
     var $main = $form.find('div.scroller-main table');
     var $head = $form.find('div.scroller-head table');
@@ -285,6 +341,9 @@ $.Grid.Movement = function(input, form_data, grid_data){
         $input.unbind();
     }
 
+    function add_row(){
+        $input.data('build')('add_row');
+    }
 
     var custom_commands = {
         'field_top' : field_top,
@@ -292,8 +351,17 @@ $.Grid.Movement = function(input, form_data, grid_data){
         'unbind_all' : unbind_all,
         'blur' : blur,
         'focus' : focus,
+        'set_scrollbars' : set_scrollbars,
+        'add_row' : add_row,
+        'save' : save_all,
+        'save_return' : save_return,
         'get_current' : get_current
     };
+
+    function set_scrollbars(data){
+        current.scrollbar_side = data.scrollbar_side;
+        current.scrollbar_bottom = data.scrollbar_bottom;
+    }
 
     function get_current(){
         return (current);
@@ -376,7 +444,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
         // any differences in the padding etc
         // don't do this for complex conrols as they do thier own wrapping
         if (current.row === 0 && !current.complex_control){
-            current.$item.width(current.$item.width() - $.Util.Size.GRID_COL_EDIT_DIFF);
+            current.$item.width(current.$item.width() - util_size.GRID_COL_EDIT_DIFF);
         }
         current.value = grid_data[current.row][current.field.name];
     }
@@ -401,7 +469,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
         // any differences in the padding etc
         // don't do this for complex conrols as they do thier own wrapping
         if (current.row === 0 && !current.complex_control){
-            current.$item.width(current.$item.width() + $.Util.Size.GRID_COL_EDIT_DIFF);
+            current.$item.width(current.$item.width() + util_size.GRID_COL_EDIT_DIFF);
         }
         if (value === current.value){
             // not changed
@@ -415,6 +483,9 @@ $.Grid.Movement = function(input, form_data, grid_data){
             check_row_dirty();
         } else {
             // has changed
+            if (!row_info[current.row]){
+                row_info[current.row];
+            }
             row_info[current.row][current.field.name] = value;
             current.dirty = true;
             current.$item.addClass('dirty');
@@ -423,6 +494,127 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
         }
         current.$control = undefined;
+    }
+
+    function get_grid_row_data(this_row){
+        // get our data to save
+        var save_data = {};
+        var row_data = grid_data[this_row];
+
+        for (var item in row_data){
+            save_data[item] = row_data[item];
+        }
+
+        var this_row_info = row_info[this_row];
+        var copy_of_row_info = {};
+        for (var item in this_row_info){
+            save_data[item] = this_row_info[item];
+            copy_of_row_info[item] = this_row_info[item];
+        }
+        return [save_data, copy_of_row_info];
+    }
+
+    function save_all(){
+        edit_mode_off();
+        console.log('save');
+        var save_data;
+        var full_save_data = [];
+        var full_copy_data = [];
+        var counter = 0;
+        for (var this_row in row_info){
+            save_data = get_grid_row_data(this_row);
+            save_data[0].__root = counter;
+            save_data[1].__row = grid_data[this_row];
+            full_save_data.push(save_data[0]);
+            full_copy_data.push(save_data[1]);
+            counter++;
+        }
+        var out = {};
+        out.data = full_save_data;
+        // any extra data needed from the form
+        params = form_data.params;
+        if (params && params.extras){
+            for (var extra in params.extras){
+                if (params.extras.hasOwnProperty(extra)){
+                    out[extra] = params.extras[extra];
+                }
+            }
+        }
+        if (counter !==0 ){
+            get_node_return(form_data.node, '_save', out, $input, full_copy_data);
+        }
+    }
+    function save_errors(data){
+        // FIXME implement
+    }
+
+    function check_dirty_rows(){
+        // check all rows_altered to see if they are still dirty
+        // sort css etc
+        var is_dirty;
+        var $this_row;
+        var $this_side;
+        var $this_item;
+        var this_col;
+        for (var this_row in row_info){
+            is_dirty = false;
+            $this_row = $main.find('tr').eq(this_row);
+            $this_side = $side.find('tr').eq(this_row);
+
+            for (var field in row_info[this_row]){
+                this_col = form_data.items[field].index;
+                $this_item = $this_row.children().eq(this_col)
+                if (grid_data[this_row][field] == row_info[this_row][field]){
+                    // don't delete if we are editing this item
+                    if (!current.editing && current.row != this_row && field != current.field.name){
+                        delete row_info[this_row][field];
+                    }
+                    $this_item.removeClass('dirty');
+                } else {
+                    is_dirty = true
+                    $this_item.addClass('dirty');
+                }
+            }
+            if (is_dirty){
+                $this_row.addClass('dirty');
+                $this_side.addClass('dirty');
+            } else {
+                $this_row.removeClass('dirty');
+                $this_side.removeClass('dirty');
+                // don't remove if current row
+                if (current.row != this_row){
+                    delete row_info[this_row];
+                }
+            }
+
+        }
+    }
+
+    function save_update(data, obj_data){
+        // FIXME implement
+        var row_data;
+        var this_data;
+        for (var i = 0, n = data.length; i < n; i++){
+            row_data = obj_data[i].__row;
+            this_data = obj_data[i];
+            for (var field in this_data){
+                if (field !== '__row'){
+                    row_data[field] = this_data[field];
+                }
+            }
+        }
+        check_dirty_rows();
+    }
+
+    function save_return(data){
+        // errors
+        if (data.errors){
+            save_errors(data.errors);
+        }
+        // saves
+        if (data.saved){
+            save_update(data.saved, data.obj_data); // single form so only want first saved item
+        }
     }
 
     function autosave(){
@@ -472,11 +664,11 @@ $.Grid.Movement = function(input, form_data, grid_data){
         var cell_top = cell_pos.top - div_top;
         var cell_left = cell_pos.left - div_left;
 
-        var s = $.Util.Size.SCROLLBAR_WIDTH;
+        var s = util_size.SCROLLBAR_WIDTH;
         var height = $scroll_div.innerHeight() - s;
         var width = $scroll_div.innerWidth() - s;
-        var h = $.Util.Size.GRID_BODY_H;
-        var h2 = $.Util.Size.GRID_HEADER_H;
+        var h = util_size.GRID_BODY_H;
+        var h2 = util_size.GRID_HEADER_H;
         var w = current.$item.outerWidth();
         var top = $scroll_div.scrollTop();
         var left = $scroll_div.scrollLeft();
@@ -773,10 +965,13 @@ $.Grid.Movement = function(input, form_data, grid_data){
         field : undefined,
         $control : undefined,
         editing : false,
+        scrollbar_side : true,
+        scrollbar_bottom : false,
         complex_control : undefined
     };
 
     var util = $.Util;
+    var util_size = $.Util.Size;
 
     init();
 
@@ -794,6 +989,9 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
     function create(){
         $(input).empty();
         var $div = $('<div class="scroller"></div>');
+
+        $title = $(title());
+        $div.append($title);
 
         $head = $(header());
         $div.append($head);
@@ -843,21 +1041,18 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
         return html.join('');
     }
 
+    function title(){
+        return '<div class="scroller-title">' + form_data.params.title + '</div>';
+    }
+
     function foot(){
         var html = '<div class="scroller-foot">';
         if (paging_data){
             html += $.Util.paging_bar(paging_data);
         }
+        html += '<a href="#" onclick="grid_add_row();return false;">add new</a>';
         html += '</div>';
         return html
-    }
-
-    function footer(){
-        var html = [];
-        html.push('<tfoot><tr>');
-        html.push('<td colspan="' + (num_fields + 1) + '">&nbsp;</td>');
-        html.push('</tr></tfoot>');
-        return html;
     }
 
     function build_rows(){
@@ -929,8 +1124,17 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
         return html.join('');
     }
 
+    function add_new_row(data){
+        var new_row = grid_data.length;
+        grid_data[new_row] = {};
+        $(input).find('div.scroller-main table').append(row());
+        $(input).find('div.scroller-side table').append('<tr><td>' + new_row + '</td></tr>');
+    }
+
     var HTML_Encode = $.Util.HTML_Encode;
     var num_fields = form_data.fields.length;
+    $(input).data('build', add_new_row);
+
     create();
 };
 
@@ -1114,6 +1318,23 @@ $.Util.paging_bar = function (data){
     return html;
 };
 
+$.Util.Position = function ($item, top, left, height, width){
+    // position an element absolutely on the screen
+    var css = {position : 'absolute'};
+    if (top){
+        css.top = top;
+    }
+    if (left){
+        css.left = left;
+    }
+    if (height){
+        css.height = height;
+    }
+    if (width){
+        css.width = width;
+    }
+    $item.css(css);
+};
 
 // $.Util.Size
 // this is used to calculate and store size related info
@@ -1122,6 +1343,15 @@ $.Util.Size = {};
 
 $.Util.Size.get = function(){
 
+    function action_button(){
+        // get size of action buttons
+        var $div = $('<div style="overflow:hidden; width:100px; height:100px; position:absolute; left:-200px; top:0px;"></div>');
+        $div.append('<div class="action"><a href="#"><span class="command">button</span><span class="shortcut">A</span></a></div>');
+        $('body').append($div);
+        var $x = $div.find('div.action');
+        util_size.ACTION_BUTTON_H = $x.outerHeight();
+        $div.remove();
+    }
 
     function scrollbar(){
         // get width of scrollbar
@@ -1130,37 +1360,42 @@ $.Util.Size.get = function(){
         var w1 = $div.find('div').width();
         $div.css('overflow-y', 'scroll');
         var w2 = $div.find('div').width();
-        $.Util.Size.SCROLLBAR_WIDTH = w1 - w2;
-        $div.remove()
+        util_size.SCROLLBAR_WIDTH = w1 - w2;
+        $div.remove();
     }
 
     function grid(){
         // get interesting stuff about grid cells
         // needed for acurate resizing
         var $div = $('<div style="overflow:hidden; width:100px; height:100px; position:absolute; left:-200px; top:0px;"></div>');
-        $div.append('<table class="grid"><thead><tr><th>head</th></tr></thead><tbody><tr><td>body</td></tr><tr><td class="t_edited_cell">body</td></tr></tbody></table><div class="scroller-foot">foot</div>');
+        $div.append('<div class="scroller-title">head</div><table class="grid"><thead><tr><th>head</th></tr></thead><tbody><tr><td>body</td></tr><tr><td class="t_edited_cell">body</td></tr></tbody></table><div class="scroller-foot">foot</div>');
         $('body').append($div);
 
         var $x = $div.find('th');
-        $.Util.Size.GRID_HEADER_BORDER_W = $x.outerWidth() - $x.width();
-        $.Util.Size.GRID_HEADER_H = $x.outerHeight();
+        util_size.GRID_HEADER_BORDER_W = $x.outerWidth() - $x.width();
+        util_size.GRID_HEADER_H = $x.outerHeight();
 
         var $x = $div.find('td').eq(0);
-        $.Util.Size.GRID_BODY_BORDER_W = $x.outerWidth() - $x.width();
-        $.Util.Size.GRID_BODY_H = $x.outerHeight();
+        util_size.GRID_BODY_BORDER_W = $x.outerWidth() - $x.width();
+        util_size.GRID_BODY_H = $x.outerHeight();
 
         var $x = $div.find('td').eq(1);
-        $.Util.Size.GRID_BODY_BORDER_W_EDIT = $x.outerWidth() - $x.width();
-        $.Util.Size.GRID_BODY_H_EDIT = $x.outerHeight();
+        util_size.GRID_BODY_BORDER_W_EDIT = $x.outerWidth() - $x.width();
+        util_size.GRID_BODY_H_EDIT = $x.outerHeight();
+
+        var $x = $div.find('div.scroller-title');
+        util_size.GRID_TITLE_H = $x.outerHeight();
 
         var $x = $div.find('div.scroller-foot');
-        $.Util.Size.GRID_FOOTER_H = $x.outerHeight();
+        util_size.GRID_FOOTER_H = $x.outerHeight();
 
-        $.Util.Size.GRID_COL_RESIZE_DIFF = $.Util.Size.GRID_HEADER_BORDER_W - $.Util.Size.GRID_BODY_BORDER_W;
-        $.Util.Size.GRID_COL_EDIT_DIFF = $.Util.Size.GRID_BODY_BORDER_W_EDIT - $.Util.Size.GRID_BODY_BORDER_W;
-        $div.remove()
+        util_size.GRID_COL_RESIZE_DIFF = util_size.GRID_HEADER_BORDER_W - util_size.GRID_BODY_BORDER_W;
+        util_size.GRID_COL_EDIT_DIFF = util_size.GRID_BODY_BORDER_W_EDIT - util_size.GRID_BODY_BORDER_W;
+        $div.remove();
     }
 
+    var util_size = $.Util.Size;
+    action_button();
     scrollbar();
     grid();
 
@@ -1232,11 +1467,12 @@ $.Util.HTML_Encode = function (arg) {
     return arg.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 };
 
-$.Util.FormDataNormalize = function (form_data) {
+$.Util.FormDataNormalize = function (form_data, node) {
     // add parameters if not
     if (!form_data.params){
         form_data.params = {};
     }
+    form_data.node = node;
     // make hash of the fields
     form_data.items = {};
     for (var i = 0, n = form_data.fields.length; i < n; i++){
