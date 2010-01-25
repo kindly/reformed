@@ -307,6 +307,7 @@ class Edit(node.TableNode):
         self.fields = fields
         self.form_params =  {"form_type": "grid",
                              "extras" : self.extra_data,
+                             "title" : self.table,
                              "read_only" : True
                             }
 

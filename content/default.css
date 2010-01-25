@@ -395,10 +395,20 @@ td input {
     overflow:hidden;
     position:absolute;
 }
-
+.scroller-title {
+    background-color:#339;
+    color:#CCC;
+    text-align:center;
+    font-weight:bold;
+}
 .scroller-foot {
+    background-color:#339;
+    color:#CCC;
     overflow:hidden;
     position:absolute;
+}
+.scroller-foot a {
+    color:#CCC;
 }
 
 .scroller-resizer {

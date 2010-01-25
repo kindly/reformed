@@ -901,7 +901,7 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
     }
 
     function title(){
-        return '<div class="scroller-title">title</div>';
+        return '<div class="scroller-title">' + form_data.params.title + '</div>';
     }
 
     function foot(){
