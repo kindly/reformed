@@ -193,6 +193,9 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             grid_main_css['overflow-x'] = 'scroll';
         }
 
+        // pass the scrollbar settings to movement
+        $form.data('command')('set_scrollbars', {scrollbar_bottom : (bottom_scrollbar == 1),
+                                                  scrollbar_side : (right_scrollbar == 1)});
         $grid_main.css(grid_main_css);
 
         $grid_main.css({top : head_height + title_height,
@@ -345,8 +348,15 @@ $.Grid.Movement = function(input, form_data, grid_data){
         'unbind_all' : unbind_all,
         'blur' : blur,
         'focus' : focus,
+        'set_scrollbars' : set_scrollbars,
+        'add_row' : add_row,
         'get_current' : get_current
     };
+
+    function set_scrollbars(data){
+        current.scrollbar_side = data.scrollbar_side;
+        current.scrollbar_bottom = data.scrollbar_bottom;
+    }
 
     function get_current(){
         return (current);
@@ -826,6 +836,8 @@ $.Grid.Movement = function(input, form_data, grid_data){
         field : undefined,
         $control : undefined,
         editing : false,
+        scrollbar_side : true,
+        scrollbar_bottom : false,
         complex_control : undefined
     };
 
