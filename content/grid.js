@@ -353,6 +353,8 @@ $.Grid.Movement = function(input, form_data, grid_data){
         'focus' : focus,
         'set_scrollbars' : set_scrollbars,
         'add_row' : add_row,
+        'save' : save_all,
+        'save_return' : save_return,
         'get_current' : get_current
     };
 
@@ -481,6 +483,9 @@ $.Grid.Movement = function(input, form_data, grid_data){
             check_row_dirty();
         } else {
             // has changed
+            if (!row_info[current.row]){
+                row_info[current.row];
+            }
             row_info[current.row][current.field.name] = value;
             current.dirty = true;
             current.$item.addClass('dirty');
@@ -489,6 +494,127 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
         }
         current.$control = undefined;
+    }
+
+    function get_grid_row_data(this_row){
+        // get our data to save
+        var save_data = {};
+        var row_data = grid_data[this_row];
+
+        for (var item in row_data){
+            save_data[item] = row_data[item];
+        }
+
+        var this_row_info = row_info[this_row];
+        var copy_of_row_info = {};
+        for (var item in this_row_info){
+            save_data[item] = this_row_info[item];
+            copy_of_row_info[item] = this_row_info[item];
+        }
+        return [save_data, copy_of_row_info];
+    }
+
+    function save_all(){
+        edit_mode_off();
+        console.log('save');
+        var save_data;
+        var full_save_data = [];
+        var full_copy_data = [];
+        var counter = 0;
+        for (var this_row in row_info){
+            save_data = get_grid_row_data(this_row);
+            save_data[0].__root = counter;
+            save_data[1].__row = grid_data[this_row];
+            full_save_data.push(save_data[0]);
+            full_copy_data.push(save_data[1]);
+            counter++;
+        }
+        var out = {};
+        out.data = full_save_data;
+        // any extra data needed from the form
+        params = form_data.params;
+        if (params && params.extras){
+            for (var extra in params.extras){
+                if (params.extras.hasOwnProperty(extra)){
+                    out[extra] = params.extras[extra];
+                }
+            }
+        }
+        if (counter !==0 ){
+            get_node_return(form_data.node, '_save', out, $input, full_copy_data);
+        }
+    }
+    function save_errors(data){
+        // FIXME implement
+    }
+
+    function check_dirty_rows(){
+        // check all rows_altered to see if they are still dirty
+        // sort css etc
+        var is_dirty;
+        var $this_row;
+        var $this_side;
+        var $this_item;
+        var this_col;
+        for (var this_row in row_info){
+            is_dirty = false;
+            $this_row = $main.find('tr').eq(this_row);
+            $this_side = $side.find('tr').eq(this_row);
+
+            for (var field in row_info[this_row]){
+                this_col = form_data.items[field].index;
+                $this_item = $this_row.children().eq(this_col)
+                if (grid_data[this_row][field] == row_info[this_row][field]){
+                    // don't delete if we are editing this item
+                    if (!current.editing && current.row != this_row && field != current.field.name){
+                        delete row_info[this_row][field];
+                    }
+                    $this_item.removeClass('dirty');
+                } else {
+                    is_dirty = true
+                    $this_item.addClass('dirty');
+                }
+            }
+            if (is_dirty){
+                $this_row.addClass('dirty');
+                $this_side.addClass('dirty');
+            } else {
+                $this_row.removeClass('dirty');
+                $this_side.removeClass('dirty');
+                // don't remove if current row
+                if (current.row != this_row){
+                    delete row_info[this_row];
+                }
+            }
+
+        }
+    }
+
+    function save_update(data, obj_data){
+        // FIXME implement
+        var row_data;
+        var this_data;
+        for (var i = 0, n = data.length; i < n; i++){
+            row_data = obj_data[i].__row;
+            this_data = obj_data[i];
+            for (var field in this_data){
+                if (field !== '__row'){
+                    row_data[field] = this_data[field];
+                }
+            }
+        }
+        check_dirty_rows();
+    }
+
+    function save_return(data){
+        // errors
+        if (data.errors){
+            save_errors(data.errors);
+        }
+        // saves
+        if (data.saved){
+            save_update(data.saved, data.obj_data); // single form so only want first saved item
+        }
     }
 
     function autosave(){
