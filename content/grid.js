@@ -523,8 +523,12 @@ $.Grid.Movement = function(input, form_data, grid_data){
         var counter = 0;
         for (var this_row in row_info){
             save_data = get_grid_row_data(this_row);
+            // add some extra bits of info for processing on return
             save_data[0].__root = counter;
             save_data[1].__row = grid_data[this_row];
+            save_data[1].__$row = $main.find('tr').eq(this_row);
+            save_data[1].__$side = $side.find('tr').eq(this_row);
+
             full_save_data.push(save_data[0]);
             full_copy_data.push(save_data[1]);
             counter++;
@@ -543,9 +547,6 @@ $.Grid.Movement = function(input, form_data, grid_data){
         if (counter !==0 ){
             get_node_return(form_data.node, '_save', out, $input, full_copy_data);
         }
-    }
-    function save_errors(data){
-        // FIXME implement
     }
 
     function check_dirty_rows(){
@@ -591,17 +592,56 @@ $.Grid.Movement = function(input, form_data, grid_data){
     }
 
     function save_update(data, obj_data){
-        // FIXME implement
+
         var row_data;
         var this_data;
+        var $this_side;
         for (var i = 0, n = data.length; i < n; i++){
             row_data = obj_data[i].__row;
             this_data = obj_data[i];
+            if (row_data.id){
+                // check if the id has changed (it shouldn't)
+                if (row_data.id != data[i][1]){
+                    alert('something went wrong the id has changed during the save\nid = ' + row_data.id + ', returned ' + this_data[1]);
+                    return;
+                }
+            } else {
+                // update id
+                row_data.id = data[i][1];
+            }
+            // update _version
+            row_data._version = data[i][2];
+
+            // update fields
             for (var field in this_data){
                 if (field !== '__row'){
                     row_data[field] = this_data[field];
                 }
             }
+
+            $this_side = obj_data[i].__$side;
+            tooltip_clear($this_side);
+        }
+        check_dirty_rows();
+    }
+
+    function save_errors(data, obj_data){
+        // FIXME implement
+        var $this_row;
+        var $this_side;
+        var $this_item;
+        for (var error_row in data){
+            $this_row = obj_data[error_row].__$row;
+            $this_side = obj_data[error_row].__$side;
+            for (var field in data[error_row]){
+                if (field != '__row' && field != '__$row' && field != '__$side'){
+                    console.log(field);
+                    $this_item = $this_row.find('td').eq(form_data.items[field].index);
+                    $this_item.addClass('error');
+                }
+            }
+            // add error tooltip to the side selector
+            tooltip_add($this_side, $.toJSON(data[error_row]));
         }
         check_dirty_rows();
     }
@@ -609,7 +649,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
     function save_return(data){
         // errors
         if (data.errors){
-            save_errors(data.errors);
+            save_errors(data.errors, data.obj_data);
         }
         // saves
         if (data.saved){
