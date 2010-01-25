@@ -737,7 +737,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
     function edit_mode_on(){
         // turn on edit mode
-        if (!edit_mode){
+        if (!edit_mode && !form_data.params.read_only){
             edit_mode = true;
             current.editing = true;
             make_editable(current.$item);
