@@ -34,7 +34,6 @@ class Search(object):
         self.eager_tables = self.get_eager_tables(self.tables)
 
         self.table_paths_list = create_table_path_list(table_paths) 
-        self.table_path = create_table_path(self.table_paths_list, self.table)
 
         self.aliased_name_path = {} 
         self.create_aliased_path()
@@ -213,10 +212,90 @@ class Search(object):
         
         for item in self.table_paths_list:
             key, edge = item
-            new_name = edge.name
-            self.aliased_name_path[new_name] = list(key)
+            self.aliased_name_path[edge.name] = edge
 
-class QueryFromString(object):
+
+class QueryBase(object):
+
+    """useful function for both paramararised and normal queries"""
+
+    def make_join_tree(self):
+
+        join_tree = dict(type = "root",
+                         table = self.search.table,
+                         tree = {})
+
+        for join in self.outer_joins.union(self.covering_ors):
+            if join == self.search.table:
+                continue
+            sub_tree = join_tree
+
+            edge = self.search.aliased_name_path[join]
+
+            for node in edge.table_path:
+                if node in sub_tree["tree"]:
+                    sub_tree = sub_tree["tree"]
+                else:
+                    old_tree = sub_tree
+                    sub_tree = dict(type = "outer",
+                                    tree = {},
+                                    table = node[0],
+                                    join = node[1],
+                                    old_table = old_tree["table"])
+                    old_tree["tree"][node] = sub_tree
+
+        for join in self.inner_joins:
+            if join == self.search.table:
+                continue
+            sub_tree = join_tree
+
+            edge = self.search.aliased_name_path[join]
+
+            for node in edge.table_path:
+                if node in sub_tree["tree"]:
+                    sub_tree = sub_tree["tree"]
+                else:
+                    old_tree = sub_tree
+                    sub_tree = dict(type = "inner",
+                                    tree = {},
+                                    table = node[0],
+                                    join = node[1],
+                                    old_table = old_tree["table"])
+                    old_tree["tree"][node] = sub_tree
+
+        return join_tree
+                
+    def recurse_join_tree(self, current_node):
+
+        for node in current_node["tree"].values():
+            old_table = self.search.database.aliases[node["old_table"]]
+            table = self.search.database.aliases[node["table"]]
+            relation = node["join"]
+            join_tuple = (table, getattr(old_table, relation))
+
+            if node["type"] == "outer":
+                self.sa_query = self.sa_query.outerjoin(join_tuple)
+
+            if node["type"] == "inner":
+                self.sa_query = self.sa_query.join(join_tuple)
+
+            self.recurse_join_tree(node)
+
+    def add_conditions(self, sa_query):
+
+        self.sa_query = sa_query
+
+        join_tree = self.make_join_tree()
+
+        self.recurse_join_tree(join_tree)
+
+        self.sa_query = self.sa_query.filter(self.where)
+
+        return self.sa_query
+
+
+
+class QueryFromString(QueryBase):
 
     def __init__(self, search, *args, **kw):
 
@@ -241,20 +320,6 @@ class QueryFromString(object):
 
         self.where = self.convert_where(self.ast[0])
 
-
-    def add_conditions(self, sa_query):
-
-        for join in self.outer_joins.union(self.covering_ors):
-            if join <> self.search.table:
-                sa_query = sa_query.outerjoin(self.search.aliased_name_path[join])
-
-        for join in self.inner_joins:
-            if join <> self.search.table:
-                sa_query = sa_query.join(self.search.aliased_name_path[join])
-
-        sa_query = sa_query.filter(self.where)
-
-        return sa_query
 
     def gather_covering_ors(self, node, notted, ored):
 
@@ -302,9 +367,9 @@ class QueryFromString(object):
 
         if node.operator:
             if node.table:
-                table_class = getattr(self.search.database.t,node.table)
+                table_class = self.search.database.aliases[node.table]
             else:
-                table_class = getattr(self.search.database.t,self.search.table)
+                table_class = self.search.database.aliases[self.search.table]
             
             field = getattr(table_class, node.field)
 
@@ -407,13 +472,25 @@ class QueryFromString(object):
 
         value = date | decimal | Word(nums) | pyparsing.quotedString.setParseAction(remove_quotes) |string_no_quote
 
-        objwithtable = attr.setResultsName("table") +\
+        ### really stupid but pyparsing seems to have non greedyness and naming correctly here makes everythin else cleaner
+        objwith4table = Combine(attr + Literal(".") + attr + Literal(".") + attr + Literal(".") + attr).setResultsName("table") +\
                        Literal(".").suppress() +\
                        attr.setResultsName("field")
+        objwith3table = Combine(attr + Literal(".") + attr + Literal(".") + attr).setResultsName("table") +\
+                       Literal(".").suppress() +\
+                       attr.setResultsName("field")
+        objwith2table = Combine(attr + Literal(".") + attr).setResultsName("table") +\
+                       Literal(".").suppress() +\
+                       attr.setResultsName("field")
+        objwith1table = attr.setResultsName("table") +\
+                       Literal(".").suppress() +\
+                       attr.setResultsName("field")
+
                         
         objnotable = attr.setResultsName("field")
 
-        obj = objwithtable | objnotable
+        obj = objwith4table | objwith3table | objwith2table | objwith1table | objnotable
+
 
         is_ = pyparsing.CaselessKeyword("is")
         is_not = is_.suppress() + pyparsing.CaselessKeyword("not")
@@ -640,7 +717,7 @@ class Expression(object):
         return date
 
 
-class QueryFromStringParam(object):
+class QueryFromStringParam(QueryBase):
 
     def __init__(self, search, *args, **kw):
 
@@ -681,21 +758,6 @@ class QueryFromStringParam(object):
         self.gather_covering_ors(self.ast, False, False)
 
         self.where = self.convert_where(self.ast[0])
-
-
-    def add_conditions(self, sa_query):
-
-        for join in self.outer_joins.union(self.covering_ors):
-            if join <> self.search.table:
-                sa_query = sa_query.outerjoin(self.search.aliased_name_path[join])
-
-        for join in self.inner_joins:
-            if join <> self.search.table:
-                sa_query = sa_query.join(self.search.aliased_name_path[join])
-
-        sa_query = sa_query.filter(self.where)
-
-        return sa_query
 
     def gather_covering_ors(self, node, notted, ored):
 
@@ -806,14 +868,24 @@ class QueryFromStringParam(object):
         attr = Word(pyparsing.alphanums + "_" )
         name = Word(pyparsing.alphanums + "_" )
 
-
-        objwithtable = attr.setResultsName("table") +\
+        ### really stupid but pyparsing seems to have non greedyness and naming correctly here makes everythin else cleaner
+        objwith4table = Combine(attr + Literal(".") + attr + Literal(".") + attr + Literal(".") + attr).setResultsName("table") +\
                        Literal(".").suppress() +\
                        attr.setResultsName("field")
+        objwith3table = Combine(attr + Literal(".") + attr + Literal(".") + attr).setResultsName("table") +\
+                       Literal(".").suppress() +\
+                       attr.setResultsName("field")
+        objwith2table = Combine(attr + Literal(".") + attr).setResultsName("table") +\
+                       Literal(".").suppress() +\
+                       attr.setResultsName("field")
+        objwith1table = attr.setResultsName("table") +\
+                       Literal(".").suppress() +\
+                       attr.setResultsName("field")
+
                         
         objnotable = attr.setResultsName("field")
 
-        obj = objwithtable | objnotable
+        obj = objwith4table | objwith3table | objwith2table | objwith1table | objnotable
 
         named_param = Literal("{") + name.setResultsName("name") + Literal("}")
         assumed_named_param = Literal("{") + Literal("}")

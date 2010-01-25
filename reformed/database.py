@@ -580,7 +580,13 @@ class Database(object):
         ie 'name desc, donkey.name, donkey.age desc'  (name in base table) 
         """
 
-        session = self.Session()
+        session = kw.pop("session", None)
+        if session:
+            external_session = True
+        else:
+            session = self.Session()
+            external_session = False
+
         # convert string values to int
         try:
             limit = int(kw.get("limit", None))
@@ -596,6 +602,7 @@ class Database(object):
         internal = kw.get("internal", False)
         tables = kw.get("tables", [table_name])
         fields = kw.get("fields", None)
+
 
         one_to_many_tables = [] 
 
@@ -622,6 +629,8 @@ class Database(object):
             else:
                 results = query.all()
 
+            if external_session:
+                return results
 
             data = []
             for result in results:
@@ -647,9 +656,8 @@ class Database(object):
             return wrapped_results    
         except Exception, e:
             session.rollback()
-            raise
-        finally:
             session.close()
+            raise
         
     def search_single(self, table_name, *args, **kw): 
 

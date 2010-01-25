@@ -69,7 +69,7 @@ def last_entity(tables, rtables):
 
 class Edge(object):
 
-    def __init__(self, node, node1 = None, node2 =  None, tables = None, path = None, name_changes = None, relation = None):
+    def __init__(self, node, node1 = None, node2 =  None, tables = None, path = None, name_changes = None, relation = None, changed_table_names = None):
 
         self.node = node
         self.table = node
@@ -78,7 +78,10 @@ class Edge(object):
         self.tables = tables or []
         self.path = path or []
         self.name_changes = name_changes or []
+        self.changed_table_names = changed_table_names or []
         self.relation = relation
+
+        # make sure table path includes next table
 
         if not relation:
             return
@@ -89,8 +92,11 @@ class Edge(object):
             self.join = relation.type
 
         name_change = [name_change for name_change in name_changes if name_change]
-
         self.name = ".".join(name_change + [self.node])
+
+        self.changed_table_names = self.changed_table_names + [self.name]
+
+        self.table_path = zip(self.changed_table_names, self.path)
             
 def get_next_relation(gr, path_dict, edge):
 
@@ -99,6 +105,8 @@ def get_next_relation(gr, path_dict, edge):
     current_path = edge.path
     last_edge = (edge.node1, edge.node2)
     name_changes = edge.name_changes
+    changed_table_names = edge.changed_table_names
+    last_relation = edge.relation
     
     for edge in gr.out_edges(node, data = True):
         node1, node2, relation = edge
@@ -113,7 +121,7 @@ def get_next_relation(gr, path_dict, edge):
             continue
         if len(tables) > 1 and check_two_entities(tables, node2, rtables):
             continue
-        if (node1, node2) == last_edge:
+        if relation == last_relation:
             continue
 
         
@@ -149,7 +157,7 @@ def get_next_relation(gr, path_dict, edge):
 
 
         new_tables = tables + [node2]
-        edge = Edge(node2, node1, node2, new_tables, new_path, new_name_changes, relation)
+        edge = Edge(node2, node1, node2, new_tables, new_path, new_name_changes, relation, changed_table_names)
         path_dict[tuple(new_path)] = edge
         get_next_relation(gr, path_dict, edge)
 
@@ -168,8 +176,8 @@ def get_next_relation(gr, path_dict, edge):
             continue
         if len(tables) > 1 and check_two_entities(tables, node1, rtables):
             continue
-        if (node1, node2) == last_edge:
-            continue 
+        if relation == last_relation:
+            continue
 
         split = None
 
@@ -188,7 +196,7 @@ def get_next_relation(gr, path_dict, edge):
         if len(new_path) > JOINS_DEEP:
             continue
         new_tables = tables + [node1]
-        edge = Edge(node1, node1, node2, new_tables, new_path, new_name_changes, relation)
+        edge = Edge(node1, node1, node2, new_tables, new_path, new_name_changes, relation, changed_table_names)
 
         path_dict[tuple(new_path)] = edge
         get_next_relation(gr, path_dict, edge)

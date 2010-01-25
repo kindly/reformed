@@ -362,9 +362,10 @@ class test_basic_input(test_donkey):
         print self.Donkey.tables["relation"].local_tables 
         assert self.Donkey.tables["relation"].local_tables == {'relation.over_18.code': ('_secondary', 'people', 'over_18'), 'relation.donkey': ('_secondary', 'donkey'), 'relation.people': ('_secondary', 'people'), 'relation.contact_summary': ('_secondary', 'people', 'contact_summary'), 'relation.gender.code': ('_secondary', 'people', 'gender'), 'relation._core_entity': ('_secondary',), 'relation.donkey_pics': ('_secondary', 'donkey', 'donkey_pics')} 
 
+
         print self.Donkey.tables["relation"].one_to_many_tables
 
-        assert self.Donkey.tables["relation"].one_to_many_tables == {'relation.entity_categories': ('_secondary', 'categories'), 'relation.email': ('_secondary', 'people', 'email'), 'relation.donkey_sponsership': ('_secondary', 'donkey', 'donkey_sponsership'), 'relation.transactions': ('_secondary', 'people', 'transactions'), 'relation.membership': ('_secondary', '_membership')}
+        assert self.Donkey.tables["relation"].one_to_many_tables == {'relation.relation': ('_secondary', 'relation_primary'), 'relation.membership': ('_secondary', '_membership'), 'relation.donkey_sponsership': ('_secondary', 'donkey', 'donkey_sponsership'), 'relation.email': ('_secondary', 'people', 'email'), 'relation.entity_categories': ('_secondary', 'categories'), 'relation.transactions': ('_secondary', 'people', 'transactions')}
         
     def test_zz_add_local(self):
 
