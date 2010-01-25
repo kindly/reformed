@@ -106,7 +106,7 @@ $.LayoutManager = function () {
         $side = $('<div></div>');
 
         var html = [];
-    
+        // FIXME this wants to be ripped out asap
         html.push('<div style=\'font-size:12px\'>');
         html.push('<span onclick="$.Util.selectStyleSheet(\'size\', \'css/size1.css\');" style="font-size:8px">A</span>');
         html.push('<span onclick="$.Util.selectStyleSheet(\'size\', \'css/size2.css\');" style="font-size:10px">A</span>');
@@ -142,6 +142,7 @@ $.LayoutManager = function () {
 
     function create_logo(){
         $logo = $('<div><img src="logo.png" /></div>');
+        // fixme get height/width correct etc
         $logo.find('img').css({width : 95, height : 95});
         $logo.css({overflow : 'hidden'});
         position_logo();
