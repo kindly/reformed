@@ -341,6 +341,9 @@ $.Grid.Movement = function(input, form_data, grid_data){
         $input.unbind();
     }
 
+    function add_row(){
+        $input.data('build')('add_row');
+    }
 
     var custom_commands = {
         'field_top' : field_top,
@@ -921,6 +924,7 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
         if (paging_data){
             html += $.Util.paging_bar(paging_data);
         }
+        html += '<a href="#" onclick="grid_add_row();return false;">add new</a>';
         html += '</div>';
         return html
     }
@@ -994,8 +998,17 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
         return html.join('');
     }
 
+    function add_new_row(data){
+        var new_row = grid_data.length;
+        grid_data[new_row] = {};
+        $(input).find('div.scroller-main table').append(row());
+        $(input).find('div.scroller-side table').append('<tr><td>' + new_row + '</td></tr>');
+    }
+
     var HTML_Encode = $.Util.HTML_Encode;
     var num_fields = form_data.fields.length;
+    $(input).data('build', add_new_row);
+
     create();
 };
 

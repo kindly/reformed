@@ -1053,6 +1053,11 @@ function itemsBlurLast(){
 
 }
 
+function grid_add_row(){
+    console.log('add_row');
+    $('#main div.GRID').data('command')('add_row');
+}
+
 
 var fn = function(packet, job){
      var root = 'main'; //FIXME
