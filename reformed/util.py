@@ -61,45 +61,145 @@ def check_two_entities(tables, node, rtables):
                     return False
         return False
 
+def last_entity(tables, rtables):
+    for table in tables[::-1]:
+        if rtables[table].entity:
+            return table
 
-def get_next_relation(gr, node, path_dict, tables, current_path = [], last_edge = (), one_ways = []):
+
+class Edge(object):
+
+    def __init__(self, node, node1 = None, node2 =  None, tables = None, path = None, name_changes = None, relation = None, changed_table_names = None):
+
+        self.node = node
+        self.table = node
+        self.node1 = node1
+        self.node2 = node2
+        self.tables = tables or []
+        self.path = path or []
+        self.name_changes = name_changes or []
+        self.changed_table_names = changed_table_names or []
+        self.relation = relation
+
+        # make sure table path includes next table
+
+        if not relation:
+            return
+
+        if node == node1:
+            self.join = swap_relations(relation.type)
+        else:
+            self.join = relation.type
+
+        name_change = [name_change for name_change in name_changes if name_change]
+        self.name = ".".join(name_change + [self.node])
+
+        self.changed_table_names = self.changed_table_names + [self.name]
+
+        self.table_path = zip(self.changed_table_names, self.path)
+            
+def get_next_relation(gr, path_dict, edge):
+
+    node = edge.node
+    tables = edge.tables
+    current_path = edge.path
+    last_edge = (edge.node1, edge.node2)
+    name_changes = edge.name_changes
+    changed_table_names = edge.changed_table_names
+    last_relation = edge.relation
     
     for edge in gr.out_edges(node, data = True):
         node1, node2, relation = edge
+            
         relation = relation["relation"]
         rtables = relation.table.database.tables
+        old_table = rtables[node1]
+        new_table = rtables[node2]
+        if rtables[node1].lookup and not rtables[node2].lookup:
+            continue
         if len(tables) > 1 and rtables[node2].entity and rtables[tables[-1]].name == "_core_entity" and rtables[tables[-2]].entity:
             continue
         if len(tables) > 1 and check_two_entities(tables, node2, rtables):
             continue
-        if (node1, node2) != last_edge:
-            new_path = current_path + [relation.name] 
-            if len(new_path) > JOINS_DEEP:
+        if relation == last_relation:
+            continue
+
+        
+        ### relationships only run from entity table to relation
+        if rtables[node2].relationship:
+            last_ent = last_entity(tables, rtables)
+            if not last_ent and not relation.name.endswith("primary"):
                 continue
-            if relation.one_way:
-                new_one_ways = one_ways + [node1]
-            else:
-                new_one_ways = one_ways
-            path_dict[tuple(new_path)] = [node2, relation.type, new_one_ways]
-            new_tables = tables + [node2]
-            get_next_relation(gr, node2, path_dict, new_tables, new_path, (node1, node2), new_one_ways)
+            valid_entities1 = rtables[node2].valid_entities1
+            valid_entities2 = rtables[node2].valid_entities2
+
+            if relation.name.endswith("primary"):
+                if valid_entities1 and last_ent not in valid_entities1:
+                    continue
+            if not relation.name.endswith("primary"):
+                if valid_entities2 and last_ent not in valid_entities2:
+                    continue
+                if last_ent in valid_entities1 or not valid_entities1:
+                    continue
+        
+        split = None
+
+        if not rtables[node2].relationship:
+            if len(old_table.tables_with_relations[(node2, "here")]) > 1:
+                split = relation.name
+
+        new_name_changes = name_changes + [split]
+
+
+        new_path = current_path + [relation.name] 
+        if len(new_path) > JOINS_DEEP:
+            continue
+
+
+        new_tables = tables + [node2]
+        edge = Edge(node2, node1, node2, new_tables, new_path, new_name_changes, relation, changed_table_names)
+        path_dict[tuple(new_path)] = edge
+        get_next_relation(gr, path_dict, edge)
+
+            #get_next_relation(gr, node2, path_dict, new_tables, new_path, (node1, node2), new_one_ways)
         
     for edge in gr.in_edges(node, data = True):
         node1, node2, relation = edge
         relation = relation["relation"]
         rtables = relation.table.database.tables
+        old_table = rtables[node2]
+        new_table = rtables[node1]
+
+        if rtables[node2].lookup and not rtables[node1].lookup:
+            continue
         if len(tables) > 1 and rtables[node1].entity and rtables[tables[-1]].name == "_core_entity" and rtables[tables[-2]].entity:
             continue
         if len(tables) > 1 and check_two_entities(tables, node1, rtables):
             continue
-        if (node1, node2) != last_edge and not relation.one_way:
-            backref = relation.sa_options.get("backref", "_%s" % node1)
-            new_path = current_path + [backref] 
-            if len(new_path) > JOINS_DEEP:
-                continue
-            path_dict[tuple(new_path)] = [node1, swap_relations(relation.type), one_ways]
-            new_tables = tables + [node1]
-            get_next_relation(gr, node1, path_dict, new_tables, new_path, (node1, node2), one_ways)
+        if relation == last_relation:
+            continue
+
+        split = None
+
+        if len(old_table.tables_with_relations[(node1, "other")]) > 1:
+            split = relation.name
+
+        backref = relation.sa_options.get("backref", "_%s" % node1)
+        new_path = current_path + [backref.encode("ascii")] 
+
+        ##relationships only defined from entity
+        if rtables[node2].relationship:
+            split = node2
+
+        new_name_changes = name_changes + [split]
+
+        if len(new_path) > JOINS_DEEP:
+            continue
+        new_tables = tables + [node1]
+        edge = Edge(node1, node1, node2, new_tables, new_path, new_name_changes, relation, changed_table_names)
+
+        path_dict[tuple(new_path)] = edge
+        get_next_relation(gr, path_dict, edge)
 
 def get_collection_of_obj(database, obj, parent_name):
 
@@ -122,15 +222,18 @@ def get_paths(gr, table):
 
     path_dict = {}
 
-    get_next_relation(gr, table, path_dict, [table])
+    edge = Edge(table, tables = [table])
+
+    get_next_relation(gr, path_dict, edge)
+
 
     return path_dict
 
 def get_local_tables(path_dict, one_to_many_tables, local_tables, current_pos):
 
-    table, relation, one_ways = path_dict[current_pos]  
-    new_name = "_".join(one_ways + [table])
-    if relation in ("manytoone", "onetoone"):
+    edge = path_dict[current_pos]  
+    new_name = edge.name
+    if edge.join in ("manytoone", "onetoone"):
         local_tables[new_name] = current_pos
     else:
         one_to_many_tables[new_name] = current_pos
@@ -153,17 +256,12 @@ def make_local_tables(path_dict):
     return [local_tables, one_to_many_tables]
 
 
-def table_path_sort_order(a, b):
-    return len(a[0]) - len(b[0]) 
-
 def create_table_path_list(path_dict):
 
     table_paths_list = [] 
 
     for k, v in path_dict.iteritems():
-        table_paths_list.append([k, v[0], v[1], v[2]])
-
-    table_paths_list.sort(table_path_sort_order)
+        table_paths_list.append([k, v])
 
     return table_paths_list
     
@@ -175,9 +273,19 @@ def create_table_path(table_path_list, table):
     table_path[table] = "root"
 
     for item in table_path_list:
-        key, table_name, relation, one_ways = item
-        new_name = "_".join(one_ways + [table_name])
-        table_path[new_name] = [list(key), relation]
+        key, edge = item
+        table_name = edge.node
+        relation = edge.relation
+
+        table_path[edge.name] = [list(key), relation]
+
+        #new_name = ".".join(one_ways + [table_name])
+        #if new_name in table_path:
+        #    old_keys, old_relation = table_path.pop(new_name)
+        #    table_path["%s.%s" % (new_name, old_relation.name)] = [old_keys, old_relation] 
+        #    table_path["%s.%s" % (new_name, relation.name)] = [list(key), relation] 
+        #else:
+        #    table_path[new_name] = [list(key), relation]
 
     return table_path
 
@@ -328,7 +436,7 @@ def get_row_with_table(obj, tables, keep_all = True, internal = False):
         row_data.update(data)
 
     for aliased_table_name, path in table.local_tables.iteritems():
-        table_name = table.paths[path][0]
+        table_name = table.paths[path].node
         if table_name not in tables:
             continue
         current_obj =  recurse_relationships(database, obj, path)
@@ -359,7 +467,7 @@ def get_row_with_fields(obj, fields, internal = False):
         row_data.update(data)
 
     for aliased_table_name, path in table.local_tables.iteritems():
-        table_name = table.paths[path][0]
+        table_name = table.paths[path].node
 
         if table_name not in table_field_dict:
             continue
@@ -427,13 +535,14 @@ def load_local_data(database, data):
             new_key = key[:-1:2]
             field_name = key[-1]
             if key[0] == table:
-                new_table, one_ways = table, []
+                new_table = table
             else:
-                new_table, relation, one_ways = rtable.paths[new_key]
+                edge = rtable.paths[new_key]
+                new_table = edge.name
 
             
-            error_dict["%s.%s" % ("_".join(one_ways + [new_table]),
-                                    field_name)] = invalid
+            error_dict["%s.%s" % (new_table,
+                                  field_name)] = invalid
 
             invalid_msg = invalid_msg + "\n" + "\n".join(["%s\n" % inv.msg for inv in invalid])
 

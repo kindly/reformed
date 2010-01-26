@@ -77,7 +77,7 @@ class Created(Field):
 
 class CreatedBy(Field):
     def __init__(self, name, *args, **kw):
-        self.created_by = Column(sa.DateTime,
+        self.created_by = Column(sa.Integer,
                                  default = get_user_id)
 
 class Modified(Field):

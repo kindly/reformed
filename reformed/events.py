@@ -111,10 +111,10 @@ class ChangeEvent(object):
         for index, attribute in enumerate(path):
             if index == 0:
                 current_table = start_table
-                new_table = start_table.paths[(path[index],)][0]
+                new_table = start_table.paths[(path[index],)].node
             else:
-                current_table = start_table.paths[tuple(path[:index])][0]
-                new_table = start_table.paths[tuple(path[:index+1])][0]
+                current_table = start_table.paths[tuple(path[:index])].node
+                new_table = start_table.paths[tuple(path[:index+1])].node
 
 
             tuples = self.get_join_tuples(attribute, current_table, new_table)

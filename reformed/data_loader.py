@@ -195,7 +195,7 @@ class FlatFile(object):
             key_field_dict[("root", ) + (col_name, )] = column.type
 
         for key, key_data in self.key_data.iteritems():
-            table, join, one_ways = key_data
+            table = key_data.node
             for col_name, column in self.database.tables[table].columns.iteritems():
                 key_field_dict[key + (col_name, )] = column.type
 
@@ -394,7 +394,7 @@ class FlatFile(object):
             if key == "root":
                 table = self.table
             else:
-                table, relation, one_ways = self.key_data[key]
+                table = self.key_data[key].node
             check_correct_fields(self.key_item_dict[key], self.database, table)
 
     def get_all_decendants(self):
@@ -477,16 +477,16 @@ class SingleRecord(object):
     def get_key_info(self, key):
 
         if self.flat_file:
-            table, join, one_ways = self.flat_file.key_data[key]
+            edge = self.flat_file.key_data[key]
             ##FIXME this will fail if the import file specifies a child key that has no parent
             parent_key = self.flat_file.parent_key[key]
             relation_name = key[-2]
         else:
-            table, join, one_ways = get_key_data(key, self.database, self.table)
+            edge = get_key_data(key, self.database, self.table)
             parent_key = get_parent_key(key, self.all_rows)
             relation_name = key[-2]
 
-        return [table, join, parent_key, relation_name]
+        return [edge.node, edge.join, parent_key, relation_name]
 
     def save_all_objs(self, session):
 

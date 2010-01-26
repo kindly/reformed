@@ -30,6 +30,7 @@ import search
 import resultset
 import tables
 import time
+from collections import defaultdict
 from util import get_paths, get_all_local_data
 from fields import ManyToOne, OneToOne, OneToMany, Integer, CopyTextAfter, CopyTextAfterField, DeleteRow
 import fields as field_types
@@ -80,7 +81,7 @@ class Database(object):
                 self.add_entity(table)
             else:
                 self.add_table(table)
-        self.persist()
+        #self.persist()
         self.status = "active"
         #self.job_scheduler = job_scheduler.JobScheduler(self)
         self.manager_thread = ManagerThread(self, threading.currentThread())
@@ -144,20 +145,22 @@ class Database(object):
 
         try:
             #update fields in other tables so that they do not have to change their name
-            for relation in table_to_rename.tables_with_relations.itervalues():
-                if relation.foreign_key_table <> table_to_rename.name:
-                    field = relation.parent
-                    foreign_key_name = relation.foriegn_key_id_name
-                    row = field.get_field_row_from_table(session)
-                    row.foreign_key_name = u"%s" % foreign_key_name
-                    session.save(row)
+            for relations in table_to_rename.tables_with_relations.itervalues():
+                for relation in relations:
+                    if relation.foreign_key_table <> table_to_rename.name:
+                        field = relation.parent
+                        foreign_key_name = relation.foriegn_key_id_name
+                        row = field.get_field_row_from_table(session)
+                        row.foreign_key_name = u"%s" % foreign_key_name
+                        session.save(row)
 
-            for rel in table_to_rename.tables_with_relations.values():
-                if rel.other == table_to_rename.name:
-                    field = rel.parent
-                    row = field.get_field_row_from_table(session)
-                    row.other = u"%s" % new_name
-                    session.save(row)
+            for relations in table_to_rename.tables_with_relations.values():
+                for rel in relations:
+                    if rel.other == table_to_rename.name:
+                        field = rel.parent
+                        row = field.get_field_row_from_table(session)
+                        row.other = u"%s" % new_name
+                        session.save(row)
             
             row = table_to_rename.get_table_row_from_table(session)
             row.table_name = u"%s" % new_name
@@ -197,9 +200,10 @@ class Database(object):
             row = table_to_drop.get_table_row_from_table(session)
             session.delete(row)
 
-            for relation in table_to_drop.tables_with_relations.itervalues():
-                row = relation.parent.get_field_row_from_table(session)
-                session.delete(row)
+            for relations in table_to_drop.tables_with_relations.itervalues():
+                for relation in relations:
+                    row = relation.parent.get_field_row_from_table(session)
+                    session.delete(row)
 
             session._flush()
 
@@ -234,16 +238,20 @@ class Database(object):
                                                     "no entity table in the database"
                                                     % table.name)
 
-        relation_from_table = ManyToOne("_core_entity", "_core_entity", one_way = True) 
+        table.relationship = True
+        table.kw["relationship"] = True
+
         self.add_table(table)
-        table._add_field_no_persist(relation_from_table)
 
+        primary = OneToMany("%s_primary" % table.name, table.name, backref = "_primary")
+        secondary = OneToMany("%s_secondary" % table.name, table.name, backref = "_secondary")
 
-        relation_to_table = OneToMany(table.name, table.name )
-        self.tables["_core_entity"]._add_field_no_persist(relation_to_table)
+        self.tables["_core_entity"]._add_field_no_persist(primary)
+        self.tables["_core_entity"]._add_field_no_persist(secondary)
 
         if self.tables["_core_entity"].persisted:
-            self.fields_to_persist.append(relation_to_table)
+            self.fields_to_persist.append(primary)
+            self.fields_to_persist.append(secondary)
 
 
     def add_entity_table(self):
@@ -528,12 +536,12 @@ class Database(object):
             
 
     def tables_with_relations(self, table):
-        relations = {}
+        relations = defaultdict(list)
         for n, v in table.relations.iteritems():
-            relations[(v.other, "here")] = v
+            relations[(v.other, "here")].append(v)
         for v in self.relations:
             if v.other == table.name:
-                relations[(v.table.name, "other")] = v
+                relations[(v.table.name, "other")].append(v)
         return relations
 
     def result_set(self, search):
@@ -572,7 +580,13 @@ class Database(object):
         ie 'name desc, donkey.name, donkey.age desc'  (name in base table) 
         """
 
-        session = self.Session()
+        session = kw.pop("session", None)
+        if session:
+            external_session = True
+        else:
+            session = self.Session()
+            external_session = False
+
         # convert string values to int
         try:
             limit = int(kw.get("limit", None))
@@ -588,6 +602,7 @@ class Database(object):
         internal = kw.get("internal", False)
         tables = kw.get("tables", [table_name])
         fields = kw.get("fields", None)
+
 
         one_to_many_tables = [] 
 
@@ -614,6 +629,8 @@ class Database(object):
             else:
                 results = query.all()
 
+            if external_session:
+                return results
 
             data = []
             for result in results:
@@ -639,9 +656,8 @@ class Database(object):
             return wrapped_results    
         except Exception, e:
             session.rollback()
-            raise
-        finally:
             session.close()
+            raise
         
     def search_single(self, table_name, *args, **kw): 
 
@@ -707,13 +723,13 @@ class Database(object):
         if self.graph is not None and len(self.graph.nodes()) == len(self.tables):
             return
 
-        gr = nx.DiGraph()
+        gr = nx.MultiDiGraph()
 
         for table in self.tables.keys():
             gr.add_node(table)
 
         for rel in self.relations:
-            gr.add_edge(rel.table.name, rel.other, {"relation" : rel})
+            gr.add_edge(rel.table.name, rel.other, None, {"relation" : rel})
 
         self.graph = gr
 
@@ -726,18 +742,17 @@ class Database(object):
         if root_table:
             unique_aliases = set()
             paths = get_paths(self.graph, root_table)
-            unique_aliases.update([(root_table,)])
-            for key, value in paths.iteritems():
-                table, join, one_ways = value
-                unique_aliases.update([tuple(one_ways + [table])])
+            unique_aliases.update([root_table])
+            for key, edge in paths.iteritems():
+                unique_aliases.update([edge.name])
             for key, value in self.tables.iteritems():
-                unique_aliases.update([(key,)])
-            
+                unique_aliases.update([key])
+
             for item in unique_aliases:
-                if len(item) == 1:
-                    aliases[item[0]] = self.get_class(item[0])
+                if len(item.split(".")) == 1:
+                    aliases[item] = self.get_class(item)
                 else:
-                    aliases["_".join(item)] = sa.orm.aliased(self.get_class(item[-1]))
+                    aliases[item] = sa.orm.aliased(self.get_class(item.split(".")[-1]))
         else:
             for key, value in self.tables.iteritems():
                 aliases[key] = value.sa_class

@@ -108,7 +108,8 @@ class test_record_loader(donkey_test.test_donkey):
 
     def test_get_key_data(self):
 
-        assert get_key_data(("donkey_sponsership", 0, "_donkey", 0), self.Donkey , "people") == ["donkey", "manytoone", []]
+        assert get_key_data(("donkey_sponsership", 0, "_donkey", 0), self.Donkey , "people").node == "donkey"
+        assert get_key_data(("donkey_sponsership", 0, "_donkey", 0), self.Donkey , "people").join == "manytoone"
 
         assert_raises(InvalidKey, get_key_data, 
                      ("donkey_sponsership", 0, "donkey", 0), self.Donkey , "people")
@@ -312,10 +313,11 @@ class test_flat_file(donkey_test.test_donkey):
 
     def test_get_key_info(self):
 
-        assert self.flatfile.key_data == {('donkey_sponsership', 0, '_donkey', 0): ['donkey', 'manytoone', []],
-                                                      ('email', 1): ['email', 'onetomany', []],
-                                                      ('email', 0): ['email', 'onetomany', []],
-                                                      ('donkey_sponsership', 0): ['donkey_sponsership', 'onetomany', []]}
+        print self.flatfile.key_data.keys()
+
+        assert self.flatfile.key_data.keys() == [('donkey_sponsership', 0, '_donkey', 0), ('email', 1), ('email', 0), ('donkey_sponsership', 0)]
+
+
 
         assert_raises(custom_exceptions.InvalidKey, FlatFile, self.Donkey,
                             "people",

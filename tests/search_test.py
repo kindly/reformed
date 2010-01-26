@@ -34,6 +34,7 @@ class test_query_from_string(donkey_test.test_donkey):
                             )
         cls.flatfile.load()
 
+
     def test_basic_query(self):
 
         query = QueryFromString(None, "boo.boo = 20", test = True)
@@ -304,7 +305,39 @@ class test_query_from_string(donkey_test.test_donkey):
         assert str(search.search()) == """SELECT donkey_sponsership.giving_date AS donkey_sponsership_giving_date, donkey_sponsership._version AS donkey_sponsership__version, donkey_sponsership.amount AS donkey_sponsership_amount, donkey_sponsership._modified_by AS donkey_sponsership__modified_by, donkey_sponsership._modified_date AS donkey_sponsership__modified_date, donkey_sponsership.people_id AS donkey_sponsership_people_id, donkey_sponsership.donkey_id AS donkey_sponsership_donkey_id, donkey_sponsership.id AS donkey_sponsership_id 
 FROM donkey_sponsership ORDER BY donkey_sponsership.amount DESC, people.name, donkey.age DESC"""
 
+    def test_search_split(self):
+
+        result1, result2, result3 = self.Donkey.search("people", session = self.session, limit =3)
+
+        code = self.Donkey.get_instance("code")
+        code.type = u"over_18"
+        self.session.save(code)
+
+        result1.over_18 = code
+        self.session.save(result1)
+        self.session.commit()
+
+        #a = Search(cls.Donkey, "people", cls.session, "over_18.code.type = 'over_18' or gender.code.type = 'gender'")
+        a = Search(self.Donkey, "people", self.session, "over_18.code.type = 'over_1'")
+
+        assert len(a.search().all()) == 0
+
+        a = Search(self.Donkey, "people", self.session, "over_18.code.type = 'over_18'")
+
+        assert len(a.search().all()) == 1
+
+        code = self.Donkey.get_instance("code")
+        code.type = u"gender"
+        self.session.save(code)
         
+        result2.gender = code
+        self.session.save(result2)
+        self.session.commit()
+
+        a = Search(self.Donkey, "people", self.session, "over_18.code.type = 'over_18' or gender.code.type = gender")
+
+        assert len(a.search().all()) == 2
+
         
     def test_eager_loads(self):
 
@@ -314,10 +347,6 @@ FROM donkey_sponsership ORDER BY donkey_sponsership.amount DESC, people.name, do
         print search.search()
 
         assert search.eager_tables ==  ['_people', '_donkey', '_donkey.donkey_pics']
-
-        assert str(search.search()) == """SELECT donkey_sponsership._modified_date AS donkey_sponsership_modified_date, donkey_sponsership.giving_date AS donkey_sponsership_giving_date, donkey_sponsership.modified_by AS donkey_sponsership_modified_by, donkey_sponsership.amount AS donkey_sponsership_amount, donkey_sponsership.people_id AS donkey_sponsership_people_id, donkey_sponsership.donkey_id AS donkey_sponsership_donkey_id, donkey_sponsership.id AS donkey_sponsership_id, people_1.town AS people_1_town, people_1.modified_date AS people_1_modified_date, people_1.modified_by AS people_1_modified_by, people_1.name AS people_1_name, people_1.country AS people_1_country, email_1.modified_date AS email_1_modified_date, email_1.active_email AS email_1_active_email, email_1.modified_by AS email_1_modified_by, email_1.people_id AS email_1_people_id, email_1.email_number AS email_1_email_number, email_1.email AS email_1_email, email_1.id AS email_1_id, people_1._core_entity_id AS people_1__core_entity_id, people_1.postcode AS people_1_postcode, people_1.address_line_2 AS people_1_address_line_2, people_1.address_line_3 AS people_1_address_line_3, people_1.address_line_1 AS people_1_address_line_1, people_1.id AS people_1_id, donkey_1.modified_date AS donkey_1_modified_date, donkey_1.modified_by AS donkey_1_modified_by, donkey_1.name AS donkey_1_name, donkey_pics_1.modified_date AS donkey_pics_1_modified_date, donkey_pics_1.pic_name AS donkey_pics_1_pic_name, donkey_pics_1.pic AS donkey_pics_1_pic, donkey_pics_1.modified_by AS donkey_pics_1_modified_by, donkey_pics_1.donkey_id AS donkey_pics_1_donkey_id, donkey_pics_1.id AS donkey_pics_1_id, donkey_1.age AS donkey_1_age, donkey_1.donkey_type AS donkey_1_donkey_type, donkey_1._core_entity_id AS donkey_1__core_entity_id, donkey_1.id AS donkey_1_id 
-FROM donkey_sponsership LEFT OUTER JOIN people AS people_1 ON people_1.id = donkey_sponsership.people_id LEFT OUTER JOIN email AS email_1 ON people_1.id = email_1.people_id LEFT OUTER JOIN donkey AS donkey_1 ON donkey_1.id = donkey_sponsership.donkey_id LEFT OUTER JOIN donkey_pics AS donkey_pics_1 ON donkey_1.id = donkey_pics_1.donkey_id ORDER BY email_1.email"""
-
 
         search = Search(self.Donkey, "donkey_sponsership", self.session, fields = ["people.id", "donkey.name", "amount", "donkey_pics.pic_name"], tables = ["people", "donkey", "donkey_sponsership", "donkey_pics"])
 
