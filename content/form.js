@@ -193,8 +193,8 @@ $.Form.Movement = function($input, form_data, row_data){
         console.log('return');
         console.log(data);
         // errors
-        if (data.errors && data.errors.null){
-            save_errors(data.errors.null);
+        if (data.errors && data.errors['null']){
+            save_errors(data.errors['null']);
         }
         // saves
         if (data.saved){
