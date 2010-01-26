@@ -235,7 +235,17 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         $head.width(t_width);
         $main.width(t_width);
 
+        // unfortunately we have to treat different browsers differently
+        // at least at the moment
+        // FIXME better test plust safari depreciated in JQuery 1.4
+        if ($.browser.safari){
+            resize_table_colums_all_rows();
+        } else {
+            resize_table_colums_first_row()
+        }
+    }
 
+    function resize_table_colums_first_row(){
         // restore column widths
         var $head_cols = $head.find('th');
         var $main_cols = $main.find('tr').eq(0).find('td');
@@ -249,6 +259,23 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             }
         }
     }
+
+    function resize_table_colums_all_rows(){
+        // restore column widths
+        // needed for Chrome
+        // we need to set width and max-width for each cell
+        // FIXME may need to do some first row magic
+        // FIXME some formatting glitches need fixing
+        var $head_cols = $head.find('th');
+        var $main_cols = $main.find('td');
+        for (i = 0, n = column_widths.length; i < n; i++){
+            $head_cols.eq(i).css({'width' : column_widths[i] - util_size.GRID_COL_RESIZE_DIFF,
+                                  'max-width' : column_widths[i] - util_size.GRID_COL_RESIZE_DIFF});
+            $main_cols.filter(':nth-child(' + (i+1) + ')').css({'width' : column_widths[i],
+                                                                'max-width' : column_widths[i]});
+        }
+    }
+
 
 
     // remove any existing items from the input
