@@ -511,7 +511,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
         } else {
             // has changed
             if (!row_info[current.row]){
-                row_info[current.row];
+                row_info[current.row] = {};
             }
             row_info[current.row][current.field.name] = value;
             current.dirty = true;
@@ -529,16 +529,21 @@ $.Grid.Movement = function(input, form_data, grid_data){
         var row_data = grid_data[this_row];
 
         for (var item in row_data){
-            save_data[item] = row_data[item];
+            if (row_data.hasOwnProperty(item)){
+                save_data[item] = row_data[item];
+            }
         }
 
         var this_row_info = row_info[this_row];
         var copy_of_row_info = {};
         for (var item in this_row_info){
-            save_data[item] = this_row_info[item];
-            copy_of_row_info[item] = this_row_info[item];
+            if (this_row_info.hasOwnProperty(item)){
+                console.log(this_row_info[item]);
+                save_data[item] = this_row_info[item];
+                copy_of_row_info[item] = this_row_info[item];
+            }
         }
-        return [save_data, copy_of_row_info];
+        return { data : save_data, copy : copy_of_row_info };
     }
 
     function save_all(){
@@ -549,16 +554,18 @@ $.Grid.Movement = function(input, form_data, grid_data){
         var full_copy_data = [];
         var counter = 0;
         for (var this_row in row_info){
-            save_data = get_grid_row_data(this_row);
-            // add some extra bits of info for processing on return
-            save_data[0].__root = counter;
-            save_data[1].__row = grid_data[this_row];
-            save_data[1].__$row = $main.find('tr').eq(this_row);
-            save_data[1].__$side = $side.find('tr').eq(this_row);
+            if (row_info.hasOwnProperty(this_row)){
+                save_data = get_grid_row_data(this_row);
+                // add some extra bits of info for processing on return
+                save_data.data.__root = counter;
+                save_data.copy.__row = grid_data[this_row];
+                save_data.copy.__$row = $main.find('tr').eq(this_row);
+                save_data.copy.__$side = $side.find('tr').eq(this_row);
 
-            full_save_data.push(save_data[0]);
-            full_copy_data.push(save_data[1]);
-            counter++;
+                full_save_data.push(save_data.data);
+                full_copy_data.push(save_data.copy);
+                counter++;
+            }
         }
         var out = {};
         out.data = full_save_data;
@@ -641,7 +648,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
             // update fields
             for (var field in this_data){
-                if (field !== '__row'){
+                if (row_data[field] !== undefined){
                     row_data[field] = this_data[field];
                 }
             }
