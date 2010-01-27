@@ -346,6 +346,8 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     }
     // add resize function so remotely accessable
     $form.data('resize', resize_grid);
+    $form.data('resize_table_columns', resize_table_columns);
+
 };
 
 $.Grid.MIN_COLUMN_SIZE = 25;
@@ -1203,12 +1205,14 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
         grid_data[new_row] = {};
         $(input).find('div.scroller-main table').append(row());
         $(input).find('div.scroller-side table').append('<tr><td>' + new_row + '</td></tr>');
+        if (new_row === 0){
+            $(input).data('resize_table_columns')();
+        }
     }
 
     var HTML_Encode = $.Util.HTML_Encode;
     var num_fields = form_data.fields.length;
     $(input).data('build', add_new_row);
-
     create();
 };
 
