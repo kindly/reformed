@@ -235,7 +235,8 @@ class test_donkey(object):
         jimimage = cls.Donkey.tables["donkey_pics"].sa_class()
         jimimage.pic = jimpic
 
-        cls.session.add(cls.david)
+
+        cls.session.save_or_update(cls.david)
         cls.session.add(cls.jim)
         cls.session.add(cls.jim1)
         cls.session.add(jim2)

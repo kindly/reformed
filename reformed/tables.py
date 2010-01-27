@@ -897,6 +897,7 @@ class Table(object):
             def init_onload(self):
                 self._table = table
                 self._validated = False
+                self._version_changed = False
 
             def __repr__(self):
 
@@ -918,7 +919,10 @@ class Table(object):
 
         properties ={}
         for col_name, column in self.columns.iteritems():
-            if column.type == sa.DateTime:
+            if column.name == "_version":
+                properties[col_name] = column_property(getattr(self.sa_table.c,col_name),
+                                                         extension = VersionChange())
+            elif column.type == sa.DateTime:
                 properties[col_name] = column_property(getattr(self.sa_table.c,col_name),
                                                          extension = ConvertDate())
             elif column.type == sa.Boolean:
@@ -1189,6 +1193,21 @@ class ChangedAttributes(AttributeExtension):
             state.dict["_validated"] = False
 
         return value
+
+class VersionChange(AttributeExtension):
+
+    def set(self, state, value, oldvalue, initator):
+
+            
+        state.dict["_version_changed"] = True
+
+        if isinstance(value, int):
+            return value
+        if value:
+            return int(value)
+
+        return value
+
     
 class ConvertDate(AttributeExtension):
     
