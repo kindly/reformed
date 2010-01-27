@@ -223,19 +223,6 @@ $.Form.Movement = function($input, form_data, row_data){
         }
     }
 
-    function make_editable(){
-        // make the cell editable
-        var $item = current.$item;
-        // is this a complex control?
-        var complex_control = (current.field.params && current.field.params.control == 'dropdown');
-
-        if (complex_control){
-            for (var item in row_info){
-                save_data[item] = row_info[item];
-            }
-        }
-    }
-
     function form_mousedown(e){
         var actioned = false;
         var item = e.target;
