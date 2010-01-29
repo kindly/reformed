@@ -193,8 +193,8 @@ $.Form.Movement = function($input, form_data, row_data){
         console.log('return');
         console.log(data);
         // errors
-        if (data.errors && data.errors.null){
-            save_errors(data.errors.null);
+        if (data.errors && data.errors['null']){
+            save_errors(data.errors['null']);
         }
         // saves
         if (data.saved){
@@ -220,19 +220,6 @@ $.Form.Movement = function($input, form_data, row_data){
         } else {
             alert('command: <' + type + '> has no handler');
             return false;
-        }
-    }
-
-    function make_editable(){
-        // make the cell editable
-        var $item = current.$item;
-        // is this a complex control?
-        var complex_control = (current.field.params && current.field.params.control == 'dropdown');
-
-        if (complex_control){
-            for (var item in row_info){
-                save_data[item] = row_info[item];
-            }
         }
     }
 

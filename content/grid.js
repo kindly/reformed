@@ -235,7 +235,17 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         $head.width(t_width);
         $main.width(t_width);
 
+        // unfortunately we have to treat different browsers differently
+        // at least at the moment
+        // FIXME better test plust safari depreciated in JQuery 1.4
+        if ($.browser.safari){
+            resize_table_colums_all_rows();
+        } else {
+            resize_table_colums_first_row()
+        }
+    }
 
+    function resize_table_colums_first_row(){
         // restore column widths
         var $head_cols = $head.find('th');
         var $main_cols = $main.find('tr').eq(0).find('td');
@@ -249,6 +259,23 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             }
         }
     }
+
+    function resize_table_colums_all_rows(){
+        // restore column widths
+        // needed for Chrome
+        // we need to set width and max-width for each cell
+        // FIXME may need to do some first row magic
+        // FIXME some formatting glitches need fixing
+        var $head_cols = $head.find('th');
+        var $main_cols = $main.find('td');
+        for (i = 0, n = column_widths.length; i < n; i++){
+            $head_cols.eq(i).css({'width' : column_widths[i] - util_size.GRID_COL_RESIZE_DIFF,
+                                  'max-width' : column_widths[i] - util_size.GRID_COL_RESIZE_DIFF});
+            $main_cols.filter(':nth-child(' + (i+1) + ')').css({'width' : column_widths[i],
+                                                                'max-width' : column_widths[i]});
+        }
+    }
+
 
 
     // remove any existing items from the input
@@ -319,6 +346,8 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     }
     // add resize function so remotely accessable
     $form.data('resize', resize_grid);
+    $form.data('resize_table_columns', resize_table_columns);
+
 };
 
 $.Grid.MIN_COLUMN_SIZE = 25;
@@ -484,7 +513,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
         } else {
             // has changed
             if (!row_info[current.row]){
-                row_info[current.row];
+                row_info[current.row] = {};
             }
             row_info[current.row][current.field.name] = value;
             current.dirty = true;
@@ -502,16 +531,21 @@ $.Grid.Movement = function(input, form_data, grid_data){
         var row_data = grid_data[this_row];
 
         for (var item in row_data){
-            save_data[item] = row_data[item];
+            if (row_data.hasOwnProperty(item)){
+                save_data[item] = row_data[item];
+            }
         }
 
         var this_row_info = row_info[this_row];
         var copy_of_row_info = {};
         for (var item in this_row_info){
-            save_data[item] = this_row_info[item];
-            copy_of_row_info[item] = this_row_info[item];
+            if (this_row_info.hasOwnProperty(item)){
+                console.log(this_row_info[item]);
+                save_data[item] = this_row_info[item];
+                copy_of_row_info[item] = this_row_info[item];
+            }
         }
-        return [save_data, copy_of_row_info];
+        return { data : save_data, copy : copy_of_row_info };
     }
 
     function save_all(){
@@ -522,12 +556,18 @@ $.Grid.Movement = function(input, form_data, grid_data){
         var full_copy_data = [];
         var counter = 0;
         for (var this_row in row_info){
-            save_data = get_grid_row_data(this_row);
-            save_data[0].__root = counter;
-            save_data[1].__row = grid_data[this_row];
-            full_save_data.push(save_data[0]);
-            full_copy_data.push(save_data[1]);
-            counter++;
+            if (row_info.hasOwnProperty(this_row)){
+                save_data = get_grid_row_data(this_row);
+                // add some extra bits of info for processing on return
+                save_data.data.__root = counter;
+                save_data.copy.__row = grid_data[this_row];
+                save_data.copy.__$row = $main.find('tr').eq(this_row);
+                save_data.copy.__$side = $side.find('tr').eq(this_row);
+
+                full_save_data.push(save_data.data);
+                full_copy_data.push(save_data.copy);
+                counter++;
+            }
         }
         var out = {};
         out.data = full_save_data;
@@ -543,9 +583,6 @@ $.Grid.Movement = function(input, form_data, grid_data){
         if (counter !==0 ){
             get_node_return(form_data.node, '_save', out, $input, full_copy_data);
         }
-    }
-    function save_errors(data){
-        // FIXME implement
     }
 
     function check_dirty_rows(){
@@ -591,17 +628,56 @@ $.Grid.Movement = function(input, form_data, grid_data){
     }
 
     function save_update(data, obj_data){
-        // FIXME implement
+
         var row_data;
         var this_data;
+        var $this_side;
         for (var i = 0, n = data.length; i < n; i++){
             row_data = obj_data[i].__row;
             this_data = obj_data[i];
+            if (row_data.id){
+                // check if the id has changed (it shouldn't)
+                if (row_data.id != data[i][1]){
+                    alert('something went wrong the id has changed during the save\nid = ' + row_data.id + ', returned ' + this_data[1]);
+                    return;
+                }
+            } else {
+                // update id
+                row_data.id = data[i][1];
+            }
+            // update _version
+            row_data._version = data[i][2];
+
+            // update fields
             for (var field in this_data){
-                if (field !== '__row'){
+                if (row_data[field] !== undefined){
                     row_data[field] = this_data[field];
                 }
             }
+
+            $this_side = obj_data[i].__$side;
+            tooltip_clear($this_side);
+        }
+        check_dirty_rows();
+    }
+
+    function save_errors(data, obj_data){
+        // FIXME implement
+        var $this_row;
+        var $this_side;
+        var $this_item;
+        for (var error_row in data){
+            $this_row = obj_data[error_row].__$row;
+            $this_side = obj_data[error_row].__$side;
+            for (var field in data[error_row]){
+                if (field != '__row' && field != '__$row' && field != '__$side'){
+                    console.log(field);
+                    $this_item = $this_row.find('td').eq(form_data.items[field].index);
+                    $this_item.addClass('error');
+                }
+            }
+            // add error tooltip to the side selector
+            tooltip_add($this_side, $.toJSON(data[error_row]));
         }
         check_dirty_rows();
     }
@@ -609,7 +685,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
     function save_return(data){
         // errors
         if (data.errors){
-            save_errors(data.errors);
+            save_errors(data.errors, data.obj_data);
         }
         // saves
         if (data.saved){
@@ -737,7 +813,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
     function edit_mode_on(){
         // turn on edit mode
-        if (!edit_mode){
+        if (!edit_mode && !form_data.params.read_only){
             edit_mode = true;
             current.editing = true;
             make_editable(current.$item);
@@ -1129,12 +1205,14 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
         grid_data[new_row] = {};
         $(input).find('div.scroller-main table').append(row());
         $(input).find('div.scroller-side table').append('<tr><td>' + new_row + '</td></tr>');
+        if (new_row === 0){
+            $(input).data('resize_table_columns')();
+        }
     }
 
     var HTML_Encode = $.Util.HTML_Encode;
     var num_fields = form_data.fields.length;
     $(input).data('build', add_new_row);
-
     create();
 };
 
@@ -1367,8 +1445,8 @@ $.Util.Size.get = function(){
     function grid(){
         // get interesting stuff about grid cells
         // needed for acurate resizing
-        var $div = $('<div style="overflow:hidden; width:100px; height:100px; position:absolute; left:-200px; top:0px;"></div>');
-        $div.append('<div class="scroller-title">head</div><table class="grid"><thead><tr><th>head</th></tr></thead><tbody><tr><td>body</td></tr><tr><td class="t_edited_cell">body</td></tr></tbody></table><div class="scroller-foot">foot</div>');
+        var $div = $('<div style="overflow:hidden; width:150px; height:200px; position:absolute; left:-200px; top:0px;"></div>');
+        $div.append('<div class="scroller-title">head</div><table class="grid"><thead><tr><th>head</th></tr></thead><tbody><tr><td style="width:100;">body</td></tr><tr><td class="t_edited_cell">body</td></tr></tbody></table><div class="scroller-foot">foot</div>');
         $('body').append($div);
 
         var $x = $div.find('th');
@@ -1391,6 +1469,7 @@ $.Util.Size.get = function(){
 
         util_size.GRID_COL_RESIZE_DIFF = util_size.GRID_HEADER_BORDER_W - util_size.GRID_BODY_BORDER_W;
         util_size.GRID_COL_EDIT_DIFF = util_size.GRID_BODY_BORDER_W_EDIT - util_size.GRID_BODY_BORDER_W;
+
         $div.remove();
     }
 
