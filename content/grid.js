@@ -235,14 +235,10 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         $head.width(t_width);
         $main.width(t_width);
 
-        // unfortunately we have to treat different browsers differently
-        // at least at the moment
-        // FIXME better test plust safari depreciated in JQuery 1.4
-        if ($.browser.safari){
-            resize_table_colums_all_rows();
-        } else {
-            resize_table_colums_first_row()
-        }
+        // Chrome needs to add css to each table to render correct column width.
+        $main.css({"table-layout" : "fixed"})
+        $head.css({"table-layout" : "fixed"})
+        resize_table_colums_first_row()
     }
 
     function resize_table_colums_first_row(){
@@ -250,7 +246,9 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         var $head_cols = $head.find('th');
         var $main_cols = $main.find('tr').eq(0).find('td');
         for (i = 0, n = column_widths.length; i < n; i++){
+
             $head_cols.eq(i).width(column_widths[i] - util_size.GRID_COL_RESIZE_DIFF);
+
             if (current && current.editing && current.row === 0 && current.col === i && !current.complex_control){
                 // control is on first row and being edited for this column
                 $main_cols.eq(i).width(column_widths[i] - util_size.GRID_COL_EDIT_DIFF);
@@ -472,7 +470,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
         // if this is the first row we need to adjust the width to compensate for
         // any differences in the padding etc
         // don't do this for complex conrols as they do thier own wrapping
-        if (current.row === 0 && !current.complex_control){
+        if ($.browser.mozilla && current.row === 0 && !current.complex_control){
             current.$item.width(current.$item.width() - util_size.GRID_COL_EDIT_DIFF);
         }
         current.value = grid_data[current.row][current.field.name];
@@ -497,7 +495,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
         // if this is the first row we need to adjust the width to compensate for
         // any differences in the padding etc
         // don't do this for complex conrols as they do thier own wrapping
-        if (current.row === 0 && !current.complex_control){
+        if ($.browser.mozilla && current.row === 0 && !current.complex_control){
             current.$item.width(current.$item.width() + util_size.GRID_COL_EDIT_DIFF);
         }
         if (value === current.value){
@@ -1469,6 +1467,11 @@ $.Util.Size.get = function(){
 
         util_size.GRID_COL_RESIZE_DIFF = util_size.GRID_HEADER_BORDER_W - util_size.GRID_BODY_BORDER_W;
         util_size.GRID_COL_EDIT_DIFF = util_size.GRID_BODY_BORDER_W_EDIT - util_size.GRID_BODY_BORDER_W;
+
+        if (!$.browser.mozilla){
+            util_size.GRID_COL_EDIT_DIFF = 0;
+            util_size.GRID_COL_RESIZE_DIFF = 0;
+        }
 
         $div.remove();
     }
