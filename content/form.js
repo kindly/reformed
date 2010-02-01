@@ -180,7 +180,6 @@ $.Form.Movement = function($input, form_data, row_data){
         for (var field in obj_data){
             row_data[field] = obj_data[field];
         }
-
         // form is now clean
         current.dirty = false;
         dirty = false;
@@ -226,9 +225,27 @@ $.Form.Movement = function($input, form_data, row_data){
     function form_mousedown(e){
         var actioned = false;
         var item = e.target;
+        var $item = $(e.target);
+        var fn_finalise;
+        // if this control is complex eg. dropdown.
+        if ($item[0].nodeName == 'DIV'){
+            if ($item.hasClass('data')){
+                $item = $item.parent();
+            } else if ($item.hasClass('but_dd')){
+                $item = $item.parent();
+                fn_finalise = function(){
+                    var $input = $item.find('input');
+                    $input.trigger('dropdown');
+                }
+            }
+            $field = $(item).parent().parent('div');
+        }
+        // simple control
         if (item.nodeName == 'SPAN'){
             var $field = $(item).parent('div');
-            var $item = $field.find('span').eq(1);
+        }
+        if ($field){
+            $item = $field.find('span').eq(1);
             // which field?
             field_number = $input.children().index($field);
             if (field_number >= 0){
@@ -243,7 +260,9 @@ $.Form.Movement = function($input, form_data, row_data){
                 actioned = true;
             }
         }
-
+        if (fn_finalise){
+            fn_finalise();
+        }
         return !actioned;
     }
 
@@ -252,11 +271,12 @@ $.Form.Movement = function($input, form_data, row_data){
     function make_editable(){
         // make the cell editable
         var $item = current.$item;
-        // is this a complex control?
-        var complex_control = (current.field.params && current.field.params.control == 'dropdown');
 
-        if (complex_control){
+        // is this a complex control?
+        if (current.complex_control){
             $item = $item.find('div.data');
+            console.log('complex');
+            console.log($item);
         }
 
         current.$control = util.make_editable($item, current.field);
@@ -349,6 +369,8 @@ make_cell_viewable
             }
 
             current.field = form_data.fields[field_number];
+            current.complex_control = (current.field.params && current.field.params.control == 'dropdown');
+
             current.$item = $new_item;
             if (edit_mode){
                 current.$item.addClass('f_edited_cell');
@@ -661,7 +683,7 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
             }
 
             if (item.params.control == 'dropdown'){
-                html.push('<span class="' + class_list + ' complex"><span class="but_dd"/><span class="data">' + value + '</span></span>');
+                html.push('<span class="' + class_list + ' complex"><div class="but_dd"/><div class="data">' + value + '</div></span>');
             }
             else {
                 html.push('<span class="' + class_list + '">' + value + '</span>');
@@ -697,6 +719,8 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
         }
         return '<button class="' + class_list + '" onclick="node_button(this, \'' + item.params.node + '\', \'' + item.params.action + '\');return false">' + item.title + '</button>';
     }
+
+
 
     function build_control(item){
         var html = [];
@@ -738,7 +762,7 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
         num_fields = form_data.fields.length;
         for (var i = 0; i < num_fields; i++){
             item = form_data.fields[i];
-            if (!(item.params && item.params.control)){
+            if (!(item.params && item.params.control && (item.params.control != 'dropdown' && item.params.control != 'textarea'))){
                 html.push(build_input(item));
             } else {
                 html.push(build_control(item));
@@ -938,6 +962,14 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
         return '<button class="' + class_list + '" onclick="node_button_input_form(this, \'' + item.params.node + '\', \'' + item.params.action + '\');return false">' + item.title + '</button>';
     }
 
+    function textarea(item, value){
+        var class_list = '';
+        if (item.params.css){
+            class_list += ' ' + item.params.css;
+        }
+        return '<textarea class="' + class_list + '">' + HTML_Encode(value) + '</textarea>';
+    }
+
     function build_control(item){
         var html = [];
         var value = row_data[item.name];
@@ -948,6 +980,9 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
                 if (value){
                     html.push(value);
                 }
+                break;
+            case 'textarea':
+                html.push(control(item, value));
                 break;
             case 'button':
                 html.push(button(item, value));
