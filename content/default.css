@@ -470,13 +470,28 @@ td.complex.t_edited_cell div.data {
     padding:0;
 }
 
-
 td, body, input, select, textarea, th {
-    font-family: monospace, arial, verdana;
+    font-family: arial, helvetica, sans;
 }
 
 span.form_label {
     font-weight:bold;
+}
+
+label.form_label {
+    font-weight:bold;
+    vertical-align:top;
+    width:120px;
+    float:left;
+}
+
+textarea {
+    border:1px solid #DDDDDD;
+    width:200px;
+}
+
+textarea.large {
+    width:500px;
 }
 
 .f_selected_cell {

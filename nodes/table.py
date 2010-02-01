@@ -308,7 +308,7 @@ class Edit(node.TableNode):
         self.form_params =  {"form_type": "grid",
                              "extras" : self.extra_data,
                              "title" : self.table,
-                             "read_only" : True
+                             "read_only" : False
                             }
 
     def view(self, read_only=False, limit = 100):

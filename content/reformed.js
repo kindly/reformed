@@ -225,3 +225,4 @@ function msg(arg){
     status_message = arg + ' - ' + status_message;
     $('#status').html(status_message);
 }
+

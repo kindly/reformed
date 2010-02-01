@@ -1299,13 +1299,42 @@ $.Util.make_normal = function($item, field){
     var $control = $item.find('input');
     $.Util.control_takedown($control, field);
     var value = $control.val().trim();
-    var update_value = value;
     // check for nulls
     if (value === ''){
        if ($item.hasClass('null')){
            value = null;
        }
     }
+    var cleaned = $.Util.clean_value(value, field);
+    // output
+    if (cleaned.value === null){
+        cleaned.update_value = '[NULL]';
+        $item.addClass('null');
+    } else {
+        $item.removeClass('null');
+    }
+    if (cleaned.update_value === ''){
+        $item.html('&nbsp;');
+    } else {
+        $item.text(cleaned.update_value);
+    }
+    return cleaned.value;
+};
+
+$.Util.get_item_value = function (item, data){
+
+    if (data && data[item.name] !== undefined){
+        return data[item.name];
+    }
+    if (item.params['default']){
+        return item.params['default'];
+    }
+    return null;
+};
+
+$.Util.clean_value = function (value, field){
+
+    var update_value = value;
     // special controls
     switch (field.type){
         case 'DateTime':
@@ -1334,20 +1363,12 @@ $.Util.make_normal = function($item, field){
             break;
     }
 
-    // output
-    if (value === null){
-        update_value = '[NULL]';
-        $item.addClass('null');
-    } else {
-        $item.removeClass('null');
-    }
-    if (update_value === ''){
-        $item.html('&nbsp;');
-    } else {
-        $item.text(update_value);
-    }
-    return value;
-};
+    return {"value" : value,
+            "update_value" : update_value}
+
+
+}
+
 
 $.Util.paging_bar = function (data){
 
@@ -1541,6 +1562,9 @@ $.Util.selectStyleSheet = function (title, url){
 $.Util.HTML_Encode = function (arg) {
     // encode html
     // replace & " < > with html entity
+    if (arg === null){
+        return '';
+    }
     if (typeof arg != 'string'){
         return arg;
     }
