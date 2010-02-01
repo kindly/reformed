@@ -364,7 +364,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
     }
 
     function unbind_all(){
-        console.log('unbind');
+        console_log('unbind');
         $input.unbind();
     }
 
@@ -395,7 +395,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
     }
 
     function command_caller(type, data){
-        console.log('command triggered: ' + type);
+        console_log('command triggered: ' + type);
         if (custom_commands[type]){
             return custom_commands[type](data);
         } else {
@@ -538,7 +538,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
         var copy_of_row_info = {};
         for (var item in this_row_info){
             if (this_row_info.hasOwnProperty(item)){
-                console.log(this_row_info[item]);
+                console_log(this_row_info[item]);
                 save_data[item] = this_row_info[item];
                 copy_of_row_info[item] = this_row_info[item];
             }
@@ -548,7 +548,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
     function save_all(){
         edit_mode_off();
-        console.log('save');
+        console_log('save');
         var save_data;
         var full_save_data = [];
         var full_copy_data = [];
@@ -669,7 +669,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
             $this_side = obj_data[error_row].__$side;
             for (var field in data[error_row]){
                 if (field != '__row' && field != '__$row' && field != '__$side'){
-                    console.log(field);
+                    console_log(field);
                     $this_item = $this_row.find('td').eq(form_data.items[field].index);
                     $this_item.addClass('error');
                 }
@@ -694,9 +694,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
     function autosave(){
         var node = 'table.Edit';
         var out = {};
-    //    if (console){
-    //        console.log('autosave: ' + row_info[current.row]);
-   //     }
+        console_log('autosave: ' + row_info[current.row]);
         //get_node(node, '_save', out, false);
     }
 
@@ -1534,7 +1532,7 @@ $.Util.selectStyleSheet = function (title, url){
         }
     }
     if (!found){
-        console.log('load ' + url);
+        console_log('load ' + url);
         $('head').append($('<link media="screen" title="'+ title + '" href="' + url + '" type="text/css" rel="alternate stylesheet"/>'));
     }
     update_onloaded();
@@ -1608,7 +1606,7 @@ $.Util.Event_Delegator_keydown = function (e){
     if (keydown){
         keydown(e);
     } else {
-        console.log('no bound keydown');
+        console_log('no bound keydown');
     }
 };
 
@@ -1622,3 +1620,9 @@ $.Util.Event_Delegator_keydown = function (e){
 $(document).ready($.Util.Size.get);
 //trap keyboard events
 $(document).keydown($.Util.Event_Delegator_keydown);
+
+function console_log(obj){
+    if (typeof console == "object"){
+       console.log(obj);
+    }
+}
