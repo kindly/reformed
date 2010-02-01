@@ -189,6 +189,17 @@ class ManyToOne(Field):
     def __init__(self, name, other, *args, **kw):
         self.other = other
         self.manytoone = Relation("manytoone", other, use_parent = True)
+
+class Lookup(Field):
+
+    def __init__(self, name, other, *args, **kw):
+
+        self.other = other
+        self.manytoone = Relation("manytoone", other, foreign_key_name = "%s_%s_id" % (other, name), backref = name, use_parent = True)
+
+        self.validation = {"%s_%s_id" % (other, name): validators.CheckInField("%s.id" % other,
+                                                         filter_field = kw["type_field"],
+                                                         filter_value = name )}
     
 
 class OneToMany(Field):
