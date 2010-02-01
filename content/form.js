@@ -99,7 +99,7 @@ $.Form.Movement = function($input, form_data, row_data){
 
 
     function unbind_all(){
-        console.log('unbind');
+        console_log('unbind');
         $input.unbind();
     }
 
@@ -131,7 +131,7 @@ $.Form.Movement = function($input, form_data, row_data){
     }
 
     function save(){
-        console.log('save');
+        console_log('save');
         // make the form non-edit
         edit_mode_off();
         if (current.dirty){
@@ -189,8 +189,8 @@ $.Form.Movement = function($input, form_data, row_data){
     }
 
     function save_return(data){
-        console.log('return');
-        console.log(data);
+        console_log('return');
+        console_log(data);
         // errors
         if (data.errors && data.errors['null']){
             save_errors(data.errors['null']);
@@ -213,7 +213,7 @@ $.Form.Movement = function($input, form_data, row_data){
     }
 
     function command_caller(type, data){
-        console.log('command triggered: ' + type);
+        console_log('command triggered: ' + type);
         if (custom_commands[type]){
             return custom_commands[type](data);
         } else {
@@ -827,7 +827,7 @@ $.InputForm.Interaction = function($input, form_data, row_data){
 
 
     function unbind_all(){
-        console.log('unbind');
+        console_log('unbind');
         $input.unbind();
     }
 
@@ -865,7 +865,7 @@ $.InputForm.Interaction = function($input, form_data, row_data){
         return get_form_data()[0];
     }
     function command_caller(type, data){
-        console.log('command triggered: ' + type);
+        console_log('command triggered: ' + type);
         if (custom_commands[type]){
             return custom_commands[type](data);
         } else {
@@ -1071,7 +1071,7 @@ $.StatusForm = function(input){
     }
 
     function unbind_all(){
-        console.log('unbind');
+        console_log('unbind');
         $input.unbind();
     }
 
@@ -1083,7 +1083,7 @@ $.StatusForm = function(input){
     };
 
     function command_caller(type, data){
-        console.log('command triggered: ' + type);
+        console_log('command triggered: ' + type);
         if (custom_commands[type]){
             return custom_commands[type](data);
         } else {

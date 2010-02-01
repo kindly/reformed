@@ -61,14 +61,22 @@ class SessionWrapper(object):
         self.add(obj)
 
     def save_or_update(self, obj):
+
         self.add(obj)
+
+        ## TODO find a quicker way to if its new
+        if obj in self.session.new:
+            return
+
+        if not hasattr(obj, "_version_changed") or obj._version_changed == False:
+            raise AttributeError("version has not been set")
+
+        obj._version_changed = False
+
 
     def add(self, obj):
         """save or update and validate a sqlalchemy object"""
         obj._table.validate(obj, self.session)
-        ##version_id has to be int
-        if hasattr(obj, "_version") and obj._version:
-            obj._version = int(obj._version)
         obj._validated = True
         self.session.add(obj)
 
@@ -92,6 +100,7 @@ class SessionWrapper(object):
         self.after_flush_list = []
         for obj in self.session:
             obj._validated = False
+            obj._version_changed = False
 
     def _commit(self):
 

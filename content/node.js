@@ -1054,7 +1054,7 @@ function itemsBlurLast(){
 }
 
 function grid_add_row(){
-    console.log('add_row');
+    console_log('add_row');
     $('#main div.GRID').data('command')('add_row');
 }
 
