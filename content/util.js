@@ -656,6 +656,13 @@ function is_empty(obj) {
 }
 
 
+/*
+ *
+ * Object overloading
+ *
+ */
+
+
 if(!Date.ISO)(function(){"use strict";
 /** ES5 ISO Date Parser Plus toISOString Method
  * @author          Andrea Giammarchi
