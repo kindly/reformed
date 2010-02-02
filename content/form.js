@@ -286,7 +286,7 @@ $.Form.Movement = function($input, form_data, row_data){
     }
 
     function check_row_dirty(){
-        if (is_empty(row_info)){
+        if ($.Util.is_empty(row_info)){
             current.dirty = false;
             dirty = false;
             $input.removeClass('dirty');

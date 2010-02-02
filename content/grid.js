@@ -477,7 +477,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
     }
 
     function check_row_dirty(){
-        if (is_empty(row_info[current.row])){
+        if ($.Util.is_empty(row_info[current.row])){
             current.$row.removeClass('dirty');
             current.$side.removeClass('dirty');
             current.dirty = false;
@@ -503,7 +503,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
             current.$item.removeClass('dirty');
             if (row_info[current.row] && row_info[current.row][current.field.name]){
                 delete row_info[current.row][current.field.name];
-                if (is_empty(row_info[current.row])){
+                if ($.Util.is_empty(row_info[current.row])){
                     delete row_info[current.row];
                 }
             }
