@@ -38,6 +38,14 @@ $.Buttons.action_hash = {
     home: [['home', 'go-home.png', 'h', 'general'],[document, node_load, ['n:test.HomePage:']]]
 };
 
+$.Buttons.action_call = function (action_name){
+    // this function fires the event for action button clicks
+    // we get the base object, function to call and the args from the
+    // array action_hash
+    var cmd_info = $.Buttons.action_hash[action_name][1];
+    cmd_info[1].apply(cmd_info[0], cmd_info[2]);
+};
+
 
 $.LayoutManager = function () {
 
@@ -54,7 +62,7 @@ $.LayoutManager = function () {
             
             var button_data = data[0];
             var $button = $('<div id="action_' + name + '" class="action"></div>');
-            var $link = $('<a href="javascript:action_call(\'' + name + '\')"></a>');
+            var $link = $('<a href="javascript:$.Buttons.action_call(\'' + name + '\')"></a>');
             var $img = $('<img src="icon/22x22/' + button_data[1] + '" />');
             var $command = $('<span class="command">' + button_data[0] + '</span>');
             var $shortcut = $('<span class="shortcut">' + button_data[2] + '</span>');
