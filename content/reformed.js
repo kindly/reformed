@@ -64,28 +64,32 @@ function allowedKeys(key){
     // this returns true for allowed key presses
     // eg arrows cut/paste tab...
 
-    if (
-        key.keyCode === 0 || // special key
-        key.keyCode == 8 || // backspace
-        key.keyCode == 9 || // TAB
-        key.keyCode == 13 || // Return
-        key.keyCode == 20 || // Caps Lock
-        key.keyCode == 27 || // Escape
-        key.keyCode == 35 || // Home
-        key.keyCode == 36 || // End
-        key.keyCode == 37 || // Left
-        key.keyCode == 38 || // Up
-        key.keyCode == 39 || // Right
-        key.keyCode == 40 || // Down
-        key.keyCode == 45 || // Insert
-        key.keyCode == 46 || // Delete
-        key.keyCode == 144 || // Num Lock
-        key.keyCode == 145 || // Scroll Lock
-        key.ctrlKey || key.altKey // special?
-       ){
+    // special keys
+    if (key.ctrlKey || key.altKey){
         return true;
-    } else {
-        return false;
+    }
+    // list of allowed keys
+    switch (key.keyCode){
+        case 0: // special key
+        case 8: // backspace
+        case 9: // TAB
+        case 13: // Return
+        case 20: // Caps Lock
+        case 27: // Escape
+        case 35: // Home
+        case 36: // End
+        case 37: // Left
+        case 38: // Up
+        case 39: // Right
+        case 40: // Down
+        case 45: // Insert
+        case 46: // Delete
+        case 144: // Num Lock
+        case 145: // Scroll Lock
+            return true;
+            break;
+        default:
+            return false;
     }
 }
 
