@@ -464,7 +464,7 @@ $FORM_CONTROL = {
         var key = e.keyCode;
         if ((key > 47 && key < 59) /* numbers */ ||
              (key == 191) /* forward slash */ ||
-              allowedKeys2(e) ){
+              allowedKeys(e) ){
 
       //      keyDown(obj, event);
             return true;
@@ -483,7 +483,7 @@ $FORM_CONTROL = {
     _intbox_key: function(e){
         var key = e.keyCode;
         if ((key > 47 && key < 59) /* numbers */
-             ||  allowedKeys2(e) )
+             ||  allowedKeys(e) )
         {
           //  keyDown(obj, event);
             return true;

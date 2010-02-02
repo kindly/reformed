@@ -59,7 +59,7 @@ function get_html(root, file){
 // UTILS
 
 // THESE ARE FROM formcontrol.js
-function allowedKeys2(key){
+function allowedKeys(key){
 
     // this returns true for allowed key presses
     // eg arrows cut/paste tab...
