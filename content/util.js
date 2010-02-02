@@ -212,7 +212,7 @@ $.Util.clean_value = function (value, field){
     switch (field.type){
         case 'DateTime':
         case 'Date':
-            value = date_from_value(value);
+            value = $.Util.date_from_value(value);
             if (value){
                 update_value = value.toLocaleDateString();
                 value = value.toISOString();
@@ -514,26 +514,12 @@ $.Util.is_empty = function (obj){
     return true;
 };
 
-})(jQuery);
-
-
-// get our size calculations
-$(document).ready($.Util.Size.get);
-//trap keyboard events
-$(document).keydown($.Util.Event_Delegator_keydown);
-
-function console_log(obj){
-    if (typeof console == "object"){
-       console.log(obj);
-    }
-}
-
 // FIXME this needs to be in sync with the locale or else dates go crazy
 // maybe need to do own toLocaleString function to get balance
 // or else determine this from the locale being used by probing the date object
-var DATE_FORMAT = 'UK';
+$.Util.DATE_FORMAT = 'UK';
 
-function date_from_value(value){
+$.Util.date_from_value = function (value){
 
     if (!value){
         return '';
@@ -544,7 +530,7 @@ function date_from_value(value){
     var year;
     var parts = value.split('/');
     if (parts.length == 3){
-        switch(DATE_FORMAT){
+        switch($.Util.DATE_FORMAT){
             case 'UK':
                 // UK format (dd/mm/yyyy)
                 year = parseInt(parts[2], 10);
@@ -578,7 +564,22 @@ function date_from_value(value){
     }
     // not a valid date
     return '';
+};
+
+})(jQuery);
+
+
+// get our size calculations
+$(document).ready($.Util.Size.get);
+//trap keyboard events
+$(document).keydown($.Util.Event_Delegator_keydown);
+
+function console_log(obj){
+    if (typeof console == "object"){
+       console.log(obj);
+    }
 }
+
 // the validators we have
 var validation_rules = {
 
