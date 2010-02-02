@@ -236,6 +236,13 @@ $.Util.clean_value = function (value, field){
             break;
     }
 
+    // FIXME it would be nicer if we do not need to check for this
+    // but at the moment we get data from none existant objects on occasions
+    // this is just to stop these causing problems
+    if (value === undefined){
+        value = null
+    };
+
     return {"value" : value,
             "update_value" : update_value};
 
