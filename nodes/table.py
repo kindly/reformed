@@ -39,8 +39,8 @@ class Table(node.TableNode):
 
     fields = [
         ['table_name', 'Text', 'table name:'],
-        ['table_type', 'info', 'type:'],
-        ['summary', 'Text', 'Summary:'],
+        ['table_type', 'info', 'type:', {'autocomplete': allowed_field_types, 'type':'list', 'control' : 'dropdown'}],
+        ['summary', 'Text', 'Summary:', {'control' : 'textarea'}],
         ['entity', 'Boolean', 'entity:'],
         ['logged', 'Boolean', 'logged:'],
         ['fields', 'subform', 'fields']
@@ -307,8 +307,7 @@ class Edit(node.TableNode):
         self.fields = fields
         self.form_params =  {"form_type": "grid",
                              "extras" : self.extra_data,
-                             "title" : self.table,
-                             "read_only" : True
+                             "title" : self.table
                             }
 
     def view(self, read_only=False, limit = 100):
