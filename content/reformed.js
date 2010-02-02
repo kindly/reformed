@@ -40,32 +40,6 @@ function init(){
     $.address.change(page_load);
 }
 
-var form_active = true;
-
-function form_dblclick(event){
-
-    if (event.target != "[object HTMLInputElement]" &&
-      event.target != "[object HTMLButtonElement]"){
-        form_mode();
-    }
-}
-function form_mode(){
-
-    if(!form_active){
-        $('#main').find('.form,.subform,tr').addClass('active').removeClass('inactive');
-        $('#main').find('input,select').removeAttr("disabled");
-        form_active = true;
-    } else {
-        $('#main').find('.form,.subform,tr').removeClass('active').addClass('inactive');
-        $('#main').find('input,select').attr("disabled", "disabled");
-        form_active = false;
-    }
-
-}
-
-
-
-
 function page(){
     var request = {type:'page'};
     var data = {root: 'main'};
@@ -142,39 +116,6 @@ function allowedKeys(key){
     } else {
         return false;
     }
-}
-
-function getItemFromObj(obj){
-
-    // for composite controls finds the root object and extension
-    var item = {};
-    if (obj.id){
-        var m = String(obj.id).match(/^(.*)(__(([a-zA-Z0-9]\w?)+))$/);
-        item.id = obj.id;
-        if (m){
-            item.root = m[1];
-            item.ext = m[4];
-        }
-    }
-    return item;
-}
-
-function getKeyPress(event){
-
-    // returns the key info for an event
-    var key = {'code' : 0}; // default key
-    if(window.event){
-        //IE
-          key.code = event.keyCode;
-      } else if(event.which){
-         // Netscape/Firefox/Opera
-        key.code = event.which;
-      }
-    key.ctrl = (event.ctrlKey);
-    key.alt = (event.altKey);
-    key.shift = (event.shiftKey);
-
-    return key;
 }
 
 function makeUTC(date){
