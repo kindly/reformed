@@ -812,9 +812,12 @@ $.Grid.Movement = function(input, form_data, grid_data){
         if (!edit_mode && !form_data.params.read_only){
             edit_mode = true;
             current.editing = true;
-            make_editable(current.$item);
-            current.$item.addClass('t_edited_cell');
-            current.$item.removeClass('t_selected_cell');
+            // if we have a current item make it editable
+            if (current.$item[0]){
+                make_editable(current.$item);
+                current.$item.addClass('t_edited_cell');
+                current.$item.removeClass('t_selected_cell');
+            }
         }
     }
 
