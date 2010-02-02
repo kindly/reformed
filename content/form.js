@@ -123,11 +123,12 @@ $.Form.Movement = function($input, form_data, row_data){
                 }
             }
         }
-        return [save_data, copy_of_row_info];
+        return {save_data : save_data,
+                copy_of_row_info : copy_of_row_info};
     }
 
     function get_form_data_remote(){
-        return get_form_data()[0];
+        return get_form_data().save_data;
     }
 
     function save(){
@@ -136,7 +137,7 @@ $.Form.Movement = function($input, form_data, row_data){
         edit_mode_off();
         if (current.dirty){
             var info = get_form_data();
-            get_node_return(form_data.node, '_save', info[0], $input, info[1]);
+            get_node_return(form_data.node, '_save', info.save_data, $input, info.copy_of_row_info);
         }
     }
 
@@ -645,7 +646,7 @@ make_cell_viewable
 
 $.Form.Build = function($input, form_data, row_data, paging_data){
 
-    function build_input(item){
+    function build_input(item, value){
             var html = [];
             html.push('<div>');
 
@@ -722,9 +723,8 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
 
 
 
-    function build_control(item){
+    function build_control(item, value){
         var html = [];
-        var value = row_data[item.name];
 
         html.push('<div>');
         switch (item.params.control){
@@ -759,13 +759,17 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
 
     function build_form(){
         var html = [];
-        num_fields = form_data.fields.length;
+        var item;
+        var value;
+
+        var num_fields = form_data.fields.length;
         for (var i = 0; i < num_fields; i++){
             item = form_data.fields[i];
+            value = $.Util.get_item_value(item, row_data);
             if (!(item.params && item.params.control && (item.params.control != 'dropdown' && item.params.control != 'textarea'))){
-                html.push(build_input(item));
+                html.push(build_input(item, value));
             } else {
-                html.push(build_control(item));
+                html.push(build_control(item, value));
             }
         }
         return html.join('');
@@ -874,10 +878,73 @@ $.InputForm.Interaction = function($input, form_data, row_data){
         }
     }
 
+    function get_form_data(){
+        // get our data to save
+        var save_data = {};
+        for (var item in row_data){
+            save_data[item] = row_data[item];
+        }
+        var copy_of_row_info = {};
+        var row_info = get_row_info();
+
+        for (var item in row_info){
+            save_data[item] = row_info[item];
+            copy_of_row_info[item] = row_info[item];
+        }
+        // any extra data needed from the form
+        params = form_data.params;
+        if (params && params.extras){
+            for (var extra in params.extras){
+                if (params.extras.hasOwnProperty(extra)){
+                    save_data[extra] = params.extras[extra];
+                }
+            }
+        }
+        return {save_data : save_data,
+                copy_of_row_info : copy_of_row_info};
+    }
+
+    function save(){
+        console_log('save');
+        // make the form non-edit
+        var info = get_form_data();
+        get_node_return(form_data.node, '_save', info.save_data, $input, info.copy_of_row_info);
+    }
+
+    function save_return(){
+        // Do nothing.
+    }
+
+
+
+    function get_row_info(){
+        var $items = $input.children('div');
+        var row_info = {};
+
+        var value;
+        var cleaned;
+        var field;
+
+        for (var i = 0, n = form_data.fields.length; i < n; i++){
+            field = form_data.fields[i];
+            if (field.params.control){
+                value = $items.eq(i).find("textarea:first").val();
+            } else {
+                value = $items.eq(i).find("input:first").val();
+            }
+            cleaned = $.Util.clean_value(value, field);
+            row_info[field.name] = cleaned.value
+        }
+        return row_info;
+
+    }
+
     // custom events
     var custom_commands = {
         'unbind_all' : unbind_all,
         'register_events' : register_events,
+        'save' : save,
+        'save_return' : save_return,
         'get_form_data' : get_form_data_remote
     };
 
@@ -887,22 +954,17 @@ $.InputForm.Interaction = function($input, form_data, row_data){
 
 $.InputForm.Build = function($input, form_data, row_data, paging_data){
 
-    function build_input(item){
+    function add_label(item, prefix){
+        return '<label class="form_label" for="' + prefix + item.name + '">' + item.title + '</label>';
+    }
+
+    function build_input(item, value){
             var html = [];
             html.push('<div>');
 
             // label
-            html.push('<label class="form_label" for="rf_' + item.name + '">' + item.title + '</label>');
+            html.push(add_label(item, 'rf_'));
 
-            if (row_data && row_data[item.name] !== undefined){
-                value = row_data[item.name];
-            } else {
-                if (item.params['default']){
-                    value = item.params['default'];
-                } else {
-                    value = null;
-                }
-            }
             // correct data value if needed
             switch (item.type){
                 case 'DateTime':
@@ -963,16 +1025,16 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
     }
 
     function textarea(item, value){
+
         var class_list = '';
         if (item.params.css){
             class_list += ' ' + item.params.css;
         }
-        return '<textarea class="' + class_list + '">' + HTML_Encode(value) + '</textarea>';
+        return add_label(item, 'rf_') + '<textarea class="' + class_list + '">' + HTML_Encode(value) + '</textarea>';
     }
 
-    function build_control(item){
+    function build_control(item, value){
         var html = [];
-        var value = row_data[item.name];
 
         html.push('<div>');
         switch (item.params.control){
@@ -982,7 +1044,7 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
                 }
                 break;
             case 'textarea':
-                html.push(control(item, value));
+                html.push(textarea(item, value));
                 break;
             case 'button':
                 html.push(button(item, value));
@@ -1013,10 +1075,11 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
         num_fields = form_data.fields.length;
         for (var i = 0; i < num_fields; i++){
             item = form_data.fields[i];
+            value = $.Util.get_item_value(item, row_data);
             if (!(item.params && item.params.control)){
-                html.push(build_input(item));
+                html.push(build_input(item, value));
             } else {
-                html.push(build_control(item));
+                html.push(build_control(item, value));
             }
         }
         return html.join('');

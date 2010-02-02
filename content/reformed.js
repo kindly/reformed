@@ -40,32 +40,6 @@ function init(){
     $.address.change(page_load);
 }
 
-var form_active = true;
-
-function form_dblclick(event){
-
-    if (event.target != "[object HTMLInputElement]" &&
-      event.target != "[object HTMLButtonElement]"){
-        form_mode();
-    }
-}
-function form_mode(){
-
-    if(!form_active){
-        $('#main').find('.form,.subform,tr').addClass('active').removeClass('inactive');
-        $('#main').find('input,select').removeAttr("disabled");
-        form_active = true;
-    } else {
-        $('#main').find('.form,.subform,tr').removeClass('active').addClass('inactive');
-        $('#main').find('input,select').attr("disabled", "disabled");
-        form_active = false;
-    }
-
-}
-
-
-
-
 function page(){
     var request = {type:'page'};
     var data = {root: 'main'};
@@ -85,96 +59,38 @@ function get_html(root, file){
 // UTILS
 
 // THESE ARE FROM formcontrol.js
-function allowedKeys2(key){
-
-    // this returns true for allowed key presses
-    // eg arrows cut/paste tab...
-
-    if (
-        key.keyCode === 0 || // special key
-        key.keyCode == 8 || // backspace
-        key.keyCode == 9 || // TAB
-        key.keyCode == 13 || // Return
-        key.keyCode == 20 || // Caps Lock
-        key.keyCode == 27 || // Escape
-        key.keyCode == 35 || // Home
-        key.keyCode == 36 || // End
-        key.keyCode == 37 || // Left
-        key.keyCode == 38 || // Up
-        key.keyCode == 39 || // Right
-        key.keyCode == 40 || // Down
-        key.keyCode == 45 || // Insert
-        key.keyCode == 46 || // Delete
-        key.keyCode == 144 || // Num Lock
-        key.keyCode == 145 || // Scroll Lock
-        key.ctrlKey || key.altKey // special?
-       ){
-        return true;
-    } else {
-        return false;
-    }
-}
-
 function allowedKeys(key){
 
     // this returns true for allowed key presses
     // eg arrows cut/paste tab...
 
-    if (
-        key.code === 0 || // special key
-        key.code == 8 || // backspace
-        key.code == 9 || // TAB
-        key.code == 20 || // Caps Lock
-        key.code == 27 || // Escape
-        key.code == 35 || // Home
-        key.code == 36 || // End
-        key.code == 37 || // Left
-        key.code == 38 || // Up
-        key.code == 39 || // Right
-        key.code == 40 || // Down
-        key.code == 45 || // Insert
-        key.code == 46 || // Delete
-        key.code == 144 || // Num Lock
-        key.code == 145 || // Scroll Lock
-        key.ctrl || key.alt // special?
-       ){
+    // special keys
+    if (key.ctrlKey || key.altKey){
         return true;
-    } else {
-        return false;
     }
-}
-
-function getItemFromObj(obj){
-
-    // for composite controls finds the root object and extension
-    var item = {};
-    if (obj.id){
-        var m = String(obj.id).match(/^(.*)(__(([a-zA-Z0-9]\w?)+))$/);
-        item.id = obj.id;
-        if (m){
-            item.root = m[1];
-            item.ext = m[4];
-        }
+    // list of allowed keys
+    switch (key.keyCode){
+        case 0: // special key
+        case 8: // backspace
+        case 9: // TAB
+        case 13: // Return
+        case 20: // Caps Lock
+        case 27: // Escape
+        case 35: // Home
+        case 36: // End
+        case 37: // Left
+        case 38: // Up
+        case 39: // Right
+        case 40: // Down
+        case 45: // Insert
+        case 46: // Delete
+        case 144: // Num Lock
+        case 145: // Scroll Lock
+            return true;
+            break;
+        default:
+            return false;
     }
-    return item;
-}
-
-function getKeyPress(event){
-
-    // returns the key info for an event
-    var key = {'code' : 0}; // default key
-    if(window.event){
-        //IE
-          key.code = event.keyCode;
-      } else if(event.which){
-         // Netscape/Firefox/Opera
-        key.code = event.which;
-      }
-    key.ctrl = (event.ctrlKey);
-    key.alt = (event.altKey);
-    key.shift = (event.shiftKey);
-
-    return key;
 }
 
 function makeUTC(date){
@@ -225,3 +141,4 @@ function msg(arg){
     status_message = arg + ' - ' + status_message;
     $('#status').html(status_message);
 }
+
