@@ -53,34 +53,6 @@ function get_html(root, file){
 }
 
 
-
-// UTILS
-
-// THESE ARE FROM formcontrol.js
-
-
-function makeUTC(date){
-
-    return date.getUTCFullYear() + '-' + (date.getUTCMonth() + 1) + '-' + date.getUTCDate();
-}
-
-function UTC2Date(UTC){
-
-// actually get this to work ;)
-    if (!UTC){
-        return "";
-    } else {
-        var m = UTC.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-        if (m){
-            var date = new Date(m[1],m[2]-1,m[3]);
-            return date.toLocaleDateString();
-        }
-    }
-}
-
-// END UTILS
-
-
 // FIXME this is repeated and should be removed to the actions stuff in layout
 var action_hash = {
     //previous: [['previous', 'go-previous.png', 'X', 'record'],[$FORM, $FORM._move, ['main#','prev']]],
