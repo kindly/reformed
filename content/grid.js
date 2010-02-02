@@ -161,7 +161,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         var grid_main_css = {top : head_height,
                              left : side_width,
                              width : width - side_width,
-                             height : height - head_height - foot_height}
+                             height : height - head_height - foot_height};
 
         var right_scrollbar = 0;
         var bottom_scrollbar = 0;
@@ -236,9 +236,9 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         $main.width(t_width);
 
         // Chrome needs to add css to each table to render correct column width.
-        $main.css({"table-layout" : "fixed"})
-        $head.css({"table-layout" : "fixed"})
-        resize_table_colums_first_row()
+        $main.css({"table-layout" : "fixed"});
+        $head.css({"table-layout" : "fixed"});
+        resize_table_colums_first_row();
     }
 
     function resize_table_colums_first_row(){
@@ -277,7 +277,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 
 
     // remove any existing items from the input
-    var $children = $(input).children()
+    var $children = $(input).children();
     for (var i = 0, n = $children.size(); i < n; i++){
             if ($children.eq(i).data('command')){
                 $children.eq(i).data('command')('unbind_all');
@@ -326,7 +326,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 
     // add resizers
     var headers = $head.find('th');
-    for (var i = 0, n=headers.size() ; i < n ; i++){
+    for (i = 0, n=headers.size() ; i < n ; i++){
         // add the resizer
         headers.eq(i).prepend($('<div class="t_resizer" ></div>').mousedown(start_column_resize).dblclick(auto_column_resize));
     }
@@ -435,7 +435,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
                 fn_finalise = function(){
                     var $input = $item.find('input');
                     $input.trigger('dropdown');
-                }
+                };
             }
         }
         // switch on edit mode if needed
@@ -536,7 +536,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
         var this_row_info = row_info[this_row];
         var copy_of_row_info = {};
-        for (var item in this_row_info){
+        for (item in this_row_info){
             if (this_row_info.hasOwnProperty(item)){
                 console_log(this_row_info[item]);
                 save_data[item] = this_row_info[item];
@@ -598,7 +598,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
             for (var field in row_info[this_row]){
                 this_col = form_data.items[field].index;
-                $this_item = $this_row.children().eq(this_col)
+                $this_item = $this_row.children().eq(this_col);
                 if (grid_data[this_row][field] == row_info[this_row][field]){
                     // don't delete if we are editing this item
                     if (!current.editing && current.row != this_row && field != current.field.name){
@@ -606,7 +606,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
                     }
                     $this_item.removeClass('dirty');
                 } else {
-                    is_dirty = true
+                    is_dirty = true;
                     $this_item.addClass('dirty');
                 }
             }
@@ -748,7 +748,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
         if (cell_top < 0){
             $scroll_div.scrollTop(top + cell_top + s + (h-h2));
         } else if (cell_top + (h * 2) > height + (h-h2)){
-            $scroll_div.scrollTop(top - height + cell_top + h + s + (h-h2))
+            $scroll_div.scrollTop(top - height + cell_top + h + s + (h-h2));
         }
 
         if (cell_left + div_left < 0){
@@ -785,7 +785,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
             current.complex_control = (current.field.params && current.field.params.control == 'dropdown');
 
             // check cell is viewable
-            make_cell_viewable()
+            make_cell_viewable();
 
             if (edit_mode){
                 current.$item.addClass('t_edited_cell');
@@ -826,7 +826,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
             } else {
                 edit_mode_off();
             }
-            $.Util.Event_Delegator('register', {keydown:keydown, blur:blur})
+            $.Util.Event_Delegator('register', {keydown:keydown, blur:blur});
             form_in_focus = true;
             move();
         }
@@ -1014,7 +1014,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
     var $main = $input.find('div.scroller-main table');
     var $head = $input.find('div.scroller-head table');
     var $side = $input.find('div.scroller-side table');
-    var $scroll_div = $input.find('div.scroller-main')
+    var $scroll_div = $input.find('div.scroller-main');
 
     var row = 0;
     var col = 0;
@@ -1124,7 +1124,7 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
         }
         html += '<a href="#" onclick="grid_add_row();return false;">add new</a>';
         html += '</div>';
-        return html
+        return html;
     }
 
     function build_rows(){
