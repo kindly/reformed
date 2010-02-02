@@ -845,7 +845,7 @@ $.InputForm.Interaction = function($input, form_data, row_data){
     }
 
     function get_form_data_remote(){
-        return get_form_data()[0];
+        return get_form_data().save_data;
     }
     function command_caller(type, data){
         console_log('command triggered: ' + type);
