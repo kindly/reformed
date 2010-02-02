@@ -523,3 +523,195 @@ function console_log(obj){
     }
 }
 
+// FIXME this needs to be in sync with the locale or else dates go crazy
+// maybe need to do own toLocaleString function to get balance
+// or else determine this from the locale being used by probing the date object
+var DATE_FORMAT = 'UK';
+
+function date_from_value(value){
+
+    if (!value){
+        return '';
+    }
+
+    var day;
+    var month;
+    var year;
+    var parts = value.split('/');
+    if (parts.length == 3){
+        switch(DATE_FORMAT){
+            case 'UK':
+                // UK format (dd/mm/yyyy)
+                year = parseInt(parts[2], 10);
+                month = parseInt(parts[1], 10) - 1;
+                day = parseInt(parts[0], 10);
+                break;
+            case 'US':
+                // US format (mm/dd/yyyy)
+                year = parseInt(parts[2], 10);
+                month = parseInt(parts[0], 10) - 1;
+                day = parseInt(parts[1], 10);
+                break;
+            case 'ISO':
+                // ISO format (yyyy/mm/dd)
+                year = parseInt(parts[0], 10);
+                month = parseInt(parts[1], 10) - 1;
+                day = parseInt(parts[3], 10);
+                break;
+        }
+        if (day !== undefined){
+            var new_date = new Date();
+            new_date.setUTCFullYear(year);
+            new_date.setUTCMonth(month);
+            new_date.setUTCDate(day);
+            new_date.setUTCHours(0);
+            new_date.setUTCMinutes(0);
+            new_date.setUTCSeconds(0);
+            new_date.setUTCMilliseconds(0);
+            return new_date;
+        }
+    }
+    // not a valid date
+    return '';
+}
+// the validators we have
+var validation_rules = {
+
+    'UnicodeString' : function(rule, value){
+        var errors = [];
+        if (value !== null && rule.max && value.length > rule.max){
+            errors.push('cannot be over ' + rule.max + ' chars');
+        }
+        return errors;
+    },
+
+    'Int' : function(rule, value){
+        var errors = [];
+        if (value > 2147483647){
+            errors.push('maximum integer size is 2,147,483,647');
+        }
+        if (value < -2147483648){
+            errors.push('minimum integer size is -2,147,483,648');
+        }
+        return errors;
+    },
+
+    'DateValidator' : function(rule, value, currently_selected){
+        if (currently_selected === true){
+            return []
+        }
+        var errors = [];
+        if (value === ''){
+            errors.push('not a valid date' + value);
+        }
+        return errors;
+    },
+
+    'Email' : function(rule, value, currently_selected){
+        if (currently_selected === true){
+            return []
+        }
+        var usernameRE = /^[^ \t\n\r@<>()]+$/i;
+        var domainRE = /^(?:[a-z0-9][a-z0-9\-]{0,62}\.)+[a-z]{2,}$/i;
+        var parts = value.split('@');
+        if (parts.length != 2){
+            return ['An email address must contain a single @'];
+        }
+        if (!parts[0].match(usernameRE)){
+            return ['The username portion of the email address is invalid (the portion before the @)'];
+        }
+        if (!parts[1].match(domainRE)){
+            return ['The domain portion of the email address is invalid (the portion after the @)'];
+        }
+        return [];
+    }
+};
+
+function validate(rules, value, currently_selected){
+    var errors = [];
+    for (var i=0; i < rules.length; i++){
+        rule = rules[i];
+        // the first rule states if we allow nulls or not
+        if (i === 0){
+            if (rule.not_empty && value === null && currently_selected !== true){
+                return ['must not be null'];
+            }
+        }
+        // validate the rules for the field if we know the validator
+        if (validation_rules[rule.type] !== undefined){
+            validation_errors = (validation_rules[rule.type](rule, value, currently_selected));
+            if (validation_errors.length){
+                errors.push(validation_errors);
+            }
+        }
+    }
+    return errors;
+}
+
+function is_empty(obj) {
+    for(var key in obj) {
+        return false;
+    }
+    return true;
+}
+
+
+if(!Date.ISO)(function(){"use strict";
+/** ES5 ISO Date Parser Plus toISOString Method
+ * @author          Andrea Giammarchi
+ * @blog            WebReflection
+ * @version         2009-07-04T11:36:25.123Z
+ * @compatibility   Chrome, Firefox, IE 5+, Opera, Safari, WebKit, Others
+ */
+function ISO(s){
+    var m = /^(\d{4})(-(\d{2})(-(\d{2})(T(\d{2}):(\d{2})(:(\d{2})(\.(\d+))?)?(Z|((\+|-)(\d{2}):(\d{2}))))?)?)?$/.exec(s);
+    if(m === null)
+        throw new Error("Invalid ISO String");
+    var d = new Date;
+    d.setUTCFullYear(+m[1]);
+    d.setUTCMonth(m[3] ? (m[3] >> 0) - 1 : 0);
+    d.setUTCDate(m[5] >> 0);
+    d.setUTCHours(m[7] >> 0);
+    d.setUTCMinutes(m[8] >> 0);
+    d.setUTCSeconds(m[10] >> 0);
+    d.setUTCMilliseconds(m[12] >> 0);
+    if(m[13] && m[13] !== "Z"){
+        var h = m[16] >> 0,
+            i = m[17] >> 0,
+            s = m[15] === "+"
+        ;
+        d.setUTCHours((m[7] >> 0) + s ? -h : h);
+        d.setUTCMinutes((m[8] >> 0) + s ? -i : i);
+    };
+    return toISOString(d);
+};
+var toISOString = Date.prototype.toISOString ?
+    function(d){return d}:
+    (function(){
+        function t(i){return i<10?"0"+i:i};
+        function h(i){return i.length<2?"00"+i:i.length<3?"0"+i:3<i.length?Math.round(i/Math.pow(10,i.length-3)):i};
+        function toISOString(){
+            return "".concat(
+                this.getUTCFullYear(), "-",
+                t(this.getUTCMonth() + 1), "-",
+                t(this.getUTCDate()), "T",
+                t(this.getUTCHours()), ":",
+                t(this.getUTCMinutes()), ":",
+                t(this.getUTCSeconds()), ".",
+                h("" + this.getUTCMilliseconds()), "Z"
+            );
+        };
+        return function(d){
+            d.toISOString = toISOString;
+            return d;
+        }
+    })()
+;
+Date.ISO = ISO;
+})();
+
+// string trim() function
+if(!String.trim){
+    String.prototype.trim = function() { return this.replace(/^\s*((?:[\S\s]*\S)?)\s*$/, '$1'); };
+}
+
