@@ -94,7 +94,7 @@ def process_node(environ, start_response):
                 'node' : 'JSON error',
                 'data' : error_msg}
         data = [{'data' : info, 'type' : 'node'}]
-        return [json.dumps(data,  separators=(',',':'))]
+        return [json.dumps(data, separators=(',',':'))]
 
 
 class WebApplication(object):
