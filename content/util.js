@@ -51,7 +51,7 @@ $.Util.get_keystroke = function (e){
     return key;
 };
 
-$.Util. allowedKeys = function (key){
+$.Util.allowedKeys = function (key){
 
     // this returns true for allowed key presses
     // eg arrows cut/paste tab...
@@ -85,6 +85,34 @@ $.Util. allowedKeys = function (key){
     }
 };
 
+$.Util.datebox_key = function(e){
+    var key = e.keyCode;
+    if ((key > 47 && key < 59) /* numbers */ ||
+         (key == 191) /* forward slash */ ||
+          $.Util.allowedKeys(e) ){
+        return true;
+    } else {
+        return false;
+    }
+};
+
+$.Util.intbox_key = function(e){
+    var key = e.keyCode;
+    if ((key > 47 && key < 59) /* numbers */
+         ||  $.Util.allowedKeys(e) )
+    {
+        return true;
+    } else {
+        return false;
+    }
+};
+
+$.Util.intbox_change = function(obj){
+    if (isNaN(parseInt($(obj).val(), 10))){
+        $(obj).val('');
+    }
+};
+
 $.Util.clone_hash_shallow = function (arg){
     var new_hash = {};
     for (var item in arg){
@@ -99,12 +127,12 @@ $.Util.control_setup = function($control, field){
     $control.unbind();
     switch (field.type){
         case 'Integer':
-            $control.change($FORM_CONTROL._intbox_change);
-            $control.keydown($FORM_CONTROL._intbox_key);
+            $control.change($.Util.intbox_change);
+            $control.keydown($.Util.intbox_key);
             break;
         case 'DateTime':
         case 'Date':
-            $control.keydown($FORM_CONTROL._datebox_key);
+            $control.keydown($.Util.datebox_key);
             break;
     }
     if (field.params && field.params.control == 'dropdown'){
