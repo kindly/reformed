@@ -30,6 +30,14 @@ $.fn.extend({
 		$.LayoutManager(this);
 	}
 });
+$.Buttons = {};
+
+$.Buttons.action_hash = {
+    save: [['save', 'document-save.png', 'c', 'record'],[document, node_save, ['main','']]],
+    'delete':[['delete', 'edit-delete.png', 'd', 'record'],[document, node_delete, ['main','']]],
+    home: [['home', 'go-home.png', 'h', 'general'],[document, node_load, ['n:test.HomePage:']]]
+};
+
 
 $.LayoutManager = function () {
 
@@ -74,8 +82,8 @@ $.LayoutManager = function () {
             var html = '';
             for (var i = 0, n = action_list.length; i < n; i++){
                 action = action_list[i];
-                if (action && action_hash[action]){
-                    add_action_button(action, action_hash[action], i);
+                if (action && $.Buttons.action_hash[action]){
+                    add_action_button(action, $.Buttons.action_hash[action], i);
                 }
             }
         }
@@ -89,11 +97,7 @@ $.LayoutManager = function () {
         var $button_holder = $('<div style="position:relative"></div>');
         $actions.append($button_holder);
     
-        var action_hash = {
-            save: [['save', 'document-save.png', 'c', 'record'],[document, node_save, ['main','']]],
-            'delete':[['delete', 'edit-delete.png', 'd', 'record'],[document, node_delete, ['main','']]],
-            home: [['home', 'go-home.png', 'h', 'general'],[document, node_load, ['n:test.HomePage:']]]
-        };
+
 
         var action_list = ['home',  'save', 'delete'];
 

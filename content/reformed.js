@@ -52,24 +52,11 @@ function get_html(root, file){
     $JOB.add(request, data, 'html', true);
 }
 
-
-// FIXME this is repeated and should be removed to the actions stuff in layout
-var action_hash = {
-    //previous: [['previous', 'go-previous.png', 'X', 'record'],[$FORM, $FORM._move, ['main#','prev']]],
-    //next: [['next', 'go-next.png', 'Y', 'record'],[$FORM, $FORM._move, ['main#','next']]],
-//    new: [['new', 'document-new.png', 'B', 'record'],[$FORM, $FORM._new, ['main']]],
-    save: [['save', 'document-save.png', 'c', 'record'],[document, node_save, ['main','']]],
-    'delete':[['delete', 'edit-delete.png', 'd', 'record'],[document, node_delete, ['main','']]],
-    home: [['home', 'go-home.png', 'h', 'general'],[document, node_load, ['n:test.HomePage:']]]
-//    donkey: [['donkey', 'go-home.png', 'I', 'general'],[$FORM, $FORM.request, ['donkey', 'main', 'first']]]
-};
-
-
 function action_call(action_name){
     // this function fires the event for action button clicks
     // we get the base object, function to call and the args from the
     // array action_hash
-    var cmd_info = action_hash[action_name][1];
+    var cmd_info = $.Buttons.action_hash[action_name][1];
     cmd_info[1].apply(cmd_info[0], cmd_info[2]);
 }
 
