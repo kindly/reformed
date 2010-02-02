@@ -470,7 +470,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
         // if this is the first row we need to adjust the width to compensate for
         // any differences in the padding etc
         // don't do this for complex conrols as they do thier own wrapping
-        if ($.browser.mozilla && current.row === 0 && !current.complex_control){
+        if (!$.browser.safari && current.row === 0 && !current.complex_control){
             current.$item.width(current.$item.width() - util_size.GRID_COL_EDIT_DIFF);
         }
         current.value = grid_data[current.row][current.field.name];
@@ -495,7 +495,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
         // if this is the first row we need to adjust the width to compensate for
         // any differences in the padding etc
         // don't do this for complex conrols as they do thier own wrapping
-        if ($.browser.mozilla && current.row === 0 && !current.complex_control){
+        if (!$.browser.safari && current.row === 0 && !current.complex_control){
             current.$item.width(current.$item.width() + util_size.GRID_COL_EDIT_DIFF);
         }
         if (value === current.value){

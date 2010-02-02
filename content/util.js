@@ -360,7 +360,7 @@ $.Util.Size.get = function(){
         util_size.GRID_COL_RESIZE_DIFF = util_size.GRID_HEADER_BORDER_W - util_size.GRID_BODY_BORDER_W;
         util_size.GRID_COL_EDIT_DIFF = util_size.GRID_BODY_BORDER_W_EDIT - util_size.GRID_BODY_BORDER_W;
 
-        if (!$.browser.mozilla){
+        if ($.browser.safari){
             util_size.GRID_COL_EDIT_DIFF = 0;
             util_size.GRID_COL_RESIZE_DIFF = 0;
         }
