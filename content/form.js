@@ -700,6 +700,9 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
         if (item.params.css){
             class_list += ' ' + item.params.css;
         }
+        if (!value){
+            return '';
+        }
         var split = value.split("|");
         var link_node = split.shift();
         value = split.join('|');
@@ -741,9 +744,11 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
                 html.push(link(item, value));
                 break;
             case 'link_list':
-                for (var i = 0, n = value.length; i < n; i++){
-                    html.push(link(item, value[i]));
-                    html.push(' ');
+                if (value && value.length){
+                    for (var i = 0, n = value.length; i < n; i++){
+                        html.push(link(item, value[i]));
+                        html.push(' ');
+                    }
                 }
                 break;
             case 'subform':
