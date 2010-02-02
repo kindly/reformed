@@ -44,14 +44,12 @@ function page(){
     var request = {type:'page'};
     var data = {root: 'main'};
     $JOB.add(request, data, 'page', true);
-    //$FORM.request('form_item', 'moo', 'first');
 }
 
 function get_html(root, file){
     var request = {type:'page', file:file};
     var data = {root:root};
     $JOB.add(request, data, 'html', true);
-    //$FORM.request('form_item', 'moo', 'first');
 }
 
 
