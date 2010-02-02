@@ -166,13 +166,13 @@ function link_process(item, link){
 }
 
 function node_save(root, command){
-    msg('node_save');
+    console_log('node_save');
     $('#main').find('div').data('command')('save'); //FIXME these want to be found properly
 }
 
 function node_delete(root, command){
     // FIXME this needs removal as references $INFO
-    msg('node_delete');
+    console_log('node_delete');
     var parsed_root = _parse_div(root);
     var my_root = parsed_root.root;
     var sent_data = $INFO.getState(my_root, 'sent_data');

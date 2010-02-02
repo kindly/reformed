@@ -60,10 +60,3 @@ function action_call(action_name){
     cmd_info[1].apply(cmd_info[0], cmd_info[2]);
 }
 
-
-var status_message = '';
-function msg(arg){
-    status_message = arg + ' - ' + status_message;
-    $('#status').html(status_message);
-}
-
