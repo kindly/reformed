@@ -25,6 +25,15 @@
 */
 
 
+$(document).ready(init);
+
+function init(){
+
+    $.address.change(page_load);
+}
+
+
+
 function page_load(){
 /*
     function called on page load by address jquery plug-in
