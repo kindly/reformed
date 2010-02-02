@@ -1180,6 +1180,12 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
                 default:
                     value = HTML_Encode(value);
             }
+            // make sure we add &nbsp; to make cell show
+            // FIXME can we do this via css better?
+            if (value === ''){
+                value = '&nbsp;';
+            }
+
             if (item.params && item.params.control == 'dropdown'){
                 if (value === null){
                     html.push('<td class="null complex"><div class="but_dd"/><div class="data">[NULL]</div></td>');
