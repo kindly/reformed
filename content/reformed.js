@@ -57,39 +57,7 @@ function get_html(root, file){
 // UTILS
 
 // THESE ARE FROM formcontrol.js
-function allowedKeys(key){
 
-    // this returns true for allowed key presses
-    // eg arrows cut/paste tab...
-
-    // special keys
-    if (key.ctrlKey || key.altKey){
-        return true;
-    }
-    // list of allowed keys
-    switch (key.keyCode){
-        case 0: // special key
-        case 8: // backspace
-        case 9: // TAB
-        case 13: // Return
-        case 20: // Caps Lock
-        case 27: // Escape
-        case 35: // Home
-        case 36: // End
-        case 37: // Left
-        case 38: // Up
-        case 39: // Right
-        case 40: // Down
-        case 45: // Insert
-        case 46: // Delete
-        case 144: // Num Lock
-        case 145: // Scroll Lock
-            return true;
-            break;
-        default:
-            return false;
-    }
-}
 
 function makeUTC(date){
 
