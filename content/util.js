@@ -52,7 +52,7 @@ $.Util.get_keystroke = function (e){
 };
 
 $.Util.clone_hash_shallow = function (arg){
-    var new_hash = {}
+    var new_hash = {};
     for (var item in arg){
         new_hash[item] = arg[item];
     }
@@ -175,10 +175,10 @@ $.Util.clean_value = function (value, field){
     }
 
     return {"value" : value,
-            "update_value" : update_value}
+            "update_value" : update_value};
 
 
-}
+};
 
 
 $.Util.paging_bar = function (data){
@@ -281,18 +281,18 @@ $.Util.Size.get = function(){
         util_size.GRID_HEADER_BORDER_W = $x.outerWidth() - $x.width();
         util_size.GRID_HEADER_H = $x.outerHeight();
 
-        var $x = $div.find('td').eq(0);
+        $x = $div.find('td').eq(0);
         util_size.GRID_BODY_BORDER_W = $x.outerWidth() - $x.width();
         util_size.GRID_BODY_H = $x.outerHeight();
 
-        var $x = $div.find('td').eq(1);
+        $x = $div.find('td').eq(1);
         util_size.GRID_BODY_BORDER_W_EDIT = $x.outerWidth() - $x.width();
         util_size.GRID_BODY_H_EDIT = $x.outerHeight();
 
-        var $x = $div.find('div.scroller-title');
+        $x = $div.find('div.scroller-title');
         util_size.GRID_TITLE_H = $x.outerHeight();
 
-        var $x = $div.find('div.scroller-foot');
+        $x = $div.find('div.scroller-foot');
         util_size.GRID_FOOTER_H = $x.outerHeight();
 
         util_size.GRID_COL_RESIZE_DIFF = util_size.GRID_HEADER_BORDER_W - util_size.GRID_BODY_BORDER_W;
@@ -360,7 +360,7 @@ $.Util.selectStyleSheet = function (title, url){
             } else {
                 found = true;
                 style_sheet.disabled = false;
-            };
+            }
         }
     }
     if (!found){
