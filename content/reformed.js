@@ -40,17 +40,6 @@ function init(){
     $.address.change(page_load);
 }
 
-function page(){
-    var request = {type:'page'};
-    var data = {root: 'main'};
-    $JOB.add(request, data, 'page', true);
-}
-
-function get_html(root, file){
-    var request = {type:'page', file:file};
-    var data = {root:root};
-    $JOB.add(request, data, 'html', true);
-}
 
 function action_call(action_name){
     // this function fires the event for action button clicks
