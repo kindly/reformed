@@ -442,6 +442,15 @@ $.Util.selectStyleSheet = function (title, url){
 $.Util.HTML_Encode = function (arg) {
     // encode html
     // replace & " < > with html entity
+    if (typeof arg != 'string'){
+        return arg;
+    }
+    return arg.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+};
+
+$.Util.HTML_Encode_Clear = function (arg) {
+    // encode html also show null as ''
+    // replace & " < > with html entity
     if (arg === null){
         return '';
     }
