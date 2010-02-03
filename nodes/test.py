@@ -329,6 +329,7 @@ class AutoFormPlus(TableNode):
         fields = []
         field_list = []
         obj = r[self.table]
+        self.title_field = obj.title_field
         columns = obj.schema_info
         for field in columns.keys():
             if field not in ['_modified_date', '_modified_by','_core_entity_id', '_version']:
