@@ -408,6 +408,12 @@ function grid_add_row(){
 
 
 var fn = function(packet, job){
+
+     if (packet.data === null){
+         console_log("NULL DATA PACKET");
+         return;
+     }
+
      var root = 'main'; //FIXME
 
      var title = packet.data.title;
