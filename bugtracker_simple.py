@@ -37,6 +37,15 @@ entity('ticket', d,
        title_field = "title"
 )
 
+table("comment", d, ## notes for each user
+      ManyToOne("entity", "_core_entity"),
+      Created("created_date"),
+      CreatedBy("created_by"),
+      Text("note", length = 4000),
+
+      valid_entities = "ticket"
+)
+
 table("bookmarks",d,
 
     Integer("entity_id"),
