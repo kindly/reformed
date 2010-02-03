@@ -34,8 +34,8 @@ $.fn.extend({
 		$.Form(this, form_data, grid_data, paging_data);
 	},
 
-	input_form: function(form_data, grid_data){
-		$.InputForm(this, form_data, grid_data);
+	input_form: function(form_data, grid_data, extra_defaults){
+		$.InputForm(this, form_data, grid_data, extra_defaults);
 	},
 
 	status_form: function(){
@@ -787,18 +787,31 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
 
     // subforms
     var $subforms = $input.find('div.SUBFORM');
+    var params;
     for (var i = 0, n = subforms.length; i < n; i ++){
-        if (subforms[i].item.params.form.params.form_type == 'grid'){
-            $subforms.eq(i).grid(subforms[i].item.params.form, subforms[i].data);
-        } else {
-            $subforms.eq(i).form(subforms[i].item.params.form, subforms[i].data);
+        params = subforms[i].item.params;
+        console_log(subforms[i]);
+        extra_defaults = {__table: params.form.table_name,
+                          __subform: subforms[i].item.name};
+        extra_defaults[params.form.child_id] = row_data[params.form.parent_id];
+        console_log(subforms[i]);
+
+        switch (subforms[i].item.params.form.params.form_type){
+            case 'grid':
+                $subforms.eq(i).grid(subforms[i].item.params.form, subforms[i].data);
+                break;
+            case 'action':
+                $subforms.eq(i).input_form(subforms[i].item.params.form, subforms[i].data, extra_defaults);
+                break;
+            default:
+                $subforms.eq(i).form(subforms[i].item.params.form, subforms[i].data);
         }
     }
 
 };
 
 
-$.InputForm = function(input, form_data, row_data){
+$.InputForm = function(input, form_data, row_data, extra_defaults){
     $input = $(input);
     // remove any existing items from the input
     var $children = $input.children();
@@ -818,13 +831,12 @@ $.InputForm = function(input, form_data, row_data){
         row_data = {};
     }
 
-    if (!row_data.length){
-        $.InputForm.Build($form, form_data, row_data);
-        $.InputForm.Interaction($form, form_data, row_data);
-        $form.data('command')('register_events');
-    }
+    //FIXME how do we deal with data in the form
+    $.InputForm.Build($form, form_data, row_data);
+    $.InputForm.Interaction($form, form_data, row_data, extra_defaults);
+    $form.data('command')('register_events');
 };
-$.InputForm.Interaction = function($input, form_data, row_data){
+$.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
 
     function init(){
 
@@ -876,6 +888,13 @@ $.InputForm.Interaction = function($input, form_data, row_data){
             for (var extra in params.extras){
                 if (params.extras.hasOwnProperty(extra)){
                     save_data[extra] = params.extras[extra];
+                }
+            }
+        }
+        if (extra_defaults){
+            for (var extra in extra_defaults){
+                if (extra_defaults.hasOwnProperty(extra)){
+                    save_data[extra] = extra_defaults[extra];
                 }
             }
         }
