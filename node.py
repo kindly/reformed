@@ -210,7 +210,7 @@ class TableNode(Node):
 
 
     def node_search_single(self, where):
-        return r.reformed.search_single(self.table, where, fields = self.field_list)
+        return r.reformed.search_single(self.table, where, fields = self.field_list, keep_all = True)
 
 
     def save_record_rows(self, session, table, fields, data, join_fields):

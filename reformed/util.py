@@ -317,11 +317,12 @@ def get_row_data(obj, fields = None, keep_all = False, internal = False, basic =
 
     for field in get_fields_from_obj(obj):
 
-        if fields and (field not in fields):
-            continue
-
-        if field in INTERNAL_FIELDS and not keep_all and not fields:
-            continue
+        if fields:
+            if not((field in fields) or (keep_all and field in INTERNAL_FIELDS)):
+                continue
+        else:
+            if not keep_all and field in INTERNAL_FIELDS:
+                continue
 
         if obj_table == table:
             field_name = field
@@ -402,7 +403,7 @@ def get_all_local_data(obj, **kw):
     table = obj._table
 
     if fields:
-        row = get_row_with_fields(obj, fields, internal = internal)
+        row = get_row_with_fields(obj, fields, internal = internal, keep_all = keep_all)
     elif tables:
         row = get_row_with_table(obj, tables, keep_all = keep_all, internal = internal)
     elif allow_system:
@@ -416,7 +417,7 @@ def get_all_local_data(obj, **kw):
     if extra_obj:
         for obj in extra_obj:
             table_name = obj._table
-            data = get_row_data(obj, fields = fields, internal = internal, table = table.name)
+            data = get_row_data(obj, fields = fields, keep_all = keep_all, internal = internal, table = table.name)
             row.update(data)
     if extra_fields:
         row.update(extra_fields)
@@ -449,7 +450,7 @@ def get_row_with_table(obj, tables, keep_all = True, internal = False):
 
     return row_data
 
-def get_row_with_fields(obj, fields, internal = False):
+def get_row_with_fields(obj, fields, keep_all = False, internal = False):
 
     table = obj._table
 
@@ -463,7 +464,7 @@ def get_row_with_fields(obj, fields, internal = False):
         fields = table_field_dict[table.name]
 
     if fields:
-        data = get_row_data(obj, fields = fields, internal = internal, table = table.name)
+        data = get_row_data(obj, fields = fields, keep_all = keep_all, internal = internal, table = table.name)
         row_data.update(data)
 
     for aliased_table_name, path in table.local_tables.iteritems():
@@ -479,7 +480,7 @@ def get_row_with_fields(obj, fields, internal = False):
             current_obj = recurse_relationships(database, obj, path)
             if not current_obj:
                 continue
-            data = get_row_data(current_obj, fields = fields, internal = internal, table = table.name)
+            data = get_row_data(current_obj, fields = fields, keep_all = keep_all, internal = internal, table = table.name)
             row_data.update(data)
 
     return row_data
