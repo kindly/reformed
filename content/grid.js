@@ -1174,7 +1174,7 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
                 case 'DateTime':
                 case 'Date':
                     if (value !== null){
-                        value = Date.ISO(value).toLocaleDateString();
+                        value = Date.ISO(value).makeLocaleString();
                     }
                     break;
                 default:

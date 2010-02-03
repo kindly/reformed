@@ -668,7 +668,7 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
                 case 'DateTime':
                 case 'Date':
                     if (value !== null){
-                        value = Date.ISO(value).toLocaleDateString();
+                        value = Date.ISO(value).makeLocaleString();
                     }
                     break;
                 default:
@@ -949,7 +949,7 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
                 case 'DateTime':
                 case 'Date':
                     if (value !== null){
-                        value = Date.ISO(value).toLocaleDateString();
+                        value = Date.ISO(value).makeLocaleString();
                     }
                     break;
                 default:
@@ -1009,7 +1009,7 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
         if (item.params.css){
             class_list += ' ' + item.params.css;
         }
-        return add_label(item, 'rf_') + '<textarea class="' + class_list + '">' + HTML_Encode(value) + '</textarea>';
+        return add_label(item, 'rf_') + '<textarea class="' + class_list + '">' + HTML_Encode_Clear(value) + '</textarea>';
     }
 
     function build_control(item, value){
@@ -1065,6 +1065,7 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
     }
 
     var HTML_Encode = $.Util.HTML_Encode;
+    var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
     $input.html(build_form());
 
 

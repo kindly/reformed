@@ -214,7 +214,7 @@ $.Util.clean_value = function (value, field){
         case 'Date':
             value = $.Util.date_from_value(value);
             if (value){
-                update_value = value.toLocaleDateString();
+                update_value = value.makeLocaleString();
                 value = value.toISOString();
             } else {
                 value = null;
@@ -441,6 +441,15 @@ $.Util.selectStyleSheet = function (title, url){
 
 $.Util.HTML_Encode = function (arg) {
     // encode html
+    // replace & " < > with html entity
+    if (typeof arg != 'string'){
+        return arg;
+    }
+    return arg.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+};
+
+$.Util.HTML_Encode_Clear = function (arg) {
+    // encode html also show null as ''
     // replace & " < > with html entity
     if (arg === null){
         return '';
@@ -724,6 +733,34 @@ var toISOString = Date.prototype.toISOString ?
 ;
 Date.ISO = ISO;
 })();
+
+
+// date to local string
+if (!Date.makeLocaleString){
+    Date.prototype.makeLocaleString = function (){
+        // output the date as a locally formated string
+        var day = this.getUTCDate();
+        var month = this.getUTCMonth() + 1;
+        var year = this.getUTCFullYear();
+        var separator = '/';
+        switch($.Util.DATE_FORMAT){
+            case 'UK':
+                // UK format (dd/mm/yyyy)
+                return day + separator + month + separator + year;
+                break;
+            case 'US':
+                // US format (mm/dd/yyyy)
+                return month + separator + day + separator + year;
+                break;
+            case 'ISO':
+                // ISO format (yyyy/mm/dd)
+                return year + separator + month + separator + day;
+                break;
+        }
+    }
+}
+
+
 
 // string trim() function
 if(!String.trim){
