@@ -471,14 +471,7 @@ var fn = function(packet, job){
                 data.obj_data = job.obj_data;
                 job.obj.data('command')('save_return', data);
             } else {
-                // errors
-                if (data.errors){
-                    form_save_process_errors(data.errors);
-                }
-                // saved records
-                if (data.saved){
-                    form_save_process_saved(data.saved);
-                }
+                alert("we have not sent the object");
             }
             break;
          case 'delete':
