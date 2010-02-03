@@ -474,11 +474,7 @@ td, body, input, select, textarea, th {
     font-family: arial, helvetica, sans;
 }
 
-span.form_label {
-    font-weight:bold;
-}
-
-label.form_label {
+label.form_label, span.form_label{
     font-weight:bold;
     vertical-align:top;
     width:120px;
