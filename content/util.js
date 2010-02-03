@@ -734,6 +734,34 @@ var toISOString = Date.prototype.toISOString ?
 Date.ISO = ISO;
 })();
 
+
+// date to local string
+if (!Date.makeLocaleString){
+    Date.prototype.makeLocaleString = function (){
+        // output the date as a locally formated string
+        var day = this.getUTCDate();
+        var month = this.getUTCMonth() + 1;
+        var year = this.getUTCFullYear();
+        var separator = '/';
+        switch($.Util.DATE_FORMAT){
+            case 'UK':
+                // UK format (dd/mm/yyyy)
+                return day + separator + month + separator + year;
+                break;
+            case 'US':
+                // US format (mm/dd/yyyy)
+                return month + separator + day + separator + year;
+                break;
+            case 'ISO':
+                // ISO format (yyyy/mm/dd)
+                return year + separator + month + separator + day;
+                break;
+        }
+    }
+}
+
+
+
 // string trim() function
 if(!String.trim){
     String.prototype.trim = function() { return this.replace(/^\s*((?:[\S\s]*\S)?)\s*$/, '$1'); };
