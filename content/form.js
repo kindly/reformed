@@ -668,7 +668,7 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
                 case 'DateTime':
                 case 'Date':
                     if (value !== null){
-                        value = Date.ISO(value).toLocaleDateString();
+                        value = Date.ISO(value).makeLocaleString();
                     }
                     break;
                 default:
@@ -949,7 +949,7 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
                 case 'DateTime':
                 case 'Date':
                     if (value !== null){
-                        value = Date.ISO(value).toLocaleDateString();
+                        value = Date.ISO(value).makeLocaleString();
                     }
                     break;
                 default:

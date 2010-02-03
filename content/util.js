@@ -214,7 +214,7 @@ $.Util.clean_value = function (value, field){
         case 'Date':
             value = $.Util.date_from_value(value);
             if (value){
-                update_value = value.toLocaleDateString();
+                update_value = value.makeLocaleString();
                 value = value.toISOString();
             } else {
                 value = null;
