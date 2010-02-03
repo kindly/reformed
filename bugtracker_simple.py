@@ -37,6 +37,16 @@ entity('ticket', d,
        title_field = "title"
 )
 
+table("bookmarks",d,
+
+    Integer("entity_id"),
+    Integer("user_id"),
+    Text("bookmark"),
+    Text("title"),
+    Text("entity_table"),
+    DateTime("accessed_date")
+)
+
 d.persist()
 
 
