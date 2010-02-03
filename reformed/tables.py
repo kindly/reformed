@@ -185,6 +185,22 @@ class Table(object):
 
         self.persisted = True
 
+    def add_foriegn_key_field(self):
+        for column in self.foriegn_key_columns.values():
+            original_col = column.original_column
+            name = column.name
+            if original_col == "id" and name not in self.defined_columns:
+                relation = column.defined_relation
+                field = relation.parent
+                field.foreign_key_name = unicode(name)
+                new_field = Integer(name, mandatory = field.many_side_not_null)
+                self.add_field(new_field)
+                if field.name in self.field_order:
+                    self.field_order.pop()
+                    pos = self.field_order.index(field.name)
+                    self.field_order.insert(pos, name)
+
+
     def persist_foreign_key_columns(self, session):
 
         for column in self.foriegn_key_columns.values():

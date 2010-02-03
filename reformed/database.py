@@ -699,6 +699,8 @@ class Database(object):
                 table.logged = False
             if table.logged and "_log_%s" % table.name not in self.tables.iterkeys() :
                 self.add_table(self.logged_table(table))
+        for table in self.tables.values():
+            table.add_foriegn_key_field()
 
     def get_class(self, table):
 

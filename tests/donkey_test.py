@@ -40,6 +40,7 @@ class test_donkey(object):
 
         entity("people", cls.Donkey,
               Text("name", mandatory = True, length = 30),
+              ManyToOne("gender", "code", foreign_key_name = "gender_id", backref = "gender", many_side_not_null = False), ##enumeration look up table
               Address("supporter_address"),
               OneToMany("email","email", 
                         order_by = "email",
@@ -51,7 +52,6 @@ class test_donkey(object):
                        "contact_summary" ),
               OneToMany("transactions",
                        "transactions", foreign_key_name = "pop"),
-              ManyToOne("gender", "code", foreign_key_name = "gender_id", backref = "gender", many_side_not_null = False), ##enumeration look up table
               ManyToOne("over_18", "code", foreign_key_name = "over_18_id", backref = "over_18", many_side_not_null = False), ##enumeration look up table
 
               entity = True,
