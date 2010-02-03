@@ -243,11 +243,10 @@ function node_button(item, node, command){
 }
 
 function node_button_input_form(item, node, command){
-    var out = $('#main div.INPUT_FORM').data('command')('get_form_data');
-    get_node(node, command, out, false);
+    var $obj = $('#main div.INPUT_FORM');
+    var out = $obj.data('command')('get_form_data');
+    get_node_return(node, command, out, $obj);
 }
-
-
 
 function search_box(){
     var node = 'n:test.Search::q=' + $('#search').val();
