@@ -251,6 +251,9 @@ class TableNode(Node):
                     value = data.get(field_name)
                     print 'join: %s = %s' % (field_name, value)
                     setattr(record_data, field_name, value)
+            version = data.get("_version")
+            if version:
+                setattr(record_data, "_version", version)
             try:
                 session.save_or_update(record_data)
                 session.commit()
@@ -279,8 +282,16 @@ class TableNode(Node):
             filter = {'id' : id}
         else:
             filter = {}
+        subform = self.data.get("__subform")
+        if subform:
+            fields = self.subforms[subform]["fields"] + [[self.subforms[subform]["child_id"], "Integer", ""]]
+            table = self.subforms[subform]["table"]
+        else:
+            table = self.table
+            fields = self.fields
 
-        record_data = self.save_record(session, self.table, self.fields, self.data, filter, root)
+        record_data = self.save_record(session, table, fields, self.data, filter, root)
+
 
         # FIXME how do we deal with save errors more cleverly?
         # need to think about possible behaviours we want
