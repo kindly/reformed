@@ -39,8 +39,8 @@ class Table(node.TableNode):
 
     fields = [
         ['table_name', 'Text', 'table name:'],
-        ['table_type', 'info', 'type:'],
-        ['summary', 'Text', 'Summary:'],
+        ['table_type', 'info', 'type:', {'autocomplete': allowed_field_types, 'type':'list', 'control' : 'dropdown'}],
+        ['summary', 'Text', 'Summary:', {'control' : 'textarea'}],
         ['entity', 'Boolean', 'entity:'],
         ['logged', 'Boolean', 'logged:'],
         ['fields', 'subform', 'fields']

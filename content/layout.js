@@ -30,6 +30,22 @@ $.fn.extend({
 		$.LayoutManager(this);
 	}
 });
+$.Buttons = {};
+
+$.Buttons.action_hash = {
+    save: [['save', 'document-save.png', 'c', 'record'],[document, node_save, ['main','']]],
+    'delete':[['delete', 'edit-delete.png', 'd', 'record'],[document, node_delete, ['main','']]],
+    home: [['home', 'go-home.png', 'h', 'general'],[document, node_load, ['n:test.HomePage:']]]
+};
+
+$.Buttons.action_call = function (action_name){
+    // this function fires the event for action button clicks
+    // we get the base object, function to call and the args from the
+    // array action_hash
+    var cmd_info = $.Buttons.action_hash[action_name][1];
+    cmd_info[1].apply(cmd_info[0], cmd_info[2]);
+};
+
 
 $.LayoutManager = function () {
 
@@ -46,7 +62,7 @@ $.LayoutManager = function () {
             
             var button_data = data[0];
             var $button = $('<div id="action_' + name + '" class="action"></div>');
-            var $link = $('<a href="javascript:action_call(\'' + name + '\')"></a>');
+            var $link = $('<a href="javascript:$.Buttons.action_call(\'' + name + '\')"></a>');
             var $img = $('<img src="icon/22x22/' + button_data[1] + '" />');
             var $command = $('<span class="command">' + button_data[0] + '</span>');
             var $shortcut = $('<span class="shortcut">' + button_data[2] + '</span>');
@@ -74,8 +90,8 @@ $.LayoutManager = function () {
             var html = '';
             for (var i = 0, n = action_list.length; i < n; i++){
                 action = action_list[i];
-                if (action && action_hash[action]){
-                    add_action_button(action, action_hash[action], i);
+                if (action && $.Buttons.action_hash[action]){
+                    add_action_button(action, $.Buttons.action_hash[action], i);
                 }
             }
         }
@@ -89,11 +105,7 @@ $.LayoutManager = function () {
         var $button_holder = $('<div style="position:relative"></div>');
         $actions.append($button_holder);
     
-        var action_hash = {
-            save: [['save', 'document-save.png', 'c', 'record'],[document, node_save, ['main','']]],
-            'delete':[['delete', 'edit-delete.png', 'd', 'record'],[document, node_delete, ['main','']]],
-            home: [['home', 'go-home.png', 'h', 'general'],[document, node_load, ['n:test.HomePage:']]]
-        };
+
 
         var action_list = ['home',  'save', 'delete'];
 
