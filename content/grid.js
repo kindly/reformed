@@ -1142,7 +1142,7 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
 
         for (var i = 0, n = grid_data.length; i < n ; i++){
             body_html.push(row(grid_data[i], i));
-            selectors_html.push('<tr><td>' + i + '</td></tr>');
+            selectors_html.push('<tr><td>' + (i + paging_data.offset) + '</td></tr>');
         }
         body_html.push('</tbody>');
         body_html.push('</table></div>');
