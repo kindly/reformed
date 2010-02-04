@@ -774,7 +774,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
         if (cell_left < 0){
             $scroll_div.scrollLeft(scroller_left + cell_left);
-        } else if (cell_left > scroller_width - cell_width){
+        } else if (cell_left > scroller_width - cell_width && cell_left !== 0){
             $scroll_div.scrollLeft(scroller_left + cell_left - scroller_width + cell_width);
         }
     }
