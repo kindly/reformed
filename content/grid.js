@@ -252,6 +252,9 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         $main.width(t_width);
 
         resize_table_colums();
+
+        // sometime we need to add/remove scrollbars to the grid
+        resize_grid();
     }
 
     function resize_table_colums(){
