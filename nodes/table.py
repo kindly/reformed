@@ -314,8 +314,8 @@ class Edit(node.TableNode):
     def view(self, read_only=False, limit = 100):
 
         query = self.data.get('q', '')
-        limit = self.data.get('l', limit)
-        offset = self.data.get('o', 0)
+        limit = self.get_data_int('l', limit)
+        offset = self.get_data_int('o')
 
         obj = r[self.table_id]
         results = r.search(obj.name, limit=limit, offset=offset, count=True)

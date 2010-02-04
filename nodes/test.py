@@ -215,8 +215,8 @@ class Search(TableNode):
 
     def call(self, limit = 100):
         query = self.data.get('q', '')
-        limit = self.data.get('l', limit)
-        offset = self.data.get('o', 0)
+        limit = self.get_data_int('l', limit)
+        offset = self.get_data_int('o')
 
         where = "_core_entity.title like ?"
         results = r.search( '_core_entity',

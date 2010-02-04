@@ -513,8 +513,8 @@ class TableNode(Node):
 
     def list(self, limit=20):
         query = self.data.get('q', '')
-        limit = self.data.get('l', limit)
-        offset = self.data.get('o', 0)
+        limit = self.get_data_int('l', limit)
+        offset = self.get_data_int('o')
 
         if r.reformed[self.table].entity:
             results = r.reformed.search('_core_entity',
