@@ -251,20 +251,20 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         $head.width(t_width);
         $main.width(t_width);
 
+        resize_table_colums();
+    }
+
+    function resize_table_colums(){
         // Chrome needs to add css to each table to render correct column width.
         $main.css({"table-layout" : "fixed"});
         $head.css({"table-layout" : "fixed"});
-        resize_table_colums_first_row();
-    }
 
-    function resize_table_colums_first_row(){
-        // restore column widths
         var $head_cols = $head.find('th');
         var $main_cols = $main.find('tr').eq(0).find('td');
         for (i = 0, n = column_widths.length; i < n; i++){
-
+            // headers
             $head_cols.eq(i).width(column_widths[i] - util_size.GRID_COL_RESIZE_DIFF);
-
+            // main table
             if (current && current.editing && current.row === 0 && current.col === i && !current.complex_control){
                 // control is on first row and being edited for this column
                 $main_cols.eq(i).width(column_widths[i] - util_size.GRID_COL_EDIT_DIFF);
