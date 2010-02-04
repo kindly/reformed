@@ -739,40 +739,43 @@ $.Grid.Movement = function(input, form_data, grid_data){
         current.$side.addClass('current');
     }
 
+
     function make_cell_viewable(){
-        // FIXME do complete rewrite as logic has gone for a walk ;)
-        // however it appears to function correctly so is
-        // good for checking any new approach against
-        // but completely unreadable
-        var div_pos = $scroll_div.position();
-        var div_top = div_pos.top;
-        var div_left = div_pos.left;
+        // Check if current grid cell is visible within the scroller div.
+        // If not scroll so it is.
 
         var cell_pos = current.$item.position();
-        var cell_top = cell_pos.top - div_top;
-        var cell_left = cell_pos.left - div_left;
+        var cell_top = cell_pos.top;
+        var cell_left = cell_pos.left;
+        var cell_height = util_size.GRID_BODY_H;
+        var cell_width = current.$item.outerWidth();
 
+        var scroller_top = $scroll_div.scrollTop();
+        var scroller_left = $scroll_div.scrollLeft();
         var s = util_size.SCROLLBAR_WIDTH;
-        var height = $scroll_div.innerHeight() - s;
-        var width = $scroll_div.innerWidth() - s;
-        var h = util_size.GRID_BODY_H;
-        var h2 = util_size.GRID_HEADER_H;
-        var w = current.$item.outerWidth();
-        var top = $scroll_div.scrollTop();
-        var left = $scroll_div.scrollLeft();
+
+        var scroller_height = $scroll_div.innerHeight();
+        if (!$.browser.Safari && current.scrollbar_bottom){
+            scroller_height -= s;
+        }
+        var scroller_width = $scroll_div.innerWidth();
+        if (!$.browser.Safari && current.scrollbar_side){
+            scroller_width -= s;
+        }
 
         if (cell_top < 0){
-            $scroll_div.scrollTop(top + cell_top + s + (h-h2));
-        } else if (cell_top + (h * 2) > height + (h-h2)){
-            $scroll_div.scrollTop(top - height + cell_top + h + s + (h-h2));
+            $scroll_div.scrollTop(scroller_top + cell_top);
+        } else if (cell_top > scroller_height - cell_height){
+            $scroll_div.scrollTop(scroller_top + cell_top - scroller_height + cell_height);
         }
 
-        if (cell_left + div_left < 0){
-            $scroll_div.scrollLeft(left + cell_left + div_left);
-        } else if (cell_left + w + s + s > width){
-            $scroll_div.scrollLeft(left - width + cell_left + w + div_left);
+        if (cell_left < 0){
+            $scroll_div.scrollLeft(scroller_left + cell_left);
+        } else if (cell_left > scroller_width - cell_width){
+            $scroll_div.scrollLeft(scroller_left + cell_left - scroller_width + cell_width);
         }
     }
+
 
     function selected($new_item, $new_row, $row_side){
         // a cell has been selected update as needed
