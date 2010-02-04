@@ -100,6 +100,13 @@ class Node(object):
             out.append('%s=%s' % (key, dict[key]))
         return '&'.join(out)
 
+    def get_data_int(self, key, default = 0):
+        """ Get integer value out of self.data[key] or default """
+        try:
+            value = int(self.data.get(key, default))
+        except:
+            value = default
+        return value
 
     def initialise(self):
         """called first when the node is used"""
