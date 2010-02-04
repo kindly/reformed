@@ -277,8 +277,6 @@ $.Form.Movement = function($input, form_data, row_data){
         // is this a complex control?
         if (current.complex_control){
             $item = $item.find('div.data');
-            console.log('complex');
-            console.log($item);
         }
 
         current.$control = util.make_editable($item, current.field);
