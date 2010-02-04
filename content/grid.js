@@ -122,10 +122,26 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         if ($item[0].nodeName == 'TH'){
             col = $item.parent().children().index($item);
         }
-        column_widths[col] = 100;
+        column_widths[col] = measure_column_width(col);
         resize_table_columns();
     }
 
+    function measure_column_width(col){
+        // build column off screen and measure width
+        var field = form_data.fields[col].name;
+        var $div = $('<div style="top:0;left:-200px;position:absolute;width:100px;height:100px;overflow:hidden;"/>');
+        var table = ['<table class="t_grid" >'];
+        table.push('<tr><th><div class="t_header">' + form_data.fields[col].title + '</div></th></tr>');
+        for (var i = 0, n = grid_data.length; i < n; i++){
+            table.push('<tr><td>' + grid_data[i][field] + '</td></tr>');
+        }
+        table.push('</table>');
+        $div.html(table.join(''));
+        $('body').append($div);
+        var width = $div.find('table').width();
+        $div.remove();
+        return width;
+    }
 
     function get_column_widths(){
         var $cols_main = $main.find('tr').eq(0).find('td');
