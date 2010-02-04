@@ -231,6 +231,9 @@ $.Util.clean_value = function (value, field){
         case 'Integer':
             if (value !== null){
                 value = parseInt(value, 10);
+                if (isNaN(value)){
+                    value = null;
+                }
             }
             update_value = value;
             break;
