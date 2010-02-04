@@ -340,6 +340,10 @@ $.Util.Size.get = function(){
         var w2 = $div.find('div').width();
         util_size.SCROLLBAR_WIDTH = w1 - w2;
         $div.remove();
+        // FIXME cannot measure webkit browsers scrollbar width
+        if ($.browser.safari){
+            util_size.SCROLLBAR_WIDTH = 15;
+        }
     }
 
     function grid(){
