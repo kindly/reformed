@@ -170,6 +170,13 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         var main_height = $main.height();
         var main_width = $main.width();
 
+        // make sure we have enough height to show grid elements
+        var min_height = foot_height + head_height + title_height;
+        if (height < min_height){
+            height = min_height;
+            grid_size.height = min_height;
+        }
+
         $grid.width(width).height(height);
 
         // Css for $grid_main.
