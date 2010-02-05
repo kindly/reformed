@@ -420,6 +420,9 @@ $.Util.Size.page_size = function (){
     if (util_size.MAIN_WIDTH_OFFSET){
         util_size.MAIN_WIDTH = util_size.PAGE_WIDTH - util_size.MAIN_WIDTH_OFFSET;
         util_size.MAIN_HEIGHT = util_size.PAGE_HEIGHT - util_size.MAIN_HEIGHT_OFFSET;
+    } else {
+        util_size.MAIN_WIDTH = util_size.PAGE_WIDTH;
+        util_size.MAIN_HEIGHT = util_size.PAGE_HEIGHT;
     }
 };
 
