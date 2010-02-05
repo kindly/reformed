@@ -115,6 +115,28 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         return false;
     }
 
+    function autosize_grid(){
+        // get the grid  to display at the correct size for it's data
+        var has_scrollbar = false;
+        var height = $main.height();
+        height += util_size.GRID_HEADER_H + util_size.GRID_TITLE_H + util_size.GRID_FOOTER_H;
+        if (height > util_size.MAIN_HEIGHT){
+            height = util_size.MAIN_HEIGHT;
+            has_scrollbar = true;
+        }
+        grid_size.height = height;
+
+        var width = $head.width();
+        width += $.Grid.SIDE_COLUMN_WIDTH;
+        if (has_scrollbar){
+            width += util_size.SCROLLBAR_WIDTH;
+        }
+        if (width > util_size.MAIN_WIDTH){
+            width = util_size.MAIN_WIDTH;
+        }
+        grid_size.width = width;
+    }
+
 
     function auto_column_resize(e){
         var $item = $(e.target).parent();
@@ -267,6 +289,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 
         resize_table_colums();
 
+        autosize_grid();
         // sometime we need to add/remove scrollbars to the grid
         resize_grid();
     }
