@@ -167,6 +167,9 @@ $.LayoutManager = function () {
         var height = null;
         var width = info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + util_size.SCROLLBAR_WIDTH);
         position($main, top, left, height, width);
+        // Store the viewable size of the div.
+        util_size.MAIN_WIDTH = width;
+        util_size.MAIN_HEIGHT = util_size.PAGE_HEIGHT - top - info.spacing;
     }
 
     function position_actions(){
