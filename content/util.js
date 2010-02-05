@@ -340,10 +340,31 @@ $.Util.Size.get = function(){
         var w2 = $div.find('div').width();
         util_size.SCROLLBAR_WIDTH = w1 - w2;
         $div.remove();
-        // FIXME cannot measure webkit browsers scrollbar width
-        if ($.browser.safari){
-            util_size.SCROLLBAR_WIDTH = 15;
+        // Some browsers e.g. webkit don't let us measure
+        // the scrollbar using the easy method above.
+        // If it didn't work we use a different approach instead.
+        if (util_size.SCROLLBAR_WIDTH === 0){
+            var $div = $('<div style="overflow:hidden; width:50px; height:50px; position:absolute; left:-100px; top:0px;"></div>');
+            var $d1 = $('<div style="height:60px;width:1px;float:left"></div>');
+            var $d2 = $('<div style="height:60px;width:1px;float:left"></div>');
+            $div.append($d1);
+            $div.append($d2);
+            $('body').append($div);
+            w1 = 1;
+            do {
+                $d1.width(w1++);
+            } while ($d2.position().top === 0);
+
+            $div.css('overflow-y', 'scroll');
+            w2 = 1;
+            do {
+                $d1.width(w2++);
+            } while ($d2.position().top === 0);
+
+            $div.remove();
+            util_size.SCROLLBAR_WIDTH = w1 - w2;
         }
+
     }
 
     function grid(){
