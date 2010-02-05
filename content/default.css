@@ -330,7 +330,6 @@ td input {
     float: right;
     cursor:e-resize;
     width:10px;
-    height:50px;
     background-color:transparent;
     z-index:2;
     position:relative;

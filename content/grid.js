@@ -223,6 +223,9 @@ $.Grid = function(input, form_data, grid_data, paging_data){
                         left : side_width,
                         width : width - side_width - (scrollbar_width * right_scrollbar)});
 
+        // Make column resizers correct height.
+        $grid_head.find('div.t_resizer').height(head_height);
+
         $grid_side.css({top : head_height + title_height,
                         left : 0,
                         height : height - head_height - (scrollbar_width * bottom_scrollbar) - foot_height - title_height,
