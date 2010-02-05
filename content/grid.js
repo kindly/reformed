@@ -380,7 +380,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         $form.data('command')('focus');
     }
     // add resize function so remotely accessable
-    $form.data('resize', resize_grid);
+    $form.data('resize_grid', resize_grid);
     $form.data('resize_table', resize_table);
 
 };

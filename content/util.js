@@ -435,7 +435,7 @@ $.Util.selectStyleSheet = function (title, url){
             // update any grids
             var $grids = $('div.GRID');
             for (var i = 0, n = $grids.size(); i < n; i++){
-                $grids.eq(i).data('resize')();
+                $grids.eq(i).data('resize_grid')();
             }
         }
 
