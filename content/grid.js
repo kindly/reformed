@@ -110,7 +110,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             if (resize_column_timeout){
                 clearTimeout(resize_column_timeout);
             }
-            resize_column_timeout = setTimeout(resize_table_columns, 25);
+            resize_column_timeout = setTimeout(resize_table, 25);
         }
         return false;
     }
@@ -145,7 +145,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             col = $item.parent().children().index($item);
         }
         column_widths[col] = measure_column_width(col);
-        resize_table_columns();
+        resize_table();
     }
 
     function measure_column_width(col){
@@ -278,7 +278,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
                            left : width - 15});
     }
 
-    function resize_table_columns(){
+    function resize_table(){
         // resize table
         var table_width = 0;
         for (var i = 0, n = column_widths.length; i < n; i++){
@@ -287,14 +287,14 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         $head.width(table_width);
         $main.width(table_width);
 
-        resize_table_colums();
+        resize_table_columns();
 
         autosize_grid();
         // sometime we need to add/remove scrollbars to the grid
         resize_grid();
     }
 
-    function resize_table_colums(){
+    function resize_table_columns(){
         // Chrome needs to add css to each table to render correct column width.
         $main.css({"table-layout" : "fixed"});
         $head.css({"table-layout" : "fixed"});
@@ -390,7 +390,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     // add grid movement functionality
     $.Grid.Movement($form, form_data, grid_data);
 
-    resize_table_columns();
+    resize_table();
     $form.addClass('grid_holder');
 
     // if top level form then give focus
@@ -399,7 +399,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     }
     // add resize function so remotely accessable
     $form.data('resize', resize_grid);
-    $form.data('resize_table_columns', resize_table_columns);
+    $form.data('resize_table', resize_table);
 
 };
 
@@ -1269,7 +1269,7 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data){
         $(input).find('div.scroller-main table').append(row());
         $(input).find('div.scroller-side table').append('<tr><td>' + new_row + '</td></tr>');
         if (new_row === 0){
-            $(input).data('resize_table_columns')();
+            $(input).data('resize_table')();
         }
     }
 
