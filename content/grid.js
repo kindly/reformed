@@ -367,7 +367,6 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     // add grid movement functionality
     $.Grid.Movement($form, form_data, grid_data);
 
-    resize_grid();
     resize_table_columns();
     $form.addClass('grid_holder');
 
