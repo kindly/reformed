@@ -109,7 +109,6 @@ $.LayoutManager = function () {
 
         var action_list = ['home',  'save', 'delete'];
 
-        var util_size = $.Util.Size;
         add_actions();
         $body.append($actions);
     }
@@ -166,8 +165,7 @@ $.LayoutManager = function () {
         var top = info.margin_top + info.top_height + info.spacing;
         var left = info.margin_left + info.left_width + info.spacing;
         var height = null;
-        var width = info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + $.Util.Size.SCROLLBAR_WIDTH);
-    
+        var width = info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + util_size.SCROLLBAR_WIDTH);
         position($main, top, left, height, width);
     }
 
@@ -175,7 +173,7 @@ $.LayoutManager = function () {
         var top = info.margin_top;
         var left = info.margin_left + info.left_width + info.spacing;
         var height = info.top_height;
-        var width = info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + $.Util.Size.SCROLLBAR_WIDTH);
+        var width = info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + util_size.SCROLLBAR_WIDTH);
 
         position($actions, top, left, height, width);
     }
@@ -200,6 +198,7 @@ $.LayoutManager = function () {
     };
     
 
+    var util_size = $.Util.Size;
     var position = $.Util.Position;
     var $main;
     var $side;
