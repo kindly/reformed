@@ -412,9 +412,15 @@ $.Util.Size.get = function(){
 };
 
 $.Util.Size.page_size = function (){
+    var util_size = $.Util.Size;
     var $screen = $(window);
-    $.Util.Size.PAGE_WIDTH = $screen.width();
-    $.Util.Size.PAGE_HEIGHT = $screen.height();
+    util_size.PAGE_WIDTH = $screen.width();
+    util_size.PAGE_HEIGHT = $screen.height();
+    // recalculate main div sizes
+    if (util_size.MAIN_WIDTH_OFFSET){
+        util_size.MAIN_WIDTH = util_size.PAGE_WIDTH - util_size.MAIN_WIDTH_OFFSET;
+        util_size.MAIN_HEIGHT = util_size.PAGE_HEIGHT - util_size.MAIN_HEIGHT_OFFSET;
+    }
 };
 
 $.Util.selectStyleSheet = function (title, url){

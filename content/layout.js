@@ -170,6 +170,9 @@ $.LayoutManager = function () {
         // Store the viewable size of the div.
         util_size.MAIN_WIDTH = width;
         util_size.MAIN_HEIGHT = util_size.PAGE_HEIGHT - top - info.spacing;
+        // Store the offsets so we can recalculate if the browser window is resized
+        util_size.MAIN_WIDTH_OFFSET = info.left_width + info.spacing + info.margin_left + info.margin_right + util_size.SCROLLBAR_WIDTH;
+        util_size.MAIN_HEIGHT_OFFSET = top + info.spacing;
     }
 
     function position_actions(){
