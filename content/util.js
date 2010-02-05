@@ -619,7 +619,7 @@ $.Util.date_from_value = function (value){
 
 })(jQuery);
 
-$(document).resize($.Util.Size.page_size);
+$(window).resize($.Util.Size.page_size);
 // get our size calculations
 $(document).ready($.Util.Size.get);
 //trap keyboard events
