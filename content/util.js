@@ -407,7 +407,14 @@ $.Util.Size.get = function(){
     action_button();
     scrollbar();
     grid();
+    $.Util.Size.page_size();
 
+};
+
+$.Util.Size.page_size = function (){
+    var $screen = $(window);
+    $.Util.Size.PAGE_WIDTH = $screen.width();
+    $.Util.Size.PAGE_HEIGHT = $screen.height();
 };
 
 $.Util.selectStyleSheet = function (title, url){
@@ -612,7 +619,7 @@ $.Util.date_from_value = function (value){
 
 })(jQuery);
 
-
+$(document).resize($.Util.Size.page_size);
 // get our size calculations
 $(document).ready($.Util.Size.get);
 //trap keyboard events
