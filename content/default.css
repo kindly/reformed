@@ -524,3 +524,11 @@ span.f_cell.dirty {
     color:green;
     font-size:0.8em;
 }
+
+/*
+    in a form we want each control
+    to start on a new line
+*/
+div.f_form > div{
+    clear:both;
+}
