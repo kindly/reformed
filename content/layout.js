@@ -206,7 +206,7 @@ $.LayoutManager = function () {
     var $actions;
     var $body = $('body');
 
-    info.page_width = $(window).width();
+    info.page_width = util_size.PAGE_WIDTH;
 
     create_logo();
     create_main();
