@@ -258,12 +258,12 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 
     function resize_table_columns(){
         // resize table
-        var t_width = 0;
+        var table_width = 0;
         for (var i = 0, n = column_widths.length; i < n; i++){
-            t_width += column_widths[i];
+            table_width += column_widths[i];
         }
-        $head.width(t_width);
-        $main.width(t_width);
+        $head.width(table_width);
+        $main.width(table_width);
 
         resize_table_colums();
 
