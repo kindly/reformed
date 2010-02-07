@@ -406,6 +406,10 @@ td input {
     overflow:hidden;
     position:absolute;
 }
+.scroller-loader {
+    position:absolute;
+    display:none;
+}
 .scroller-foot a {
     color:#CCC;
 }

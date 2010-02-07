@@ -277,8 +277,8 @@ $.Util.paging_bar = function (data){
     var current = Math.floor(offset/limit);
 
     if (current>0){
-        html += '<a href="#" onclick="node_load(\'' + base + '&o=0&l=' + limit +'\');return false;">|&lt;</a> ';
-        html += '<a href="#" onclick="node_load(\'' + base + '&o=' + (current-1) * limit + '&l=' + limit +'\');return false;">&lt;</a> ';
+        html += '<a href="#" onclick="node_load_grid(\'' + base + '&o=0&l=' + limit +'\');return false;">|&lt;</a> ';
+        html += '<a href="#" onclick="node_load_grid(\'' + base + '&o=' + (current-1) * limit + '&l=' + limit +'\');return false;">&lt;</a> ';
     } else {
         html += '|&lt; ';
         html += '&lt; ';
@@ -291,13 +291,13 @@ $.Util.paging_bar = function (data){
                  (i<(PAGING_SIZE*2)-1 && current<PAGING_SIZE) ||
                  (pages-i<(PAGING_SIZE*2) && current>pages-PAGING_SIZE)
             ){
-                html += '<a href="#" onclick="node_load(\'' + base + '&o=' + i * limit + '&l=' + limit +'\');return false;">' + (i+1) + '</a> ';
+                html += '<a href="#" onclick="node_load_grid(\'' + base + '&o=' + i * limit + '&l=' + limit +'\');return false;">' + (i+1) + '</a> ';
             }
         }
     }
     if (current<pages - 1){
-        html += '<a href="#" onclick="node_load(\'' + base + '&o=' + (current+1) * limit + '&l=' + limit +'\');return false;">&gt;</a> ';
-        html += '<a href="#" onclick="node_load(\'' + base + '&o=' + (pages-1) * limit + '&l=' + limit +'\');return false;">&gt;|</a> ';
+        html += '<a href="#" onclick="node_load_grid(\'' + base + '&o=' + (current+1) * limit + '&l=' + limit +'\');return false;">&gt;</a> ';
+        html += '<a href="#" onclick="node_load_grid(\'' + base + '&o=' + (pages-1) * limit + '&l=' + limit +'\');return false;">&gt;|</a> ';
     } else {
         html += '&gt; ';
         html += '&gt;| ';
@@ -429,6 +429,10 @@ $.Util.Size.get = function(){
             util_size.GRID_COL_RESIZE_DIFF = 0;
         }
 
+        $div.append('<div class="scroller-loader" style="display:block;">Loading ...</div>');
+        $x = $div.find('div.scroller-loader');
+        util_size.GRID_LOADER_H = $x.outerHeight();
+        util_size.GRID_LOADER_W = $x.outerWidth();
         $div.remove();
     }
 
