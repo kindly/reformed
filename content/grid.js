@@ -426,7 +426,6 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         $form.data('resize_table', resize_table);
         $form.data('unbind_column_resizers', unbind_column_resizers);
         $form.data('update_grid', update_grid);
-        $form.data('column_widths', column_widths);
 
     }
 
@@ -485,15 +484,8 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         var $body = $(rows.body);
         var $selectors = $(rows.selectors);
 
-        // Get table and column widths;
-        var column_widths = $form.data('column_widths');
-        var table_width = 0;
-        for (var i = 0, n = column_widths.length; i < n; i++){
-            table_width += column_widths[i];
-        }
-
         // Resize table.
-        $body.css('width', table_width);
+        $body.css('width', table_size.width);
         $body.css({"table-layout" : "fixed"});
         // Resize columns.
         var $main_cols = $body.find('tr').eq(0).find('td');
