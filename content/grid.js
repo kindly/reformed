@@ -1416,8 +1416,8 @@ $.Grid.Movement = function($form, form_data, grid_data){
         complex_control : undefined
     };
 
-    var scrollbar_side : true,
-    var scrollbar_bottom : false,
+    var scrollbar_side;
+    var scrollbar_bottom;
     var util = $.Util;
     var util_size = $.Util.Size;
 
