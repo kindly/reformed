@@ -307,19 +307,37 @@ $.Util.paging_bar = function (data){
     return html;
 };
 
-$.Util.Position = function ($item, top, left, height, width){
+$.Util.position = function ($item, top, left, height, width){
     // position an element absolutely on the screen
-    var css = {position : 'absolute'};
-    if (top){
+    var css = {};
+    if (top !== null){
         css.top = top;
     }
-    if (left){
+    if (left !== null){
         css.left = left;
     }
-    if (height){
+    if (height !== null){
         css.height = height;
     }
-    if (width){
+    if (width !== null){
+        css.width = width;
+    }
+    $item.css(css);
+};
+
+$.Util.position_absolute = function ($item, top, left, height, width){
+    // position an element absolutely on the screen
+    var css = {position : 'absolute'};
+    if (top !== null){
+        css.top = top;
+    }
+    if (left !== null){
+        css.left = left;
+    }
+    if (height !== null){
+        css.height = height;
+    }
+    if (width !== null){
         css.width = width;
     }
     $item.css(css);
