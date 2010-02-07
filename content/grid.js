@@ -203,11 +203,8 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 
         // Css for $grid_main.
         // There may be scroll bars or not, so see if we need them.
-        var grid_main_css = {top : head_height,
-                             left : side_width,
-                             width : width - side_width,
-                             height : height - head_height - foot_height};
 
+        var grid_main_css = {};
         var right_scrollbar = 0;
         var bottom_scrollbar = 0;
 
@@ -243,14 +240,11 @@ $.Grid = function(input, form_data, grid_data, paging_data){
                                                   scrollbar_side : (right_scrollbar == 1)});
         $grid_main.css(grid_main_css);
 
-        $grid_main.css({top : head_height + title_height,
-                        left : side_width,
-                        width : width - side_width,
-                        height : height - head_height - foot_height - title_height});
+        var new_main_height = height - head_height - foot_height - title_height;
+        position($grid_main, head_height + title_height, side_width, new_main_height, width - side_width);
 
-        $grid_head.css({top : title_height,
-                        left : side_width,
-                        width : width - side_width - (scrollbar_width * right_scrollbar)});
+        var new_head_width = width - side_width - (scrollbar_width * right_scrollbar);
+        position($grid_head, title_height, side_width, null, new_head_width);
 
         // Make column resizers correct height.
         $grid_head.find('div.t_resizer').height(head_height);
@@ -259,23 +253,15 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         if (side_height < 0){
             side_height = 0;
         }
-        $grid_side.css({top : head_height + title_height,
-                        left : 0,
-                        height : side_height,
-                        width : side_width});
+        position($grid_side, head_height + title_height, 0, side_height, side_width);
 
-        $grid_foot.css({top : height - foot_height,
-                        left : 0,
-                        width : width,
-                        height : foot_height});
+        position($grid_foot, height - foot_height, 0, foot_height, width);
 
-        $grid_title.css({top : 0,
-                        left : 0,
-                        width : width,
-                        height : title_height});
+        position($grid_title, 0, 0, title_height, width);
 
-        $grid_resizer.css({top : height - 15,
-                           left : width - 15});
+        position($grid_resizer, height - 15, width - 15, null, null);
+
+
     }
 
     function resize_table(){
