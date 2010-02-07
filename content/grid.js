@@ -729,8 +729,8 @@ $.Grid.Movement = function($form, form_data, grid_data){
     };
 
     function set_scrollbars(data){
-        current.scrollbar_side = data.scrollbar_side;
-        current.scrollbar_bottom = data.scrollbar_bottom;
+        scrollbar_side = data.scrollbar_side;
+        scrollbar_bottom = data.scrollbar_bottom;
     }
 
     function get_current(){
@@ -805,7 +805,7 @@ $.Grid.Movement = function($form, form_data, grid_data){
             var $row_side = $side.find('tr').eq(row);
             var this_col = $item.parent().children().index($item);
             col = this_col;
-            selected($item, $row, $row_side);
+            cell_selected($item, $row, $row_side);
             actioned = true;
         }
         if (fn_finalise){
@@ -1096,11 +1096,11 @@ $.Grid.Movement = function($form, form_data, grid_data){
         var s = util_size.SCROLLBAR_WIDTH;
 
         var scroller_height = $grid_main.innerHeight();
-        if (!$.browser.Safari && current.scrollbar_bottom){
+        if (!$.browser.Safari && scrollbar_bottom){
             scroller_height -= s;
         }
         var scroller_width = $grid_main.innerWidth();
-        if (!$.browser.Safari && current.scrollbar_side){
+        if (!$.browser.Safari && scrollbar_side){
             scroller_width -= s;
         }
 
@@ -1118,7 +1118,7 @@ $.Grid.Movement = function($form, form_data, grid_data){
     }
 
 
-    function selected($new_item, $new_row, $row_side){
+    function cell_selected($new_item, $new_row, $row_side){
         // a cell has been selected update as needed
         if ($new_item[0] !== current.$item[0]){
             if (current.$item[0] !== undefined){
@@ -1236,7 +1236,7 @@ $.Grid.Movement = function($form, form_data, grid_data){
         var $row = $main.find('tr').eq(row);
         var $row_side = $side.find('tr').eq(row);
         var $item = $row.children().eq(col);
-        selected($item, $row, $row_side);
+        cell_selected($item, $row, $row_side);
     }
 
     function move_right(){
@@ -1413,11 +1413,11 @@ $.Grid.Movement = function($form, form_data, grid_data){
         field : undefined,
         $control : undefined,
         editing : false,
-        scrollbar_side : true,
-        scrollbar_bottom : false,
         complex_control : undefined
     };
 
+    var scrollbar_side : true,
+    var scrollbar_bottom : false,
     var util = $.Util;
     var util_size = $.Util.Size;
 
