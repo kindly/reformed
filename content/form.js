@@ -48,15 +48,7 @@ $.fn.extend({
 $.Form = function(input, form_data, row_data, paging_data){
 
     $input = $(input);
-    // remove any existing items from the input
-    var $children = $input.children();
-    for (var i = 0, n = $children.size(); i < n; i++){
-            if ($children.eq(i).data('command')){
-                $children.eq(i).data('command')('unbind_all');
-            }
-    }
-    $children.remove();
-    $children = null;
+    $.Util.unbind_all_children($input);
 
     // make our div that everything will hang off
     var $form = $('<div class="f_form"></div>');
@@ -810,15 +802,8 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
 
 $.InputForm = function(input, form_data, row_data, extra_defaults){
     $input = $(input);
-    // remove any existing items from the input
-    var $children = $input.children();
-    for (var i = 0, n = $children.size(); i < n; i++){
-            if ($children.eq(i).data('command')){
-                $children.eq(i).data('command')('unbind_all');
-            }
-    }
-    $children.remove();
-    $children = null;
+
+    $.Util.unbind_all_children($input);
 
     // make our div that everything will hang off
     var $form = $('<div class="INPUT_FORM"></div>');
@@ -1089,15 +1074,7 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
 
 $.StatusForm = function(input){
     $input = $(input);
-    // remove any existing items from the input
-    var $children = $input.children();
-    for (var i = 0, n = $children.size(); i < n; i++){
-            if ($children.eq(i).data('command')){
-                $children.eq(i).data('command')('unbind_all');
-            }
-    }
-    $children.remove();
-    $children = null;
+    $.Util.unbind_all_children($input);
 
     // make our div that everything will hang off
     var $form = $('<div class="STATUS_FORM"></div>');
