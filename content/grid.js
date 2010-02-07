@@ -483,7 +483,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
         total_rows = $main.find('tr').size();
         total_cols = $main.find('tr').eq(0).children().size();
         $main.mousedown(click_main);
-        $scroll_div.scroll(scroll);
+        $grid_main.scroll(scroll);
         $side.mousedown(click_side);
         $input.data('command', command_caller);
     }
@@ -493,7 +493,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
         $input.data('unbind_column_resizers');
         $side.unbind();
         $main.unbind();
-        $scroll_div.unbind();
+        $grid_main.unbind();
         $input.unbind();
     }
 
@@ -506,7 +506,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
         init();
         move();
         // Scroll the table to align with the headers.
-        $scroll_div.scrollLeft($head_div.scrollLeft());
+        $grid_main.scrollLeft($grid_head.scrollLeft());
     }
 
     var custom_commands = {
@@ -544,15 +544,15 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
 
     function scroll(e){
-        var new_left = $scroll_div.scrollLeft();
-        var new_top = $scroll_div.scrollTop();
+        var new_left = $grid_main.scrollLeft();
+        var new_top = $grid_main.scrollTop();
         if (new_left != scroll_left){
             scroll_left = new_left;
-            $head_div.scrollLeft(scroll_left);
+            $grid_head.scrollLeft(scroll_left);
         }
         if (new_top != scroll_top){
             scroll_top = new_top;
-            $side_div.scrollTop(scroll_top);
+            $grid_side.scrollTop(scroll_top);
         }
     }
 
@@ -886,29 +886,29 @@ $.Grid.Movement = function(input, form_data, grid_data){
         var cell_height = util_size.GRID_BODY_H;
         var cell_width = current.$item.outerWidth();
 
-        var scroller_top = $scroll_div.scrollTop();
-        var scroller_left = $scroll_div.scrollLeft();
+        var scroller_top = $grid_main.scrollTop();
+        var scroller_left = $grid_main.scrollLeft();
         var s = util_size.SCROLLBAR_WIDTH;
 
-        var scroller_height = $scroll_div.innerHeight();
+        var scroller_height = $grid_main.innerHeight();
         if (!$.browser.Safari && current.scrollbar_bottom){
             scroller_height -= s;
         }
-        var scroller_width = $scroll_div.innerWidth();
+        var scroller_width = $grid_main.innerWidth();
         if (!$.browser.Safari && current.scrollbar_side){
             scroller_width -= s;
         }
 
         if (cell_top < 0){
-            $scroll_div.scrollTop(scroller_top + cell_top);
+            $grid_main.scrollTop(scroller_top + cell_top);
         } else if (cell_top > scroller_height - cell_height){
-            $scroll_div.scrollTop(scroller_top + cell_top - scroller_height + cell_height);
+            $grid_main.scrollTop(scroller_top + cell_top - scroller_height + cell_height);
         }
 
         if (cell_left < 0){
-            $scroll_div.scrollLeft(scroller_left + cell_left);
+            $grid_main.scrollLeft(scroller_left + cell_left);
         } else if (cell_left > scroller_width - cell_width && cell_left !== 0){
-            $scroll_div.scrollLeft(scroller_left + cell_left - scroller_width + cell_width);
+            $grid_main.scrollLeft(scroller_left + cell_left - scroller_width + cell_width);
         }
     }
 
@@ -1170,10 +1170,10 @@ $.Grid.Movement = function(input, form_data, grid_data){
     function find_elements(){
         $main = $input.find('div.scroller-main table');
         $head = $input.find('div.scroller-head table');
-        $head_div = $input.find('div.scroller-head');
+        $grid_head = $input.find('div.scroller-head');
         $side = $input.find('div.scroller-side table');
-        $side_div = $input.find('div.scroller-side');
-        $scroll_div = $input.find('div.scroller-main');
+        $grid_side = $input.find('div.scroller-side');
+        $grid_main = $input.find('div.scroller-main');
     }
 
     // useful objects
@@ -1181,9 +1181,9 @@ $.Grid.Movement = function(input, form_data, grid_data){
     var $main;
     var $head;
     var $side;
-    var $scroll_div;
-    var $head_div;
-    var $side_div;
+    var $grid_main;
+    var $grid_head;
+    var $grid_side;
 
     var scroll_left = 0;
     var scroll_top = 0;
