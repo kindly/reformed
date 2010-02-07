@@ -1222,37 +1222,33 @@ $.Grid.Movement = function(input, form_data, grid_data){
 
 $.Grid.Build = function(input, form_data, grid_data, paging_data, build_new){
 
-    var $side;
-    var $head;
-    var $main;
-    var $foot;
-    var $input = $(input);
-
     function create(){
         $input.empty();
         var $div = $('<div class="scroller"></div>');
 
-        $title = $(title());
+        var $title = $(title());
         $div.append($title);
 
-        $head = $(header());
+        var $head = $(header());
         $div.append($head);
 
         var rows = build_rows();
 
-        $side = $('<div class="scroller-side">' + rows.selectors + '</div>');
+        var $side = $('<div class="scroller-side">' + rows.selectors + '</div>');
         $div.append($side);
 
-        $main = $('<div class="scroller-main">' + rows.body + '</div>');
+        var $main = $('<div class="scroller-main">' + rows.body + '</div>');
         $div.append($main);
 
-        $foot = $(foot());
+        var $foot = $(foot());
         $div.append($foot);
 
         $div.append('<div class="scroller-resizer"></div>');
         $div.append('<div class="scroller-loader">Loading ...</div>');
 
         $input.append($div);
+
+        $input.data('build', add_new_row);
     }
 
     function replace_table(){
@@ -1348,7 +1344,7 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data, build_new){
             if (row_data && row_data[item.name] !== null){
                 value = row_data[item.name];
             } else {
-                if (item.params && item.params['default']){
+                if (item.params['default']){
                     value = item.params['default'];
                 } else {
                     value = null;
@@ -1371,7 +1367,7 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data, build_new){
                 value = '&nbsp;';
             }
 
-            if (item.params && item.params.control == 'dropdown'){
+            if (item.params.control == 'dropdown'){
                 if (value === null){
                     html.push('<td class="null complex"><div class="but_dd"/><div class="data">[NULL]</div></td>');
                 } else {
@@ -1400,10 +1396,12 @@ $.Grid.Build = function(input, form_data, grid_data, paging_data, build_new){
         }
     }
 
+    var $input = $(input);
+
     var HTML_Encode = $.Util.HTML_Encode;
     var num_fields = form_data.fields.length;
+
     if (build_new){
-        $input.data('build', add_new_row);
         create();
     } else {
         console_log('replace');
