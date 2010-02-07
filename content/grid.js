@@ -687,7 +687,7 @@ $.Grid.SIDE_COLUMN_WIDTH = 50;
 
 $.Grid.Movement = function($form, form_data, grid_data){
 
-    function init(){
+    function init_movement(){
         find_elements();
         row = 0;
         col = 0;
@@ -714,7 +714,7 @@ $.Grid.Movement = function($form, form_data, grid_data){
 
     function update_grid_data(data){
         grid_data = data;
-        init();
+        init_movement();
         move();
         // Scroll the table to align with the headers.
         $grid_main.scrollLeft($grid_head.scrollLeft());
@@ -1427,7 +1427,7 @@ $.Grid.Movement = function($form, form_data, grid_data){
     var util = $.Util;
     var util_size = $.Util.Size;
 
-    init();
+    init_movement();
 
 };
 
