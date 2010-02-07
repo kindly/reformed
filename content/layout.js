@@ -205,7 +205,7 @@ $.LayoutManager = function () {
     
 
     var util_size = $.Util.Size;
-    var position = $.Util.Position;
+    var position = $.Util.position_absolute;
     var $main;
     var $side;
     var $logo;
