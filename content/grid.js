@@ -332,8 +332,10 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     function update_grid(data){
         // The table data has been changed.
         $form.data('command')('blur');
+
+        grid_data = data.grid_data;
         // Update the grid.
-        $.Grid.Build($form, form_data, data.grid_data, data.paging_data, false);
+        build_grid(false);
         // hide the loader
         find_grid_elements();
      //   resize_table(true);
@@ -370,7 +372,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             $form.data('form_string', form_string);
             $input.append($form);
             // Create the table.
-            $.Grid.Build($form, form_data, grid_data, paging_data, true);
+            build_grid(true);
             find_grid_elements();
             get_column_widths();
             add_functionality();
@@ -429,7 +431,216 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     }
 
 
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//  BUILD FUNCTIONS
+//
+//
+//
+//
+    function create(){
+        $form.empty();
+        var $div = $('<div class="scroller"></div>');
 
+        var $title = $(title());
+        $div.append($title);
+
+        var $head = $(header());
+        $div.append($head);
+
+        var rows = build_rows();
+
+        var $side = $('<div class="scroller-side">' + rows.selectors + '</div>');
+        $div.append($side);
+
+        var $main = $('<div class="scroller-main">' + rows.body + '</div>');
+        $div.append($main);
+
+        var $foot = $(foot());
+        $div.append($foot);
+
+        $div.append('<div class="scroller-resizer"></div>');
+        $div.append('<div class="scroller-loader">Loading ...</div>');
+
+        $form.append($div);
+
+        $form.data('build', add_new_row);
+    }
+
+    function replace_table(){
+        // Replace the existing grid with new data.
+        var $main_table = $form.find('div.scroller-main table');
+        var $side_table = $form.find('div.scroller-side table');
+
+        var rows = build_rows();
+        var $body = $(rows.body);
+        var $selectors = $(rows.selectors);
+
+        // Get table and column widths;
+        var column_widths = $form.data('column_widths');
+        var table_width = 0;
+        for (var i = 0, n = column_widths.length; i < n; i++){
+            table_width += column_widths[i];
+        }
+
+        // Resize table.
+        $body.css('width', table_width);
+        $body.css({"table-layout" : "fixed"});
+        // Resize columns.
+        var $main_cols = $body.find('tr').eq(0).find('td');
+        for (i = 0, n = column_widths.length; i < n; i++){
+            $main_cols.eq(i).css('width', column_widths[i]);
+        }
+
+        $main_table.replaceWith($body);
+        $side_table.replaceWith($selectors);
+    }
+
+    function header(){
+        var html = [];
+        html.push('<div class="scroller-head"><table class="t_grid">');
+        html.push('<thead><tr>');
+
+        for (var i = 0; i < num_fields; i++){
+            html.push('<th><div class="t_header">');
+            html.push(form_data.fields[i].title);
+            html.push('</div></th>');
+        }
+        html.push('</tr></thead>');
+        html.push('</table></div>');
+        return html.join('');
+    }
+
+    function title(){
+        return '<div class="scroller-title">' + form_data.params.title + '</div>';
+    }
+
+    function foot(){
+        var html = '<div class="scroller-foot">';
+        html += '<span class="paging">';
+        if (paging_data){
+            html += $.Util.paging_bar(paging_data);
+        }
+        html += '</span>';
+        html += '<a href="#" onclick="grid_add_row();return false;">add new</a>';
+        html += '</div>';
+        return html;
+    }
+
+    function build_rows(){
+        var body_html = [];
+        var selectors_html = [];
+
+        body_html.push('<table class="t_grid">');
+        body_html.push('<tbody>');
+
+        selectors_html.push('<table class="t_grid">');
+        selectors_html.push('<tbody>');
+
+        for (var i = 0, n = grid_data.length; i < n ; i++){
+            body_html.push(row(grid_data[i], i));
+            selectors_html.push('<tr><td>' + (i + paging_data.offset) + '</td></tr>');
+        }
+        body_html.push('</tbody>');
+        body_html.push('</table>');
+
+        selectors_html.push('</tbody>');
+        selectors_html.push('</table>');
+
+        return {body : body_html.join(''),
+                selectors : selectors_html.join('')};
+    }
+
+    function row(row_data, row_number){
+        var html = [];
+        var item, value;
+        html.push('<tr class="form_body">');
+        for (var i = 0; i < num_fields; i++){
+            item = form_data.fields[i];
+            if (row_data && row_data[item.name] !== null){
+                value = row_data[item.name];
+            } else {
+                if (item.params['default']){
+                    value = item.params['default'];
+                } else {
+                    value = null;
+                }
+            }
+            // correct data value if needed
+            switch (item.type){
+                case 'DateTime':
+                case 'Date':
+                    if (value !== null){
+                        value = Date.ISO(value).makeLocaleString();
+                    }
+                    break;
+                default:
+                    value = HTML_Encode(value);
+            }
+            // make sure we add &nbsp; to make cell show
+            // FIXME can we do this via css better?
+            if (value === ''){
+                value = '&nbsp;';
+            }
+
+            if (item.params.control == 'dropdown'){
+                if (value === null){
+                    html.push('<td class="null complex"><div class="but_dd"/><div class="data">[NULL]</div></td>');
+                } else {
+                    html.push('<td class="complex"><div class="but_dd"/><div class="data">' + value + '</div></td>');
+                }
+            }
+            else {
+                if (value === null){
+                    html.push('<td class="null">[NULL]</td>');
+                } else {
+                    html.push('<td>' + value + '</td>');
+                }
+            }
+        }
+        html.push('</tr>');
+        return html.join('');
+    }
+
+    function add_new_row(data){
+        var new_row = grid_data.length;
+        grid_data[new_row] = {};
+        $form.find('div.scroller-main table').append(row());
+        $form.find('div.scroller-side table').append('<tr><td>' + new_row + '</td></tr>');
+        if (new_row === 0){
+            $form.data('resize_table')();
+        }
+    }
+
+    function build_grid(build_new){
+
+        if (build_new){
+            create();
+        } else {
+            replace_table();
+        }
+    }
+
+
+    var HTML_Encode = $.Util.HTML_Encode;
+    var num_fields = form_data.fields.length;
+//
+//
+//
+//
+//
+//
+//
+//
     var $input = $(input);
     var $form;
 
@@ -1221,192 +1432,6 @@ $.Grid.Movement = function(input, form_data, grid_data){
 };
 
 $.Grid.Build = function(input, form_data, grid_data, paging_data, build_new){
-
-    function create(){
-        $input.empty();
-        var $div = $('<div class="scroller"></div>');
-
-        var $title = $(title());
-        $div.append($title);
-
-        var $head = $(header());
-        $div.append($head);
-
-        var rows = build_rows();
-
-        var $side = $('<div class="scroller-side">' + rows.selectors + '</div>');
-        $div.append($side);
-
-        var $main = $('<div class="scroller-main">' + rows.body + '</div>');
-        $div.append($main);
-
-        var $foot = $(foot());
-        $div.append($foot);
-
-        $div.append('<div class="scroller-resizer"></div>');
-        $div.append('<div class="scroller-loader">Loading ...</div>');
-
-        $input.append($div);
-
-        $input.data('build', add_new_row);
-    }
-
-    function replace_table(){
-        // Replace the existing grid with new data.
-        var $main_table = $input.find('div.scroller-main table');
-        var $side_table = $input.find('div.scroller-side table');
-
-        var rows = build_rows();
-        var $body = $(rows.body);
-        var $selectors = $(rows.selectors);
-
-        // Get table and column widths;
-        var column_widths = $input.data('column_widths');
-        var table_width = 0;
-        for (var i = 0, n = column_widths.length; i < n; i++){
-            table_width += column_widths[i];
-        }
-
-        // Resize table.
-        $body.css('width', table_width);
-        $body.css({"table-layout" : "fixed"});
-        // Resize columns.
-        var $main_cols = $body.find('tr').eq(0).find('td');
-        for (i = 0, n = column_widths.length; i < n; i++){
-            $main_cols.eq(i).css('width', column_widths[i]);
-        }
-
-        $main_table.replaceWith($body);
-        $side_table.replaceWith($selectors);
-    }
-
-    function header(){
-        var html = [];
-        html.push('<div class="scroller-head"><table class="t_grid">');
-        html.push('<thead><tr>');
-
-        for (var i = 0; i < num_fields; i++){
-            html.push('<th><div class="t_header">');
-            html.push(form_data.fields[i].title);
-            html.push('</div></th>');
-        }
-        html.push('</tr></thead>');
-        html.push('</table></div>');
-        return html.join('');
-    }
-
-    function title(){
-        return '<div class="scroller-title">' + form_data.params.title + '</div>';
-    }
-
-    function foot(){
-        var html = '<div class="scroller-foot">';
-        html += '<span class="paging">';
-        if (paging_data){
-            html += $.Util.paging_bar(paging_data);
-        }
-        html += '</span>';
-        html += '<a href="#" onclick="grid_add_row();return false;">add new</a>';
-        html += '</div>';
-        return html;
-    }
-
-    function build_rows(){
-        var body_html = [];
-        var selectors_html = [];
-
-        body_html.push('<table class="t_grid">');
-        body_html.push('<tbody>');
-
-        selectors_html.push('<table class="t_grid">');
-        selectors_html.push('<tbody>');
-
-        for (var i = 0, n = grid_data.length; i < n ; i++){
-            body_html.push(row(grid_data[i], i));
-            selectors_html.push('<tr><td>' + (i + paging_data.offset) + '</td></tr>');
-        }
-        body_html.push('</tbody>');
-        body_html.push('</table>');
-
-        selectors_html.push('</tbody>');
-        selectors_html.push('</table>');
-
-        return {body : body_html.join(''),
-                selectors : selectors_html.join('')};
-    }
-
-    function row(row_data, row_number){
-        var html = [];
-        var item, value;
-        html.push('<tr class="form_body">');
-        for (var i = 0; i < num_fields; i++){
-            item = form_data.fields[i];
-            if (row_data && row_data[item.name] !== null){
-                value = row_data[item.name];
-            } else {
-                if (item.params['default']){
-                    value = item.params['default'];
-                } else {
-                    value = null;
-                }
-            }
-            // correct data value if needed
-            switch (item.type){
-                case 'DateTime':
-                case 'Date':
-                    if (value !== null){
-                        value = Date.ISO(value).makeLocaleString();
-                    }
-                    break;
-                default:
-                    value = HTML_Encode(value);
-            }
-            // make sure we add &nbsp; to make cell show
-            // FIXME can we do this via css better?
-            if (value === ''){
-                value = '&nbsp;';
-            }
-
-            if (item.params.control == 'dropdown'){
-                if (value === null){
-                    html.push('<td class="null complex"><div class="but_dd"/><div class="data">[NULL]</div></td>');
-                } else {
-                    html.push('<td class="complex"><div class="but_dd"/><div class="data">' + value + '</div></td>');
-                }
-            }
-            else {
-                if (value === null){
-                    html.push('<td class="null">[NULL]</td>');
-                } else {
-                    html.push('<td>' + value + '</td>');
-                }
-            }
-        }
-        html.push('</tr>');
-        return html.join('');
-    }
-
-    function add_new_row(data){
-        var new_row = grid_data.length;
-        grid_data[new_row] = {};
-        $input.find('div.scroller-main table').append(row());
-        $input.find('div.scroller-side table').append('<tr><td>' + new_row + '</td></tr>');
-        if (new_row === 0){
-            $input.data('resize_table')();
-        }
-    }
-
-    var $input = $(input);
-
-    var HTML_Encode = $.Util.HTML_Encode;
-    var num_fields = form_data.fields.length;
-
-    if (build_new){
-        create();
-    } else {
-        console_log('replace');
-        replace_table();
-    }
 };
 
 
