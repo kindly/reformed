@@ -252,6 +252,17 @@ $.Util.clean_value = function (value, field){
 
 };
 
+$.Util.unbind_all_children = function ($div){
+    // remove any existing items from the give div
+    var $children = $div.children();
+    for (var i = 0, n = $children.size(); i < n; i++){
+            if ($children.eq(i).data('command')){
+                $children.eq(i).data('command')('unbind_all');
+            }
+    }
+    $children.remove();
+    $children = null;
+};
 
 $.Util.paging_bar = function (data){
 
