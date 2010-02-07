@@ -447,14 +447,14 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 //
 //
 //
-    function create(){
+    function build_create(){
         $form.empty();
         var $div = $('<div class="scroller"></div>');
 
-        var $title = $(title());
+        var $title = $(build_title());
         $div.append($title);
 
-        var $head = $(header());
+        var $head = $(build_header());
         $div.append($head);
 
         var rows = build_rows();
@@ -465,7 +465,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         var $main = $('<div class="scroller-main">' + rows.body + '</div>');
         $div.append($main);
 
-        var $foot = $(foot());
+        var $foot = $(build_foot());
         $div.append($foot);
 
         $div.append('<div class="scroller-resizer"></div>');
@@ -473,10 +473,10 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 
         $form.append($div);
 
-        $form.data('build', add_new_row);
+        $form.data('build', build_add_new_row);
     }
 
-    function replace_table(){
+    function build_replace_table(){
         // Replace the existing grid with new data.
         var $main_table = $form.find('div.scroller-main table');
         var $side_table = $form.find('div.scroller-side table');
@@ -505,7 +505,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         $side_table.replaceWith($selectors);
     }
 
-    function header(){
+    function build_header(){
         var html = [];
         html.push('<div class="scroller-head"><table class="t_grid">');
         html.push('<thead><tr>');
@@ -520,11 +520,11 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         return html.join('');
     }
 
-    function title(){
+    function build_title(){
         return '<div class="scroller-title">' + form_data.params.title + '</div>';
     }
 
-    function foot(){
+    function build_foot(){
         var html = '<div class="scroller-foot">';
         html += '<span class="paging">';
         if (paging_data){
@@ -547,7 +547,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         selectors_html.push('<tbody>');
 
         for (var i = 0, n = grid_data.length; i < n ; i++){
-            body_html.push(row(grid_data[i], i));
+            body_html.push(build_row(grid_data[i], i));
             selectors_html.push('<tr><td>' + (i + paging_data.offset) + '</td></tr>');
         }
         body_html.push('</tbody>');
@@ -560,7 +560,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
                 selectors : selectors_html.join('')};
     }
 
-    function row(row_data, row_number){
+    function build_row(row_data, row_number){
         var html = [];
         var item, value;
         html.push('<tr class="form_body">');
@@ -611,7 +611,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         return html.join('');
     }
 
-    function add_new_row(data){
+    function build_add_new_row(data){
         var new_row = grid_data.length;
         grid_data[new_row] = {};
         $form.find('div.scroller-main table').append(row());
@@ -624,9 +624,9 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     function build_grid(build_new){
 
         if (build_new){
-            create();
+            build_create();
         } else {
-            replace_table();
+            build_replace_table();
         }
     }
 
