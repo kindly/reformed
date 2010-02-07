@@ -201,6 +201,8 @@ $.Grid = function(input, form_data, grid_data, paging_data){
                 column_widths[i] = column_widths_header[i];
             }
         }
+        // set the last_column_user_width
+        last_column_user_width = column_widths[--i];
     }
 
     function resize_grid(){
@@ -375,7 +377,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             build_grid(true);
             find_grid_elements();
             get_column_widths();
-            add_functionality();
+            add_grid_functionality();
         }
     }
 
@@ -398,7 +400,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             $header_resizers[i].unbind();
         }
     }
-    function add_functionality(){
+    function add_grid_functionality(){
         // add resizers
         var headers = $head.find('th');
         var $current;
@@ -640,7 +642,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     var drag_col;
     var current;  // place to store current selection info for column resizing
     var column_widths = [];
-    var last_column_user_width = 100; // FIXME make  this better
+    var last_column_user_width;
     var column_widths_main = [];
     var column_widths_header = [];
 
