@@ -685,7 +685,7 @@ $.Grid.MIN_GRID_HEIGHT = 50;
 $.Grid.MIN_GRID_WIDTH = 100;
 $.Grid.SIDE_COLUMN_WIDTH = 50;
 
-$.Grid.Movement = function(input, form_data, grid_data){
+$.Grid.Movement = function($form, form_data, grid_data){
 
     function init(){
         find_elements();
@@ -696,20 +696,20 @@ $.Grid.Movement = function(input, form_data, grid_data){
         $main.mousedown(click_main);
         $grid_main.scroll(scroll);
         $side.mousedown(click_side);
-        $input.data('command', command_caller);
+        $form.data('command', command_caller);
     }
 
     function unbind_all(){
         console_log('unbind');
-        $input.data('unbind_column_resizers');
+        $form.data('unbind_column_resizers');
         $side.unbind();
         $main.unbind();
         $grid_main.unbind();
-        $input.unbind();
+        $form.unbind();
     }
 
     function add_row(){
-        $input.data('build')('add_row');
+        $form.data('build')('add_row');
     }
 
     function update_grid_data(data){
@@ -796,8 +796,8 @@ $.Grid.Movement = function(input, form_data, grid_data){
             } else if ($item.hasClass('but_dd')){
                 $item = $item.parent();
                 fn_finalise = function(){
-                    var $input = $item.find('input');
-                    $input.trigger('dropdown');
+                    var $form = $item.find('input');
+                    $form.trigger('dropdown');
                 };
             }
         }
@@ -942,7 +942,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
             }
         }
         if (counter !==0 ){
-            get_node_return(form_data.node, '_save', out, $input, full_copy_data);
+            get_node_return(form_data.node, '_save', out, $form, full_copy_data);
         }
     }
 
@@ -1217,7 +1217,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
     }
 
     function move_parent(event_type){
-        var $parent = $input.parent();
+        var $parent = $form.parent();
         if ($parent.hasClass('SUBFORM')){
             // is a subform
             var $new_item = $parent.parent().parent();
@@ -1233,7 +1233,7 @@ $.Grid.Movement = function(input, form_data, grid_data){
             } else if (event_type == 'field_down'){
                 event_type = 'field_top';
             }
-            $input.data('command')(event_type, {edit_mode: current_edit_mode});
+            $form.data('command')(event_type, {edit_mode: current_edit_mode});
         }
     }
 
@@ -1379,16 +1379,16 @@ $.Grid.Movement = function(input, form_data, grid_data){
     }
 
     function find_elements(){
-        $main = $input.find('div.scroller-main table');
-        $head = $input.find('div.scroller-head table');
-        $grid_head = $input.find('div.scroller-head');
-        $side = $input.find('div.scroller-side table');
-        $grid_side = $input.find('div.scroller-side');
-        $grid_main = $input.find('div.scroller-main');
+        $main = $form.find('div.scroller-main table');
+        $head = $form.find('div.scroller-head table');
+        $grid_head = $form.find('div.scroller-head');
+        $side = $form.find('div.scroller-side table');
+        $grid_side = $form.find('div.scroller-side');
+        $grid_main = $form.find('div.scroller-main');
     }
 
     // useful objects
-    var $input = $(input);
+//    var $input = $(input);
     var $main;
     var $head;
     var $side;
