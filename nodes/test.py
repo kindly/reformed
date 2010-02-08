@@ -89,7 +89,7 @@ class DataLoader(TableNode):
 
         elif self.command == 'refresh':
             jobId = self.data.get('id')
-            data = node.create_form_data(self.fields)
+            data = self.create_form_data(self.fields)
             data['jobId'] = jobId
             data['status'] = self.get_status(jobId)
             self.out = data
@@ -243,7 +243,7 @@ class Search(TableNode):
                            'n:test.%s:view:__id=%s|View' % (table_name,
                                                            row['id'])                                                  ]
 
-        out = node.create_form_data(self.list_fields, self.list_params, data)
+        out = self.create_form_data(self.list_fields, self.list_params, data)
 
         # add the paging info
         out['paging'] = {'row_count' : results['__count'],
@@ -278,7 +278,7 @@ class Login(Node):
                 self.action = 'general_error'
                 self.out = 'wrong guess'
         else:
-            data = node.create_form_data(self.fields, self.form_params)
+            data = self.create_form_data(self.fields, self.form_params)
             self.action = 'form'
             self.out = data
 
@@ -314,10 +314,10 @@ class Sponsorship(Node):
             data = {'html': 'person %s, donkey %s' % (vdata['person'], vdata['donkey'])}
             self.action = 'html'
         elif vdata['person']:
-            data = node.create_form_data(fields2, data=vdata)
+            data = self.create_form_data(fields2, data=vdata)
             self.action = 'form'
         else:
-            data = node.create_form_data(fields, data=vdata)
+            data = self.create_form_data(fields, data=vdata)
             self.action = 'form'
         self.out = data
 

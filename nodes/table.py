@@ -232,7 +232,7 @@ class Table(node.TableNode):
                              'id' : table.table_id,
                              'summary': table.summary,
                              'edit' : edit})
-        data = node.create_form_data(self.list_fields, self.list_params, data)
+        data = self.create_form_data(self.list_fields, self.list_params, data)
         self.action = 'form'
         self.out = data
 
@@ -270,7 +270,7 @@ class Table(node.TableNode):
         form_params = self.form_params.copy()
         form_params['extras'] = {'table' : table_id}
 
-        data = node.create_form_data(self.fields, form_params, table_data)
+        data = self.create_form_data(self.fields, form_params, table_data)
         self.action = 'form'
         self.out = data
 
@@ -319,7 +319,7 @@ class Edit(node.TableNode):
 
         obj = r[self.table_id]
         results = r.search(obj.name, limit=limit, offset=offset, count=True)
-        data = node.create_form_data(self.fields, self.form_params, results['data'])
+        data = self.create_form_data(self.fields, self.form_params, results['data'])
 
         # add the paging info
         data['paging'] = {'row_count' : results['__count'],
