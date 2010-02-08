@@ -268,7 +268,7 @@ class Login(Node):
         ['password', validators.UnicodeString]
     ]
     def call(self):
-        vdata = node.validate_data_full(self.data, self.validations)
+        vdata = self.validate_data_full(self.data, self.validations)
         if vdata['name'] and vdata['password']:
             where = "name='%s' and password='%s'" % (vdata['name'], vdata['password'])
             try:
@@ -308,7 +308,7 @@ class Sponsorship(Node):
             ['person', validators.Int],
             ['donkey', validators.Int]
         ]
-        vdata = node.validate_data_full(self.data, validations)
+        vdata = self.validate_data_full(self.data, validations)
 
         if vdata['donkey'] and  vdata['person']:
             data = {'html': 'person %s, donkey %s' % (vdata['person'], vdata['donkey'])}

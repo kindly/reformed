@@ -132,7 +132,7 @@ class Node(object):
     def create_form_data(self, fields, params=None, data=None, read_only=False):
         out = {
             "form": {
-                "fields":create_fields(fields)
+                "fields":self.create_fields(fields)
             },
             "type": "form",
         }
@@ -145,6 +145,31 @@ class Node(object):
                 out['form']['params'] = {}
             out['form']['params']['read_only'] = True
         return out
+
+    def create_fields(self, fields_list):
+
+        fields = []
+        for field in fields_list:
+            row = {}
+            row['name'] = field[0]
+            row['type'] = field[1]
+            row['title'] = field[2]
+            if len(field) > 3:
+                row['params'] = field[3]
+            fields.append(row)
+        return fields
+
+    def validate_data(self, data, field, validator):
+        try:
+            return validator().to_python(data.get(field))
+        except:
+            return None
+
+    def validate_data_full(self, data, validators):
+        validated_data = {}
+        for (field, validator) in validators:
+            validated_data[field] = self.validate_data(data, field, validator)
+        return validated_data
 
     def finish_node_processing(self):
 
@@ -615,30 +640,6 @@ class AutoForm(TableNode):
                 fields.append([field, 'Text', '%s:' % field])
         self.__class__.fields = fields
 
-def create_fields(fields_list):
-
-    fields = []
-    for field in fields_list:
-        row = {}
-        row['name'] = field[0]
-        row['type'] = field[1]
-        row['title'] = field[2]
-        if len(field) > 3:
-            row['params'] = field[3]
-        fields.append(row)
-    return fields
-
-def validate_data(data, field, validator):
-    try:
-        return validator().to_python(data.get(field))
-    except:
-        return None
-
-def validate_data_full(data, validators):
-    validated_data = {}
-    for (field, validator) in validators:
-        validated_data[field] = validate_data(data, field, validator)
-    return validated_data
 
 
 
