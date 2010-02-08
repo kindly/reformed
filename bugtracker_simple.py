@@ -34,7 +34,8 @@ entity('ticket', d,
        Created("created_date"), 
        CreatedBy("created_by"),
 
-       title_field = "title"
+       title_field = "title",
+       summary_fields = "summary"
 )
 
 table("comment", d, ## notes for each user
