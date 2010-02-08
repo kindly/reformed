@@ -1,11 +1,4 @@
-import formencode as fe
-from formencode import validators
-import node
-from node import TableNode, Node, AutoForm
-from .reformed.reformed import reformed as r
-import sqlalchemy as sa
-from global_session import global_session
-from .reformed import reformed as table_functions
+from node import TableNode
 
 class Ticket(TableNode):
 
@@ -15,7 +8,7 @@ class Ticket(TableNode):
 
     fields = [
         ['title', 'Text', 'title:'],
-        ['accepted', 'Boolean', 'accepted:', {"dropdown" : True, "autocomplete" : ["true", "false"]}],
+        ['accepted', 'Boolean', 'accepted:', {"control" : "dropdown", "autocomplete" : ["true", "false"]}],
         ['complete_by', 'Date', 'complete by:'],
         ['summary', 'Text', 'summary:', {"control" : "textarea", "css" : "large"}],
         ['button', 'submit', 'add ticket', {'control' : 'button', 'action': '_save', 'node': 'bug.Ticket'}]

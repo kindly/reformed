@@ -423,10 +423,16 @@ var fn = function(packet, job){
          $.address.title(title);
      }
 
+     var bookmark = packet.data.bookmark;
+     if (bookmark){
+        bookmark_add(bookmark);
+        bookmark_display();
+     }
+
     var data;
      switch (packet.data.action){
          case 'update_bookmarks':
-            var bookmark = packet.data.data;
+            bookmark = packet.data.data;
             if (bookmark){
                 if ($.isArray(bookmark)){
                     for (i = 0; i < bookmark.length; i++){
