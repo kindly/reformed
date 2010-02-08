@@ -118,7 +118,7 @@ class Node(object):
             result["title"] = self.title
         except custom_exceptions.SingleResultError:
             result = {"__table": "bookmarks",
-                      "entity_id": id,
+                      "entity_id": self.bookmark["entity_id"],
                       "user_id": user,
                       "bookmark": self.bookmark["bookmark_string"],
                       "title": self.title,
@@ -452,7 +452,8 @@ class TableNode(Node):
 
         self.bookmark = dict(
             table_name = r.reformed[data_out.get("__table")].name,
-            bookmark_string = self.build_node('', 'view', 'id=%s' %  id)
+            bookmark_string = self.build_node('', 'view', 'id=%s' %  id),
+            entity_id = id
         )
 
 

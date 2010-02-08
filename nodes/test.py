@@ -360,8 +360,6 @@ class Bookmark(Node):
 
         user = global_session.session['user_id']
 
-        print "here" * 20
-
         bookmarks = r.search("bookmarks",
                                       "user_id = ?",
                                       values = [user],
