@@ -40,7 +40,6 @@ class Node(object):
         self.next_node = None
         self.next_data = None
         self.extra_data = {}
-        self.get_bookmarks = data.get("get_bookmarks", False)
         self.allowed = self.check_permissions()
 
         self.last_node = data.get('lastnode')
@@ -107,6 +106,33 @@ class Node(object):
         except:
             value = default
         return value
+
+    def update_bookmarks(self):
+
+        user = global_session.session['user_id']
+        try:
+            result = r.reformed.search_single("bookmarks",
+                                              "user_id = ? and bookmark = ?",
+                                              values = [user, self.bookmark["bookmark_string"]])
+            result["accessed_date"] = util.convert_value(datetime.datetime.now())
+            result["title"] = self.title
+        except custom_exceptions.SingleResultError:
+            result = {"__table": "bookmarks",
+                      "entity_id": id,
+                      "user_id": user,
+                      "bookmark": self.bookmark["bookmark_string"],
+                      "title": self.title,
+                      "entity_table": self.bookmark["table_name"],
+                      "accessed_date": util.convert_value(datetime.datetime.now())}
+
+        util.load_local_data(r.reformed, result)
+
+        self.bookmark = result
+
+    def finish_node_processing(self):
+
+        if self.bookmark:
+            self.update_bookmarks()
 
     def initialise(self):
         """called first when the node is used"""
@@ -424,34 +450,10 @@ class TableNode(Node):
         self.out = data
         self.action = 'form'
 
-
-        table_name = r.reformed[data_out.get("__table")].name
-        node = self.build_node('', 'view', 'id=%s' %  id)
-        user = global_session.session['user_id'] 
-
-        try:
-            result = r.reformed.search_single("bookmarks", "user_id = ? and bookmark = ?", values = [user, node])
-            result["accessed_date"] = util.convert_value(datetime.datetime.now())
-            result["title"] = self.title
-        except custom_exceptions.SingleResultError:
-            result = {"__table": "bookmarks",
-                      "entity_id": id,
-                      "user_id": user,
-                      "bookmark": node,
-                      "title": self.title,
-                      "entity_table": table_name,
-                      "accessed_date": util.convert_value(datetime.datetime.now())}
-
-        util.load_local_data(r.reformed, result)
-
-        if self.get_bookmarks: 
-            self.bookmark = r.reformed.search("bookmarks", 
-                                              "user_id = ?",
-                                              values = [user], 
-                                              order_by = "accessed_date",
-                                              limit = 10)["data"]
-        else:
-            self.bookmark = result
+        self.bookmark = dict(
+            table_name = r.reformed[data_out.get("__table")].name,
+            bookmark_string = self.build_node('', 'view', 'id=%s' %  id)
+        )
 
 
 

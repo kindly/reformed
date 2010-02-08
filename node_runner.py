@@ -74,6 +74,7 @@ def run(node_name, data, last_node = None):
             x.initialise()
             x.call()
             x.finalise()
+            x.finish_node_processing()
             if x.next_node:
                 return run(x.next_node, x.next_data, node_name)
             else:

@@ -354,4 +354,20 @@ class AutoFormPlus(TableNode):
                              "title" : obj.name
                             }
 
+class Bookmark(Node):
+
+    def call(self):
+
+        user = global_session.session['user_id']
+
+        print "here" * 20
+
+        bookmarks = r.search("bookmarks",
+                                      "user_id = ?",
+                                      values = [user],
+                                      order_by = "accessed_date",
+                                      limit = 10)["data"]
+        self.action = "update_bookmarks"
+        self.out = bookmarks
+
 

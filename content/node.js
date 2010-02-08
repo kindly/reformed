@@ -29,6 +29,7 @@ $(document).ready(init);
 
 function init(){
 
+    node_call_from_string('n:test.Bookmark:');
     $.address.change(page_load);
 }
 
@@ -145,10 +146,6 @@ function get_node(node_name, node_command, node_data, change_state){
 
     if (node_data){
         info.data = node_data;
-    }
-
-    if (bookmark_array.length === 0){
-        info.get_bookmarks = true
     }
 
     $JOB.add(info, {}, 'node', true);
@@ -426,19 +423,22 @@ var fn = function(packet, job){
          $.address.title(title);
      }
 
-    var bookmark = packet.data.bookmark;
-    if (bookmark){
-        if ($.isArray(bookmark)){
-            for (i = 0; i < bookmark.length; i++){
-               bookmark_add(bookmark[i]);
-            }
-        } else {
-            bookmark_add(bookmark);
-        }
-        bookmark_display();
-    }
     var data;
      switch (packet.data.action){
+         case 'update_bookmarks':
+            var bookmark = packet.data.data;
+            if (bookmark){
+                if ($.isArray(bookmark)){
+                    for (i = 0; i < bookmark.length; i++){
+                       bookmark_add(bookmark[i]);
+                    }
+                } else {
+                    bookmark_add(bookmark);
+                }
+                bookmark_display();
+             }
+
+             break;
          case 'redirect':
              var link = packet.data.link;
              if (link){
