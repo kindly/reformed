@@ -139,7 +139,7 @@ class Table(object):
 
         for field_name in self.field_order:
             field = self.fields[field_name]
-            if field.category == "field":
+            if field.category in ("field", "multi_field", "internal"):
                 self.current_order = self.current_order + 1
                 field.order = self.current_order
             
@@ -543,7 +543,7 @@ class Table(object):
 
     def _persist_extra_field(self, field, session):
 
-        if field.category == "field":
+        if field.category in ("field", "multi_field", "internal"):
             self.current_order = self.current_order + 1
             field.order = self.current_order
 
@@ -588,7 +588,31 @@ class Table(object):
         result = query.filter(sa_class.id == self.table_id).one()
         return result
 
-    @property    
+    @property
+    def ordered_fields(self):
+
+        fields = []
+
+        for field in self.fields.values():
+            if field.category in ("internal", "multi_field", "field"):
+                fields.append(field)
+
+        def sort_order(a, b):
+            first = a.order or -1
+            second = b.order or -1
+            return first - second
+
+        fields.sort(sort_order)
+
+        return fields
+
+    @property
+    def ordered_user_fields(self):
+
+        return filter(lambda f: f.category.endswith("field"),
+                      self.ordered_fields)
+
+    @property
     def items(self):
         """gathers all columns and relations defined in this table"""
         items = {}

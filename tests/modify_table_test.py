@@ -62,7 +62,7 @@ class test_modify_table_sqlite(object):
         self.Donkey.persist()
 
         for table in self.Donkey.tables.values():
-            assert None not in [field.order for field in table.fields.values() if field.category == "field"]
+            assert None not in [field.order for field in table.fields.values() if field.category.endswith("field")]
 
         self.Donkey.load_from_persist(True)
 
@@ -84,7 +84,7 @@ class test_modify_table_sqlite(object):
                                       "moo02%s" % self.randish))
 
         for table in self.Donkey.tables.values():
-            assert None not in [field.order for field in table.fields.values() if field.category == "field"]
+            assert None not in [field.order for field in table.fields.values() if field.category.endswith("field")]
 
 
         table1 = self.Donkey["moo01%s" % self.randish]
@@ -119,7 +119,7 @@ class test_modify_table_sqlite(object):
         assert hasattr(table1.sa_class(), "moo04%s" % self.randish)
 
         for table in self.Donkey.tables.values():
-            assert None not in [field.order for field in table.fields.values() if field.category == "field"]
+            assert None not in [field.order for field in table.fields.values() if field.category.endswith("field")]
 
 
     def test_3_rename_table(self):
@@ -176,7 +176,7 @@ class test_modify_table_sqlite(object):
 
         table1 = self.Donkey["rename_field"]
         
-        assert set([field.order for field in table1.fields.values() if field.category == "field"]) == set([1,2,3,4])
+        assert set([field.order for field in table1.fields.values() if field.category.endswith("field")]) == set([1,2,3,4])
 
         table1.alter_field("man2", type = "Text", mandatory = True, default = "wee", validation = "Email")
 

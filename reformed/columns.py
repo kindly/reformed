@@ -395,6 +395,8 @@ class Field(object):
             obj.length = int(obj.length)
         obj.many_side_not_null = kw.get("many_side_not_null", True)
         obj.many_side_mandatory = kw.get("many_side_mandatory", False)
+
+        obj.field_type = kw.get("type", None)
         obj.one_way = kw.get("one_way", None)
         return obj
 
@@ -449,16 +451,56 @@ class Field(object):
     @property
     def category(self):
 
-        if self.columns and self.name.startswith("_"):
-            return "internal"
+        if self.column:
+            if self.column.name.startswith("_"):
+                return "internal"
+            else:
+                return "field"
         if self.columns:
-            return "field"
+            return "multi_field"
         if self.relations:
             return "relation"
         if self.constraints:
             return "constraint"
         if self.indexes:
             return "index"
+
+    @property
+    def type(self):
+        if self.field_type:
+            return self.field_type
+        else:
+            return self.__class__.__name__
+
+    @property
+    def column(self):
+        if len(self.columns) == 1:
+            return self.columns.copy().popitem()[1]
+
+    @property
+    def validation_info(self):
+        if not self.column:
+            raise AttributeError("can only get validation info on"
+                                 "fields with one column")
+
+        all_validator = self.table.schema_dict[self.column.name]
+        info = []
+
+        for validator in all_validator.validators:
+            validator_info = {}
+
+            validator_info["type"] = validator.__class__.__name__
+
+            for name, attrib in validator.__dict__.iteritems():
+                if name in ('declarative_count', 'inputEncoding', 'outputEncoding'):
+                    continue
+                if name.startswith("_"):
+                    continue
+                validator_info[name] = attrib
+                
+            info.append(validator_info)
+
+        return info
 
     @property
     def items(self):

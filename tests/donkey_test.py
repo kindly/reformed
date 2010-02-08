@@ -295,7 +295,16 @@ class test_basic_input(test_donkey):
         assert self.jim in [ds for ds in\
                          [a._donkey for a in\
                           self.session.query(self.Donkey.tables["donkey_sponsership"].sa_class).all()]]
-        
+
+    def test_ordered_fields(self):
+
+        print self.Donkey["people"].ordered_fields
+
+        assert [a.order for a in self.Donkey["people"].ordered_fields] == [1, 2, 3, 4, 5, 6, 7, 8]
+
+        print [a.order for a in self.Donkey["people"].ordered_user_fields]
+
+        assert [a.order for a in self.Donkey["people"].ordered_user_fields] == [1, 2, 3, 4]
 
     def test_logged_attribute(self):
 

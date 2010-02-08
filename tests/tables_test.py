@@ -386,7 +386,7 @@ class test_field_type_validation(object):
         self.Donkey = Database("Donkey",
                             Table("people",
                                   Email("name1", length = 10, mandatory = True),
-                                  Money("name2", mandatory = True),
+                                  Money("name2", mandatory = True, type = "new"),
                                   Integer("name3", mandatory = True),
                                   DateTime("name4", mandatory = True),
                                   Boolean("name5", mandatory = True),
@@ -452,6 +452,25 @@ class test_field_type_validation(object):
         person.name7 = "poop@poop.com"
         person.name8 = "pop"
         assert_raises(fe.Invalid, self.session.add, person)
+
+    def test_field_type(self):
+
+        assert self.Donkey["people"].fields["name1"].type == "Email"
+        assert self.Donkey["people"].fields["name2"].type == "new"
+
+    def test_column(self):
+
+        assert self.Donkey["people"].fields["name1"].column.name == "email"
+        assert self.Donkey["people"].fields["name2"].column.name == "name2"
+
+    def test_validation_info(self):
+        print self.Donkey["people"].fields["name1"].validation_info
+        assert self.Donkey["people"].fields["name1"].validation_info == [{'max': 300, 'not_empty': True, 'type': 'UnicodeString'}, {'type': 'Email'}]
+
+        print self.Donkey["people"].fields["name2"].validation_info
+        assert self.Donkey["people"].fields["name2"].validation_info == [{'not_empty': True, 'type': 'Number'}]
+
+
 
 
 if __name__ == '__main__':
