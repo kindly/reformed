@@ -39,6 +39,18 @@ $.fn.extend({
 
 $.Grid = function(input, form_data, grid_data, paging_data){
 
+/*
+       _          _          _          _          _
+     >(')____,  >(')____,  >(')____,  >(')____,  >(') ___,
+       (` =~~/    (` =~~/    (` =~~/    (` =~~/    (` =~~/
+ jgs~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~
+
+            EVENT HANDLERS
+
+*/
+
+    // GRID RESIZING EVENTS
+
     function start_grid_resize(e){
         // begin resizing
         $(document).mousemove(move_grid_resize).mouseup(end_grid_resize);
@@ -51,7 +63,6 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         $(document).unbind('mouseup', end_grid_resize);
         return false;
     }
-
 
     function move_grid_resize(e){
         // resize
@@ -78,6 +89,8 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     }
 
 
+    // COLUMN RESIZING EVENTS
+
     function start_column_resize(e){
         // begin resizing
         $drag_col = $(e.target).parent();
@@ -103,6 +116,9 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             if (new_width < $.Grid.MIN_COLUMN_SIZE){
                 new_width = $.Grid.MIN_COLUMN_SIZE;
             }
+            if (new_width > $.Grid.MAX_COLUMN_WIDTH_HARD){
+                new_width = $.Grid.MAX_COLUMN_WIDTH_HARD;
+            }
             column_widths[drag_col] = new_width;
 
             if (drag_col == column_widths.length - 1){
@@ -116,6 +132,143 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         }
         return false;
     }
+
+
+
+    // EVENTS FOR THE TABLE
+
+
+    function scroll(e){
+        var new_left = $grid_main.scrollLeft();
+        var new_top = $grid_main.scrollTop();
+        if (new_left != scroll_left){
+            scroll_left = new_left;
+            $grid_head.scrollLeft(scroll_left);
+        }
+        if (new_top != scroll_top){
+            scroll_top = new_top;
+            $grid_side.scrollTop(scroll_top);
+        }
+    }
+
+    function click_side(e){
+        // click on the side selector
+        if (!form_in_focus){
+            focus();
+        }
+        var $item = $(e.target);
+        if ($item[0].nodeName == 'TD'){
+            var $row = $item.parent('tr');
+            row = $row.parent().children().index($row);
+            move();
+        }
+        return false;
+    }
+
+    function click_main(e){
+        // click in the main table body
+        if (!form_in_focus){
+            focus();
+        }
+        var actioned = false;
+        var $item = $(e.target);
+        var fn_finalise;
+        // if this control is complex eg. dropdown.
+        if ($item[0].nodeName == 'DIV'){
+            if ($item.hasClass('data')){
+                $item = $item.parent();
+            } else if ($item.hasClass('but_dd')){
+                $item = $item.parent();
+                fn_finalise = function(){
+                    var $form = $item.find('input');
+                    $form.trigger('dropdown');
+                };
+            }
+        }
+        // switch on edit mode if needed
+        if (!edit_mode){
+            edit_mode_on();
+        }
+        if ($item[0].nodeName == 'TD'){
+            var $row = $item.parent('tr');
+            row = $row.parent().children().index($row);
+            var $row_side = $side.find('tr').eq(row);
+            var this_col = $item.parent().children().index($item);
+            col = this_col;
+            cell_selected($item, $row, $row_side);
+            actioned = true;
+        }
+        if (fn_finalise){
+            fn_finalise();
+        }
+        return !actioned;
+    }
+
+    // BINDING AND UNBINDING
+
+
+    function unbind_column_resizers(){
+        for (var i = 0, n = $header_resizers.length; i < n ; i++){
+            $header_resizers[i].unbind();
+        }
+    }
+
+    function add_grid_functionality(){
+        // add resizers
+        var headers = $head.find('th');
+        var $current;
+        for (i = 0, n= headers.size() ; i < n ; i++){
+            // add the resizer
+            $current = $('<div class="t_resizer" ></div>').mousedown(start_column_resize).dblclick(auto_column_resize);
+            $header_resizers.push($current);
+            headers.eq(i).prepend($current);
+        }
+
+        $grid_resizer.mousedown(start_grid_resize);
+        // add grid movement functionality
+        init_movement();
+
+        resize_table();
+        $form.addClass('grid_holder');
+
+        // if top level form then give focus
+        if (!$form.parent().hasClass('SUBFORM')){
+            focus();
+        }
+        // add resize function so remotely accessable
+        $form.data('show_loader', show_loader);
+        $form.data('update_grid', update_grid);
+
+    }
+
+
+    function unbind_all(){
+        console_log('unbind');
+        unbind_column_resizers();
+        $side.unbind();
+        $main.unbind();
+        $grid_main.unbind();
+        $form.unbind();
+    }
+
+    function add_row(){
+        $form.data('build')('add_row');
+    }
+
+
+
+/*
+       _          _          _          _          _
+     >(')____,  >(')____,  >(')____,  >(')____,  >(') ___,
+       (` =~~/    (` =~~/    (` =~~/    (` =~~/    (` =~~/
+ jgs~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~
+
+            RESIZE FUNCTIONS
+
+*/
+
+
+    // GRID RESIZE FUNCTIONS
 
     function resize_grid_call(){
         var last_column = column_widths.length - 1;
@@ -157,52 +310,6 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             width = util_size.MAIN_WIDTH;
         }
         grid_size.width = width;
-    }
-
-
-    function auto_column_resize(e){
-        var $item = $(e.target).parent();
-        var col;
-        if ($item[0].nodeName == 'TH'){
-            col = $item.parent().children().index($item);
-        }
-        column_widths[col] = measure_column_width(col);
-        resize_table();
-    }
-
-    function measure_column_width(col){
-        // build column off screen and measure width
-        var field = form_data.fields[col].name;
-        var $div = $('<div style="top:0;left:-200px;position:absolute;width:100px;height:100px;overflow:hidden;"/>');
-        var table = ['<table class="t_grid" >'];
-        table.push('<tr><th><div class="t_header">' + form_data.fields[col].title + '</div></th></tr>');
-        for (var i = 0, n = grid_data.length; i < n; i++){
-            table.push('<tr><td>' + grid_data[i][field] + '</td></tr>');
-        }
-        table.push('</table>');
-        $div.html(table.join(''));
-        $('body').append($div);
-        var width = $div.find('table').width();
-        $div.remove();
-        return width;
-    }
-
-    function get_column_widths(){
-        var $cols_main = $main.find('tr').eq(0).find('td');
-        var $cols_head = $head.find('th');
-        for (var i = 0, n = $cols_head.size(); i < n; i++){
-            // get column widths for the headers and main table
-            column_widths_main[i] = $cols_main.eq(i).width();
-            column_widths_header[i] = $cols_head.eq(i).width();
-            // store the higher value in column_widths
-            if (column_widths_main[i] > column_widths_header[i]){
-                column_widths[i] = column_widths_main[i];
-            } else {
-                column_widths[i] = column_widths_header[i];
-            }
-        }
-        // set the last_column_user_width
-        last_column_user_width = column_widths[--i];
     }
 
     function resize_grid(){
@@ -290,6 +397,61 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 
     }
 
+
+    // COLUMN RESIZE FUNCTIONS
+
+    function auto_column_resize(e){
+        var $item = $(e.target).parent();
+        var col;
+        if ($item[0].nodeName == 'TH'){
+            col = $item.parent().children().index($item);
+        }
+        column_widths[col] = measure_column_width(col);
+
+        if (column_widths[col] > $.Grid.MAX_COLUMN_WIDTH_SOFT){
+            column_widths[col] = $.Grid.MAX_COLUMN_WIDTH_SOFT;
+        }
+        resize_table();
+    }
+
+    function measure_column_width(col){
+        // build column off screen and measure width
+        var field = form_data.fields[col].name;
+        var $div = $('<div style="top:0;left:-200px;position:absolute;width:100px;height:100px;overflow:hidden;"/>');
+        var table = ['<table class="t_grid" >'];
+        table.push('<tr><th><div class="t_header">' + form_data.fields[col].title + '</div></th></tr>');
+        for (var i = 0, n = grid_data.length; i < n; i++){
+            table.push('<tr><td>' + grid_data[i][field] + '</td></tr>');
+        }
+        table.push('</table>');
+        $div.html(table.join(''));
+        $('body').append($div);
+        var width = $div.find('table').width();
+        $div.remove();
+        return width;
+    }
+
+    function get_column_widths(){
+        var $cols_main = $main.find('tr').eq(0).find('td');
+        var $cols_head = $head.find('th');
+        for (var i = 0, n = $cols_head.size(); i < n; i++){
+            // get column widths for the headers and main table
+            column_widths_main[i] = $cols_main.eq(i).width();
+            column_widths_header[i] = $cols_head.eq(i).width();
+            // store the higher value in column_widths
+            if (column_widths_main[i] > column_widths_header[i]){
+                column_widths[i] = column_widths_main[i];
+            } else {
+                column_widths[i] = column_widths_header[i];
+            }
+            if (column_widths[i] > $.Grid.MAX_COLUMN_WIDTH_SOFT){
+                column_widths[i] = $.Grid.MAX_COLUMN_WIDTH_SOFT;
+            }
+        }
+        // set the last_column_user_width
+        last_column_user_width = column_widths[--i];
+    }
+
     function resize_table(stop_autosize){
         table_size.width = 0;
         for (var i = 0, n = column_widths.length; i < n; i++){
@@ -327,6 +489,19 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             }
         }
     }
+
+
+/*
+       _          _          _          _          _
+     >(')____,  >(')____,  >(')____,  >(')____,  >(') ___,
+       (` =~~/    (` =~~/    (` =~~/    (` =~~/    (` =~~/
+ jgs~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~
+
+            GENERAL FUNCTIONS
+
+*/
+
+
 
     function show_loader(){
         $grid_loader.show();
@@ -395,40 +570,6 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     }
 
 
-    function unbind_column_resizers(){
-        for (var i = 0, n = $header_resizers.length; i < n ; i++){
-            $header_resizers[i].unbind();
-        }
-    }
-    function add_grid_functionality(){
-        // add resizers
-        var headers = $head.find('th');
-        var $current;
-        for (i = 0, n= headers.size() ; i < n ; i++){
-            // add the resizer
-            $current = $('<div class="t_resizer" ></div>').mousedown(start_column_resize).dblclick(auto_column_resize);
-            $header_resizers.push($current);
-            headers.eq(i).prepend($current);
-        }
-
-        $grid_resizer.mousedown(start_grid_resize);
-        // add grid movement functionality
-        init_movement();
-
-        resize_table();
-        $form.addClass('grid_holder');
-
-        // if top level form then give focus
-        if (!$form.parent().hasClass('SUBFORM')){
-            focus();
-        }
-        // add resize function so remotely accessable
-        $form.data('show_loader', show_loader);
-        $form.data('update_grid', update_grid);
-
-    }
-
-
 //
 //
 //
@@ -436,6 +577,15 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 //
 //
 
+/*
+       _          _          _          _          _
+     >(')____,  >(')____,  >(')____,  >(')____,  >(') ___,
+       (` =~~/    (` =~~/    (` =~~/    (` =~~/    (` =~~/
+ jgs~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~
+
+            GENERAL FUNCTIONS
+
+*/
 
     function init_movement(){
         row = 0;
@@ -446,19 +596,6 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         $grid_main.scroll(scroll);
         $side.mousedown(click_side);
         $form.data('command', command_caller);
-    }
-
-    function unbind_all(){
-        console_log('unbind');
-        unbind_column_resizers();
-        $side.unbind();
-        $main.unbind();
-        $grid_main.unbind();
-        $form.unbind();
-    }
-
-    function add_row(){
-        $form.data('build')('add_row');
     }
 
     function update_grid_movement(){
@@ -490,73 +627,15 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         }
     }
 
+/*
+       _          _          _          _          _
+     >(')____,  >(')____,  >(')____,  >(')____,  >(') ___,
+       (` =~~/    (` =~~/    (` =~~/    (` =~~/    (` =~~/
+ jgs~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~
 
-    function scroll(e){
-        var new_left = $grid_main.scrollLeft();
-        var new_top = $grid_main.scrollTop();
-        if (new_left != scroll_left){
-            scroll_left = new_left;
-            $grid_head.scrollLeft(scroll_left);
-        }
-        if (new_top != scroll_top){
-            scroll_top = new_top;
-            $grid_side.scrollTop(scroll_top);
-        }
-    }
+            FORM ACTIONS
 
-    function click_side(e){
-        // click on the side selector
-        if (!form_in_focus){
-            focus();
-        }
-        var $item = $(e.target);
-        if ($item[0].nodeName == 'TD'){
-            var $row = $item.parent('tr');
-            row = $row.parent().children().index($row);
-            move();
-        }
-        return false;
-    }
-
-    function click_main(e){
-        // click in the main table body
-        if (!form_in_focus){
-            focus();
-        }
-        var actioned = false;
-        var $item = $(e.target);
-        var fn_finalise;
-        // if this control is complex eg. dropdown.
-        if ($item[0].nodeName == 'DIV'){
-            if ($item.hasClass('data')){
-                $item = $item.parent();
-            } else if ($item.hasClass('but_dd')){
-                $item = $item.parent();
-                fn_finalise = function(){
-                    var $form = $item.find('input');
-                    $form.trigger('dropdown');
-                };
-            }
-        }
-        // switch on edit mode if needed
-        if (!edit_mode){
-            edit_mode_on();
-        }
-        if ($item[0].nodeName == 'TD'){
-            var $row = $item.parent('tr');
-            row = $row.parent().children().index($row);
-            var $row_side = $side.find('tr').eq(row);
-            var this_col = $item.parent().children().index($item);
-            col = this_col;
-            cell_selected($item, $row, $row_side);
-            actioned = true;
-        }
-        if (fn_finalise){
-            fn_finalise();
-        }
-        return !actioned;
-    }
-
+*/
 
     function make_editable(){
         // make the cell editable
@@ -973,6 +1052,16 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         }
     }
 
+/*
+       _          _          _          _          _
+     >(')____,  >(')____,  >(')____,  >(')____,  >(') ___,
+       (` =~~/    (` =~~/    (` =~~/    (` =~~/    (` =~~/
+ jgs~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~
+
+            CELL MOVEMENTS
+
+*/
+
     function move(){
         // find the cell and select it
         var $row = $main.find('tr').eq(row);
@@ -1142,19 +1231,17 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 
     var scrollbar_side;
     var scrollbar_bottom;
-    var util = $.Util;
 
+/*
+       _          _          _          _          _
+     >(')____,  >(')____,  >(')____,  >(')____,  >(') ___,
+       (` =~~/    (` =~~/    (` =~~/    (` =~~/    (` =~~/
+ jgs~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~
 
-//
-//
-//
-//
-//
-//  BUILD FUNCTIONS
-//
-//
-//
-//
+            BUILD FUNCTIONS
+
+*/
+
     function build_create(){
         $form.empty();
         var $div = $('<div class="scroller"></div>');
@@ -1336,16 +1423,17 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     }
 
 
-    var HTML_Encode = util.HTML_Encode;
+/*
+       _          _          _          _          _
+     >(')____,  >(')____,  >(')____,  >(')____,  >(') ___,
+       (` =~~/    (` =~~/    (` =~~/    (` =~~/    (` =~~/
+ jgs~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~
+
+            VARIABLES
+
+*/
+
     var num_fields = form_data.fields.length;
-//
-//
-//
-//
-//
-//
-//
-//
     var $input = $(input);
     var $form;
 
@@ -1359,6 +1447,8 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     var resize_grid_timeout;
     var resize_column_timeout;
 
+    var util = $.Util;
+    var HTML_Encode = util.HTML_Encode;
     var util_size = $.Util.Size;
     var position = $.Util.position;
     var grid_size = {width : 500, height : 300};
@@ -1389,6 +1479,8 @@ $.Grid.MIN_COLUMN_SIZE = 25;
 $.Grid.MIN_GRID_HEIGHT = 50;
 $.Grid.MIN_GRID_WIDTH = 100;
 $.Grid.SIDE_COLUMN_WIDTH = 50;
+$.Grid.MAX_COLUMN_WIDTH_SOFT = 300;
+$.Grid.MAX_COLUMN_WIDTH_HARD = 500;
 
 
 })(jQuery);
