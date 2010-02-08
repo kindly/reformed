@@ -48,15 +48,7 @@ $.fn.extend({
 $.Form = function(input, form_data, row_data, paging_data){
 
     $input = $(input);
-    // remove any existing items from the input
-    var $children = $input.children();
-    for (var i = 0, n = $children.size(); i < n; i++){
-            if ($children.eq(i).data('command')){
-                $children.eq(i).data('command')('unbind_all');
-            }
-    }
-    $children.remove();
-    $children = null;
+    $.Util.unbind_all_children($input);
 
     // make our div that everything will hang off
     var $form = $('<div class="f_form"></div>');
@@ -277,8 +269,6 @@ $.Form.Movement = function($input, form_data, row_data){
         // is this a complex control?
         if (current.complex_control){
             $item = $item.find('div.data');
-            console.log('complex');
-            console.log($item);
         }
 
         current.$control = util.make_editable($item, current.field);
@@ -794,17 +784,16 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
         extra_defaults = {__table: params.form.table_name,
                           __subform: subforms[i].item.name};
         extra_defaults[params.form.child_id] = row_data[params.form.parent_id];
-        console_log(subforms[i]);
 
-        switch (subforms[i].item.params.form.params.form_type){
+        switch (params.form.params.form_type){
             case 'grid':
-                $subforms.eq(i).grid(subforms[i].item.params.form, subforms[i].data);
+                $subforms.eq(i).grid(params.form, subforms[i].data);
                 break;
             case 'action':
-                $subforms.eq(i).input_form(subforms[i].item.params.form, subforms[i].data, extra_defaults);
+                $subforms.eq(i).input_form(params.form, subforms[i].data, extra_defaults);
                 break;
             default:
-                $subforms.eq(i).form(subforms[i].item.params.form, subforms[i].data);
+                $subforms.eq(i).form(params.form, subforms[i].data);
         }
     }
 
@@ -813,15 +802,8 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
 
 $.InputForm = function(input, form_data, row_data, extra_defaults){
     $input = $(input);
-    // remove any existing items from the input
-    var $children = $input.children();
-    for (var i = 0, n = $children.size(); i < n; i++){
-            if ($children.eq(i).data('command')){
-                $children.eq(i).data('command')('unbind_all');
-            }
-    }
-    $children.remove();
-    $children = null;
+
+    $.Util.unbind_all_children($input);
 
     // make our div that everything will hang off
     var $form = $('<div class="INPUT_FORM"></div>');
@@ -1092,15 +1074,7 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
 
 $.StatusForm = function(input){
     $input = $(input);
-    // remove any existing items from the input
-    var $children = $input.children();
-    for (var i = 0, n = $children.size(); i < n; i++){
-            if ($children.eq(i).data('command')){
-                $children.eq(i).data('command')('unbind_all');
-            }
-    }
-    $children.remove();
-    $children = null;
+    $.Util.unbind_all_children($input);
 
     // make our div that everything will hang off
     var $form = $('<div class="STATUS_FORM"></div>');

@@ -231,6 +231,9 @@ $.Util.clean_value = function (value, field){
         case 'Integer':
             if (value !== null){
                 value = parseInt(value, 10);
+                if (isNaN(value)){
+                    value = null;
+                }
             }
             update_value = value;
             break;
@@ -249,6 +252,17 @@ $.Util.clean_value = function (value, field){
 
 };
 
+$.Util.unbind_all_children = function ($div){
+    // remove any existing items from the give div
+    var $children = $div.children();
+    for (var i = 0, n = $children.size(); i < n; i++){
+            if ($children.eq(i).data('command')){
+                $children.eq(i).data('command')('unbind_all');
+            }
+    }
+    $children.remove();
+    $children = null;
+};
 
 $.Util.paging_bar = function (data){
 
@@ -263,8 +277,8 @@ $.Util.paging_bar = function (data){
     var current = Math.floor(offset/limit);
 
     if (current>0){
-        html += '<a href="#" onclick="node_load(\'' + base + '&o=0&l=' + limit +'\');return false;">|&lt;</a> ';
-        html += '<a href="#" onclick="node_load(\'' + base + '&o=' + (current-1) * limit + '&l=' + limit +'\');return false;">&lt;</a> ';
+        html += '<a href="#" onclick="node_load_grid(\'' + base + '&o=0&l=' + limit +'\');return false;">|&lt;</a> ';
+        html += '<a href="#" onclick="node_load_grid(\'' + base + '&o=' + (current-1) * limit + '&l=' + limit +'\');return false;">&lt;</a> ';
     } else {
         html += '|&lt; ';
         html += '&lt; ';
@@ -277,13 +291,13 @@ $.Util.paging_bar = function (data){
                  (i<(PAGING_SIZE*2)-1 && current<PAGING_SIZE) ||
                  (pages-i<(PAGING_SIZE*2) && current>pages-PAGING_SIZE)
             ){
-                html += '<a href="#" onclick="node_load(\'' + base + '&o=' + i * limit + '&l=' + limit +'\');return false;">' + (i+1) + '</a> ';
+                html += '<a href="#" onclick="node_load_grid(\'' + base + '&o=' + i * limit + '&l=' + limit +'\');return false;">' + (i+1) + '</a> ';
             }
         }
     }
     if (current<pages - 1){
-        html += '<a href="#" onclick="node_load(\'' + base + '&o=' + (current+1) * limit + '&l=' + limit +'\');return false;">&gt;</a> ';
-        html += '<a href="#" onclick="node_load(\'' + base + '&o=' + (pages-1) * limit + '&l=' + limit +'\');return false;">&gt;|</a> ';
+        html += '<a href="#" onclick="node_load_grid(\'' + base + '&o=' + (current+1) * limit + '&l=' + limit +'\');return false;">&gt;</a> ';
+        html += '<a href="#" onclick="node_load_grid(\'' + base + '&o=' + (pages-1) * limit + '&l=' + limit +'\');return false;">&gt;|</a> ';
     } else {
         html += '&gt; ';
         html += '&gt;| ';
@@ -293,19 +307,37 @@ $.Util.paging_bar = function (data){
     return html;
 };
 
-$.Util.Position = function ($item, top, left, height, width){
+$.Util.position = function ($item, top, left, height, width){
     // position an element absolutely on the screen
-    var css = {position : 'absolute'};
-    if (top){
+    var css = {};
+    if (top !== null){
         css.top = top;
     }
-    if (left){
+    if (left !== null){
         css.left = left;
     }
-    if (height){
+    if (height !== null){
         css.height = height;
     }
-    if (width){
+    if (width !== null){
+        css.width = width;
+    }
+    $item.css(css);
+};
+
+$.Util.position_absolute = function ($item, top, left, height, width){
+    // position an element absolutely on the screen
+    var css = {position : 'absolute'};
+    if (top !== null){
+        css.top = top;
+    }
+    if (left !== null){
+        css.left = left;
+    }
+    if (height !== null){
+        css.height = height;
+    }
+    if (width !== null){
         css.width = width;
     }
     $item.css(css);
@@ -337,6 +369,31 @@ $.Util.Size.get = function(){
         var w2 = $div.find('div').width();
         util_size.SCROLLBAR_WIDTH = w1 - w2;
         $div.remove();
+        // Some browsers e.g. webkit don't let us measure
+        // the scrollbar using the easy method above.
+        // If it didn't work we use a different approach instead.
+        if (util_size.SCROLLBAR_WIDTH === 0){
+            var $div = $('<div style="overflow:hidden; width:50px; height:50px; position:absolute; left:-100px; top:0px;"></div>');
+            var $d1 = $('<div style="height:60px;width:1px;float:left"></div>');
+            var $d2 = $('<div style="height:60px;width:1px;float:left"></div>');
+            $div.append($d1);
+            $div.append($d2);
+            $('body').append($div);
+            w1 = 1;
+            do {
+                $d1.width(w1++);
+            } while ($d2.position().top === 0);
+
+            $div.css('overflow-y', 'scroll');
+            w2 = 1;
+            do {
+                $d1.width(w2++);
+            } while ($d2.position().top === 0);
+
+            $div.remove();
+            util_size.SCROLLBAR_WIDTH = w1 - w2;
+        }
+
     }
 
     function grid(){
@@ -372,6 +429,10 @@ $.Util.Size.get = function(){
             util_size.GRID_COL_RESIZE_DIFF = 0;
         }
 
+        $div.append('<div class="scroller-loader" style="display:block;">Loading ...</div>');
+        $x = $div.find('div.scroller-loader');
+        util_size.GRID_LOADER_H = $x.outerHeight();
+        util_size.GRID_LOADER_W = $x.outerWidth();
         $div.remove();
     }
 
@@ -379,7 +440,23 @@ $.Util.Size.get = function(){
     action_button();
     scrollbar();
     grid();
+    $.Util.Size.page_size();
 
+};
+
+$.Util.Size.page_size = function (){
+    var util_size = $.Util.Size;
+    var $screen = $(window);
+    util_size.PAGE_WIDTH = $screen.width();
+    util_size.PAGE_HEIGHT = $screen.height();
+    // recalculate main div sizes
+    if (util_size.MAIN_WIDTH_OFFSET){
+        util_size.MAIN_WIDTH = util_size.PAGE_WIDTH - util_size.MAIN_WIDTH_OFFSET;
+        util_size.MAIN_HEIGHT = util_size.PAGE_HEIGHT - util_size.MAIN_HEIGHT_OFFSET;
+    } else {
+        util_size.MAIN_WIDTH = util_size.PAGE_WIDTH;
+        util_size.MAIN_HEIGHT = util_size.PAGE_HEIGHT;
+    }
 };
 
 $.Util.selectStyleSheet = function (title, url){
@@ -394,7 +471,7 @@ $.Util.selectStyleSheet = function (title, url){
             // update any grids
             var $grids = $('div.GRID');
             for (var i = 0, n = $grids.size(); i < n; i++){
-                $grids.eq(i).data('resize')();
+                $grids.eq(i).data('resize_grid')();
             }
         }
 
@@ -584,7 +661,7 @@ $.Util.date_from_value = function (value){
 
 })(jQuery);
 
-
+$(window).resize($.Util.Size.page_size);
 // get our size calculations
 $(document).ready($.Util.Size.get);
 //trap keyboard events

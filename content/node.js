@@ -46,6 +46,11 @@ function page_load(){
     node_call_from_string(link, true, true);
 }
 
+function node_load_grid(arg){
+    $obj = $('#main').find('div.GRID').eq(0);
+    $obj.data('show_loader')();
+    node_load(arg);
+}
 
 function node_load(arg){
 /*

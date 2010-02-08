@@ -100,6 +100,13 @@ class Node(object):
             out.append('%s=%s' % (key, dict[key]))
         return '&'.join(out)
 
+    def get_data_int(self, key, default = 0):
+        """ Get integer value out of self.data[key] or default """
+        try:
+            value = int(self.data.get(key, default))
+        except:
+            value = default
+        return value
 
     def initialise(self):
         """called first when the node is used"""
@@ -506,8 +513,8 @@ class TableNode(Node):
 
     def list(self, limit=20):
         query = self.data.get('q', '')
-        limit = self.data.get('l', limit)
-        offset = self.data.get('o', 0)
+        limit = self.get_data_int('l', limit)
+        offset = self.get_data_int('o')
 
         if r.reformed[self.table].entity:
             results = r.reformed.search('_core_entity',

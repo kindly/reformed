@@ -330,7 +330,6 @@ td input {
     float: right;
     cursor:e-resize;
     width:10px;
-    height:50px;
     background-color:transparent;
     z-index:2;
     position:relative;
@@ -406,6 +405,10 @@ td input {
     color:#CCC;
     overflow:hidden;
     position:absolute;
+}
+.scroller-loader {
+    position:absolute;
+    display:none;
 }
 .scroller-foot a {
     color:#CCC;
@@ -523,4 +526,12 @@ span.f_cell.dirty {
 .link {
     color:green;
     font-size:0.8em;
+}
+
+/*
+    in a form we want each control
+    to start on a new line
+*/
+div.f_form > div{
+    clear:both;
 }

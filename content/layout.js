@@ -109,7 +109,6 @@ $.LayoutManager = function () {
 
         var action_list = ['home',  'save', 'delete'];
 
-        var util_size = $.Util.Size;
         add_actions();
         $body.append($actions);
     }
@@ -166,16 +165,21 @@ $.LayoutManager = function () {
         var top = info.margin_top + info.top_height + info.spacing;
         var left = info.margin_left + info.left_width + info.spacing;
         var height = null;
-        var width = info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + $.Util.Size.SCROLLBAR_WIDTH);
-    
+        var width = info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + util_size.SCROLLBAR_WIDTH);
         position($main, top, left, height, width);
+        // Store the viewable size of the div.
+        util_size.MAIN_WIDTH = width;
+        util_size.MAIN_HEIGHT = util_size.PAGE_HEIGHT - top - info.spacing;
+        // Store the offsets so we can recalculate if the browser window is resized
+        util_size.MAIN_WIDTH_OFFSET = info.left_width + info.spacing + info.margin_left + info.margin_right + util_size.SCROLLBAR_WIDTH;
+        util_size.MAIN_HEIGHT_OFFSET = top + info.spacing;
     }
 
     function position_actions(){
         var top = info.margin_top;
         var left = info.margin_left + info.left_width + info.spacing;
         var height = info.top_height;
-        var width = info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + $.Util.Size.SCROLLBAR_WIDTH);
+        var width = info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + util_size.SCROLLBAR_WIDTH);
 
         position($actions, top, left, height, width);
     }
@@ -200,14 +204,15 @@ $.LayoutManager = function () {
     };
     
 
-    var position = $.Util.Position;
+    var util_size = $.Util.Size;
+    var position = $.Util.position_absolute;
     var $main;
     var $side;
     var $logo;
     var $actions;
     var $body = $('body');
 
-    info.page_width = $(window).width();
+    info.page_width = util_size.PAGE_WIDTH;
 
     create_logo();
     create_main();
