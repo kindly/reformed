@@ -809,12 +809,14 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     var $form = $('<div class="INPUT_FORM"></div>');
     $input.append($form);
 
+
     if (!row_data){
         row_data = {};
     }
 
     //FIXME how do we deal with data in the form
     $.InputForm.Build($form, form_data, row_data);
+    $input.find("input.DROPDOWN").autocomplete(["true","false"], {dropdown : true})
     $.InputForm.Interaction($form, form_data, row_data, extra_defaults);
     $form.data('command')('register_events');
 };
@@ -824,6 +826,8 @@ $.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
 
         // remove any previous bound events
         unbind_all();
+
+        $input.mousedown(form_mousedown);
 
         total_fields = form_data.fields.length;
         $input.data('command', command_caller);
@@ -919,6 +923,34 @@ $.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
 
     }
 
+    function form_mousedown(e){
+        var actioned = false;
+        var item = e.target;
+        var $item = $(e.target);
+        var fn_finalise;
+        var $field;
+        // if this control is complex eg. dropdown.
+        if ($item[0].nodeName == 'DIV'){
+            if ($item.hasClass('data')){
+                $item = $item.parent();
+            } else if ($item.hasClass('but_dd')){
+                $item = $item.parent();
+                fn_finalise = function(){
+                    var $input = $item.find('input');
+                    $input.focus();
+                    $input.trigger('dropdown');
+                }
+                actioned = true;
+            }
+            $field = $(item).parent().parent('div');
+        }
+
+        if (fn_finalise){
+            fn_finalise();
+        }
+        return !actioned;
+    }
+
     // custom events
     var custom_commands = {
         'unbind_all' : unbind_all,
@@ -953,6 +985,12 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
                         value = Date.ISO(value).makeLocaleString();
                     }
                     break;
+                case 'Boolean':
+                    if (value){
+                        value = "True"
+                    } else {
+                        value = "False"
+                    }
                 default:
                     value = HTML_Encode(value);
             }
@@ -967,7 +1005,7 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
             }
 
             if (item.params.control == 'dropdown'){
-                html.push('<span class="' + class_list + ' complex"><span class="but_dd"/><span class="data">' + value + '</span></span>');
+                html.push('<span class="' + class_list + ' complex"><div class="but_dd"/><input id="rf_' + item.name + '" class="DROPDOWN ' + class_list + '" value="' + value + '" /></span>');
             }
             else {
                 html.push('<input id="rf_' + item.name + '" class="' + class_list + '" value="' + value + '" />');
@@ -1056,7 +1094,7 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
         for (var i = 0; i < num_fields; i++){
             item = form_data.fields[i];
             value = $.Util.get_item_value(item, row_data);
-            if (!(item.params && item.params.control)){
+            if (!item.params.control || item.params.control == "dropdown"){
                 html.push(build_input(item, value));
             } else {
                 html.push(build_control(item, value));

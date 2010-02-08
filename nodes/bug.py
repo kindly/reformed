@@ -15,7 +15,7 @@ class Ticket(TableNode):
     ]
     list_title = 'ticket %s'
 
-    def view(self):
+    def view(self, read_only = False):
 
         self.next_node = "bug.ListTicket"
         self.next_data = dict(data = self.data,
