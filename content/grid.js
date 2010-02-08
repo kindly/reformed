@@ -257,9 +257,10 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             grid_main_css['overflow-x'] = 'scroll';
         }
 
-        // pass the scrollbar settings to movement
-        $form.data('command')('set_scrollbars', {scrollbar_bottom : (bottom_scrollbar == 1),
-                                                  scrollbar_side : (right_scrollbar == 1)});
+        // store the scrollbar settings
+        scrollbar_bottom = (bottom_scrollbar == 1);
+        scrollbar_side = (right_scrollbar == 1);
+
         $grid_main.css(grid_main_css);
 
         var new_main_height = height - head_height - foot_height - title_height;
@@ -331,7 +332,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 
     function update_grid(data){
         // The table data has been changed.
-        $form.data('command')('blur');
+        blur();
 
         grid_data = data.grid_data;
         // Update the grid.
@@ -348,9 +349,9 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         }
         $paging.html(paging);
         // Update the grid_data in Movement.
-        $form.data('command')('update_grid_data', data.grid_data);
+        update_grid_movement();
         // FIXME do we need to do the focus here?
-        $form.data('command')('focus');
+        focus();
     }
 
     function init(){
@@ -419,13 +420,10 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 
         // if top level form then give focus
         if (!$form.parent().hasClass('SUBFORM')){
-            $form.data('command')('focus');
+            focus();
         }
         // add resize function so remotely accessable
-        $form.data('resize_grid', resize_grid);
         $form.data('show_loader', show_loader);
-        $form.data('resize_table', resize_table);
-        $form.data('unbind_column_resizers', unbind_column_resizers);
         $form.data('update_grid', update_grid);
 
     }
@@ -440,7 +438,6 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 
 
     function init_movement(){
-    //    find_elements();
         row = 0;
         col = 0;
         total_rows = $main.find('tr').size();
@@ -453,7 +450,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 
     function unbind_all(){
         console_log('unbind');
-        $form.data('unbind_column_resizers');
+        unbind_column_resizers();
         $side.unbind();
         $main.unbind();
         $grid_main.unbind();
@@ -464,8 +461,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         $form.data('build')('add_row');
     }
 
-    function update_grid_data(data){
-        grid_data = data;
+    function update_grid_movement(){
         init_movement();
         move();
         // Scroll the table to align with the headers.
@@ -482,7 +478,6 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         'add_row' : add_row,
         'save' : save_all,
         'save_return' : save_return,
-        'update_grid_data' : update_grid_data
     };
 
     function set_scrollbars(data){
@@ -1346,10 +1341,10 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     function build_add_new_row(data){
         var new_row = grid_data.length;
         grid_data[new_row] = {};
-        $form.find('div.scroller-main table').append(row());
+        $form.find('div.scroller-main table').append(build_row());
         $form.find('div.scroller-side table').append('<tr><td>' + new_row + '</td></tr>');
         if (new_row === 0){
-            $form.data('resize_table')();
+            resize_table();
         }
     }
 
