@@ -129,6 +129,48 @@ class Node(object):
 
         self.bookmark = result
 
+    def create_form_data(self, fields, params=None, data=None, read_only=False):
+        out = {
+            "form": {
+                "fields":self.create_fields(fields)
+            },
+            "type": "form",
+        }
+        if data:
+            out['data'] = data
+        if params:
+            out['form']['params'] = params.copy()
+        if read_only:
+            if not out['form']['params']:
+                out['form']['params'] = {}
+            out['form']['params']['read_only'] = True
+        return out
+
+    def create_fields(self, fields_list):
+
+        fields = []
+        for field in fields_list:
+            row = {}
+            row['name'] = field[0]
+            row['type'] = field[1]
+            row['title'] = field[2]
+            if len(field) > 3:
+                row['params'] = field[3]
+            fields.append(row)
+        return fields
+
+    def validate_data(self, data, field, validator):
+        try:
+            return validator().to_python(data.get(field))
+        except:
+            return None
+
+    def validate_data_full(self, data, validators):
+        validated_data = {}
+        for (field, validator) in validators:
+            validated_data[field] = self.validate_data(data, field, validator)
+        return validated_data
+
     def finish_node_processing(self):
 
         if self.bookmark:
@@ -201,7 +243,7 @@ class TableNode(Node):
             if field[1] == 'subform':
                 name = field[0]
                 subform = self.__class__.subforms.get(name)
-                data = create_form_data(subform.get('fields'), subform.get('params'))
+                data = self.create_form_data(subform.get('fields'), subform.get('params'))
                 data['form']['parent_id'] =  subform.get('parent_id')
                 data['form']['child_id'] =  subform.get('child_id')
                 data['form']['table_name'] =  subform.get('table')
@@ -412,7 +454,7 @@ class TableNode(Node):
     def new(self):
 
         data_out = {}
-        data = create_form_data(self.fields, self.form_params, data_out)
+        data = self.create_form_data(self.fields, self.form_params, data_out)
         self.out = data
         self.action = 'form'
 
@@ -448,7 +490,7 @@ class TableNode(Node):
             for code_group_name in self.code_list:
                 data_out[code_group_name] = self.code_data(code_group_name, data_out)
 
-        data = create_form_data(self.fields, self.form_params, data_out, read_only)
+        data = self.create_form_data(self.fields, self.form_params, data_out, read_only)
         self.out = data
         self.action = 'form'
 
@@ -553,7 +595,7 @@ class TableNode(Node):
                 else:
                     row['title'] = self.build_node('%s: %s' % (self.table, row['id']), 'edit', 'id=%s' % row['id'])
 
-        out = create_form_data(self.list_fields, self.list_params, data)
+        out = self.create_form_data(self.list_fields, self.list_params, data)
 
         # add the paging info
         out['paging'] = {'row_count' : results['__count'],
@@ -598,52 +640,6 @@ class AutoForm(TableNode):
                 fields.append([field, 'Text', '%s:' % field])
         self.__class__.fields = fields
 
-
-
-
-def create_fields(fields_list):
-
-    fields = []
-    for field in fields_list:
-        row = {}
-        row['name'] = field[0]
-        row['type'] = field[1]
-        row['title'] = field[2]
-        if len(field) > 3:
-            row['params'] = field[3]
-        fields.append(row)
-    return fields
-
-
-
-def create_form_data(fields, params=None, data=None, read_only=False):
-    out = {
-        "form": {
-            "fields":create_fields(fields)
-        },
-        "type": "form",
-    }
-    if data:
-        out['data'] = data
-    if params:
-        out['form']['params'] = params.copy()
-    if read_only:
-        if not out['form']['params']:
-            out['form']['params'] = {}
-        out['form']['params']['read_only'] = True
-    return out
-
-def validate_data(data, field, validator):
-    try:
-        return validator().to_python(data.get(field))
-    except:
-        return None
-
-def validate_data_full(data, validators):
-    validated_data = {}
-    for (field, validator) in validators:
-        validated_data[field] = validate_data(data, field, validator)
-    return validated_data
 
 
 
