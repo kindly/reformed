@@ -474,16 +474,11 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         'unbind_all' : unbind_all,
         'blur' : blur,
         'focus' : focus,
-        'set_scrollbars' : set_scrollbars,
         'add_row' : add_row,
         'save' : save_all,
         'save_return' : save_return,
     };
 
-    function set_scrollbars(data){
-        scrollbar_side = data.scrollbar_side;
-        scrollbar_bottom = data.scrollbar_bottom;
-    }
 
     function command_caller(type, data){
         console_log('command triggered: ' + type);
@@ -1119,24 +1114,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             $item.val('');
         }
     }
-/*
-    function find_elements(){
-        $main = $form.find('div.scroller-main table');
-        $head = $form.find('div.scroller-head table');
-        $grid_head = $form.find('div.scroller-head');
-        $side = $form.find('div.scroller-side table');
-        $grid_side = $form.find('div.scroller-side');
-        $grid_main = $form.find('div.scroller-main');
-    }
 
-    // useful objects
-    var $main;
-    var $head;
-    var $side;
-    var $grid_main;
-    var $grid_head;
-    var $grid_side;
-*/
     var scroll_left = 0;
     var scroll_top = 0;
     var row = 0;
@@ -1412,13 +1390,6 @@ $.Grid.MIN_COLUMN_SIZE = 25;
 $.Grid.MIN_GRID_HEIGHT = 50;
 $.Grid.MIN_GRID_WIDTH = 100;
 $.Grid.SIDE_COLUMN_WIDTH = 50;
-
-$.Grid.Movement = function($form, form_data, grid_data){
-
-};
-
-$.Grid.Build = function(input, form_data, grid_data, paging_data, build_new){
-};
 
 
 })(jQuery);
