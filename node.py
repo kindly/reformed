@@ -442,7 +442,9 @@ class TableNode(Node):
 
         if data_out:
             for subform_name in self.subforms.keys():
-                data_out[subform_name] = self.subform(subform_name, data_out)
+                ## FIXME look at logic to determining what data is sent
+                if self.subforms[subform_name]["params"]["form_type"] != "action":
+                    data_out[subform_name] = self.subform(subform_name, data_out)
             for code_group_name in self.code_list:
                 data_out[code_group_name] = self.code_data(code_group_name, data_out)
 

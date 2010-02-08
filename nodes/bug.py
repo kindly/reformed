@@ -15,6 +15,12 @@ class Ticket(TableNode):
     ]
     list_title = 'ticket %s'
 
+    def view(self):
+
+        self.next_node = "bug.ListTicket"
+        self.next_data = dict(data = self.data,
+                              command = "view")
+
 class ListTicket(TableNode):
 
     table = "ticket"
@@ -23,13 +29,27 @@ class ListTicket(TableNode):
 
     fields = [
         ['title', 'Text', 'title:'],
-        ['accepted', 'Boolean', 'accepted:', {"dropdown" : True, "autocomplete" : ["true", "false"]}],
+        ['accepted', 'Boolean', 'accepted:', {"control" : "dropdown", "autocomplete" : ["true", "false"]}],
         ['complete_by', 'Date', 'complete by:'],
         ['summary', 'Text', 'summary:', {"control" : "textarea", "css" : "large"}],
+        ['old_comments', 'subform', 'old_comments'],
         ['comment', 'subform', 'comment']
     ]
 
     subforms = {
+        'old_comments':{
+            'fields': [
+                ['created_date', 'DateTime', 'Date Created: '],
+                ['note', 'Text', '', {"control" : "textarea", "css" : "large"}],
+            ],
+            "parent_id": "_core_entity_id",
+            "child_id": "_core_entity_id",
+            "table": "comment",
+            "params":{
+                "form_type": "continuous"
+            }
+        },
+
         'comment':{
             'fields': [
                 ['note', 'Text', 'note:', {"control" : "textarea", "css" : "large"}],
@@ -45,3 +65,11 @@ class ListTicket(TableNode):
     }
 
     list_title = 'ticket %s'
+
+    def save(self):
+
+        super(ListTicket, self).save()
+        self.action = "redirect"
+        print "-&"*5, self.data
+        self.link = "bug.ListTicket:view:__id=%s" % self.data.get("_core_entity_id")
+
