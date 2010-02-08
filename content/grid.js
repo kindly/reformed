@@ -329,7 +329,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     }
 
     function show_loader(){
-        $grid_loader.css({display : 'block'});
+        $grid_loader.show();
     }
 
     function update_grid(data){
@@ -339,10 +339,8 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         grid_data = data.grid_data;
         // Update the grid.
         build_grid(false);
-        // hide the loader
         find_grid_elements();
-     //   resize_table(true);
-        $grid_loader.css({display : 'none'});
+        $grid_loader.hide();
         // Update the paging info.
         var $paging = $grid_foot.find('span.paging');
         var paging = '';
