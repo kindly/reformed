@@ -35,7 +35,9 @@ $.Buttons = {};
 $.Buttons.action_hash = {
     save: [['save', 'document-save.png', 'c', 'record'],[document, node_save, ['main','']]],
     'delete':[['delete', 'edit-delete.png', 'd', 'record'],[document, node_delete, ['main','']]],
-    home: [['home', 'go-home.png', 'h', 'general'],[document, node_load, ['n:test.HomePage:']]]
+    home: [['home', 'go-home.png', 'h', 'general'],[document, node_load, ['n:test.HomePage:']]],
+    new_ticket: [['new ticket', 'go-home.png', 'h', 'general'],[document, node_load, ['n:bug.Ticket:new']]],
+    list_tickets: [['list tickets', 'go-home.png', 'h', 'general'],[document, node_load, ['n:bug.Ticket:list']]]
 };
 
 $.Buttons.action_call = function (action_name){
@@ -70,16 +72,15 @@ $.LayoutManager = function () {
             $link.append($img).append($command).append($shortcut);
             $button.append($link);
 
-            var button_width = 200;
             var button_top = (button_number % BUTTONS_PER_COLUMN) * (util_size.ACTION_BUTTON_H + ACTION_BUTTON_SPACING) + ACTION_BUTTON_SPACING;
-            var button_left = 10;
+            var button_left = (ACTION_BUTTON_SPACING + ACTION_BUTTON_WIDTH) * Math.floor(button_number / BUTTONS_PER_COLUMN);
             var button_image_size = 12;
 
-            position($button, button_top, button_left, util_size.ACTION_BUTTON_H, button_width);
-            position($link, 0, 0, util_size.ACTION_BUTTON_H, button_width);
+            position($button, button_top, button_left, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
+            position($link, 0, 0, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
             position($img, 0, 0, button_image_size, button_image_size);
-            position($command, 0, button_image_size, util_size.ACTION_BUTTON_H, button_width - (2 * button_image_size));
-            position($shortcut, 0, button_width - button_image_size, util_size.ACTION_BUTTON_H, button_image_size);
+            position($command, 0, button_image_size, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH - (2 * button_image_size));
+            position($shortcut, 0, ACTION_BUTTON_WIDTH - button_image_size, util_size.ACTION_BUTTON_H, button_image_size);
 
             $button_holder.append($button);
         }
@@ -97,8 +98,9 @@ $.LayoutManager = function () {
         }
 
 
-        var BUTTONS_PER_COLUMN = 4;
+        var BUTTONS_PER_COLUMN = 3;
         var ACTION_BUTTON_SPACING = 5;
+        var ACTION_BUTTON_WIDTH = 200;
         $actions = $('<div id="actions"></div>');
         position_actions();
     
@@ -107,7 +109,7 @@ $.LayoutManager = function () {
     
 
 
-        var action_list = ['home',  'save', 'delete'];
+        var action_list = ['home',  'save', 'delete', 'new_ticket', 'list_tickets'];
 
         add_actions();
         $body.append($actions);
