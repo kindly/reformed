@@ -135,16 +135,18 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         }
     }
 
-    function autosize_grid(){
+    function autosize_grid(width_only){
         // get the grid  to display at the correct size for it's data
         var has_scrollbar = false;
-        var height = $main.height();
-        height += util_size.GRID_HEADER_H + util_size.GRID_TITLE_H + util_size.GRID_FOOTER_H;
-        if (height > util_size.MAIN_HEIGHT){
-            height = util_size.MAIN_HEIGHT;
-            has_scrollbar = true;
+        if (!width_only){
+            var height = $main.height();
+            height += util_size.GRID_HEADER_H + util_size.GRID_TITLE_H + util_size.GRID_FOOTER_H;
+            if (height > util_size.MAIN_HEIGHT){
+                height = util_size.MAIN_HEIGHT;
+                has_scrollbar = true;
+            }
+            grid_size.height = height;
         }
-        grid_size.height = height;
 
         var width = $head.width();
         width += $.Grid.SIDE_COLUMN_WIDTH;
@@ -300,7 +302,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         resize_table_columns();
 
         if (stop_autosize !== true){
-            autosize_grid();
+            autosize_grid(true);
         }
         // sometime we need to add/remove scrollbars to the grid
         resize_grid();
@@ -327,7 +329,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     }
 
     function show_loader(){
-        $grid_loader.css({display : 'block'});
+        $grid_loader.show();
     }
 
     function update_grid(data){
@@ -337,15 +339,13 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         grid_data = data.grid_data;
         // Update the grid.
         build_grid(false);
-        // hide the loader
         find_grid_elements();
-     //   resize_table(true);
-        $grid_loader.css({display : 'none'});
+        $grid_loader.hide();
         // Update the paging info.
         var $paging = $grid_foot.find('span.paging');
         var paging = '';
         if (paging_data){
-            paging = $.Util.paging_bar(data.paging_data);
+            paging = util.paging_bar(data.paging_data);
         }
         $paging.html(paging);
         // Update the grid_data in Movement.
@@ -368,7 +368,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             $form.data('update_grid')({ grid_data : grid_data, paging_data : paging_data});
         } else {
             console_log('new');
-            $.Util.unbind_all_children($input);
+            util.unbind_all_children($input);
             $form = $('<div class="f_form GRID"></div>');
             $form.data('form_string', form_string);
             $input.append($form);
@@ -474,16 +474,11 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         'unbind_all' : unbind_all,
         'blur' : blur,
         'focus' : focus,
-        'set_scrollbars' : set_scrollbars,
         'add_row' : add_row,
         'save' : save_all,
         'save_return' : save_return,
     };
 
-    function set_scrollbars(data){
-        scrollbar_side = data.scrollbar_side;
-        scrollbar_bottom = data.scrollbar_bottom;
-    }
 
     function command_caller(type, data){
         console_log('command triggered: ' + type);
@@ -582,7 +577,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     }
 
     function check_row_dirty(){
-        if ($.Util.is_empty(row_info[current.row])){
+        if (util.is_empty(row_info[current.row])){
             current.$row.removeClass('dirty');
             current.$side.removeClass('dirty');
             current.dirty = false;
@@ -608,7 +603,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             current.$item.removeClass('dirty');
             if (row_info[current.row] && row_info[current.row][current.field.name]){
                 delete row_info[current.row][current.field.name];
-                if ($.Util.is_empty(row_info[current.row])){
+                if (util.is_empty(row_info[current.row])){
                     delete row_info[current.row];
                 }
             }
@@ -800,7 +795,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         var node = 'table.Edit';
         var out = {};
         console_log('autosave: ' + row_info[current.row]);
-        //get_node(node, '_save', out, false);
+        // FIXME implement
     }
 
     function row_blur(){
@@ -937,7 +932,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             } else {
                 edit_mode_off();
             }
-            $.Util.Event_Delegator('register', {keydown:keydown, blur:blur});
+            util.Event_Delegator('register', {keydown:keydown, blur:blur});
             form_in_focus = true;
             move();
         }
@@ -965,8 +960,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             var $new_item = $parent.parent().parent();
 
             var current_edit_mode = edit_mode;
-            $.Util.Event_Delegator('clear');
-         //   blur();
+            util.Event_Delegator('clear');
             $new_item.data('command')(event_type, {edit_mode: current_edit_mode});
         } else {
             // main form
@@ -1103,7 +1097,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             edit_keys[key]();
             e.preventDefault();
             return false;
-        } else if (key == '32c'){
+        } else if (edit_mode && key == '32c'){
             // toggle [NULL]
             null_toggle($(e.target));
         }
@@ -1119,24 +1113,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             $item.val('');
         }
     }
-/*
-    function find_elements(){
-        $main = $form.find('div.scroller-main table');
-        $head = $form.find('div.scroller-head table');
-        $grid_head = $form.find('div.scroller-head');
-        $side = $form.find('div.scroller-side table');
-        $grid_side = $form.find('div.scroller-side');
-        $grid_main = $form.find('div.scroller-main');
-    }
 
-    // useful objects
-    var $main;
-    var $head;
-    var $side;
-    var $grid_main;
-    var $grid_head;
-    var $grid_side;
-*/
     var scroll_left = 0;
     var scroll_top = 0;
     var row = 0;
@@ -1166,9 +1143,6 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     var scrollbar_side;
     var scrollbar_bottom;
     var util = $.Util;
-    var util_size = $.Util.Size;
-
-    //init_movement();
 
 
 //
@@ -1255,7 +1229,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         var html = '<div class="scroller-foot">';
         html += '<span class="paging">';
         if (paging_data){
-            html += $.Util.paging_bar(paging_data);
+            html += util.paging_bar(paging_data);
         }
         html += '</span>';
         html += '<a href="#" onclick="grid_add_row();return false;">add new</a>';
@@ -1358,7 +1332,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     }
 
 
-    var HTML_Encode = $.Util.HTML_Encode;
+    var HTML_Encode = util.HTML_Encode;
     var num_fields = form_data.fields.length;
 //
 //
@@ -1373,7 +1347,6 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 
     var $drag_col;
     var drag_col;
-  //  var current;  // place to store current selection info for column resizing
     var column_widths = [];
     var last_column_user_width;
     var column_widths_main = [];
@@ -1412,13 +1385,6 @@ $.Grid.MIN_COLUMN_SIZE = 25;
 $.Grid.MIN_GRID_HEIGHT = 50;
 $.Grid.MIN_GRID_WIDTH = 100;
 $.Grid.SIDE_COLUMN_WIDTH = 50;
-
-$.Grid.Movement = function($form, form_data, grid_data){
-
-};
-
-$.Grid.Build = function(input, form_data, grid_data, paging_data, build_new){
-};
 
 
 })(jQuery);
