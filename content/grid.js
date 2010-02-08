@@ -1097,7 +1097,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             edit_keys[key]();
             e.preventDefault();
             return false;
-        } else if (key == '32c'){
+        } else if (edit_mode && key == '32c'){
             // toggle [NULL]
             null_toggle($(e.target));
         }
