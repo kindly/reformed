@@ -795,7 +795,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         var node = 'table.Edit';
         var out = {};
         console_log('autosave: ' + row_info[current.row]);
-        //get_node(node, '_save', out, false);
+        // FIXME implement
     }
 
     function row_blur(){
@@ -961,7 +961,6 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 
             var current_edit_mode = edit_mode;
             util.Event_Delegator('clear');
-         //   blur();
             $new_item.data('command')(event_type, {edit_mode: current_edit_mode});
         } else {
             // main form
@@ -1144,8 +1143,6 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     var scrollbar_side;
     var scrollbar_bottom;
     var util = $.Util;
-
-    //init_movement();
 
 
 //
@@ -1350,7 +1347,6 @@ $.Grid = function(input, form_data, grid_data, paging_data){
 
     var $drag_col;
     var drag_col;
-  //  var current;  // place to store current selection info for column resizing
     var column_widths = [];
     var last_column_user_width;
     var column_widths_main = [];
