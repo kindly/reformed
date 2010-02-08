@@ -345,7 +345,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         var $paging = $grid_foot.find('span.paging');
         var paging = '';
         if (paging_data){
-            paging = $.Util.paging_bar(data.paging_data);
+            paging = util.paging_bar(data.paging_data);
         }
         $paging.html(paging);
         // Update the grid_data in Movement.
@@ -368,7 +368,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             $form.data('update_grid')({ grid_data : grid_data, paging_data : paging_data});
         } else {
             console_log('new');
-            $.Util.unbind_all_children($input);
+            util.unbind_all_children($input);
             $form = $('<div class="f_form GRID"></div>');
             $form.data('form_string', form_string);
             $input.append($form);
@@ -577,7 +577,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     }
 
     function check_row_dirty(){
-        if ($.Util.is_empty(row_info[current.row])){
+        if (util.is_empty(row_info[current.row])){
             current.$row.removeClass('dirty');
             current.$side.removeClass('dirty');
             current.dirty = false;
@@ -603,7 +603,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             current.$item.removeClass('dirty');
             if (row_info[current.row] && row_info[current.row][current.field.name]){
                 delete row_info[current.row][current.field.name];
-                if ($.Util.is_empty(row_info[current.row])){
+                if (util.is_empty(row_info[current.row])){
                     delete row_info[current.row];
                 }
             }
@@ -932,7 +932,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             } else {
                 edit_mode_off();
             }
-            $.Util.Event_Delegator('register', {keydown:keydown, blur:blur});
+            util.Event_Delegator('register', {keydown:keydown, blur:blur});
             form_in_focus = true;
             move();
         }
@@ -960,7 +960,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             var $new_item = $parent.parent().parent();
 
             var current_edit_mode = edit_mode;
-            $.Util.Event_Delegator('clear');
+            util.Event_Delegator('clear');
          //   blur();
             $new_item.data('command')(event_type, {edit_mode: current_edit_mode});
         } else {
@@ -1144,7 +1144,6 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     var scrollbar_side;
     var scrollbar_bottom;
     var util = $.Util;
-    var util_size = $.Util.Size;
 
     //init_movement();
 
@@ -1233,7 +1232,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         var html = '<div class="scroller-foot">';
         html += '<span class="paging">';
         if (paging_data){
-            html += $.Util.paging_bar(paging_data);
+            html += util.paging_bar(paging_data);
         }
         html += '</span>';
         html += '<a href="#" onclick="grid_add_row();return false;">add new</a>';
@@ -1336,7 +1335,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
     }
 
 
-    var HTML_Encode = $.Util.HTML_Encode;
+    var HTML_Encode = util.HTML_Encode;
     var num_fields = form_data.fields.length;
 //
 //
