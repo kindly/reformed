@@ -1247,9 +1247,13 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         selectors_html.push('<table class="t_grid">');
         selectors_html.push('<tbody>');
 
+        var offset = 0;
+        if (paging_data.offset){
+            offset = paging_data.offset;
+        }
         for (var i = 0, n = grid_data.length; i < n ; i++){
             body_html.push(build_row(grid_data[i], i));
-            selectors_html.push('<tr><td>' + (i + paging_data.offset) + '</td></tr>');
+            selectors_html.push('<tr><td>' + (i + offset) + '</td></tr>');
         }
         body_html.push('</tbody>');
         body_html.push('</table>');
