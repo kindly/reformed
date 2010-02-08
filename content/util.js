@@ -552,6 +552,10 @@ $.Util.FormDataNormalize = function (form_data, node) {
         if (!field.params){
             field.params = {};
         }
+        if (field.type == 'subform'){
+            console_log(field);
+            field.params.form = $.Util.FormDataNormalize(field.params.form, node);
+        }
     }
     return form_data;
 };
