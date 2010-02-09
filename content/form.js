@@ -898,7 +898,17 @@ $.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
         // Do nothing.
     }
 
+    function get_control_value(item, $item){
 
+        switch (item.params.control){
+            case 'textarea':
+                return $item.find("textarea:first").val();
+                break;
+            case 'dropdown':
+                return $item.find("input:first").val();
+                break;
+        }
+    }
 
     function get_row_info(){
         var $items = $input.children('div');
@@ -909,14 +919,14 @@ $.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
         var field;
 
         for (var i = 0, n = form_data.fields.length; i < n; i++){
-            field = form_data.fields[i];
-            if (field.params.control){
-                value = $items.eq(i).find("textarea:first").val();
+            item = form_data.fields[i];
+            if (item.params.control){
+                value = get_control_value(item, $items.eq(i));
             } else {
                 value = $items.eq(i).find("input:first").val();
             }
-            cleaned = $.Util.clean_value(value, field);
-            row_info[field.name] = cleaned.value;
+            cleaned = $.Util.clean_value(value, item);
+            row_info[item.name] = cleaned.value;
         }
         return row_info;
 
@@ -1112,7 +1122,7 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
     var HTML_Encode = $.Util.HTML_Encode;
     var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
     $input.empty();
-    build_form()
+    build_form();
 
 
 };
