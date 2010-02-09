@@ -27,6 +27,16 @@
 // General functions
 $.Util = {};
 
+$.Util.stress_test_offset = 0;
+
+$.Util.stress_test = function (node, max_offset){
+    node_load(node + $.Util.stress_test_offset)
+    if ($.Util.stress_test_offset++ > max_offset){
+        $.Util.stress_test_offset = 0;
+        }
+    setTimeout("$.Util.stress_test('" + node + "', " + max_offset + ")", 1000 )
+};
+
 $.Util.get_keystroke = function (e){
     // make a simple key code string
     // eg          tab => 8

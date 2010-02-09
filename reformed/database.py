@@ -603,6 +603,9 @@ class Database(object):
         tables = kw.get("tables", [table_name])
         fields = kw.get("fields", None)
 
+        if "order_by" not in kw:
+            kw["order_by"] = "id"
+
 
         one_to_many_tables = [] 
 
