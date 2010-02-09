@@ -195,11 +195,22 @@ class Lookup(Field):
     def __init__(self, name, other, *args, **kw):
 
         self.other = other
-        self.manytoone = Relation("manytoone", other, foreign_key_name = "%s_%s_id" % (other, name), backref = name, use_parent = True)
+        if name == other:
+            foreign_key_name = "%s_id" % name
+            backref = "_" + other
+        else:
+            foreign_key_name = "%s_%s_id" % (other, name)
+            backref = name
 
-        self.validation = {"%s_%s_id" % (other, name): validators.CheckInField("%s.id" % other,
-                                                         filter_field = kw["type_field"],
-                                                         filter_value = name )}
+        self.filter_field = kw.get("type_field")
+
+        self.manytoone = Relation("manytoone", other, 
+                                  foreign_key_name = foreign_key_name, 
+                                  backref = backref, use_parent = True)
+
+        self.validation = {foreign_key_name: validators.CheckInField("%s.id" % other,
+                                                   filter_field = self.filter_field,
+                                                   filter_value = name )}
 
 class LookupList(Field):
 

@@ -648,26 +648,38 @@ class TableNode(Node):
                 filter_value = autocomplete_options.get("filter_value")
 
             if autocomplete_options == True:
-
                 rfield = database[self.table].fields[field[0]]
-                table, target_field = rfield.other.split(".")
 
-                filter_field = rfield.kw.get("filter_field")
-                filter_value = rfield.kw.get("filter_value")
+                if rfield.type == "Lookup":
+                    table = rfield.other
+                    target_field = database[table].title_field
+                    filter_field = rfield.filter_field
+                    filter_value = rfield.name
+                else:
+                    table, target_field = rfield.other.split(".")
+                    filter_field = rfield.kw.get("filter_field")
+                    filter_value = rfield.kw.get("filter_value")
 
             session = r.reformed.Session()
 
             target_class = database.tables[table].sa_class
+
+            id_field = getattr(target_class, "id")
             target_field = getattr(target_class, target_field)
+
             if filter_field:
                 filter_field = getattr(target_class, filter_field)
-                results = session.query(target_field).filter(filter_field == u"%s" % filter_value).all()
+                results = session.query(id_field, target_field).filter(filter_field == u"%s" % filter_value).all()
             else:
-                results = session.query(target_field).all()
+                results = session.query(id_field, target_field).all()
 
             session.close()
 
-            params["autocomplete"] = [item[0] for item in results]
+            if "control" in params and params["control"] == 'dropdown_codes':
+                params["autocomplete"] = dict(keys = [item[0] for item in results],
+                                              descriptions = [item[1] for item in results])
+            else:
+                params["autocomplete"] = [item[1] for item in results]
 
 
 
