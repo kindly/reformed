@@ -231,10 +231,12 @@ $.Util.clean_value = function (value, field){
             }
             break;
         case 'Boolean':
-            if (value == 'true'){
-                value = true;
-            } else {
-                value = false;
+            if (value !== null){
+                if (value == 'true' || value === true){
+                    value = true;
+                } else {
+                    value = false;
+                }
             }
             update_value = value;
             break;
@@ -558,7 +560,9 @@ $.Util.FormDataNormalize = function (form_data, node) {
     for (var i = 0, n = form_data.fields.length; i < n; i++){
         var field = form_data.fields[i];
         field.index = i;
-        form_data.items[field.name] = field;
+        if (field.name){
+            form_data.items[field.name] = field;
+        }
         if (!field.params){
             field.params = {};
         }

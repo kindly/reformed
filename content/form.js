@@ -30,6 +30,10 @@
 	
 $.fn.extend({
 
+	checkbox: function(item, value){
+		$.Checkbox(this, item, value);
+	},
+
 	form: function(form_data, grid_data, paging_data){
 		$.Form(this, form_data, grid_data, paging_data);
 	},
@@ -43,7 +47,36 @@ $.fn.extend({
 	}
 });
 
+$.Checkbox = function(input, item, value){
 
+    function mousedown(){
+        switch (value){
+            case false:
+                value = null;
+                $checkbox.removeClass('false');
+                $checkbox.addClass('null');
+                break;
+            case null:
+                value = true;
+                $checkbox.removeClass('null');
+                $checkbox.addClass('true');
+                break;
+            case true:
+                value = false;
+                $checkbox.removeClass('true');
+                $checkbox.addClass('false');
+                break;
+        }
+        // store the value
+        $checkbox.data('value', value);
+    }
+    var $checkbox = $(input);
+
+    $checkbox.data('value', value);
+    // FIXME need to unbind this
+    $checkbox.mousedown(mousedown);
+
+};
 
 $.Form = function(input, form_data, row_data, paging_data){
 
@@ -91,7 +124,6 @@ $.Form.Movement = function($input, form_data, row_data){
 
 
     function unbind_all(){
-        console_log('unbind');
         $input.unbind();
     }
 
@@ -124,7 +156,6 @@ $.Form.Movement = function($input, form_data, row_data){
     }
 
     function save(){
-        console_log('save');
         // make the form non-edit
         edit_mode_off();
         if (current.dirty){
@@ -182,8 +213,6 @@ $.Form.Movement = function($input, form_data, row_data){
     }
 
     function save_return(data){
-        console_log('return');
-        console_log(data);
         // errors
         if (data.errors && data.errors['null']){
             save_errors(data.errors['null']);
@@ -206,7 +235,6 @@ $.Form.Movement = function($input, form_data, row_data){
     }
 
     function command_caller(type, data){
-        console_log('command triggered: ' + type);
         if (custom_commands[type]){
             return custom_commands[type](data);
         } else {
@@ -780,7 +808,6 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
     var params;
     for (var i = 0, n = subforms.length; i < n; i ++){
         params = subforms[i].item.params;
-        console_log(subforms[i]);
         extra_defaults = {__table: params.form.table_name,
                           __subform: subforms[i].item.name};
         extra_defaults[params.form.child_id] = row_data[params.form.parent_id];
@@ -834,7 +861,6 @@ $.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
 
 
     function unbind_all(){
-        console_log('unbind');
         $input.unbind();
     }
 
@@ -845,7 +871,6 @@ $.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
         return get_form_data().save_data;
     }
     function command_caller(type, data){
-        console_log('command triggered: ' + type);
         if (custom_commands[type]){
             return custom_commands[type](data);
         } else {
@@ -888,7 +913,6 @@ $.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
     }
 
     function save(){
-        console_log('save');
         // make the form non-edit
         var info = get_form_data();
         get_node_return(form_data.node, '_save', info.save_data, $input, info.copy_of_row_info);
@@ -907,7 +931,27 @@ $.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
             case 'dropdown':
                 return $item.find("input:first").val();
                 break;
+            case 'dropdown_codes':
+                return get_key_from_description(item, $item.find("input:first").val());
+                break;
+            case 'checkbox':
+                return $item.find("div.CHECKBOX").data('value');
+                break;
         }
+    }
+
+    function get_key_from_description(item, value){
+        // convert a description into a key
+        // used by dropdown_codes
+        var descriptions = item.params.autocomplete.descriptions;
+        var keys = item.params.autocomplete.keys;
+        for (var i = 0, n = descriptions.length; i < n; i++){
+            if (value == descriptions[i]){
+                return keys[i];
+            }
+        }
+        // There is no valid key.
+        return null;
     }
 
     function get_row_info(){
@@ -1047,7 +1091,27 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
         return '<button class="' + class_list + '" onclick="node_button_input_form(this, \'' + item.params.node + '\', \'' + item.params.action + '\');return false">' + item.title + '</button>';
     }
 
+    function dropdown_codes(item, value){
+        var descriptions = item.params.autocomplete.descriptions;
+        var keys = item.params.autocomplete.keys;
+        for (var i = 0, n = keys.length; i < n; i++){
+            if (value == keys[i]){
+                value = descriptions[i];
+                break;
+            }
+        }
+        if (i == n){
+            // the key is not valid
+            value = null;
+        }
+        return dropdown_core(item, value, descriptions);
+    }
+
     function dropdown(item, value){
+        return dropdown_core(item, value, item.params.autocomplete);
+    }
+
+    function dropdown_core(item, value, autocomplete){
         var $control;
         var class_list = 'dropdown_f';
         value = correct_value(value);
@@ -1055,7 +1119,7 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
             class_list += ' ' + item.params.css;
         }
         $control = $(add_label(item, 'rf_') + '<span class="' + class_list + ' complex"><input id="rf_' + item.name + '" class="DROPDOWN ' + class_list + '" value="' + value + '" /><div class="but_dd_f"/></span>');
-        $control.find('input').autocomplete(item.params.autocomplete, {dropdown : true});
+        $control.find('input').autocomplete(autocomplete, {dropdown : true});
         return $control;
     }
 
@@ -1067,6 +1131,17 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
         return add_label(item, 'rf_') + '<textarea class="' + class_list + '">' + HTML_Encode_Clear(value) + '</textarea>';
     }
 
+    function checkbox(item, value){
+
+        var class_list = String(value);
+        if (item.params.css){
+            class_list += ' ' + item.params.css;
+        }
+        var $control = $(add_label(item, 'rf_') + '<div class="CHECKBOX ' + class_list + '">X</div>');
+        $control.eq(1).filter('div').checkbox(item, value);
+        return $control;
+    }
+
     function build_control(item, value){
         var $div = $('<div/>');
 
@@ -1076,6 +1151,9 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
                     $div.append(value);
                 }
                 break;
+            case 'dropdown_code':
+                $div.append(dropdown(item, value));
+                break;
             case 'dropdown':
                 $div.append(dropdown(item, value));
                 break;
@@ -1084,6 +1162,9 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
                 break;
             case 'button':
                 $div.append(button(item, value));
+                break;
+            case 'checkbox':
+                $div.append(checkbox(item, value));
                 break;
             case 'link':
                 $div.append(link(item, value));
@@ -1105,18 +1186,46 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
     }
 
     function build_form(){
-        var html = [];
-        num_fields = form_data.fields.length;
+
+        function add_layout_item(item){
+            switch (item.params.layout){
+                case 'hr':
+                    $builder[builder_depth].append('<div><hr/></div>');
+                    break;
+                case 'column_start':
+                    $builder.push($('<div class="COLUMN">'));
+                    builder_depth++;
+                    break;
+                case 'column_end':
+                    if (builder_depth > 0){
+                        $builder[--builder_depth].append($builder.pop());
+                    }
+                    break;
+            }
+        }
+
+
+        var $builder = [$('<div/>')];
+        var builder_depth = 0;
+        var num_fields = form_data.fields.length;
         for (var i = 0; i < num_fields; i++){
             item = form_data.fields[i];
             value = $.Util.get_item_value(item, row_data);
-            if (!item.params.control){
-                $input.append(build_input(item, value));
+            if (item.params.layout){
+                add_layout_item(item, $builder, builder_depth);
             } else {
-                $input.append(build_control(item, value));
+                if (item.params.control){
+                    $builder[builder_depth].append(build_control(item, value));
+                } else {
+                    $builder[builder_depth].append(build_input(item, value));
+                }
             }
         }
-        return html.join('');
+        // close any builder divs
+        while (builder_depth > 0){
+            $builder[--builder_depth].append($builder.pop());
+        }
+        $input.append($builder[0].contents());
     }
 
     var HTML_Encode = $.Util.HTML_Encode;
@@ -1162,7 +1271,6 @@ $.StatusForm = function(input){
     }
 
     function unbind_all(){
-        console_log('unbind');
         $input.unbind();
     }
 
@@ -1174,7 +1282,6 @@ $.StatusForm = function(input){
     };
 
     function command_caller(type, data){
-        console_log('command triggered: ' + type);
         if (custom_commands[type]){
             return custom_commands[type](data);
         } else {

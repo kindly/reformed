@@ -554,3 +554,17 @@ span.f_cell.dirty {
 div.f_form > div{
     clear:both;
 }
+
+
+div.CHECKBOX.false {
+    color:red;
+}
+
+div.CHECKBOX.true {
+    color:green;
+}
+
+div.CHECKBOX.null {
+    color:grey;
+}
+
