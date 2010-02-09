@@ -512,6 +512,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         blur();
 
         grid_data = data.grid_data;
+        paging_data = data.paging_data
         // Update the grid.
         build_grid(false);
         find_grid_elements();
@@ -520,7 +521,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         var $paging = $grid_foot.find('span.paging');
         var paging = '';
         if (paging_data){
-            paging = util.paging_bar(data.paging_data);
+            paging = util.paging_bar(paging_data);
         }
         $paging.html(paging);
         // Update the grid_data in Movement.
