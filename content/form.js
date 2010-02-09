@@ -956,6 +956,15 @@ $.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
 
     function get_row_info(){
         var $items = $input.children('div');
+        var $items2 = $('<div>');
+        for (var i = 0, n = $items.size(); i < n; i++){
+            if ($items.eq(i).hasClass('COLUMN')){
+                $items2.append('<div>').append($items.eq(i).children('div')).append('<div>');
+            } else {
+                $items2.append($items[i]);
+            }
+        }
+        $items = $items2.children('div');
         var row_info = {};
 
         var value;
@@ -964,7 +973,9 @@ $.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
 
         for (var i = 0, n = form_data.fields.length; i < n; i++){
             item = form_data.fields[i];
-            if (item.params.control){
+            if (item.params.layout){
+                continue;
+            } else if (item.params.control){
                 value = get_control_value(item, $items.eq(i));
             } else {
                 value = $items.eq(i).find("input:first").val();

@@ -461,6 +461,7 @@ div.INPUT_FORM > div {
 position:relative;
 float:left;
 clear:both;
+width:100%;
 }
 div.but_dd {
 /*background-color:red;*/
