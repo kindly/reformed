@@ -932,10 +932,27 @@ $.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
             case 'dropdown':
                 return $item.find("input:first").val();
                 break;
+            case 'dropdown_codes':
+                return get_key_from_description(item, $item.find("input:first").val());
+                break;
             case 'checkbox':
                 return $item.find("div.CHECKBOX").data('value');
                 break;
         }
+    }
+
+    function get_key_from_description(item, value){
+        // convert a description into a key
+        // used by dropdown_codes
+        var descriptions = item.params.autocomplete.descriptions;
+        var keys = item.params.autocomplete.keys;
+        for (var i = 0, n = descriptions.length; i < n; i++){
+            if (value == descriptions[i]){
+                return keys[i];
+            }
+        }
+        // There is no valid key.
+        return null;
     }
 
     function get_row_info(){
@@ -1075,7 +1092,27 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
         return '<button class="' + class_list + '" onclick="node_button_input_form(this, \'' + item.params.node + '\', \'' + item.params.action + '\');return false">' + item.title + '</button>';
     }
 
+    function dropdown_codes(item, value){
+        var descriptions = item.params.autocomplete.descriptions;
+        var keys = item.params.autocomplete.keys;
+        for (var i = 0, n = keys.length; i < n; i++){
+            if (value == keys[i]){
+                value = descriptions[i];
+                break;
+            }
+        }
+        if (i == n){
+            // the key is not valid
+            value = null;
+        }
+        return dropdown_core(item, value, descriptions);
+    }
+
     function dropdown(item, value){
+        return dropdown_core(item, value, item.params.autocomplete);
+    }
+
+    function dropdown_core(item, value, autocomplete){
         var $control;
         var class_list = 'dropdown_f';
         value = correct_value(value);
@@ -1083,7 +1120,7 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
             class_list += ' ' + item.params.css;
         }
         $control = $(add_label(item, 'rf_') + '<span class="' + class_list + ' complex"><input id="rf_' + item.name + '" class="DROPDOWN ' + class_list + '" value="' + value + '" /><div class="but_dd_f"/></span>');
-        $control.find('input').autocomplete(item.params.autocomplete, {dropdown : true});
+        $control.find('input').autocomplete(autocomplete, {dropdown : true});
         return $control;
     }
 
@@ -1114,6 +1151,9 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
                 if (value){
                     $div.append(value);
                 }
+                break;
+            case 'dropdown_code':
+                $div.append(dropdown(item, value));
                 break;
             case 'dropdown':
                 $div.append(dropdown(item, value));
