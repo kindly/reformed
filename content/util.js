@@ -550,7 +550,9 @@ $.Util.FormDataNormalize = function (form_data, node) {
     for (var i = 0, n = form_data.fields.length; i < n; i++){
         var field = form_data.fields[i];
         field.index = i;
-        form_data.items[field.name] = field;
+        if (field.name){
+            form_data.items[field.name] = field;
+        }
         if (!field.params){
             field.params = {};
         }
