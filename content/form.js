@@ -933,21 +933,15 @@ $.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
         if ($item[0].nodeName == 'DIV'){
             if ($item.hasClass('data')){
                 $item = $item.parent();
-            } else if ($item.hasClass('but_dd')){
-                $item = $item.parent();
-                fn_finalise = function(){
-                    var $input = $item.find('input');
-                    $input.focus();
-                    $input.trigger('dropdown');
-                }
+            } else if ($item.hasClass('but_dd_f')){
+                $item = $item.parent().find('input');
+                $item.focus();
+                $item.trigger('dropdown');
                 actioned = true;
             }
             $field = $(item).parent().parent('div');
         }
 
-        if (fn_finalise){
-            fn_finalise();
-        }
         return !actioned;
     }
 
@@ -970,51 +964,53 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
         return '<label class="form_label" for="' + prefix + item.name + '">' + item.title + '</label>';
     }
 
+    function correct_value(value){
+        // correct data value if needed
+        switch (item.type){
+            case 'DateTime':
+            case 'Date':
+                if (value !== null){
+                    return Date.ISO(value).makeLocaleString();
+                } else {
+                    return null;
+                }
+                break;
+            case 'Boolean':
+                if (value){
+                    return "True"
+                } else {
+                    return "False"
+                }
+            default:
+                return HTML_Encode(value);
+        }
+    }
+
+
     function build_input(item, value){
             var html = [];
             html.push('<div>');
 
             // label
             html.push(add_label(item, 'rf_'));
+            value = correct_value(value);
 
-            // correct data value if needed
-            switch (item.type){
-                case 'DateTime':
-                case 'Date':
-                    if (value !== null){
-                        value = Date.ISO(value).makeLocaleString();
-                    }
-                    break;
-                case 'Boolean':
-                    if (value){
-                        value = "True"
-                    } else {
-                        value = "False"
-                    }
-                default:
-                    value = HTML_Encode(value);
-            }
             var class_list = 'f_cell';
             if (value === null){
                 value = '';
-      //          class_list += ' null';
             }
 
             if (item.params.css){
                 class_list += ' ' + item.params.css;
             }
 
-            if (item.params.control == 'dropdown'){
-                html.push('<span class="' + class_list + ' complex"><div class="but_dd"/><input id="rf_' + item.name + '" class="DROPDOWN ' + class_list + '" value="' + value + '" /></span>');
-            }
-            else {
-                html.push('<input id="rf_' + item.name + '" class="' + class_list + '" value="' + value + '" />');
-            }
+            html.push('<input id="rf_' + item.name + '" class="' + class_list + '" value="' + value + '" />');
 
             html.push('</div>');
             return html.join('');
 
     }
+
     function link(item, value){
         var class_list = 'link';
         if (item.params.css){
@@ -1042,8 +1038,19 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
         return '<button class="' + class_list + '" onclick="node_button_input_form(this, \'' + item.params.node + '\', \'' + item.params.action + '\');return false">' + item.title + '</button>';
     }
 
-    function textarea(item, value){
+    function dropdown(item, value){
+        var $control;
+        var class_list = 'dropdown_f';
+        value = correct_value(value);
+        if (item.params.css){
+            class_list += ' ' + item.params.css;
+        }
+        $control = $(add_label(item, 'rf_') + '<span class="' + class_list + ' complex"><input id="rf_' + item.name + '" class="DROPDOWN ' + class_list + '" value="' + value + '" /><div class="but_dd_f"/></span>');
+        $control.find('input').autocomplete(item.params.autocomplete, {dropdown : true});
+        return $control;
+    }
 
+    function textarea(item, value){
         var class_list = '';
         if (item.params.css){
             class_list += ' ' + item.params.css;
@@ -1052,40 +1059,40 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
     }
 
     function build_control(item, value){
-        var html = [];
+        var $div = $('<div/>');
 
-        html.push('<div>');
         switch (item.params.control){
             case 'info':
                 if (value){
-                    html.push(value);
+                    $div.append(value);
                 }
                 break;
+            case 'dropdown':
+                $div.append(dropdown(item, value));
+                break;
             case 'textarea':
-                html.push(textarea(item, value));
+                $div.append(textarea(item, value));
                 break;
             case 'button':
-                html.push(button(item, value));
+                $div.append(button(item, value));
                 break;
             case 'link':
-                html.push(link(item, value));
+                $div.append(link(item, value));
                 break;
             case 'link_list':
                 for (var i = 0, n = value.length; i < n; i++){
-                    html.push(link(item, value[i]));
-                    html.push(' ');
+                    $div.append(link(item, value[i]) + '  ');
                 }
                 break;
             case 'subform':
-                html.push('<div class="SUBFORM"></div>');
+                $div.append('<div class="SUBFORM"></div>');
                 subforms.push({item: item, data: value});
                 break;
             default:
-                html.push(item.params.control);
+                $div.append(item.params.control);
         }
-        html.push('</div>');
 
-        return html.join('');
+        return $div;
     }
 
     function build_form(){
@@ -1094,10 +1101,10 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
         for (var i = 0; i < num_fields; i++){
             item = form_data.fields[i];
             value = $.Util.get_item_value(item, row_data);
-            if (!item.params.control || item.params.control == "dropdown"){
-                html.push(build_input(item, value));
+            if (!item.params.control){
+                $input.append(build_input(item, value));
             } else {
-                html.push(build_control(item, value));
+                $input.append(build_control(item, value));
             }
         }
         return html.join('');
@@ -1105,7 +1112,8 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
 
     var HTML_Encode = $.Util.HTML_Encode;
     var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
-    $input.html(build_form());
+    $input.empty();
+    build_form()
 
 
 };
