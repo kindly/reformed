@@ -201,6 +201,15 @@ class Lookup(Field):
                                                          filter_field = kw["type_field"],
                                                          filter_value = name )}
     
+class LookupList(Field):
+
+    def __init__(self, name, lookup, *args, **kw):
+
+        self.type = "Text"
+        if "lookup_list" in kw:
+            self.lookup_list = kw["lookup_list"].split(",")
+
+        self.text = Column(sa.Unicode(100), use_parent = True)
 
 class OneToMany(Field):
     
