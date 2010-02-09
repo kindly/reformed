@@ -221,10 +221,12 @@ $.Util.clean_value = function (value, field){
             }
             break;
         case 'Boolean':
-            if (value == 'true'){
-                value = true;
-            } else {
-                value = false;
+            if (value !== null){
+                if (value == 'true' || value === true){
+                    value = true;
+                } else {
+                    value = false;
+                }
             }
             update_value = value;
             break;
