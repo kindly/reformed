@@ -133,6 +133,7 @@ $.LayoutManager = function () {
         html.push('</form>');
     
         html.push('<ul>');
+        html.push('<li><span onclick="$.Util.stress_test(\'n:table.Edit:list:t=9&l=100&o=\', 9900)">stress test</span></li>');
         html.push('<li><span onclick="node_load(\'n:bug.Ticket:new\')">new ticket</span></li>');
         html.push('<li><span onclick="node_load(\'n:bug.Ticket:list\')">list tickets</span></li>');
         html.push('<li><span onclick="node_load(\'n:table.Table:new\')">new table</span></li>');

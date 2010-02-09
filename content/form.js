@@ -843,7 +843,6 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     //FIXME how do we deal with data in the form
     $.InputForm.Build($form, form_data, row_data);
-    $input.find("input.DROPDOWN").autocomplete(["true","false"], {dropdown : true})
     $.InputForm.Interaction($form, form_data, row_data, extra_defaults);
     $form.data('command')('register_events');
 };
