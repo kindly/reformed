@@ -8,9 +8,13 @@ class Ticket(TableNode):
 
     fields = [
         ['title', 'Text', 'title:'],
+        ['', '', '', dict(layout = 'hr')],
+        ['', '', '', dict(layout = 'column_start')],
         ['accepted', 'Boolean', 'accepted:', {"control" : "dropdown", "autocomplete" : ["true", "false"]}],
         ['complete_by', 'Date', 'complete by:'],
         ['severity', 'Text', 'severity:', {"control" : "dropdown", "autocomplete" : True}],
+        ['', '', '', dict(layout = 'column_end')],
+        ['', '', '', dict(layout = 'hr')],
         ['summary', 'Text', 'summary:', {"control" : "textarea", "css" : "large"}],
         ['button', 'submit', 'add ticket', {'control' : 'button', 'action': '_save', 'node': 'bug.Ticket'}]
     ]
@@ -55,6 +59,7 @@ class ListTicket(TableNode):
         'comment':{
             'fields': [
                 ['note', 'Text', 'note:', {"control" : "textarea", "css" : "large"}],
+                ['moo', 'Boolean', 'moo:', {"control" : "checkbox"}],
                 ['button', 'submit', 'add comment', {'control' : 'button', 'action': '_save', 'node': 'bug.ListTicket'}]
             ],
             "parent_id": "_core_entity_id",
