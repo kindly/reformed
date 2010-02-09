@@ -29,6 +29,7 @@ entity('ticket', d,
        Text("title", mandatory = True),
        Text("summary", length = 4000),
        TextLookupValidated("severity", "severity.severity", length = 4000),
+       Lookup("priority", "priority", length = 4000),
        DateTime("complete_by"),
        Boolean("accepted"),
 
@@ -64,6 +65,15 @@ table("severity", d,
       Created("created_date"), ## when data was gathered
       CreatedBy("created_by"),
       lookup = True
+)
+
+table("priority", d,
+      Text("priority", mandatory = True),
+      Text("desctiption", length = 2000),
+      Created("created_date"), ## when data was gathered
+      CreatedBy("created_by"),
+      lookup = True,
+      title_field = "priority",
 )
 
 d.persist()

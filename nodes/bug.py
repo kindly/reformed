@@ -11,6 +11,7 @@ class Ticket(TableNode):
         ['accepted', 'Boolean', 'accepted:', {"control" : "dropdown", "autocomplete" : ["true", "false"]}],
         ['complete_by', 'Date', 'complete by:'],
         ['severity', 'Text', 'severity:', {"control" : "dropdown", "autocomplete" : True}],
+        ['priority', 'Text', 'priority:', {"control" : "dropdown_codes", "autocomplete" : True}],
         ['summary', 'Text', 'summary:', {"control" : "textarea", "css" : "large"}],
         ['button', 'submit', 'add ticket', {'control' : 'button', 'action': '_save', 'node': 'bug.Ticket'}]
     ]
@@ -34,6 +35,7 @@ class ListTicket(TableNode):
         ['complete_by', 'Date', 'complete by:'],
         ['summary', 'Text', 'summary:', {"control" : "textarea", "css" : "large"}],
         ['severity', 'Text', 'severity:', {"control" : "dropdown", "autocomplete" : True}],
+        ['priority', 'Text', 'priority:', {"control" : "dropdown_codes", "autocomplete" : True}],
         ['old_comments', 'subform', 'old_comments'],
         ['comment', 'subform', 'comment']
     ]
