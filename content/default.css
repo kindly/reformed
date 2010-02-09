@@ -443,6 +443,25 @@ white-space:nowrap;
 }
 
 
+div.but_dd_f {
+/*background-color:red;*/
+background-color:transparent;
+background-image:url('bullet_arrow_down.png');
+background-repeat:no-repeat;
+height:1em;
+float:left;
+position:relative;
+width:20px;
+background-color:#00B;
+}
+.dropdown_f{
+float:left;
+}
+div.INPUT_FORM > div {
+position:relative;
+float:left;
+clear:both;
+}
 div.but_dd {
 /*background-color:red;*/
 background-color:transparent;
