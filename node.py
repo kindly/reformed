@@ -155,9 +155,15 @@ class Node(object):
             row['type'] = field[1]
             row['title'] = field[2]
             if len(field) > 3:
-                row['params'] = field[3]
+                params = field[3].copy()
+                row['params'] = self.modify_params(params, field)
             fields.append(row)
         return fields
+
+    def modify_params(self, params, field):
+        """Change field parameters dynamically for each node load.
+        return modified parameters"""
+        return params
 
     def validate_data(self, data, field, validator):
         try:
@@ -622,6 +628,51 @@ class TableNode(Node):
         except sa.orm.exc.NoResultFound:
             out = {}
         return out
+
+    def modify_params(self, params, field):
+        """Change field parameters dynamically for each node load.
+        return modified parameters"""
+        if "autocomplete" in params:
+            autocomplete_options = params["autocomplete"]
+
+            database = r.reformed
+
+            if isinstance(autocomplete_options, list):
+                return params
+
+            if isinstance(autocomplete_options, dict):
+                table = autocomplete_options["table"]
+                target_field = autocomplete_options["field"]
+
+                filter_field = autocomplete_options.get("filter_field")
+                filter_value = autocomplete_options.get("filter_value")
+
+            if autocomplete_options == True:
+
+                rfield = database[self.table].fields[field[0]]
+                table, target_field = rfield.other.split(".")
+
+                filter_field = rfield.kw.get("filter_field")
+                filter_value = rfield.kw.get("filter_value")
+
+            session = r.reformed.Session()
+
+            target_class = database.tables[table].sa_class
+            target_field = getattr(target_class, target_field)
+            if filter_field:
+                filter_field = getattr(target_class, filter_field)
+                results = session.query(target_field).filter(filter_field == u"%s" % filter_value).all()
+            else:
+                results = session.query(target_field).all()
+
+            session.close()
+
+            params["autocomplete"] = [item[0] for item in results]
+
+
+                
+
+        return params
 
 
 class AutoForm(TableNode):
