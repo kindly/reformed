@@ -670,7 +670,6 @@ class TableNode(Node):
             params["autocomplete"] = [item[0] for item in results]
 
 
-                
 
         return params
 

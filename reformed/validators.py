@@ -153,7 +153,7 @@ class CheckInField(FancyValidator):
 class All(formencode.compound.CompoundValidator):
 
     """
-    This class is a copy of formencodes All validator but makes a new exception 
+    This class is a copy of formencodes All validator but makes a new exception
     with a list of errors (in the error_list property) instead of just raising the
     first found error."""
 
@@ -231,4 +231,4 @@ class All(formencode.compound.CompoundValidator):
 class UnicodeString(UnicodeString):
 
     def is_empty(self, value):
-        return value is None 
+        return value is None
