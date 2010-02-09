@@ -1187,18 +1187,46 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
     }
 
     function build_form(){
-        var html = [];
-        num_fields = form_data.fields.length;
+
+        function add_layout_item(item){
+            switch (item.params.layout){
+                case 'hr':
+                    $builder[builder_depth].append('<div><hr/></div>');
+                    break;
+                case 'column_start':
+                    $builder.push($('<div class="COLUMN">'));
+                    builder_depth++;
+                    break;
+                case 'column_end':
+                    if (builder_depth > 0){
+                        $builder[--builder_depth].append($builder.pop());
+                    }
+                    break;
+            }
+        }
+
+
+        var $builder = [$('<div/>')];
+        var builder_depth = 0;
+        var num_fields = form_data.fields.length;
         for (var i = 0; i < num_fields; i++){
             item = form_data.fields[i];
             value = $.Util.get_item_value(item, row_data);
-            if (!item.params.control){
-                $input.append(build_input(item, value));
+            if (item.params.layout){
+                add_layout_item(item, $builder, builder_depth);
             } else {
-                $input.append(build_control(item, value));
+                if (item.params.control){
+                    $builder[builder_depth].append(build_control(item, value));
+                } else {
+                    $builder[builder_depth].append(build_input(item, value));
+                }
             }
         }
-        return html.join('');
+        // close any builder divs
+        while (builder_depth > 0){
+            $builder[--builder_depth].append($builder.pop());
+        }
+        $input.append($builder[0].contents());
     }
 
     var HTML_Encode = $.Util.HTML_Encode;
