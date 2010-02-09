@@ -88,7 +88,7 @@ class test_donkey(object):
         entity("donkey", cls.Donkey,
               Text("name", validation = '__^[a-zA-Z0-9]*$'),
               Integer("age", validation = 'Int'),
-              TextLookupValidated("donkey_type", "donkey_types.donkey_type", filter_field = "donkey_type_type", filter_value = "looks"),
+              LookupTextValidated("donkey_type", "donkey_types.donkey_type", filter_field = "donkey_type_type", filter_value = "looks"),
               OneToOne("donkey_pics","donkey_pics",
                        foreign_key_name = "donkey",
                        many_side_not_null = False

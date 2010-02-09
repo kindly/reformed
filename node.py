@@ -650,7 +650,10 @@ class TableNode(Node):
             if autocomplete_options == True:
                 rfield = database[self.table].fields[field[0]]
 
-                if rfield.type == "Lookup":
+                if rfield.column.defined_relation:
+                    rfield = rfield.column.defined_relation.parent
+
+                if rfield.type == "LookupId":
                     table = rfield.other
                     target_field = database[table].title_field
                     filter_field = rfield.filter_field
@@ -675,7 +678,7 @@ class TableNode(Node):
 
             session.close()
 
-            if "control" in params and params["control"] == 'dropdown_codes':
+            if "control" in params and params["control"] == 'dropdown_code':
                 params["autocomplete"] = dict(keys = [item[0] for item in results],
                                               descriptions = [item[1] for item in results])
             else:

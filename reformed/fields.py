@@ -51,7 +51,7 @@ class Text(Field):
     def __init__(self, name, *args, **kw):
         self.text = Column(sa.Unicode(100),  use_parent = True)
 
-class TextLookupValidated(Field):
+class LookupTextValidated(Field):
 
     def __init__(self, name, target, *args, **kw):
         self.text = Column(sa.Unicode(100),  use_parent = True)
@@ -190,7 +190,7 @@ class ManyToOne(Field):
         self.other = other
         self.manytoone = Relation("manytoone", other, use_parent = True)
 
-class Lookup(Field):
+class LookupId(Field):
 
     def __init__(self, name, other, *args, **kw):
 

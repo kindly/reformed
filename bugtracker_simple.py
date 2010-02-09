@@ -28,8 +28,8 @@ entity('ticket', d,
 
        Text("title", mandatory = True),
        Text("summary", length = 4000),
-       TextLookupValidated("severity", "severity.severity", length = 4000),
-       Lookup("priority", "priority", length = 4000),
+       LookupTextValidated("severity", "severity.severity", length = 4000),
+       LookupId("priority", "priority", length = 4000),
        DateTime("complete_by"),
        Boolean("accepted"),
 
