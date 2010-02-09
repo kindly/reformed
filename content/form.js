@@ -124,7 +124,6 @@ $.Form.Movement = function($input, form_data, row_data){
 
 
     function unbind_all(){
-        console_log('unbind');
         $input.unbind();
     }
 
@@ -157,7 +156,6 @@ $.Form.Movement = function($input, form_data, row_data){
     }
 
     function save(){
-        console_log('save');
         // make the form non-edit
         edit_mode_off();
         if (current.dirty){
@@ -215,8 +213,6 @@ $.Form.Movement = function($input, form_data, row_data){
     }
 
     function save_return(data){
-        console_log('return');
-        console_log(data);
         // errors
         if (data.errors && data.errors['null']){
             save_errors(data.errors['null']);
@@ -239,7 +235,6 @@ $.Form.Movement = function($input, form_data, row_data){
     }
 
     function command_caller(type, data){
-        console_log('command triggered: ' + type);
         if (custom_commands[type]){
             return custom_commands[type](data);
         } else {
@@ -813,7 +808,6 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
     var params;
     for (var i = 0, n = subforms.length; i < n; i ++){
         params = subforms[i].item.params;
-        console_log(subforms[i]);
         extra_defaults = {__table: params.form.table_name,
                           __subform: subforms[i].item.name};
         extra_defaults[params.form.child_id] = row_data[params.form.parent_id];
@@ -868,7 +862,6 @@ $.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
 
 
     function unbind_all(){
-        console_log('unbind');
         $input.unbind();
     }
 
@@ -879,7 +872,6 @@ $.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
         return get_form_data().save_data;
     }
     function command_caller(type, data){
-        console_log('command triggered: ' + type);
         if (custom_commands[type]){
             return custom_commands[type](data);
         } else {
@@ -922,7 +914,6 @@ $.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
     }
 
     function save(){
-        console_log('save');
         // make the form non-edit
         var info = get_form_data();
         get_node_return(form_data.node, '_save', info.save_data, $input, info.copy_of_row_info);
@@ -1213,7 +1204,6 @@ $.StatusForm = function(input){
     }
 
     function unbind_all(){
-        console_log('unbind');
         $input.unbind();
     }
 
@@ -1225,7 +1215,6 @@ $.StatusForm = function(input){
     };
 
     function command_caller(type, data){
-        console_log('command triggered: ' + type);
         if (custom_commands[type]){
             return custom_commands[type](data);
         } else {
