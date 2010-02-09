@@ -28,6 +28,7 @@ entity('ticket', d,
 
        Text("title", mandatory = True),
        Text("summary", length = 4000),
+       TextLookupValidated("severity", "severity.severity", length = 4000),
        DateTime("complete_by"), 
        Boolean("accepted"), 
 
@@ -56,6 +57,14 @@ table("bookmarks",d,
     Text("entity_table"),
     DateTime("accessed_date")
 )
+
+table("severity", d,
+      Text("severity", mandatory = True), 
+      Text("desctiption", length = 2000),
+      Created("created_date"), ## when data was gathered
+      CreatedBy("created_by"),
+      lookup = True
+) 
 
 d.persist()
 
