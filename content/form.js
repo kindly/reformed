@@ -30,6 +30,10 @@
 	
 $.fn.extend({
 
+	checkbox: function(item, value){
+		$.Checkbox(this, item, value);
+	},
+
 	form: function(form_data, grid_data, paging_data){
 		$.Form(this, form_data, grid_data, paging_data);
 	},
@@ -43,7 +47,36 @@ $.fn.extend({
 	}
 });
 
+$.Checkbox = function(input, item, value){
 
+    function mousedown(){
+        switch (value){
+            case false:
+                value = null;
+                $checkbox.removeClass('false');
+                $checkbox.addClass('null');
+                break;
+            case null:
+                value = true;
+                $checkbox.removeClass('null');
+                $checkbox.addClass('true');
+                break;
+            case true:
+                value = false;
+                $checkbox.removeClass('true');
+                $checkbox.addClass('false');
+                break;
+        }
+        // store the value
+        $checkbox.data('value', value);
+    }
+    var $checkbox = $(input);
+
+    $checkbox.data('value', value);
+    // FIXME need to unbind this
+    $checkbox.mousedown(mousedown);
+
+};
 
 $.Form = function(input, form_data, row_data, paging_data){
 
@@ -908,6 +941,9 @@ $.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
             case 'dropdown':
                 return $item.find("input:first").val();
                 break;
+            case 'checkbox':
+                return $item.find("div.CHECKBOX").data('value');
+                break;
         }
     }
 
@@ -1068,6 +1104,17 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
         return add_label(item, 'rf_') + '<textarea class="' + class_list + '">' + HTML_Encode_Clear(value) + '</textarea>';
     }
 
+    function checkbox(item, value){
+
+        var class_list = String(value);
+        if (item.params.css){
+            class_list += ' ' + item.params.css;
+        }
+        var $control = $(add_label(item, 'rf_') + '<div class="CHECKBOX ' + class_list + '">X</div>');
+        $control.eq(1).filter('div').checkbox(item, value);
+        return $control;
+    }
+
     function build_control(item, value){
         var $div = $('<div/>');
 
@@ -1085,6 +1132,9 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
                 break;
             case 'button':
                 $div.append(button(item, value));
+                break;
+            case 'checkbox':
+                $div.append(checkbox(item, value));
                 break;
             case 'link':
                 $div.append(link(item, value));
