@@ -37,6 +37,7 @@ $.Buttons.action_hash = {
     'delete':[['delete', 'edit-delete.png', 'd', 'record'],[document, node_delete, ['main','']]],
     home: [['home', 'go-home.png', 'h', 'general'],[document, node_load, ['n:test.HomePage:']]],
     new_ticket: [['new ticket', 'go-home.png', 'h', 'general'],[document, node_load, ['n:bug.Ticket:new']]],
+    new_user: [['new user', 'go-home.png', 'h', 'general'],[document, node_load, ['n:bug.User:new']]],
     list_tickets: [['list tickets', 'go-home.png', 'h', 'general'],[document, node_load, ['n:bug.Ticket:list']]]
 };
 
@@ -109,7 +110,7 @@ $.LayoutManager = function () {
     
 
 
-        var action_list = ['home',  'save', 'delete', 'new_ticket', 'list_tickets'];
+        var action_list = ['home',  'save', 'delete', 'new_ticket', 'list_tickets', 'new_user'];
 
         add_actions();
         $body.append($actions);
