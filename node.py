@@ -684,8 +684,13 @@ class TableNode(Node):
             else:
                 params["autocomplete"] = [item[1] for item in results]
 
-
-
+        ## if its a known fields
+        rfield = r[self.table].fields.get(field[0])
+        if rfield:
+            if "validation" not in params:
+                params["validation"] = rfield.validation_info
+            if rfield.default:
+                params["default"] = rfield.default
         return params
 
 
