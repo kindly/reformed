@@ -91,7 +91,7 @@ class User(TableNode):
 
     fields = [
         ['name', 'Text', 'name:'],
-        ['login_name', 'Text', 'login_name:'],
+        ['login_name', 'Text', 'login name:'],
         ['active', 'Boolean', 'active:', {"control" : "checkbox"}],
         ['password', 'Text', 'password:', {"control" : "password"}],
         ['password2', 'Text', 'confirm password:', {"control" : "password"}],
