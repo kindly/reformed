@@ -26,10 +26,11 @@ from reformed.util import get_dir
 from optparse import OptionParser
 import web
 
-def make_application(dir):
-    if not dir:
-        dir = "sample"
-    application = web.WebApplication(dir)
+def make_application(args):
+    if args:
+        application = web.WebApplication(args[0])
+    else:
+        application = web.WebApplication("sample")
     return application
 
 def create(application):
@@ -131,16 +132,14 @@ if __name__ == "__main__":
                       help="web server port")
     (options, args) = parser.parse_args()
 
-    if args:
-        application = make_application(args[0])
-    else:
-        application = make_application("sample")
+    application = make_application(args)
 
     if options.generate:
         generate_data(application)
     if options.delete:
         delete(application)
     if options.create:
+        application = make_application(args)
         create(application)
     if options.load:
         load_data(application, options.load_file)
@@ -150,8 +149,11 @@ if __name__ == "__main__":
         reloader()
         run(options.host, options.port, application)
     if options.all:
+        print "deleting"
         delete(application)
+        application = make_application(args)
         create(application)
+        print "loading"
         load_data(application,options.load_file)
 
 
