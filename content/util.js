@@ -738,7 +738,7 @@ var validation_rules = {
     },
 
     'Email' : function(rule, value, currently_selected){
-        if (currently_selected === true){
+        if (currently_selected === true || value === ''){
             return []
         }
         var usernameRE = /^[^ \t\n\r@<>()]+$/i;
