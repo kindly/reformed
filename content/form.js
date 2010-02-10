@@ -944,7 +944,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             case 'dropdown':
                 return $item.find("input:first").val();
                 break;
-            case 'dropdown_codes':
+            case 'dropdown_code':
                 return get_key_from_description(item, $item.find("input:first").val());
                 break;
             case 'checkbox':
@@ -955,7 +955,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     function get_key_from_description(item, value){
         // convert a description into a key
-        // used by dropdown_codes
+        // used by dropdown_code
         var descriptions = item.params.autocomplete.descriptions;
         var keys = item.params.autocomplete.keys;
         for (var i = 0, n = descriptions.length; i < n; i++){
@@ -1103,9 +1103,11 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         return '<button class="' + class_list + '" onclick="node_button_input_form(this, \'' + item.params.node + '\', \'' + item.params.action + '\');return false">' + item.title + '</button>';
     }
 
-    function dropdown_codes(item, value){
+    function dropdown_code(item, value){
         var descriptions = item.params.autocomplete.descriptions;
         var keys = item.params.autocomplete.keys;
+        console_log(descriptions)
+        console_log(keys)
         for (var i = 0, n = keys.length; i < n; i++){
             if (value == keys[i]){
                 value = descriptions[i];
@@ -1157,6 +1159,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     function build_control(item, value){
         var $div = $('<div class="f_control_holder"/>');
 
+
         switch (item.params.control){
             case 'info':
                 if (value){
@@ -1164,7 +1167,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 }
                 break;
             case 'dropdown_code':
-                $div.append(dropdown(item, value));
+                $div.append(dropdown_code(item, value));
                 break;
             case 'dropdown':
                 $div.append(dropdown(item, value));

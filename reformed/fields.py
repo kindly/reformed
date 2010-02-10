@@ -1,7 +1,7 @@
-##   This file is part of Reformed.
+#   This file is part of Reformed.
 ##
 ##   Reformed is free software: you can redistribute it and/or modify
-##   it under the terms of the GNU General Public License version 2 as 
+##   it under the terms of the GNU General Public License version 2 as
 ##   published by the Free Software Foundation.
 ##
 ##   Reformed is distributed in the hope that it will be useful,
@@ -36,23 +36,23 @@ import datetime
 import events
 
 def get_user_id():
-    
+
     try:
         user_id = html_session.global_session.session["user_id"]
     except AttributeError, e:
         user_id = 1
 
     return user_id
-    
+
 
 
 class Text(Field):
-    
+
     def __init__(self, name, *args, **kw):
         self.text = Column(sa.Unicode(100),  use_parent = True)
 
-class TextLookupValidated(Field):
-    
+class LookupTextValidated(Field):
+
     def __init__(self, name, target, *args, **kw):
         self.text = Column(sa.Unicode(100),  use_parent = True)
         self.other = target
@@ -60,17 +60,17 @@ class TextLookupValidated(Field):
         filter_field = kw.get("filter_field", None)
         filter_value = kw.get("filter_value", None)
 
-        self.validation = {name: validators.CheckInField(target, 
+        self.validation = {name: validators.CheckInField(target,
                                                          filter_field = filter_field,
                                                          filter_value = filter_value )}
 
 class Unicode(Field):
-    
+
     def __init__(self, name, *args, **kw):
         self.text = Column(sa.Unicode(100), use_parent = True)
 
 class Created(Field):
-    
+
     def __init__(self, name, *args, **kw):
         self.created_date = Column(sa.DateTime,
                                    default =datetime.datetime.now)
@@ -81,14 +81,14 @@ class CreatedBy(Field):
                                  default = get_user_id)
 
 class Modified(Field):
-    
+
     def __init__(self, name, *args, **kw):
         self._modified_date = Column(sa.DateTime,
                                      onupdate=datetime.datetime.now,
                                      default =datetime.datetime.now)
 
 class ModifiedBySession(Field):
-    
+
     def __init__(self, name, *args, **kw):
         self._modified_by = Column(sa.Integer,
                                   onupdate = get_user_id,
@@ -96,19 +96,19 @@ class ModifiedBySession(Field):
 
 
 class DateTime(Field):
-    
+
     def __init__(self, name, *args, **kw):
         self.text = Column(sa.DateTime, use_parent = True)
 
 
 class Integer(Field):
-    
+
     def __init__(self, name, *args, **kw):
         self.text = Column(sa.Integer, use_parent = True)
 
-    
+
 class Address(Field):
-    
+
     def __init__(self, name, *args, **kw):
         self.address_line_1 = Column(sa.Unicode(100))
         self.address_line_2 = Column(sa.Unicode(100))
@@ -152,55 +152,66 @@ class Binary(Field):
 
     def __init__(self, name, *args, **kw):
         self.money = Column(sa.Binary, use_parent = True)
-        
-        
+
+
 class Boolean(Field):
 
     def __init__(self, name, *args, **kw):
         self.money = Column(sa.Boolean, use_parent = True)
-        
-        
+
+
 class Money(Field):
 
     def __init__(self, name, *args, **kw):
         self.money = Column(sa.Numeric, use_parent = True)
-        
+
 
 class Numeric(Field):
 
     def __init__(self, name, *args, **kw):
         self.money = Column(sa.Numeric, use_parent = True)
-        
+
 class Email(Field):
-    
+
     def __init__(self, name, *args, **kw):
         self.email = Column(sa.Unicode(300), use_parent_options = True)
         self.validation = {"email" : validators.Email()}
 
 
 class Date(Field):
-    
+
     def __init__(self, name, *args, **kw):
         self.date = Column(sa.Date, use_parent = True)
 
 
 class ManyToOne(Field):
-    
+
     def __init__(self, name, other, *args, **kw):
         self.other = other
         self.manytoone = Relation("manytoone", other, use_parent = True)
 
-class Lookup(Field):
+class LookupId(Field):
 
     def __init__(self, name, other, *args, **kw):
 
         self.other = other
-        self.manytoone = Relation("manytoone", other, foreign_key_name = "%s_%s_id" % (other, name), backref = name, use_parent = True)
+        if name == other:
+            foreign_key_name = "%s_id" % name
+            backref = "_" + other
+        else:
+            foreign_key_name = "%s_%s_id" % (other, name)
+            backref = name
 
-        self.validation = {"%s_%s_id" % (other, name): validators.CheckInField("%s.id" % other,
-                                                         filter_field = kw["type_field"],
-                                                         filter_value = name )}
-    
+        self.filter_field = kw.get("type_field")
+
+        self.manytoone = Relation("manytoone", other, 
+                                  foreign_key_name = foreign_key_name, 
+                                  backref = backref, use_parent = True)
+
+        self.validation = {foreign_key_name: validators.CheckInField("%s.id" % other,
+                                                   filter_field = self.filter_field,
+                                                   filter_value = name )}
+
 class LookupList(Field):
 
     def __init__(self, name, lookup, *args, **kw):
@@ -212,21 +223,21 @@ class LookupList(Field):
         self.text = Column(sa.Unicode(100), use_parent = True)
 
 class OneToMany(Field):
-    
+
     def __init__(self, name, other, *args, **kw):
         self.other = other
         self.onetomany = Relation("onetomany", other, use_parent = True)
-    
+
 
 class OneToManyEager(Field):
-    
+
     def __init__(self, name, other, *args, **kw):
         self.other = other
         self.onetomany = Relation("onetomany", other, eager = True, cascade="all, delete-orphan",  use_parent = True)
-    
+
 
 class OneToOne(Field):
-    
+
     def __init__(self, name, other, *args, **kw):
         self.other = other
         self.onetoone = Relation("onetoone", other, use_parent = True)
@@ -243,7 +254,7 @@ class UniqueIndex(Field):
     def __init__(self, name, fields, *args, **kw):
         self.other = fields
         self.index = columns.Index("unique", fields, use_parent = True)
-    
+
 class UniqueConstraint(Field):
 
     def __init__(self, name, fields, *args, **kw):

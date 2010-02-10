@@ -14,6 +14,7 @@ class Ticket(TableNode):
         ['complete_by', 'Date', 'complete by:'],
         ['', '', '', dict(layout = 'column_next')],
         ['severity', 'Text', 'severity:', {"control" : "dropdown", "autocomplete" : True}],
+        ['priority_id', 'Integer', 'priority:', {"control" : "dropdown_code", "autocomplete" : True}],
         ['', '', '', dict(layout = 'column_end')],
         ['', '', '', dict(layout = 'hr')],
         ['summary', 'Text', 'summary:', {"control" : "textarea", "css" : "large"}],
@@ -39,6 +40,7 @@ class ListTicket(TableNode):
         ['complete_by', 'Date', 'complete by:'],
         ['summary', 'Text', 'summary:', {"control" : "textarea", "css" : "large"}],
         ['severity', 'Text', 'severity:', {"control" : "dropdown", "autocomplete" : True}],
+        ['priority_id', 'Integer', 'priority:', {"control" : "dropdown_code", "autocomplete" : True}],
         ['old_comments', 'subform', 'old_comments'],
         ['comment', 'subform', 'comment']
     ]

@@ -1,7 +1,7 @@
 ##   This file is part of Reformed.
 ##
 ##   Reformed is free software: you can redistribute it and/or modify
-##   it under the terms of the GNU General Public License version 2 as 
+##   it under the terms of the GNU General Public License version 2 as
 ##   published by the Free Software Foundation.
 ##
 ##   Reformed is distributed in the hope that it will be useful,
@@ -20,7 +20,7 @@
 ##	database.py
 ##	======
 ##	
-##	This file contains the Database class that provides access to 
+##	This file contains the Database class that provides access to
 ##  all fuctionality to create the schema, and give acces to query
 ##  and modify a reformed database.
 
@@ -55,7 +55,7 @@ reformedhandler.setFormatter(formatter)
 logger.addHandler(reformedhandler)
 
 class Database(object):
-    
+
     def __init__(self, name, *args, **kw):
 
         self.status = "updating"
@@ -72,7 +72,7 @@ class Database(object):
         boots = boot_tables.boot_tables()
         self.boot_tables = boots.boot_tables
         self.graph = None
-        self.fields_to_persist = [] 
+        self.fields_to_persist = []
         self.load_from_persist()
         if self.entity:
             self.add_entity_table()
@@ -114,7 +114,7 @@ class Database(object):
             elif drop:
                 self.drop_table(table.name)
             else:
-                raise custom_exceptions.DuplicateTableError("already a table named %s" 
+                raise custom_exceptions.DuplicateTableError("already a table named %s"
                                                             % table.name)
 
         for field in table.fields.itervalues():
@@ -161,7 +161,7 @@ class Database(object):
                         row = field.get_field_row_from_table(session)
                         row.other = u"%s" % new_name
                         session.save(row)
-            
+
             row = table_to_rename.get_table_row_from_table(session)
             row.table_name = u"%s" % new_name
             session.save(row)
@@ -208,7 +208,7 @@ class Database(object):
             session._flush()
 
             table_to_drop.sa_table.drop()
-            
+
         except Exception, e:
             session.rollback()
             raise
@@ -221,7 +221,7 @@ class Database(object):
 
         if table_to_drop.logged:
             self.drop_table(self.tables["_log_" + table_to_drop.name])
-        
+
 
     @property
     def t(self):
@@ -229,7 +229,7 @@ class Database(object):
             pass
         tables = Tables()
         for name, table in self.aliases.iteritems():
-            setattr(tables, name, table) 
+            setattr(tables, name, table)
         return tables
 
     def add_relation_table(self, table):
@@ -298,7 +298,7 @@ class Database(object):
 
         if self.tables["_core_entity"].persisted:
             self.fields_to_persist.append(title_event)
-        
+
         #add summary events
 
         if table.summary_fields:
@@ -317,7 +317,7 @@ class Database(object):
 
         if self.tables["_core_entity"].persisted:
             self.fields_to_persist.append(delete_event)
-    
+
     def _add_table_no_persist(self, table):
 
         table._set_parent(self)
@@ -377,7 +377,7 @@ class Database(object):
         #old boot table state causes issues
         boots = boot_tables.boot_tables()
         self.boot_tables = boots.boot_tables
-        
+
         for table in self.boot_tables:
             self.add_table(table)
 
@@ -388,7 +388,7 @@ class Database(object):
 
         self.tables = {}
         self.clear_sa()
-            
+
         ## only persist boot tables if first time
         if not all_tables:
             self.persist()
@@ -400,12 +400,12 @@ class Database(object):
             for field in row.field:
                 field_name = field.field_name.encode("ascii")
                 if field.other:
-                    field_other = field.other.encode("ascii") 
+                    field_other = field.other.encode("ascii")
                 else:
                     field_other = field.other
 
                 if field.foreign_key_name:
-                    foreign_key_name = field.foreign_key_name.encode("ascii") 
+                    foreign_key_name = field.foreign_key_name.encode("ascii")
                 else:
                     foreign_key_name = field.foreign_key_name
 
@@ -416,13 +416,13 @@ class Database(object):
                     elif field_param.value == u"False":
                         value = False
                     else:
-                        value = field_param.value 
+                        value = field_param.value
                     field_kw[field_param.item.encode("ascii")] = value
 
                 fields.append(getattr(field_types, field.type)(field_name,
                                                               field_other,
                                                               foreign_key_name = foreign_key_name,
-                                                              order = field.order, 
+                                                              order = field.order,
                                                               field_id = field.id,
                                                               **field_kw))
             kw = {}
@@ -432,7 +432,7 @@ class Database(object):
                 elif table_param.value == u"False":
                     value = False
                 else:
-                    value = table_param.value 
+                    value = table_param.value
                 kw[table_param.item.encode("ascii")] = value
 
             kw["table_id"] = row.id
@@ -450,7 +450,7 @@ class Database(object):
         # for first time do not say database is persisted
         if all_tables:
             self.persisted = True
-            
+
         self.update_sa()
         self.validate_database()
         session.close()
@@ -482,7 +482,7 @@ class Database(object):
                               "ordered column %s does not exits in %s" \
                                 % (col[0], relation.other)
 
- 
+
     def update_sa(self, reload = False, update_tables = True):
         if reload == True and self.status <> "terminated":
             self.status = "updating"
@@ -533,7 +533,7 @@ class Database(object):
             table.initial_events = []
             table.schema_dict = None
         self.graph = None
-            
+
 
     def tables_with_relations(self, table):
         relations = defaultdict(list)
@@ -547,26 +547,26 @@ class Database(object):
     def result_set(self, search):
 
         return resultset.ResultSet(search)
-    
-    def search(self, table_name, where = None, *args, **kw): 
-        
+
+    def search(self, table_name, where = None, *args, **kw):
+
         """
         :param table_name: specifies the base table you will be query from (required)
 
-        :param where: either a paramatarised or normal where clause, if paramitarised 
-        either values or params keywords have to be added. (optional first arg, if 
+        :param where: either a paramatarised or normal where clause, if paramitarised
+        either values or params keywords have to be added. (optional first arg, if
         missing will query without where)
 
         :param tables: an optional list of onetoone or manytoone tables to be extracted
         with results
-        
+
         :param keep_all: will keep id, _core_entity_id, modified_by and modified_on fields
 
         :param fields: an optional explicit field list in the form 'field' for base table
         and 'table.field' for other tables.  Overwrites table option and keep all.
 
         :param limit: the row limit
-        
+
         :param offset: the offset
 
         :param internal: if true will not convert date, boolean and decimal fields
@@ -576,8 +576,8 @@ class Database(object):
         :param params: a dict with the keys as the replacement to inside the curly
         brackets i.e key name will replace {name} in query.
 
-        :param order_by: a string in the same form as a sql order by 
-        ie 'name desc, donkey.name, donkey.age desc'  (name in base table) 
+        :param order_by: a string in the same form as a sql order by
+        ie 'name desc, donkey.name, donkey.age desc'  (name in base table)
         """
 
         session = kw.pop("session", None)
@@ -607,7 +607,7 @@ class Database(object):
             kw["order_by"] = "id"
 
 
-        one_to_many_tables = [] 
+        one_to_many_tables = []
 
         for table in tables:
             if table == table_name:
@@ -644,25 +644,25 @@ class Database(object):
                     obj = result
                     extra_obj = None
 
-                data.append(get_all_local_data(obj, 
-                                       tables = tables, 
+                data.append(get_all_local_data(obj,
+                                       tables = tables,
                                        fields = fields,
-                                       internal = internal, 
-                                       keep_all = keep_all, 
+                                       internal = internal,
+                                       keep_all = keep_all,
                                        allow_system = True,
-                                       extra_obj = extra_obj)) 
+                                       extra_obj = extra_obj))
 
             wrapped_results = {"data": data}
 
             if count:
                 wrapped_results["__count"] = query.count()
-            return wrapped_results    
+            return wrapped_results
         except Exception, e:
             session.rollback()
             session.close()
             raise
-        
-    def search_single(self, table_name, *args, **kw): 
+
+    def search_single(self, table_name, *args, **kw):
 
         result = self.search(table_name, *args, limit = 2, **kw)["data"]
         if not result or len(result) == 2:
@@ -677,7 +677,7 @@ class Database(object):
                                      modified_date = False)
 
         for column in logged_table.columns.itervalues():
-            
+
             ##FIXME if type is an object (not a class) need different rules
             if hasattr(column.type, "length"):
                 length = column.type.length
@@ -685,12 +685,12 @@ class Database(object):
                               (column.name, length = length)
             else:
                 field =getattr(field_types, column.type.__name__)(column.name)
-            
+
             logging_table.add_field(field)
 
         logging_table.add_field(Integer("_logged_table_id"))
 
-        #logging_table.add_field(ManyToOne(logged_table.name+"_logged" 
+        #logging_table.add_field(ManyToOne(logged_table.name+"_logged"
         #                                 , logged_table.name ))
 
         return logging_table
@@ -742,7 +742,7 @@ class Database(object):
 
         if "_core_entity" in self.tables and not root_table:
             root_table = "_core_entity"
-        aliases = {} 
+        aliases = {}
 
         if root_table:
             unique_aliases = set()
@@ -785,7 +785,7 @@ class ManagerThread(threading.Thread):
                     self.database.scheduler_thread.join()
                 break
             time.sleep(1)
-        
+
 def table(name, database, *args, **kw):
     """helper to add table to database args and keywords same as Table definition"""
     database.add_table(tables.Table(name, *args, **kw))

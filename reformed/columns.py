@@ -1,7 +1,7 @@
 ##   This file is part of Reformed.
 ##
 ##   Reformed is free software: you can redistribute it and/or modify
-##   it under the terms of the GNU General Public License version 2 as 
+##   it under the terms of the GNU General Public License version 2 as
 ##   published by the Free Software Foundation.
 ##
 ##   Reformed is distributed in the hope that it will be useful,
@@ -21,18 +21,18 @@
 ##	======
 ##	
 ##	This file contains the classes that hold information about database
-##  fields such as name,type, indexes and constraints. 
+##  fields such as name,type, indexes and constraints.
 
 import sqlalchemy as sa
 import util
-import custom_exceptions 
+import custom_exceptions
 
 class BaseSchema(object):
-    """Base class of everthing that turn into a database field or 
+    """Base class of everthing that turn into a database field or
     constraint or index. Its only use is to gather the type and name
     of the field, constraint or index.
 
-    :param type: This is either a sqlalchemy type or a string 
+    :param type: This is either a sqlalchemy type or a string
             with onetomany, manytoone or onetoone to define join types.
 
     :param use_parent:  if True will use its parents (Field) column parameters
@@ -48,7 +48,7 @@ class BaseSchema(object):
         self.use_parent_options = kw.pop("use_parent_options", False)
         self.defined_relation = kw.pop("defined_relation", None)
         self.sa_options = {}
-    
+
     def _set_name(self, field, name):
         if self.use_parent:
             self.name = field.decendants_name
@@ -59,12 +59,12 @@ class BaseSchema(object):
 
         if self.use_parent or self.use_parent_options:
             self.sa_options.update(field.sa_options)
-            
+
 
     def __repr__(self):
         return "<class = %s, name = %s, type = %s>" % \
-                (self.__class__.__name__, self.name, self.type) 
-    
+                (self.__class__.__name__, self.name, self.type)
+
     @property
     def table(self):
         """The table object accociated with this object"""
@@ -72,7 +72,7 @@ class BaseSchema(object):
             return self.defined_relation.table
         if not hasattr(self, "parent"):
             raise custom_exceptions.NoFieldError("no field defined for column")
-        return self.parent.table                                         
+        return self.parent.table
 
 class Column(BaseSchema):
     """Contains information to make a database field.
@@ -84,7 +84,7 @@ class Column(BaseSchema):
     def __init__(self, type, *args, **kw):
 
         super(Column, self).__init__(type , *args, **kw)
-        ##original column should be made private. 
+        ##original column should be made private.
         self.original_column = kw.pop("original_column", None)
         default = kw.get("default", None)
         if default is not None:
@@ -100,22 +100,22 @@ class Column(BaseSchema):
         self.parent = None
 
     def _set_parent(self, parent, name):
-        
+
         self._set_name(parent, name)
         self._set_sa_options(parent)
-        
+
         if self.use_parent:
             if parent.length:
                 self.type.length = parent.length
             if parent.field_validation:
                 self.validation = parent.field_validation
-            
+
         if self.name in parent.items.iterkeys():
             raise AttributeError("column already in field definition")
-        else: 
+        else:
             parent.add_column(self.name, self)
             self.parent = parent
-        
+
 class Index(BaseSchema):
 
     def __init__(self, type, fields, *args, **kw):
@@ -129,7 +129,7 @@ class Index(BaseSchema):
 
         if self.name in parent.items.iterkeys():
             raise AttributeError("index name already in field definition")
-        else: 
+        else:
             parent.add_index(self.name, self)
             self.parent = parent
 
@@ -146,7 +146,7 @@ class Constraint(BaseSchema):
 
         if self.name in parent.items.iterkeys():
             raise AttributeError("constraint name already in field definition")
-        else: 
+        else:
             parent.add_constraint(self.name, self)
             self.parent = parent
 
@@ -161,7 +161,7 @@ class Relation(BaseSchema):
 
     type and other are mandatory for relations
 
-    :param type: specifies join type. Accepts onetoone, onetomany and 
+    :param type: specifies join type. Accepts onetoone, onetomany and
         manytoone.
 
     :param other: The name of the table where this reltaion will
@@ -173,15 +173,15 @@ class Relation(BaseSchema):
     :param cascade: Default cascade options see sqlalchemy docs for details
 
     :param order_by: defines the default ordering of the the related table.
-        Input is a string with column names of the other table and ordering 
+        Input is a string with column names of the other table and ordering
         seperated by comma.
         Default ordering is asc
         i.e "email desc, email_type" This will order by email descending then
-        email_type ascending. 
+        email_type ascending.
 
     :param backref: Name the attribute that will occur on the instance of the
-        other tables sqlalchemy objects. By default this will be _thistable 
-        where this table is the name of the table where this relation is 
+        other tables sqlalchemy objects. By default this will be _thistable
+        where this table is the name of the table where this relation is
         defined.
 
     :param one_way: This is to be put at the last edge of where the tables
@@ -189,14 +189,14 @@ class Relation(BaseSchema):
         for tables whos joins loop back to a table search fuctionality wont
         work.
         ie.  table "a" has a relation to "b" and "b" has a relation back to "a"
-        In this case you would put the one_way flag on the secone relation 
-        defined on "b".  
+        In this case you would put the one_way flag on the secone relation
+        defined on "b".
     """
 
     def __init__(self, type, other, *args, **kw):
 
         super(Relation, self).__init__(type , *args, **kw)
-        self.other = other 
+        self.other = other
         self.order_by = kw.pop("order_by", None)
         if self.type == "onetoone":
             self.sa_options["uselist"] = False
@@ -221,14 +221,14 @@ class Relation(BaseSchema):
     def order_by_list(self):
         if self.order_by:
             columns_split = self.order_by.split(",")
-            order_by = [a.split() for a in columns_split] 
+            order_by = [a.split() for a in columns_split]
             for col in order_by:
                 if len(col) == 1:
                     col.append("")
             return order_by
         else:
             return []
-        
+
     def _set_parent(self, parent, name):
         """adds this relation to a field object"""
         self._set_name(parent, name)
@@ -260,7 +260,7 @@ class Relation(BaseSchema):
              return util.swap_relations(self.type)
 
          raise ArgumentError("table %s is not part of this relation" % table_name)
-    
+
     @property
     def foreign_key_table(self):
 
@@ -286,9 +286,9 @@ class Relation(BaseSchema):
     def foreign_key_constraint_name(self):
 
         return self.table.name + "__" + self.name
-    
+
     def join_keys_from_table(self, table_name):
-         
+
          table = self.table.database.tables[table_name]
 
          if self.parent.table.name == table_name:
@@ -298,12 +298,12 @@ class Relation(BaseSchema):
 
          raise ArgumentError("table %s is not part of this relation" % table_name)
 
-        
+
 
     @property
     def other_table(self):
         """Table object of related table"""
-        
+
         try:
             return self.parent.table.database.tables[self.other]
         except AttributeError:
@@ -325,11 +325,11 @@ class Relation(BaseSchema):
                     keys_other_table.append(name)
 
         return [keys_this_table, keys_other_table]
-            
 
-        
 
-        
+
+
+
 class Field(object):
     """ This is intended to be sublassed and should be the only way
     a database field or relation can be made.  This object can contain
@@ -337,14 +337,14 @@ class Field(object):
     relation object (representing a database relataion with a foreign key).
     Examples are in fields.py
 
-    :param name:  field name will be used as column name if use_parent is 
+    :param name:  field name will be used as column name if use_parent is
            used
 
     A field can also have any paremeters defined for a column or relation
     as long as the field only has one column or relation and the use parent
     or use_parent_option flag is set for that column or relation.
     """
-    
+
     def __new__(cls, name, *args, **kw):
 
         obj = object.__new__(cls)
@@ -388,7 +388,7 @@ class Field(object):
             obj.field_validation = r"%s" % obj.field_validation.encode("ascii")
         obj.order_by = kw.get("order_by", None)
         obj.length = kw.get("length", None)
-        ## ignore length if empty string 
+        ## ignore length if empty string
         if not obj.length:
             kw.pop("length", None)
         else:
@@ -401,8 +401,8 @@ class Field(object):
         return obj
 
     def __eq__(self, other):
-        if (self.__class__.__name__ == other.__class__.__name__ 
-            and self.name == other.name 
+        if (self.__class__.__name__ == other.__class__.__name__
+            and self.name == other.name
             and self.kw == other.kw):
             return True
         else:
@@ -430,7 +430,7 @@ class Field(object):
         for name, value in self.kw.iteritems():
             if name not in other.kw:
                 new[name] = value
-        
+
         for name, value in other.kw.iteritems():
             if name not in self.kw:
                 removed[name] = value
@@ -442,7 +442,7 @@ class Field(object):
         return new, removed, difference
 
     def get_field_row_from_table(self, session):
-        
+
         sa_class = self.table.database["__field"].sa_class
         query = session.query(sa_class)
         result = query.filter(sa_class.id == self.field_id).one()
@@ -497,7 +497,7 @@ class Field(object):
                 if name.startswith("_"):
                     continue
                 validator_info[name] = attrib
-                
+
             info.append(validator_info)
 
         return info
@@ -526,7 +526,7 @@ class Field(object):
         self.constraints[name] = constraint
 
     def _set_parent(self, table):
-                
+
         self.check_table(table)
         table.fields[self.name] = self
         table.field_order.append(self.name)
@@ -539,10 +539,10 @@ class Field(object):
         """check to see if this fields columns or relation name clash with
         any fields or columns in a table.
 
-        :param table:  rtable to check this field against 
+        :param table:  rtable to check this field against
         """
         for name, item in self.items.iteritems():
             if name in table.items.iterkeys():
-                raise AttributeError("already an item named %s in %s" % 
+                raise AttributeError("already an item named %s in %s" %
                                      (name, table.name))
-                
+

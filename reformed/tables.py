@@ -1,7 +1,7 @@
 ##   This file is part of Reformed.
 ##
 ##   Reformed is free software: you can redistribute it and/or modify
-##   it under the terms of the GNU General Public License version 2 as 
+##   it under the terms of the GNU General Public License version 2 as
 ##   published by the Free Software Foundation.
 ##
 ##   Reformed is distributed in the hope that it will be useful,
@@ -20,7 +20,7 @@
 ##	tables.py
 ##	======
 ##	
-##	This file contains the reformed Table class. A Table is 
+##	This file contains the reformed Table class. A Table is
 ##  collection of Field objects and the Table objects uses these to make
 ##  make a real database table and store the metadata in private tables in
 ##  the database.
@@ -48,18 +48,18 @@ LOGGER = logging.getLogger('reformed.main')
 class Table(object):
     """ this holds metadata relating to a database table.  It also
     contains methods to create a sqlalchemy Table,Mapper and Class."""
-    
-    
+
+
     def __init__(self, name, *args , **kw):
-        """ 
+        """
         name:  name of the table
         primary_key:   a comma delimited string stating what field
                        should act as a primary key.
         logged: Boolean stating if the table should be logged
-        modified_date: Boolean stating if the table should have a last 
+        modified_date: Boolean stating if the table should have a last
                        modified date
         index:  a semicolon (;) delimited list of the columns to be indexed
-        unique_constraint : a semicolon delimeited list of colums with a 
+        unique_constraint : a semicolon delimeited list of colums with a
                            unique constraint
         *args :  All the Field objects this table has.
         """
@@ -78,7 +78,7 @@ class Table(object):
         self.entity = kw.get("entity", False)
         self.relationship = kw.get("relationship", False)
         self.lookup = kw.get("lookup", False)
-        
+
         valid_entities = kw.get("valid_entities", "").strip().split(",")
         self.valid_entities = [] if valid_entities == [""] else valid_entities
 
@@ -105,7 +105,7 @@ class Table(object):
             self.primary_key_list = self.primary_key.split(",")
         self.unique_constraint_list  = []
         if self.unique_constraint:
-            self.unique_constraint_list = [column_list.split(",") 
+            self.unique_constraint_list = [column_list.split(",")
                                            for column_list in
                                            self.unique_constraint.split(";")]
 
@@ -133,7 +133,7 @@ class Table(object):
         return "%s - %s" % (self.name, self.columns.keys())
 
     def persist(self, session):
-        """This puts the information about the this objects parameters 
+        """This puts the information about the this objects parameters
         and its collection of fields into private database tables so that in future they
         no longer need to be explicitely defined"""
 
@@ -142,8 +142,8 @@ class Table(object):
             if field.category in ("field", "multi_field", "internal"):
                 self.current_order = self.current_order + 1
                 field.order = self.current_order
-            
-                
+
+
         __table = self.database.tables["__table"].sa_class()
         __table.table_name = u"%s" % self.name
         __table.summary = self.summary
@@ -153,7 +153,7 @@ class Table(object):
         for name, param in self.kw.iteritems():
             __table_param = self.database.get_instance("__table_params")
             __table_param.item = u"%s" % name
-            __table_param.value = u"%s" % str(param) 
+            __table_param.value = u"%s" % str(param)
             __table.table_params.append(__table_param)
             session.add(__table_param)
 
@@ -169,11 +169,11 @@ class Table(object):
                 __field.order = field.order
             __table.field.append(__field)
             session.add(__field)
-            
+
             for name, param in field.kw.iteritems():
                 __field_param = self.database.get_instance("__field_params")
                 __field_param.item = u"%s" % name
-                __field_param.value = u"%s" % str(param) 
+                __field_param.value = u"%s" % str(param)
                 __field.field_params.append(__field_param)
                 session.add(__field_param)
 
@@ -250,7 +250,7 @@ class Table(object):
                 if self.database.engine.name == 'sqlite':
                     break
 
-                fk_const = migrate.changeset.constraint.ForeignKeyConstraint(con[0], 
+                fk_const = migrate.changeset.constraint.ForeignKeyConstraint(con[0],
                                                    con[1], name = name, table = fk_table.sa_table)
 
                 if name == relation.foreign_key_constraint_name:
@@ -268,8 +268,8 @@ class Table(object):
                 self.database.load_from_persist(True)
         finally:
             session.close()
-        return 
-    
+        return
+
     def delete_relation(self, field):
 
         if isinstance(field, basestring):
@@ -289,11 +289,11 @@ class Table(object):
             session._flush()
 
             for name, con in fk_table.foreign_key_constraints.iteritems():
-                
-                #fk_const = sa.ForeignKeyConstraint([fk_table.sa_table.c[con[0][0]]], 
+
+                #fk_const = sa.ForeignKeyConstraint([fk_table.sa_table.c[con[0][0]]],
                 #                                   [pk_table.sa_table.c[con[1][0]]], name = name)
 
-                fk_const = migrate.changeset.constraint.ForeignKeyConstraint(con[0], 
+                fk_const = migrate.changeset.constraint.ForeignKeyConstraint(con[0],
                                                    con[1], name = name, table = fk_table.sa_table)
 
                 if name == relation.foreign_key_constraint_name:
@@ -358,7 +358,7 @@ class Table(object):
             self.database.load_from_persist(True)
         finally:
             session.close()
-        
+
 
     def add_field(self, field, defer_update_sa = False):
         """add a Field object to this Table"""
@@ -380,7 +380,7 @@ class Table(object):
                     self.database.update_sa(reload = True)
             finally:
                 session.close()
-            return 
+            return
 
         else:
             self._add_field_no_persist(field)
@@ -405,7 +405,7 @@ class Table(object):
             self.sa_table.c[column.name].alter(name = new_name)
 
             session._flush()
-        
+
         except Exception, e:
             session.rollback()
             raise
@@ -431,7 +431,7 @@ class Table(object):
             session.delete(row)
             session._flush()
 
-            query = Search(self.database, 
+            query = Search(self.database,
                            "__field",
                            session,
                            "table_name = ? and order is ?",
@@ -446,11 +446,11 @@ class Table(object):
 
 
             session._flush()
-            
+
 
             for column in field.columns.values():
                 self.sa_table.c[column.name].drop()
-        
+
         except Exception, e:
             session.rollback()
             raise
@@ -506,7 +506,7 @@ class Table(object):
             for name, param in new_field.kw.iteritems():
                 __field_param = self.database.get_instance("__field_params")
                 __field_param.item = u"%s" % name
-                __field_param.value = u"%s" % str(param) 
+                __field_param.value = u"%s" % str(param)
                 row.field_params.append(__field_param)
                 session.add(__field_param)
             row.type = unicode(new_field.__class__.__name__)
@@ -561,11 +561,11 @@ class Table(object):
 
         if field.order:
             __field.order = field.order
-        
+
         for name, param in field.kw.iteritems():
             __field_param = self.database.tables["__field_params"].sa_class()
             __field_param.item = u"%s" % name
-            __field_param.value = u"%s" % str(param) 
+            __field_param.value = u"%s" % str(param)
             __field.field_params.append(__field_param)
             session.add(__field_param)
 
@@ -582,7 +582,7 @@ class Table(object):
         return __field
 
     def get_table_row_from_table(self, session):
-        
+
         sa_class = self.database["__table"].sa_class
         query = session.query(sa_class)
         result = query.filter(sa_class.id == self.table_id).one()
@@ -621,7 +621,7 @@ class Table(object):
                 items[name] = item
         return items
 
-    @property    
+    @property
     def defined_columns(self):
         """gathers all columns defined in this table"""
         columns = {}
@@ -630,7 +630,7 @@ class Table(object):
                 columns[name] = column
         return columns
 
-    @property    
+    @property
     def indexes(self):
         """gathers all columns defined in this table"""
         columns = {}
@@ -639,7 +639,7 @@ class Table(object):
                 columns[name] = column
         return columns
 
-    @property    
+    @property
     def constraints(self):
         """gathers all columns defined in this table"""
         columns = {}
@@ -656,7 +656,7 @@ class Table(object):
                 column_order.append(column)
         return column_order
 
-    @property    
+    @property
     def columns(self):
         """gathers all columns this table has whether defined here on in
         another tables relation"""
@@ -673,7 +673,7 @@ class Table(object):
             pass
         return columns
 
-  
+
     def add_relations(self):   # this is not a property for an optimisation
         """gathers all relations defined in this table"""
         relations = {}
@@ -713,7 +713,7 @@ class Table(object):
         database.add_relations()
         self.database = database
 
-    @property    
+    @property
     def tables_with_relations(self):
         """returns a dictionary of all related tables and the relation object
         that was defined that related them"""
@@ -736,7 +736,7 @@ class Table(object):
 
     @property
     def dependant_attributes(self):
-        """attributes that would result in a null in the related table if 
+        """attributes that would result in a null in the related table if
         object was removed"""
 
         dependant_attributes = {}
@@ -789,7 +789,7 @@ class Table(object):
 
 
 
-    @property    
+    @property
     def foriegn_key_columns(self):
         """gathers the extra columns in this table that are needed as the tables
         are related. i.e if this table is the many side of a one to many
@@ -798,7 +798,7 @@ class Table(object):
 
         if self.foriegn_key_columns_current:
             return self.foriegn_key_columns_current
-        
+
         self.check_database()
         database = self.database
         columns={}
@@ -812,9 +812,9 @@ class Table(object):
                         for name, column in rtable.primary_key_columns.items():
                             new_col = Column(column.type,
                                              name=name,
-                                             mandatory = rel.many_side_not_null, 
+                                             mandatory = rel.many_side_not_null,
                                              defined_relation = rel,
-                                             original_column = name) 
+                                             original_column = name)
                             columns[name] = new_col
 
                     if rel.foreign_key_name and rel.foreign_key_name not in self.defined_columns:
@@ -873,7 +873,7 @@ class Table(object):
         return fk_constraints
 
     def make_sa_table(self):
-        """makes a sqlalchemy table object and stores it in the 
+        """makes a sqlalchemy table object and stores it in the
         attribute sa_table"""
         #make sure table is not already made
         if self.sa_table:
@@ -921,7 +921,7 @@ class Table(object):
             sa_table.append_constraint(sa.UniqueConstraint(*con, name = name))
 
         self.sa_table = sa_table
-   
+
     def make_sa_class(self):
         """makes a class to be mapped and stores it in the attribute sa_class"""
         #make sure class is not already made
@@ -941,17 +941,17 @@ class Table(object):
 
             def __repr__(self):
 
-                return "_table: %s, id: %s, %s" % (self._table.name, self.id, ", ".join(["%s: %s" % 
-                                         (field, getattr(self, field)) for 
+                return "_table: %s, id: %s, %s" % (self._table.name, self.id, ", ".join(["%s: %s" %
+                                         (field, getattr(self, field)) for
                                           field in self._table.columns])
                                          )
-                
+
 
         SaClass.__name__ = self.name.encode("ascii")
         self.sa_class = SaClass
 
     def sa_mapper(self):
-        """runs sqlalchemy mapper to map the sa_table to sa_class and stores  
+        """runs sqlalchemy mapper to map the sa_table to sa_class and stores
         the mapper object in the 'mapper' attribute"""
         #make sure mapping has not been done
         if self.mapper:
@@ -993,7 +993,7 @@ class Table(object):
                     if relation == col.defined_relation and col.original_column == "id":
                         joined_columns.append([col.original_column, name])
 
-            join_conditions = [] 
+            join_conditions = []
             for col1, col2 in joined_columns:
                 join_conditions.append(getattr(self.sa_table.c, col1) ==\
                                        getattr(other_table.c, col2))
@@ -1007,7 +1007,7 @@ class Table(object):
                              self.sa_table,
                              properties = properties,
                              version_id_col = self.sa_table.c._version)
-    
+
     def make_paths(self):
 
         if not self.paths:
@@ -1023,7 +1023,7 @@ class Table(object):
 
     def _make_sa_order_by_list(self, relation, other_table):
 
-        order_by = [] 
+        order_by = []
         if relation.order_by_list:
             for col in relation.order_by_list:
                 if col[1] == 'desc':
@@ -1031,7 +1031,7 @@ class Table(object):
                 else:
                     order_by.append(getattr(other_table.c, col[0]))
         return order_by
- 
+
     def validation_from_field_types(self, column):
         formencode_all = All()
         validators = formencode_all.validators
@@ -1039,7 +1039,7 @@ class Table(object):
         mand = not column.sa_options.get("nullable", True)
         if column.defined_relation:
             mand = False
-        
+
         val = formencode.validators
         if column.validate == False:
             pass
@@ -1068,7 +1068,7 @@ class Table(object):
     def make_schema_dict(self):
 
         schema_dict = {}
-        chained_validators = [] 
+        chained_validators = []
 
         # gets from column definition
         for column in self.columns.itervalues():
@@ -1091,8 +1091,8 @@ class Table(object):
                     chained_validators.extend(field.chained_validator)
                 else:
                     chained_validators.append(field.chained_validator)
-                    
-        # Non nullable foriegn keys are validated on the 
+
+        # Non nullable foriegn keys are validated on the
         # relationship attribute
         for column in self.foriegn_key_columns.itervalues():
             mand = not column.sa_options.get("nullable", True)
@@ -1119,7 +1119,7 @@ class Table(object):
                     schema_dict[rel.name] = validators.FancyValidator(not_empty = True)
                 if rel.type == "manytoone" and pos == "other":
                     schema_dict[rel.sa_options["backref"]] = validators.FancyValidator(not_empty = True)
-        
+
         if chained_validators:
             schema_dict["chained_validators"] = chained_validators
 
@@ -1150,7 +1150,7 @@ class Table(object):
                     if name.startswith("_"):
                         continue
                     validator_info[name] = attrib
-                    
+
                 all_info.append(validator_info)
 
             schema[key] = all_info
@@ -1166,11 +1166,11 @@ class Table(object):
         return formencode.Schema(allow_extra_fields = True,
                                  ignore_key_missing = True,
                                  **self.schema_dict)
-    
+
     def validate(self, instance, session):
         """this validates an instance of sa_class with the schema defined
         by this tables Field objects"""
-        
+
         validation_dict = {}
         for name in self.schema_dict.iterkeys():
             if name == "chained_validators":
@@ -1182,11 +1182,11 @@ class Table(object):
             return {}
 
         return self.validation_schema.to_python(validation_dict, instance)
-        
-    
+
+
     def logged_instance(self, instance):
         """this creates a copy of an instace of sa_class"""
-        
+
         ##not used as sessionwrapper now does this
         logged_instance = self.database.tables["_log_" + self.name].sa_class()
         for name in self.columns.iterkeys():
@@ -1224,7 +1224,7 @@ class Table(object):
         session.close()
 
 
-    
+
 class ChangedAttributes(AttributeExtension):
 
     def set(self, state, value, oldvalue, initator):
@@ -1238,7 +1238,7 @@ class VersionChange(AttributeExtension):
 
     def set(self, state, value, oldvalue, initator):
 
-            
+
         state.dict["_version_changed"] = True
 
         if isinstance(value, int):
@@ -1248,9 +1248,9 @@ class VersionChange(AttributeExtension):
 
         return value
 
-    
+
 class ConvertDate(AttributeExtension):
-    
+
     def set(self, state, value, oldvalue, initator):
 
         if value == oldvalue:

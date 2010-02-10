@@ -22,10 +22,10 @@ import formencode as fe
 from formencode import validators
 import node
 from node import TableNode, Node, AutoForm
-from .reformed.reformed import reformed as r
 import sqlalchemy as sa
 from global_session import global_session
-from .reformed import reformed as table_functions
+r = global_session.database
+##from .reformed import reformed as table_functions
 
 class HomePage(Node):
 

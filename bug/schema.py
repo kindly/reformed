@@ -18,21 +18,22 @@
 ##   Copyright (c) 2008-2009 Toby Dacre & David Raznick
 ##
 
-import reformed.reformed as r
 from reformed.database import table, entity, relation
 from reformed.fields import *
+from global_session import global_session
 
-d =  r.reformed
+d =  global_session.database
 
 entity('ticket', d,
 
        Text("title", mandatory = True),
        Text("summary", length = 4000),
-       TextLookupValidated("severity", "severity.severity", length = 4000),
-       DateTime("complete_by"), 
-       Boolean("accepted"), 
+       LookupTextValidated("severity", "severity.severity", length = 4000),
+       LookupId("priority", "priority", length = 4000),
+       DateTime("complete_by"),
+       Boolean("accepted"),
 
-       Created("created_date"), 
+       Created("created_date"),
        CreatedBy("created_by"),
 
        title_field = "title",
@@ -59,12 +60,21 @@ table("bookmarks",d,
 )
 
 table("severity", d,
-      Text("severity", mandatory = True), 
+      Text("severity", mandatory = True),
       Text("desctiption", length = 2000),
       Created("created_date"), ## when data was gathered
       CreatedBy("created_by"),
       lookup = True
-) 
+)
+
+table("priority", d,
+      Text("priority", mandatory = True),
+      Text("desctiption", length = 2000),
+      Created("created_date"), ## when data was gathered
+      CreatedBy("created_by"),
+      lookup = True,
+      title_field = "priority",
+)
 
 d.persist()
 

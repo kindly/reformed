@@ -18,13 +18,13 @@
 ##   Copyright (c) 2008-2009 Toby Dacre & David Raznick
 ##
 
-import reformed.reformed as r
 import reformed.util as util
 from reformed import custom_exceptions
 import formencode as fe
 import sqlalchemy as sa
 import datetime
 from global_session import global_session
+r = global_session.database
 
 class Node(object):
 
@@ -111,7 +111,7 @@ class Node(object):
 
         user = global_session.session['user_id']
         try:
-            result = r.reformed.search_single("bookmarks",
+            result = r.search_single("bookmarks",
                                               "user_id = ? and bookmark = ?",
                                               values = [user, self.bookmark["bookmark_string"]])
             result["accessed_date"] = util.convert_value(datetime.datetime.now())
@@ -125,7 +125,7 @@ class Node(object):
                       "entity_table": self.bookmark["table_name"],
                       "accessed_date": util.convert_value(datetime.datetime.now())}
 
-        util.load_local_data(r.reformed, result)
+        util.load_local_data(r, result)
 
         self.bookmark = result
 
@@ -236,7 +236,7 @@ class TableNode(Node):
             code_group = self.code_groups[code_group_name]
             table = code_group.get('code_table')
             field = code_group.get('code_field')
-            codes = r.reformed.search(table, 'id>0', fields = [field])['data']
+            codes = r.search(table, 'id>0', fields = [field])['data']
             code_array = []
             for row in codes:
                 code_array.append(row.get(field))
@@ -291,7 +291,7 @@ class TableNode(Node):
 
 
     def node_search_single(self, where):
-        return r.reformed.search_single(self.table, where, fields = self.field_list, keep_all = True)
+        return r.search_single(self.table, where, fields = self.field_list, keep_all = True)
 
 
     def save_record_rows(self, session, table, fields, data, join_fields):
@@ -312,11 +312,11 @@ class TableNode(Node):
         try:
             if filter:
                 print 'existing record'
-                obj = r.reformed.get_class(table)
+                obj = r.get_class(table)
                 record_data = session.query(obj).filter_by(**filter).one()
             else:
                 print 'new record'
-                record_data = r.reformed.get_instance(table)
+                record_data = r.get_instance(table)
             for field in fields:
                 field_name = field[0]
                 field_type = field[1]
@@ -356,7 +356,7 @@ class TableNode(Node):
         self.saved = []
         self.errors = {}
 
-        session = r.reformed.Session()
+        session = r.Session()
         id = self.data.get('id')
         root = self.data.get('__root')
         if id:
@@ -437,7 +437,7 @@ class TableNode(Node):
 
             for code in no_codes:
                 filter = {flag_child_field: parent_value, code_field: code}
-                obj = r.reformed.get_class(table)
+                obj = r.get_class(table)
                 try:
                     data = session.query(obj).filter_by(**filter).one()
                     if data:
@@ -448,10 +448,10 @@ class TableNode(Node):
 
             for code in yes_codes:
                 where = "%s='%s' and %s='%s'" % (flag_child_field, parent_value, code_field, code)
-                result = r.reformed.search(table, where)['data']
+                result = r.search(table, where)['data']
                 if not result:
                     # need to add this field
-                    record_data = r.reformed.get_instance(table)
+                    record_data = r.get_instance(table)
                     setattr(record_data, flag_child_field, parent_value)
                     setattr(record_data, code_field, code)
                     session.save_or_update(record_data)
@@ -501,7 +501,7 @@ class TableNode(Node):
         self.action = 'form'
 
         self.bookmark = dict(
-            table_name = r.reformed[data_out.get("__table")].name,
+            table_name = r[data_out.get("__table")].name,
             bookmark_string = self.build_node('', 'view', 'id=%s' %  id),
             entity_id = id
         )
@@ -517,7 +517,7 @@ class TableNode(Node):
         parent_value = data_out.get(flag_parent_field)
 
         where = "%s = '%s'" % (flag_parent_field, parent_value)
-        results = r.reformed.search(flag_table, where, fields = [flag_code_field])['data']
+        results = r.search(flag_table, where, fields = [flag_code_field])['data']
 
         out = []
         for row in results:
@@ -534,8 +534,8 @@ class TableNode(Node):
         # FIXME i'd rather get this data ourself and not rely on the returned info
         table = self.data.get('table_name', self.table)
 
-        session = r.reformed.Session()
-        obj = r.reformed.get_class(table)
+        session = r.Session()
+        obj = r.get_class(table)
         try:
             data = session.query(obj).filter_by(**filter).one()
             # code_groups
@@ -569,14 +569,14 @@ class TableNode(Node):
         limit = self.get_data_int('l', limit)
         offset = self.get_data_int('o')
 
-        if r.reformed[self.table].entity:
-            results = r.reformed.search('_core_entity',
+        if r[self.table].entity:
+            results = r.search('_core_entity',
                                         where = "%s.id >0" % self.table,
                                         limit = limit,
                                         offset = offset,
                                         count = True)
         else:
-            results = r.reformed.search(self.table,
+            results = r.search(self.table,
                                         where = "id >0",
                                         limit = limit,
                                         offset = offset,
@@ -584,7 +584,7 @@ class TableNode(Node):
 
         data = results['data']
         # build the links
-        if r.reformed[self.table].entity:
+        if r[self.table].entity:
             for row in data:
                 row['title'] = self.build_node(row['title'], 'edit', '__id=%s' % row['id'])
                 row['edit'] = [self.build_node('Edit', 'edit', '__id=%s' % row['id']),
@@ -624,7 +624,7 @@ class TableNode(Node):
 
         where = "%s=%s" % (child_id, parent_value)
         try:
-            out = r.reformed.search(table, where, fields = field_list)["data"]
+            out = r.search(table, where, fields = field_list)["data"]
         except sa.orm.exc.NoResultFound:
             out = {}
         return out
@@ -635,7 +635,7 @@ class TableNode(Node):
         if "autocomplete" in params:
             autocomplete_options = params["autocomplete"]
 
-            database = r.reformed
+            database = r
 
             if isinstance(autocomplete_options, list):
                 return params
@@ -648,29 +648,43 @@ class TableNode(Node):
                 filter_value = autocomplete_options.get("filter_value")
 
             if autocomplete_options == True:
-
                 rfield = database[self.table].fields[field[0]]
-                table, target_field = rfield.other.split(".")
 
-                filter_field = rfield.kw.get("filter_field")
-                filter_value = rfield.kw.get("filter_value")
+                if rfield.column.defined_relation:
+                    rfield = rfield.column.defined_relation.parent
 
-            session = r.reformed.Session()
+                if rfield.type == "LookupId":
+                    table = rfield.other
+                    target_field = database[table].title_field
+                    filter_field = rfield.filter_field
+                    filter_value = rfield.name
+                else:
+                    table, target_field = rfield.other.split(".")
+                    filter_field = rfield.kw.get("filter_field")
+                    filter_value = rfield.kw.get("filter_value")
+
+            session = r.Session()
 
             target_class = database.tables[table].sa_class
+
+            id_field = getattr(target_class, "id")
             target_field = getattr(target_class, target_field)
+
             if filter_field:
                 filter_field = getattr(target_class, filter_field)
-                results = session.query(target_field).filter(filter_field == u"%s" % filter_value).all()
+                results = session.query(id_field, target_field).filter(filter_field == u"%s" % filter_value).all()
             else:
-                results = session.query(target_field).all()
+                results = session.query(id_field, target_field).all()
 
             session.close()
 
-            params["autocomplete"] = [item[0] for item in results]
+            if "control" in params and params["control"] == 'dropdown_code':
+                params["autocomplete"] = dict(keys = [item[0] for item in results],
+                                              descriptions = [item[1] for item in results])
+            else:
+                params["autocomplete"] = [item[1] for item in results]
 
 
-                
 
         return params
 
@@ -684,7 +698,7 @@ class AutoForm(TableNode):
 
     def setup(self):
         fields = []
-        obj = r.reformed.get_instance(self.table)
+        obj = r.get_instance(self.table)
         columns = obj._table.schema_info
         for field in columns.keys():
             if field not in ['_modified_date', '_modified_by']:

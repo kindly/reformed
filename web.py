@@ -31,7 +31,6 @@ import wsgiref.util
 import json
 from global_session import global_session
 import interface
-import lookup
 
 import logging
 logger = logging.getLogger('reformed.main')
@@ -100,6 +99,35 @@ def process_node(environ, start_response):
 class WebApplication(object):
     """New leaner webapplication server."""
 
+    def __init__(self, dir):
+
+        ##FIXME may not be the correct place for this
+        from sqlalchemy import MetaData, create_engine
+        from sqlalchemy.orm import sessionmaker
+        import reformed.database
+
+        self.metadata = MetaData()
+
+        this_dir = os.path.dirname(os.path.abspath(__file__))
+        application_folder = os.path.join(this_dir, dir)
+
+        sys.path.append(application_folder)
+
+        self.engine = create_engine('sqlite:///%s/%s.sqlite' % (application_folder,dir))
+        self.metadata.bind = self.engine
+        Session = sessionmaker(bind=self.engine, autoflush = False)
+
+        self.database = reformed.database.Database("reformed",
+                                                    entity = True,
+                                                    metadata = self.metadata,
+                                                    engine = self.engine,
+                                                    session = Session,
+                                                    logging_tables = False
+                                                    )
+
+        global_session.database = self.database
+
+
     def static(self, environ, start_response, path):
         """Serve static content"""
 
@@ -145,6 +173,8 @@ class WebApplication(object):
     def __call__(self, environ, start_response):
         """Request handler"""
 
+
+        global_session.database = self.database
         request_url = environ['PATH_INFO']
         if request_url == '/ajax':
             return (process_node(environ, start_response))
