@@ -107,7 +107,7 @@ class WebApplication(object):
         import reformed.database
 
         self.metadata = MetaData()
-
+        self.dir = dir
         this_dir = os.path.dirname(os.path.abspath(__file__))
         application_folder = os.path.join(this_dir, dir)
 
@@ -131,9 +131,14 @@ class WebApplication(object):
     def static(self, environ, start_response, path):
         """Serve static content"""
 
+        print self.dir
+        print path
         root = os.path.dirname(os.path.abspath(__file__))
-        path = '%s/content/%s' % (root, path) # does this work in windows?
-
+        if path.startswith('/local/'):
+            path = '%s/%s/content%s' % (root, self.dir, path[6:]) # does this work in windows?
+        else:
+            path = '%s/content%s' % (root, path) # does this work in windows?
+        print path
         if os.path.isfile(path):
             stat = os.stat(path)
             mimetype = mimetypes.guess_type(path)[0] or 'application/octet-stream'
