@@ -766,6 +766,9 @@ function validate(rules, value, currently_selected){
             if (rule.not_empty && value === null && currently_selected !== true){
                 return ['must not be null'];
             }
+            if (rule.not_empty && value === '' && currently_selected !== true){
+                return ['must not be ""'];
+            }
         }
         // validate the rules for the field if we know the validator
         if (validation_rules[rule.type] !== undefined){
