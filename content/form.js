@@ -852,10 +852,12 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         'get_form_data' : get_form_data_remote
     };
 
+    var util_size = $.Util.Size;
     var HTML_Encode = $.Util.HTML_Encode;
     var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
     //FIXME how do we deal with data in the form
     build_form();
+    size_boxes();
     init_movement();
     register_events();
 
@@ -1060,6 +1062,18 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             html.push('</div>');
             return $(html.join(''));
 
+    }
+
+    function size_boxes(){
+        var $box;
+        var width;
+        var $boxes = $form.find('div.BOX');
+        for (var i = 0, n = $boxes.size(); i < n ; i++){
+            $box = $boxes.eq(i);
+            width = $box.parent().width() - util_size.FORM_BOX_W;
+    console_log(width);
+            $box.width(width);
+        }
     }
 
     function link(item, value){

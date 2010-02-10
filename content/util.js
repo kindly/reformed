@@ -408,6 +408,18 @@ $.Util.Size.get = function(){
 
     }
 
+    function form_elements(){
+        var $div = $('<div style="overflow:hidden; width:150px; height:200px; position:absolute; left:-200px; top:0px;"></div>');
+        $div.append('<div class="BOX" />');
+
+        $('body').append($div);
+        var $x = $div.find('div.BOX');
+        util_size.FORM_BOX_W = $x.outerWidth() - $x.width();
+   //     util_size.FORM_BOX_H = $x.outerHeight() - $x.height();
+
+        $div.remove();
+    }
+
     function grid(){
         // get interesting stuff about grid cells
         // needed for acurate resizing
@@ -449,6 +461,7 @@ $.Util.Size.get = function(){
     }
 
     var util_size = $.Util.Size;
+    form_elements();
     action_button();
     scrollbar();
     grid();
