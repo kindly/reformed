@@ -1071,7 +1071,6 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         for (var i = 0, n = $boxes.size(); i < n ; i++){
             $box = $boxes.eq(i);
             width = $box.parent().width() - util_size.FORM_BOX_W;
-    console_log(width);
             $box.width(width);
         }
     }
@@ -1106,8 +1105,6 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     function dropdown_code(item, value){
         var descriptions = item.params.autocomplete.descriptions;
         var keys = item.params.autocomplete.keys;
-        console_log(descriptions)
-        console_log(keys)
         for (var i = 0, n = keys.length; i < n; i++){
             if (value == keys[i]){
                 value = descriptions[i];
