@@ -342,6 +342,9 @@ class AutoFormPlus(TableNode):
                         if field_type == "Text" and field_schema[0]["max"] > 500:
                             params["control"] = "textarea"
                             params["css"] = "large"
+                        if field_type == "Boolean":
+                            params["control"] = "checkbox"
+
                         fields.append([field, field_type, '%s:' % field, params])
                     except:
                         fields.append([field, 'Text', '%s:' % field, params])
