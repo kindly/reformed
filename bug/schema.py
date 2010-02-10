@@ -18,11 +18,11 @@
 ##   Copyright (c) 2008-2009 Toby Dacre & David Raznick
 ##
 
-import reformed.reformed as r
 from reformed.database import table, entity, relation
 from reformed.fields import *
+from global_session import global_session
 
-d =  r.reformed
+d =  global_session.database
 
 entity('ticket', d,
 

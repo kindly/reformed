@@ -19,9 +19,11 @@
 ##
 
 
-from .reformed.reformed import reformed as r
 import node
-from .reformed import reformed as table_functions
+import reformed.fields as rfields
+from reformed.tables import Table
+from global_session import global_session
+r = global_session.database
 
 
 class Table(node.TableNode):
@@ -144,7 +146,7 @@ class Table(node.TableNode):
                 pass
             else:
                 # add a new field
-                field_class = getattr(table_functions, field_type)
+                field_class = getattr(rfields, field_type)
                 table.add_field(field_class(field_name, **field_info))
 
                 root = field.get('__root')
@@ -165,7 +167,7 @@ class Table(node.TableNode):
 
     def create_new_table(self, table_name, entity, logged, fields, summary, joins):
 
-        table = table_functions.Table(table_name, logged=logged, summary = summary)
+        table = Table(table_name, logged=logged, summary = summary)
 
         for field in fields:
             field_type = field.get('field_type')
@@ -181,7 +183,7 @@ class Table(node.TableNode):
             if length:
                 field_info['length'] = length
 
-            field_class = getattr(table_functions, field_type)
+            field_class = getattr(rfields, field_type)
 
             if field_name:
                 table.add_field(field_class(field_name, **field_info))

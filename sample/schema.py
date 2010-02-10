@@ -19,12 +19,14 @@
 ##
 
 
-import reformed.reformed as r
 from reformed.database import table, entity
 from reformed.fields import *
+from global_session import global_session
+
+d = global_session.database
 
 
-d =  r.reformed
+
 
 
 entity("people",d,

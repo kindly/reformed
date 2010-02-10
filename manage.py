@@ -23,111 +23,135 @@ import os, os.path, sys
 from reformed.export import json_dump_all_from_table
 from reformed.data_loader import load_json_from_file
 from reformed.util import get_dir
+from optparse import OptionParser
+import web
 
+def make_application(dir):
+    if not dir:
+        dir = "sample"
+    application = web.WebApplication(dir)
+    return application
 
-
-
-def create():
+def create(application):
     print 'creating database structure'
-    import sample_schema
+    import schema
 
-def load_data():
+def load_data(application, file):
     print 'loading data'
-    import reformed.reformed as r
     from reformed.data_loader import FlatFile
-    flatfile = FlatFile(r.reformed,
+    flatfile = FlatFile(application.database,
                         "people",
-                        "data.csv")
+                        file)
     flatfile.load()
 
-def generate_data():
+def generate_data(application):
     print 'generating data'
     import data_creator
     data_creator.create_csv()
 
-def delete():
+def delete(application):
 
-    import reformed.dbconfig as config
     from sqlalchemy import MetaData
     print 'deleting database'
 
-    engine = config.engine.name
-
     meta = MetaData()
-    meta.reflect(bind=config.engine)
+    meta.reflect(bind=application.engine)
 
     for table in reversed(meta.sorted_tables):
         print 'deleting %s...' % table.name
-        table.drop(bind=config.engine)
+        table.drop(bind=application.engine)
 
-def dump():
+def dump(application):
     print 'dumping data'
-    from reformed.reformed import reformed
-    session = reformed.Session()
-    json_dump_all_from_table(session, 'user', reformed, 'data/users.json', style = "clear")
+    session = application.database.Session()
+    json_dump_all_from_table(session, 'user', application.database, 'data/users.json', style = "clear")
     session.close()
 
-def undump():
+def undump(application):
     print 'undumping data'
-    from reformed.reformed import reformed
-    load_json_from_file('data/users.json', reformed, 'user')
+    load_json_from_file('data/users.json', application.database, 'user')
 
 def reloader():
     import paste.reloader
     paste.reloader.install()
 
-def run():
+def run(host, port, application):
     print 'starting webserver'
     import beaker.middleware
-    from reformed.reformed import reformed 
-    reformed.scheduler_thread.start()
-    import web
+    database = application.database
+    database.scheduler_thread.start()
+
     if os.environ.get("REQUEST_METHOD", ""):
         from wsgiref.handlers import BaseCGIHandler
         BaseCGIHandler(sys.stdin, sys.stdout, sys.stderr, os.environ).run(http.app)
     else:
 
         from paste import httpserver
-        #from wsgiref.simple_server import WSGIServer, WSGIRequestHandler
-        #httpd = WSGIServer(('', 8000), WSGIRequestHandler)
-        application = web.WebApplication()
-        
+
         application = beaker.middleware.SessionMiddleware(application, {"session.type": "memory",
                                                                         "session.auto": True})
-
-        #httpd.set_app(application)
-        #print "Serving HTTP on %s port %s ..." % httpd.socket.getsockname()
-
         try:
-            httpserver.serve(application, port = 8000)
+            httpserver.serve(application, host = host, port = port)
             #httpd.serve_forever()
         except KeyboardInterrupt:
             pass
 
 if __name__ == "__main__":
-   load = False 
-   if 'dump' in sys.argv:
-       dump()
-   if 'delete' in sys.argv:
-       delete()
-   if 'create' in sys.argv:
-        create()
-   if 'undump' in sys.argv:
-       undump()
-   if 'generate' in sys.argv:
-        generate_data()
-   if 'load' in sys.argv:
-        if "run" not in sys.argv:
-            load_data()
-        load = True
-   if 'reload' in sys.argv:
+
+    usage = "usage: %prog [options] package"
+
+    parser = OptionParser(usage=usage)
+
+    parser.add_option("-a", "--all",
+                      action="store_true", dest="all",
+                      help="equivilent to delete create load")
+
+    parser.add_option("-c", "--create",
+                      action="store_true", dest="create",
+                      help="create the database")
+    parser.add_option("-l", "--load",
+                      action="store_true", dest="load",
+                      help="load the data, use -f to change the file (default data.csv)")
+    parser.add_option("-f", "--file",
+                      action="store", dest="load_file", default = "data.csv",
+                      help="specify load file (default data.csv)")
+    parser.add_option("-g", "--generate", action="store_true",
+                      help="generate sample file")
+    parser.add_option("-d", "--delete", dest = "delete", action="store_true",
+                      help="delete current database")
+    parser.add_option("-r", "--run", dest = "run", action="store_true",
+                      help="run the web server")
+    parser.add_option("--reload", dest = "reload", action="store_true",
+                      help="run with reloader")
+    parser.add_option("--host", dest = "host", action="store",
+                      default = "127.0.0.1",
+                      help="web server host")
+    parser.add_option("--port", dest = "port", action="store",
+                      default = "8000",
+                      help="web server port")
+    (options, args) = parser.parse_args()
+
+    if args:
+        application = make_application(args[0])
+    else:
+        application = make_application("sample")
+
+    if options.generate:
+        generate_data(application)
+    if options.delete:
+        delete(application)
+    if options.create:
+        create(application)
+    if options.load:
+        load_data(application, options.load_file)
+    if options.run:
+        run(options.host, options.port, application)
+    if options.reload:
         reloader()
-        run()
-   if 'run' in sys.argv:
-        run()
-   if 'test' in sys.argv:
-        load = True
-        delete()
-        create()
-        run()
+        run(options.host, options.port, application)
+    if options.all:
+        delete(application)
+        create(application)
+        load_data(application,options.load_file)
+
 
