@@ -1336,7 +1336,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         selectors_html.push('<tbody>');
 
         var offset = 0;
-        if (paging_data.offset){
+        if (paging_data && paging_data.offset){
             offset = paging_data.offset;
         }
         for (var i = 0, n = grid_data.length; i < n ; i++){
