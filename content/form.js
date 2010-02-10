@@ -904,9 +904,39 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     function register_events(){
     }
 
-    function get_form_data_remote(){
-        return get_form_data().save_data;
+    function remove_all_errors(){
+        // remove error spans
+        $form.find('span.f_error').remove();
+        // remove any error classes
+        $form.find('div.f_error').removeClass('f_error');
     }
+
+    function save_errors(errors){
+        remove_all_errors();
+        var index;
+        var $item;
+        for (var field in errors){
+            index = form_data.items[field].index;
+            $item = $control = form_controls_hash[field];
+            // add the error span
+            $item.append('<span class="f_error">ERROR: ' + errors[field] + '</span>');
+            // add error class
+            $item.addClass('f_error');
+        }
+    }
+
+    function get_form_data_remote(){
+        //return get_form_data().save_data;
+        var data = get_form_data().save_data;
+        var errors = validate_form_data(data);
+        if ($.Util.is_empty(errors)){
+            return data;
+        } else {
+            save_errors(errors)
+            return false;
+        }
+    }
+
     function command_caller(type, data){
         if (custom_commands[type]){
             return custom_commands[type](data);
@@ -948,15 +978,44 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         return {save_data : save_data,
                 copy_of_row_info : copy_of_row_info};
     }
+    function validate_form_data(data){
+        var item;
+        var errors = {};
+        var error;
+        for (var i = 0, n = form_data.fields.length; i < n ; i++){
+            item = form_data.fields[i];
 
-    function save(){
-        // make the form non-edit
-        var info = get_form_data();
-        get_node_return(form_data.node, '_save', info.save_data, $form, info.copy_of_row_info);
+            if (item.params.validation){
+                error = validate(item.params.validation, data[item.name], false)
+                if (error.length !== 0){
+                    errors[item.name] = error;
+                }
+            }
+        }
+        return errors;
     }
 
-    function save_return(){
-        // Do nothing.
+    function save(){
+        var info = get_form_data();
+        var errors = validate_form_data(info);
+        if ($.Util.is_empty(errors)){
+            get_node_return(form_data.node, '_save', info.save_data, $form, info.copy_of_row_info);
+        } else {
+            alert('moo');
+        }
+    }
+
+    function save_return(data){
+        // errors
+        if (data.errors && data.errors['null']){
+            save_errors(data.errors['null']);
+        }
+        // saves  FIXME what do we want to do here?
+        if (data.saved){
+
+            remove_all_errors();
+//            save_update(data.saved[0], data.obj_data); // single form so only want first saved item
+        }
     }
 
     function get_control_value(item, $item){

@@ -247,7 +247,9 @@ function node_button(item, node, command){
 function node_button_input_form(item, node, command){
     var $obj = $('#main div.INPUT_FORM');
     var out = $obj.data('command')('get_form_data');
-    get_node_return(node, command, out, $obj);
+    if (out){
+        get_node_return(node, command, out, $obj);
+    }
 }
 
 function search_box(){
