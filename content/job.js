@@ -17,7 +17,7 @@
 	-----------------------------------------------------------------
 	
 	Reformed
-	Copyright (c) 2008-2009 Toby Dacre & David Raznick
+	Copyright (c) 2008-2010 Toby Dacre & David Raznick
 	
 	job.js
 	======
