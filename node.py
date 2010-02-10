@@ -156,7 +156,9 @@ class Node(object):
             row['title'] = field[2]
             if len(field) > 3:
                 params = field[3].copy()
-                row['params'] = self.modify_params(params, field)
+            else:
+                params = {}
+            row['params'] = self.modify_params(params, field)
             fields.append(row)
         return fields
 
@@ -198,7 +200,7 @@ class Node(object):
 class TableNode(Node):
 
     """Node for table level elements"""
-    table = "unknown"
+    table = None
     core_table = True
     fields = []
     field_list = []     # list of fields to be retrieved by searches (auto created)
@@ -685,12 +687,15 @@ class TableNode(Node):
                 params["autocomplete"] = [item[1] for item in results]
 
         ## if its a known fields
-        rfield = r[self.table].fields.get(field[0])
-        if rfield:
-            if "validation" not in params:
-                params["validation"] = rfield.validation_info
-            if rfield.default:
-                params["default"] = rfield.default
+
+        if self.table:
+            rfield = r[self.table].fields.get(field[0])
+            if rfield:
+                if "validation" not in params:
+                    params["validation"] = rfield.validation_info
+                if rfield.default:
+                    params["default"] = rfield.default
+
         return params
 
 
