@@ -12,6 +12,7 @@ class Ticket(TableNode):
         ['', '', '', dict(layout = 'column_start')],
         ['accepted', 'Boolean', 'accepted:', {"control" : "dropdown", "autocomplete" : ["true", "false"]}],
         ['complete_by', 'Date', 'complete by:'],
+        ['', '', '', dict(layout = 'column_next')],
         ['severity', 'Text', 'severity:', {"control" : "dropdown", "autocomplete" : True}],
         ['', '', '', dict(layout = 'column_end')],
         ['', '', '', dict(layout = 'hr')],

@@ -454,15 +454,11 @@ position:relative;
 width:20px;
 background-color:#00B;
 }
+
 .dropdown_f{
 float:left;
 }
-div.INPUT_FORM > div {
-position:relative;
-float:left;
-clear:both;
-width:100%;
-}
+
 div.but_dd {
 /*background-color:red;*/
 background-color:transparent;
@@ -569,3 +565,15 @@ div.CHECKBOX.null {
     color:grey;
 }
 
+div.f_control_holder {
+    position:relative;
+    float:left;
+    clear:both;
+    width:100%;
+}
+
+div.COLUMN {
+    float:left;
+    position:relative;
+    width:50%;
+}

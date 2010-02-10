@@ -841,27 +841,38 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         row_data = {};
     }
 
-    //FIXME how do we deal with data in the form
-    $.InputForm.Build($form, form_data, row_data);
-    $.InputForm.Interaction($form, form_data, row_data, extra_defaults);
-    $form.data('command')('register_events');
-};
-$.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
 
-    function init(){
+
+    // custom events
+    var custom_commands = {
+        'unbind_all' : unbind_all,
+        'register_events' : register_events,
+        'save' : save,
+        'save_return' : save_return,
+        'get_form_data' : get_form_data_remote
+    };
+
+    var HTML_Encode = $.Util.HTML_Encode;
+    var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
+    //FIXME how do we deal with data in the form
+    build_form();
+    init_movement();
+    register_events();
+
+    function init_movement(){
 
         // remove any previous bound events
         unbind_all();
 
-        $input.mousedown(form_mousedown);
+        $form.mousedown(form_mousedown);
 
         total_fields = form_data.fields.length;
-        $input.data('command', command_caller);
+        $form.data('command', command_caller);
     }
 
 
     function unbind_all(){
-        $input.unbind();
+        $form.unbind();
     }
 
     function register_events(){
@@ -915,7 +926,7 @@ $.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
     function save(){
         // make the form non-edit
         var info = get_form_data();
-        get_node_return(form_data.node, '_save', info.save_data, $input, info.copy_of_row_info);
+        get_node_return(form_data.node, '_save', info.save_data, $form, info.copy_of_row_info);
     }
 
     function save_return(){
@@ -955,30 +966,21 @@ $.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
     }
 
     function get_row_info(){
-        var $items = $input.children('div');
-        var $items2 = $('<div>');
-        for (var i = 0, n = $items.size(); i < n; i++){
-            if ($items.eq(i).hasClass('COLUMN')){
-                $items2.append('<div>').append($items.eq(i).children('div')).append('<div>');
-            } else {
-                $items2.append($items[i]);
-            }
-        }
-        $items = $items2.children('div');
         var row_info = {};
-
         var value;
         var cleaned;
         var field;
+        var $control;
 
         for (var i = 0, n = form_data.fields.length; i < n; i++){
             item = form_data.fields[i];
+            $control = form_controls_hash[item.name];
             if (item.params.layout){
                 continue;
             } else if (item.params.control){
-                value = get_control_value(item, $items.eq(i));
+                value = get_control_value(item, $control);
             } else {
-                value = $items.eq(i).find("input:first").val();
+                value = $control.find("input:first").val();
             }
             cleaned = $.Util.clean_value(value, item);
             row_info[item.name] = cleaned.value;
@@ -1009,21 +1011,6 @@ $.InputForm.Interaction = function($input, form_data, row_data, extra_defaults){
         return !actioned;
     }
 
-    // custom events
-    var custom_commands = {
-        'unbind_all' : unbind_all,
-        'register_events' : register_events,
-        'save' : save,
-        'save_return' : save_return,
-        'get_form_data' : get_form_data_remote
-    };
-
-    init();
-};
-
-
-$.InputForm.Build = function($input, form_data, row_data, paging_data){
-
     function add_label(item, prefix){
         return '<label class="form_label" for="' + prefix + item.name + '">' + item.title + '</label>';
     }
@@ -1053,7 +1040,7 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
 
     function build_input(item, value){
             var html = [];
-            html.push('<div>');
+            html.push('<div class="f_control_holder">');
 
             // label
             html.push(add_label(item, 'rf_'));
@@ -1071,7 +1058,7 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
             html.push('<input id="rf_' + item.name + '" class="' + class_list + '" value="' + value + '" />');
 
             html.push('</div>');
-            return html.join('');
+            return $(html.join(''));
 
     }
 
@@ -1154,7 +1141,7 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
     }
 
     function build_control(item, value){
-        var $div = $('<div/>');
+        var $div = $('<div class="f_control_holder"/>');
 
         switch (item.params.control){
             case 'info':
@@ -1196,16 +1183,26 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
         return $div;
     }
 
+    var form_controls_hash; // holder for the form controls
+
     function build_form(){
 
+        $form.empty();
         function add_layout_item(item){
             switch (item.params.layout){
                 case 'hr':
-                    $builder[builder_depth].append('<div><hr/></div>');
+                    $builder[builder_depth].append('<div class="f_control_holder"><hr/></div>');
                     break;
                 case 'column_start':
                     $builder.push($('<div class="COLUMN">'));
                     builder_depth++;
+                    break;
+                case 'column_next':
+                    if (builder_depth > 0){
+                        $builder[--builder_depth].append($builder.pop());
+                        $builder.push($('<div class="COLUMN">'));
+                        builder_depth++;
+                    }
                     break;
                 case 'column_end':
                     if (builder_depth > 0){
@@ -1216,7 +1213,9 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
         }
 
 
+        form_controls_hash = {};
         var $builder = [$('<div/>')];
+        var $control;
         var builder_depth = 0;
         var num_fields = form_data.fields.length;
         for (var i = 0; i < num_fields; i++){
@@ -1226,23 +1225,20 @@ $.InputForm.Build = function($input, form_data, row_data, paging_data){
                 add_layout_item(item, $builder, builder_depth);
             } else {
                 if (item.params.control){
-                    $builder[builder_depth].append(build_control(item, value));
+                    $control = build_control(item, value);
                 } else {
-                    $builder[builder_depth].append(build_input(item, value));
+                    $control = build_input(item, value);
                 }
+                $builder[builder_depth].append($control);
+                form_controls_hash[item.name] = $control;
             }
         }
         // close any builder divs
         while (builder_depth > 0){
             $builder[--builder_depth].append($builder.pop());
         }
-        $input.append($builder[0].contents());
+        $form.append($builder[0].contents());
     }
-
-    var HTML_Encode = $.Util.HTML_Encode;
-    var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
-    $input.empty();
-    build_form();
 
 
 };
