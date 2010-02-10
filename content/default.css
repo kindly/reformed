@@ -577,3 +577,12 @@ div.COLUMN {
     position:relative;
     width:50%;
 }
+
+div.BOX {
+    position:relative;
+    float:left;
+    width:97%;
+    border: 2px solid green;
+    padding:5px;
+}
+

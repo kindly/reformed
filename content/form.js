@@ -1209,6 +1209,15 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                         $builder[--builder_depth].append($builder.pop());
                     }
                     break;
+                case 'box_start':
+                    $builder.push($('<div class="BOX">'));
+                    builder_depth++;
+                    break;
+                case 'box_end':
+                    if (builder_depth > 0){
+                        $builder[--builder_depth].append($builder.pop());
+                    }
+                    break;
             }
         }
 
