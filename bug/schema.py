@@ -76,6 +76,63 @@ table("priority", d,
       title_field = "priority",
 )
 
+## application user tables
+
+entity("user",d,
+
+    Text("name"),
+    Boolean("active", default = True, mandatory = True),
+    Boolean("locked", default = False),
+    Text("login_name"),
+    Text("password"),
+    Email("email"),
+    DateTime("last_logged_in"),
+    Text("notes", length = 4000),
+
+    Created("created_date"),
+    CreatedBy("created_by"),
+
+    Index("login_name_index", "login_name", unique = True),
+
+    primary_key = "login_name",
+    table_type = "system",
+)
+
+table("user_group",d,
+
+    Text("groupname"),
+    Text("notes", length = 4000),
+    Boolean("active"),
+
+    primary_key = "groupname",
+    table_type = "system"
+)
+
+table("user_group_user",d,
+
+    LookupId("user", "user"),
+    LookupId("user_group", "user_group"),
+
+    table_type = "system"
+)
+
+table("user_group_permission",d,
+
+    ##TODO Sort out backref problems
+    LookupId("user_group_name", "user_group"),
+    LookupId("permission_name", "permission"),
+    table_type = "system"
+)
+
+
+table("permission",d,
+
+    Text("permission"),
+    Text("description", length = 4000),
+    primary_key = "permission",
+    table_type = "system"
+)
+
 d.persist()
 
 

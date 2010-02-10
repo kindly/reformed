@@ -50,6 +50,31 @@ $.fn.extend({
 $.Checkbox = function(input, item, value){
 
     function mousedown(){
+        if (is_2_state){
+            mousedown_2_state();
+        } else {
+            mousedown_3_state();
+        }
+        // store the value
+        $checkbox.data('value', value);
+    }
+
+    function mousedown_2_state(){
+        switch (value){
+            case false:
+                value = true;
+                $checkbox.removeClass('false');
+                $checkbox.addClass('true');
+                break;
+            case true:
+                value = false;
+                $checkbox.removeClass('true');
+                $checkbox.addClass('false');
+                break;
+        }
+    }
+
+    function mousedown_3_state(){
         switch (value){
             case false:
                 value = null;
@@ -67,10 +92,9 @@ $.Checkbox = function(input, item, value){
                 $checkbox.addClass('false');
                 break;
         }
-        // store the value
-        $checkbox.data('value', value);
     }
     var $checkbox = $(input);
+    var is_2_state = (item.params.validation[0].not_empty == true);
 
     $checkbox.data('value', value);
     // FIXME need to unbind this
@@ -942,6 +966,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 return $item.find("textarea:first").val();
                 break;
             case 'dropdown':
+            case 'password':
                 return $item.find("input:first").val();
                 break;
             case 'dropdown_code':
@@ -1142,6 +1167,14 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         return add_label(item, 'rf_') + '<textarea class="' + class_list + '">' + HTML_Encode_Clear(value) + '</textarea>';
     }
 
+    function password(item, value){
+        var class_list = '';
+        if (item.params.css){
+            class_list += ' ' + item.params.css;
+        }
+        return add_label(item, 'rf_') + '<input type="password" class="' + class_list + '" value="' + HTML_Encode_Clear(value) + '"/>';
+    }
+
     function checkbox(item, value){
 
         var class_list = String(value);
@@ -1171,6 +1204,9 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 break;
             case 'textarea':
                 $div.append(textarea(item, value));
+                break;
+            case 'password':
+                $div.append(password(item, value));
                 break;
             case 'button':
                 $div.append(button(item, value));
