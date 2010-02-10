@@ -82,3 +82,22 @@ class ListTicket(TableNode):
         print "-&"*5, self.data
         self.link = "bug.ListTicket:view:__id=%s" % self.data.get("_core_entity_id")
 
+class User(TableNode):
+
+    table = "user"
+    form_params =  {"form_type": "action"}
+    title_field = 'name'
+
+    fields = [
+        ['name', 'Text', 'name:'],
+        ['login_name', 'Text', 'login_name:'],
+        ['active', 'Boolean', 'active:', {"control" : "checkbox"}],
+        ['password', 'Text', 'password:', {"control" : "password"}],
+        ['password2', 'Text', 'confirm password:', {"control" : "password"}],
+        ['email', 'Text', 'email:'],
+        ['notes', 'Text', 'notes:', {"control" : "textarea", "css" : "large"}],
+        ['button', 'submit', 'add user', {'control' : 'button', 'action': '_save', 'node': 'bug.User'}],
+    ]
+
+
+
