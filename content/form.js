@@ -1060,16 +1060,18 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
         for (var i = 0, n = form_data.fields.length; i < n; i++){
             item = form_data.fields[i];
-            $control = form_controls_hash[item.name];
-            if (item.params.layout){
-                continue;
-            } else if (item.params.control){
-                value = get_control_value(item, $control);
-            } else {
-                value = $control.find("input:first").val();
+            if (item.name){
+                $control = form_controls_hash[item.name];
+                if (item.params.layout){
+                    continue;
+                } else if (item.params.control){
+                    value = get_control_value(item, $control);
+                } else {
+                    value = $control.find("input:first").val();
+                }
+                cleaned = $.Util.clean_value(value, item);
+                row_info[item.name] = cleaned.value;
             }
-            cleaned = $.Util.clean_value(value, item);
-            row_info[item.name] = cleaned.value;
         }
         return row_info;
 
