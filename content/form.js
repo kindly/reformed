@@ -1052,7 +1052,21 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             case 'checkbox':
                 return $item.find("div.CHECKBOX").data('value');
                 break;
+            case 'codegroup':
+                return get_codegroup_values($item, item);
+                break;
         }
+    }
+
+    function get_codegroup_values($item){
+        var $checkboxes = $item.find("div.CHECKBOX");
+        var codes = item.params.codes;
+        var values = {};
+        for (var i = 0, n = $checkboxes.size(); i < n; i++){
+            values[codes[i][0]] = $checkboxes.eq(i).data('value');
+        }
+        console.log(values);
+        return values;
     }
 
     function get_key_from_description(item, value){
@@ -1288,6 +1302,45 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         return $control;
     }
 
+    function codegroup(item, value){
+
+        var cbox = {params : {'validation' : [{'not_empty' : true } ]}};
+        if (item.params.css){
+            cbox.params.css = item.params.css;
+        }
+        var $div = $('<div class="CODEGROUP" />');
+        if (item.title){
+            $div.append('<div class="f_codegroup_title">' + item.title + '</div>');
+        }
+        var codes = item.params.codes;
+        var holder;
+        var code;
+        var cbox_value;
+        var m;
+        if (value){
+            m = value.length;
+        } else {
+            m = 0;
+        }
+        if (codes){
+            for (var i = 0, n = codes.length; i < n; i++){
+                code = codes[i][0]
+                cbox_value = false
+                for(var j = 0; j < m; j++){
+                    if (value[j] == code){
+                        cbox_value = true;
+                        break;
+                    }
+                }
+                cbox.title = codes[i][1];
+                cbox.code = codes[i][0];
+                $holder = $('<div class="f_codegroup_holder">');
+                $div.append($holder.append(checkbox(cbox, cbox_value)));
+            }
+        }
+        return $div;
+    }
+
     function build_control(item, value){
         var $div = $('<div class="f_control_holder"/>');
 
@@ -1300,6 +1353,9 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 break;
             case 'dropdown_code':
                 $div.append(dropdown_code(item, value));
+                break;
+            case 'codegroup':
+                $div.append(codegroup(item, value));
                 break;
             case 'dropdown':
                 $div.append(dropdown(item, value));

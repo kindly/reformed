@@ -584,4 +584,8 @@ div.BOX {
     border: 1px solid green;
     padding:5px;
 }
-
+div.f_codegroup_holder {
+    float:left;
+    position:relative;
+    width:25%;
+}

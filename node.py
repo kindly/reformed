@@ -138,6 +138,8 @@ class Node(object):
         }
         if data:
             out['data'] = data
+        else:
+            out['data'] = {}
         if params:
             out['form']['params'] = params.copy()
         if read_only:
@@ -237,13 +239,20 @@ class TableNode(Node):
         for code_group_name in self.code_groups.keys():
             code_group = self.code_groups[code_group_name]
             table = code_group.get('code_table')
-            field = code_group.get('code_field')
-            codes = r.search(table, 'id>0', fields = [field])['data']
+            code_id = code_group.get('code_field')
+            code_title = code_group.get('code_title_field')
+            code_desc = code_group.get('code_desc_field')
+            fields = [code_id, code_title]
+            if code_desc:
+                fields.append(code_desc)
+            codes = r.search(table, 'id>0', fields = fields)['data']
             code_array = []
             for row in codes:
-                code_array.append(row.get(field))
+                code_row = [row.get(code_id), row.get(code_title)]
+                if code_desc:
+                    code_row.append(code_desc)
+                code_array.append(code_row)
             self.__class__.code_list[code_group_name] = code_array
-
 
     def setup_forms(self):
         for field in self.fields:
@@ -262,9 +271,13 @@ class TableNode(Node):
             # add data for code groups
             elif field[1] == 'code_group':
                 name = field[0]
-                data = {}
-                data['codes'] = self.__class__.code_list.get(name)
-                field.append(data)
+                code_list= self.__class__.code_list.get(name)
+                if len(field) == 4:
+                    field[3]['codes'] = code_list
+                else:
+                    data = {}
+                    data['codes'] = code_list
+                    field.append(data)
             # build the field list
             self.field_list.append(field[0])
         # add any extra fields to the field list
@@ -414,9 +427,9 @@ class TableNode(Node):
             table = code_group.get('flag_table')
             flag_child_field = code_group.get('flag_child_field')
             flag_parent_field = code_group.get('flag_parent_field')
-            code_field = code_group.get('code_field')
+            flag_code_field = code_group.get('flag_code_field')
             parent_value = getattr(record_data, flag_parent_field)
-            code_group_data = self.data.get(code_group_name)
+            code_group_data = self.data.get(code_group_name, [])
 
             #FIXME everything following this until session.commit() is rubbish
             # although it works i'm sure
@@ -425,37 +438,41 @@ class TableNode(Node):
             # c) i just don't like it
             # still it will do for now
 
-            if not code_group_data:
-                code_group_data = []
-            yes_codes = set(self.code_list[code_group_name]).intersection(set(code_group_data))
-            no_codes = set(self.code_list[code_group_name]).difference(set(code_group_data))
+            yes_codes = []
+            no_codes = []
+            for code in code_group_data.keys():
+                if code_group_data[code]:
+                    yes_codes.append(int(code))
+                else:
+                    no_codes.append(int(code))
+
+
             print "YES CODES", yes_codes
             print "NO CODES", no_codes
             print 'table', table
             print 'flag_child_field', flag_child_field
             print 'flag_parent_field', flag_parent_field
-            print 'code_field', code_field
+            print 'flag_code_field', flag_code_field
             print 'parent_value', parent_value
 
             for code in no_codes:
-                filter = {flag_child_field: parent_value, code_field: code}
+                filter = {flag_child_field: parent_value, flag_code_field: code}
+                print filter
                 obj = r.get_class(table)
-                try:
-                    data = session.query(obj).filter_by(**filter).one()
-                    if data:
-                        session.delete(data)
-                except sa.orm.exc.NoResultFound:
-                    pass
+                data = session.query(obj).filter_by(**filter).all()
+                if data:
+                    session.delete(data[0])
 
 
             for code in yes_codes:
-                where = "%s='%s' and %s='%s'" % (flag_child_field, parent_value, code_field, code)
+                where = "%s='%s' and %s='%s'" % (flag_child_field, parent_value, flag_code_field, code)
+                print where
                 result = r.search(table, where)['data']
                 if not result:
                     # need to add this field
                     record_data = r.get_instance(table)
                     setattr(record_data, flag_child_field, parent_value)
-                    setattr(record_data, code_field, code)
+                    setattr(record_data, flag_code_field, code)
                     session.save_or_update(record_data)
                     print 'saved', record_data
 
@@ -512,14 +529,21 @@ class TableNode(Node):
 
     def code_data(self, code_group_name, data_out):
         codes = self.code_groups.get(code_group_name)
+        code_table = codes.get('code_table')
+        code_desc_field = codes.get('code_desc_field')
+        code_title_field = codes.get('code_title_field')
         flag_table = codes.get('flag_table')
         flag_child_field = codes.get('flag_child_field')
         flag_parent_field = codes.get('flag_parent_field')
-        flag_code_field = codes.get('flag_code_field')
+        flag_code_field = codes.get('flag_code_field', 'id')
         parent_value = data_out.get(flag_parent_field)
 
-        where = "%s = '%s'" % (flag_parent_field, parent_value)
-        results = r.search(flag_table, where, fields = [flag_code_field])['data']
+        fields = [flag_code_field, '%s.%s' % (code_table, code_title_field)]
+        if code_desc_field:
+            fields.append('%s.%s' % (code_table, code_desc_field))
+
+        where = "%s = '%s'" % (flag_child_field, parent_value)
+        results = r.search(flag_table, where, fields = fields)['data']
 
         out = []
         for row in results:
