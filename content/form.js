@@ -1135,7 +1135,10 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         return '<label class="form_label" for="' + prefix + item.name + '">' + item.title + '</label>';
     }
 
-    function correct_value(value){
+    function correct_value(item, value){
+        if (value === null && item.params['default'] !== undefined){
+            value = item.params['default'];
+        }
         // correct data value if needed
         switch (item.type){
             case 'DateTime':
@@ -1164,7 +1167,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
             // label
             html.push(add_label(item, 'rf_'));
-            value = correct_value(value);
+            value = correct_value(item, value);
 
             var class_list = 'f_cell';
             if (value === null){
@@ -1258,7 +1261,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     function dropdown_core(item, value, autocomplete){
         var $control;
         var class_list = 'dropdown_f';
-        value = correct_value(value);
+        value = correct_value(item, value);
         if (item.params.css){
             class_list += ' ' + item.params.css;
         }
@@ -1292,8 +1295,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     }
 
     function checkbox(item, value){
-
-        var class_list = String(value);
+        var class_list = '';
         if (item.params.css){
             class_list += ' ' + item.params.css;
         }
