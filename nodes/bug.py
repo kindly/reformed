@@ -112,21 +112,18 @@ class Permission(TableNode):
         ['permission', 'Text', 'permission:'],
         ['description', 'Text', 'description:', {"control" : "textarea", "css" : "large"}],
         ['', '', '', {'control' : 'button_box',
-             'buttons' : [['add permission', 'bug.Permission:_save:'], ['cancel', 'test.HomePage:new']]}],
+             'buttons' : [['add permission', 'bug.Permission:_save:'], ['cancel', 'BACK']]}],
     ]
-
-    def new(self):
-        pass
 
     def finalise(self):
         if self.command == '_save' and self.saved:
             message = "Permission <b>%s</b> saved!  Add more?" % self.data['permission']
+            self.out = self.create_form_data(self.fields, self.form_params)
+            self.action = 'form'
         if self.command == 'new':
             message = "Hello, add new permissions below"
         if message:
-            data_out = {'message' : message}
-            self.out = self.create_form_data(self.fields, self.form_params, data_out)
-            self.action = 'form'
+            self.out['data']['message'] = message
         print self.out
 
 class UserGroup(TableNode):
@@ -140,20 +137,35 @@ class UserGroup(TableNode):
         ['groupname', 'Text', 'groupname:'],
         ['active', 'Boolean', 'active:', {'control' : 'checkbox'}],
         ['notes', 'Text', 'notes:', {"control" : "textarea", "css" : "large"}],
+        ['', '', '', dict(layout = 'box_start')],
+        ['permission', 'code_group', 'permission:', {'control' : 'codegroup'}],
+        ['', '', '', dict(layout = 'box_end')],
         ['', '', '', {'control' : 'button_box',
-             'buttons' : [['add user group', 'bug.UserGroup:_save:'], ['cancel', 'test.HomePage:new']]}],
+             'buttons' : [['add user group', 'bug.UserGroup:_save:'], ['cancel', 'BACK']]}],
     ]
 
-    def new(self):
-        pass
+    code_groups = {'permission':{
+                                    'code_table': 'permission',
+                                    'code_field': 'id',
+                                    'code_desc_field': 'description',
+                                    'code_title_field': 'permission',
+                                    'flag_table': 'user_group_permission',
+                                    'flag_child_field': 'user_group_id',
+                                    'flag_code_field': 'permission_id',
+                                    'flag_parent_field': 'id'
+                                  }
+                    }
 
     def finalise(self):
+        message = None
         if self.command == '_save' and self.saved:
             message = "user group <b>%s</b> saved!  Add more?" % self.data['groupname']
+            self.out = self.create_form_data(self.fields, self.form_params)
+            self.action = 'form'
         if self.command == 'new':
             message = "Hello, add new user group below"
+        if self.command == 'edit':
+            message = "Hello, edit %s new user group below" % self.out['data']['groupname']
+            self.out['form']['fields'][8]['params']['buttons'][0][0] = 'save changes'
         if message:
-            data_out = {'message' : message}
-            self.out = self.create_form_data(self.fields, self.form_params, data_out)
-            self.action = 'form'
-        print self.out
+            self.out['data']['message'] = message
