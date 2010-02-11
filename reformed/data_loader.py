@@ -211,7 +211,7 @@ class FlatFile(object):
 
         flat_file = self.get_file()
 
-        self.dialect = csv.Sniffer().sniff(flat_file.read(10240))
+        self.dialect = csv.Sniffer().sniff(flat_file.read(102400))
 
         flat_file.seek(0)
 
@@ -331,6 +331,10 @@ class FlatFile(object):
             if self.database.status == "terminated":
                 break
             chunk_status = self.load_chunk(chunk)
+            if chunk_status.error_lines:
+                print chunk_status.error_lines
+            if chunk_status.error:
+                print chunk_status.error
             self.status.append(chunk_status)
             self.calculate_stats()
 
@@ -359,7 +363,7 @@ class FlatFile(object):
                                    time, rate, other_errors + validation_errors)
         print message
 
-        percent = completed*100/self.total_lines
+        percent = completed*100/(self.total_lines or 1)
 
         if self.messager:
             self.messager.message(message, percent)
@@ -553,7 +557,9 @@ class SingleRecord(object):
         pk_list = self.database.tables[self.table].primary_key_columns.keys()
 
         if "id" in row.keys():
-            obj = session.query(self.database.get_class(self.table)).filter_by( id = row["id"]).one()
+            obj = session.query(self.database.get_class(self.table)).filter_by( id = row["id"]).first()
+            if not obj:
+                obj = self.database.get_instance(self.table)
         ##TODO incorrect need to check even if just one key is specified and error otherwise
         elif set(pk_list).intersection(set(row.keys())) == set(pk_list) and pk_list:
             try:

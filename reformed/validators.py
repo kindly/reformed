@@ -144,6 +144,7 @@ class CheckInField(FancyValidator):
         else:
             results = session.query(getattr(target_class, self.field)).all()
 
+
         if value and (value,) not in results:
             raise Invalid(self.message("invalid", obj, field = self.field, value = value), value, obj)
 

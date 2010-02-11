@@ -373,7 +373,7 @@ class Field(object):
 
 
         obj.default = kw.get("default", None)
-        if obj.default:
+        if obj.default is not None:
             obj.sa_options["default"] = obj.default
         obj.onupdate = kw.get("onupdate", None)
         if obj.onupdate:
