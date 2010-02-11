@@ -306,6 +306,17 @@ class test_basic_input(test_donkey):
 
         assert [a.order for a in self.Donkey["people"].ordered_user_fields] == [1, 2, 3, 4]
 
+    def test_validation_empty_string(self):
+
+        self.david = self.Donkey.tables["people"].sa_class()
+        print self.Donkey.tables["people"].fields["name"].kw
+        print self.Donkey.tables["people"].fields["name"].mandatory
+        print self.Donkey.tables["people"].fields["name"].column.mandatory
+        self.david.name = u""
+        self.david.address_line_1 = u"43 union street"
+        self.david.postcode = u"es388"
+        assert_raises(formencode.Invalid, self.session.add, self.david)
+
     def test_logged_attribute(self):
 
         assert self.david_logged.name == u"david"
@@ -421,7 +432,7 @@ class test_basic_input(test_donkey):
 
         print get_all_local_data(a, internal = True)
         assert get_all_local_data(a, internal = True) == {'contact_summary.people_id': 2, 'giving_date': None, 'contact_summary.transaction_count': 0, 'people.name': u'fred', '__table': 'donkey_sponsership', 'contact_summary.membership': None, 'people.address_line_1': u'poo1010101', 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'poo1010101 fred', 'people.town': None, 'people_id': 2, 'people.postcode': u'fred', 'people.country': None, 'people.address_line_2': u'poop', 'people.over_18_id': None, 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'amount': Decimal('711110'), 'donkey_id': 12, 'people.gender_id': None, 'donkey.donkey_type': None, 'donkey.age': 12, 'donkey.name': None}
-        
+
     def test_import_catagory_data(self):
 
         load_local_data(self.Donkey, {"__table": u"sub_sub_category",

@@ -178,13 +178,13 @@ class test_modify_table_sqlite(object):
         
         assert set([field.order for field in table1.fields.values() if field.category.endswith("field")]) == set([1,2,3,4])
 
-        table1.alter_field("man2", type = "Text", mandatory = True, default = "wee", validation = "Email")
+        table1.alter_field("man2", type = "Text", nullable = False, default = "wee", validation = "Email")
 
         table1 = self.Donkey["rename_field"]
 
         assert table1.fields["man2"].field_validation == "Email"
 
-        table1.alter_field("man2", type = "Text", mandatory = True, default = "wee", validation = "__.*")
+        table1.alter_field("man2", type = "Text", nullable = False, default = "wee", validation = "__.*")
         
         result = validate_database(self.Donkey)
 

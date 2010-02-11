@@ -9,23 +9,23 @@ class test_fields():
         
         self.a = Text("col")
         self.b = Text("pop" , 
-                      mandatory = True, 
+                      nullable = True, 
                       default = "pop" ,
                       onupdate = "pop") 
         
         self.c = ManyToOne("many","table2")
 
         self.d = Text("pop" , 
-                      mandatory = True, 
+                      nullable = True, 
                       default = "pop" ,
                       onupdate = "pop")
 
         self.e = Text("pop" , 
-                      mandatory = True, 
+                      nullable = True, 
                       onupdate = "pop")
 
         self.f = Text("pop" , 
-                      mandatory = False, 
+                      nullable = False, 
                       onupdate = "pop")
             
     def test_text_field_fieldname(self):
@@ -38,7 +38,7 @@ class test_fields():
 
     def test_use_parent(self):
 
-        assert ("nullable", False) in self.b.columns["pop"].sa_options.items()
+        assert ("nullable", True) in self.b.columns["pop"].sa_options.items()
         assert ("default", "pop") in self.b.columns["pop"].sa_options.items()
         assert ("onupdate", "pop") in self.b.columns["pop"].sa_options.items()
 
@@ -55,10 +55,12 @@ class test_fields():
         assert self.b.diff(self.e) == ({'default': 'pop'}, {}, {})
         assert self.e.diff(self.b) == ({}, {'default': 'pop'}, {})
 
-        assert self.f.diff(self.e) == ({}, {}, {'mandatory': [True, False]})
-        assert self.e.diff(self.f) == ({}, {}, {'mandatory': [False, True]})
+        print self.f.kw
+        print self.e.kw
+        assert self.f.diff(self.e) == ({}, {}, {'nullable': [True, False]})
+        assert self.e.diff(self.f) == ({}, {}, {'nullable': [False, True]})
 
-        assert self.f.diff(self.b) == ({}, {'default': 'pop'}, {'mandatory': [True, False]})
+        assert self.f.diff(self.b) == ({}, {'default': 'pop'}, {'nullable': [True, False]})
 
         
 class test_validation(object):
