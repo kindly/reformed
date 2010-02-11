@@ -93,9 +93,27 @@ $.Checkbox = function(input, item, value){
                 break;
         }
     }
+
+    function set_state(){
+        switch (value){
+            case null:
+                $checkbox.addClass('null');
+                break;
+            case true:
+                $checkbox.addClass('true');
+                break;
+            case false:
+                $checkbox.addClass('false');
+                break;
+        }
+    }
+
     var $checkbox = $(input);
     var is_2_state = (item.params.validation && item.params.validation[0].not_empty == true);
-
+    if (is_2_state && value === null){
+        value = false;
+    }
+    set_state();
     $checkbox.data('value', value);
     // FIXME need to unbind this
     $checkbox.mousedown(mousedown);
