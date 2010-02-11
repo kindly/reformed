@@ -1265,7 +1265,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         if (item.params.css){
             class_list += ' ' + item.params.css;
         }
-        var $control = $(add_label(item, 'rf_') + '<div class="CHECKBOX ' + class_list + '">X</div>');
+        var $control = $(add_label(item, 'rf_') + '<div class="CHECKBOX ' + class_list + '"><input type="button" style="width:20px;" />&nbsp;</div>');
         $control.eq(1).filter('div').checkbox(item, value);
         return $control;
     }

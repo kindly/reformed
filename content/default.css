@@ -553,16 +553,16 @@ div.f_form > div{
 }
 
 
-div.CHECKBOX.false {
-    color:red;
+div.CHECKBOX.false input {
+    background-color:red;
 }
 
-div.CHECKBOX.true {
-    color:green;
+div.CHECKBOX.true input {
+    background-color:green;
 }
 
-div.CHECKBOX.null {
-    color:grey;
+div.CHECKBOX.null input {
+    background-color:grey;
 }
 
 div.f_control_holder {
