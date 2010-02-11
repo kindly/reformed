@@ -122,6 +122,8 @@ if __name__ == "__main__":
                       help="delete current database")
     parser.add_option("-r", "--run", dest = "run", action="store_true",
                       help="run the web server")
+    parser.add_option("--console", dest = "console", action="store_true",
+                      help="return to the repl")
     parser.add_option("--reload", dest = "reload", action="store_true",
                       help="run with reloader")
     parser.add_option("--host", dest = "host", action="store",
@@ -134,6 +136,10 @@ if __name__ == "__main__":
 
     application = make_application(args)
 
+    if options.console:
+        import code
+        database = application.database
+        code.interact(local=locals())
     if options.generate:
         generate_data(application)
     if options.delete:

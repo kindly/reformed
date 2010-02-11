@@ -195,14 +195,14 @@ class LookupId(Field):
     def __init__(self, name, other, *args, **kw):
 
         self.other = other
-        if name == other:
-            foreign_key_name = "%s_id" % name
-            backref = "_" + other
-        else:
+        self.filter_field = kw.get("type_field")
+
+        if self.filter_field:
             foreign_key_name = "%s_%s_id" % (other, name)
             backref = name
-
-        self.filter_field = kw.get("type_field")
+        else:
+            foreign_key_name = "%s_id" % name
+            backref = "_" + name
 
         self.manytoone = Relation("manytoone", other, 
                                   foreign_key_name = foreign_key_name, 
