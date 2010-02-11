@@ -94,7 +94,7 @@ $.Checkbox = function(input, item, value){
         }
     }
     var $checkbox = $(input);
-    var is_2_state = (item.params.validation[0].not_empty == true);
+    var is_2_state = (item.params.validation && item.params.validation[0].not_empty == true);
 
     $checkbox.data('value', value);
     // FIXME need to unbind this
@@ -1001,7 +1001,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         if ($.Util.is_empty(errors)){
             get_node_return(form_data.node, '_save', info.save_data, $form, info.copy_of_row_info);
         } else {
-            alert('moo');
+            save_errors(errors)
         }
     }
 
