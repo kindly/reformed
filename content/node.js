@@ -244,9 +244,15 @@ function node_button(item, node, command){
     get_node(node, command, out, false);
 }
 
-function node_button_input_form(item, node, command){
+function node_button_input_form(item, data){
     var $obj = $('#main div.INPUT_FORM');
-    var out = $obj.data('command')('get_form_data');
+    data = data.split(':')
+    var node = data[0];
+    var command = data[1];
+    var out = {};
+    if (data.length == 3){
+        out = $obj.data('command')('get_form_data');
+    }
     if (out){
         get_node_return(node, command, out, $obj);
     }
