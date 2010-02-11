@@ -128,3 +128,32 @@ class Permission(TableNode):
             self.out = self.create_form_data(self.fields, self.form_params, data_out)
             self.action = 'form'
         print self.out
+
+class UserGroup(TableNode):
+
+    table = "user_group"
+    form_params =  {"form_type": "action"}
+    title_field = 'user group'
+    fields = [
+        ['message', '', '', {'control' : 'html'}],
+        ['', '', '', dict(layout = 'box_start')],
+        ['groupname', 'Text', 'groupname:'],
+        ['active', 'Boolean', 'active:', {'control' : 'checkbox'}],
+        ['notes', 'Text', 'notes:', {"control" : "textarea", "css" : "large"}],
+        ['', '', '', {'control' : 'button_box',
+             'buttons' : [['add user group', 'bug.UserGroup:_save:'], ['cancel', 'test.HomePage:new']]}],
+    ]
+
+    def new(self):
+        pass
+
+    def finalise(self):
+        if self.command == '_save' and self.saved:
+            message = "user group <b>%s</b> saved!  Add more?" % self.data['groupname']
+        if self.command == 'new':
+            message = "Hello, add new user group below"
+        if message:
+            data_out = {'message' : message}
+            self.out = self.create_form_data(self.fields, self.form_params, data_out)
+            self.action = 'form'
+        print self.out
