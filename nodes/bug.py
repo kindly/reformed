@@ -18,7 +18,7 @@ class Ticket(TableNode):
         ['', '', '', dict(layout = 'column_end')],
         ['', '', '', dict(layout = 'hr')],
         ['summary', 'Text', 'summary:', {"control" : "textarea", "css" : "large"}],
-        ['button', 'submit', 'add ticket', {'control' : 'button', 'action': '_save', 'node': 'bug.Ticket'}]
+        ['', '', 'add ticket', {'control' : 'button', 'node': 'bug.Ticket:_save:'}]
     ]
     list_title = 'ticket %s'
 
@@ -63,7 +63,7 @@ class ListTicket(TableNode):
             'fields': [
                 ['note', 'Text', 'note:', {"control" : "textarea", "css" : "large"}],
                 ['moo', 'Boolean', 'moo:', {"control" : "checkbox"}],
-                ['button', 'submit', 'add comment', {'control' : 'button', 'action': '_save', 'node': 'bug.ListTicket'}]
+                ['', '', 'add comment', {'control' : 'button', 'node': 'bug.ListTicket:_save:'}]
             ],
             "parent_id": "_core_entity_id",
             "child_id": "_core_entity_id",
@@ -97,7 +97,7 @@ class User(TableNode):
         ['password2', 'Text', 'confirm password:', {"control" : "password"}],
         ['email', 'Text', 'email:'],
         ['notes', 'Text', 'notes:', {"control" : "textarea", "css" : "large"}],
-        ['button', 'submit', 'add user', {'control' : 'button', 'action': '_save', 'node': 'bug.User'}],
+        ['', '', 'add user', {'control' : 'button', 'node': 'bug.User:_save:'}],
     ]
 
 
