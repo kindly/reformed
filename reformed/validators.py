@@ -230,5 +230,21 @@ class All(formencode.compound.CompoundValidator):
 
 class UnicodeString(UnicodeString):
 
+    not_empty_string = None
+
+    messages = {
+        'badEncoding' : _("Invalid data or incorrect encoding"),
+        'emptyString' : _("Field must not be blank"),
+    }
+
     def is_empty(self, value):
         return value is None
+
+    def _to_python(self, value, state):
+
+        value = super(UnicodeString, self)._to_python(value, state)
+        if self.not_empty_string and value == '':
+            raise Invalid(self.message("emptyString", state), value, state)
+
+        
+

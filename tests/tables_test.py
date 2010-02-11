@@ -386,7 +386,7 @@ class test_field_type_validation(object):
         self.Donkey = Database("Donkey",
                             Table("people",
                                   Email("name1", length = 10, mandatory = True),
-                                  Money("name2", mandatory = True, type = "new"),
+                                  Money("name2", nullable = False, type = "new"),
                                   Integer("name3", mandatory = True),
                                   DateTime("name4", mandatory = True),
                                   Boolean("name5", mandatory = True),
@@ -465,7 +465,8 @@ class test_field_type_validation(object):
 
     def test_validation_info(self):
         print self.Donkey["people"].fields["name1"].validation_info
-        assert self.Donkey["people"].fields["name1"].validation_info == [{'max': 300, 'not_empty': True, 'type': 'UnicodeString'}, {'type': 'Email'}]
+
+        assert self.Donkey["people"].fields["name1"].validation_info == [{'max': 300, 'not_empty_string': False, 'type': 'UnicodeString', 'not_empty': True}, {'type': 'Email'}]
 
         print self.Donkey["people"].fields["name2"].validation_info
         assert self.Donkey["people"].fields["name2"].validation_info == [{'not_empty': True, 'type': 'Number'}]

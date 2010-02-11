@@ -1051,8 +1051,10 @@ class Table(object):
                     max = 100
             else:
                 max = 100
+            not_empty_string = column.mandatory
             validators.append(UnicodeString(max = max,
-                                                not_empty = mand))
+                                            not_empty = mand,
+                                            not_empty_string = not_empty_string))
         elif col_type is sa.Integer or isinstance(col_type, sa.Integer):
             validators.append(val.Int(not_empty = mand))
         elif col_type is sa.Numeric or isinstance(col_type, sa.Numeric):

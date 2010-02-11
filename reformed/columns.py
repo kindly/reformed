@@ -78,7 +78,8 @@ class Column(BaseSchema):
     """Contains information to make a database field.
     :param default: default value for the column
     :param onupdate: value whenever the accosiated row is updated
-    :param mandatory: boolean saying if the column will be not nullable
+    :param mandatory: boolean saying if the column will be not nullable and not empty string
+    :param nullable: boolean saying if column in nullable
     """
 
     def __init__(self, type, *args, **kw):
@@ -92,9 +93,13 @@ class Column(BaseSchema):
         onupdate = kw.pop("onupdate", None)
         if onupdate:
             self.sa_options["onupdate"] = onupdate
-        mandatory = kw.pop("mandatory", False)
-        if mandatory == True:
-            self.sa_options["nullable"] = False
+
+        self.nullable = kw.pop("nullable", True)
+        self.mandatory = kw.pop("mandatory", False)
+        if self.mandatory:
+            self.nullable = False
+        self.sa_options["nullable"] = self.nullable
+
         self.validation = kw.pop("validation", None)
         self.validate = kw.pop("validate", True)
         self.parent = None
@@ -109,6 +114,8 @@ class Column(BaseSchema):
                 self.type.length = parent.length
             if parent.field_validation:
                 self.validation = parent.field_validation
+            if parent.mandatory:
+                self.mandatory = parent.mandatory
 
         if self.name in parent.items.iterkeys():
             raise AttributeError("column already in field definition")
@@ -371,9 +378,14 @@ class Field(object):
         obj.onupdate = kw.get("onupdate", None)
         if obj.onupdate:
             obj.sa_options["onupdate"] = obj.onupdate
+
+        obj.nullable = kw.get("nullable", True)
         obj.mandatory = kw.get("mandatory", False)
-        if obj.mandatory == True:
-            obj.sa_options["nullable"] = False
+        if obj.mandatory:
+            obj.nullable = False
+        if obj.nullable == False:
+            obj.sa_options["nullable"] = obj.nullable
+
         obj.eager = kw.get("eager", None)
         if obj.eager:
             obj.sa_options["lazy"] = not obj.eager
