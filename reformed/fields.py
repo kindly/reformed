@@ -201,7 +201,7 @@ class LookupId(Field):
             foreign_key_name = "%s_%s_id" % (other, name)
             backref = name
         else:
-            foreign_key_name = "%s_id" % name
+            foreign_key_name = "%s_id" % other
             backref = "_" + name
 
         self.manytoone = Relation("manytoone", other, 
