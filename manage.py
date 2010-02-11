@@ -37,6 +37,12 @@ def create(application):
     print 'creating database structure'
     import schema
 
+def extract(application):
+    print 'creating database structure'
+    import data_extract
+    data_extract.extract(application.database,
+                 application.dir)
+
 def load_data(application, file):
     print 'loading data'
     from reformed.data_loader import FlatFile
@@ -50,17 +56,28 @@ def generate_data(application):
     import data_creator
     data_creator.create_csv()
 
-def delete(application):
+def delete(args):
 
-    from sqlalchemy import MetaData
+    from sqlalchemy import MetaData, create_engine
     print 'deleting database'
 
     meta = MetaData()
-    meta.reflect(bind=application.engine)
+
+    if args:
+        dir = args[0]
+    else:
+        dir = "sample"
+
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    application_folder = os.path.join(this_dir, dir)
+    sys.path.append(application_folder)
+    engine = create_engine('sqlite:///%s/%s.sqlite' % (application_folder,dir))
+
+    meta.reflect(bind=engine)
 
     for table in reversed(meta.sorted_tables):
         print 'deleting %s...' % table.name
-        table.drop(bind=application.engine)
+        table.drop(bind=engine)
 
 def dump(application):
     print 'dumping data'
@@ -110,6 +127,9 @@ if __name__ == "__main__":
     parser.add_option("-c", "--create",
                       action="store_true", dest="create",
                       help="create the database")
+    parser.add_option("-e", "--extract",
+                      action="store_true", dest="extract",
+                      help="extract all tables")
     parser.add_option("-l", "--load",
                       action="store_true", dest="load",
                       help="load the data, use -f to change the file (default data.csv)")
@@ -134,27 +154,35 @@ if __name__ == "__main__":
                       help="web server port")
     (options, args) = parser.parse_args()
 
-    application = make_application(args)
 
     if options.console:
         import code
+        application = make_application(args)
         database = application.database
         code.interact(local=locals())
+    if options.extract:
+        application = make_application(args)
+        extract(application)
     if options.generate:
+        application = make_application(args)
         generate_data(application)
     if options.delete:
-        delete(application)
+        delete(args)
     if options.create:
         application = make_application(args)
         create(application)
     if options.load:
+        application = make_application(args)
         load_data(application, options.load_file)
     if options.run:
+        application = make_application(args)
         run(options.host, options.port, application)
     if options.reload:
+        application = make_application(args)
         reloader()
         run(options.host, options.port, application)
     if options.all:
+        application = make_application(args)
         print "deleting"
         delete(application)
         application = make_application(args)
