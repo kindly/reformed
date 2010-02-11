@@ -1178,12 +1178,27 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         return x;
     }
 
+    function button_box(item, value){
+        var html = '';
+        var but = {params : {}};
+        var buttons = item.params.buttons;
+        if (item.params.css){
+            button.params.css = item.params.css;
+        }
+        for (var i = 0, n = buttons.length; i < n; i++){
+            but.params.node = buttons[i][1];
+            but.title = buttons[i][0];
+            html += button(but);
+        }
+        return html;
+    }
+
     function button(item, value){
         var class_list = 'button';
         if (item.params.css){
             class_list += ' ' + item.params.css;
         }
-        return '<button class="' + class_list + '" onclick="node_button_input_form(this, \'' + item.params.node + '\', \'' + item.params.action + '\');return false">' + item.title + '</button>';
+        return '<button class="' + class_list + '" onclick="node_button_input_form(this, \'' + item.params.node + '\');return false">' + item.title + '</button>';
     }
 
     function dropdown_code(item, value){
@@ -1224,6 +1239,14 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             class_list += ' ' + item.params.css;
         }
         return add_label(item, 'rf_') + '<textarea class="' + class_list + '">' + HTML_Encode_Clear(value) + '</textarea>';
+    }
+
+    function htmlarea(item, value){
+        var class_list = '';
+        if (item.params.css){
+            class_list += ' ' + item.params.css;
+        }
+        return add_label(item, 'rf_') + '<div class="' + class_list + '">' + value + '</div>';
     }
 
     function password(item, value){
@@ -1269,6 +1292,12 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 break;
             case 'button':
                 $div.append(button(item, value));
+                break;
+            case 'button_box':
+                $div.append(button_box(item, value));
+                break;
+            case 'html':
+                $div.append(htmlarea(item, value));
                 break;
             case 'checkbox':
                 $div.append(checkbox(item, value));
