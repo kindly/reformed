@@ -245,6 +245,10 @@ function node_button(item, node, command){
 }
 
 function node_button_input_form(item, data){
+    if (data == 'BACK'){
+        window.history.back();
+        return false;
+    }
     var $obj = $('#main div.INPUT_FORM');
     data = data.split(':')
     var node = data[0];
