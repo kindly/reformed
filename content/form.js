@@ -987,7 +987,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
             if (item.params.validation){
                 error = validate(item.params.validation, data[item.name], false)
-                if (error.length !== 0){
+                if (error.length > 0){
                     errors[item.name] = error;
                 }
             }
