@@ -101,4 +101,30 @@ class User(TableNode):
     ]
 
 
+class Permission(TableNode):
 
+    table = "permission"
+    form_params =  {"form_type": "action"}
+    title_field = 'permission'
+    fields = [
+        ['message', '', '', {'control' : 'html'}],
+        ['', '', '', dict(layout = 'box_start')],
+        ['permission', 'Text', 'permission:'],
+        ['description', 'Text', 'description:', {"control" : "textarea", "css" : "large"}],
+        ['', '', '', {'control' : 'button_box',
+             'buttons' : [['add permission', 'bug.Permission:_save:'], ['cancel', 'test.HomePage:new']]}],
+    ]
+
+    def new(self):
+        pass
+
+    def finalise(self):
+        if self.command == '_save' and self.saved:
+            message = "Permission <b>%s</b> saved!  Add more?" % self.data['permission']
+        if self.command == 'new':
+            message = "Hello, add new permissions below"
+        if message:
+            data_out = {'message' : message}
+            self.out = self.create_form_data(self.fields, self.form_params, data_out)
+            self.action = 'form'
+        print self.out
