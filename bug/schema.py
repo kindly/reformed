@@ -100,6 +100,7 @@ entity("user",d,
 entity("user_group",d,
 
     Text("groupname", mandatory = True),
+    Text("description", length = 200),
     Text("notes", length = 4000),
     Boolean("active", default = False, mandatory = True),
 
@@ -127,7 +128,8 @@ table("user_group_permission",d,
 table("permission",d,
 
     Text("permission"),
-    Text("description", length = 4000),
+    Text("description", length = 200),
+    Text("long_description", length = 4000),
     table_type = "system",
     title_field = 'permission'
 )
