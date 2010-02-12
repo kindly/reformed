@@ -90,6 +90,7 @@ class User(TableNode):
     title_field = 'name'
 
     fields = [
+        ['', '', '', dict(layout = 'text', text = 'user..........')],
         ['', '', '', dict(layout = 'column_start')],
         ['name', 'Text', 'name:'],
         ['login_name', 'Text', 'login name:'],
@@ -103,9 +104,11 @@ class User(TableNode):
         ['', '', '', dict(layout = 'column_end')],
         ['', '', '', dict(layout = 'hr')],
         ['notes', 'Text', 'notes:', {"control" : "textarea", "css" : "large"}],
+        ['', '', '', dict(layout = 'spacer')],
         ['', '', '', dict(layout = 'box_start')],
         ['usergroup', 'code_group', 'usergroup:', {'control' : 'codegroup'}],
         ['', '', '', dict(layout = 'box_end')],
+        ['', '', '', dict(layout = 'spacer')],
     ]
 
 
@@ -145,7 +148,8 @@ class Permission(TableNode):
     fields = [
         ['', '', '', dict(layout = 'box_start')],
         ['permission', 'Text', 'permission:'],
-        ['description', 'Text', 'description:', {"control" : "textarea", "css" : "large"}],
+        ['description', 'Text', 'description:'],
+        ['long_description', 'Text', 'long description:', {"control" : "textarea", "css" : "large"}],
     ]
 
     def finalise(self):
@@ -173,12 +177,15 @@ class UserGroup(TableNode):
     title_field = 'user group'
     fields = [
         ['', '', '', dict(layout = 'box_start')],
-        ['groupname', 'Text', 'groupname:'],
-        ['active', 'Boolean', 'active:', {'control' : 'checkbox'}],
-        ['notes', 'Text', 'notes:', {"control" : "textarea", "css" : "large"}],
+        ['groupname', 'Text', 'groupname:', {'description' : 'The name of the user group'}],
+        ['active', 'Boolean', 'active:', {'control' : 'checkbox', 'description' : 'Only active user groups give members permissions'}],
+        ['description', 'Text', 'description:', {'description' : 'A brief description of the user group'}],
+        ['notes', 'Text', 'notes:', {"control" : "textarea", "css" : "large", 'description' : 'A longer more detailed description'}],
+        ['', '', '', dict(layout = 'spacer')],
         ['', '', '', dict(layout = 'box_start')],
         ['permission', 'code_group', 'permission:', {'control' : 'codegroup'}],
         ['', '', '', dict(layout = 'box_end')],
+        ['', '', '', dict(layout = 'spacer')],
     ]
 
     code_groups = {'permission':{
