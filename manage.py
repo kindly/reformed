@@ -94,9 +94,31 @@ def undump(application):
     print 'undumping data'
     load_json_from_file('data/users.json', application.database, 'user')
 
-def reloader():
+def reloader(args, options):
+
     import paste.reloader
-    paste.reloader.install()
+    import multiprocessing
+    import time
+    import datetime
+
+    def reload():
+        application = make_application(args)
+        paste.reloader.install()
+        run(options.host, options.port, application)
+
+    while 1:
+        try:
+            print "------------ NEW PROCESS ---------------------"
+            print datetime.datetime.now()
+            proc = multiprocessing.Process(target = reload)
+            proc.start()
+            while 1:
+                if not proc.is_alive():
+                    break
+                time.sleep(1)
+        except KeyboardInterrupt:
+            proc.terminate()
+            break
 
 def run(host, port, application):
     print 'starting webserver'
@@ -189,13 +211,11 @@ if __name__ == "__main__":
         application = make_application(args)
         run(options.host, options.port, application)
     if options.reload:
-        application = make_application(args)
-        reloader()
-        run(options.host, options.port, application)
+        reloader(args, options)
     if options.all:
         application = make_application(args)
         print "deleting"
-        delete(application)
+        delete(args)
         application = make_application(args)
         create(application)
         print "loading"
