@@ -968,6 +968,9 @@ class Table(object):
             elif column.type == sa.Boolean:
                 properties[col_name] = column_property(getattr(self.sa_table.c,col_name),
                                                          extension = ConvertBoolean())
+            elif column.type == sa.Integer:
+                properties[col_name] = column_property(getattr(self.sa_table.c,col_name),
+                                                         extension = ConvertInteger())
             else:
                 properties[col_name] = column_property(getattr(self.sa_table.c,col_name),
                                                          extension = ChangedAttributes())
@@ -1293,5 +1296,21 @@ class ConvertBoolean(AttributeExtension):
             raise AttributeError("field needs to be a boolean")
 
 
+class ConvertInteger(AttributeExtension):
 
+    def set(self, state, value, oldvalue, initator):
+
+        if value == oldvalue:
+            return value
+        if not value:
+            return None
+        state.dict["_validated"] = False
+
+        if isinstance(value, ClauseElement):
+            return value
+
+        try:
+            return int(value)
+        except ValueError:
+            return value
 

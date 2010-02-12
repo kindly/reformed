@@ -38,9 +38,8 @@ def create(application):
     import schema
 
 def extract(application):
-    print 'creating database structure'
-    import data_extract
-    data_extract.extract(application.database,
+    import extract
+    extract.extract(application.database,
                  application.dir)
 
 def load_data(application, file):
@@ -49,7 +48,13 @@ def load_data(application, file):
     flatfile = FlatFile(application.database,
                         "people",
                         file)
+
     flatfile.load()
+
+def load(application):
+    import load
+    load.load(application.database,
+                 application.dir)
 
 def generate_data(application):
     print 'generating data'
@@ -130,6 +135,9 @@ if __name__ == "__main__":
     parser.add_option("-e", "--extract",
                       action="store_true", dest="extract",
                       help="extract all tables")
+    parser.add_option("--tableload",
+                      action="store_true", dest="table_load",
+                      help="load all tables")
     parser.add_option("-l", "--load",
                       action="store_true", dest="load",
                       help="load the data, use -f to change the file (default data.csv)")
@@ -163,6 +171,9 @@ if __name__ == "__main__":
     if options.extract:
         application = make_application(args)
         extract(application)
+    if options.table_load:
+        application = make_application(args)
+        load(application)
     if options.generate:
         application = make_application(args)
         generate_data(application)
