@@ -94,7 +94,6 @@ entity("user",d,
 
     Index("login_name_index", "login_name", unique = True),
 
-    primary_key = "login_name",
     table_type = "system",
 )
 
@@ -129,7 +128,7 @@ table("permission",d,
 
     Text("permission"),
     Text("description", length = 4000),
-    table_type = "system"
+    table_type = "system",
     title_field = 'permission'
 )
 
