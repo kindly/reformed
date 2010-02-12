@@ -238,9 +238,9 @@ class TableNode(Node):
     def __init__(self, *args, **kw):
         super(TableNode, self).__init__(*args, **kw)
         self.setup_code_groups()
+        self.setup_forms()
         if self.__class__.first_run:
             self.__class__.first_run = False
-            self.setup_forms()
 
     def setup_code_groups(self):
         self.__class__.code_list = {}
