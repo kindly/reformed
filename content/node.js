@@ -460,7 +460,11 @@ var fn = function(packet, job){
          case 'redirect':
              var link = packet.data.link;
              if (link){
-                 node_load('n:' + link);
+                 if (link == 'BACK'){
+                    window.history.back();
+                 } else {
+                    node_load('n:' + link);
+                 }
              }
              break;
          case 'html':
