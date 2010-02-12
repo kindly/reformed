@@ -90,7 +90,6 @@ class User(TableNode):
     title_field = 'name'
 
     fields = [
-        ['message', '', '', {'control' : 'html'}],
         ['', '', '', dict(layout = 'column_start')],
         ['name', 'Text', 'name:'],
         ['login_name', 'Text', 'login name:'],
@@ -102,12 +101,11 @@ class User(TableNode):
         ['password2', 'Text', 'confirm password:', {"control" : "password"}],
         ['', '', '', dict(layout = 'box_end')],
         ['', '', '', dict(layout = 'column_end')],
+        ['', '', '', dict(layout = 'hr')],
         ['notes', 'Text', 'notes:', {"control" : "textarea", "css" : "large"}],
         ['', '', '', dict(layout = 'box_start')],
         ['usergroup', 'code_group', 'usergroup:', {'control' : 'codegroup'}],
         ['', '', '', dict(layout = 'box_end')],
-        ['', '', '', {'control' : 'button_box',
-             'buttons' : [['add user', 'bug.User:_save:'], ['cancel', 'BACK']]}],
     ]
 
 
@@ -123,18 +121,21 @@ class User(TableNode):
                                   }
                 }
     def finalise(self):
-        message = None
         if self.command == '_save' and self.saved:
-            message = "user <b>%s</b> saved!  Add more?" % self.data['name']
-            self.out = self.create_form_data(self.fields, self.form_params)
-            self.action = 'form'
+            if self.data.get('id',0) == 0:
+                self.out = self.create_form_data(self.fields, self.form_params)
+                self.set_form_message("User %s saved!  Add more?" % self.data.get('name'))
+                self.action = 'form'
+                self.set_form_buttons([['add user', 'bug.User:_save:'], ['cancel', 'BACK']])
+            else:
+                self.action = 'redirect'
+                self.link = 'BACK'
         if self.command == 'new':
-            message = "Hello, add new user below"
+            self.set_form_message("Add new user below")
+            self.set_form_buttons([['add user', 'bug.User:_save:'], ['cancel', 'BACK']])
         if self.command == 'edit':
-            message = "Hello, edit %s new user below" % self.out['data']['name']
-            self.out['form']['fields'][16]['params']['buttons'][0][0] = 'save changes'
-        if message:
-            self.out['data']['message'] = message
+            self.set_form_message("Edit {name}")
+            self.set_form_buttons([['add user', 'bug.User:_save:'], ['delete user', 'bug.User:_delete:'], ['cancel', 'BACK']])
 
 class Permission(TableNode):
 
@@ -142,24 +143,28 @@ class Permission(TableNode):
     form_params =  {"form_type": "action"}
     title_field = 'permission'
     fields = [
-        ['message', '', '', {'control' : 'html'}],
         ['', '', '', dict(layout = 'box_start')],
         ['permission', 'Text', 'permission:'],
         ['description', 'Text', 'description:', {"control" : "textarea", "css" : "large"}],
-        ['', '', '', {'control' : 'button_box',
-             'buttons' : [['add permission', 'bug.Permission:_save:'], ['cancel', 'BACK']]}],
     ]
 
     def finalise(self):
         if self.command == '_save' and self.saved:
-            message = "Permission <b>%s</b> saved!  Add more?" % self.data['permission']
-            self.out = self.create_form_data(self.fields, self.form_params)
-            self.action = 'form'
+            if self.data.get('id',0) == 0:
+                self.out = self.create_form_data(self.fields, self.form_params)
+                self.set_form_message("Permission %s saved!  Add more?" % self.data.get('permission'))
+                self.action = 'form'
+                self.set_form_buttons([['add permission', 'bug.Permission:_save:'], ['cancel', 'BACK']])
+            else:
+                self.action = 'redirect'
+                self.link = 'BACK'
         if self.command == 'new':
-            message = "Hello, add new permissions below"
-        if message:
-            self.out['data']['message'] = message
-        print self.out
+            self.set_form_message("Hello, add new permission")
+            self.set_form_buttons([['add permission', 'bug.Permission:_save:'], ['cancel', 'BACK']])
+        if self.command == 'edit':
+            self.set_form_message("Hello, edit [b]{permission}[/b]")
+            self.set_form_buttons([['save permission', 'bug.Permission:_save:'], ['delete permission', 'bug.Permission:_delete:'], ['cancel', 'BACK']])
+
 
 class UserGroup(TableNode):
 
@@ -167,7 +172,6 @@ class UserGroup(TableNode):
     form_params =  {"form_type": "action"}
     title_field = 'user group'
     fields = [
-        ['message', '', '', {'control' : 'html'}],
         ['', '', '', dict(layout = 'box_start')],
         ['groupname', 'Text', 'groupname:'],
         ['active', 'Boolean', 'active:', {'control' : 'checkbox'}],
@@ -175,8 +179,6 @@ class UserGroup(TableNode):
         ['', '', '', dict(layout = 'box_start')],
         ['permission', 'code_group', 'permission:', {'control' : 'codegroup'}],
         ['', '', '', dict(layout = 'box_end')],
-        ['', '', '', {'control' : 'button_box',
-             'buttons' : [['add user group', 'bug.UserGroup:_save:'], ['cancel', 'BACK']]}],
     ]
 
     code_groups = {'permission':{
@@ -192,15 +194,18 @@ class UserGroup(TableNode):
                     }
 
     def finalise(self):
-        message = None
         if self.command == '_save' and self.saved:
-            message = "user group <b>%s</b> saved!  Add more?" % self.data['groupname']
-            self.out = self.create_form_data(self.fields, self.form_params)
-            self.action = 'form'
+            if self.data.get('id',0) == 0:
+                self.out = self.create_form_data(self.fields, self.form_params)
+                self.set_form_message("User group %s saved!  Add more?" % self.data.get('groupname'))
+                self.set_form_buttons([['save user group', 'bug.UserGroup:_save:'], ['cancel', 'BACK']])
+                self.action = 'form'
+            else:
+                self.action = 'redirect'
+                self.link = 'BACK'
         if self.command == 'new':
-            message = "Hello, add new user group below"
+            self.set_form_message("Add new user group below")
+            self.set_form_buttons([['save user group', 'bug.UserGroup:_save:'], ['cancel', 'BACK']])
         if self.command == 'edit':
-            message = "Hello, edit %s new user group below" % self.out['data']['groupname']
-            self.out['form']['fields'][8]['params']['buttons'][0][0] = 'save changes'
-        if message:
-            self.out['data']['message'] = message
+            self.set_form_message("Edit {groupname}")
+            self.set_form_buttons([['save user group', 'bug.UserGroup:_save:'], ['delete user group', 'bug.UserGroup:_delete:'], ['cancel', 'BACK']])
