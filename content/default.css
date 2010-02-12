@@ -553,6 +553,11 @@ div.f_form > div{
 }
 
 
+div.CHECKBOX {
+    float:left;
+    margin-right:5px;
+}
+
 div.CHECKBOX.false input {
     background-color:white;
 }

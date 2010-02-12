@@ -1357,8 +1357,14 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         if (item.params.css){
             class_list += ' ' + item.params.css;
         }
-        var $control = $(add_label(item, 'rf_') + '<div class="CHECKBOX ' + class_list + '"><input type="button" style="width:20px;" />&nbsp;</div>');
-        $control.eq(1).filter('div').checkbox(item, value);
+        var description = form_description(item);
+        if (item.params.reverse){
+            $control = $('<div class="CHECKBOX ' + class_list + '"><input type="button" style="width:20px;" />&nbsp;</div>' + add_label(item, 'rf_') + description);
+            $control.eq(0).filter('div').checkbox(item, value);
+        } else {
+            $control = $(add_label(item, 'rf_') + '<div class="CHECKBOX ' + class_list + '"><input type="button" style="width:20px;" />&nbsp;</div>' + description);
+            $control.eq(1).filter('div').checkbox(item, value);
+        }
         return $control;
     }
 
@@ -1394,6 +1400,10 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 }
                 cbox.title = codes[i][1];
                 cbox.code = codes[i][0];
+                if (codes[i].length > 2){
+                    cbox.params.description = codes[i][2];
+                }
+                cbox.params.reverse = true;
                 $holder = $('<div class="f_codegroup_holder">');
                 $div.append($holder.append(checkbox(cbox, cbox_value)));
             }
