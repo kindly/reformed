@@ -1065,7 +1065,6 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         for (var i = 0, n = $checkboxes.size(); i < n; i++){
             values[codes[i][0]] = $checkboxes.eq(i).data('value');
         }
-        console.log(values);
         return values;
     }
 
@@ -1276,6 +1275,11 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             class_list += ' ' + item.params.css;
         }
         return add_label(item, 'rf_') + '<textarea class="' + class_list + '">' + HTML_Encode_Clear(value) + '</textarea>';
+    }
+
+    function message_area(message){
+        var title = process_html(message.title, row_data);
+        return '<div class="f_message"><div class="f_message_title">' + title + '</div>' + message.body + '</div>';
     }
 
     function process_html(text, data){
@@ -1490,6 +1494,12 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         var $control;
         var builder_depth = 0;
         var num_fields = form_data.fields.length;
+        // form message
+        if (!$.Util.is_empty(row_data.__message)){
+            $control = message_area(row_data.__message);
+            $builder[builder_depth].append($control);
+        }
+        // main form
         for (var i = 0; i < num_fields; i++){
             item = form_data.fields[i];
             value = $.Util.get_item_value(item, row_data);
@@ -1504,6 +1514,12 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 $builder[builder_depth].append($control);
                 form_controls_hash[item.name] = $control;
             }
+        }
+        // form buttons
+        if (row_data.__buttons){
+            item = {params : { buttons : row_data.__buttons}};
+            $control = '<div class="f_control_holder">' + button_box(item, value) + '</div>';
+            $builder[builder_depth].append($control);
         }
         // close any builder divs
         while (builder_depth > 0){

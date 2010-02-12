@@ -164,6 +164,14 @@ class Node(object):
             fields.append(row)
         return fields
 
+    def set_form_message(self, title, body = ''):
+        """Sets the button info to be displayed by a form."""
+        self.out['data']['__message'] = dict(title = title, body = body)
+
+    def set_form_buttons(self, button_list):
+        """Sets the button info to be displayed by a form."""
+        self.out['data']['__buttons'] = button_list
+
     def modify_params(self, params, field):
         """Change field parameters dynamically for each node load.
         return modified parameters"""
