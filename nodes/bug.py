@@ -1,4 +1,5 @@
 from node import TableNode
+from page_item import *
 
 class Ticket(TableNode):
 
@@ -7,18 +8,17 @@ class Ticket(TableNode):
     title_field = 'title'
 
     fields = [
-        ['title', 'Text', 'title:'],
-        ['', '', '', dict(layout = 'hr')],
-        ['', '', '', dict(layout = 'column_start')],
-        ['accepted', 'Boolean', 'accepted:', {"control" : "dropdown", "autocomplete" : ["true", "false"]}],
-        ['complete_by', 'Date', 'complete by:'],
-        ['', '', '', dict(layout = 'column_next')],
-        ['severity', 'Text', 'severity:', {"control" : "dropdown", "autocomplete" : True}],
-        ['priority_id', 'Integer', 'priority:', {"control" : "dropdown_code", "autocomplete" : True}],
-        ['', '', '', dict(layout = 'column_end')],
-        ['', '', '', dict(layout = 'hr')],
-        ['summary', 'Text', 'summary:', {"control" : "textarea", "css" : "large"}],
-        ['', '', 'add ticket', {'control' : 'button', 'node': 'bug.Ticket:_save:'}]
+        input('title', data_type = 'Text'),
+        layout('hr'),
+        layout('column_start'),
+        input('accepted', data_type = 'Boolean' , control = dropdown(["true", "false"])),
+        input('complete_by', data_type = 'Date'),
+        layout('column_next'),
+        input('severity', data_type = 'Text' , control = dropdown(True)),
+        input('priority_id', data_type = 'Integer' , control = dropdown(True)),
+        layout('column_end'),
+        layout('hr'),
+        input('summary', data_type = 'Text' , control = textarea(css = "large")),
     ]
     list_title = 'ticket %s'
 
