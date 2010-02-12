@@ -1159,6 +1159,13 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         }
     }
 
+    function form_description(item){
+        if (item.params.description){
+            return '<div class="f_description">' + process_html(item.params.description, row_data) + '</div>';
+        } else {
+            return '';
+        }
+    }
 
     function build_input(item, value){
             var html = [];
@@ -1178,7 +1185,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             }
 
             html.push('<input id="rf_' + item.name + '" class="' + class_list + '" value="' + value + '" />');
-
+            html.push(form_description(item));
             html.push('</div>');
             return $(html.join(''));
 
@@ -1274,7 +1281,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         if (item.params.css){
             class_list += ' ' + item.params.css;
         }
-        return add_label(item, 'rf_') + '<textarea class="' + class_list + '">' + HTML_Encode_Clear(value) + '</textarea>';
+        return add_label(item, 'rf_') + '<textarea class="' + class_list + '">' + HTML_Encode_Clear(value) + '</textarea>' + form_description(item);
     }
 
     function message_area(message){
