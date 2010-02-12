@@ -632,8 +632,7 @@ class TableNode(Node):
             for row in data:
                 row['title'] = self.build_node(row['title'], 'edit', '__id=%s' % row['id'])
                 row['edit'] = [self.build_node('Edit', 'edit', '__id=%s' % row['id']),
-                               self.build_node('View', 'view', '__id=%s' % row['id']),
-                               self.build_function_node('Delete', 'node_delete')
+                               self.build_node('Delete', '_delete', '__id=%s' % row['id']),
                               ]
                 # the id is actually the _core_entity id so let's rename it to __id
                 row['__id'] = row['id']
@@ -645,6 +644,9 @@ class TableNode(Node):
                 else:
                     row['title'] = self.build_node('%s: %s' % (self.table, row['id']), 'edit', 'id=%s' % row['id'])
 
+                row['edit'] = [self.build_node('Edit', 'edit', 'id=%s' % row['id']),
+                               self.build_node('Delete', '_delete', 'id=%s' % row['id']),
+                              ]
         out = self.create_form_data(self.list_fields, self.list_params, data)
 
         # add the paging info
