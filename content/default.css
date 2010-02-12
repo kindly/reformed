@@ -594,3 +594,17 @@ div.f_codegroup_holder {
     position:relative;
     width:25%;
 }
+div.f_description{
+    color:green;
+    font-size:0.8em;
+    float:left;
+    position:relative;
+    margin-left:123px;
+    clear:both;
+}
+div.f_control_holder input{
+    float:left;
+}
+div.f_codegroup_holder div.f_description{
+    margin-left:0;
+}
