@@ -1301,7 +1301,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             start = match.index + offset;
             end = match.index + match[0].length + offset;
             offset += substitute_data.length - match[0].length;
-            out = String.concat(out.substring(0, start), substitute_data, out.substring(end));
+            out = out.substring(0, start) + substitute_data + out.substring(end);
         }
         text = HTML_Encode_Clear(out);
 
@@ -1320,8 +1320,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             start = match.index + offset;
             end = match.index + match[0].length + offset;
             offset += substitute_length - match[1].length - match[4].length ;
-            out = String.concat(out.substring(0, start), tag1, out.substring(start + len_1));
-            out = String.concat(out.substring(0, end - len_2), tag2, out.substring(end));
+            out = out.substring(0, start) + tag1 + out.substring(start + len_1);
+            out = out.substring(0, end - len_2) + tag2 + out.substring(end);
 
         }
 
