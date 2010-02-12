@@ -594,6 +594,12 @@ div.f_codegroup_holder {
     position:relative;
     width:25%;
 }
+div.f_spacer{
+    height: 25px;
+}
+div.f_text{
+    color:green;
+}
 div.f_description{
     color:green;
     font-size:0.8em;

@@ -1474,6 +1474,13 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         $form.empty();
         function add_layout_item(item){
             switch (item.params.layout){
+                case 'text':
+                    var text = process_html(item.params.text, row_data);
+                    $builder[builder_depth].append('<div class="f_control_holder f_text">' + text + '</div>');
+                    break;
+                case 'spacer':
+                    $builder[builder_depth].append('<div class="f_control_holder f_spacer">');
+                    break;
                 case 'hr':
                     $builder[builder_depth].append('<div class="f_control_holder"><hr/></div>');
                     break;
