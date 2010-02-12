@@ -421,6 +421,24 @@ class TableNode(Node):
         self.out = out
         self.action = 'save'
 
+    def delete_group_codes(self, session, record_data):
+        for code_group_name in self.code_groups.keys():
+            code_group = self.code_groups[code_group_name]
+            table = code_group.get('flag_table')
+            flag_child_field = code_group.get('flag_child_field')
+            flag_parent_field = code_group.get('flag_parent_field')
+            parent_value = getattr(record_data, flag_parent_field)
+            code_group_data = self.data.get(code_group_name, [])
+
+            filter = {flag_child_field: parent_value}
+            print filter
+            obj = r.get_class(table)
+            data = session.query(obj).filter_by(**filter).all()
+            if data:
+                for row in data:
+                    session.delete(row)
+            print 'deleted code group'
+
     def save_group_codes(self, session, record_data):
         for code_group_name in self.code_groups.keys():
             code_group = self.code_groups[code_group_name]
@@ -566,7 +584,7 @@ class TableNode(Node):
             data = session.query(obj).filter_by(**filter).one()
             # code_groups
             if self.code_groups:
-                self.save_group_codes(session, data)
+                self.delete_group_codes(session, data)
             session.delete(data)
             session.commit()
             # FIXME this needs to be handled more nicely
