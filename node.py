@@ -258,7 +258,7 @@ class TableNode(Node):
             for row in codes:
                 code_row = [row.get(code_id), row.get(code_title)]
                 if code_desc:
-                    code_row.append(code_desc)
+                    code_row.append(row.get(code_desc))
                 code_array.append(code_row)
             self.__class__.code_list[code_group_name] = code_array
 
