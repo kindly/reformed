@@ -1278,6 +1278,53 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         return add_label(item, 'rf_') + '<textarea class="' + class_list + '">' + HTML_Encode_Clear(value) + '</textarea>';
     }
 
+    function process_html(text, data){
+        var match;
+        var out = text;
+        var start;
+        var end;
+        var substitute_data;
+
+        // data substitution
+        var offset = 0;
+        var reg = /\{([^}]+)\}/g;
+        while (match = reg.exec(text)){
+            if (!data[match[1]]){
+                continue;
+            }
+            substitute_data = data[match[1]];
+
+            start = match.index + offset;
+            end = match.index + match[0].length + offset;
+            offset += substitute_data.length - match[0].length;
+            out = String.concat(out.substring(0, start), substitute_data, out.substring(end));
+        }
+        text = HTML_Encode_Clear(out);
+
+        out = text;
+        // html
+        var offset = 0;
+        var reg = /(\[(\w+)([^\]]*)?\]).*?(\[\/\2\])/g;
+        while (match = reg.exec(text)){
+            if (match[2] == 'b'){
+                tag1 = '<b>';
+                tag2 = '</b>';
+            }
+            substitute_length = tag1.length + tag2.length
+            len_1 = match[1].length;
+            len_2 = match[4].length;
+            start = match.index + offset;
+            end = match.index + match[0].length + offset;
+            offset += substitute_length - match[1].length - match[4].length ;
+            out = String.concat(out.substring(0, start), tag1, out.substring(start + len_1));
+            out = String.concat(out.substring(0, end - len_2), tag2, out.substring(end));
+
+        }
+
+        return out;
+    }
+
+
     function htmlarea(item, value){
         var class_list = '';
         if (item.params.css){
