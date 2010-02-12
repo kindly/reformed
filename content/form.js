@@ -93,9 +93,27 @@ $.Checkbox = function(input, item, value){
                 break;
         }
     }
+
+    function set_state(){
+        switch (value){
+            case null:
+                $checkbox.addClass('null');
+                break;
+            case true:
+                $checkbox.addClass('true');
+                break;
+            case false:
+                $checkbox.addClass('false');
+                break;
+        }
+    }
+
     var $checkbox = $(input);
     var is_2_state = (item.params.validation && item.params.validation[0].not_empty == true);
-
+    if (is_2_state && value === null){
+        value = false;
+    }
+    set_state();
     $checkbox.data('value', value);
     // FIXME need to unbind this
     $checkbox.mousedown(mousedown);
@@ -987,7 +1005,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
             if (item.params.validation){
                 error = validate(item.params.validation, data[item.name], false)
-                if (error.length !== 0){
+                if (error.length > 0){
                     errors[item.name] = error;
                 }
             }
@@ -1034,7 +1052,20 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             case 'checkbox':
                 return $item.find("div.CHECKBOX").data('value');
                 break;
+            case 'codegroup':
+                return get_codegroup_values($item, item);
+                break;
         }
+    }
+
+    function get_codegroup_values($item){
+        var $checkboxes = $item.find("div.CHECKBOX");
+        var codes = item.params.codes;
+        var values = {};
+        for (var i = 0, n = $checkboxes.size(); i < n; i++){
+            values[codes[i][0]] = $checkboxes.eq(i).data('value');
+        }
+        return values;
     }
 
     function get_key_from_description(item, value){
@@ -1060,16 +1091,18 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
         for (var i = 0, n = form_data.fields.length; i < n; i++){
             item = form_data.fields[i];
-            $control = form_controls_hash[item.name];
-            if (item.params.layout){
-                continue;
-            } else if (item.params.control){
-                value = get_control_value(item, $control);
-            } else {
-                value = $control.find("input:first").val();
+            if (item.name){
+                $control = form_controls_hash[item.name];
+                if (item.params.layout){
+                    continue;
+                } else if (item.params.control){
+                    value = get_control_value(item, $control);
+                } else {
+                    value = $control.find("input:first").val();
+                }
+                cleaned = $.Util.clean_value(value, item);
+                row_info[item.name] = cleaned.value;
             }
-            cleaned = $.Util.clean_value(value, item);
-            row_info[item.name] = cleaned.value;
         }
         return row_info;
 
@@ -1101,7 +1134,10 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         return '<label class="form_label" for="' + prefix + item.name + '">' + item.title + '</label>';
     }
 
-    function correct_value(value){
+    function correct_value(item, value){
+        if (value === null && item.params['default'] !== undefined){
+            value = item.params['default'];
+        }
         // correct data value if needed
         switch (item.type){
             case 'DateTime':
@@ -1130,7 +1166,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
             // label
             html.push(add_label(item, 'rf_'));
-            value = correct_value(value);
+            value = correct_value(item, value);
 
             var class_list = 'f_cell';
             if (value === null){
@@ -1224,7 +1260,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     function dropdown_core(item, value, autocomplete){
         var $control;
         var class_list = 'dropdown_f';
-        value = correct_value(value);
+        value = correct_value(item, value);
         if (item.params.css){
             class_list += ' ' + item.params.css;
         }
@@ -1240,6 +1276,58 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         }
         return add_label(item, 'rf_') + '<textarea class="' + class_list + '">' + HTML_Encode_Clear(value) + '</textarea>';
     }
+
+    function message_area(message){
+        var title = process_html(message.title, row_data);
+        return '<div class="f_message"><div class="f_message_title">' + title + '</div>' + message.body + '</div>';
+    }
+
+    function process_html(text, data){
+        var match;
+        var out = text;
+        var start;
+        var end;
+        var substitute_data;
+
+        // data substitution
+        var offset = 0;
+        var reg = /\{([^}]+)\}/g;
+        while (match = reg.exec(text)){
+            if (!data[match[1]]){
+                continue;
+            }
+            substitute_data = data[match[1]];
+
+            start = match.index + offset;
+            end = match.index + match[0].length + offset;
+            offset += substitute_data.length - match[0].length;
+            out = String.concat(out.substring(0, start), substitute_data, out.substring(end));
+        }
+        text = HTML_Encode_Clear(out);
+
+        out = text;
+        // html
+        var offset = 0;
+        var reg = /(\[(\w+)([^\]]*)?\]).*?(\[\/\2\])/g;
+        while (match = reg.exec(text)){
+            if (match[2] == 'b'){
+                tag1 = '<b>';
+                tag2 = '</b>';
+            }
+            substitute_length = tag1.length + tag2.length
+            len_1 = match[1].length;
+            len_2 = match[4].length;
+            start = match.index + offset;
+            end = match.index + match[0].length + offset;
+            offset += substitute_length - match[1].length - match[4].length ;
+            out = String.concat(out.substring(0, start), tag1, out.substring(start + len_1));
+            out = String.concat(out.substring(0, end - len_2), tag2, out.substring(end));
+
+        }
+
+        return out;
+    }
+
 
     function htmlarea(item, value){
         var class_list = '';
@@ -1258,14 +1346,52 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     }
 
     function checkbox(item, value){
-
-        var class_list = String(value);
+        var class_list = '';
         if (item.params.css){
             class_list += ' ' + item.params.css;
         }
-        var $control = $(add_label(item, 'rf_') + '<div class="CHECKBOX ' + class_list + '">X</div>');
+        var $control = $(add_label(item, 'rf_') + '<div class="CHECKBOX ' + class_list + '"><input type="button" style="width:20px;" />&nbsp;</div>');
         $control.eq(1).filter('div').checkbox(item, value);
         return $control;
+    }
+
+    function codegroup(item, value){
+
+        var cbox = {params : {'validation' : [{'not_empty' : true } ]}};
+        if (item.params.css){
+            cbox.params.css = item.params.css;
+        }
+        var $div = $('<div class="CODEGROUP" />');
+        if (item.title){
+            $div.append('<div class="f_codegroup_title">' + item.title + '</div>');
+        }
+        var codes = item.params.codes;
+        var holder;
+        var code;
+        var cbox_value;
+        var m;
+        if (value){
+            m = value.length;
+        } else {
+            m = 0;
+        }
+        if (codes){
+            for (var i = 0, n = codes.length; i < n; i++){
+                code = codes[i][0]
+                cbox_value = false
+                for(var j = 0; j < m; j++){
+                    if (value[j] == code){
+                        cbox_value = true;
+                        break;
+                    }
+                }
+                cbox.title = codes[i][1];
+                cbox.code = codes[i][0];
+                $holder = $('<div class="f_codegroup_holder">');
+                $div.append($holder.append(checkbox(cbox, cbox_value)));
+            }
+        }
+        return $div;
     }
 
     function build_control(item, value){
@@ -1280,6 +1406,9 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 break;
             case 'dropdown_code':
                 $div.append(dropdown_code(item, value));
+                break;
+            case 'codegroup':
+                $div.append(codegroup(item, value));
                 break;
             case 'dropdown':
                 $div.append(dropdown(item, value));
@@ -1365,6 +1494,12 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         var $control;
         var builder_depth = 0;
         var num_fields = form_data.fields.length;
+        // form message
+        if (!$.Util.is_empty(row_data.__message)){
+            $control = message_area(row_data.__message);
+            $builder[builder_depth].append($control);
+        }
+        // main form
         for (var i = 0; i < num_fields; i++){
             item = form_data.fields[i];
             value = $.Util.get_item_value(item, row_data);
@@ -1379,6 +1514,12 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 $builder[builder_depth].append($control);
                 form_controls_hash[item.name] = $control;
             }
+        }
+        // form buttons
+        if (row_data.__buttons){
+            item = {params : { buttons : row_data.__buttons}};
+            $control = '<div class="f_control_holder">' + button_box(item, value) + '</div>';
+            $builder[builder_depth].append($control);
         }
         // close any builder divs
         while (builder_depth > 0){

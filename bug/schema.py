@@ -94,18 +94,17 @@ entity("user",d,
 
     Index("login_name_index", "login_name", unique = True),
 
-    primary_key = "login_name",
     table_type = "system",
 )
 
-table("user_group",d,
+entity("user_group",d,
 
-    Text("groupname"),
+    Text("groupname", mandatory = True),
     Text("notes", length = 4000),
-    Boolean("active"),
+    Boolean("active", default = False, mandatory = True),
 
-    primary_key = "groupname",
-    table_type = "system"
+    table_type = "system",
+    title_field = 'groupname'
 )
 
 table("user_group_user",d,
@@ -129,8 +128,8 @@ table("permission",d,
 
     Text("permission"),
     Text("description", length = 4000),
-    primary_key = "permission",
-    table_type = "system"
+    table_type = "system",
+    title_field = 'permission'
 )
 
 d.persist()
