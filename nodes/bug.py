@@ -90,16 +90,51 @@ class User(TableNode):
     title_field = 'name'
 
     fields = [
+        ['message', '', '', {'control' : 'html'}],
+        ['', '', '', dict(layout = 'column_start')],
         ['name', 'Text', 'name:'],
         ['login_name', 'Text', 'login name:'],
         ['active', 'Boolean', 'active:', {"control" : "checkbox"}],
+        ['email', 'Text', 'email:'],
+        ['', '', '', dict(layout = 'column_next')],
+        ['', '', '', dict(layout = 'box_start')],
         ['password', 'Text', 'password:', {"control" : "password"}],
         ['password2', 'Text', 'confirm password:', {"control" : "password"}],
-        ['email', 'Text', 'email:'],
+        ['', '', '', dict(layout = 'box_end')],
+        ['', '', '', dict(layout = 'column_end')],
         ['notes', 'Text', 'notes:', {"control" : "textarea", "css" : "large"}],
-        ['', '', 'add user', {'control' : 'button', 'node': 'bug.User:_save:'}],
+        ['', '', '', dict(layout = 'box_start')],
+        ['usergroup', 'code_group', 'usergroup:', {'control' : 'codegroup'}],
+        ['', '', '', dict(layout = 'box_end')],
+        ['', '', '', {'control' : 'button_box',
+             'buttons' : [['add user', 'bug.User:_save:'], ['cancel', 'BACK']]}],
     ]
 
+
+    code_groups = {'usergroup':{
+                                    'code_table': 'user_group',
+                                    'code_field': 'id',
+                                    'code_desc_field': 'notes',
+                                    'code_title_field': 'groupname',
+                                    'flag_table': 'user_group_user',
+                                    'flag_child_field': 'user_id',
+                                    'flag_code_field': 'user_group_id',
+                                    'flag_parent_field': 'id'
+                                  }
+                }
+    def finalise(self):
+        message = None
+        if self.command == '_save' and self.saved:
+            message = "user <b>%s</b> saved!  Add more?" % self.data['name']
+            self.out = self.create_form_data(self.fields, self.form_params)
+            self.action = 'form'
+        if self.command == 'new':
+            message = "Hello, add new user below"
+        if self.command == 'edit':
+            message = "Hello, edit %s new user below" % self.out['data']['name']
+            self.out['form']['fields'][16]['params']['buttons'][0][0] = 'save changes'
+        if message:
+            self.out['data']['message'] = message
 
 class Permission(TableNode):
 
