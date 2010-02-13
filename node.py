@@ -238,9 +238,9 @@ class TableNode(Node):
     def __init__(self, *args, **kw):
         super(TableNode, self).__init__(*args, **kw)
         self.setup_code_groups()
+        self.setup_forms()
         if self.__class__.first_run:
             self.__class__.first_run = False
-            self.setup_forms()
 
     def setup_code_groups(self):
         self.__class__.code_list = {}
@@ -258,7 +258,7 @@ class TableNode(Node):
             for row in codes:
                 code_row = [row.get(code_id), row.get(code_title)]
                 if code_desc:
-                    code_row.append(code_desc)
+                    code_row.append(row.get(code_desc))
                 code_array.append(code_row)
             self.__class__.code_list[code_group_name] = code_array
 

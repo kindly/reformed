@@ -1159,6 +1159,13 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         }
     }
 
+    function form_description(item){
+        if (item.params.description){
+            return '<div class="f_description">' + process_html(item.params.description, row_data) + '</div>';
+        } else {
+            return '';
+        }
+    }
 
     function build_input(item, value){
             var html = [];
@@ -1178,7 +1185,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             }
 
             html.push('<input id="rf_' + item.name + '" class="' + class_list + '" value="' + value + '" />');
-
+            html.push(form_description(item));
             html.push('</div>');
             return $(html.join(''));
 
@@ -1274,7 +1281,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         if (item.params.css){
             class_list += ' ' + item.params.css;
         }
-        return add_label(item, 'rf_') + '<textarea class="' + class_list + '">' + HTML_Encode_Clear(value) + '</textarea>';
+        return add_label(item, 'rf_') + '<textarea class="' + class_list + '">' + HTML_Encode_Clear(value) + '</textarea>' + form_description(item);
     }
 
     function message_area(message){
@@ -1301,7 +1308,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             start = match.index + offset;
             end = match.index + match[0].length + offset;
             offset += substitute_data.length - match[0].length;
-            out = String.concat(out.substring(0, start), substitute_data, out.substring(end));
+            out = out.substring(0, start) + substitute_data + out.substring(end);
         }
         text = HTML_Encode_Clear(out);
 
@@ -1320,8 +1327,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             start = match.index + offset;
             end = match.index + match[0].length + offset;
             offset += substitute_length - match[1].length - match[4].length ;
-            out = String.concat(out.substring(0, start), tag1, out.substring(start + len_1));
-            out = String.concat(out.substring(0, end - len_2), tag2, out.substring(end));
+            out = out.substring(0, start) + tag1 + out.substring(start + len_1);
+            out = out.substring(0, end - len_2) + tag2 + out.substring(end);
 
         }
 
@@ -1350,8 +1357,14 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         if (item.params.css){
             class_list += ' ' + item.params.css;
         }
-        var $control = $(add_label(item, 'rf_') + '<div class="CHECKBOX ' + class_list + '"><input type="button" style="width:20px;" />&nbsp;</div>');
-        $control.eq(1).filter('div').checkbox(item, value);
+        var description = form_description(item);
+        if (item.params.reverse){
+            $control = $('<div class="CHECKBOX ' + class_list + '"><input type="button" style="width:20px;" />&nbsp;</div>' + add_label(item, 'rf_') + description);
+            $control.eq(0).filter('div').checkbox(item, value);
+        } else {
+            $control = $(add_label(item, 'rf_') + '<div class="CHECKBOX ' + class_list + '"><input type="button" style="width:20px;" />&nbsp;</div>' + description);
+            $control.eq(1).filter('div').checkbox(item, value);
+        }
         return $control;
     }
 
@@ -1387,6 +1400,10 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 }
                 cbox.title = codes[i][1];
                 cbox.code = codes[i][0];
+                if (codes[i].length > 2){
+                    cbox.params.description = codes[i][2];
+                }
+                cbox.params.reverse = true;
                 $holder = $('<div class="f_codegroup_holder">');
                 $div.append($holder.append(checkbox(cbox, cbox_value)));
             }
@@ -1457,6 +1474,13 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         $form.empty();
         function add_layout_item(item){
             switch (item.params.layout){
+                case 'text':
+                    var text = process_html(item.params.text, row_data);
+                    $builder[builder_depth].append('<div class="f_control_holder f_text">' + text + '</div>');
+                    break;
+                case 'spacer':
+                    $builder[builder_depth].append('<div class="f_control_holder f_spacer">');
+                    break;
                 case 'hr':
                     $builder[builder_depth].append('<div class="f_control_holder"><hr/></div>');
                     break;
