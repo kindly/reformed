@@ -258,19 +258,19 @@ class Search(TableNode):
 class Login(Node):
 
     fields = [
-        ['name', 'Text', 'username:'],
+        ['username', 'Text', 'username:'],
         ['password', 'password', 'password:'],
-        ['button', 'submit', 'moo', {'control' : 'button', 'action': 'next', 'node': 'test.Login'}]
+        ['button', 'submit', 'moo', {'control' : 'button', 'node': 'test.Login:next:'}]
     ]
     form_params =  {"form_type": "action"}
     validations = [
-        ['name', validators.UnicodeString],
+        ['username', validators.UnicodeString],
         ['password', validators.UnicodeString]
     ]
     def call(self):
         vdata = self.validate_data_full(self.data, self.validations)
-        if vdata['name'] and vdata['password']:
-            where = "name='%s' and password='%s'" % (vdata['name'], vdata['password'])
+        if vdata['username'] and vdata['password']:
+            where = "login_name='%s' and password='%s'" % (vdata['username'], vdata['password'])
             try:
                 data_out = r.search_single('user', where)
                 self.login(data_out)
