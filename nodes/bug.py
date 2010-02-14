@@ -115,7 +115,7 @@ class User(TableNode):
     code_groups = {'usergroup':{
                                     'code_table': 'user_group',
                                     'code_field': 'id',
-                                    'code_desc_field': 'notes',
+                                    'code_desc_field': 'description',
                                     'code_title_field': 'groupname',
                                     'flag_table': 'user_group_user',
                                     'flag_child_field': 'user_id',
