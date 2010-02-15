@@ -2,7 +2,7 @@
 import reformed.data_loader
 import os
 
-TABLES = ['_core_entity', 'comment', 'user', 'severity', 'priority', 'ticket', 'bookmarks', 'permission', 'user_group', 'user_group_permission', 'user_group_user']
+TABLES = ['_core_entity', 'comment', 'user', 'severity', 'priority', 'ticket'] ## 'bookmarks', 'permission', 'user_group', 'user_group_permission', 'user_group_user']
 
 def load(database, dir):
 

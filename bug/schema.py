@@ -134,6 +134,13 @@ table("permission",d,
     title_field = 'permission'
 )
 
+
+table("emailer_state",d,
+    Text("module"),
+    Text("email", length = 200),
+    Text("state", length = 200),
+)
+
 d.persist()
 
 

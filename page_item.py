@@ -21,15 +21,14 @@
 
 class PageItem(object):
 
-    def __init__(self, *arg, **kw):
+    def __init__(self, page_item_type, *arg, **kw):
 
         self.name = None
         if arg:
             self.name = arg[0]
 
-        self.field_item_type = kw.pop("field_item_type", type)
+        self.page_item_type = page_item_type
         self.data_type = kw.pop("data_type", None)
-
         self.label = kw.pop("label", None)
 
         if self.name and not self.label:
@@ -37,6 +36,16 @@ class PageItem(object):
 
         self.control = kw.pop("control", None)
         self.layout = kw.pop("layout", None)
+
+    def params(self):
+
+        if self.control:
+            return self.control.convert()
+
+        if self.layout:
+            return self.layout.convert()
+
+        return {}
 
     def convert(self):
 
@@ -52,6 +61,32 @@ class PageItem(object):
 
         return form_field
 
+
+class SubForm(object):
+
+    def __init__(self, name, **kw):
+
+        self.name = name
+        self.page_item_type = "subform"
+        self.label = kw.pop("label", None)
+
+        if self.name and not self.label:
+            self.label = self.name + ":"
+
+        self.subform = {}
+
+
+    def convert(self):
+
+        form_field = [self.name or '',
+                     'subform',
+                     self.label or '']
+
+        return form_field
+
+    def params(self):
+
+        return self.subform or {}
 
 
 class Layout(object):
@@ -74,7 +109,6 @@ class Control(object):
     def __init__(self, control_type, params = None, extra_params = None):
 
         self.control_type = control_type
-
         self.params = params or {}
         self.extra_params = extra_params or {}
 
@@ -92,13 +126,17 @@ class Control(object):
 
 ##Form fields
 
-def input(name, **kw):
-    form_field = PageItem(name, "input", **kw)
-    return form_field.convert()
+def input(*arg, **kw):
+    form_field = PageItem("input", *arg, **kw)
+    return form_field
 
 def layout(layout_type, **kw):
-    form_field = PageItem(layout = Layout(layout_type, kw))
-    return form_field.convert()
+    form_field = PageItem("layout", layout = Layout(layout_type, kw))
+    return form_field
+
+def subform(name, **kw):
+    form_field = SubForm(name)
+    return form_field
 
 ##Controls
 
@@ -130,6 +168,15 @@ def button_box(button_list, **kw):
 
     return Control("button_box", dict(buttons = button_list), kw)
 
+def link(**kw):
 
+    return Control("link", kw)
 
+def link_list(**kw):
+
+    return Control("link_list", kw)
+
+def info(**kw):
+
+    return Control("info", kw)
 

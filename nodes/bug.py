@@ -35,21 +35,21 @@ class ListTicket(TableNode):
     title_field = 'title'
 
     fields = [
-        ['title', 'Text', 'title:'],
-        ['accepted', 'Boolean', 'accepted:', {"control" : "dropdown", "autocomplete" : ["true", "false"]}],
-        ['complete_by', 'Date', 'complete by:'],
-        ['summary', 'Text', 'summary:', {"control" : "textarea", "css" : "large"}],
-        ['severity', 'Text', 'severity:', {"control" : "dropdown", "autocomplete" : True}],
-        ['priority_id', 'Integer', 'priority:', {"control" : "dropdown_code", "autocomplete" : True}],
-        ['old_comments', 'subform', 'old_comments'],
-        ['comment', 'subform', 'comment']
+        input('title', data_type = 'Text'),
+        input('accepted', data_type = 'Boolean' , control = dropdown(["true", "false"])),
+        input('complete_by', data_type = 'Date'),
+        input('summary', data_type = 'Text' , control = textarea(css = "large")),
+        input('severity', data_type = 'Text' , control = dropdown(True)),
+        input('priority_id', data_type = 'Integer' , control = dropdown(True)),
+        subform('old_comments'),
+        subform('comment'),
     ]
 
     subforms = {
         'old_comments':{
             'fields': [
-                ['created_date', 'DateTime', 'Date Created: '],
-                ['note', 'Text', '', {"control" : "textarea", "css" : "large"}],
+                input('created_date', data_type = 'DateTime'),
+                input('note', data_type = 'Text' , control = textarea(css = "large")),
             ],
             "parent_id": "_core_entity_id",
             "child_id": "_core_entity_id",
@@ -61,9 +61,9 @@ class ListTicket(TableNode):
 
         'comment':{
             'fields': [
-                ['note', 'Text', 'note:', {"control" : "textarea", "css" : "large"}],
-                ['moo', 'Boolean', 'moo:', {"control" : "checkbox"}],
-                ['', '', 'add comment', {'control' : 'button', 'node': 'bug.ListTicket:_save:'}]
+                input('note', data_type = 'Text' , control = textarea(css = "large")),
+                input('moo', data_type = 'Boolean' , control = checkbox()),
+                input(label = 'add comment', control = button(node = 'bug.ListTicket:_save:')),
             ],
             "parent_id": "_core_entity_id",
             "child_id": "_core_entity_id",

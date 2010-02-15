@@ -24,6 +24,7 @@ import formencode as fe
 import sqlalchemy as sa
 import datetime
 from global_session import global_session
+from page_item import link, link_list, info, input
 r = global_session.database
 
 class Node(object):
@@ -153,13 +154,12 @@ class Node(object):
         fields = []
         for field in fields_list:
             row = {}
-            row['name'] = field[0]
-            row['type'] = field[1]
-            row['title'] = field[2]
-            if len(field) > 3:
-                params = field[3].copy()
-            else:
-                params = {}
+            row['name'] = field.name
+            row['type'] = field.page_item_type
+            row['title'] = field.label
+
+            params = field.params()
+
             row['params'] = self.modify_params(params, field)
             fields.append(row)
         return fields
@@ -228,10 +228,11 @@ class TableNode(Node):
     first_run = True
 
     list_fields = [
-        ['title', 'link', 'title', {'control' : 'link', 'css' : 'form_title'}],
-        ['summary', 'info', 'summary', {'control' : 'info'}],
-        ['edit', 'link_list', '', {'control' : 'link_list'}]
+        input('title', data_type = 'link', control = link(css = 'form_title')),
+        input('summarty', data_type = 'info', control = info()),
+        input('edit', data_type = 'link_list', control = link_list()),
     ]
+
     list_params = {"form_type": "results"}
 
 
@@ -265,8 +266,8 @@ class TableNode(Node):
     def setup_forms(self):
         for field in self.fields:
             # add subform data
-            if field[1] == 'subform':
-                name = field[0]
+            if field.page_item_type == 'subform':
+                name = field.name
                 subform = self.__class__.subforms.get(name)
                 data = self.create_form_data(subform.get('fields'), subform.get('params'))
                 data['form']['parent_id'] =  subform.get('parent_id')
@@ -274,20 +275,19 @@ class TableNode(Node):
                 data['form']['table_name'] =  subform.get('table')
                 data['control'] = 'subform'
                 self.__class__.subform_data[name] = data
-                field.append(data)
+                field.subform = data
                 self.setup_subforms(name)
             # add data for code groups
-            elif field[1] == 'code_group':
-                name = field[0]
+            elif field.control and field.control.control_type == 'code_group':
+                name = field.name
                 code_list= self.__class__.code_list.get(name)
                 if len(field) == 4:
                     field[3]['codes'] = code_list
                 else:
                     data = {}
                     data['codes'] = code_list
-                    field.append(data)
             # build the field list
-            self.field_list.append(field[0])
+            self.field_list.append(field.name or '') ## FIXME should keep as None if does not exist
         # add any extra fields to the field list
         for field in self.extra_fields:
             self.field_list.append(field)
@@ -295,7 +295,7 @@ class TableNode(Node):
     def setup_subforms(self, name):
         extra_fields = []
         for field in self.subforms.get(name).get('fields'):
-            extra_fields.append(field[0])
+            extra_fields.append(field.name)
         self.subform_field_list[name] = extra_fields
 
     def call(self):
@@ -341,9 +341,10 @@ class TableNode(Node):
                 print 'new record'
                 record_data = r.get_instance(table)
             for field in fields:
-                field_name = field[0]
-                field_type = field[1]
-                if field_name != '' and field_name != 'id' and field_type not in ignore_types and field_name != u'version_id':
+                print field
+                field_name = field.name
+                field_type = field.data_type
+                if field_name and field_name != 'id' and field_type not in ignore_types and field_name != u'version_id':
                     # update/add the value
                     value = data.get(field_name)
                     print '%s = %s' % (field_name, value)
@@ -388,7 +389,8 @@ class TableNode(Node):
             filter = {}
         subform = self.data.get("__subform")
         if subform:
-            fields = self.subforms[subform]["fields"] + [[self.subforms[subform]["child_id"], "Integer", ""]]
+            child_id = self.subforms[subform]["child_id"]
+            fields = self.subforms[subform]["fields"] + [input(child_id, data_type = "Integer")]
             table = self.subforms[subform]["table"]
         else:
             table = self.table
@@ -702,7 +704,7 @@ class TableNode(Node):
                 filter_value = autocomplete_options.get("filter_value")
 
             if autocomplete_options == True:
-                rfield = database[self.table].fields[field[0]]
+                rfield = database[self.table].fields[field.name]
 
                 if rfield.column.defined_relation:
                     rfield = rfield.column.defined_relation.parent
@@ -741,7 +743,7 @@ class TableNode(Node):
         ## if its a known fields
 
         if self.table:
-            rfield = r[self.table].fields.get(field[0])
+            rfield = r[self.table].fields.get(field.name)
             if rfield:
                 if "validation" not in params:
                     params["validation"] = rfield.validation_info
