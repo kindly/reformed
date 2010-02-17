@@ -414,10 +414,20 @@ $.Util.Size.get = function(){
 
         $('body').append($div);
         var $x = $div.find('div.BOX');
-        util_size.FORM_BOX_W = $x.outerWidth() - $x.width();
+        util_size.FORM_BOX_W = $x.outerWidth() - $x.width() + margin_left($x) + margin_right($x);
    //     util_size.FORM_BOX_H = $x.outerHeight() - $x.height();
 
         $div.remove();
+    }
+
+    function margin_left($arg){
+        var size = $arg.css('margin-left');
+        return Number(size.substring(0, size.length-2));
+    }
+
+    function margin_right($arg){
+        var size = $arg.css('margin-right');
+        return Number(size.substring(0, size.length-2));
     }
 
     function grid(){
