@@ -785,6 +785,14 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
         return '<button class="' + class_list + '" onclick="node_button(this, \'' + item.params.node + '\', \'' + item.params.action + '\');return false">' + item.title + '</button>';
     }
 
+    function button_link(item, value){
+        var class_list = 'button_link';
+        if (item.params.css){
+            class_list += ' ' + item.params.css;
+        }
+        return '<a href="#" class="' + class_list + '" onclick="node_button(this, \'' + item.params.node + '\', \'' + item.params.action + '\');return false">' + item.title + '</a>';
+    }
+
 
 
     function build_control(item, value){
@@ -799,6 +807,9 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
                 break;
             case 'button':
                 html.push(button(item, value));
+                break;
+            case 'button_link':
+                html.push(button_link(item, value));
                 break;
             case 'link':
                 html.push(link(item, value));
@@ -1236,6 +1247,14 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         return html;
     }
 
+    function button_link(item, value){
+        var class_list = 'link';
+        if (item.params.css){
+            class_list += ' ' + item.params.css;
+        }
+        return '<a href="#" class="' + class_list + '" onclick="node_button_input_form(this, \'' + item.params.node + '\');return false">' + item.title + '</a>';
+    }
+
     function button(item, value){
         var class_list = 'button';
         if (item.params.css){
@@ -1445,6 +1464,9 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 break;
             case 'button':
                 $div.append(button(item, value));
+                break;
+            case 'button_link':
+                $div.append(button_link(item, value));
                 break;
             case 'button_box':
                 $div.append(button_box(item, value));

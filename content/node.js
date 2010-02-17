@@ -254,15 +254,17 @@ function node_button_input_form(item, data){
         return false;
     }
     var $obj = $('#main div.INPUT_FORM');
-    data = data.split(':')
-    var node = data[0];
-    var command = data[1];
+    var split_data = data.split(':')
+    var node = split_data[0];
+    var command = split_data[1];
     var out = {};
-    if (data.length == 3){
+    if (split_data.length == 3){
         out = $obj.data('command')('get_form_data');
-    }
-    if (out){
-        get_node_return(node, command, out, $obj);
+        if (out){
+            get_node_return(node, command, out, $obj);
+        }
+    } else {
+        node_load('n:' + data);
     }
 }
 
