@@ -37,8 +37,10 @@ logger = logging.getLogger('reformed.main')
 
 def session(environ):
     global_session.session = environ['beaker.session']
+    # if this is a new session set up the defaults
     if global_session.session.get('user_id') == None:
         global_session.session['user_id'] = 0
+        global_session.session['username'] = ''
         global_session.session['permissions'] = []
 
 

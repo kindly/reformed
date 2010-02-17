@@ -44,6 +44,11 @@ def reload_nodes():
 def run(node_name, data, last_node = None):
     print 'RUNNING NODE %s' % node_name
     app_data = global_session.application
+    # check if application is private
+    if not app_data.get('public') and not global_session.session['user_id']:
+        node_name = app_data.get('default_node')
+        data['command'] = app_data.get('default_command')
+
 
     node_base = node_name.split('.')[0]
     found = False
@@ -90,6 +95,8 @@ def run(node_name, data, last_node = None):
 
                 if data.get('request_application_data'):
                         info['application_data'] = app_data
+                        info['application_data']['__user_id'] = global_session.session['user_id']
+                        info['application_data']['__username'] = global_session.session['username']
 
                 return info
         else:
