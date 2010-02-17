@@ -22,14 +22,6 @@
 */
 
 
-(function($) {
-	
-$.fn.extend({
-
-	layout_manager: function(){
-		$.LayoutManager(this);
-	}
-});
 $.Buttons = {};
 
 $.Buttons.action_hash = {};
@@ -45,7 +37,7 @@ $.Buttons.action_call = function (action_name){
 };
 
 
-$.LayoutManager = function () {
+LayoutManager = function () {
 
     function create_main(){
         $main = $('<div id="main"></div>');
@@ -213,6 +205,30 @@ $.LayoutManager = function () {
     };
     
 
+    function create_layout(arg){
+
+        info.page_width = util_size.PAGE_WIDTH;
+
+        if (current_layout != arg){
+            $body.empty();
+            if (arg == "main"){
+                info.left_width = 200;
+                info.top_height = 100;
+                create_logo();
+                create_main();
+                create_side();
+                create_actions();
+            } else {
+                info.left_width = 10;
+                info.top_height = 10;
+                create_main();
+            }
+
+            current_layout = arg;
+        }
+    }
+
+    var current_layout;
     var util_size = $.Util.Size;
     var position_absolute = $.Util.position_absolute;
     var position = $.Util.position;
@@ -220,18 +236,22 @@ $.LayoutManager = function () {
     var $side;
     var $logo;
     var $actions;
-    var $body = $('body');
+    var $body = $('<div id="layout_holder">');
+    $('body').append($body);
 
-    info.page_width = util_size.PAGE_WIDTH;
-
-    create_logo();
-    create_main();
-    create_side();
-    create_actions();
-
+    return {
+        layout : function (arg){
+            create_layout(arg);
+        }
+    }
 };
 
 
-})(jQuery);
 
-$(document).ready($.LayoutManager);
+var layout_manager;
+
+function init_layout_manager(){
+    layout_manager = LayoutManager();
+}
+
+$(document).ready(init_layout_manager);

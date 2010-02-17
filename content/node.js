@@ -430,6 +430,7 @@ function grid_add_row(){
 function change_user(user){
     application_data.__user_id = user.id;
     application_data.__username = user.name;
+    change_layout();
 }
 
 function change_user_bar(){
@@ -441,6 +442,14 @@ function change_user_bar(){
     }
 }
 
+function change_layout(){
+    if (!application_data.public && !application_data.__user_id){
+         layout_manager.layout('mainx');
+    } else {
+         layout_manager.layout('main');
+    }
+    change_user_bar();
+}
 
 
 var fn = function(packet, job){
@@ -459,6 +468,7 @@ var fn = function(packet, job){
 
     if (packet.data.application_data){
         application_data = packet.data.application_data;
+        change_layout();
     }
 
      var user = packet.data.user;
