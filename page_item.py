@@ -97,11 +97,13 @@ class SubForm(object):
 
     def convert(self, node, field_list):
 
-        form_field = [self.name or '',
-                     'subform',
-                     self.label or '']
+        row = {}
+        row['name'] = self.name
+        row['type'] = self.data_type
+        row['title'] = self.label
+        row['params'] = self.params()
 
-        return form_field
+        return row
 
     def params(self):
 
@@ -117,10 +119,14 @@ class Layout(object):
 
     def convert(self, field, node):
 
+        row = {}
+
         params = dict(layout = self.layout_type)
         params.update(self.params)
 
-        return params
+        row['params'] = params()
+
+        return row
 
 
 class Control(object):
@@ -175,7 +181,7 @@ class Dropdown(Control):
             if rfield.column.defined_relation:
                 rfield = rfield.column.defined_relation.parent
 
-            if rfield.type == "LookupId":
+            if rfield.data_type == "Integer":
                 table = rfield.other
                 target_field = database[table].title_field
                 filter_field = rfield.filter_field
