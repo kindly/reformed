@@ -408,8 +408,9 @@ class Field(object):
         obj.many_side_not_null = kw.get("many_side_not_null", True)
         obj.many_side_mandatory = kw.get("many_side_mandatory", False)
 
-        obj.data_type = kw.get("data_type", None)
         obj.one_way = kw.get("one_way", None)
+
+        obj.data_type = None
         return obj
 
     def __eq__(self, other):

@@ -63,7 +63,12 @@ class PageItem(object):
 
     def set_data_type(self, node):
 
-        return self.data_type
+        if self.data_type:
+            return self.data_type
+        if node.table:
+            rfield = r[node.table].fields.get(self.name)
+            if rfield:
+                return rfield.type
 
     def set_params(self, node):
 
@@ -119,14 +124,10 @@ class Layout(object):
 
     def convert(self, field, node):
 
-        row = {}
-
         params = dict(layout = self.layout_type)
         params.update(self.params)
 
-        row['params'] = params()
-
-        return row
+        return params
 
 
 class Control(object):

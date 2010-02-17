@@ -8,17 +8,17 @@ class Ticket(TableNode):
     title_field = 'title'
 
     fields = [
-        input('title', data_type = 'Text'),
+        input('title'),
         layout('hr'),
         layout('column_start'),
-        input('accepted', data_type = 'Boolean' , control = dropdown(["true", "false"])),
-        input('complete_by', data_type = 'Date'),
+        input('accepted', control = dropdown(["true", "false"])),
+        input('complete_by'),
         layout('column_next'),
-        input('severity', data_type = 'Text' , control = dropdown(True)),
-        input('priority_id', data_type = 'Integer' , control = dropdown(True)),
+        input('severity', control = dropdown(True)),
+        input('priority_id', control = dropdown(True)),
         layout('column_end'),
         layout('hr'),
-        input('summary', data_type = 'Text' , control = textarea(css = "large")),
+        input('summary', control = textarea(css = "large")),
     ]
     list_title = 'ticket %s'
 
@@ -35,12 +35,12 @@ class ListTicket(TableNode):
     title_field = 'title'
 
     fields = [
-        input('title', data_type = 'Text'),
-        input('accepted', data_type = 'Boolean' , control = dropdown(["true", "false"])),
-        input('complete_by', data_type = 'Date'),
-        input('summary', data_type = 'Text' , control = textarea(css = "large")),
-        input('severity', data_type = 'Text' , control = dropdown(True)),
-        input('priority_id', data_type = 'Integer' , control = dropdown(True)),
+        input('title'),
+        input('accepted', control = dropdown(["true", "false"])),
+        input('complete_by' ),
+        input('summary', control = textarea(css = "large")),
+        input('severity', control = dropdown(True)),
+        input('priority_id', control = dropdown(True)),
         subform('old_comments'),
         subform('comment'),
     ]
@@ -48,8 +48,8 @@ class ListTicket(TableNode):
     subforms = {
         'old_comments':{
             'fields': [
-                input('created_date', data_type = 'DateTime'),
-                input('note', data_type = 'Text' , control = textarea(css = "large")),
+                input('created_date'),
+                input('note', control = textarea(css = "large")),
             ],
             "parent_id": "_core_entity_id",
             "child_id": "_core_entity_id",
@@ -61,8 +61,8 @@ class ListTicket(TableNode):
 
         'comment':{
             'fields': [
-                input('note', data_type = 'Text' , control = textarea(css = "large")),
-                input('moo', data_type = 'Boolean' , control = checkbox()),
+                input('note', control = textarea(css = "large")),
+                input('moo', control = checkbox()),
                 input(label = 'add comment', control = button(node = 'bug.ListTicket:_save:')),
             ],
             "parent_id": "_core_entity_id",
