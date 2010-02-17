@@ -320,7 +320,7 @@ $.Util.paging_bar = function (data){
 };
 
 $.Util.position = function ($item, top, left, height, width){
-    // position an element absolutely on the screen
+    // position an element on the screen
     var css = {};
     if (top !== null){
         css.top = top;
