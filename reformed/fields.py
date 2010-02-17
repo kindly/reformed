@@ -54,6 +54,7 @@ class Text(Field):
 class LookupTextValidated(Field):
 
     def __init__(self, name, target, *args, **kw):
+        self.data_type = "Text"
         self.text = Column(sa.Unicode(100),  use_parent = True)
         self.other = target
 
@@ -194,6 +195,8 @@ class LookupId(Field):
 
     def __init__(self, name, other, *args, **kw):
 
+        self.data_type = "Integer"
+
         self.other = other
         self.filter_field = kw.get("type_field")
 
@@ -216,7 +219,7 @@ class LookupList(Field):
 
     def __init__(self, name, lookup, *args, **kw):
 
-        self.type = "Text"
+        self.data_type = "Text"
         if "lookup_list" in kw:
             self.lookup_list = kw["lookup_list"].split(",")
 
