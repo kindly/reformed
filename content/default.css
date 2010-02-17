@@ -614,3 +614,22 @@ div.f_control_holder input{
 div.f_codegroup_holder div.f_description{
     margin-left:0;
 }
+
+div.f_message {
+    border: 1px solid blue;
+    background-color:#CCF;
+    color:#339;
+    padding:10px;
+    margin:10px;
+}
+
+div.f_message_error {
+    border: 1px solid red;
+    background-color:#FFC;
+    color:red;
+}
+
+div.f_message_title {
+    font-size:1.5em;
+    background-color:transparent;
+}

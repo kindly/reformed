@@ -1286,7 +1286,14 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     function message_area(message){
         var title = process_html(message.title, row_data);
-        return '<div class="f_message"><div class="f_message_title">' + title + '</div>' + message.body + '</div>';
+        var body = process_html(message.body, row_data);
+        var css;
+        if (message.type == 'error'){
+            css = ' f_message_error';
+        } else {
+            css = '';
+        }
+        return '<div class="f_message' + css + '"><div class="f_message_title">' + title + '</div>' + body + '</div>';
     }
 
     function process_html(text, data){
