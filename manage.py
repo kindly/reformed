@@ -94,28 +94,30 @@ def undump(application):
     print 'undumping data'
     load_json_from_file('data/users.json', application.database, 'user')
 
+def reload(host, options):
+    import paste.reloader
+    print "reloading"
+
+    application = make_application(args)
+    paste.reloader.install()
+    run(options.host, options.port, application)
+
 def reloader(args, options):
 
-    import paste.reloader
-    import multiprocessing
-    import time
-    import datetime
-
-    def reload():
-        application = make_application(args)
-        paste.reloader.install()
-        run(options.host, options.port, application)
+    import subprocess
 
     while 1:
         try:
-            print "------------ NEW PROCESS ---------------------"
-            print datetime.datetime.now()
-            proc = multiprocessing.Process(target = reload)
-            proc.start()
-            while 1:
-                if not proc.is_alive():
-                    break
-                time.sleep(1)
+            command = ["python",
+                       "manage.py",
+                       "--reloader",
+                       "--port=%s" % options.port,
+                       "--host=%s" % options.host,
+                      ]
+            if args:
+                command.append(args[0])
+            proc = subprocess.Popen(command)
+            proc.wait()
         except KeyboardInterrupt:
             proc.terminate()
             break
@@ -176,6 +178,8 @@ if __name__ == "__main__":
                       help="return to the repl")
     parser.add_option("--reload", dest = "reload", action="store_true",
                       help="run with reloader")
+    parser.add_option("--reloader", dest = "reloader", action="store_true",
+                      help="INTERNAL, used for reload")
     parser.add_option("--host", dest = "host", action="store",
                       default = "127.0.0.1",
                       help="web server host")
@@ -212,6 +216,8 @@ if __name__ == "__main__":
         run(options.host, options.port, application)
     if options.reload:
         reloader(args, options)
+    if options.reloader:
+        reload(args, options)
     if options.all:
         application = make_application(args)
         print "deleting"
