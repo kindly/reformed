@@ -72,11 +72,11 @@ $.LayoutManager = function () {
             var button_left = (ACTION_BUTTON_SPACING + ACTION_BUTTON_WIDTH) * Math.floor(button_number / BUTTONS_PER_COLUMN);
             var button_image_size = 12;
 
-            position($button, button_top, button_left, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
-            position($link, 0, 0, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
-            position($img, 0, 0, button_image_size, button_image_size);
-            position($command, 0, button_image_size, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH - (2 * button_image_size));
-            position($shortcut, 0, ACTION_BUTTON_WIDTH - button_image_size, util_size.ACTION_BUTTON_H, button_image_size);
+            position_absolute($button, button_top, button_left, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
+            position_absolute($link, 0, 0, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
+            position_absolute($img, 0, 0, button_image_size, button_image_size);
+            position_absolute($command, 0, button_image_size, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH - (2 * button_image_size));
+            position_absolute($shortcut, 0, ACTION_BUTTON_WIDTH - button_image_size, util_size.ACTION_BUTTON_H, button_image_size);
 
             $button_holder.append($button);
         }
@@ -167,7 +167,7 @@ $.LayoutManager = function () {
         var left = info.margin_left + info.left_width + info.spacing;
         var height = null;
         var width = info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + util_size.SCROLLBAR_WIDTH);
-        position($main, top, left, height, width);
+        position_absolute($main, top, left, height, width);
         // Store the viewable size of the div.
         util_size.MAIN_WIDTH = width;
         util_size.MAIN_HEIGHT = util_size.PAGE_HEIGHT - top - info.spacing;
@@ -182,15 +182,15 @@ $.LayoutManager = function () {
         var height = info.top_height;
         var width = info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + util_size.SCROLLBAR_WIDTH);
 
-        position($actions, top, left, height, width);
+        position_absolute($actions, top, left, height, width);
     }
 
     function position_side(){
-        position($side, info.margin_top + info.top_height + info.spacing, info.margin_left, null, info.left_width);
+        position_absolute($side, info.margin_top + info.top_height + info.spacing, info.margin_left, null, info.left_width);
     }
 
     function position_logo(){
-        position($logo, info.margin_top, info.margin_left, info.top_height, info.left_width);
+        position_absolute($logo, info.margin_top, info.margin_left, info.top_height, info.left_width);
     }
 
 
@@ -206,7 +206,8 @@ $.LayoutManager = function () {
     
 
     var util_size = $.Util.Size;
-    var position = $.Util.position_absolute;
+    var position_absolute = $.Util.position_absolute;
+    var position = $.Util.position;
     var $main;
     var $side;
     var $logo;
