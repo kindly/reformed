@@ -166,11 +166,6 @@ class Node(object):
         """Sets the button info to be displayed by a form."""
         self.out['data']['__buttons'] = button_list
 
-    def modify_params(self, params, field):
-        """Change field parameters dynamically for each node load.
-        return modified parameters"""
-        return params
-
     def validate_data(self, data, field, validator):
         try:
             return validator().to_python(data.get(field))
@@ -678,11 +673,6 @@ class TableNode(Node):
         except sa.orm.exc.NoResultFound:
             out = {}
         return out
-
-    def modify_params(self, params, field):
-        """Change field parameters dynamically for each node load.
-        return modified parameters"""
-
 
 
 class AutoForm(TableNode):
