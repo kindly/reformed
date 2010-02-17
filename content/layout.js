@@ -108,9 +108,24 @@ $.LayoutManager = function () {
         var action_list = $.Buttons.action_list;
 
         add_actions();
+        var $user_bar = user_bar();$('<div style="position:relative;background-color:#f0f;"></div>');
+        position_absolute($user_bar, (ACTION_BUTTON_SPACING + util_size.ACTION_BUTTON_H) * BUTTONS_PER_COLUMN + ACTION_BUTTON_SPACING, 0, null, info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + util_size.SCROLLBAR_WIDTH));
+        $actions.append($user_bar);
         $body.append($actions);
     }
-
+    function user_bar(){
+        $user_bar = $('<div style="position:relative;background-color:#f0f;"></div>');
+        // search box
+        html = [];
+        html.push('<form action="" onclick="$.Util.Event_Delegator(\'clear\');" onsubmit="return search_box();" style="display:inline">');
+        html.push('<input type="text" name="search" id="search" />');
+        html.push('<input type="submit" name="search_button" id="search_button" value="search"/>');
+        html.push('</form>');
+        $user_bar.append(html.join(''));
+        // login info
+        $user_bar.append('<span id="user_login" style="float:right;">user login</span>');
+        return $user_bar;
+    }
     function create_side(){
         $side = $('<div></div>');
 
@@ -124,9 +139,6 @@ $.LayoutManager = function () {
         html.push('<span onclick="$.Util.selectStyleSheet(\'size\', \'css/size5.css\');" style="font-size:16px">A</span>');
         html.push('</div>');
     
-        html.push('<form action="" onclick="$.Util.Event_Delegator(\'clear\');" onsubmit="return search_box();">');
-        html.push('<input type=\'text\' name=\'search\' id=\'search\' />');
-        html.push('</form>');
     
         html.push('<ul>');
         html.push('<li><span onclick="$.Util.stress_test(\'n:table.Edit:list:t=9&l=100&o=\', 9900)">stress test</span></li>');
