@@ -1,5 +1,9 @@
 from node import TableNode
+from formencode import validators
 from page_item import *
+import reformed.search
+from global_session import global_session
+r = global_session.database
 
 class Ticket(TableNode):
 
@@ -123,6 +127,127 @@ class User(TableNode):
                                     'flag_parent_field': 'id'
                                   }
                 }
+
+
+
+    login_fields = [
+        ['', '', '', dict(layout = 'box_start')],
+        ['login_name', 'Text', 'username:'],
+        ['password', 'password', 'password:', dict(control = 'password')],
+        ['button', 'submit', 'Log in', {'control' : 'button', 'node': 'bug.User:login:'}],
+        ['', '', '', dict(layout = 'box_end')],
+    ]
+    login_form_params =  {"form_type": "action"}
+    login_validations = [
+        ['login_name', validators.UnicodeString],
+        ['password', validators.UnicodeString]
+    ]
+
+    about_me_fields = [
+        ['', '', '', dict(layout = 'box_start')],
+        ['login_name', 'Text', 'username:'],
+        ['about_me', 'Text', 'notes:', {"control" : "textarea", "css" : "large"}],
+        ['', '', '', dict(layout = 'box_end')],
+    ]
+    about_me_form_params =  {"form_type": "action"}
+
+    about_me_form_fields = ['login_name', 'about_me']
+
+    def check_login(self):
+        message = None
+        vdata = self.validate_data_full(self.data, self.login_validations)
+        if vdata['login_name'] and vdata['password']:
+            where = "login_name='%s' and password='%s'" % (vdata['login_name'], vdata['password'])
+            try:
+                data_out = r.search_single('user', where)
+                if data_out.get('active') != True:
+                    message = dict(title = 'Login failed', body ='This account is disabled.')
+                    self.show_login_form(message)
+                else:
+
+                    result = r.search('permission', 'user_group_user.user_id = %s and permission="Login"' % data_out.get('id'), fields=['permission'])['data']
+                    if not result:
+                        message = dict(title = 'Login failed', body ='This account is not allowed to log into the system.')
+                        self.show_login_form(message)
+                    else:
+                        self.login(data_out)
+
+            except:
+                message = dict(title = 'Login failed', body ='user name or password incorrect, try again.', type = 'error')
+                self.show_login_form(message)
+        else:
+            message = dict(title = 'Login.', body ='Welcome to %s enter your login details to continue' % global_session.application['name'])
+            self.show_login_form(message)
+
+    def show_login_form(self, message = None):
+        if message:
+            data = dict(__message = message)
+        else:
+            data = {}
+        out = self.create_form_data(self.login_fields, self.login_form_params, data)
+        self.action = 'form'
+        self.out = out
+
+    def about_me(self):
+        where = 'id = %s' % global_session.session['user_id']
+        data = r.search_single('user', where, fields = self.about_me_form_fields, keep_all = True)
+        out = self.create_form_data(self.about_me_fields, self.about_me_form_params, data)
+        self.action = 'form'
+        self.out = out
+
+    def save_about_me(self):
+        self.saved = []
+        self.errors = {}
+        session = r.Session()
+        filter = dict(id =  global_session.session['user_id'])
+        data = self.data
+        self.save_record(session, 'user', self.about_me_fields, data, filter, None)
+        session.close()
+        # output data
+        out = {}
+        if self.errors:
+            out['errors'] = self.errors
+            self.out = out
+            self.action = 'save'
+        else:
+            self.action = 'redirect'
+            self.link = 'BACK'
+
+    def login(self, data):
+        user_id = data.get('id')
+        username = data.get('login_name')
+        global_session.session['user_id'] = user_id
+        global_session.session['username'] = username
+
+        global_session.session['permissions'] = self.get_permissions(user_id)#['logged_in']
+
+        user_name = data.get('name')
+        user_id = data.get('id')
+        self.user = dict(name = user_name, id = user_id)
+
+        self.action = 'html'
+        data = "<p>Hello %s you are now logged in, what fun!</p>" % data['name']
+        self.out = {'html': data}
+
+    def get_permissions(self, user_id):
+
+        result = r.search('permission', 'user_group_user.user_id = %s' % user_id, fields=['permission'])['data']
+        permissions = ['logged_in']
+        for row in result:
+            print row
+            permissions.append(row.get('permission'))
+        print permissions
+        return permissions
+
+    def logout(self):
+        global_session.session['user_id'] = 0
+        global_session.session['username'] = ''
+        global_session.session['permissions'] = []
+
+        self.user = dict(name = None, id = 0)
+        message = dict(title = "You are now logged out", body = '')
+        self.show_login_form(message)
+
     def finalise(self):
         if self.command == '_save' and self.saved:
             if self.data.get('id',0) == 0:
@@ -133,12 +258,18 @@ class User(TableNode):
             else:
                 self.action = 'redirect'
                 self.link = 'BACK'
+        if self.command == 'list':
+            self.set_form_message("These are the current users.")
+            self.set_form_buttons([['add new user', 'bug.User:new:'], ['cancel', 'BACK']])
+        if self.command == 'about_me':
+            self.set_form_message("About Me")
+            self.set_form_buttons([['Save Changes', 'bug.User:_save_about_me:'], ['cancel', 'BACK']])
         if self.command == 'new':
             self.set_form_message("Add new user below")
             self.set_form_buttons([['add user', 'bug.User:_save:'], ['cancel', 'BACK']])
         if self.command == 'edit':
             self.set_form_message("Edit {name}")
-            self.set_form_buttons([['add user', 'bug.User:_save:'], ['delete user', 'bug.User:_delete:'], ['cancel', 'BACK']])
+            self.set_form_buttons([['Save Changes', 'bug.User:_save:'], ['delete user', 'bug.User:_delete:'], ['cancel', 'BACK']])
 
 class Permission(TableNode):
 
