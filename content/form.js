@@ -1468,7 +1468,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 subforms.push({item: item, data: value});
                 break;
             default:
-                $div.append(item.params.control);
+                $div.append('UNKNOWN: ' + item.params.control);
         }
 
         return $div;
@@ -1519,6 +1519,23 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             }
         }
 
+        function build_form_items(row_data){
+            for (var i = 0; i < num_fields; i++){
+                item = form_data.fields[i];
+                value = $.Util.get_item_value(item, row_data);
+                if (item.params.layout){
+                    add_layout_item(item, $builder, builder_depth);
+                } else {
+                    if (item.params.control){
+                        $control = build_control(item, value);
+                    } else {
+                        $control = build_input(item, value);
+                    }
+                    $builder[builder_depth].append($control);
+                    form_controls_hash[item.name] = $control;
+                }
+            }
+        }
 
         form_controls_hash = {};
         var $builder = [$('<div/>')];
@@ -1531,19 +1548,13 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             $builder[builder_depth].append($control);
         }
         // main form
-        for (var i = 0; i < num_fields; i++){
-            item = form_data.fields[i];
-            value = $.Util.get_item_value(item, row_data);
-            if (item.params.layout){
-                add_layout_item(item, $builder, builder_depth);
-            } else {
-                if (item.params.control){
-                    $control = build_control(item, value);
-                } else {
-                    $control = build_input(item, value);
-                }
+        if (!row_data.__array){
+            build_form_items(row_data);
+        } else {
+            for (var i = 0, n = row_data.__array.length; i <  n; i++){
+                build_form_items(row_data.__array[i]);
+                $control = $('<div class="f_control_holder"><hr/></div>');
                 $builder[builder_depth].append($control);
-                form_controls_hash[item.name] = $control;
             }
         }
         // form buttons
