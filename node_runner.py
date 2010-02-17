@@ -24,6 +24,7 @@ import imp
 import sys
 import paste
 
+from global_session import global_session
 
 def node(data, caller):
     node = data.get('node')
@@ -42,6 +43,8 @@ def reload_nodes():
 
 def run(node_name, data, last_node = None):
     print 'RUNNING NODE %s' % node_name
+    app_data = global_session.application
+
     node_base = node_name.split('.')[0]
     found = False
     if not hasattr(nodes, node_base):
@@ -84,6 +87,10 @@ def run(node_name, data, last_node = None):
                         'link' : x.link,
                         'bookmark' : x.bookmark,
                         'data' : x.out}
+
+                if data.get('request_application_data'):
+                        info['application_data'] = app_data
+
                 return info
         else:
             # the user cannot perform this action

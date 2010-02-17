@@ -23,7 +23,7 @@
     ======
 
 */
-
+var application_data;
 
 $(document).ready(init);
 
@@ -146,6 +146,10 @@ function get_node(node_name, node_command, node_data, change_state){
 
     if (node_data){
         info.data = node_data;
+    }
+
+    if (!application_data){
+        info.request_application_data = true;
     }
 
     $JOB.add(info, {}, 'node', true);
@@ -434,6 +438,10 @@ var fn = function(packet, job){
      if (title){
          $.address.title(title);
      }
+
+    if (packet.data.application_data){
+        application_data = packet.data.application_data;
+    }
 
      var bookmark = packet.data.bookmark;
      if (bookmark){
