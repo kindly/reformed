@@ -425,6 +425,22 @@ function grid_add_row(){
     console_log('add_row');
     $('#main div.GRID').data('command')('add_row');
 }
+// user bits
+
+function change_user(user){
+    application_data.__user_id = user.id;
+    application_data.__username = user.name;
+}
+
+function change_user_bar(){
+
+    if (application_data.__user_id === 0){
+        $('#user_login').html('<a href="#" onclick="node_button_input_form(this, \'bug.User:login\');return false">Login</a>');
+    } else {
+        $('#user_login').html(application_data.__username + ' <a href="#" onclick="node_button_input_form(this, \'bug.User:logout\');return false">Log out</a>');
+    }
+}
+
 
 
 var fn = function(packet, job){
@@ -444,6 +460,11 @@ var fn = function(packet, job){
     if (packet.data.application_data){
         application_data = packet.data.application_data;
     }
+
+     var user = packet.data.user;
+     if (user){
+         change_user(user);
+     }
 
      var bookmark = packet.data.bookmark;
      if (bookmark){

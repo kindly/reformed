@@ -90,6 +90,7 @@ def run(node_name, data, last_node = None):
                         'node': node_name,
                         'title' : x.title,
                         'link' : x.link,
+                        'user' : x.user,
                         'bookmark' : x.bookmark,
                         'data' : x.out}
 
