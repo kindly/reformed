@@ -36,6 +36,7 @@ class Node(object):
         self.name = node_name
         self.title = None
         self.link = None
+
         self.action = None
         self.bookmark = None
         self.next_node = None
@@ -153,14 +154,7 @@ class Node(object):
 
         fields = []
         for field in fields_list:
-            row = {}
-            row['name'] = field.name
-            row['type'] = field.page_item_type
-            row['title'] = field.label
-
-            params = field.params()
-
-            row['params'] = self.modify_params(params, field)
+            row = field.convert(self, fields_list)
             fields.append(row)
         return fields
 
@@ -688,69 +682,7 @@ class TableNode(Node):
     def modify_params(self, params, field):
         """Change field parameters dynamically for each node load.
         return modified parameters"""
-        if "autocomplete" in params:
-            autocomplete_options = params["autocomplete"]
 
-            database = r
-
-            if isinstance(autocomplete_options, list):
-                return params
-
-            if isinstance(autocomplete_options, dict):
-                table = autocomplete_options["table"]
-                target_field = autocomplete_options["field"]
-
-                filter_field = autocomplete_options.get("filter_field")
-                filter_value = autocomplete_options.get("filter_value")
-
-            if autocomplete_options == True:
-                rfield = database[self.table].fields[field.name]
-
-                if rfield.column.defined_relation:
-                    rfield = rfield.column.defined_relation.parent
-
-                if rfield.type == "LookupId":
-                    table = rfield.other
-                    target_field = database[table].title_field
-                    filter_field = rfield.filter_field
-                    filter_value = rfield.name
-                else:
-                    table, target_field = rfield.other.split(".")
-                    filter_field = rfield.kw.get("filter_field")
-                    filter_value = rfield.kw.get("filter_value")
-
-            session = r.Session()
-
-            target_class = database.tables[table].sa_class
-
-            id_field = getattr(target_class, "id")
-            target_field = getattr(target_class, target_field)
-
-            if filter_field:
-                filter_field = getattr(target_class, filter_field)
-                results = session.query(id_field, target_field).filter(filter_field == u"%s" % filter_value).all()
-            else:
-                results = session.query(id_field, target_field).all()
-
-            session.close()
-
-            if "control" in params and params["control"] == 'dropdown_code':
-                params["autocomplete"] = dict(keys = [item[0] for item in results],
-                                              descriptions = [item[1] for item in results])
-            else:
-                params["autocomplete"] = [item[1] for item in results]
-
-        ## if its a known fields
-
-        if self.table:
-            rfield = r[self.table].fields.get(field.name)
-            if rfield:
-                if "validation" not in params:
-                    params["validation"] = rfield.validation_info
-                if rfield.default:
-                    params["default"] = rfield.default
-
-        return params
 
 
 class AutoForm(TableNode):

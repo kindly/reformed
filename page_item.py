@@ -17,6 +17,8 @@
 ##   Reformed
 ##   Copyright (c) 2008-2009 Toby Dacre & David Raznick
 ##
+from global_session import global_session
+r = global_session.database
 
 
 class PageItem(object):
@@ -26,6 +28,8 @@ class PageItem(object):
         self.name = None
         if arg:
             self.name = arg[0]
+
+        self.validation = kw.pop("validation", True)
 
         self.page_item_type = page_item_type
         self.data_type = kw.pop("data_type", None)
@@ -37,29 +41,43 @@ class PageItem(object):
         self.control = kw.pop("control", None)
         self.layout = kw.pop("layout", None)
 
-    def params(self):
+    def params(self, node):
 
         if self.control:
-            return self.control.convert()
+            return self.control.convert(self, node)
 
         if self.layout:
-            return self.layout.convert()
+            return self.layout.convert(self, node)
 
         return {}
 
-    def convert(self):
+    def convert(self, node, field_list):
 
-        form_field = [self.name or '',
-                     self.data_type or '',
-                     self.label or '']
+        row = {}
+        row['name'] = self.name
+        row['type'] = self.set_data_type(node)
+        row['title'] = self.label
+        row['params'] = self.set_params(node)
 
-        if self.control:
-            form_field.append(self.control.convert())
+        return row
 
-        if self.layout:
-            form_field.append(self.layout.convert())
+    def set_data_type(self, node):
 
-        return form_field
+        return self.data_type
+
+    def set_params(self, node):
+
+        params = self.params(node)
+
+        if node.table and self.validation:
+            rfield = r[node.table].fields.get(self.name)
+            if rfield:
+                if "validation" not in params:
+                    params["validation"] = rfield.validation_info
+                if rfield.default:
+                    params["default"] = rfield.default
+
+        return params
 
 
 class SubForm(object):
@@ -68,6 +86,7 @@ class SubForm(object):
 
         self.name = name
         self.page_item_type = "subform"
+        self.data_type = "subform"
         self.label = kw.pop("label", None)
 
         if self.name and not self.label:
@@ -76,7 +95,7 @@ class SubForm(object):
         self.subform = {}
 
 
-    def convert(self):
+    def convert(self, node, field_list):
 
         form_field = [self.name or '',
                      'subform',
@@ -96,7 +115,7 @@ class Layout(object):
         self.layout_type = layout_type
         self.params = params
 
-    def convert(self):
+    def convert(self, field, node):
 
         params = dict(layout = self.layout_type)
         params.update(self.params)
@@ -112,7 +131,7 @@ class Control(object):
         self.params = params or {}
         self.extra_params = extra_params or {}
 
-    def convert(self):
+    def convert(self, field, node):
 
         params = dict(control = self.control_type)
 
@@ -121,6 +140,71 @@ class Control(object):
 
         if self.extra_params:
             params.update(self.extra_params)
+
+        return params
+
+class Dropdown(Control):
+
+    def convert(self, field, node):
+
+        params = dict(control = self.control_type)
+
+        if self.params:
+            params.update(self.params)
+
+        if self.extra_params:
+            params.update(self.extra_params)
+
+        autocomplete_options = params["autocomplete"]
+
+        database = r
+
+        if isinstance(autocomplete_options, list):
+            return params
+
+        if isinstance(autocomplete_options, dict):
+            table = autocomplete_options["table"]
+            target_field = autocomplete_options["field"]
+
+            filter_field = autocomplete_options.get("filter_field")
+            filter_value = autocomplete_options.get("filter_value")
+
+        if autocomplete_options == True:
+            rfield = database[node.table].fields[field.name]
+
+            if rfield.column.defined_relation:
+                rfield = rfield.column.defined_relation.parent
+
+            if rfield.type == "LookupId":
+                table = rfield.other
+                target_field = database[table].title_field
+                filter_field = rfield.filter_field
+                filter_value = rfield.name
+            else:
+                table, target_field = rfield.other.split(".")
+                filter_field = rfield.kw.get("filter_field")
+                filter_value = rfield.kw.get("filter_value")
+
+        session = r.Session()
+
+        target_class = database.tables[table].sa_class
+
+        id_field = getattr(target_class, "id")
+        target_field = getattr(target_class, target_field)
+
+        if filter_field:
+            filter_field = getattr(target_class, filter_field)
+            results = session.query(id_field, target_field).filter(filter_field == u"%s" % filter_value).all()
+        else:
+            results = session.query(id_field, target_field).all()
+
+        session.close()
+
+        if "control" in params and params["control"] == 'dropdown_code':
+            params["autocomplete"] = dict(keys = [item[0] for item in results],
+                                          descriptions = [item[1] for item in results])
+        else:
+            params["autocomplete"] = [item[1] for item in results]
 
         return params
 
@@ -142,7 +226,7 @@ def subform(name, **kw):
 
 def dropdown(arg, **kw):
 
-    return Control("dropdown", dict(autocomplete = arg), kw)
+    return Dropdown("dropdown", dict(autocomplete = arg), kw)
 
 def dropdown_code(arg, **kw):
 
