@@ -444,9 +444,9 @@ function change_user_bar(){
 
 function change_layout(){
     if (!application_data.public && !application_data.__user_id){
-         layout_manager.layout('mainx');
+         REBASE.layout_manager.layout('mainx');
     } else {
-         layout_manager.layout('main');
+         REBASE.layout_manager.layout('main');
     }
     change_user_bar();
 }

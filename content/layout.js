@@ -36,8 +36,10 @@ $.Buttons.action_call = function (action_name){
     cmd_info[1].apply(cmd_info[0], cmd_info[2]);
 };
 
+var REBASE = {};
 
-LayoutManager = function () {
+
+REBASE.layout_manager = function (){
 
     function create_main(){
         $main = $('<div id="main"></div>');
@@ -194,18 +196,11 @@ LayoutManager = function () {
     }
 
 
-    var info = {
-        margin_left : 10,
-        margin_right : 10,
-        margin_top : 10,
-        left_width : 200,
-        top_height : 100,
-        spacing : 10,
-        page_width : undefined
-    };
-    
-
     function create_layout(arg){
+        if (first_run){
+            $('body').append($body);
+            first_run = false;
+        }
 
         info.page_width = util_size.PAGE_WIDTH;
 
@@ -228,6 +223,17 @@ LayoutManager = function () {
         }
     }
 
+
+    var info = {
+        margin_left : 10,
+        margin_right : 10,
+        margin_top : 10,
+        left_width : 200,
+        top_height : 100,
+        spacing : 10,
+        page_width : undefined
+    };
+
     var current_layout;
     var util_size = $.Util.Size;
     var position_absolute = $.Util.position_absolute;
@@ -236,22 +242,14 @@ LayoutManager = function () {
     var $side;
     var $logo;
     var $actions;
+    var first_run = true;
     var $body = $('<div id="layout_holder">');
-    $('body').append($body);
 
     return {
         layout : function (arg){
             create_layout(arg);
         }
     }
-};
+}();
 
 
-
-var layout_manager;
-
-function init_layout_manager(){
-    layout_manager = LayoutManager();
-}
-
-$(document).ready(init_layout_manager);
