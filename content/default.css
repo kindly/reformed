@@ -76,7 +76,7 @@ div.form_footer {
 
 button {
 	color:#666;
-	lborder-color:#DDD;
+    margin: 1px 10px 1px 10px;
 }
 
 
@@ -505,7 +505,7 @@ textarea {
     width:200px;
 }
 
-textarea.large {
+textarea.large, input.large {
     width:500px;
 }
 
@@ -583,23 +583,57 @@ div.COLUMN {
     width:50%;
 }
 
-div.BOX {
-    position:relative;
+/* Layouts */
+
+div.BOX, div.COLUMN_2, div.COLUMN_3, div.COLUMN_4, div.COLUMN_5 {
     float:left;
+    position:relative;
+}
+
+/* Column layouts */
+
+div.COLUMN_2 {
+    width:50%;
+}
+
+div.COLUMN_3 {
+    width:33%;
+}
+
+div.COLUMN_4 {
+    width:25%;
+}
+
+div.COLUMN_5 {
+    width:20%;
+}
+
+
+/* Box style */
+
+div.BOX {
     border: 1px solid green;
     padding:5px;
+    margin:10px;
 }
+
+
+
+
 div.f_codegroup_holder {
     float:left;
     position:relative;
-    width:25%;
+    width:33%;
 }
+
 div.f_spacer{
-    height: 25px;
+    height: 1em;
 }
+
 div.f_text{
     color:green;
 }
+
 div.f_description{
     color:green;
     font-size:0.8em;
@@ -608,9 +642,11 @@ div.f_description{
     margin-left:123px;
     clear:both;
 }
+
 div.f_control_holder input{
     float:left;
 }
+
 div.f_codegroup_holder div.f_description{
     margin-left:0;
 }
