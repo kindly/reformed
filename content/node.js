@@ -520,9 +520,10 @@ var fn = function(packet, job){
              form = $.Util.FormDataNormalize(form, packet.data.node);
              data = packet.data.data.data;
              var paging = packet.data.data.paging;
-             if (form.params.form_type == 'grid'){
+             var form_type = form.params.form_type;
+             if (form_type == 'grid'){
                 $('#' + root).grid(form, data, paging);
-             } else if (form.params.form_type == 'action'){
+             } else if (form_type == 'action' || form_type == 'results'){
                 $('#' + root).input_form(form, data, paging);
              } else {
                 $('#' + root).form(form, data, paging);

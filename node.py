@@ -678,6 +678,7 @@ class TableNode(Node):
                 row['edit'] = [self.build_node('Edit', 'edit', 'id=%s' % row['id']),
                                self.build_node('Delete', '_delete', 'id=%s' % row['id']),
                               ]
+        data = {'__array' : data}
         out = self.create_form_data(self.list_fields, self.list_params, data)
 
         # add the paging info
