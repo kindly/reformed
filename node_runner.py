@@ -102,8 +102,7 @@ def run(node_name, data, last_node = None):
                 return info
         else:
             # the user cannot perform this action
-            return {'action': 'general_error',
-                    'data' : 'no permission'}
+            return {'action': 'forbidden'}
     else:
         print "Node <%s> not found" % node_name
 

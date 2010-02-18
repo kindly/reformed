@@ -551,6 +551,9 @@ var fn = function(packet, job){
          case 'general_error':
             alert(packet.data.data);
             break;
+         case 'forbidden':
+            alert('You do not have the permissions to perform this action');
+            break;
         case 'status':
             job_processor_status(packet.data.data, packet.data.node, root);
             break;
