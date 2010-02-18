@@ -142,6 +142,7 @@ class Node(object):
             try:
                 result = r.search_single("bookmarks",
                                          "user_id = ? and bookmark = ?",
+                                         fields = ['title', 'bookmark', 'entity_table', 'entity_id', 'accessed_date'],
                                          values = [user_id, self.bookmark["bookmark_string"]])
                 result["accessed_date"] = util.convert_value(datetime.datetime.now())
                 result["title"] = self.title
