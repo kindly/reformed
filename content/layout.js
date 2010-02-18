@@ -52,12 +52,11 @@ REBASE.layout_manager = function (){
 
         function add_action_button(name, data, button_number){
             
-            var button_data = data[0];
             var $button = $('<div id="action_' + name + '" class="action"></div>');
-            var $link = $('<a href="javascript:$.Buttons.action_call(\'' + name + '\')"></a>');
-            var $img = $('<img src="icon/22x22/' + button_data[1] + '" />');
-            var $command = $('<span class="command">' + button_data[0] + '</span>');
-            var $shortcut = $('<span class="shortcut">' + button_data[2] + '</span>');
+            var $link = $('<a href="javascript:node_load(\'' + data[4] + '\')"></a>');
+            var $img = $('<img src="icon/22x22/' + data[1] + '" />');
+            var $command = $('<span class="command">' + data[0] + '</span>');
+            var $shortcut = $('<span class="shortcut">' + data[2] + '</span>');
 
             $link.append($img).append($command).append($shortcut);
             $button.append($link);
