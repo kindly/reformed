@@ -156,6 +156,16 @@ class WebApplication(object):
             if key:
                 data[key] = value
 
+        # list of default data if none provided
+        defaults = dict(public = True,
+                        name = 'Reformed Application',
+                        test_default = 'test')
+
+        for key in defaults.keys():
+            if not data.has_key(key):
+                data[key] = defaults[key]
+
+
         print '\n  Application data\n  ----------------'
         for key in data.keys():
             print '  %s = %s' % (key, data[key])
