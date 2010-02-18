@@ -257,6 +257,15 @@ REBASE.bookmark = function (){
 
 
     function bookmark_add(bookmark){
+        // create the bookmark view link
+        var table_data = REBASE.application_data.bookmarks[bookmark.entity_table];
+        if (table_data){
+            bookmark.bookmark = 'n:' + table_data.node + ':view:id=' + bookmark.entity_id;
+        } else {
+            console_log('missing bookmark data for ' + bookmark.table_entity);
+            bookmark.bookmark = '';
+        }
+
         // remove the item if already in the list
         for (var i = 0, n = bookmark_array.length; i < n; i++){
             if (bookmark_array[i].bookmark == bookmark.bookmark){

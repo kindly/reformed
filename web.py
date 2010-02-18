@@ -170,6 +170,26 @@ class WebApplication(object):
         for key in data.keys():
             print '  %s = %s' % (key, data[key])
         print
+
+        data['bookmarks'] = self.get_bookmark_data()
+
+        return data
+
+    def get_bookmark_data(self):
+        # FIXME this is hard coded for bugs
+        data = dict(
+            user = dict(title = 'Users', node = 'bug.User'),
+            ticket = dict(title = 'Ticket', node = 'bug.Ticket'),
+            user_group = dict(title = 'User Group', node = 'bug.UserGroup'),
+            permission = dict(title = 'Permission', node = 'bug.Permission'),
+            _system_info = dict(title = 'System Settings', node = 'bug.SysInfo'),
+        )
+
+        print '\n  Bookmark data\n  -------------'
+        for key in data.keys():
+            print '  table: %s, \t%s \tnode: %s' % (key, data[key]['title'], data[key]['node'])
+        print
+
         return data
 
     def static(self, environ, start_response, path):

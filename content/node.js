@@ -23,7 +23,6 @@
     ======
 
 */
-var application_data;
 
 $(document).ready(init);
 
@@ -147,7 +146,7 @@ function get_node(node_name, node_command, node_data, change_state){
         info.data = node_data;
     }
 
-    if (!application_data){
+    if (!REBASE.application_data){
         info.request_application_data = true;
     }
 
@@ -373,22 +372,22 @@ function grid_add_row(){
 // user bits
 
 function change_user(user){
-    application_data.__user_id = user.id;
-    application_data.__username = user.name;
+    REBASE.application_data.__user_id = user.id;
+    REBASE.application_data.__username = user.name;
     change_layout();
 }
 
 function change_user_bar(){
 
-    if (application_data.__user_id === 0){
+    if (REBASE.application_data.__user_id === 0){
         $('#user_login').html('<a href="#" onclick="node_button_input_form(this, \'bug.User:login\');return false">Login</a>');
     } else {
-        $('#user_login').html(application_data.__username + ' <a href="#" onclick="node_button_input_form(this, \'bug.User:logout\');return false">Log out</a>');
+        $('#user_login').html(REBASE.application_data.__username + ' <a href="#" onclick="node_button_input_form(this, \'bug.User:logout\');return false">Log out</a>');
     }
 }
 
 function change_layout(){
-    if (!application_data.public && !application_data.__user_id){
+    if (!REBASE.application_data.public && !REBASE.application_data.__user_id){
          REBASE.layout_manager.layout('mainx');
     } else {
          REBASE.layout_manager.layout('main');
@@ -412,7 +411,7 @@ var fn = function(packet, job){
      }
 
     if (packet.data.application_data){
-        application_data = packet.data.application_data;
+        REBASE.application_data = packet.data.application_data;
         change_layout();
     }
 
