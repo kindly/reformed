@@ -719,6 +719,7 @@ class TableNode(Node):
                 return params
 
             if isinstance(autocomplete_options, dict):
+                return params  ##FIXME
                 table = autocomplete_options["table"]
                 target_field = autocomplete_options["field"]
 
