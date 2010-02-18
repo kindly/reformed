@@ -256,15 +256,11 @@ REBASE.layout_manager = function (){
 
 REBASE.bookmark = function (){
 
-    function bookmark_clear(){
-        // reset the bookmarks
-        bookmark_array = [];
-    }
 
     function bookmark_add(bookmark){
         // remove the item if already in the list
-        for (var i=0; i<bookmark_array.length; i++){
-            if (bookmark_array[i].bookmark==bookmark.bookmark){
+        for (var i = 0, n = bookmark_array.length; i < n; i++){
+            if (bookmark_array[i].bookmark == bookmark.bookmark){
                 bookmark_array.splice(i, 1);
                 break;
             }
@@ -277,14 +273,17 @@ REBASE.bookmark = function (){
     }
 
     function bookmark_display(){
-        categories = [];
-        category_items = {};
+        var categories = [];
+        var category_items = {};
+        var category;
+        var entity_table;
+        var html;
 
-        for(var i=0; i<bookmark_array.length && i<BOOKMARKS_SHOW_MAX; i++){
+        for(var i = 0; i < bookmark_array.length && i < BOOKMARKS_SHOW_MAX; i++){
             entity_table = bookmark_array[i].entity_table
             if (category_items[entity_table] === undefined){
                 categories.push(entity_table);
-                category_items[entity_table] = []
+                category_items[entity_table] = [];
             }
 
             html  = '<li class ="bookmark-item-' + entity_table + '">';
@@ -295,8 +294,8 @@ REBASE.bookmark = function (){
             category_items[entity_table].push(html);
         }
 
-        var html = '<ol class = "bookmark">';
-        for(var i=0; i<categories.length; i++){
+        html = '<ol class = "bookmark">';
+        for(i = 0; i < categories.length; i++){
             category = categories[i];
             html += '<li class ="bookmark-category-title-' + category + '">';
             html += category;
@@ -313,12 +312,13 @@ REBASE.bookmark = function (){
 
     function bookmark_process(bookmark){
          if ($.isArray(bookmark)){
-             for (i = 0; i < bookmark.length; i++){
+             for (var i = 0, n = bookmark.length; i < n; i++){
                 bookmark_add(bookmark[i]);
              }
          } else {
              if (bookmark == 'CLEAR'){
-                bookmark_clear();
+                // reset the bookmarks
+                bookmark_array = [];
              } else {
                 bookmark_add(bookmark);
             }
