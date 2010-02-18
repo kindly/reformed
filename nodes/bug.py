@@ -89,6 +89,7 @@ class ListTicket(TableNode):
 
 class User(TableNode):
 
+
     table = "user"
     form_params =  {"form_type": "action"}
     title_field = 'name'
@@ -152,6 +153,13 @@ class User(TableNode):
     about_me_form_params =  {"form_type": "action"}
 
     about_me_form_fields = ['login_name', 'about_me']
+
+    def setup_extra_commands(self):
+        commands = self.__class__.commands
+        commands['login'] = dict(command = 'check_login')
+        commands['logout'] = dict(command = 'logout')
+        commands['about_me'] = dict(command = 'about_me', permissions = ['logged_in'])
+        commands['_save_about_me'] = dict(command = 'save_about_me')
 
     def check_login(self):
         message = None
@@ -279,7 +287,7 @@ class Permission(TableNode):
     fields = [
         ['', '', '', dict(layout = 'box_start')],
         ['permission', 'Text', 'permission:'],
-        ['description', 'Text', 'description:'],
+        ['description', 'Text', 'description:', {"css" : "large"}],
         ['long_description', 'Text', 'long description:', {"control" : "textarea", "css" : "large"}],
     ]
 
@@ -293,6 +301,9 @@ class Permission(TableNode):
             else:
                 self.action = 'redirect'
                 self.link = 'BACK'
+        if self.command == 'list':
+            self.set_form_message("These are the current permissions.")
+            self.set_form_buttons([['add new permission', 'bug.Permission:new'], ['cancel', 'BACK']])
         if self.command == 'new':
             self.set_form_message("Hello, add new permission")
             self.set_form_buttons([['add permission', 'bug.Permission:_save:'], ['cancel', 'BACK']])
@@ -310,7 +321,7 @@ class UserGroup(TableNode):
         ['', '', '', dict(layout = 'box_start')],
         ['groupname', 'Text', 'groupname:', {'description' : 'The name of the user group'}],
         ['active', 'Boolean', 'active:', {'control' : 'checkbox', 'description' : 'Only active user groups give members permissions'}],
-        ['description', 'Text', 'description:', {'description' : 'A brief description of the user group'}],
+        ['description', 'Text', 'description:', {'description' : 'A brief description of the user group', "css" : "large"}],
         ['notes', 'Text', 'notes:', {"control" : "textarea", "css" : "large", 'description' : 'A longer more detailed description'}],
         ['', '', '', dict(layout = 'spacer')],
         ['', '', '', dict(layout = 'box_start')],
@@ -341,9 +352,62 @@ class UserGroup(TableNode):
             else:
                 self.action = 'redirect'
                 self.link = 'BACK'
+        if self.command == 'list':
+            self.set_form_message("These are the current user groups.")
+            self.set_form_buttons([['add new permission', 'bug.UserGroup:new'], ['cancel', 'BACK']])
         if self.command == 'new':
             self.set_form_message("Add new user group below")
             self.set_form_buttons([['save user group', 'bug.UserGroup:_save:'], ['cancel', 'BACK']])
         if self.command == 'edit':
             self.set_form_message("Edit {groupname}")
             self.set_form_buttons([['save user group', 'bug.UserGroup:_save:'], ['delete user group', 'bug.UserGroup:_delete:'], ['cancel', 'BACK']])
+
+
+class UserAdmin(TableNode):
+
+    permissions = ['logged_in']
+
+    form_params =  {"form_type": "action"}
+    fields = [
+        ['', '', '', dict(layout = 'text', text = 'Users {users}')],
+        ['', '', 'add user', dict(control = 'button_link', node = 'bug.User:new')],
+        ['', '', 'list users', dict(control = 'button_link', node = 'bug.User:list')],
+        ['', '', '', dict(layout = 'spacer')],
+        ['', '', '', dict(layout = 'text', text = 'User Groups {user_groups}')],
+        ['', '', 'add user group', dict(control = 'button_link', node = 'bug.UserGroup:new')],
+        ['', '', 'list user groups', dict(control = 'button_link', node = 'bug.UserGroup:list')],
+        ['', '', '', dict(layout = 'spacer')],
+        ['', '', '', dict(layout = 'text', text = 'Permissions {permissions}')],
+        ['', '', 'add permission', dict(control = 'button_link', node = 'bug.Permission:new')],
+        ['', '', 'list permissions', dict(control = 'button_link', node = 'bug.Permission:list')],
+        ['', '', '', dict(layout = 'spacer')],
+    ]
+
+    def call(self):
+        session = r.Session()
+        users = reformed.search.Search(r, 'user', session).search().count()
+        user_groups = reformed.search.Search(r, 'user_group', session).search().count()
+        permissions = reformed.search.Search(r, 'permission', session).search().count()
+        data = {'users' : users, "user_groups" : user_groups , "permissions" : permissions }
+        out = self.create_form_data(self.fields, params = self.form_params, data = data)
+        self.out = out
+        self.action = 'form'
+        self.title = 'listing'
+
+        self.set_form_message("User Admin")
+        self.set_form_buttons([['cancel', 'BACK']])
+
+
+class SysInfo(TableNode):
+
+    table = "_system_info"
+    form_params =  {"form_type": "action"}
+    title_field = 'key'
+
+    fields = [
+        ['key', 'Text', 'key:'],
+        ['value', 'Text', 'value:'],
+        ['type', 'Integer', 'type:', {"control" : "dropdown_code", "autocomplete" : dict(keys = [1, 2, 3], descriptions = ['String', 'Integer', 'Boolean']) }],
+        ['button', 'submit', 'Save', {'control' : 'button', 'node': 'bug.SysInfo:_save:'}],
+    ]
+
