@@ -38,6 +38,7 @@ class Node(object):
         self.link = None
         self.action = None
         self.bookmark = None
+        self.user = None
         self.next_node = None
         self.next_data = None
         self.extra_data = {}
