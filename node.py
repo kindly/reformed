@@ -41,13 +41,13 @@ class Node(object):
         self.next_node = None
         self.next_data = None
         self.extra_data = {}
+        self.command = data.get('command')
         self.allowed = self.check_permissions()
 
         self.last_node = data.get('lastnode')
         self.data = data.get('data')
         if type(self.data).__name__ != 'dict':
             self.data = {}
-        self.command = data.get('command')
 
         if self.last_node == self.__class__.__name__:
             self.first_call = False
