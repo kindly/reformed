@@ -255,6 +255,8 @@ class User(TableNode):
         self.user = dict(name = None, id = 0)
         message = dict(title = "You are now logged out", body = '')
         self.show_login_form(message)
+        # clear bookmarks
+        self.bookmark = 'CLEAR'
 
     def finalise(self):
         if self.command == '_save' and self.saved:

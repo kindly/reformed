@@ -29,7 +29,6 @@ $(document).ready(init);
 
 function init(){
 
-    node_call_from_string('n:test.Bookmark:');
     $.address.change(page_load);
 }
 
@@ -336,6 +335,11 @@ var bookmark_array = [];
 var BOOKMARKS_SHOW_MAX = 6;
 var BOOKMARK_ARRAY_MAX = 6;
 
+function bookmark_clear(){
+    // reset the bookmarks
+    bookmark_array = [];
+}
+
 function bookmark_add(bookmark){
     // remove the item if already in the list
     for (var i=0; i<bookmark_array.length; i++){
@@ -478,26 +482,22 @@ var fn = function(packet, job){
 
      var bookmark = packet.data.bookmark;
      if (bookmark){
-        bookmark_add(bookmark);
-        bookmark_display();
+         if ($.isArray(bookmark)){
+             for (i = 0; i < bookmark.length; i++){
+                bookmark_add(bookmark[i]);
+             }
+         } else {
+             if (bookmark == 'CLEAR'){
+                bookmark_clear();
+             } else {
+                bookmark_add(bookmark);
+            }
+         }
+         bookmark_display();
      }
 
     var data;
      switch (packet.data.action){
-         case 'update_bookmarks':
-            bookmark = packet.data.data;
-            if (bookmark){
-                if ($.isArray(bookmark)){
-                    for (i = 0; i < bookmark.length; i++){
-                       bookmark_add(bookmark[i]);
-                    }
-                } else {
-                    bookmark_add(bookmark);
-                }
-                bookmark_display();
-             }
-
-             break;
          case 'redirect':
              var link = packet.data.link;
              if (link){
