@@ -194,7 +194,7 @@ class WebApplication(object):
 
     def static(self, environ, start_response, path):
         """Serve static content"""
-
+        # FIXME security limit path directory traversal etc
         print self.dir
         print path
         root = os.path.dirname(os.path.abspath(__file__))
