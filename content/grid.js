@@ -238,6 +238,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         // add resize function so remotely accessable
         $form.data('show_loader', show_loader);
         $form.data('update_grid', update_grid);
+        $form.data('resize_grid', resize_grid);
 
     }
 

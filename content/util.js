@@ -494,61 +494,33 @@ $.Util.Size.page_size = function (){
     }
 };
 
-$.Util.selectStyleSheet = function (title, url){
-    // disable all style sheets with the given title
-    // enable the one with the correct url ending
-    // if not found try to load it.
-    function update_onloaded(){
+$.Util.selectStyleSheet = function (type, value){
 
-        function update(){
-            // refresh the sizes of elements
-            $.Util.Size.get();
-            // update any grids
-            var $grids = $('div.GRID');
-            for (var i = 0, n = $grids.size(); i < n; i++){
-                $grids.eq(i).data('resize_grid')();
-            }
-        }
-
-        function check_loaded(){
-            if ((--tries < 0) || $('#styleSheetCheck').css('font-family') == '"' + url + '"'){
-                // stylesheet has loaded
-                // remove our special div
-                $('#styleSheetCheck').remove();
-                update();
-            } else {
-                // wait and try again
-                setTimeout(check_loaded, 50);
-            }
-        }
-
-        var tries = 50; //number of attempts before giving up
-
-        // add a special div that has the font-family set to the file name in the new stylesheet
-        $('body').append('<div id="styleSheetCheck" style="display:none"></div>');
-        check_loaded();
-    }
-
-
-    var $style_sheets = $('link[title]');
-    var style_sheet;
-    var found = false;
-    for (var i = 0, n = $style_sheets.size(); i < n; i++){
-        style_sheet = $style_sheets[i];
-        if (style_sheet.title == title){
-            if (style_sheet.href.search(url + '$') == -1){
-                style_sheet.disabled = true;
-            } else {
-                found = true;
-                style_sheet.disabled = false;
-            }
+    function update(){
+        // refresh the sizes of elements
+        $.Util.Size.get();
+        // update any grids
+        var $grids = $('div.GRID');
+        for (var i = 0, n = $grids.size(); i < n; i++){
+            $grids.eq(i).data('resize_grid')();
         }
     }
-    if (!found){
-        console_log('load ' + url);
-        $('head').append($('<link media="screen" title="'+ title + '" href="' + url + '" type="text/css" rel="alternate stylesheet"/>'));
+
+    var sizes = {   1 : '0.75',
+                    2 : '0.85',
+                    3 : '1',
+                    4 : '1.2',
+                    5 : '1.4'
+                }
+
+    if (type == 'size' && sizes[value]){
+        var new_style = "td, body, input, select, textarea, th {font-size:" + sizes[value] + "em;}";
+        new_style += "td input{font-size:1em;}";
+        $('#style_size').text(new_style);
     }
-    update_onloaded();
+
+    update();
+
 };
 
 $.Util.HTML_Encode = function (arg) {

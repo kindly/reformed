@@ -125,11 +125,11 @@ REBASE.layout_manager = function (){
         var html = [];
         // FIXME this wants to be ripped out asap
         html.push('<div style=\'font-size:12px\'>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', \'css/size1.css\');" style="font-size:8px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', \'css/size2.css\');" style="font-size:10px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', \'css/size3.css\');" style="font-size:12px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', \'css/size4.css\');" style="font-size:14px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', \'css/size5.css\');" style="font-size:16px">A</span>');
+        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 1);" style="font-size:8px">A</span>');
+        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 2);" style="font-size:10px">A</span>');
+        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 3);" style="font-size:12px">A</span>');
+        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 4);" style="font-size:14px">A</span>');
+        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 5);" style="font-size:16px">A</span>');
         html.push('</div>');
     
     
