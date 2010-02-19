@@ -410,6 +410,25 @@ class SysInfo(TableNode):
         ['key', 'Text', 'key:'],
         ['value', 'Text', 'value:'],
         ['type', 'Integer', 'type:', {"control" : "dropdown_code", "autocomplete" : dict(keys = [1, 2, 3], descriptions = ['String', 'Integer', 'Boolean']) }],
-        ['button', 'submit', 'Save', {'control' : 'button', 'node': 'bug.SysInfo:_save:'}],
     ]
+
+    def finalise(self):
+        if self.command == '_save' and self.saved:
+            if self.data.get('id',0) == 0:
+                self.out = self.create_form_data(self.fields, self.form_params)
+                self.set_form_message("Key %s saved!  Add more?" % self.data.get('key'))
+                self.action = 'form'
+                self.set_form_buttons([['add key', 'bug.SysInfo:_save:'], ['cancel', 'BACK']])
+            else:
+                self.action = 'redirect'
+                self.link = 'BACK'
+        if self.command == 'list':
+            self.set_form_message("These are the current keys.")
+            self.set_form_buttons([['add new key', 'bug.SysInfo:new'], ['cancel', 'BACK']])
+        if self.command == 'new':
+            self.set_form_message("Add new key")
+            self.set_form_buttons([['add key', 'bug.SysInfo:_save:'], ['cancel', 'BACK']])
+        if self.command == 'edit':
+            self.set_form_message("Edit [b]{key}[/b]")
+            self.set_form_buttons([['save key', 'bug.SysInfo:_save:'], ['delete key', 'bug.SysInfo:_delete:'], ['cancel', 'BACK']])
 
