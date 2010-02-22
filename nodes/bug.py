@@ -432,3 +432,82 @@ class SysInfo(TableNode):
             self.set_form_message("Edit {key}")
             self.set_form_buttons([['save key', 'bug.SysInfo:_save:'], ['delete key', 'bug.SysInfo:_delete:'], ['cancel', 'BACK']])
 
+
+class Page(TableNode):
+
+    table = "page"
+    form_params =  {"form_type": "action"}
+    title_field = 'title'
+
+    fields = [
+        ['page', 'Text', 'page:', {"css" : "large", 'description' : 'A reference for the page used for links etc.'}],
+        ['title', 'Text', 'title:', {"css" : "large", 'description' : 'The displayed title for the page.'}],
+        ['body', 'Text', 'content:', {"control" : "textarea", "css" : "large long", 'description' : 'A longer more detailed description'}],
+    ]
+
+    view_fields = [
+        ['title', 'Text', '', {"control" : "info"}],
+        ['body', 'Text', '', {"control" : "info"}],
+    ]
+
+    def view(self, read_only = False):
+        id = self.data.get('id')
+        if id:
+            where = 'id=%s' % id
+        else:
+            id = self.data.get('__id')
+            where = '_core_entity_id=%s' % id
+        page = self.data.get('page')
+        if page:
+            where = 'page = %s' % page
+        try:
+            data_out = self.node_search_single(where)
+            id = data_out.get('id')
+            if self.title_field and data_out.has_key(self.title_field):
+                self.title = data_out.get(self.title_field)
+            else:
+                self.title = '%s: %s' % (self.table, id)
+
+        except sa.orm.exc.NoResultFound:
+            data = None
+            data_out = {}
+            id = None
+            self.title = 'unknown'
+            print 'no data found'
+
+        if self.command == 'edit':
+            fields = self.fields
+        else:
+            fields = self.view_fields
+
+        data = self.create_form_data(fields, self.form_params, data_out, read_only)
+        self.out = data
+        self.action = 'form'
+
+        self.bookmark = dict(
+            table_name = r[data_out.get("__table")].name,
+            bookmark_string = self.build_node('', 'view', 'id=%s' %  id),
+            entity_id = id
+        )
+
+
+    def finalise(self):
+        if self.command == '_save' and self.saved:
+            if self.data.get('id',0) == 0:
+                self.out = self.create_form_data(self.fields, self.form_params)
+                self.set_form_message("Page %s saved!  Add more?" % self.data.get('title'))
+                self.action = 'form'
+                self.set_form_buttons([['add page', 'bug.Page:_save:'], ['cancel', 'BACK']])
+            else:
+                self.action = 'redirect'
+                self.link = 'BACK'
+        if self.command == 'list':
+            self.set_form_message("These are the current page.")
+            self.set_form_buttons([['add new page', 'bug.Page:new'], ['cancel', 'BACK']])
+        if self.command == 'new':
+            self.set_form_message("Add new page")
+            self.set_form_buttons([['add page', 'bug.Page:_save:'], ['cancel', 'BACK']])
+        if self.command == 'edit':
+            self.set_form_message("Edit {title}")
+            self.set_form_buttons([['save page', 'bug.Page:_save:'], ['delete page', 'bug.Page:_delete:'], ['cancel', 'BACK']])
+
