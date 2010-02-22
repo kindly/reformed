@@ -1,0 +1,4 @@
+"description","notes","groupname","_modified_by","_core_entity_id","_modified_date","active","id"
+"Full control of the system.","","System Administrator","0","11","2010-02-14T00:02:10.380025Z","True","1"
+"General application user.","","User","1","12","2010-02-16T02:42:27.566431Z","True","2"
+"Add, remove and edit user accounts.","","User Administrator","2","10","2010-02-16T23:32:41.951293Z","True","3"

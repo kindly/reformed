@@ -1,0 +1,7 @@
+"description","permission","long_description","_modified_by","_modified_date","id"
+"Full [b]system administration[/b] permissions.","SysAdmin","This permission gives full control of the system to a user.","2","2010-02-16T23:25:33.525353Z","1"
+"Allows access to log in to the system.","Login","This is a very basic permission","0","2010-02-12T19:12:46.644205Z","2"
+"Add new user to the system.","AddUser","","2","2010-02-16T23:25:52.640366Z","3"
+"","EditUser","","2","2010-02-16T23:26:03.717730Z","4"
+"","DeleteUser","","2","2010-02-16T23:26:16.298502Z","5"
+"","ImpersonateUser","","2","2010-02-16T23:26:45.472582Z","6"
