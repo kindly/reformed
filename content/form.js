@@ -785,6 +785,14 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
         return '<button class="' + class_list + '" onclick="node_button(this, \'' + item.params.node + '\', \'' + item.params.action + '\');return false">' + item.title + '</button>';
     }
 
+    function button_link(item, value){
+        var class_list = 'button_link';
+        if (item.params.css){
+            class_list += ' ' + item.params.css;
+        }
+        return '<a href="#" class="' + class_list + '" onclick="node_button(this, \'' + item.params.node + '\', \'' + item.params.action + '\');return false">' + item.title + '</a>';
+    }
+
 
 
     function build_control(item, value){
@@ -799,6 +807,9 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
                 break;
             case 'button':
                 html.push(button(item, value));
+                break;
+            case 'button_link':
+                html.push(button_link(item, value));
                 break;
             case 'link':
                 html.push(link(item, value));
@@ -1161,7 +1172,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     function form_description(item){
         if (item.params.description){
-            return '<div class="f_description">' + process_html(item.params.description, row_data) + '</div>';
+            return '<div class="f_description">' + process_html(item.params.description, row_data, true) + '</div>';
         } else {
             return '';
         }
@@ -1236,6 +1247,14 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         return html;
     }
 
+    function button_link(item, value){
+        var class_list = 'link';
+        if (item.params.css){
+            class_list += ' ' + item.params.css;
+        }
+        return '<a href="#" class="' + class_list + '" onclick="node_button_input_form(this, \'' + item.params.node + '\');return false">' + item.title + '</a>';
+    }
+
     function button(item, value){
         var class_list = 'button';
         if (item.params.css){
@@ -1285,11 +1304,17 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     }
 
     function message_area(message){
-        var title = process_html(message.title, row_data);
-        return '<div class="f_message"><div class="f_message_title">' + title + '</div>' + message.body + '</div>';
+        message = process_html(message, row_data, true);
+        var css;
+        if (message.type == 'error'){
+            css = ' f_message_error';
+        } else {
+            css = '';
+        }
+        return '<div class="f_message' + css + '">' + message + '</div>';
     }
 
-    function process_html(text, data){
+    function process_html(text, data, inline){
         var match;
         var out = text;
         var start;
@@ -1310,11 +1335,19 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             offset += substitute_data.length - match[0].length;
             out = out.substring(0, start) + substitute_data + out.substring(end);
         }
-        text = HTML_Encode_Clear(out);
+   //     text = HTML_Encode_Clear(out);
+    //    out = text;
+        var converter = new Showdown.converter();
+        out = converter.makeHtml(out);
 
-        out = text;
+        if (inline){
+            // remove the <p> tags introduced by showdown
+            out = out.replace(/<\/?p>/, '');
+        }
+
+
         // html
-        var offset = 0;
+/*        var offset = 0;
         var reg = /(\[(\w+)([^\]]*)?\]).*?(\[\/\2\])/g;
         while (match = reg.exec(text)){
             if (match[2] == 'b'){
@@ -1331,7 +1364,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             out = out.substring(0, end - len_2) + tag2 + out.substring(end);
 
         }
-
+*/
         return out;
     }
 
@@ -1418,6 +1451,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         switch (item.params.control){
             case 'info':
                 if (value){
+                    value = process_html(value, row_data, true)
                     $div.append(value);
                 }
                 break;
@@ -1438,6 +1472,9 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 break;
             case 'button':
                 $div.append(button(item, value));
+                break;
+            case 'button_link':
+                $div.append(button_link(item, value));
                 break;
             case 'button_box':
                 $div.append(button_box(item, value));
@@ -1461,7 +1498,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 subforms.push({item: item, data: value});
                 break;
             default:
-                $div.append(item.params.control);
+                $div.append('UNKNOWN: ' + item.params.control);
         }
 
         return $div;
@@ -1512,6 +1549,23 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             }
         }
 
+        function build_form_items(row_data){
+            for (var i = 0; i < num_fields; i++){
+                item = form_data.fields[i];
+                value = $.Util.get_item_value(item, row_data);
+                if (item.params.layout){
+                    add_layout_item(item, $builder, builder_depth);
+                } else {
+                    if (item.params.control){
+                        $control = build_control(item, value);
+                    } else {
+                        $control = build_input(item, value);
+                    }
+                    $builder[builder_depth].append($control);
+                    form_controls_hash[item.name] = $control;
+                }
+            }
+        }
 
         form_controls_hash = {};
         var $builder = [$('<div/>')];
@@ -1524,19 +1578,13 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             $builder[builder_depth].append($control);
         }
         // main form
-        for (var i = 0; i < num_fields; i++){
-            item = form_data.fields[i];
-            value = $.Util.get_item_value(item, row_data);
-            if (item.params.layout){
-                add_layout_item(item, $builder, builder_depth);
-            } else {
-                if (item.params.control){
-                    $control = build_control(item, value);
-                } else {
-                    $control = build_input(item, value);
-                }
+        if (!row_data.__array){
+            build_form_items(row_data);
+        } else {
+            for (var i = 0, n = row_data.__array.length; i <  n; i++){
+                build_form_items(row_data.__array[i]);
+                $control = $('<div class="f_control_holder"><hr/></div>');
                 $builder[builder_depth].append($control);
-                form_controls_hash[item.name] = $control;
             }
         }
         // form buttons

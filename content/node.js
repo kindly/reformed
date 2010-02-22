@@ -24,12 +24,10 @@
 
 */
 
-
 $(document).ready(init);
 
 function init(){
 
-    node_call_from_string('n:test.Bookmark:');
     $.address.change(page_load);
 }
 
@@ -148,6 +146,10 @@ function get_node(node_name, node_command, node_data, change_state){
         info.data = node_data;
     }
 
+    if (!REBASE.application_data){
+        info.request_application_data = true;
+    }
+
     $JOB.add(info, {}, 'node', true);
 }
 
@@ -250,15 +252,17 @@ function node_button_input_form(item, data){
         return false;
     }
     var $obj = $('#main div.INPUT_FORM');
-    data = data.split(':')
-    var node = data[0];
-    var command = data[1];
+    var split_data = data.split(':')
+    var node = split_data[0];
+    var command = split_data[1];
     var out = {};
-    if (data.length == 3){
+    if (split_data.length == 3){
         out = $obj.data('command')('get_form_data');
-    }
-    if (out){
-        get_node_return(node, command, out, $obj);
+        if (out){
+            get_node_return(node, command, out, $obj);
+        }
+    } else {
+        node_load('n:' + data);
     }
 }
 
@@ -326,60 +330,6 @@ function job_processor_status(data, node, root){
     }
 }
 
-var bookmark_array = [];
-var BOOKMARKS_SHOW_MAX = 6;
-var BOOKMARK_ARRAY_MAX = 6;
-
-function bookmark_add(bookmark){
-    // remove the item if already in the list
-    for (var i=0; i<bookmark_array.length; i++){
-        if (bookmark_array[i].bookmark==bookmark.bookmark){
-            bookmark_array.splice(i, 1);
-            break;
-        }
-    }
-    // trim the array if it's too long
-    if (bookmark_array.length >= BOOKMARK_ARRAY_MAX){
-        bookmark_array.splice(BOOKMARK_ARRAY_MAX - 1, 1);
-    }
-    bookmark_array.unshift(bookmark);
-}
-
-function bookmark_display(){
-    categories = [];
-    category_items = {};
-
-    for(var i=0; i<bookmark_array.length && i<BOOKMARKS_SHOW_MAX; i++){
-        entity_table = bookmark_array[i].entity_table
-        if (category_items[entity_table] === undefined){
-            categories.push(entity_table);
-            category_items[entity_table] = []
-        }
-
-        html  = '<li class ="bookmark-item-' + entity_table + '">';
-        html += '<span onclick="node_load(\'' + bookmark_array[i].bookmark + '\')">';
-        html += bookmark_array[i].title + '</span>';
-        html += '</li>';
-
-        category_items[entity_table].push(html);
-    }
-
-    var html = '<ol class = "bookmark">';
-    for(var i=0; i<categories.length; i++){
-        category = categories[i];
-        html += '<li class ="bookmark-category-title-' + category + '">';
-        html += category;
-        html += '</li>';
-        html += '<ol class ="bookmark-category-list-' + category + '">';
-        html += category_items[category].join('\n');
-        html += '</ol>';
-    }
-
-    html += '</ol>';
-
-    $('#bookmarks').html(html);
-}
-
 function page_build_section_links(data){
     var html = '<ul>';
     for (var i=0; i<data.length; i++){
@@ -419,6 +369,31 @@ function grid_add_row(){
     console_log('add_row');
     $('#main div.GRID').data('command')('add_row');
 }
+// user bits
+
+function change_user(user){
+    REBASE.application_data.__user_id = user.id;
+    REBASE.application_data.__username = user.name;
+    change_layout();
+}
+
+function change_user_bar(){
+
+    if (REBASE.application_data.__user_id === 0){
+        $('#user_login').html('<a href="#" onclick="node_button_input_form(this, \'bug.User:login\');return false">Login</a>');
+    } else {
+        $('#user_login').html(REBASE.application_data.__username + ' <a href="#" onclick="node_button_input_form(this, \'bug.User:logout\');return false">Log out</a>');
+    }
+}
+
+function change_layout(){
+    if (!REBASE.application_data.public && !REBASE.application_data.__user_id){
+         REBASE.layout_manager.layout('mainx');
+    } else {
+         REBASE.layout_manager.layout('main');
+    }
+    change_user_bar();
+}
 
 
 var fn = function(packet, job){
@@ -435,28 +410,23 @@ var fn = function(packet, job){
          $.address.title(title);
      }
 
+    if (packet.data.application_data){
+        REBASE.application_data = packet.data.application_data;
+        change_layout();
+    }
+
+     var user = packet.data.user;
+     if (user){
+         change_user(user);
+     }
+
      var bookmark = packet.data.bookmark;
      if (bookmark){
-        bookmark_add(bookmark);
-        bookmark_display();
+        REBASE.bookmark.process(bookmark);
      }
 
     var data;
      switch (packet.data.action){
-         case 'update_bookmarks':
-            bookmark = packet.data.data;
-            if (bookmark){
-                if ($.isArray(bookmark)){
-                    for (i = 0; i < bookmark.length; i++){
-                       bookmark_add(bookmark[i]);
-                    }
-                } else {
-                    bookmark_add(bookmark);
-                }
-                bookmark_display();
-             }
-
-             break;
          case 'redirect':
              var link = packet.data.link;
              if (link){
@@ -479,9 +449,10 @@ var fn = function(packet, job){
              form = $.Util.FormDataNormalize(form, packet.data.node);
              data = packet.data.data.data;
              var paging = packet.data.data.paging;
-             if (form.params.form_type == 'grid'){
+             var form_type = form.params.form_type;
+             if (form_type == 'grid'){
                 $('#' + root).grid(form, data, paging);
-             } else if (form.params.form_type == 'action'){
+             } else if (form_type == 'action' || form_type == 'results'){
                 $('#' + root).input_form(form, data, paging);
              } else {
                 $('#' + root).form(form, data, paging);
@@ -509,6 +480,9 @@ var fn = function(packet, job){
             break;
          case 'general_error':
             alert(packet.data.data);
+            break;
+         case 'forbidden':
+            alert('You do not have the permissions to perform this action');
             break;
         case 'status':
             job_processor_status(packet.data.data, packet.data.node, root);

@@ -30,6 +30,7 @@ r = global_session.database
 class Node(object):
 
     permissions = []
+    commands = {}
 
     def __init__(self, data, node_name, last_node = None):
         self.out = []
@@ -39,16 +40,17 @@ class Node(object):
 
         self.action = None
         self.bookmark = None
+        self.user = None
         self.next_node = None
         self.next_data = None
         self.extra_data = {}
+        self.command = data.get('command')
         self.allowed = self.check_permissions()
 
         self.last_node = data.get('lastnode')
         self.data = data.get('data')
         if type(self.data).__name__ != 'dict':
             self.data = {}
-        self.command = data.get('command')
 
         if self.last_node == self.__class__.__name__:
             self.first_call = False
@@ -60,6 +62,30 @@ class Node(object):
         print 'first call:', self.first_call
         print 'data:', self.data
         print '~' * 19
+
+    def call(self):
+        """called when the node is used.  Checks to see if there
+        is a function to call for the given command"""
+
+        command_info = self.commands.get(self.command)
+        if not command_info:
+            return
+        command = command_info.get('command')
+
+        if command_info.get('permissions'):
+            user_perms = set(global_session.session.get('permissions'))
+            if not set(command_info.get('permissions')).intersection(user_perms):
+                self.action = 'forbidden'
+                self.command = None
+                print 'forbidden'
+                return
+
+        if command:
+            command = getattr(self, command)
+            command()
+        else:
+            self.action = 'general_error'
+            self.out = "Command '%s' in node '%s' not known" % (self.command, self.name)
 
     def check_permissions(self):
         if self.permissions:
@@ -111,25 +137,40 @@ class Node(object):
 
     def update_bookmarks(self):
 
-        user = global_session.session['user_id']
-        try:
-            result = r.search_single("bookmarks",
-                                              "user_id = ? and bookmark = ?",
-                                              values = [user, self.bookmark["bookmark_string"]])
-            result["accessed_date"] = util.convert_value(datetime.datetime.now())
-            result["title"] = self.title
-        except custom_exceptions.SingleResultError:
+        user_id = global_session.session['user_id']
+
+        # only update bookmarks for proper users
+        if user_id:
+            try:
+                result = r.search_single("bookmarks",
+                                         "user_id = ? and bookmark = ?",
+                                         fields = ['title', 'bookmark', 'entity_table', 'entity_id', 'accessed_date'],
+                                         values = [user_id, self.bookmark["bookmark_string"]])
+                result["accessed_date"] = util.convert_value(datetime.datetime.now())
+                result["title"] = self.title
+            except custom_exceptions.SingleResultError:
+                result = {"__table": "bookmarks",
+                          "entity_id": self.bookmark["entity_id"],
+                          "user_id": user_id,
+                          "bookmark": self.bookmark["bookmark_string"],
+                          "title": self.title,
+                          "entity_table": self.bookmark["table_name"],
+                          "accessed_date": util.convert_value(datetime.datetime.now())}
+            # save
+            util.load_local_data(r, result)
+
+        else:
+            # anonymous user
             result = {"__table": "bookmarks",
                       "entity_id": self.bookmark["entity_id"],
-                      "user_id": user,
                       "bookmark": self.bookmark["bookmark_string"],
                       "title": self.title,
                       "entity_table": self.bookmark["table_name"],
                       "accessed_date": util.convert_value(datetime.datetime.now())}
 
-        util.load_local_data(r, result)
-
+        # update bookmark output to front-end
         self.bookmark = result
+
 
     def create_form_data(self, fields, params=None, data=None, read_only=False):
         out = {
@@ -158,9 +199,9 @@ class Node(object):
             fields.append(row)
         return fields
 
-    def set_form_message(self, title, body = ''):
+    def set_form_message(self, message):
         """Sets the button info to be displayed by a form."""
-        self.out['data']['__message'] = dict(title = title, body = body)
+        self.out['data']['__message'] = message
 
     def set_form_buttons(self, button_list):
         """Sets the button info to be displayed by a form."""
@@ -180,15 +221,11 @@ class Node(object):
 
     def finish_node_processing(self):
 
-        if self.bookmark:
+        if self.bookmark and self.bookmark != 'CLEAR':
             self.update_bookmarks()
 
     def initialise(self):
         """called first when the node is used"""
-        pass
-
-    def call(self):
-        """called when the node is first used"""
         pass
 
     def finalise(self):
@@ -231,6 +268,20 @@ class TableNode(Node):
         self.setup_forms()
         if self.__class__.first_run:
             self.__class__.first_run = False
+            self.setup_commands()
+            self.setup_extra_commands()
+
+    def setup_extra_commands(self):
+        pass
+
+    def setup_commands(self):
+        commands = self.__class__.commands
+        commands['view'] = dict(command = 'view')
+        commands['list'] = dict(command = 'list')
+        commands['edit'] = dict(command = 'edit')
+        commands['_save'] = dict(command = 'save')
+        commands['delete'] = dict(command = 'delete')
+        commands['new'] = dict(command = 'new')
 
     def setup_code_groups(self):
         self.__class__.code_list = {}
@@ -286,20 +337,6 @@ class TableNode(Node):
         for field in self.subforms.get(name).get('fields'):
             extra_fields.append(field.name)
         self.subform_field_list[name] = extra_fields
-
-    def call(self):
-        if  self.command == 'view':
-            self.view()
-        if  self.command == 'edit':
-            self.view(read_only = False)
-        elif self.command == '_save':
-            self.save()
-        elif self.command == 'list':
-            self.list()
-        elif self.command == '_delete':
-            self.delete()
-        elif self.command == 'new':
-            self.new()
 
 
     def node_search_single(self, where):
@@ -500,6 +537,8 @@ class TableNode(Node):
         self.out = data
         self.action = 'form'
 
+    def edit(self):
+        self.view(read_only = False)
 
     def view(self, read_only=True):
         id = self.data.get('id')
@@ -646,6 +685,7 @@ class TableNode(Node):
                 row['edit'] = [self.build_node('Edit', 'edit', 'id=%s' % row['id']),
                                self.build_node('Delete', '_delete', 'id=%s' % row['id']),
                               ]
+        data = {'__array' : data}
         out = self.create_form_data(self.list_fields, self.list_params, data)
 
         # add the paging info

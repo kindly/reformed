@@ -24,6 +24,7 @@ import imp
 import sys
 import paste
 
+from global_session import global_session
 
 def node(data, caller):
     node = data.get('node')
@@ -42,6 +43,13 @@ def reload_nodes():
 
 def run(node_name, data, last_node = None):
     print 'RUNNING NODE %s' % node_name
+    app_data = global_session.application
+    # check if application is private
+    if not app_data.get('public') and not global_session.session['user_id']:
+        node_name = app_data.get('default_node')
+        data['command'] = app_data.get('default_command')
+
+
     node_base = node_name.split('.')[0]
     found = False
     if not hasattr(nodes, node_base):
@@ -78,19 +86,47 @@ def run(node_name, data, last_node = None):
             if x.next_node:
                 return run(x.next_node, x.next_data, node_name)
             else:
+                refresh_frontend = False
+
                 info = {'action': x.action,
                         'node': node_name,
                         'title' : x.title,
                         'link' : x.link,
+                        'user' : x.user,
                         'bookmark' : x.bookmark,
                         'data' : x.out}
+
+                user_id = global_session.session['user_id']
+                # application data
+                if data.get('request_application_data'):
+                        info['application_data'] = app_data
+                        info['application_data']['__user_id'] = user_id
+                        info['application_data']['__username'] = global_session.session['username']
+                        refresh_frontend = True
+                # bookmarks
+                if (info['user'] or refresh_frontend) and user_id:
+                    # we have logged in so we want our bookmarks
+                    info['bookmark'] = bookmark_list(user_id)
+
+
                 return info
         else:
             # the user cannot perform this action
-            return {'action': 'general_error',
-                    'data' : 'no permission'}
+            return {'action': 'forbidden'}
     else:
         print "Node <%s> not found" % node_name
 
 
 
+
+def bookmark_list(user_id, limit = 100):
+
+    r = global_session.database
+    bookmarks = r.search("bookmarks",
+                                  "user_id = ?",
+                                  fields = ['title', 'bookmark', 'entity_table', 'entity_id', 'accessed_date'],
+                                  values = [user_id],
+                                  order_by = "accessed_date",
+                                  keep_all = False,
+                                  limit = limit)["data"]
+    return bookmarks

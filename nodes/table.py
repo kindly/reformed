@@ -234,7 +234,7 @@ class Table(node.TableNode):
                              'id' : table.table_id,
                              'summary': table.summary,
                              'edit' : edit})
-        data = self.create_form_data(self.list_fields, self.list_params, data)
+        data = self.create_form_data(self.list_fields, self.list_params, {'__array' : data})
         self.action = 'form'
         self.out = data
 

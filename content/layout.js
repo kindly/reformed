@@ -22,14 +22,6 @@
 */
 
 
-(function($) {
-	
-$.fn.extend({
-
-	layout_manager: function(){
-		$.LayoutManager(this);
-	}
-});
 $.Buttons = {};
 
 $.Buttons.action_hash = {};
@@ -44,8 +36,10 @@ $.Buttons.action_call = function (action_name){
     cmd_info[1].apply(cmd_info[0], cmd_info[2]);
 };
 
+var REBASE = {};
 
-$.LayoutManager = function () {
+
+REBASE.layout_manager = function (){
 
     function create_main(){
         $main = $('<div id="main"></div>');
@@ -58,12 +52,11 @@ $.LayoutManager = function () {
 
         function add_action_button(name, data, button_number){
             
-            var button_data = data[0];
             var $button = $('<div id="action_' + name + '" class="action"></div>');
-            var $link = $('<a href="javascript:$.Buttons.action_call(\'' + name + '\')"></a>');
-            var $img = $('<img src="icon/22x22/' + button_data[1] + '" />');
-            var $command = $('<span class="command">' + button_data[0] + '</span>');
-            var $shortcut = $('<span class="shortcut">' + button_data[2] + '</span>');
+            var $link = $('<a href="javascript:node_load(\'' + data[4] + '\')"></a>');
+            var $img = $('<img src="icon/22x22/' + data[1] + '" />');
+            var $command = $('<span class="command">' + data[0] + '</span>');
+            var $shortcut = $('<span class="shortcut">' + data[2] + '</span>');
 
             $link.append($img).append($command).append($shortcut);
             $button.append($link);
@@ -72,11 +65,11 @@ $.LayoutManager = function () {
             var button_left = (ACTION_BUTTON_SPACING + ACTION_BUTTON_WIDTH) * Math.floor(button_number / BUTTONS_PER_COLUMN);
             var button_image_size = 12;
 
-            position($button, button_top, button_left, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
-            position($link, 0, 0, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
-            position($img, 0, 0, button_image_size, button_image_size);
-            position($command, 0, button_image_size, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH - (2 * button_image_size));
-            position($shortcut, 0, ACTION_BUTTON_WIDTH - button_image_size, util_size.ACTION_BUTTON_H, button_image_size);
+            position_absolute($button, button_top, button_left, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
+            position_absolute($link, 0, 0, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
+            position_absolute($img, 0, 0, button_image_size, button_image_size);
+            position_absolute($command, 0, button_image_size, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH - (2 * button_image_size));
+            position_absolute($shortcut, 0, ACTION_BUTTON_WIDTH - button_image_size, util_size.ACTION_BUTTON_H, button_image_size);
 
             $button_holder.append($button);
         }
@@ -108,25 +101,37 @@ $.LayoutManager = function () {
         var action_list = $.Buttons.action_list;
 
         add_actions();
+        var $user_bar = user_bar();$('<div style="position:relative;background-color:#f0f;"></div>');
+        position_absolute($user_bar, (ACTION_BUTTON_SPACING + util_size.ACTION_BUTTON_H) * BUTTONS_PER_COLUMN + ACTION_BUTTON_SPACING, 0, null, info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + util_size.SCROLLBAR_WIDTH));
+        $actions.append($user_bar);
         $body.append($actions);
     }
-
+    function user_bar(){
+        $user_bar = $('<div style="position:relative;background-color:#f0f;"></div>');
+        // search box
+        html = [];
+        html.push('<form action="" onclick="$.Util.Event_Delegator(\'clear\');" onsubmit="return search_box();" style="display:inline">');
+        html.push('<input type="text" name="search" id="search" />');
+        html.push('<input type="submit" name="search_button" id="search_button" value="search"/>');
+        html.push('</form>');
+        $user_bar.append(html.join(''));
+        // login info
+        $user_bar.append('<span id="user_login" style="float:right;">user login</span>');
+        return $user_bar;
+    }
     function create_side(){
         $side = $('<div></div>');
 
         var html = [];
         // FIXME this wants to be ripped out asap
         html.push('<div style=\'font-size:12px\'>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', \'css/size1.css\');" style="font-size:8px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', \'css/size2.css\');" style="font-size:10px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', \'css/size3.css\');" style="font-size:12px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', \'css/size4.css\');" style="font-size:14px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', \'css/size5.css\');" style="font-size:16px">A</span>');
+        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 1);" style="font-size:8px">A</span>');
+        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 2);" style="font-size:10px">A</span>');
+        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 3);" style="font-size:12px">A</span>');
+        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 4);" style="font-size:14px">A</span>');
+        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 5);" style="font-size:16px">A</span>');
         html.push('</div>');
     
-        html.push('<form action="" onclick="$.Util.Event_Delegator(\'clear\');" onsubmit="return search_box();">');
-        html.push('<input type=\'text\' name=\'search\' id=\'search\' />');
-        html.push('</form>');
     
         html.push('<ul>');
         html.push('<li><span onclick="$.Util.stress_test(\'n:table.Edit:list:t=9&l=100&o=\', 9900)">stress test</span></li>');
@@ -134,10 +139,6 @@ $.LayoutManager = function () {
         html.push('<li><span onclick="node_load(\'n:bug.Ticket:list\')">list tickets</span></li>');
         html.push('<li><span onclick="node_load(\'n:table.Table:new\')">new table</span></li>');
         html.push('<li><span onclick="node_load(\'n:table.Table:list\')">table</span></li>');
-        html.push('<li><span onclick="node_load(\'n:test.Permission:list\')">perm</span></li>');
-        html.push('<li><span onclick="node_load(\'n:test.Permission:new\')">new perm</span></li>');
-        html.push('<li><span onclick="node_load(\'n:test.UserGroup:list\')">usergroup</span></li>');
-        html.push('<li><span onclick="node_load(\'n:test.UserGroup:new\')">new usergroup</span></li>');
         html.push('<li><span onclick="node_load(\'n:test.Sponsorship:\')">sponsor</span></li>');
         html.push('<li><span onclick="node_load(\'n:test.Login:\')">login</span></li>');
         html.push('<li><span onclick="$JOB.add({}, {}, \'reload\', true)" ><b>reload</b></span></li>');
@@ -167,7 +168,7 @@ $.LayoutManager = function () {
         var left = info.margin_left + info.left_width + info.spacing;
         var height = null;
         var width = info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + util_size.SCROLLBAR_WIDTH);
-        position($main, top, left, height, width);
+        position_absolute($main, top, left, height, width);
         // Store the viewable size of the div.
         util_size.MAIN_WIDTH = width;
         util_size.MAIN_HEIGHT = util_size.PAGE_HEIGHT - top - info.spacing;
@@ -182,15 +183,43 @@ $.LayoutManager = function () {
         var height = info.top_height;
         var width = info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + util_size.SCROLLBAR_WIDTH);
 
-        position($actions, top, left, height, width);
+        position_absolute($actions, top, left, height, width);
     }
 
     function position_side(){
-        position($side, info.margin_top + info.top_height + info.spacing, info.margin_left, null, info.left_width);
+        position_absolute($side, info.margin_top + info.top_height + info.spacing, info.margin_left, null, info.left_width);
     }
 
     function position_logo(){
-        position($logo, info.margin_top, info.margin_left, info.top_height, info.left_width);
+        position_absolute($logo, info.margin_top, info.margin_left, info.top_height, info.left_width);
+    }
+
+
+    function create_layout(arg){
+        if (first_run){
+            $('body').append($body);
+            first_run = false;
+        }
+
+        info.page_width = util_size.PAGE_WIDTH;
+
+        if (current_layout != arg){
+            $body.empty();
+            if (arg == "main"){
+                info.left_width = 200;
+                info.top_height = 100;
+                create_logo();
+                create_main();
+                create_side();
+                create_actions();
+            } else {
+                info.left_width = 10;
+                info.top_height = 10;
+                create_main();
+            }
+
+            current_layout = arg;
+        }
     }
 
 
@@ -203,26 +232,116 @@ $.LayoutManager = function () {
         spacing : 10,
         page_width : undefined
     };
-    
 
+    var current_layout;
     var util_size = $.Util.Size;
-    var position = $.Util.position_absolute;
+    var position_absolute = $.Util.position_absolute;
+    var position = $.Util.position;
     var $main;
     var $side;
     var $logo;
     var $actions;
-    var $body = $('body');
+    var first_run = true;
+    var $body = $('<div id="layout_holder">');
 
-    info.page_width = util_size.PAGE_WIDTH;
-
-    create_logo();
-    create_main();
-    create_side();
-    create_actions();
-
-};
+    return {
+        layout : function (arg){
+            create_layout(arg);
+        }
+    }
+}();
 
 
-})(jQuery);
 
-$(document).ready($.LayoutManager);
+REBASE.bookmark = function (){
+
+
+    function bookmark_add(bookmark){
+        // create the bookmark view link
+        var table_data = REBASE.application_data.bookmarks[bookmark.entity_table];
+        if (table_data){
+            bookmark.bookmark = 'n:' + table_data.node + ':edit:id=' + bookmark.entity_id;
+        } else {
+            console_log('missing bookmark data for ' + bookmark.table_entity);
+            bookmark.bookmark = '';
+        }
+
+        // remove the item if already in the list
+        for (var i = 0, n = bookmark_array.length; i < n; i++){
+            if (bookmark_array[i].bookmark == bookmark.bookmark){
+                bookmark_array.splice(i, 1);
+                break;
+            }
+        }
+        // trim the array if it's too long
+        if (bookmark_array.length >= BOOKMARK_ARRAY_MAX){
+            bookmark_array.splice(BOOKMARK_ARRAY_MAX - 1, 1);
+        }
+        bookmark_array.unshift(bookmark);
+    }
+
+    function bookmark_display(){
+        var categories = [];
+        var category_items = {};
+        var category;
+        var entity_table;
+        var html;
+
+        for(var i = 0; i < bookmark_array.length && i < BOOKMARKS_SHOW_MAX; i++){
+            entity_table = bookmark_array[i].entity_table
+            if (category_items[entity_table] === undefined){
+                categories.push(entity_table);
+                category_items[entity_table] = [];
+            }
+
+            html  = '<li class ="bookmark-item-' + entity_table + '">';
+            html += '<span onclick="node_load(\'' + bookmark_array[i].bookmark + '\')">';
+            html += bookmark_array[i].title + '</span>';
+            html += '</li>';
+
+            category_items[entity_table].push(html);
+        }
+
+        html = '<ol class = "bookmark">';
+        for(i = 0; i < categories.length; i++){
+            category = categories[i];
+            html += '<li class ="bookmark-category-title-' + category + '">';
+            html += category;
+            html += '</li>';
+            html += '<ol class ="bookmark-category-list-' + category + '">';
+            html += category_items[category].join('\n');
+            html += '</ol>';
+        }
+
+        html += '</ol>';
+
+        $('#bookmarks').html(html);
+    }
+
+    function bookmark_process(bookmark){
+         if ($.isArray(bookmark)){
+             for (var i = 0, n = bookmark.length; i < n; i++){
+                bookmark_add(bookmark[i]);
+             }
+         } else {
+             if (bookmark == 'CLEAR'){
+                // reset the bookmarks
+                bookmark_array = [];
+             } else {
+                bookmark_add(bookmark);
+            }
+         }
+         bookmark_display();
+    }
+
+    var bookmark_array = [];
+    var BOOKMARKS_SHOW_MAX = 100;
+    var BOOKMARK_ARRAY_MAX = 100;
+
+    return {
+        process : function (arg){
+            bookmark_process(arg);
+        }
+    }
+
+}();
