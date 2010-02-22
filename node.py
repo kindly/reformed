@@ -305,6 +305,7 @@ class TableNode(Node):
 
     def setup_forms(self):
         for field in self.fields:
+            print field, field.name
             # add subform data
             if field.page_item_type == 'subform':
                 name = field.name

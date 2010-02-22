@@ -24,6 +24,7 @@ import reformed.fields as rfields
 from reformed.tables import Table
 from global_session import global_session
 r = global_session.database
+from page_item import *
 
 
 class Table(node.TableNode):
@@ -32,30 +33,31 @@ class Table(node.TableNode):
     allowed_join_types = ['OneToMany','OneToOne','ManyToOne']
 
     list_fields = [
-        ['title', 'link', 'title', {'control' : 'link', 'css' : 'form_title'}],
-        ['summary', 'info', 'summary', {'control' : 'info'}],
-        ['table_type', 'info', 'table_type', {'control' : 'info'}],
-        ['edit', 'link_list', '', {'control' : 'link_list'}]
+        input("title", control = link(css = 'form_title')),
+        input("summary", control = info()),
+        input("table_type", control = info()),
+        input("edit", control = link_list()),
     ]
+
     list_params = {"form_type": "results"}
 
     fields = [
-        ['table_name', 'Text', 'table name:'],
-        ['table_type', 'info', 'type:', {'autocomplete': allowed_field_types, 'type':'list', 'control' : 'dropdown'}],
-        ['summary', 'Text', 'Summary:', {'control' : 'textarea'}],
-        ['entity', 'Boolean', 'entity:'],
-        ['logged', 'Boolean', 'logged:'],
-        ['fields', 'subform', 'fields']
+        input('table_name'),
+        input('table_type', control = dropdown(allowed_field_types, type = 'list')),
+        input('summary', control = textarea()),
+        input('entity'),
+        input('logged'),
+        subform('fields'),
     ]
     form_params ={'title' : 'Table', 'noautosave' : True}
     subforms = {
         'fields':{
             'fields': [
-                ['field_name', 'Text', 'field name'],
-                ['field_type', 'Text', 'type', {'autocomplete': allowed_field_types, 'type':'list', 'control' : 'dropdown'}],
-                ['length', 'Integer', 'length'],
-                ['mandatory', 'Boolean', 'mandatory'],
-                ['default', 'Text', 'default']
+                input('field_name'),
+                input('field_type', control = dropdown(allowed_field_types)),
+                input('length'),
+                input('mandatory'),
+                input('default'),
             ],
             "params":{
                 "form_type": "grid",
