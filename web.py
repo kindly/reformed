@@ -129,8 +129,10 @@ class WebApplication(object):
 
         global_session.database = self.database
         # temporary system wide settings
-
-        self.application = self.load_application_data(self.database)
+        try:
+            self.application = self.load_application_data(self.database)
+        except KeyError:
+            print 'fail loading application data. No tables?'
 
     def load_application_data(self, database):
         data = {}
