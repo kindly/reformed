@@ -505,6 +505,10 @@ textarea {
     width:200px;
 }
 
+textarea.long {
+    height:400px;
+}
+
 textarea.large, input.large {
     width:500px;
 }
