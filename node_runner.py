@@ -24,6 +24,7 @@ import imp
 import sys
 import paste
 
+from global_session import global_session
 
 def node(data, caller):
     node = data.get('node')
@@ -42,6 +43,13 @@ def reload_nodes():
 
 def run(node_name, data, last_node = None):
     print 'RUNNING NODE %s' % node_name
+    app_data = global_session.application
+    # check if application is private
+    if not app_data.get('public') and not global_session.session['user_id']:
+        node_name = app_data.get('default_node')
+        data['command'] = app_data.get('default_command')
+
+
     node_base = node_name.split('.')[0]
     found = False
     if not hasattr(nodes, node_base):
@@ -82,13 +90,19 @@ def run(node_name, data, last_node = None):
                         'node': node_name,
                         'title' : x.title,
                         'link' : x.link,
+                        'user' : x.user,
                         'bookmark' : x.bookmark,
                         'data' : x.out}
+
+                if data.get('request_application_data'):
+                        info['application_data'] = app_data
+                        info['application_data']['__user_id'] = global_session.session['user_id']
+                        info['application_data']['__username'] = global_session.session['username']
+
                 return info
         else:
             # the user cannot perform this action
-            return {'action': 'general_error',
-                    'data' : 'no permission'}
+            return {'action': 'forbidden'}
     else:
         print "Node <%s> not found" % node_name
 

@@ -37,8 +37,10 @@ logger = logging.getLogger('reformed.main')
 
 def session(environ):
     global_session.session = environ['beaker.session']
+    # if this is a new session set up the defaults
     if global_session.session.get('user_id') == None:
         global_session.session['user_id'] = 0
+        global_session.session['username'] = ''
         global_session.session['permissions'] = []
 
 
@@ -126,7 +128,39 @@ class WebApplication(object):
                                                     )
 
         global_session.database = self.database
+        # temporary system wide settings
 
+        self.application = self.load_application_data(self.database)
+
+    def load_application_data(self, database):
+        data = {}
+        results = database.search('_system_info')['data']
+        for row in results:
+            key = row['key']
+            value = row['value']
+            type = row['type']
+            if type == 2:
+                # Integer
+                try:
+                    value = Int(value)
+                except:
+                    value = 0
+
+            if type == 3:
+                # Boolean
+                if value.lower() == 'true':
+                    value = True
+                else:
+                    value = False
+
+            if key:
+                data[key] = value
+
+        print '\n  Application data\n  ----------------'
+        for key in data.keys():
+            print '  %s = %s' % (key, data[key])
+        print
+        return data
 
     def static(self, environ, start_response, path):
         """Serve static content"""
@@ -178,8 +212,8 @@ class WebApplication(object):
     def __call__(self, environ, start_response):
         """Request handler"""
 
-
         global_session.database = self.database
+        global_session.application = self.application
         request_url = environ['PATH_INFO']
         if request_url == '/ajax':
             return (process_node(environ, start_response))

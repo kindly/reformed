@@ -23,7 +23,7 @@
     ======
 
 */
-
+var application_data;
 
 $(document).ready(init);
 
@@ -148,6 +148,10 @@ function get_node(node_name, node_command, node_data, change_state){
         info.data = node_data;
     }
 
+    if (!application_data){
+        info.request_application_data = true;
+    }
+
     $JOB.add(info, {}, 'node', true);
 }
 
@@ -250,15 +254,17 @@ function node_button_input_form(item, data){
         return false;
     }
     var $obj = $('#main div.INPUT_FORM');
-    data = data.split(':')
-    var node = data[0];
-    var command = data[1];
+    var split_data = data.split(':')
+    var node = split_data[0];
+    var command = split_data[1];
     var out = {};
-    if (data.length == 3){
+    if (split_data.length == 3){
         out = $obj.data('command')('get_form_data');
-    }
-    if (out){
-        get_node_return(node, command, out, $obj);
+        if (out){
+            get_node_return(node, command, out, $obj);
+        }
+    } else {
+        node_load('n:' + data);
     }
 }
 
@@ -419,6 +425,31 @@ function grid_add_row(){
     console_log('add_row');
     $('#main div.GRID').data('command')('add_row');
 }
+// user bits
+
+function change_user(user){
+    application_data.__user_id = user.id;
+    application_data.__username = user.name;
+    change_layout();
+}
+
+function change_user_bar(){
+
+    if (application_data.__user_id === 0){
+        $('#user_login').html('<a href="#" onclick="node_button_input_form(this, \'bug.User:login\');return false">Login</a>');
+    } else {
+        $('#user_login').html(application_data.__username + ' <a href="#" onclick="node_button_input_form(this, \'bug.User:logout\');return false">Log out</a>');
+    }
+}
+
+function change_layout(){
+    if (!application_data.public && !application_data.__user_id){
+         layout_manager.layout('mainx');
+    } else {
+         layout_manager.layout('main');
+    }
+    change_user_bar();
+}
 
 
 var fn = function(packet, job){
@@ -433,6 +464,16 @@ var fn = function(packet, job){
      var title = packet.data.title;
      if (title){
          $.address.title(title);
+     }
+
+    if (packet.data.application_data){
+        application_data = packet.data.application_data;
+        change_layout();
+    }
+
+     var user = packet.data.user;
+     if (user){
+         change_user(user);
      }
 
      var bookmark = packet.data.bookmark;
@@ -479,9 +520,10 @@ var fn = function(packet, job){
              form = $.Util.FormDataNormalize(form, packet.data.node);
              data = packet.data.data.data;
              var paging = packet.data.data.paging;
-             if (form.params.form_type == 'grid'){
+             var form_type = form.params.form_type;
+             if (form_type == 'grid'){
                 $('#' + root).grid(form, data, paging);
-             } else if (form.params.form_type == 'action'){
+             } else if (form_type == 'action' || form_type == 'results'){
                 $('#' + root).input_form(form, data, paging);
              } else {
                 $('#' + root).form(form, data, paging);
@@ -509,6 +551,9 @@ var fn = function(packet, job){
             break;
          case 'general_error':
             alert(packet.data.data);
+            break;
+         case 'forbidden':
+            alert('You do not have the permissions to perform this action');
             break;
         case 'status':
             job_processor_status(packet.data.data, packet.data.node, root);

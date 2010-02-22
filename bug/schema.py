@@ -88,6 +88,7 @@ entity("user",d,
     Email("email"),
     DateTime("last_logged_in"),
     Text("notes", length = 4000),
+    Text("about_me", length = 4000),
 
     Created("created_date"),
     CreatedBy("created_by"),
@@ -102,7 +103,7 @@ entity("user_group",d,
     Text("groupname", mandatory = True),
     Text("description", length = 200),
     Text("notes", length = 4000),
-    Boolean("active", default = False, mandatory = True),
+    Boolean("active", default = True, mandatory = True),
 
     table_type = "system",
     title_field = 'groupname'
@@ -132,6 +133,14 @@ table("permission",d,
     Text("long_description", length = 4000),
     table_type = "system",
     title_field = 'permission'
+)
+
+table("_system_info",d,
+
+    Text("key", length = 100, mandatory = True),
+    Text("value", length = 2000),
+    Integer("type", default = 1),
+    table_type = "system"
 )
 
 d.persist()

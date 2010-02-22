@@ -112,49 +112,6 @@ class DataLoader(TableNode):
                    'end':data_out['job_ended']}
             return out
 
-class UserGroup(TableNode):
-    table = 'user_group'
-    core_table = False
-    title_field = 'groupname'
-    fields = [
-        ['groupname', 'Text', 'groupname:'],
-        ['permission', 'code_group', 'permission:']
-    ]
-    code_groups = {'permission':{
-                                    'code_table': 'permission',
-                                    'code_field': 'permission',
-                                    'flag_table': 'user_group_permission',
-                                    'flag_child_field': 'groupname',
-                                    'flag_code_field': 'permission',
-                                    'flag_parent_field': 'groupname'
-                                  }
-                    }
-
-class Permission(AutoForm):
-    table = 'permission'
-    core_table = False
-    title_field = 'permission'
-
-
-class User(TableNode):
-
-
-    table = "user"
-    fields = [
-        ['name', 'Text', 'name:'],
-        ['password', 'Text', 'password:'],
-        ['usergroup', 'code_group', 'usergroups:']
-    ]
-    list_title = 'user %s'
-    code_groups = {'usergroup':{
-                                    'code_table': 'user_group',
-                                    'code_field': 'groupname',
-                                    'flag_table': 'user_group_user',
-                                    'flag_child_field': 'name',
-                                    'flag_code_field': 'groupname',
-                                    'flag_parent_field': 'name'
-                                  }
-                    }
 
 class Donkey(TableNode):
 
@@ -164,7 +121,7 @@ class Donkey(TableNode):
         ['age', 'Integer', 'age:']
     ]
     list_title = 'donkey %s'
-     
+
 class People(TableNode):
 
     table = "people"
@@ -179,7 +136,7 @@ class People(TableNode):
             "table": "email",
             "params":{
                 "form_type": "grid"
-            }                  
+            }
         },
         'sponsorship':{
             'fields': [
@@ -253,41 +210,6 @@ class Search(TableNode):
         self.out = out
         self.action = 'form'
         self.title = 'search for "%s"' % query
-
-
-class Login(Node):
-
-    fields = [
-        ['name', 'Text', 'username:'],
-        ['password', 'password', 'password:'],
-        ['button', 'submit', 'moo', {'control' : 'button', 'action': 'next', 'node': 'test.Login'}]
-    ]
-    form_params =  {"form_type": "action"}
-    validations = [
-        ['name', validators.UnicodeString],
-        ['password', validators.UnicodeString]
-    ]
-    def call(self):
-        vdata = self.validate_data_full(self.data, self.validations)
-        if vdata['name'] and vdata['password']:
-            where = "name='%s' and password='%s'" % (vdata['name'], vdata['password'])
-            try:
-                data_out = r.search_single('user', where)
-                self.login(data_out)
-            except:
-                self.action = 'general_error'
-                self.out = 'wrong guess'
-        else:
-            data = self.create_form_data(self.fields, self.form_params)
-            self.action = 'form'
-            self.out = data
-
-    def login(self, data):
-        global_session.session['user_id'] = data.get('id')
-        global_session.session['permissions'] = ['logged_in']
-        self.action = 'html'
-        data = "<p>Hello %s you are now logged in, what fun!</p>" % data['name']
-        self.out = {'html': data}
 
 
 class Sponsorship(Node):

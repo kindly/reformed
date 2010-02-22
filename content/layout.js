@@ -22,14 +22,6 @@
 */
 
 
-(function($) {
-	
-$.fn.extend({
-
-	layout_manager: function(){
-		$.LayoutManager(this);
-	}
-});
 $.Buttons = {};
 
 $.Buttons.action_hash = {};
@@ -45,7 +37,7 @@ $.Buttons.action_call = function (action_name){
 };
 
 
-$.LayoutManager = function () {
+LayoutManager = function () {
 
     function create_main(){
         $main = $('<div id="main"></div>');
@@ -72,11 +64,11 @@ $.LayoutManager = function () {
             var button_left = (ACTION_BUTTON_SPACING + ACTION_BUTTON_WIDTH) * Math.floor(button_number / BUTTONS_PER_COLUMN);
             var button_image_size = 12;
 
-            position($button, button_top, button_left, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
-            position($link, 0, 0, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
-            position($img, 0, 0, button_image_size, button_image_size);
-            position($command, 0, button_image_size, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH - (2 * button_image_size));
-            position($shortcut, 0, ACTION_BUTTON_WIDTH - button_image_size, util_size.ACTION_BUTTON_H, button_image_size);
+            position_absolute($button, button_top, button_left, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
+            position_absolute($link, 0, 0, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
+            position_absolute($img, 0, 0, button_image_size, button_image_size);
+            position_absolute($command, 0, button_image_size, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH - (2 * button_image_size));
+            position_absolute($shortcut, 0, ACTION_BUTTON_WIDTH - button_image_size, util_size.ACTION_BUTTON_H, button_image_size);
 
             $button_holder.append($button);
         }
@@ -108,9 +100,24 @@ $.LayoutManager = function () {
         var action_list = $.Buttons.action_list;
 
         add_actions();
+        var $user_bar = user_bar();$('<div style="position:relative;background-color:#f0f;"></div>');
+        position_absolute($user_bar, (ACTION_BUTTON_SPACING + util_size.ACTION_BUTTON_H) * BUTTONS_PER_COLUMN + ACTION_BUTTON_SPACING, 0, null, info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + util_size.SCROLLBAR_WIDTH));
+        $actions.append($user_bar);
         $body.append($actions);
     }
-
+    function user_bar(){
+        $user_bar = $('<div style="position:relative;background-color:#f0f;"></div>');
+        // search box
+        html = [];
+        html.push('<form action="" onclick="$.Util.Event_Delegator(\'clear\');" onsubmit="return search_box();" style="display:inline">');
+        html.push('<input type="text" name="search" id="search" />');
+        html.push('<input type="submit" name="search_button" id="search_button" value="search"/>');
+        html.push('</form>');
+        $user_bar.append(html.join(''));
+        // login info
+        $user_bar.append('<span id="user_login" style="float:right;">user login</span>');
+        return $user_bar;
+    }
     function create_side(){
         $side = $('<div></div>');
 
@@ -124,9 +131,6 @@ $.LayoutManager = function () {
         html.push('<span onclick="$.Util.selectStyleSheet(\'size\', \'css/size5.css\');" style="font-size:16px">A</span>');
         html.push('</div>');
     
-        html.push('<form action="" onclick="$.Util.Event_Delegator(\'clear\');" onsubmit="return search_box();">');
-        html.push('<input type=\'text\' name=\'search\' id=\'search\' />');
-        html.push('</form>');
     
         html.push('<ul>');
         html.push('<li><span onclick="$.Util.stress_test(\'n:table.Edit:list:t=9&l=100&o=\', 9900)">stress test</span></li>');
@@ -134,10 +138,6 @@ $.LayoutManager = function () {
         html.push('<li><span onclick="node_load(\'n:bug.Ticket:list\')">list tickets</span></li>');
         html.push('<li><span onclick="node_load(\'n:table.Table:new\')">new table</span></li>');
         html.push('<li><span onclick="node_load(\'n:table.Table:list\')">table</span></li>');
-        html.push('<li><span onclick="node_load(\'n:test.Permission:list\')">perm</span></li>');
-        html.push('<li><span onclick="node_load(\'n:test.Permission:new\')">new perm</span></li>');
-        html.push('<li><span onclick="node_load(\'n:test.UserGroup:list\')">usergroup</span></li>');
-        html.push('<li><span onclick="node_load(\'n:test.UserGroup:new\')">new usergroup</span></li>');
         html.push('<li><span onclick="node_load(\'n:test.Sponsorship:\')">sponsor</span></li>');
         html.push('<li><span onclick="node_load(\'n:test.Login:\')">login</span></li>');
         html.push('<li><span onclick="$JOB.add({}, {}, \'reload\', true)" ><b>reload</b></span></li>');
@@ -167,7 +167,7 @@ $.LayoutManager = function () {
         var left = info.margin_left + info.left_width + info.spacing;
         var height = null;
         var width = info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + util_size.SCROLLBAR_WIDTH);
-        position($main, top, left, height, width);
+        position_absolute($main, top, left, height, width);
         // Store the viewable size of the div.
         util_size.MAIN_WIDTH = width;
         util_size.MAIN_HEIGHT = util_size.PAGE_HEIGHT - top - info.spacing;
@@ -182,15 +182,15 @@ $.LayoutManager = function () {
         var height = info.top_height;
         var width = info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + util_size.SCROLLBAR_WIDTH);
 
-        position($actions, top, left, height, width);
+        position_absolute($actions, top, left, height, width);
     }
 
     function position_side(){
-        position($side, info.margin_top + info.top_height + info.spacing, info.margin_left, null, info.left_width);
+        position_absolute($side, info.margin_top + info.top_height + info.spacing, info.margin_left, null, info.left_width);
     }
 
     function position_logo(){
-        position($logo, info.margin_top, info.margin_left, info.top_height, info.left_width);
+        position_absolute($logo, info.margin_top, info.margin_left, info.top_height, info.left_width);
     }
 
 
@@ -205,24 +205,53 @@ $.LayoutManager = function () {
     };
     
 
+    function create_layout(arg){
+
+        info.page_width = util_size.PAGE_WIDTH;
+
+        if (current_layout != arg){
+            $body.empty();
+            if (arg == "main"){
+                info.left_width = 200;
+                info.top_height = 100;
+                create_logo();
+                create_main();
+                create_side();
+                create_actions();
+            } else {
+                info.left_width = 10;
+                info.top_height = 10;
+                create_main();
+            }
+
+            current_layout = arg;
+        }
+    }
+
+    var current_layout;
     var util_size = $.Util.Size;
-    var position = $.Util.position_absolute;
+    var position_absolute = $.Util.position_absolute;
+    var position = $.Util.position;
     var $main;
     var $side;
     var $logo;
     var $actions;
-    var $body = $('body');
+    var $body = $('<div id="layout_holder">');
+    $('body').append($body);
 
-    info.page_width = util_size.PAGE_WIDTH;
-
-    create_logo();
-    create_main();
-    create_side();
-    create_actions();
-
+    return {
+        layout : function (arg){
+            create_layout(arg);
+        }
+    }
 };
 
 
-})(jQuery);
 
-$(document).ready($.LayoutManager);
+var layout_manager;
+
+function init_layout_manager(){
+    layout_manager = LayoutManager();
+}
+
+$(document).ready(init_layout_manager);
