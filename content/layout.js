@@ -36,8 +36,10 @@ $.Buttons.action_call = function (action_name){
     cmd_info[1].apply(cmd_info[0], cmd_info[2]);
 };
 
+var REBASE = {};
 
-LayoutManager = function () {
+
+REBASE.layout_manager = function (){
 
     function create_main(){
         $main = $('<div id="main"></div>');
@@ -50,12 +52,11 @@ LayoutManager = function () {
 
         function add_action_button(name, data, button_number){
             
-            var button_data = data[0];
             var $button = $('<div id="action_' + name + '" class="action"></div>');
-            var $link = $('<a href="javascript:$.Buttons.action_call(\'' + name + '\')"></a>');
-            var $img = $('<img src="icon/22x22/' + button_data[1] + '" />');
-            var $command = $('<span class="command">' + button_data[0] + '</span>');
-            var $shortcut = $('<span class="shortcut">' + button_data[2] + '</span>');
+            var $link = $('<a href="javascript:node_load(\'' + data[4] + '\')"></a>');
+            var $img = $('<img src="icon/22x22/' + data[1] + '" />');
+            var $command = $('<span class="command">' + data[0] + '</span>');
+            var $shortcut = $('<span class="shortcut">' + data[2] + '</span>');
 
             $link.append($img).append($command).append($shortcut);
             $button.append($link);
@@ -124,11 +125,11 @@ LayoutManager = function () {
         var html = [];
         // FIXME this wants to be ripped out asap
         html.push('<div style=\'font-size:12px\'>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', \'css/size1.css\');" style="font-size:8px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', \'css/size2.css\');" style="font-size:10px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', \'css/size3.css\');" style="font-size:12px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', \'css/size4.css\');" style="font-size:14px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', \'css/size5.css\');" style="font-size:16px">A</span>');
+        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 1);" style="font-size:8px">A</span>');
+        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 2);" style="font-size:10px">A</span>');
+        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 3);" style="font-size:12px">A</span>');
+        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 4);" style="font-size:14px">A</span>');
+        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 5);" style="font-size:16px">A</span>');
         html.push('</div>');
     
     
@@ -194,18 +195,11 @@ LayoutManager = function () {
     }
 
 
-    var info = {
-        margin_left : 10,
-        margin_right : 10,
-        margin_top : 10,
-        left_width : 200,
-        top_height : 100,
-        spacing : 10,
-        page_width : undefined
-    };
-    
-
     function create_layout(arg){
+        if (first_run){
+            $('body').append($body);
+            first_run = false;
+        }
 
         info.page_width = util_size.PAGE_WIDTH;
 
@@ -228,6 +222,17 @@ LayoutManager = function () {
         }
     }
 
+
+    var info = {
+        margin_left : 10,
+        margin_right : 10,
+        margin_top : 10,
+        left_width : 200,
+        top_height : 100,
+        spacing : 10,
+        page_width : undefined
+    };
+
     var current_layout;
     var util_size = $.Util.Size;
     var position_absolute = $.Util.position_absolute;
@@ -236,22 +241,107 @@ LayoutManager = function () {
     var $side;
     var $logo;
     var $actions;
+    var first_run = true;
     var $body = $('<div id="layout_holder">');
-    $('body').append($body);
 
     return {
         layout : function (arg){
             create_layout(arg);
         }
     }
-};
+}();
 
 
 
-var layout_manager;
+REBASE.bookmark = function (){
 
-function init_layout_manager(){
-    layout_manager = LayoutManager();
-}
 
-$(document).ready(init_layout_manager);
+    function bookmark_add(bookmark){
+        // create the bookmark view link
+        var table_data = REBASE.application_data.bookmarks[bookmark.entity_table];
+        if (table_data){
+            bookmark.bookmark = 'n:' + table_data.node + ':edit:id=' + bookmark.entity_id;
+        } else {
+            console_log('missing bookmark data for ' + bookmark.table_entity);
+            bookmark.bookmark = '';
+        }
+
+        // remove the item if already in the list
+        for (var i = 0, n = bookmark_array.length; i < n; i++){
+            if (bookmark_array[i].bookmark == bookmark.bookmark){
+                bookmark_array.splice(i, 1);
+                break;
+            }
+        }
+        // trim the array if it's too long
+        if (bookmark_array.length >= BOOKMARK_ARRAY_MAX){
+            bookmark_array.splice(BOOKMARK_ARRAY_MAX - 1, 1);
+        }
+        bookmark_array.unshift(bookmark);
+    }
+
+    function bookmark_display(){
+        var categories = [];
+        var category_items = {};
+        var category;
+        var entity_table;
+        var html;
+
+        for(var i = 0; i < bookmark_array.length && i < BOOKMARKS_SHOW_MAX; i++){
+            entity_table = bookmark_array[i].entity_table
+            if (category_items[entity_table] === undefined){
+                categories.push(entity_table);
+                category_items[entity_table] = [];
+            }
+
+            html  = '<li class ="bookmark-item-' + entity_table + '">';
+            html += '<span onclick="node_load(\'' + bookmark_array[i].bookmark + '\')">';
+            html += bookmark_array[i].title + '</span>';
+            html += '</li>';
+
+            category_items[entity_table].push(html);
+        }
+
+        html = '<ol class = "bookmark">';
+        for(i = 0; i < categories.length; i++){
+            category = categories[i];
+            html += '<li class ="bookmark-category-title-' + category + '">';
+            html += category;
+            html += '</li>';
+            html += '<ol class ="bookmark-category-list-' + category + '">';
+            html += category_items[category].join('\n');
+            html += '</ol>';
+        }
+
+        html += '</ol>';
+
+        $('#bookmarks').html(html);
+    }
+
+    function bookmark_process(bookmark){
+         if ($.isArray(bookmark)){
+             for (var i = 0, n = bookmark.length; i < n; i++){
+                bookmark_add(bookmark[i]);
+             }
+         } else {
+             if (bookmark == 'CLEAR'){
+                // reset the bookmarks
+                bookmark_array = [];
+             } else {
+                bookmark_add(bookmark);
+            }
+         }
+         bookmark_display();
+    }
+
+    var bookmark_array = [];
+    var BOOKMARKS_SHOW_MAX = 100;
+    var BOOKMARK_ARRAY_MAX = 100;
+
+    return {
+        process : function (arg){
+            bookmark_process(arg);
+        }
+    }
+
+}();

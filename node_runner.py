@@ -86,6 +86,8 @@ def run(node_name, data, last_node = None):
             if x.next_node:
                 return run(x.next_node, x.next_data, node_name)
             else:
+                refresh_frontend = False
+
                 info = {'action': x.action,
                         'node': node_name,
                         'title' : x.title,
@@ -94,10 +96,18 @@ def run(node_name, data, last_node = None):
                         'bookmark' : x.bookmark,
                         'data' : x.out}
 
+                user_id = global_session.session['user_id']
+                # application data
                 if data.get('request_application_data'):
                         info['application_data'] = app_data
-                        info['application_data']['__user_id'] = global_session.session['user_id']
+                        info['application_data']['__user_id'] = user_id
                         info['application_data']['__username'] = global_session.session['username']
+                        refresh_frontend = True
+                # bookmarks
+                if (info['user'] or refresh_frontend) and user_id:
+                    # we have logged in so we want our bookmarks
+                    info['bookmark'] = bookmark_list(user_id)
+
 
                 return info
         else:
@@ -108,3 +118,15 @@ def run(node_name, data, last_node = None):
 
 
 
+
+def bookmark_list(user_id, limit = 100):
+
+    r = global_session.database
+    bookmarks = r.search("bookmarks",
+                                  "user_id = ?",
+                                  fields = ['title', 'bookmark', 'entity_table', 'entity_id', 'accessed_date'],
+                                  values = [user_id],
+                                  order_by = "accessed_date",
+                                  keep_all = False,
+                                  limit = limit)["data"]
+    return bookmarks

@@ -23,13 +23,11 @@
     ======
 
 */
-var application_data;
 
 $(document).ready(init);
 
 function init(){
 
-    node_call_from_string('n:test.Bookmark:');
     $.address.change(page_load);
 }
 
@@ -148,7 +146,7 @@ function get_node(node_name, node_command, node_data, change_state){
         info.data = node_data;
     }
 
-    if (!application_data){
+    if (!REBASE.application_data){
         info.request_application_data = true;
     }
 
@@ -332,60 +330,6 @@ function job_processor_status(data, node, root){
     }
 }
 
-var bookmark_array = [];
-var BOOKMARKS_SHOW_MAX = 6;
-var BOOKMARK_ARRAY_MAX = 6;
-
-function bookmark_add(bookmark){
-    // remove the item if already in the list
-    for (var i=0; i<bookmark_array.length; i++){
-        if (bookmark_array[i].bookmark==bookmark.bookmark){
-            bookmark_array.splice(i, 1);
-            break;
-        }
-    }
-    // trim the array if it's too long
-    if (bookmark_array.length >= BOOKMARK_ARRAY_MAX){
-        bookmark_array.splice(BOOKMARK_ARRAY_MAX - 1, 1);
-    }
-    bookmark_array.unshift(bookmark);
-}
-
-function bookmark_display(){
-    categories = [];
-    category_items = {};
-
-    for(var i=0; i<bookmark_array.length && i<BOOKMARKS_SHOW_MAX; i++){
-        entity_table = bookmark_array[i].entity_table
-        if (category_items[entity_table] === undefined){
-            categories.push(entity_table);
-            category_items[entity_table] = []
-        }
-
-        html  = '<li class ="bookmark-item-' + entity_table + '">';
-        html += '<span onclick="node_load(\'' + bookmark_array[i].bookmark + '\')">';
-        html += bookmark_array[i].title + '</span>';
-        html += '</li>';
-
-        category_items[entity_table].push(html);
-    }
-
-    var html = '<ol class = "bookmark">';
-    for(var i=0; i<categories.length; i++){
-        category = categories[i];
-        html += '<li class ="bookmark-category-title-' + category + '">';
-        html += category;
-        html += '</li>';
-        html += '<ol class ="bookmark-category-list-' + category + '">';
-        html += category_items[category].join('\n');
-        html += '</ol>';
-    }
-
-    html += '</ol>';
-
-    $('#bookmarks').html(html);
-}
-
 function page_build_section_links(data){
     var html = '<ul>';
     for (var i=0; i<data.length; i++){
@@ -428,25 +372,25 @@ function grid_add_row(){
 // user bits
 
 function change_user(user){
-    application_data.__user_id = user.id;
-    application_data.__username = user.name;
+    REBASE.application_data.__user_id = user.id;
+    REBASE.application_data.__username = user.name;
     change_layout();
 }
 
 function change_user_bar(){
 
-    if (application_data.__user_id === 0){
+    if (REBASE.application_data.__user_id === 0){
         $('#user_login').html('<a href="#" onclick="node_button_input_form(this, \'bug.User:login\');return false">Login</a>');
     } else {
-        $('#user_login').html(application_data.__username + ' <a href="#" onclick="node_button_input_form(this, \'bug.User:logout\');return false">Log out</a>');
+        $('#user_login').html(REBASE.application_data.__username + ' <a href="#" onclick="node_button_input_form(this, \'bug.User:logout\');return false">Log out</a>');
     }
 }
 
 function change_layout(){
-    if (!application_data.public && !application_data.__user_id){
-         layout_manager.layout('mainx');
+    if (!REBASE.application_data.public && !REBASE.application_data.__user_id){
+         REBASE.layout_manager.layout('mainx');
     } else {
-         layout_manager.layout('main');
+         REBASE.layout_manager.layout('main');
     }
     change_user_bar();
 }
@@ -467,7 +411,7 @@ var fn = function(packet, job){
      }
 
     if (packet.data.application_data){
-        application_data = packet.data.application_data;
+        REBASE.application_data = packet.data.application_data;
         change_layout();
     }
 
@@ -478,26 +422,11 @@ var fn = function(packet, job){
 
      var bookmark = packet.data.bookmark;
      if (bookmark){
-        bookmark_add(bookmark);
-        bookmark_display();
+        REBASE.bookmark.process(bookmark);
      }
 
     var data;
      switch (packet.data.action){
-         case 'update_bookmarks':
-            bookmark = packet.data.data;
-            if (bookmark){
-                if ($.isArray(bookmark)){
-                    for (i = 0; i < bookmark.length; i++){
-                       bookmark_add(bookmark[i]);
-                    }
-                } else {
-                    bookmark_add(bookmark);
-                }
-                bookmark_display();
-             }
-
-             break;
          case 'redirect':
              var link = packet.data.link;
              if (link){

@@ -129,8 +129,10 @@ class WebApplication(object):
 
         global_session.database = self.database
         # temporary system wide settings
-
-        self.application = self.load_application_data(self.database)
+        try:
+            self.application = self.load_application_data(self.database)
+        except KeyError:
+            print 'fail loading application data. No tables?'
 
     def load_application_data(self, database):
         data = {}
@@ -156,15 +158,45 @@ class WebApplication(object):
             if key:
                 data[key] = value
 
+        # list of default data if none provided
+        defaults = dict(public = True,
+                        name = 'Reformed Application',
+                        test_default = 'test')
+
+        for key in defaults.keys():
+            if not data.has_key(key):
+                data[key] = defaults[key]
+
+
         print '\n  Application data\n  ----------------'
         for key in data.keys():
             print '  %s = %s' % (key, data[key])
         print
+
+        data['bookmarks'] = self.get_bookmark_data()
+
+        return data
+
+    def get_bookmark_data(self):
+        # FIXME this is hard coded for bugs
+        data = dict(
+            user = dict(title = 'Users', node = 'bug.User'),
+            ticket = dict(title = 'Ticket', node = 'bug.Ticket'),
+            user_group = dict(title = 'User Group', node = 'bug.UserGroup'),
+            permission = dict(title = 'Permission', node = 'bug.Permission'),
+            _system_info = dict(title = 'System Settings', node = 'bug.SysInfo'),
+        )
+
+        print '\n  Bookmark data\n  -------------'
+        for key in data.keys():
+            print '  table: %s, \t%s \tnode: %s' % (key, data[key]['title'], data[key]['node'])
+        print
+
         return data
 
     def static(self, environ, start_response, path):
         """Serve static content"""
-
+        # FIXME security limit path directory traversal etc
         print self.dir
         print path
         root = os.path.dirname(os.path.abspath(__file__))

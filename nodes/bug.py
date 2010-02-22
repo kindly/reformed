@@ -169,22 +169,22 @@ class User(TableNode):
             try:
                 data_out = r.search_single('user', where)
                 if data_out.get('active') != True:
-                    message = dict(title = 'Login failed', body ='This account is disabled.')
+                    message = '# Login failed\n\nThis account is disabled.'
                     self.show_login_form(message)
                 else:
 
                     result = r.search('permission', 'user_group_user.user_id = %s and permission="Login"' % data_out.get('id'), fields=['permission'])['data']
                     if not result:
-                        message = dict(title = 'Login failed', body ='This account is not allowed to log into the system.')
+                        message = '# Login failed\n\nThis account is not allowed to log into the system.'
                         self.show_login_form(message)
                     else:
                         self.login(data_out)
 
             except:
-                message = dict(title = 'Login failed', body ='user name or password incorrect, try again.', type = 'error')
+                message = '# Login failed\n\nuser name or password incorrect, try again.'
                 self.show_login_form(message)
         else:
-            message = dict(title = 'Login.', body ='Welcome to %s enter your login details to continue' % global_session.application['name'])
+            message = '# Login.\n\nWelcome to %s enter your login details to continue' % global_session.application['name']
             self.show_login_form(message)
 
     def show_login_form(self, message = None):
@@ -255,6 +255,8 @@ class User(TableNode):
         self.user = dict(name = None, id = 0)
         message = dict(title = "You are now logged out", body = '')
         self.show_login_form(message)
+        # clear bookmarks
+        self.bookmark = 'CLEAR'
 
     def finalise(self):
         if self.command == '_save' and self.saved:
@@ -308,7 +310,7 @@ class Permission(TableNode):
             self.set_form_message("Hello, add new permission")
             self.set_form_buttons([['add permission', 'bug.Permission:_save:'], ['cancel', 'BACK']])
         if self.command == 'edit':
-            self.set_form_message("Hello, edit [b]{permission}[/b]")
+            self.set_form_message("Hello, edit {permission}")
             self.set_form_buttons([['save permission', 'bug.Permission:_save:'], ['delete permission', 'bug.Permission:_delete:'], ['cancel', 'BACK']])
 
 
@@ -408,6 +410,104 @@ class SysInfo(TableNode):
         ['key', 'Text', 'key:'],
         ['value', 'Text', 'value:'],
         ['type', 'Integer', 'type:', {"control" : "dropdown_code", "autocomplete" : dict(keys = [1, 2, 3], descriptions = ['String', 'Integer', 'Boolean']) }],
-        ['button', 'submit', 'Save', {'control' : 'button', 'node': 'bug.SysInfo:_save:'}],
     ]
+
+    def finalise(self):
+        if self.command == '_save' and self.saved:
+            if self.data.get('id',0) == 0:
+                self.out = self.create_form_data(self.fields, self.form_params)
+                self.set_form_message("Key %s saved!  Add more?" % self.data.get('key'))
+                self.action = 'form'
+                self.set_form_buttons([['add key', 'bug.SysInfo:_save:'], ['cancel', 'BACK']])
+            else:
+                self.action = 'redirect'
+                self.link = 'BACK'
+        if self.command == 'list':
+            self.set_form_message("These are the current keys.")
+            self.set_form_buttons([['add new key', 'bug.SysInfo:new'], ['cancel', 'BACK']])
+        if self.command == 'new':
+            self.set_form_message("Add new key")
+            self.set_form_buttons([['add key', 'bug.SysInfo:_save:'], ['cancel', 'BACK']])
+        if self.command == 'edit':
+            self.set_form_message("Edit {key}")
+            self.set_form_buttons([['save key', 'bug.SysInfo:_save:'], ['delete key', 'bug.SysInfo:_delete:'], ['cancel', 'BACK']])
+
+
+class Page(TableNode):
+
+    table = "page"
+    form_params =  {"form_type": "action"}
+    title_field = 'title'
+
+    fields = [
+        ['page', 'Text', 'page:', {"css" : "large", 'description' : 'A reference for the page used for links etc.'}],
+        ['title', 'Text', 'title:', {"css" : "large", 'description' : 'The displayed title for the page.'}],
+        ['body', 'Text', 'content:', {"control" : "textarea", "css" : "large long", 'description' : 'A longer more detailed description'}],
+    ]
+
+    view_fields = [
+        ['title', 'Text', '', {"control" : "info"}],
+        ['body', 'Text', '', {"control" : "info"}],
+    ]
+
+    def view(self, read_only = False):
+        id = self.data.get('id')
+        if id:
+            where = 'id=%s' % id
+        else:
+            id = self.data.get('__id')
+            where = '_core_entity_id=%s' % id
+        page = self.data.get('page')
+        if page:
+            where = 'page = %s' % page
+        try:
+            data_out = self.node_search_single(where)
+            id = data_out.get('id')
+            if self.title_field and data_out.has_key(self.title_field):
+                self.title = data_out.get(self.title_field)
+            else:
+                self.title = '%s: %s' % (self.table, id)
+
+        except sa.orm.exc.NoResultFound:
+            data = None
+            data_out = {}
+            id = None
+            self.title = 'unknown'
+            print 'no data found'
+
+        if self.command == 'edit':
+            fields = self.fields
+        else:
+            fields = self.view_fields
+
+        data = self.create_form_data(fields, self.form_params, data_out, read_only)
+        self.out = data
+        self.action = 'form'
+
+        self.bookmark = dict(
+            table_name = r[data_out.get("__table")].name,
+            bookmark_string = self.build_node('', 'view', 'id=%s' %  id),
+            entity_id = id
+        )
+
+
+    def finalise(self):
+        if self.command == '_save' and self.saved:
+            if self.data.get('id',0) == 0:
+                self.out = self.create_form_data(self.fields, self.form_params)
+                self.set_form_message("Page %s saved!  Add more?" % self.data.get('title'))
+                self.action = 'form'
+                self.set_form_buttons([['add page', 'bug.Page:_save:'], ['cancel', 'BACK']])
+            else:
+                self.action = 'redirect'
+                self.link = 'BACK'
+        if self.command == 'list':
+            self.set_form_message("These are the current page.")
+            self.set_form_buttons([['add new page', 'bug.Page:new'], ['cancel', 'BACK']])
+        if self.command == 'new':
+            self.set_form_message("Add new page")
+            self.set_form_buttons([['add page', 'bug.Page:_save:'], ['cancel', 'BACK']])
+        if self.command == 'edit':
+            self.set_form_message("Edit {title}")
+            self.set_form_buttons([['save page', 'bug.Page:_save:'], ['delete page', 'bug.Page:_delete:'], ['cancel', 'BACK']])
 

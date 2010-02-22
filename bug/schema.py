@@ -143,6 +143,14 @@ table("_system_info",d,
     table_type = "system"
 )
 
+
+table("page",d,
+    Text("page", length = 50, mandatory = True),
+    Text("title", length = 200, mandatory = True),
+    Text("body", length = 8000),
+    table_type = "system"
+)
+
 d.persist()
 
 

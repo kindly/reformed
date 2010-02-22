@@ -135,25 +135,40 @@ class Node(object):
 
     def update_bookmarks(self):
 
-        user = global_session.session['user_id']
-        try:
-            result = r.search_single("bookmarks",
-                                              "user_id = ? and bookmark = ?",
-                                              values = [user, self.bookmark["bookmark_string"]])
-            result["accessed_date"] = util.convert_value(datetime.datetime.now())
-            result["title"] = self.title
-        except custom_exceptions.SingleResultError:
+        user_id = global_session.session['user_id']
+
+        # only update bookmarks for proper users
+        if user_id:
+            try:
+                result = r.search_single("bookmarks",
+                                         "user_id = ? and bookmark = ?",
+                                         fields = ['title', 'bookmark', 'entity_table', 'entity_id', 'accessed_date'],
+                                         values = [user_id, self.bookmark["bookmark_string"]])
+                result["accessed_date"] = util.convert_value(datetime.datetime.now())
+                result["title"] = self.title
+            except custom_exceptions.SingleResultError:
+                result = {"__table": "bookmarks",
+                          "entity_id": self.bookmark["entity_id"],
+                          "user_id": user_id,
+                          "bookmark": self.bookmark["bookmark_string"],
+                          "title": self.title,
+                          "entity_table": self.bookmark["table_name"],
+                          "accessed_date": util.convert_value(datetime.datetime.now())}
+            # save
+            util.load_local_data(r, result)
+
+        else:
+            # anonymous user
             result = {"__table": "bookmarks",
                       "entity_id": self.bookmark["entity_id"],
-                      "user_id": user,
                       "bookmark": self.bookmark["bookmark_string"],
                       "title": self.title,
                       "entity_table": self.bookmark["table_name"],
                       "accessed_date": util.convert_value(datetime.datetime.now())}
 
-        util.load_local_data(r, result)
-
+        # update bookmark output to front-end
         self.bookmark = result
+
 
     def create_form_data(self, fields, params=None, data=None, read_only=False):
         out = {
@@ -190,9 +205,9 @@ class Node(object):
             fields.append(row)
         return fields
 
-    def set_form_message(self, title, body = ''):
+    def set_form_message(self, message):
         """Sets the button info to be displayed by a form."""
-        self.out['data']['__message'] = dict(title = title, body = body)
+        self.out['data']['__message'] = message
 
     def set_form_buttons(self, button_list):
         """Sets the button info to be displayed by a form."""
@@ -217,7 +232,7 @@ class Node(object):
 
     def finish_node_processing(self):
 
-        if self.bookmark:
+        if self.bookmark and self.bookmark != 'CLEAR':
             self.update_bookmarks()
 
     def initialise(self):
