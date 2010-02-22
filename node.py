@@ -149,7 +149,7 @@ class Node(object):
             except custom_exceptions.SingleResultError:
                 result = {"__table": "bookmarks",
                           "entity_id": self.bookmark["entity_id"],
-                          "user_id": user,
+                          "user_id": user_id,
                           "bookmark": self.bookmark["bookmark_string"],
                           "title": self.title,
                           "entity_table": self.bookmark["table_name"],
