@@ -169,22 +169,22 @@ class User(TableNode):
             try:
                 data_out = r.search_single('user', where)
                 if data_out.get('active') != True:
-                    message = dict(title = 'Login failed', body ='This account is disabled.')
+                    message = '# Login failed\n\nThis account is disabled.'
                     self.show_login_form(message)
                 else:
 
                     result = r.search('permission', 'user_group_user.user_id = %s and permission="Login"' % data_out.get('id'), fields=['permission'])['data']
                     if not result:
-                        message = dict(title = 'Login failed', body ='This account is not allowed to log into the system.')
+                        message = '# Login failed\n\nThis account is not allowed to log into the system.'
                         self.show_login_form(message)
                     else:
                         self.login(data_out)
 
             except:
-                message = dict(title = 'Login failed', body ='user name or password incorrect, try again.', type = 'error')
+                message = '# Login failed\n\nuser name or password incorrect, try again.'
                 self.show_login_form(message)
         else:
-            message = dict(title = 'Login.', body ='Welcome to %s enter your login details to continue' % global_session.application['name'])
+            message = '# Login.\n\nWelcome to %s enter your login details to continue' % global_session.application['name']
             self.show_login_form(message)
 
     def show_login_form(self, message = None):
@@ -310,7 +310,7 @@ class Permission(TableNode):
             self.set_form_message("Hello, add new permission")
             self.set_form_buttons([['add permission', 'bug.Permission:_save:'], ['cancel', 'BACK']])
         if self.command == 'edit':
-            self.set_form_message("Hello, edit [b]{permission}[/b]")
+            self.set_form_message("Hello, edit {permission}")
             self.set_form_buttons([['save permission', 'bug.Permission:_save:'], ['delete permission', 'bug.Permission:_delete:'], ['cancel', 'BACK']])
 
 
@@ -429,6 +429,6 @@ class SysInfo(TableNode):
             self.set_form_message("Add new key")
             self.set_form_buttons([['add key', 'bug.SysInfo:_save:'], ['cancel', 'BACK']])
         if self.command == 'edit':
-            self.set_form_message("Edit [b]{key}[/b]")
+            self.set_form_message("Edit {key}")
             self.set_form_buttons([['save key', 'bug.SysInfo:_save:'], ['delete key', 'bug.SysInfo:_delete:'], ['cancel', 'BACK']])
 

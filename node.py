@@ -205,9 +205,9 @@ class Node(object):
             fields.append(row)
         return fields
 
-    def set_form_message(self, title, body = ''):
+    def set_form_message(self, message):
         """Sets the button info to be displayed by a form."""
-        self.out['data']['__message'] = dict(title = title, body = body)
+        self.out['data']['__message'] = message
 
     def set_form_buttons(self, button_list):
         """Sets the button info to be displayed by a form."""

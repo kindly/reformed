@@ -1172,7 +1172,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     function form_description(item){
         if (item.params.description){
-            return '<div class="f_description">' + process_html(item.params.description, row_data) + '</div>';
+            return '<div class="f_description">' + process_html(item.params.description, row_data, true) + '</div>';
         } else {
             return '';
         }
@@ -1304,18 +1304,17 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     }
 
     function message_area(message){
-        var title = process_html(message.title, row_data);
-        var body = process_html(message.body, row_data);
+        message = process_html(message, row_data, true);
         var css;
         if (message.type == 'error'){
             css = ' f_message_error';
         } else {
             css = '';
         }
-        return '<div class="f_message' + css + '"><div class="f_message_title">' + title + '</div>' + body + '</div>';
+        return '<div class="f_message' + css + '">' + message + '</div>';
     }
 
-    function process_html(text, data){
+    function process_html(text, data, inline){
         var match;
         var out = text;
         var start;
@@ -1336,11 +1335,19 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             offset += substitute_data.length - match[0].length;
             out = out.substring(0, start) + substitute_data + out.substring(end);
         }
-        text = HTML_Encode_Clear(out);
+   //     text = HTML_Encode_Clear(out);
+    //    out = text;
+        var converter = new Showdown.converter();
+        out = converter.makeHtml(out);
 
-        out = text;
+        if (inline){
+            // remove the <p> tags introduced by showdown
+            out = out.replace(/<\/?p>/, '');
+        }
+
+
         // html
-        var offset = 0;
+/*        var offset = 0;
         var reg = /(\[(\w+)([^\]]*)?\]).*?(\[\/\2\])/g;
         while (match = reg.exec(text)){
             if (match[2] == 'b'){
@@ -1357,7 +1364,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             out = out.substring(0, end - len_2) + tag2 + out.substring(end);
 
         }
-
+*/
         return out;
     }
 
@@ -1444,6 +1451,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         switch (item.params.control){
             case 'info':
                 if (value){
+                    value = process_html(value, row_data, true)
                     $div.append(value);
                 }
                 break;
