@@ -25,6 +25,8 @@ class PageItem(object):
 
     def __init__(self, page_item_type, *arg, **kw):
 
+        self.init_kw = kw.copy()
+
         self.name = None
         if arg:
             self.name = arg[0]
@@ -41,15 +43,27 @@ class PageItem(object):
         self.control = kw.pop("control", None)
         self.layout = kw.pop("layout", None)
 
+        self.extra_params = kw
+
+        self.codegroup = None
+
+        #self.css = kw.pop("css", None)
+        #self.description = kw.pop("description", None)
+
     def params(self, node):
 
+        params = self.extra_params.copy()
+
         if self.control:
-            return self.control.convert(self, node)
+            params.update(self.control.convert(self, node))
 
         if self.layout:
-            return self.layout.convert(self, node)
+            params.update(self.layout.convert(self, node))
 
-        return {}
+        if self.codegroup:
+            params.update(dict(codes = self.codegroup))
+
+        return params
 
     def convert(self, node, field_list):
 
@@ -259,6 +273,10 @@ def button_box(button_list, **kw):
 
     return Control("button_box", dict(buttons = button_list), kw)
 
+def button_link(node, **kw):
+
+    return Control("button_link", dict(node = node), kw)
+
 def link(**kw):
 
     return Control("link", kw)
@@ -271,3 +289,6 @@ def info(**kw):
 
     return Control("info", kw)
 
+def codegroup(**kw):
+
+    return Control("codegroup", kw)
