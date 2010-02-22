@@ -51,6 +51,11 @@ class Text(Field):
     def __init__(self, name, *args, **kw):
         self.text = Column(sa.Unicode(100),  use_parent = True)
 
+class Password(Field):
+
+    def __init__(self, name, *args, **kw):
+        self.text = Column(sa.Unicode(70),  use_parent = True)
+
 class LookupTextValidated(Field):
 
     def __init__(self, name, target, *args, **kw):

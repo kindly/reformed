@@ -42,6 +42,7 @@ import datetime
 from search import Search
 from sqlalchemy.orm import column_property
 from sqlalchemy.orm.interfaces import AttributeExtension
+import fshp
 
 LOGGER = logging.getLogger('reformed.main')
 
@@ -962,6 +963,9 @@ class Table(object):
             if column.name == "_version":
                 properties[col_name] = column_property(getattr(self.sa_table.c,col_name),
                                                          extension = VersionChange())
+            elif column.parent and column.parent.type == "Password":
+                properties[col_name] = column_property(getattr(self.sa_table.c,col_name),
+                                                         extension = ConvertPassword())
             elif column.type == sa.DateTime:
                 properties[col_name] = column_property(getattr(self.sa_table.c,col_name),
                                                          extension = ConvertDate())
@@ -1313,4 +1317,20 @@ class ConvertInteger(AttributeExtension):
             return int(value)
         except ValueError:
             return value
+
+class ConvertPassword(AttributeExtension):
+
+    def set(self, state, value, oldvalue, initator):
+
+        if value == oldvalue:
+            return value
+        if not value:
+            return None
+        state.dict["_validated"] = False
+
+        if state.dict.get("_from_load"):
+            return value
+
+        return fshp.crypt(value)
+
 
