@@ -289,7 +289,7 @@ class Permission(TableNode):
     fields = [
         layout("box_start"),
         input("permission"),
-        input("permission", css = 'large'),
+        input("description", css = 'large'),
         input("long_description", label = 'long description:', control = textarea(css = 'large')),
     ]
 
