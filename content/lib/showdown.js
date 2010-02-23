@@ -986,6 +986,9 @@ var _EncodeCode = function(text) {
 //            special char: *
 //---
 
+    // rebase: add prettify
+    text = prettyPrintOne(text);
+
 	return text;
 }
 
