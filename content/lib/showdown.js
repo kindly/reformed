@@ -66,6 +66,10 @@
 //
 var Showdown = {};
 
+// rebase: add mode 'constants'
+Showdown.MODE_SIMPLE = 1;
+Showdown.MODE_FULL = 2;
+
 //
 // converter
 //
@@ -87,14 +91,19 @@ var g_html_blocks;
 // (see _ProcessListItems() for details):
 var g_list_level = 0;
 
-
-this.makeHtml = function(text) {
+// rebase: add mode parameter
+this.makeHtml = function(text, mode) {
 //
 // Main function. The order in which other subs are called here is
 // essential. Link and image substitutions need to happen before
 // _EscapeSpecialCharsWithinTagAttributes(), so that any *'s or _'s in the <a>
 // and <img> tags get encoded.
 //
+
+    // rebase: default to full mode
+    if (!mode){
+        mode = Showdown.MODE_FULL;
+    }
 
 	// Clear the global hashes. If we don't clear these, you get conflicts
 	// from other articles when generating a page which contains more than
@@ -120,8 +129,10 @@ this.makeHtml = function(text) {
 	text = text.replace(/\r/g,"\n"); // Mac to Unix
 
 	// Make sure text begins and ends with a couple of newlines:
-	text = "\n\n" + text + "\n\n";
-
+    // rebase: don't add newlines in simple mode
+    if (mode != Showdown.MODE_SIMPLE){
+	    text = "\n\n" + text + "\n\n";
+    }
 	// Convert all tabs to spaces.
 	text = _Detab(text);
 
@@ -137,8 +148,12 @@ this.makeHtml = function(text) {
 	// Strip link definitions, store in hashes.
 	text = _StripLinkDefinitions(text);
 
-	text = _RunBlockGamut(text);
-
+    // rebase: don't do block conversions for simple mode
+    if (mode == Showdown.MODE_SIMPLE){
+        text = _RunSpanGamut(text);
+    } else {
+	    text = _RunBlockGamut(text);
+    }
 	text = _UnescapeSpecialChars(text);
 
 	// attacklab: Restore dollar signs
