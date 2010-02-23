@@ -1429,7 +1429,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         switch (item.params.control){
             case 'info':
                 if (value){
-                    value = process_html(value, row_data, true)
+                    value = process_html(value, row_data)
                     $div.append(value);
                 }
                 break;
