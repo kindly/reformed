@@ -408,8 +408,9 @@ class Field(object):
         obj.many_side_not_null = kw.get("many_side_not_null", True)
         obj.many_side_mandatory = kw.get("many_side_mandatory", False)
 
-        obj.field_type = kw.get("type", None)
         obj.one_way = kw.get("one_way", None)
+
+        obj.data_type = None
         return obj
 
     def __eq__(self, other):
@@ -479,8 +480,8 @@ class Field(object):
 
     @property
     def type(self):
-        if self.field_type:
-            return self.field_type
+        if self.data_type:
+            return self.data_type
         else:
             return self.__class__.__name__
 

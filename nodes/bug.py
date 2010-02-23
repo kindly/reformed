@@ -12,17 +12,17 @@ class Ticket(TableNode):
     title_field = 'title'
 
     fields = [
-        input('title', data_type = 'Text'),
+        input('title'),
         layout('hr'),
         layout('column_start'),
-        input('accepted', data_type = 'Boolean' , control = dropdown(["true", "false"])),
-        input('complete_by', data_type = 'Date'),
+        input('accepted', control = dropdown(["true", "false"])),
+        input('complete_by'),
         layout('column_next'),
-        input('severity', data_type = 'Text' , control = dropdown(True)),
-        input('priority_id', data_type = 'Integer' , control = dropdown(True)),
+        input('severity', control = dropdown(True)),
+        input('priority_id', control = dropdown(True)),
         layout('column_end'),
         layout('hr'),
-        input('summary', data_type = 'Text' , control = textarea(css = "large")),
+        input('summary', control = textarea(css = "large")),
     ]
     list_title = 'ticket %s'
 
@@ -39,21 +39,21 @@ class ListTicket(TableNode):
     title_field = 'title'
 
     fields = [
-        ['title', 'Text', 'title:'],
-        ['accepted', 'Boolean', 'accepted:', {"control" : "dropdown", "autocomplete" : ["true", "false"]}],
-        ['complete_by', 'Date', 'complete by:'],
-        ['summary', 'Text', 'summary:', {"control" : "textarea", "css" : "large"}],
-        ['severity', 'Text', 'severity:', {"control" : "dropdown", "autocomplete" : True}],
-        ['priority_id', 'Integer', 'priority:', {"control" : "dropdown_code", "autocomplete" : True}],
-        ['old_comments', 'subform', 'old_comments'],
-        ['comment', 'subform', 'comment']
+        input('title'),
+        input('accepted', control = dropdown(["true", "false"])),
+        input('complete_by' ),
+        input('summary', control = textarea(css = "large")),
+        input('severity', control = dropdown(True)),
+        input('priority_id', control = dropdown(True)),
+        subform('old_comments'),
+        subform('comment'),
     ]
 
     subforms = {
         'old_comments':{
             'fields': [
-                ['created_date', 'DateTime', 'Date Created: '],
-                ['note', 'Text', '', {"control" : "textarea", "css" : "large"}],
+                input('created_date'),
+                input('note', control = textarea(css = "large")),
             ],
             "parent_id": "_core_entity_id",
             "child_id": "_core_entity_id",
@@ -65,9 +65,9 @@ class ListTicket(TableNode):
 
         'comment':{
             'fields': [
-                ['note', 'Text', 'note:', {"control" : "textarea", "css" : "large"}],
-                ['moo', 'Boolean', 'moo:', {"control" : "checkbox"}],
-                ['', '', 'add comment', {'control' : 'button', 'node': 'bug.ListTicket:_save:'}]
+                input('note', control = textarea(css = "large")),
+                input('moo', control = checkbox()),
+                input(label = 'add comment', control = button(node = 'bug.ListTicket:_save:')),
             ],
             "parent_id": "_core_entity_id",
             "child_id": "_core_entity_id",
@@ -95,25 +95,25 @@ class User(TableNode):
     title_field = 'name'
 
     fields = [
-        ['', '', '', dict(layout = 'text', text = 'user..........')],
-        ['', '', '', dict(layout = 'column_start')],
-        ['name', 'Text', 'name:'],
-        ['login_name', 'Text', 'login name:'],
-        ['active', 'Boolean', 'active:', {"control" : "checkbox"}],
-        ['email', 'Text', 'email:'],
-        ['', '', '', dict(layout = 'column_next')],
-        ['', '', '', dict(layout = 'box_start')],
-        ['password', 'Text', 'password:', {"control" : "password"}],
-        ['password2', 'Text', 'confirm password:', {"control" : "password"}],
-        ['', '', '', dict(layout = 'box_end')],
-        ['', '', '', dict(layout = 'column_end')],
-        ['', '', '', dict(layout = 'hr')],
-        ['notes', 'Text', 'notes:', {"control" : "textarea", "css" : "large"}],
-        ['', '', '', dict(layout = 'spacer')],
-        ['', '', '', dict(layout = 'box_start')],
-        ['usergroup', 'code_group', 'usergroup:', {'control' : 'codegroup'}],
-        ['', '', '', dict(layout = 'box_end')],
-        ['', '', '', dict(layout = 'spacer')],
+        layout('text', text = 'user..........'),
+        layout('column_start'),
+        input('name'),
+        input('login_name', label = 'login name:'),
+        input('active', control = checkbox()),
+        input('email'),
+        layout('column_next'),
+        layout('box_start'),
+        input('password', control = password()),
+        input('password2', control = password()),
+        layout('box_end'),
+        layout('column_end'),
+        layout('hr'),
+        input('notes', control = textarea(css = "large")),
+        layout('spacer'),
+        layout('box_start'),
+        input('usergroup', control = codegroup()),
+        layout('box_end'),
+        layout('spacer'),
     ]
 
 
@@ -132,11 +132,11 @@ class User(TableNode):
 
 
     login_fields = [
-        ['', '', '', dict(layout = 'box_start')],
-        ['login_name', 'Text', 'username:'],
-        ['password', 'password', 'password:', dict(control = 'password')],
-        ['button', 'submit', 'Log in', {'control' : 'button', 'node': 'bug.User:login:'}],
-        ['', '', '', dict(layout = 'box_end')],
+        layout('box_start'),
+        input('login_name', label = 'username:'),
+        input('password', control = password()),
+        input(label = 'Log in', control = button(node = 'bug.User:login:')),
+        layout('box_end'),
     ]
     login_form_params =  {"form_type": "action"}
     login_validations = [
@@ -145,10 +145,10 @@ class User(TableNode):
     ]
 
     about_me_fields = [
-        ['', '', '', dict(layout = 'box_start')],
-        ['login_name', 'Text', 'username:'],
-        ['about_me', 'Text', 'notes:', {"control" : "textarea", "css" : "large"}],
-        ['', '', '', dict(layout = 'box_end')],
+        layout('box_start'),
+        input('login_name', label = 'username:'),
+        input('about_me', label = 'about me:', control = textarea(css = "large")),
+        layout('box_end'),
     ]
     about_me_form_params =  {"form_type": "action"}
 
@@ -287,10 +287,10 @@ class Permission(TableNode):
     form_params =  {"form_type": "action"}
     title_field = 'permission'
     fields = [
-        ['', '', '', dict(layout = 'box_start')],
-        ['permission', 'Text', 'permission:'],
-        ['description', 'Text', 'description:', {"css" : "large"}],
-        ['long_description', 'Text', 'long description:', {"control" : "textarea", "css" : "large"}],
+        layout("box_start"),
+        input("permission"),
+        input("permission", css = 'large'),
+        input("long_description", label = 'long description:', control = textarea(css = 'large')),
     ]
 
     def finalise(self):
@@ -320,16 +320,16 @@ class UserGroup(TableNode):
     form_params =  {"form_type": "action"}
     title_field = 'user group'
     fields = [
-        ['', '', '', dict(layout = 'box_start')],
-        ['groupname', 'Text', 'groupname:', {'description' : 'The name of the user group'}],
-        ['active', 'Boolean', 'active:', {'control' : 'checkbox', 'description' : 'Only active user groups give members permissions'}],
-        ['description', 'Text', 'description:', {'description' : 'A brief description of the user group', "css" : "large"}],
-        ['notes', 'Text', 'notes:', {"control" : "textarea", "css" : "large", 'description' : 'A longer more detailed description'}],
-        ['', '', '', dict(layout = 'spacer')],
-        ['', '', '', dict(layout = 'box_start')],
-        ['permission', 'code_group', 'permission:', {'control' : 'codegroup'}],
-        ['', '', '', dict(layout = 'box_end')],
-        ['', '', '', dict(layout = 'spacer')],
+        layout("box_start"),
+        input('groupname', description = 'The name of the user group'),
+        input('active', control = checkbox(description = 'Only active user groups give members permissions')),
+        input('description', description = 'A brief description of the user group', css = 'large'),
+        input('notes', control = textarea(css = "large", description = 'A longer more detailed description')),
+        layout("spacer"),
+        layout("box_start"),
+        input('permission', control = codegroup()),
+        layout("box_end"),
+        layout("spacer"),
     ]
 
     code_groups = {'permission':{
@@ -371,18 +371,18 @@ class UserAdmin(TableNode):
 
     form_params =  {"form_type": "action"}
     fields = [
-        ['', '', '', dict(layout = 'text', text = 'Users {users}')],
-        ['', '', 'add user', dict(control = 'button_link', node = 'bug.User:new')],
-        ['', '', 'list users', dict(control = 'button_link', node = 'bug.User:list')],
-        ['', '', '', dict(layout = 'spacer')],
-        ['', '', '', dict(layout = 'text', text = 'User Groups {user_groups}')],
-        ['', '', 'add user group', dict(control = 'button_link', node = 'bug.UserGroup:new')],
-        ['', '', 'list user groups', dict(control = 'button_link', node = 'bug.UserGroup:list')],
-        ['', '', '', dict(layout = 'spacer')],
-        ['', '', '', dict(layout = 'text', text = 'Permissions {permissions}')],
-        ['', '', 'add permission', dict(control = 'button_link', node = 'bug.Permission:new')],
-        ['', '', 'list permissions', dict(control = 'button_link', node = 'bug.Permission:list')],
-        ['', '', '', dict(layout = 'spacer')],
+        layout('text', text = 'Users {users}'),
+        input(control = button_link('bug.User:new'), label = 'add user'),
+        input(control = button_link('bug.User:list'), label = 'list users'),
+        layout('spacer'),
+        layout('text', text = 'User Groups {user_groups}'),
+        input(control = button_link('bug.UserGroup:new'), label = 'add user group'),
+        input(control = button_link('bug.UserGroup:list'), label = 'list user groups'),
+        layout('spacer'),
+        layout('text', text = 'Permissions {permissions}'),
+        input(control = button_link('bug.Permission:new'), label = 'add permission'),
+        input(control = button_link('bug.Permission:list'), label = 'list permissions'),
+        layout('spacer'),
     ]
 
     def call(self):
@@ -407,9 +407,9 @@ class SysInfo(TableNode):
     title_field = 'key'
 
     fields = [
-        ['key', 'Text', 'key:'],
-        ['value', 'Text', 'value:'],
-        ['type', 'Integer', 'type:', {"control" : "dropdown_code", "autocomplete" : dict(keys = [1, 2, 3], descriptions = ['String', 'Integer', 'Boolean']) }],
+        input('key'),
+        input('value'),
+        input('type', control = dropdown_code(dict(keys = [1, 2, 3], descriptions = ['String', 'Integer', 'Boolean']))),
     ]
 
     def finalise(self):
@@ -440,14 +440,14 @@ class Page(TableNode):
     title_field = 'title'
 
     fields = [
-        ['page', 'Text', 'page:', {"css" : "large", 'description' : 'A reference for the page used for links etc.'}],
-        ['title', 'Text', 'title:', {"css" : "large", 'description' : 'The displayed title for the page.'}],
-        ['body', 'Text', 'content:', {"control" : "textarea", "css" : "large long", 'description' : 'A longer more detailed description'}],
+        input("page", css = "large", description = "A reference for the page used for links etc."),
+        input("title", css = "large", description = "The displayed title for the page."),
+        input("body", control = textarea(css = "large long", description = "A longer more detailed description")),
     ]
 
     view_fields = [
-        ['title', 'Text', '', {"control" : "info"}],
-        ['body', 'Text', '', {"control" : "info"}],
+        input('title', control = info()),
+        input('body', control = info()),
     ]
 
     def view(self, read_only = False):

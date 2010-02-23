@@ -8,6 +8,7 @@ from reformed.data_loader import SingleRecord
 from sqlalchemy import create_engine
 from reformed.util import get_paths, get_table_from_instance, create_data_dict, make_local_tables, get_all_local_data, load_local_data
 import datetime
+import reformed.fshp as fshp
 from decimal import Decimal
 import formencode as fe
 import yaml
@@ -114,6 +115,7 @@ class test_donkey(object):
              )
         table("payments", cls.Donkey,
               DateTime("giving_date"),
+              Password("password"),
               Money("amount"),
               Text("source")
              )
@@ -655,6 +657,25 @@ class test_basic_input(test_donkey):
         self.session.save(donkey)
         self.session.commit()
 
+    def test_hashed_password(self):
+
+        payment = self.Donkey.get_instance("payments")
+
+        payment.password = "fhdsfhaoifeio9"
+
+        assert not fshp.check("fhdsfhaoifeio", payment.password)
+
+        assert fshp.check("fhdsfhaoifeio9", payment.password)
+
+        payment._from_load = True
+
+        payment.password = "fhdsfhaoifeio9"
+
+        assert payment.password == "fhdsfhaoifeio9"
+
+
+
+        
 
 
         

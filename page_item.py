@@ -17,19 +17,24 @@
 ##   Reformed
 ##   Copyright (c) 2008-2009 Toby Dacre & David Raznick
 ##
+from global_session import global_session
+r = global_session.database
 
 
 class PageItem(object):
 
-    def __init__(self, *arg, **kw):
+    def __init__(self, page_item_type, *arg, **kw):
+
+        self.init_kw = kw.copy()
 
         self.name = None
         if arg:
             self.name = arg[0]
 
-        self.field_item_type = kw.pop("field_item_type", type)
-        self.data_type = kw.pop("data_type", None)
+        self.validation = kw.pop("validation", True)
 
+        self.page_item_type = page_item_type
+        self.data_type = kw.pop("data_type", None)
         self.label = kw.pop("label", None)
 
         if self.name and not self.label:
@@ -38,20 +43,90 @@ class PageItem(object):
         self.control = kw.pop("control", None)
         self.layout = kw.pop("layout", None)
 
-    def convert(self):
+        self.extra_params = kw
 
-        form_field = [self.name or '',
-                     self.data_type or '',
-                     self.label or '']
+        self.codegroup = None
+
+        #self.css = kw.pop("css", None)
+        #self.description = kw.pop("description", None)
+
+    def params(self, node):
+
+        params = self.extra_params.copy()
 
         if self.control:
-            form_field.append(self.control.convert())
+            params.update(self.control.convert(self, node))
 
         if self.layout:
-            form_field.append(self.layout.convert())
+            params.update(self.layout.convert(self, node))
 
-        return form_field
+        if self.codegroup:
+            params.update(dict(codes = self.codegroup))
 
+        return params
+
+    def convert(self, node, field_list):
+
+        row = {}
+        row['name'] = self.name
+        row['type'] = self.set_data_type(node)
+        row['title'] = self.label
+        row['params'] = self.set_params(node)
+
+        return row
+
+    def set_data_type(self, node):
+
+        if self.data_type:
+            return self.data_type
+        if node.table:
+            rfield = r[node.table].fields.get(self.name)
+            if rfield:
+                return rfield.type
+
+    def set_params(self, node):
+
+        params = self.params(node)
+
+        if node.table and self.validation:
+            rfield = r[node.table].fields.get(self.name)
+            if rfield:
+                if "validation" not in params:
+                    params["validation"] = rfield.validation_info
+                if rfield.default:
+                    params["default"] = rfield.default
+
+        return params
+
+
+class SubForm(object):
+
+    def __init__(self, name, **kw):
+
+        self.name = name
+        self.page_item_type = "subform"
+        self.data_type = "subform"
+        self.label = kw.pop("label", None)
+
+        if self.name and not self.label:
+            self.label = self.name + ":"
+
+        self.subform = {}
+
+
+    def convert(self, node, field_list):
+
+        row = {}
+        row['name'] = self.name
+        row['type'] = self.data_type
+        row['title'] = self.label
+        row['params'] = self.params()
+
+        return row
+
+    def params(self):
+
+        return self.subform or {}
 
 
 class Layout(object):
@@ -61,7 +136,7 @@ class Layout(object):
         self.layout_type = layout_type
         self.params = params
 
-    def convert(self):
+    def convert(self, field, node):
 
         params = dict(layout = self.layout_type)
         params.update(self.params)
@@ -74,11 +149,10 @@ class Control(object):
     def __init__(self, control_type, params = None, extra_params = None):
 
         self.control_type = control_type
-
         self.params = params or {}
         self.extra_params = extra_params or {}
 
-    def convert(self):
+    def convert(self, field, node):
 
         params = dict(control = self.control_type)
 
@@ -90,21 +164,90 @@ class Control(object):
 
         return params
 
+class Dropdown(Control):
+
+    def convert(self, field, node):
+
+        params = dict(control = self.control_type)
+
+        if self.params:
+            params.update(self.params)
+
+        if self.extra_params:
+            params.update(self.extra_params)
+
+        autocomplete_options = params["autocomplete"]
+
+        database = r
+
+        if isinstance(autocomplete_options, list):
+            return params
+
+        if isinstance(autocomplete_options, dict):
+            table = autocomplete_options["table"]
+            target_field = autocomplete_options["field"]
+
+            filter_field = autocomplete_options.get("filter_field")
+            filter_value = autocomplete_options.get("filter_value")
+
+        if autocomplete_options == True:
+            rfield = database[node.table].fields[field.name]
+
+            if rfield.column.defined_relation:
+                rfield = rfield.column.defined_relation.parent
+
+            if rfield.data_type == "Integer":
+                table = rfield.other
+                target_field = database[table].title_field
+                filter_field = rfield.filter_field
+                filter_value = rfield.name
+            else:
+                table, target_field = rfield.other.split(".")
+                filter_field = rfield.kw.get("filter_field")
+                filter_value = rfield.kw.get("filter_value")
+
+        session = r.Session()
+
+        target_class = database.tables[table].sa_class
+
+        id_field = getattr(target_class, "id")
+        target_field = getattr(target_class, target_field)
+
+        if filter_field:
+            filter_field = getattr(target_class, filter_field)
+            results = session.query(id_field, target_field).filter(filter_field == u"%s" % filter_value).all()
+        else:
+            results = session.query(id_field, target_field).all()
+
+        session.close()
+
+        if "control" in params and params["control"] == 'dropdown_code':
+            params["autocomplete"] = dict(keys = [item[0] for item in results],
+                                          descriptions = [item[1] for item in results])
+        else:
+            params["autocomplete"] = [item[1] for item in results]
+
+        return params
+
 ##Form fields
 
-def input(name, **kw):
-    form_field = PageItem(name, "input", **kw)
-    return form_field.convert()
+def input(*arg, **kw):
+    form_field = PageItem("input", *arg, **kw)
+    return form_field
 
 def layout(layout_type, **kw):
-    form_field = PageItem(layout = Layout(layout_type, kw))
-    return form_field.convert()
+    form_field = PageItem("layout", layout = Layout(layout_type, kw))
+    return form_field
+
+def subform(name, **kw):
+    form_field = SubForm(name)
+    return form_field
 
 ##Controls
 
 def dropdown(arg, **kw):
 
-    return Control("dropdown", dict(autocomplete = arg), kw)
+    return Dropdown("dropdown", dict(autocomplete = arg), kw)
 
 def dropdown_code(arg, **kw):
 
@@ -130,6 +273,22 @@ def button_box(button_list, **kw):
 
     return Control("button_box", dict(buttons = button_list), kw)
 
+def button_link(node, **kw):
 
+    return Control("button_link", dict(node = node), kw)
 
+def link(**kw):
 
+    return Control("link", kw)
+
+def link_list(**kw):
+
+    return Control("link_list", kw)
+
+def info(**kw):
+
+    return Control("info", kw)
+
+def codegroup(**kw):
+
+    return Control("codegroup", kw)
