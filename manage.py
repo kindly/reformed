@@ -133,15 +133,22 @@ def run(host, port, application):
         BaseCGIHandler(sys.stdin, sys.stdout, sys.stderr, os.environ).run(http.app)
     else:
 
-        from paste import httpserver
+        #from paste import httpserver
+        import cherrypy.wsgiserver as httpserver
 
         application = beaker.middleware.SessionMiddleware(application, {"session.type": "memory",
                                                                         "session.auto": True})
         try:
-            httpserver.serve(application, host = host, port = port)
+            server = httpserver.CherryPyWSGIServer(
+                    (host, int(port)), application,
+                    server_name='rebase')
+            server.ssl_certificate = 'host.cert'
+            server.ssl_private_key = 'host.key'
+            #httpserver.serve(application, host = host, port = port)
             #httpd.serve_forever()
+            server.start()
         except KeyboardInterrupt:
-            pass
+            server.stop()
 
 if __name__ == "__main__":
 

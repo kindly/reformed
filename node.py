@@ -305,7 +305,6 @@ class TableNode(Node):
 
     def setup_forms(self):
         for field in self.fields:
-            print field, field.name
             # add subform data
             if field.page_item_type == 'subform':
                 name = field.name
@@ -319,10 +318,6 @@ class TableNode(Node):
                 field.subform = data
                 self.setup_subforms(name)
             # add data for code groups
-            elif field.control and field.control.control_type == 'codegroup':
-                name = field.name
-                code_list= self.__class__.code_list.get(name)
-                field.codegroup = code_list
             # build the field list
             self.field_list.append(field.name or '') ## FIXME should keep as None if does not exist
         # add any extra fields to the field list

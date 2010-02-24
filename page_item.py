@@ -45,11 +45,6 @@ class PageItem(object):
 
         self.extra_params = kw
 
-        self.codegroup = None
-
-        #self.css = kw.pop("css", None)
-        #self.description = kw.pop("description", None)
-
     def params(self, node):
 
         params = self.extra_params.copy()
@@ -59,9 +54,6 @@ class PageItem(object):
 
         if self.layout:
             params.update(self.layout.convert(self, node))
-
-        if self.codegroup:
-            params.update(dict(codes = self.codegroup))
 
         return params
 
@@ -229,6 +221,21 @@ class Dropdown(Control):
 
         return params
 
+class CodeGroup(Control):
+
+    def convert(self, field, node):
+
+        params = dict(control = self.control_type)
+
+        name = field.name
+        code_list= node.code_list.get(name)
+        codegroup = code_list
+
+        params.update(dict(codes = codegroup))
+
+        return params
+
+
 ##Form fields
 
 def input(*arg, **kw):
@@ -291,4 +298,4 @@ def info(**kw):
 
 def codegroup(**kw):
 
-    return Control("codegroup", kw)
+    return CodeGroup("codegroup", kw)
