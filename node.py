@@ -264,7 +264,6 @@ class TableNode(Node):
 
     def __init__(self, *args, **kw):
         super(TableNode, self).__init__(*args, **kw)
-        self.setup_code_groups()
         self.setup_forms()
         if self.__class__.first_run:
             self.__class__.first_run = False
@@ -282,26 +281,6 @@ class TableNode(Node):
         commands['_save'] = dict(command = 'save')
         commands['delete'] = dict(command = 'delete')
         commands['new'] = dict(command = 'new')
-
-    def setup_code_groups(self):
-        self.__class__.code_list = {}
-        for code_group_name in self.code_groups.keys():
-            code_group = self.code_groups[code_group_name]
-            table = code_group.get('code_table')
-            code_id = code_group.get('code_field')
-            code_title = code_group.get('code_title_field')
-            code_desc = code_group.get('code_desc_field')
-            fields = [code_id, code_title]
-            if code_desc:
-                fields.append(code_desc)
-            codes = r.search(table, 'id>0', fields = fields)['data']
-            code_array = []
-            for row in codes:
-                code_row = [row.get(code_id), row.get(code_title)]
-                if code_desc:
-                    code_row.append(row.get(code_desc))
-                code_array.append(code_row)
-            self.__class__.code_list[code_group_name] = code_array
 
     def setup_forms(self):
         for field in self.fields:
@@ -349,7 +328,6 @@ class TableNode(Node):
         print 'table %s' % table
         print 'fields %s' % fields
         errors = None
-        ignore_types = ['subform', 'code_group']
         try:
             if filter:
                 print 'existing record'
@@ -360,13 +338,8 @@ class TableNode(Node):
                 record_data = r.get_instance(table)
             for field in fields:
                 print field
-                field_name = field.name
-                field_type = field.data_type
-                if field_name and field_name != 'id' and field_type not in ignore_types and field_name != u'version_id':
-                    # update/add the value
-                    value = data.get(field_name)
-                    print '%s = %s' % (field_name, value)
-                    setattr(record_data, field_name, value)
+                field.save(self, record_data, data, session)
+
             # if this is a subform we need to update/add the join field
             # FIXME is this needed here or just for new?
             # maybe shift up a few lines to new record
@@ -433,9 +406,6 @@ class TableNode(Node):
                     if child_id:
                         join_fields= [child_id]
                     self.save_record_rows(session, table, fields, subform_data, join_fields)
-            # code_groups
-            if self.code_groups:
-                self.save_group_codes(session, record_data)
         session.commit()
         session.close()
 
@@ -467,60 +437,6 @@ class TableNode(Node):
                     session.delete(row)
             print 'deleted code group'
 
-    def save_group_codes(self, session, record_data):
-        for code_group_name in self.code_groups.keys():
-            code_group = self.code_groups[code_group_name]
-            table = code_group.get('flag_table')
-            flag_child_field = code_group.get('flag_child_field')
-            flag_parent_field = code_group.get('flag_parent_field')
-            flag_code_field = code_group.get('flag_code_field')
-            parent_value = getattr(record_data, flag_parent_field)
-            code_group_data = self.data.get(code_group_name, [])
-
-            #FIXME everything following this until session.commit() is rubbish
-            # although it works i'm sure
-            # a) it's not very efficient
-            # b) it feels realy hacky
-            # c) i just don't like it
-            # still it will do for now
-
-            yes_codes = []
-            no_codes = []
-            for code in code_group_data.keys():
-                if code_group_data[code]:
-                    yes_codes.append(int(code))
-                else:
-                    no_codes.append(int(code))
-
-
-            print "YES CODES", yes_codes
-            print "NO CODES", no_codes
-            print 'table', table
-            print 'flag_child_field', flag_child_field
-            print 'flag_parent_field', flag_parent_field
-            print 'flag_code_field', flag_code_field
-            print 'parent_value', parent_value
-
-            for code in no_codes:
-                filter = {flag_child_field: parent_value, flag_code_field: code}
-                print filter
-                obj = r.get_class(table)
-                data = session.query(obj).filter_by(**filter).all()
-                if data:
-                    session.delete(data[0])
-
-
-            for code in yes_codes:
-                where = "%s='%s' and %s='%s'" % (flag_child_field, parent_value, flag_code_field, code)
-                print where
-                result = r.search(table, where)['data']
-                if not result:
-                    # need to add this field
-                    record_data = r.get_instance(table)
-                    setattr(record_data, flag_child_field, parent_value)
-                    setattr(record_data, flag_code_field, code)
-                    session.save_or_update(record_data)
-                    print 'saved', record_data
 
     def new(self):
 
@@ -541,7 +457,20 @@ class TableNode(Node):
             where = '_core_entity_id=%s' % id
 
         try:
-            data_out = self.node_search_single(where)
+            session = r.Session()
+            obj = r.search_single(self.table, where, session = session)
+
+            #data_out = self.node_search_single(where)
+            data_out = {}
+
+            for field in self.fields:
+                field.load(self, obj, data_out, session)
+
+            for field in util.INTERNAL_FIELDS:
+                extra_field = getattr(obj, field)
+                if extra_field:
+                    data_out[field] = util.convert_value(extra_field)
+
             id = data_out.get('id')
             if self.title_field and data_out.has_key(self.title_field):
                 self.title = data_out.get(self.title_field)
@@ -555,48 +484,23 @@ class TableNode(Node):
             self.title = 'unknown'
             print 'no data found'
 
+
         if data_out:
             for subform_name in self.subforms.keys():
                 ## FIXME look at logic to determining what data is sent
                 if self.subforms[subform_name]["params"]["form_type"] != "action":
                     data_out[subform_name] = self.subform(subform_name, data_out)
-            for code_group_name in self.code_list:
-                data_out[code_group_name] = self.code_data(code_group_name, data_out)
 
         data = self.create_form_data(self.fields, self.form_params, data_out, read_only)
         self.out = data
         self.action = 'form'
 
         self.bookmark = dict(
-            table_name = r[data_out.get("__table")].name,
+            table_name = obj._table.name,
             bookmark_string = self.build_node('', 'view', 'id=%s' %  id),
             entity_id = id
         )
 
-
-
-    def code_data(self, code_group_name, data_out):
-        codes = self.code_groups.get(code_group_name)
-        code_table = codes.get('code_table')
-        code_desc_field = codes.get('code_desc_field')
-        code_title_field = codes.get('code_title_field')
-        flag_table = codes.get('flag_table')
-        flag_child_field = codes.get('flag_child_field')
-        flag_parent_field = codes.get('flag_parent_field')
-        flag_code_field = codes.get('flag_code_field', 'id')
-        parent_value = data_out.get(flag_parent_field)
-
-        fields = [flag_code_field, '%s.%s' % (code_table, code_title_field)]
-        if code_desc_field:
-            fields.append('%s.%s' % (code_table, code_desc_field))
-
-        where = "%s = '%s'" % (flag_child_field, parent_value)
-        results = r.search(flag_table, where, fields = fields)['data']
-
-        out = []
-        for row in results:
-            out.append(row[flag_code_field])
-        return out
 
     def delete(self):
         id = self.data.get('id')

@@ -18,6 +18,7 @@
 ##   Copyright (c) 2008-2009 Toby Dacre & David Raznick
 ##
 from global_session import global_session
+import reformed.util as util
 r = global_session.database
 
 
@@ -90,6 +91,27 @@ class PageItem(object):
 
         return params
 
+    def save(self, node, object, data, session):
+
+        if self.name in object._table.fields:
+            value = data.get(self.name)
+            setattr(object, self.name, value)
+
+        if self.control and self.control.control_save:
+            self.control.save(self, node, object, data, session)
+
+    def load(self, node, object, data, session):
+
+        if self.name in object._table.fields:
+            data[self.name] = util.convert_value(getattr(object, self.name))
+
+        if self.control and self.control.control_load:
+            self.control.load(self, node, object, data, session)
+
+
+
+
+
 
 class SubForm(object):
 
@@ -143,6 +165,9 @@ class Control(object):
         self.control_type = control_type
         self.params = params or {}
         self.extra_params = extra_params or {}
+
+        self.control_save = False
+        self.control_load = False
 
     def convert(self, field, node):
 
@@ -223,15 +248,94 @@ class Dropdown(Control):
 
 class CodeGroup(Control):
 
+    def __init__(self, control_type, params = None, extra_params = None):
+
+        Control.__init__(self, control_type, params, extra_params)
+
+        self.control_save = True
+        self.control_load = True
+
+    def save(self, field, node, object, data, session):
+
+        code_group = node.code_groups[field.name]
+
+        flag_table = code_group.get('flag_table')
+        flag_code_field = code_group.get('flag_code_field')
+
+        rtable = object._table
+        relation_attr = rtable.one_to_many_tables[flag_table][0]
+        relation = rtable.relation_attributes[relation_attr]
+        join_key = relation.join_keys_from_table(flag_table)[0][0]
+
+        code_groups = getattr(object, relation_attr)
+
+        code_group_data = data.get(field.name, [])
+
+        yes_codes = set()
+        no_codes = set()
+        for code in code_group_data.keys():
+            if code_group_data[code]:
+                yes_codes.add(int(code))
+            else:
+                no_codes.add(int(code))
+
+        current_codes = set()
+
+        for obj in code_groups:
+            if getattr(obj, join_key) in no_codes:
+                session.delete(obj)
+            else:
+                current_codes.add(getattr(obj, join_key))
+
+        for code in yes_codes - current_codes:
+            new = r.get_instance(flag_table)
+            setattr(new, flag_code_field, code)
+            code_groups.append(new)
+            session.save_or_update(new)
+
+    def load(self, field, node, object, data, session):
+
+        rtable = object._table
+
+        code_group = node.code_groups[field.name]
+
+        flag_table = code_group.get('flag_table')
+        flag_code_field = code_group.get('flag_code_field')
+        relation_attr = rtable.one_to_many_tables[flag_table][0]
+
+        code_groups = getattr(object, relation_attr)
+
+        out = []
+        for row in code_groups:
+            out.append(getattr(row, flag_code_field))
+
+        data[field.name] = out
+
+
     def convert(self, field, node):
 
         params = dict(control = self.control_type)
 
         name = field.name
-        code_list= node.code_list.get(name)
-        codegroup = code_list
 
-        params.update(dict(codes = codegroup))
+        code_group = node.code_groups[name]
+        table = code_group.get('code_table')
+        code_id = code_group.get('code_field')
+        code_title = code_group.get('code_title_field')
+        code_desc = code_group.get('code_desc_field')
+        fields = [code_id, code_title]
+        if code_desc:
+            fields.append(code_desc)
+        codes = r.search(table, 'id>0', fields = fields)['data']
+        code_array = []
+
+        for row in codes:
+            code_row = [row.get(code_id), row.get(code_title)]
+            if code_desc:
+                code_row.append(row.get(code_desc))
+            code_array.append(code_row)
+
+        params.update(dict(codes = code_array))
 
         return params
 
