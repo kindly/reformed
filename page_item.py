@@ -108,7 +108,10 @@ class PageItem(object):
         if self.control and self.control.control_load:
             self.control.load(self, node, object, data, session)
 
+    def delete(self, node, object, data, session):
 
+        if self.control and self.control.control_delete:
+            self.control.delete(self, node, object, data, session)
 
 
 
@@ -248,26 +251,44 @@ class Dropdown(Control):
 
 class CodeGroup(Control):
 
-    def __init__(self, control_type, params = None, extra_params = None):
+    def __init__(self, control_type, params = None, extra_params = None, **kw):
 
         Control.__init__(self, control_type, params, extra_params)
 
         self.control_save = True
         self.control_load = True
 
+        self.code_table = params.get('code_table')
+        self.code_title = params.get('code_title_field')
+        self.code_desc = params.get('code_desc_field')
+
+    def configure(self, node):
+
+        table = node.table
+        self.rtable = r[table]
+
+        self.code_id = "id"
+
+        if not self.code_title:
+            self.code_title = r[self.code_table].title_field
+
+        if not self.code_desc:
+            self.code_desc = r[self.code_table].description_field
+
+        path, self.relation = self.rtable.table_path[self.code_table]
+
+        path_node = self.rtable.paths[(path[0],)]
+
+        self.relation_attr = path[0]
+        self.flag_table = path_node.table
+
+        self.join_key = self.relation.join_keys_from_table(self.flag_table)[0][0]
+
     def save(self, field, node, object, data, session):
 
-        code_group = node.code_groups[field.name]
+        self.configure(node)
 
-        flag_table = code_group.get('flag_table')
-        flag_code_field = code_group.get('flag_code_field')
-
-        rtable = object._table
-        relation_attr = rtable.one_to_many_tables[flag_table][0]
-        relation = rtable.relation_attributes[relation_attr]
-        join_key = relation.join_keys_from_table(flag_table)[0][0]
-
-        code_groups = getattr(object, relation_attr)
+        code_groups = getattr(object, self.relation_attr)
 
         code_group_data = data.get(field.name, [])
 
@@ -282,57 +303,55 @@ class CodeGroup(Control):
         current_codes = set()
 
         for obj in code_groups:
-            if getattr(obj, join_key) in no_codes:
+            if getattr(obj, self.join_key) in no_codes:
                 session.delete(obj)
             else:
-                current_codes.add(getattr(obj, join_key))
+                current_codes.add(getattr(obj, self.join_key))
 
         for code in yes_codes - current_codes:
-            new = r.get_instance(flag_table)
-            setattr(new, flag_code_field, code)
+            new = r.get_instance(self.flag_table)
+            setattr(new, self.join_key, code)
             code_groups.append(new)
             session.save_or_update(new)
 
     def load(self, field, node, object, data, session):
 
-        rtable = object._table
+        self.configure(node)
 
-        code_group = node.code_groups[field.name]
-
-        flag_table = code_group.get('flag_table')
-        flag_code_field = code_group.get('flag_code_field')
-        relation_attr = rtable.one_to_many_tables[flag_table][0]
-
-        code_groups = getattr(object, relation_attr)
+        code_groups = getattr(object, self.relation_attr)
 
         out = []
         for row in code_groups:
-            out.append(getattr(row, flag_code_field))
+            out.append(getattr(row, self.join_key))
+        print out
 
         data[field.name] = out
+
+    def delete(self, field, node, object, data, session):
+
+        self.configure(node)
+        code_groups = getattr(object, self.relation_attr)
+        for code in code_groups:
+            session.delete(code)
 
 
     def convert(self, field, node):
 
+        self.configure(node)
         params = dict(control = self.control_type)
-
         name = field.name
 
-        code_group = node.code_groups[name]
-        table = code_group.get('code_table')
-        code_id = code_group.get('code_field')
-        code_title = code_group.get('code_title_field')
-        code_desc = code_group.get('code_desc_field')
-        fields = [code_id, code_title]
-        if code_desc:
-            fields.append(code_desc)
-        codes = r.search(table, 'id>0', fields = fields)['data']
-        code_array = []
+        fields = ["id", self.code_title]
+        if self.code_desc:
+            fields.append(self.code_desc)
 
+        codes = r.search(self.code_table, fields = fields)['data']
+
+        code_array = []
         for row in codes:
-            code_row = [row.get(code_id), row.get(code_title)]
-            if code_desc:
-                code_row.append(row.get(code_desc))
+            code_row = [row["id"], row.get(self.code_title)]
+            if self.code_desc:
+                code_row.append(row.get(self.code_desc))
             code_array.append(code_row)
 
         params.update(dict(codes = code_array))

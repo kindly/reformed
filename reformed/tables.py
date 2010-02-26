@@ -97,6 +97,7 @@ class Table(object):
         self.table_type = kw.get("table_type", "user")
         self.entity_relationship = kw.get("entity_relationship", False)
         self.title_field = kw.get("title_field", None)
+        self.description_field = kw.get("description_field", None)
         self.summary_fields = kw.get("summary_fields", None)
         self.summary = kw.get("summary", None)
         self.primary_key_list = []

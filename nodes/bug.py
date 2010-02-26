@@ -111,25 +111,10 @@ class User(TableNode):
         input('notes', control = textarea(css = "large")),
         layout('spacer'),
         layout('box_start'),
-        input('usergroup', control = codegroup()),
+        input('usergroup', control = codegroup(code_table = 'user_group', code_desc_field = 'description')),
         layout('box_end'),
         layout('spacer'),
     ]
-
-
-    code_groups = {'usergroup':{
-                                    'code_table': 'user_group',
-                                    'code_field': 'id',
-                                    'code_desc_field': 'description',
-                                    'code_title_field': 'groupname',
-                                    'flag_table': 'user_group_user',
-                                    'flag_child_field': 'user_id',
-                                    'flag_code_field': 'user_group_id',
-                                    'flag_parent_field': 'id'
-                                  }
-                }
-
-
 
     login_fields = [
         layout('box_start'),
@@ -327,22 +312,11 @@ class UserGroup(TableNode):
         input('notes', control = textarea(css = "large", description = 'A longer more detailed description')),
         layout("spacer"),
         layout("box_start"),
-        input('permission', control = codegroup()),
+        input('permission', control = codegroup(code_table = 'permission', code_desc_field = 'description')),
         layout("box_end"),
         layout("spacer"),
     ]
 
-    code_groups = {'permission':{
-                                    'code_table': 'permission',
-                                    'code_field': 'id',
-                                    'code_desc_field': 'description',
-                                    'code_title_field': 'permission',
-                                    'flag_table': 'user_group_permission',
-                                    'flag_child_field': 'user_group_id',
-                                    'flag_code_field': 'permission_id',
-                                    'flag_parent_field': 'id'
-                                  }
-                    }
 
     def finalise(self):
         if self.command == '_save' and self.saved:
