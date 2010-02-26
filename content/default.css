@@ -641,8 +641,6 @@ div.f_text{
 div.f_description{
     color:green;
     font-size:0.8em;
-    float:left;
-    position:relative;
     margin-left:123px;
     clear:both;
 }

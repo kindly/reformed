@@ -1335,36 +1335,14 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             offset += substitute_data.length - match[0].length;
             out = out.substring(0, start) + substitute_data + out.substring(end);
         }
-   //     text = HTML_Encode_Clear(out);
-    //    out = text;
-        var converter = new Showdown.converter();
-        out = converter.makeHtml(out);
 
+        var mode = Showdown.MODE_FULL;
         if (inline){
-            // remove the <p> tags introduced by showdown
-            out = out.replace(/<\/?p>/, '');
+            mode = Showdown.MODE_SIMPLE;
         }
+        var converter = new Showdown.converter();
+        out = converter.makeHtml(out, mode);
 
-
-        // html
-/*        var offset = 0;
-        var reg = /(\[(\w+)([^\]]*)?\]).*?(\[\/\2\])/g;
-        while (match = reg.exec(text)){
-            if (match[2] == 'b'){
-                tag1 = '<b>';
-                tag2 = '</b>';
-            }
-            substitute_length = tag1.length + tag2.length
-            len_1 = match[1].length;
-            len_2 = match[4].length;
-            start = match.index + offset;
-            end = match.index + match[0].length + offset;
-            offset += substitute_length - match[1].length - match[4].length ;
-            out = out.substring(0, start) + tag1 + out.substring(start + len_1);
-            out = out.substring(0, end - len_2) + tag2 + out.substring(end);
-
-        }
-*/
         return out;
     }
 
@@ -1451,7 +1429,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         switch (item.params.control){
             case 'info':
                 if (value){
-                    value = process_html(value, row_data, true)
+                    value = process_html(value, row_data)
                     $div.append(value);
                 }
                 break;
@@ -1590,6 +1568,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         // form buttons
         if (row_data.__buttons){
             item = {params : { buttons : row_data.__buttons}};
+            value = $.Util.get_item_value(item, row_data);
             $control = '<div class="f_control_holder">' + button_box(item, value) + '</div>';
             $builder[builder_depth].append($control);
         }
