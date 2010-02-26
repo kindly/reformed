@@ -498,6 +498,7 @@ class SingleRecord(object):
         invalid_dict = {} 
         
         for key, obj in self.all_obj.iteritems():
+            obj._from_load = True
             try:
                 if self.flat_file and not self.flat_file.validation:
                     session.add_no_validate(obj)
