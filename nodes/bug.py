@@ -2,6 +2,7 @@ from node import TableNode
 from formencode import validators
 from page_item import *
 import reformed.search
+from form import form
 from global_session import global_session
 r = global_session.database
 
@@ -11,7 +12,7 @@ class Ticket(TableNode):
     form_params =  {"form_type": "action"}
     title_field = 'title'
 
-    fields = [
+    main = form(
         input('title'),
         layout('hr'),
         layout('column_start'),
@@ -23,7 +24,8 @@ class Ticket(TableNode):
         layout('column_end'),
         layout('hr'),
         input('summary', control = textarea(css = "large")),
-    ]
+    )
+
     list_title = 'ticket %s'
 
     def view(self, read_only = False):
@@ -38,7 +40,7 @@ class ListTicket(TableNode):
     form_params =  {"form_type": "normal"}
     title_field = 'title'
 
-    fields = [
+    main = form(
         input('title'),
         input('accepted', control = dropdown(["true", "false"])),
         input('complete_by' ),
@@ -47,7 +49,7 @@ class ListTicket(TableNode):
         input('priority_id', control = dropdown(True)),
         subform('old_comments'),
         subform('comment'),
-    ]
+    )
 
     subforms = {
         'old_comments':{
@@ -94,7 +96,7 @@ class User(TableNode):
     form_params =  {"form_type": "action"}
     title_field = 'name'
 
-    fields = [
+    main = form(
         layout('text', text = 'user..........'),
         layout('column_start'),
         input('name'),
@@ -114,7 +116,7 @@ class User(TableNode):
         input('usergroup', control = codegroup(code_table = 'user_group', code_desc_field = 'description')),
         layout('box_end'),
         layout('spacer'),
-    ]
+    )
 
     login_fields = [
         layout('box_start'),
@@ -271,12 +273,12 @@ class Permission(TableNode):
     table = "permission"
     form_params =  {"form_type": "action"}
     title_field = 'permission'
-    fields = [
+    main = form(
         layout("box_start"),
         input("permission"),
         input("description", css = 'large'),
         input("long_description", label = 'long description:', control = textarea(css = 'large')),
-    ]
+    )
 
     def finalise(self):
         if self.command == '_save' and self.saved:
@@ -304,7 +306,7 @@ class UserGroup(TableNode):
     table = "user_group"
     form_params =  {"form_type": "action"}
     title_field = 'user group'
-    fields = [
+    main = form(
         layout("box_start"),
         input('groupname', description = 'The name of the user group'),
         input('active', control = checkbox(description = 'Only active user groups give members permissions')),
@@ -315,7 +317,7 @@ class UserGroup(TableNode):
         input('permission', control = codegroup(code_table = 'permission', code_desc_field = 'description')),
         layout("box_end"),
         layout("spacer"),
-    ]
+    )
 
 
     def finalise(self):
@@ -344,7 +346,7 @@ class UserAdmin(TableNode):
     permissions = ['logged_in']
 
     form_params =  {"form_type": "action"}
-    fields = [
+    main = form(
         layout('text', text = 'Users {users}'),
         input(control = button_link('bug.User:new'), label = 'add user'),
         input(control = button_link('bug.User:list'), label = 'list users'),
@@ -357,7 +359,7 @@ class UserAdmin(TableNode):
         input(control = button_link('bug.Permission:new'), label = 'add permission'),
         input(control = button_link('bug.Permission:list'), label = 'list permissions'),
         layout('spacer'),
-    ]
+    )
 
     def call(self):
         session = r.Session()
@@ -380,11 +382,11 @@ class SysInfo(TableNode):
     form_params =  {"form_type": "action"}
     title_field = 'key'
 
-    fields = [
+    main = form(
         input('key'),
         input('value'),
         input('type', control = dropdown_code(dict(keys = [1, 2, 3], descriptions = ['String', 'Integer', 'Boolean']))),
-    ]
+    )
 
     def finalise(self):
         if self.command == '_save' and self.saved:
@@ -413,11 +415,11 @@ class Page(TableNode):
     form_params =  {"form_type": "action"}
     title_field = 'title'
 
-    fields = [
+    main = form(
         input("page", css = "large", description = "A reference for the page used for links etc."),
         input("title", css = "large", description = "The displayed title for the page."),
         input("body", control = textarea(css = "large long", description = "A longer more detailed description")),
-    ]
+    )
 
     view_fields = [
         input('title', control = info()),

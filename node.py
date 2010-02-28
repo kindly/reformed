@@ -25,6 +25,7 @@ import sqlalchemy as sa
 import datetime
 from global_session import global_session
 from page_item import link, link_list, info, input
+from form import Form
 r = global_session.database
 
 class Node(object):
@@ -33,6 +34,16 @@ class Node(object):
     commands = {}
 
     def __init__(self, data, node_name, last_node = None):
+
+        _forms = {}
+        for form_name, form in self.__class__.__dict__.iteritems():
+            if isinstance(form, Form):
+                form.set_name(form_name)
+                form.set_node(self)
+                _forms[form_name] = form
+
+        self.fields = _forms["main"].fields
+
         self.out = []
         self.name = node_name
         self.title = None
@@ -238,8 +249,6 @@ class TableNode(Node):
     """Node for table level elements"""
     table = None
     core_table = True
-    fields = []
-    field_list = []     # list of fields to be retrieved by searches (auto created)
     extra_fields = []
     form_params =  {"form_type": "normal"}
     list_title = 'item %s'
@@ -295,22 +304,12 @@ class TableNode(Node):
                 self.__class__.subform_data[name] = data
                 field.subform = data
                 self.setup_subforms(name)
-            # add data for code groups
-            # build the field list
-            self.field_list.append(field.name or '') ## FIXME should keep as None if does not exist
-        # add any extra fields to the field list
-        for field in self.extra_fields:
-            self.field_list.append(field)
 
     def setup_subforms(self, name):
         extra_fields = []
         for field in self.subforms.get(name).get('fields'):
             extra_fields.append(field.name)
         self.subform_field_list[name] = extra_fields
-
-
-    def node_search_single(self, where):
-        return r.search_single(self.table, where, fields = self.field_list, keep_all = True)
 
 
     def save_record_rows(self, session, table, fields, data, join_fields):
@@ -440,7 +439,6 @@ class TableNode(Node):
             session = r.Session()
             obj = r.search_single(self.table, where, session = session)
 
-            #data_out = self.node_search_single(where)
             data_out = {}
 
             for field in self.fields:
