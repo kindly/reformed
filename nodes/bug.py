@@ -327,7 +327,7 @@ class UserGroup(TableNode):
     def finalise(self):
         if self.command == '_save' and self.saved:
             if self.data.get('id',0) == 0:
-                self.out = self.create_form_data(self.fields, self.form_params)
+                self.out = self["main"].create_form_data()
                 self.set_form_message("User group %s saved!  Add more?" % self.data.get('groupname'))
                 self.set_form_buttons([['save user group', 'bug.UserGroup:_save:'], ['cancel', 'BACK']])
                 self.action = 'form'
@@ -402,7 +402,7 @@ class SysInfo(TableNode):
     def finalise(self):
         if self.command == '_save' and self.saved:
             if self.data.get('id',0) == 0:
-                self.out = self.create_form_data(self.fields, self.form_params)
+                self.out = self["main"].create_form_data()
                 self.set_form_message("Key %s saved!  Add more?" % self.data.get('key'))
                 self.action = 'form'
                 self.set_form_buttons([['add key', 'bug.SysInfo:_save:'], ['cancel', 'BACK']])
@@ -451,27 +451,23 @@ class Page(TableNode):
         page = self.data.get('page')
         if page:
             where = 'page = %s' % page
-        try:
-            data_out = self.node_search_single(where)
-            id = data_out.get('id')
-            if self.title_field and data_out.has_key(self.title_field):
-                self.title = data_out.get(self.title_field)
-            else:
-                self.title = '%s: %s' % (self.table, id)
 
-        except sa.orm.exc.NoResultFound:
-            data = None
-            data_out = {}
-            id = None
-            self.title = 'unknown'
-            print 'no data found'
+
+        data_out = r.search_single(self["main"].table, where)
+
+        id = data_out.get('id')
+        if self.title_field and data_out.has_key(self.title_field):
+            self.title = data_out.get(self.title_field)
+        else:
+            self.title = '%s: %s' % (self.table, id)
+
 
         if self.command == 'edit':
-            fields = self.fields
+            fields = self["main"].fields
         else:
             fields = self.view_fields
 
-        data = self.create_form_data(fields, self.form_params, data_out, read_only)
+        data = self["main"].create_form_data(data_out, read_only)
         self.out = data
         self.action = 'form'
 
@@ -485,7 +481,7 @@ class Page(TableNode):
     def finalise(self):
         if self.command == '_save' and self.saved:
             if self.data.get('id',0) == 0:
-                self.out = self.create_form_data(self.fields, self.form_params)
+                self.out = self["main"].create_form_data
                 self.set_form_message("Page %s saved!  Add more?" % self.data.get('title'))
                 self.action = 'form'
                 self.set_form_buttons([['add page', 'bug.Page:_save:'], ['cancel', 'BACK']])
