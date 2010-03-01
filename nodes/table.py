@@ -49,26 +49,23 @@ class Table(node.TableNode):
         input('entity'),
         input('logged'),
         subform('fields'),
+        params = {'title' : 'Table', 'noautosave' : True}
+
     )
 
-    form_params ={'title' : 'Table', 'noautosave' : True}
-    subforms = {
-        'fields':{
-            'fields': [
-                input('field_name'),
-                input('field_type', control = dropdown(allowed_field_types)),
-                input('length'),
-                input('mandatory'),
-                input('default'),
-            ],
-            "params":{
-                "form_type": "grid",
-                "title": 'fields',
-                "id_field": "field_id",
-                'noautosave' : True
-            }
-        }
-    }
+    fields = form(
+        input('field_name'),
+        input('field_type', control = dropdown(allowed_field_types)),
+        input('length'),
+        input('mandatory'),
+        input('default'),
+        params = {
+            "form_type": "grid",
+            "title": 'fields',
+            "id_field": "field_id",
+            'noautosave' : True}
+    )
+
 
     def call(self):
         if self.command == 'list':
@@ -276,7 +273,7 @@ class Table(node.TableNode):
         form_params = self.form_params.copy()
         form_params['extras'] = {'table' : table_id}
 
-        data = self.create_form_data(self.fields, form_params, table_data)
+        data = self["main"].create_form_data(table_data)
         self.action = 'form'
         self.out = data
 
@@ -284,38 +281,39 @@ class Edit(node.TableNode):
 
     def initialise(self):
         self.table_id = int(self.data.get('t'))
-        self.extra_data = {"t": self.table_id}
-        fields = []
-        field_list = []
-        obj = r[self.table_id]
-        self.table = obj.name
-        columns = obj.schema_info
-        for field in columns.keys():
-            if field not in ['_modified_date', '_modified_by','_core_entity_id', '_version']:
-                if field in columns:
-                    field_schema = obj.schema_info[field]
-                    params = {'validation' : field_schema}
-                    try:
-                        if obj.fields[field].default:
-                            params['default'] =  obj.fields[field].default
-                        field_type = obj.fields[field].__class__.__name__
-                        # dirty hack to get a dropdown test
-                        if field_type == 'Boolean':
-                            params['control'] = 'dropdown'
-                            params['autocomplete'] = ['true', 'false']
-                        fields.append([field, field_type, '%s:' % field, params])
-                    except:
-                        fields.append([field, 'Text', '%s:' % field, params])
-                else:
-                    fields.append([field, 'Text', '%s:' % field])
-                field_list.append(field)
-        self.field_list = field_list
-        self.fields = fields
-        self.form_params =  {"form_type": "grid",
+
+        rtable = r[int(self.table_id)]
+
+        self.extra_data = {'t':self.table_id}
+
+        title_field = rtable.title_field
+
+        form_params =  {"form_type": "grid",
                              "extras" : self.extra_data,
-                             "title" : self.table,
+                             "title" : rtable.name,
                              "read_only" : False
-                            }
+                        }
+
+        fields = []
+
+        for name, field in rtable.fields.iteritems():
+            if field.category <> "field":
+                continue
+
+            if field.type == "Text" and field.length > 500:
+                fields.append(input(field.name,
+                                    control = textarea(css = "large")))
+            elif field.type == "Boolean":
+                fields.append(input(field.name,
+                                    control = dropdown(["true", "false"])))
+            else:
+                fields.append(input(field.name))
+
+        main = form(*fields, table = self.table, params = form_params)
+        main.set_name("main")
+        main.set_node(self)
+        self._forms["main"] = main
+
 
     def view(self, read_only=False, limit = 100):
 

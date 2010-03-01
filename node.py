@@ -396,7 +396,9 @@ class TableNode(Node):
 
             data_out = {}
 
-            obj = r.search_single(self["main"].table, where, session = session)
+            table = self["main"].table or self.table
+
+            obj = r.search_single(table, where, session = session)
 
             for field in util.INTERNAL_FIELDS:
                 try:
@@ -483,22 +485,24 @@ class TableNode(Node):
         limit = self.get_data_int('l', limit)
         offset = self.get_data_int('o')
 
-        if r[self["main"].table].entity:
+        table = self["main"].table or self.table
+
+        if r[table].entity:
             results = r.search('_core_entity',
-                                        where = "%s.id >0" % self["main"].table,
-                                        limit = limit,
-                                        offset = offset,
-                                        count = True)
+                               where = "%s.id >0" % table,
+                               limit = limit,
+                               offset = offset,
+                               count = True)
         else:
-            results = r.search(self["main"].table,
-                                        where = "id >0",
-                                        limit = limit,
-                                        offset = offset,
-                                        count = True)
+            results = r.search(table,
+                               where = "id >0",
+                               limit = limit,
+                               offset = offset,
+                               count = True)
 
         data = results['data']
         # build the links
-        if r[self["main"].table].entity:
+        if r[table].entity:
             for row in data:
                 row['title'] = self.build_node(row['title'], 'edit', '__id=%s' % row['id'])
                 row['edit'] = [self.build_node('Edit', 'edit', '__id=%s' % row['id']),

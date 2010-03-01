@@ -139,9 +139,10 @@ class SubForm(object):
 
         data = subform.create_form_data()
 
+        data['form']['table_name'] =  subform.table
+
         data['form']['parent_id'] =  subform.parent_id
         data['form']['child_id'] =  subform.child_id
-        data['form']['table_name'] =  subform.table
         data['control'] = 'subform'
 
         row['params'] = data
@@ -153,6 +154,7 @@ class SubForm(object):
         subform = node[self.name]
         if subform.params["form_type"] != "action":
             data[self.name] = subform.load_subform(data)
+
 
 class Layout(object):
 

@@ -481,7 +481,7 @@ class Page(TableNode):
     def finalise(self):
         if self.command == '_save' and self.saved:
             if self.data.get('id',0) == 0:
-                self.out = self["main"].create_form_data
+                self.out = self["main"].create_form_data()
                 self.set_form_message("Page %s saved!  Add more?" % self.data.get('title'))
                 self.action = 'form'
                 self.set_form_buttons([['add page', 'bug.Page:_save:'], ['cancel', 'BACK']])

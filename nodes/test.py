@@ -264,7 +264,7 @@ class AutoFormPlus(TableNode):
         fields = []
 
         for name, field in rtable.fields.iteritems():
-            if name in ['_modified_date', '_modified_by','_core_entity_id', '_version']:
+            if field.category <> "field":
                 continue
 
             if field.type == "Text" and field.length > 500:
@@ -276,7 +276,7 @@ class AutoFormPlus(TableNode):
             else:
                 fields.append(input(field.name))
 
-        main = form(*fields, params = form_params)
+        main = form(*fields, table = self.table, params = form_params)
         main.set_name("main")
         main.set_node(self)
         self._forms["main"] = main
