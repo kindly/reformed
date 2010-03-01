@@ -21,9 +21,9 @@
 
 import node
 import reformed.fields as rfields
-from reformed.tables import Table
 from global_session import global_session
 r = global_session.database
+from form import form
 from page_item import *
 
 
@@ -32,23 +32,25 @@ class Table(node.TableNode):
     allowed_field_types = ['Text', 'Email', 'Integer', 'Money', 'DateTime', 'Boolean']
     allowed_join_types = ['OneToMany','OneToOne','ManyToOne']
 
-    list_fields = [
+    listing = form(
         input("title", control = link(css = 'form_title')),
         input("summary", control = info()),
         input("table_type", control = info()),
         input("edit", control = link_list()),
-    ]
 
-    list_params = {"form_type": "results"}
+        params = {"form_type": "results"}
+    )
 
-    fields = [
+
+    main = form(
         input('table_name'),
         input('table_type', control = dropdown(allowed_field_types, type = 'list')),
         input('summary', control = textarea()),
         input('entity'),
         input('logged'),
         subform('fields'),
-    ]
+    )
+
     form_params ={'title' : 'Table', 'noautosave' : True}
     subforms = {
         'fields':{
@@ -236,7 +238,7 @@ class Table(node.TableNode):
                              'id' : table.table_id,
                              'summary': table.summary,
                              'edit' : edit})
-        data = self.create_form_data(self.list_fields, self.list_params, {'__array' : data})
+        data = self["listing"].create_form_data({'__array' : data})
         self.action = 'form'
         self.out = data
 
@@ -323,7 +325,7 @@ class Edit(node.TableNode):
 
         obj = r[self.table_id]
         results = r.search(obj.name, limit=limit, offset=offset, count=True)
-        data = self.create_form_data(self.fields, self.form_params, results['data'])
+        data = self["main"].create_form_data(results['data'])
 
         # add the paging info
         data['paging'] = {'row_count' : results['__count'],

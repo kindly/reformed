@@ -23,7 +23,9 @@ from formencode import validators
 import node
 from node import TableNode, Node, AutoForm
 import sqlalchemy as sa
+from page_item import *
 from global_session import global_session
+from form import form
 r = global_session.database
 ##from .reformed import reformed as table_functions
 
@@ -246,38 +248,40 @@ class Sponsorship(Node):
 class AutoFormPlus(TableNode):
 
     def initialise(self):
+
         self.table = self.data.get('table')
+
+        rtable = r[self.table]
+
         self.extra_data = {'table':self.table}
+
+        title_field = rtable.title_field
+
+        form_params =  {"form_type": "action",
+                        "extras" : self.extra_data,
+                        "title" : rtable.name
+                        }
         fields = []
-        field_list = []
-        obj = r[self.table]
-        self.title_field = obj.title_field
-        columns = obj.schema_info
-        for field in columns.keys():
-            if field not in ['_modified_date', '_modified_by','_core_entity_id', '_version']:
-                if field in columns:
-                    field_schema = obj.schema_info[field]
-                    params = {'validation' : field_schema}
-                    try:
-                        rfield = obj.fields[field]
-                        field_type = rfield.__class__.__name__
-                        if field_type == "Text" and field_schema[0]["max"] > 500:
-                            params["control"] = "textarea"
-                            params["css"] = "large"
-                        if field_type == "Boolean":
-                            params["control"] = "checkbox"
 
-                        fields.append([field, field_type, '%s:' % field, params])
-                    except:
-                        fields.append([field, 'Text', '%s:' % field, params])
+        for name, field in rtable.fields.iteritems():
+            if name in ['_modified_date', '_modified_by','_core_entity_id', '_version']:
+                continue
 
-                field_list.append(field)
-        self.field_list = field_list
-        self.fields = fields
-        self.form_params =  {"form_type": "action",
-                             "extras" : self.extra_data,
-                             "title" : obj.name
-                            }
+            if field.type == "Text" and field.length > 500:
+                fields.append(input(field.name,
+                                    control = textarea(css = "large")))
+            elif field.type == "Boolean":
+                fields.append(input(field.name,
+                                    control = dropdown(["true", "false"])))
+            else:
+                fields.append(input(field.name))
 
+        main = form(*fields, params = form_params)
+        main.set_name("main")
+        main.set_node(self)
+        self._forms["main"] = main
 
+    def finalise(self):
+
+        self.set_form_buttons([['add', 'test.AutoFormPlus:_save:'], ['cancel', 'BACK']])
 

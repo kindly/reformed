@@ -46,43 +46,43 @@ class PageItem(object):
 
         self.extra_params = kw
 
-    def params(self, node):
+    def params(self, form):
 
         params = self.extra_params.copy()
 
         if self.control:
-            params.update(self.control.convert(self, node))
+            params.update(self.control.convert(self, form))
 
         if self.layout:
-            params.update(self.layout.convert(self, node))
+            params.update(self.layout.convert(self, form))
 
         return params
 
-    def convert(self, node, field_list):
+    def convert(self, form, field_list):
 
         row = {}
         row['name'] = self.name
-        row['type'] = self.set_data_type(node)
+        row['type'] = self.set_data_type(form)
         row['title'] = self.label
-        row['params'] = self.set_params(node)
+        row['params'] = self.set_params(form)
 
         return row
 
-    def set_data_type(self, node):
+    def set_data_type(self, form):
 
         if self.data_type:
             return self.data_type
-        if node.table:
-            rfield = r[node.table].fields.get(self.name)
+        if form.table:
+            rfield = r[form.table].fields.get(self.name)
             if rfield:
                 return rfield.type
 
-    def set_params(self, node):
+    def set_params(self, form):
 
-        params = self.params(node)
+        params = self.params(form)
 
-        if node.table and self.validation:
-            rfield = r[node.table].fields.get(self.name)
+        if form.table and self.validation:
+            rfield = r[form.table].fields.get(self.name)
             if rfield:
                 if "validation" not in params:
                     params["validation"] = rfield.validation_info
@@ -91,28 +91,27 @@ class PageItem(object):
 
         return params
 
-    def save(self, node, object, data, session):
+    def save(self, form, node, object, data, session):
 
         if self.name in object._table.fields:
             value = data.get(self.name)
             setattr(object, self.name, value)
 
         if self.control and self.control.control_save:
-            self.control.save(self, node, object, data, session)
+            self.control.save(self, form, node, object, data, session)
 
-    def load(self, node, object, data, session):
+    def load(self, form, node, object, data, session):
 
         if self.name in object._table.fields:
             data[self.name] = util.convert_value(getattr(object, self.name))
 
         if self.control and self.control.control_load:
-            self.control.load(self, node, object, data, session)
+            self.control.load(self, form, node, object, data, session)
 
-    def delete(self, node, object, data, session):
+    def delete(self, form, node, object, data, session):
 
         if self.control and self.control.control_delete:
-            self.control.delete(self, node, object, data, session)
-
+            self.control.delete(self, form, node, object, data, session)
 
 
 
@@ -128,23 +127,32 @@ class SubForm(object):
         if self.name and not self.label:
             self.label = self.name + ":"
 
-        self.subform = {}
 
+    def convert(self, form, field_list):
 
-    def convert(self, node, field_list):
+        subform = form.node[self.name]
 
         row = {}
         row['name'] = self.name
         row['type'] = self.data_type
         row['title'] = self.label
-        row['params'] = self.params()
+
+        data = subform.create_form_data()
+
+        data['form']['parent_id'] =  subform.parent_id
+        data['form']['child_id'] =  subform.child_id
+        data['form']['table_name'] =  subform.table
+        data['control'] = 'subform'
+
+        row['params'] = data
 
         return row
 
-    def params(self):
+    def load(self, form, node, object, data, session):
 
-        return self.subform or {}
-
+        subform = node[self.name]
+        if subform.params["form_type"] != "action":
+            data[self.name] = subform.load_subform(data)
 
 class Layout(object):
 
@@ -153,7 +161,7 @@ class Layout(object):
         self.layout_type = layout_type
         self.params = params
 
-    def convert(self, field, node):
+    def convert(self, field, form):
 
         params = dict(layout = self.layout_type)
         params.update(self.params)
@@ -172,7 +180,7 @@ class Control(object):
         self.control_save = False
         self.control_load = False
 
-    def convert(self, field, node):
+    def convert(self, field, form):
 
         params = dict(control = self.control_type)
 
@@ -186,7 +194,7 @@ class Control(object):
 
 class Dropdown(Control):
 
-    def convert(self, field, node):
+    def convert(self, field, form):
 
         params = dict(control = self.control_type)
 
@@ -211,7 +219,7 @@ class Dropdown(Control):
             filter_value = autocomplete_options.get("filter_value")
 
         if autocomplete_options == True:
-            rfield = database[node.table].fields[field.name]
+            rfield = database[form.table].fields[field.name]
 
             if rfield.column.defined_relation:
                 rfield = rfield.column.defined_relation.parent
@@ -262,9 +270,9 @@ class CodeGroup(Control):
         self.code_title = params.get('code_title_field')
         self.code_desc = params.get('code_desc_field')
 
-    def configure(self, node):
+    def configure(self, form):
 
-        table = node.table
+        table = form.table
         self.rtable = r[table]
 
         self.code_id = "id"
@@ -284,9 +292,9 @@ class CodeGroup(Control):
 
         self.join_key = self.relation.join_keys_from_table(self.flag_table)[0][0]
 
-    def save(self, field, node, object, data, session):
+    def save(self, field, form, node, object, data, session):
 
-        self.configure(node)
+        self.configure(form)
 
         code_groups = getattr(object, self.relation_attr)
 
@@ -314,30 +322,29 @@ class CodeGroup(Control):
             code_groups.append(new)
             session.save_or_update(new)
 
-    def load(self, field, node, object, data, session):
+    def load(self, field, form, node, object, data, session):
 
-        self.configure(node)
+        self.configure(form)
 
         code_groups = getattr(object, self.relation_attr)
 
         out = []
         for row in code_groups:
             out.append(getattr(row, self.join_key))
-        print out
 
         data[field.name] = out
 
-    def delete(self, field, node, object, data, session):
+    def delete(self, field, form, node, object, data, session):
 
-        self.configure(node)
+        self.configure(form)
         code_groups = getattr(object, self.relation_attr)
         for code in code_groups:
             session.delete(code)
 
 
-    def convert(self, field, node):
+    def convert(self, field, form):
 
-        self.configure(node)
+        self.configure(form)
         params = dict(control = self.control_type)
         name = field.name
 

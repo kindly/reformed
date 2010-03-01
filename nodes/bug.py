@@ -8,10 +8,6 @@ r = global_session.database
 
 class Ticket(TableNode):
 
-    table = "ticket"
-    form_params =  {"form_type": "action"}
-    title_field = 'title'
-
     main = form(
         input('title'),
         layout('hr'),
@@ -24,6 +20,10 @@ class Ticket(TableNode):
         layout('column_end'),
         layout('hr'),
         input('summary', control = textarea(css = "large")),
+
+        table = "ticket",
+        params =  {"form_type": "action"},
+        title_field = 'title'
     )
 
     list_title = 'ticket %s'
@@ -34,11 +34,10 @@ class Ticket(TableNode):
         self.next_data = dict(data = self.data,
                               command = "view")
 
-class ListTicket(TableNode):
+    def finalise(self):
+        self.set_form_buttons([['add', 'bug.Ticket:_save:'], ['cancel', 'BACK']])
 
-    table = "ticket"
-    form_params =  {"form_type": "normal"}
-    title_field = 'title'
+class ListTicket(TableNode):
 
     main = form(
         input('title'),
@@ -49,36 +48,33 @@ class ListTicket(TableNode):
         input('priority_id', control = dropdown(True)),
         subform('old_comments'),
         subform('comment'),
+
+        table = "ticket",
+        params =  {"form_type": "normal"},
+        title_field = 'title',
     )
 
-    subforms = {
-        'old_comments':{
-            'fields': [
-                input('created_date'),
-                input('note', control = textarea(css = "large")),
-            ],
-            "parent_id": "_core_entity_id",
-            "child_id": "_core_entity_id",
-            "table": "comment",
-            "params":{
-                "form_type": "continuous"
-            }
-        },
+    old_comments = form(
+        input('created_date'),
+        input('note', control = textarea(css = "large")),
 
-        'comment':{
-            'fields': [
-                input('note', control = textarea(css = "large")),
-                input('moo', control = checkbox()),
-                input(label = 'add comment', control = button(node = 'bug.ListTicket:_save:')),
-            ],
-            "parent_id": "_core_entity_id",
-            "child_id": "_core_entity_id",
-            "table": "comment",
-            "params":{
-                "form_type": "action"
-            }
-        }
-    }
+        parent_id = "_core_entity_id",
+        child_id = "_core_entity_id",
+        table = "comment",
+        params = {"form_type": "continuous"}
+    )
+
+    comment = form(
+
+        input('note', control = textarea(css = "large")),
+        input('moo', control = checkbox()),
+        input(label = 'add comment', control = button(node = 'bug.ListTicket:_save:')),
+
+        parent_id = "_core_entity_id",
+        child_id = "_core_entity_id",
+        table = "comment",
+        params ={"form_type": "action"}
+    )
 
     list_title = 'ticket %s'
 
@@ -86,15 +82,10 @@ class ListTicket(TableNode):
 
         super(ListTicket, self).save()
         self.action = "redirect"
-        print "-&"*5, self.data
         self.link = "bug.ListTicket:view:__id=%s" % self.data.get("_core_entity_id")
 
 class User(TableNode):
 
-
-    table = "user"
-    form_params =  {"form_type": "action"}
-    title_field = 'name'
 
     main = form(
         layout('text', text = 'user..........'),
@@ -116,28 +107,35 @@ class User(TableNode):
         input('usergroup', control = codegroup(code_table = 'user_group', code_desc_field = 'description')),
         layout('box_end'),
         layout('spacer'),
+
+        table = "user",
+        params =  {"form_type": "action"},
+        title_field = 'name'
     )
 
-    login_fields = [
+    login_form = form(
         layout('box_start'),
         input('login_name', label = 'username:'),
         input('password', control = password()),
         input(label = 'Log in', control = button(node = 'bug.User:login:')),
         layout('box_end'),
-    ]
-    login_form_params =  {"form_type": "action"}
+
+        params = {"form_type": "action"}
+    )
+
     login_validations = [
         ['login_name', validators.UnicodeString],
         ['password', validators.UnicodeString]
     ]
 
-    about_me_fields = [
+    about_me_form = form(
         layout('box_start'),
         input('login_name', label = 'username:'),
         input('about_me', label = 'about me:', control = textarea(css = "large")),
         layout('box_end'),
-    ]
-    about_me_form_params =  {"form_type": "action"}
+
+        params = {"form_type": "action"}
+    )
 
     about_me_form_fields = ['login_name', 'about_me']
 
@@ -179,14 +177,14 @@ class User(TableNode):
             data = dict(__message = message)
         else:
             data = {}
-        out = self.create_form_data(self.login_fields, self.login_form_params, data)
+        out = self["login_form"].create_form_data(data)
         self.action = 'form'
         self.out = out
 
     def about_me(self):
         where = 'id = %s' % global_session.session['user_id']
         data = r.search_single('user', where, fields = self.about_me_form_fields, keep_all = True)
-        out = self.create_form_data(self.about_me_fields, self.about_me_form_params, data)
+        out = self["about_me_form"].create_form_data(data)
         self.action = 'form'
         self.out = out
 
@@ -196,7 +194,7 @@ class User(TableNode):
         session = r.Session()
         filter = dict(id =  global_session.session['user_id'])
         data = self.data
-        self.save_record(session, 'user', self.about_me_fields, data, filter, None)
+        self.save_record(session, 'user', self["about_me_form"].fields, data, filter, None)
         session.close()
         # output data
         out = {}
@@ -229,9 +227,7 @@ class User(TableNode):
         result = r.search('permission', 'user_group_user.user_id = %s' % user_id, fields=['permission'])['data']
         permissions = ['logged_in']
         for row in result:
-            print row
             permissions.append(row.get('permission'))
-        print permissions
         return permissions
 
     def logout(self):
@@ -248,7 +244,7 @@ class User(TableNode):
     def finalise(self):
         if self.command == '_save' and self.saved:
             if self.data.get('id',0) == 0:
-                self.out = self.create_form_data(self.fields, self.form_params)
+                self.out = self["main"].create_form_data()
                 self.set_form_message("User %s saved!  Add more?" % self.data.get('name'))
                 self.action = 'form'
                 self.set_form_buttons([['add user', 'bug.User:_save:'], ['cancel', 'BACK']])
@@ -278,12 +274,16 @@ class Permission(TableNode):
         input("permission"),
         input("description", css = 'large'),
         input("long_description", label = 'long description:', control = textarea(css = 'large')),
+
+        table = "permission",
+        params =  {"form_type": "action"},
+        title_field = 'permission'
     )
 
     def finalise(self):
         if self.command == '_save' and self.saved:
             if self.data.get('id',0) == 0:
-                self.out = self.create_form_data(self.fields, self.form_params)
+                self.out = self["main"].create_form_data()
                 self.set_form_message("Permission %s saved!  Add more?" % self.data.get('permission'))
                 self.action = 'form'
                 self.set_form_buttons([['add permission', 'bug.Permission:_save:'], ['cancel', 'BACK']])
@@ -317,6 +317,10 @@ class UserGroup(TableNode):
         input('permission', control = codegroup(code_table = 'permission', code_desc_field = 'description')),
         layout("box_end"),
         layout("spacer"),
+
+        table = "user_group",
+        params =  {"form_type": "action"},
+        title_field = 'user group'
     )
 
 
@@ -359,6 +363,8 @@ class UserAdmin(TableNode):
         input(control = button_link('bug.Permission:new'), label = 'add permission'),
         input(control = button_link('bug.Permission:list'), label = 'list permissions'),
         layout('spacer'),
+
+        params =  {"form_type": "action"},
     )
 
     def call(self):
@@ -367,7 +373,7 @@ class UserAdmin(TableNode):
         user_groups = reformed.search.Search(r, 'user_group', session).search().count()
         permissions = reformed.search.Search(r, 'permission', session).search().count()
         data = {'users' : users, "user_groups" : user_groups , "permissions" : permissions }
-        out = self.create_form_data(self.fields, params = self.form_params, data = data)
+        out = self["main"].create_form_data(data)
         self.out = out
         self.action = 'form'
         self.title = 'listing'
@@ -386,6 +392,11 @@ class SysInfo(TableNode):
         input('key'),
         input('value'),
         input('type', control = dropdown_code(dict(keys = [1, 2, 3], descriptions = ['String', 'Integer', 'Boolean']))),
+
+        table = "_system_info",
+        params =  {"form_type": "action"},
+        title_field = 'key',
+
     )
 
     def finalise(self):
@@ -419,6 +430,10 @@ class Page(TableNode):
         input("page", css = "large", description = "A reference for the page used for links etc."),
         input("title", css = "large", description = "The displayed title for the page."),
         input("body", control = textarea(css = "large long", description = "A longer more detailed description")),
+
+        table = "page",
+        params =  {"form_type": "action"},
+        title_field = 'title'
     )
 
     view_fields = [

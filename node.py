@@ -25,7 +25,7 @@ import sqlalchemy as sa
 import datetime
 from global_session import global_session
 from page_item import link, link_list, info, input
-from form import Form
+from form import form, Form
 r = global_session.database
 
 class Node(object):
@@ -35,14 +35,14 @@ class Node(object):
 
     def __init__(self, data, node_name, last_node = None):
 
-        _forms = {}
-        for form_name, form in self.__class__.__dict__.iteritems():
-            if isinstance(form, Form):
+        self._forms = {}
+        for form_name in dir(self):
+            if isinstance(getattr(self, form_name), Form):
+                print form_name
+                form = getattr(self, form_name)
                 form.set_name(form_name)
                 form.set_node(self)
-                _forms[form_name] = form
-
-        self.fields = _forms["main"].fields
+                self._forms[form_name] = form
 
         self.out = []
         self.name = node_name
@@ -73,6 +73,9 @@ class Node(object):
         print 'first call:', self.first_call
         print 'data:', self.data
         print '~' * 19
+
+    def __getitem__(self, value):
+        return self._forms[value]
 
     def call(self):
         """called when the node is used.  Checks to see if there
@@ -183,39 +186,15 @@ class Node(object):
         self.bookmark = result
 
 
-    def create_form_data(self, fields, params=None, data=None, read_only=False):
-        out = {
-            "form": {
-                "fields":self.create_fields(fields)
-            },
-            "type": "form",
-        }
-        if data:
-            out['data'] = data
-        else:
-            out['data'] = {}
-        if params:
-            out['form']['params'] = params.copy()
-        if read_only:
-            if not out['form']['params']:
-                out['form']['params'] = {}
-            out['form']['params']['read_only'] = True
-        return out
-
-    def create_fields(self, fields_list):
-
-        fields = []
-        for field in fields_list:
-            row = field.convert(self, fields_list)
-            fields.append(row)
-        return fields
-
     def set_form_message(self, message):
         """Sets the button info to be displayed by a form."""
         self.out['data']['__message'] = message
 
     def set_form_buttons(self, button_list):
         """Sets the button info to be displayed by a form."""
+        if not self.out.get('data'):
+            self.out["data"] = {}
+
         self.out['data']['__buttons'] = button_list
 
     def validate_data(self, data, field, validator):
@@ -261,18 +240,17 @@ class TableNode(Node):
     code_list = {}
     first_run = True
 
-    list_fields = [
+    listing = form(
         input('title', data_type = 'link', control = link(css = 'form_title')),
         input('summarty', data_type = 'info', control = info()),
         input('edit', data_type = 'link_list', control = link_list()),
-    ]
 
-    list_params = {"form_type": "results"}
+        params = {"form_type": "results"}
+    )
 
 
     def __init__(self, *args, **kw):
         super(TableNode, self).__init__(*args, **kw)
-        self.setup_forms()
         if self.__class__.first_run:
             self.__class__.first_run = False
             self.setup_commands()
@@ -290,27 +268,6 @@ class TableNode(Node):
         commands['delete'] = dict(command = 'delete')
         commands['new'] = dict(command = 'new')
 
-    def setup_forms(self):
-        for field in self.fields:
-            # add subform data
-            if field.page_item_type == 'subform':
-                name = field.name
-                subform = self.__class__.subforms.get(name)
-                data = self.create_form_data(subform.get('fields'), subform.get('params'))
-                data['form']['parent_id'] =  subform.get('parent_id')
-                data['form']['child_id'] =  subform.get('child_id')
-                data['form']['table_name'] =  subform.get('table')
-                data['control'] = 'subform'
-                self.__class__.subform_data[name] = data
-                field.subform = data
-                self.setup_subforms(name)
-
-    def setup_subforms(self, name):
-        extra_fields = []
-        for field in self.subforms.get(name).get('fields'):
-            extra_fields.append(field.name)
-        self.subform_field_list[name] = extra_fields
-
 
     def save_record_rows(self, session, table, fields, data, join_fields):
         for row_data in data:
@@ -324,7 +281,7 @@ class TableNode(Node):
 
     def save_record(self, session, table, fields, data, filter, root, join_fields = []):
         print 'table %s' % table
-        print 'fields %s' % fields
+        #print 'fields %s' % fields
         errors = None
         try:
             if filter:
@@ -335,8 +292,7 @@ class TableNode(Node):
                 print 'new record'
                 record_data = r.get_instance(table)
             for field in fields:
-                print field
-                field.save(self, record_data, data, session)
+                field.save(self["main"], self, record_data, data, session)
 
             # if this is a subform we need to update/add the join field
             # FIXME is this needed here or just for new?
@@ -378,12 +334,12 @@ class TableNode(Node):
             filter = {}
         subform = self.data.get("__subform")
         if subform:
-            child_id = self.subforms[subform]["child_id"]
-            fields = self.subforms[subform]["fields"] + [input(child_id, data_type = "Integer")]
-            table = self.subforms[subform]["table"]
+            child_id = self[subform].child_id
+            fields = list(self[subform].fields) + [input(child_id, data_type = "Integer")]
+            table = self[subform].table
         else:
-            table = self.table
-            fields = self.fields
+            table = self["main"].table
+            fields = self["main"].fields
 
         record_data = self.save_record(session, table, fields, self.data, filter, root)
 
@@ -420,7 +376,7 @@ class TableNode(Node):
     def new(self):
 
         data_out = {}
-        data = self.create_form_data(self.fields, self.form_params, data_out)
+        data = self._forms["main"].create_form_data(data_out)
         self.out = data
         self.action = 'form'
 
@@ -437,17 +393,22 @@ class TableNode(Node):
 
         try:
             session = r.Session()
-            obj = r.search_single(self.table, where, session = session)
 
             data_out = {}
 
-            for field in self.fields:
-                field.load(self, obj, data_out, session)
+            obj = r.search_single(self["main"].table, where, session = session)
 
             for field in util.INTERNAL_FIELDS:
-                extra_field = getattr(obj, field)
+                try:
+                    extra_field = getattr(obj, field)
+                except AttributeError:
+                    extra_field = None
+
                 if extra_field:
                     data_out[field] = util.convert_value(extra_field)
+
+            for field in self["main"].fields:
+                field.load(self["main"], self, obj, data_out, session)
 
             id = data_out.get('id')
             if self.title_field and data_out.has_key(self.title_field):
@@ -463,13 +424,8 @@ class TableNode(Node):
             print 'no data found'
 
 
-        if data_out:
-            for subform_name in self.subforms.keys():
-                ## FIXME look at logic to determining what data is sent
-                if self.subforms[subform_name]["params"]["form_type"] != "action":
-                    data_out[subform_name] = self.subform(subform_name, data_out)
+        data = self["main"].create_form_data(data_out, read_only)
 
-        data = self.create_form_data(self.fields, self.form_params, data_out, read_only)
         self.out = data
         self.action = 'form'
 
@@ -496,8 +452,8 @@ class TableNode(Node):
         try:
             data = session.query(obj).filter_by(**filter).one()
             # see if fields have special delete
-            for field in self.fields:
-                field.delete(self, data, data, session)
+            for field in self["main"].fields:
+                field.delete(self["main"], self, data, data, session)
 
             session.delete(data)
             session.commit()
@@ -527,14 +483,14 @@ class TableNode(Node):
         limit = self.get_data_int('l', limit)
         offset = self.get_data_int('o')
 
-        if r[self.table].entity:
+        if r[self["main"].table].entity:
             results = r.search('_core_entity',
-                                        where = "%s.id >0" % self.table,
+                                        where = "%s.id >0" % self["main"].table,
                                         limit = limit,
                                         offset = offset,
                                         count = True)
         else:
-            results = r.search(self.table,
+            results = r.search(self["main"].table,
                                         where = "id >0",
                                         limit = limit,
                                         offset = offset,
@@ -542,7 +498,7 @@ class TableNode(Node):
 
         data = results['data']
         # build the links
-        if r[self.table].entity:
+        if r[self["main"].table].entity:
             for row in data:
                 row['title'] = self.build_node(row['title'], 'edit', '__id=%s' % row['id'])
                 row['edit'] = [self.build_node('Edit', 'edit', '__id=%s' % row['id']),
@@ -556,13 +512,14 @@ class TableNode(Node):
                 if self.title_field and row.has_key(self.title_field):
                     row['title'] = self.build_node(row[self.title_field], 'edit', 'id=%s' % row['id'])
                 else:
-                    row['title'] = self.build_node('%s: %s' % (self.table, row['id']), 'edit', 'id=%s' % row['id'])
+                    row['title'] = self.build_node('%s: %s' % (self["main"].table, row['id']), 'edit', 'id=%s' % row['id'])
 
                 row['edit'] = [self.build_node('Edit', 'edit', 'id=%s' % row['id']),
                                self.build_node('Delete', '_delete', 'id=%s' % row['id']),
                               ]
         data = {'__array' : data}
-        out = self.create_form_data(self.list_fields, self.list_params, data)
+
+        out = self["listing"].create_form_data(data)
 
         # add the paging info
         out['paging'] = {'row_count' : results['__count'],
@@ -573,22 +530,6 @@ class TableNode(Node):
         self.out = out
         self.action = 'form'
         self.title = 'listing'
-
-    def subform(self, subform_name, data_out):
-        subform_data = self.subform_data.get(subform_name)
-        subform = self.subforms.get(subform_name)
-        subform_parent_id = subform.get('parent_id')
-        parent_value = data_out.get(subform_parent_id)
-        table = subform.get('table')
-        child_id = subform.get('child_id')
-        field_list = self.subform_field_list[subform_name]
-
-        where = "%s=%s" % (child_id, parent_value)
-        try:
-            out = r.search(table, where, fields = field_list)["data"]
-        except sa.orm.exc.NoResultFound:
-            out = {}
-        return out
 
 
 class AutoForm(TableNode):

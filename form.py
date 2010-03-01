@@ -19,7 +19,6 @@
 ##
 
 from global_session import global_session
-import reformed.util as util
 r = global_session.database
 
 class Form(object):
@@ -28,11 +27,58 @@ class Form(object):
 
         self.fields = args
 
+        self.table = kw.get("table")
+        self.params = kw.get("params")
+        self.title_field = kw.get("title_field")
+
+        self.child_id = kw.get("child_id")
+        self.parent_id = kw.get("parent_id")
+
     def set_name(self, name):
         self.name = name
 
     def set_node(self, node):
         self.node = node
+
+    def load_subform(self, data):
+
+        parent_value = data.get(self.parent_id)
+
+        where = "%s=%s" % (self.child_id, parent_value)
+        out = r.search(self.table, where)["data"]
+
+        return out
+
+    def create_form_data(self, data=None, read_only=False):
+
+        out = {
+            "form": {
+                "fields":self.create_fields()
+            },
+            "type": "form",
+        }
+
+        if data:
+            out['data'] = data
+        else:
+            out['data'] = {}
+        if self.params:
+            out['form']['params'] = self.params.copy()
+        if read_only:
+            if not out['form']['params']:
+                out['form']['params'] = {}
+            out['form']['params']['read_only'] = True
+
+
+        return out
+
+    def create_fields(self):
+
+        fields = []
+        for field in self.fields:
+            row = field.convert(self, self.fields)
+            fields.append(row)
+        return fields
 
 def form(self, *args, **kw):
     return Form(self, *args, **kw)
