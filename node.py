@@ -38,7 +38,6 @@ class Node(object):
         self._forms = {}
         for form_name in dir(self):
             if isinstance(getattr(self, form_name), Form):
-                print form_name
                 form = getattr(self, form_name)
                 form.set_name(form_name)
                 form.set_node(self)
