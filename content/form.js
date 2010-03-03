@@ -1296,15 +1296,17 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     }
 
     function textarea(item, value){
-        var class_list = '';
+        var class_list = 'HOLDER';
         if (item.params.css){
             class_list += ' ' + item.params.css;
         }
-        return add_label(item, 'rf_') + '<textarea class="' + class_list + '">' + HTML_Encode_Clear(value) + '</textarea>' + form_description(item);
+        var $control = $(add_label(item, 'rf_') + '<div class="' + class_list + '"><textarea>' + HTML_Encode_Clear(value) + '</textarea></div>' + form_description(item));
+        $control.find('textarea').wmd();
+        return $control;
     }
 
     function message_area(message){
-        message = process_html(message, row_data, true);
+        message = process_html(message, row_data);
         var css;
         if (message.type == 'error'){
             css = ' f_message_error';

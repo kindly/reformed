@@ -509,7 +509,7 @@ textarea.long {
     height:400px;
 }
 
-textarea.large, input.large {
+textarea.large, input.large, div.large {
     width:500px;
 }
 
@@ -589,7 +589,7 @@ div.COLUMN {
 
 /* Layouts */
 
-div.BOX, div.COLUMN_2, div.COLUMN_3, div.COLUMN_4, div.COLUMN_5 {
+div.BOX, div.COLUMN_2, div.COLUMN_3, div.COLUMN_4, div.COLUMN_5, div.HOLDER {
     float:left;
     position:relative;
 }
