@@ -1,4 +1,3 @@
-//
 // showdown.js -- A javascript port of Markdown.
 //
 // Copyright (c) 2007 John Fraser.
@@ -109,9 +108,9 @@ this.makeHtml = function(text, mode) {
 	// from other articles when generating a page which contains more than
 	// one article (e.g. an index page that shows the N most recent
 	// articles):
-	g_urls = new Array();
-	g_titles = new Array();
-	g_html_blocks = new Array();
+	g_urls = [];
+	g_titles = [];
+	g_html_blocks = [];
 
 	// attacklab: Replace ~ with ~T
 	// This lets us use tilde as an escape char to avoid md5 hashes
@@ -987,7 +986,18 @@ var _EncodeCode = function(text) {
 //---
 
     // rebase: add prettify
-    text = prettyPrintOne(text);
+    if (typeof prettyPrintOne == 'function'){
+        // we need to restore the text back to normal
+        // to pass it to the prettifier.
+	    text = _UnescapeSpecialChars(text);
+	    // attacklab: Restore dollar signs
+	    text = text.replace(/~D/g,"$$");
+	    // attacklab: Restore tildes
+	    text = text.replace(/~T/g,"~");
+
+        // all done, now pass it to the prettifier.
+        text = prettyPrintOne(text);
+    }
 
 	return text;
 }
