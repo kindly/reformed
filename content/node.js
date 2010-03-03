@@ -183,63 +183,6 @@ function node_save(root, command){
     $('#main').find('div').data('command')('save'); //FIXME these want to be found properly
 }
 
-function node_delete(root, command){
-    // FIXME this needs removal as references $INFO
-    console_log('node_delete');
-    var parsed_root = _parse_div(root);
-    var my_root = parsed_root.root;
-    var sent_data = $INFO.getState(my_root, 'sent_data');
-    // FIXME we don't have the node for subforms yet
-    // do we set them up with the correct node or backtrack to their parent?
-    var node =  $INFO.getState(my_root, 'node', true);
-    var out = {__root: root};
-    var id;
-    var __id;
-    if (parsed_root.row === null){
-        // single form
-        id = sent_data.id;
-        __id = sent_data.__id;
-    } else {
-        // continuous form
-        if (sent_data[parsed_root.row]){
-            id = sent_data[parsed_root.row].id;
-            __id = sent_data[parsed_root.row].__id;
-        } else {
-            // this row has not been saved so let's just hide it
-            // we need to make it clean too so it won't trigger a save
-            var state = $INFO.getState(my_root, 'form_info');
-            state.clean_rows[parsed_root.row] = true;
-            $('#' + $INFO.getId(root)).hide();
-        }
-    }
-
-    if (__id){
-        out.__id = __id;
-    }
-    if (id){
-        out.id = id;
-    }
-    var form_data = $INFO.getState(my_root, 'form_info').form_data;
-    if (form_data && form_data.params && form_data.params.id_field){
-        var id_field = form_data.params.id_field;
-        out[id_field] = sent_data[parsed_root.row][id_field];
-    }
-
-    if (form_data && form_data.table_name){
-        out.table_name = form_data.table_name;
-    }
-
-    var params = form_data.params;
-    if (params && params.extras){
-        for (var extra in params.extras){
-            if (params.extras.hasOwnProperty(extra)){
-                out[extra] = params.extras[extra];
-            }
-        }
-    }
-    get_node(node, '_delete', out, false);
-}
-
 
 function node_button(item, node, command){
     var out = $('#main div.f_form').data('command')('get_form_data');
