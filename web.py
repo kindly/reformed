@@ -73,12 +73,8 @@ def process_node(environ, start_response):
 
     head = request.params["head"]
 
-    #try:
     print request.params["body"]
     body = json.loads(request.params["body"])
-    #except:
-    #    pass
-    #    body = {}
 
     node_interface = interface.Interface()
 

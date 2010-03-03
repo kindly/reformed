@@ -487,7 +487,6 @@ class Field(object):
 
     @property
     def column(self):
-        print self
         if len(self.columns) == 1:
             return self.columns.copy().popitem()[1]
 
