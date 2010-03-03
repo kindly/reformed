@@ -390,7 +390,7 @@ def dropdown(arg, **kw):
 
 def dropdown_code(arg, **kw):
 
-    return Control("dropdown_code", dict(autocomplete = arg), kw)
+    return Dropdown("dropdown_code", dict(autocomplete = arg), kw)
 
 def textarea(**kw):
 

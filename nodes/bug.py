@@ -16,7 +16,7 @@ class Ticket(TableNode):
         input('complete_by'),
         layout('column_next'),
         input('severity', control = dropdown(True)),
-        input('priority_id', control = dropdown(True)),
+        input('priority_id', control = dropdown_code(True)),
         layout('column_end'),
         layout('hr'),
         input('summary', control = textarea(css = "large")),
