@@ -23,6 +23,7 @@ r = global_session.database
 import formencode as fe
 import sqlalchemy as sa
 import reformed.util as util
+from page_item import input
 
 class Form(object):
 
@@ -81,7 +82,7 @@ class Form(object):
             table = self.table
             fields = self.fields
 
-        record_data = self.save_record(session, table, fields, node.data, filter, root)
+        self.save_record(session, table, fields, node.data, filter, root)
 
 
         # FIXME how do we deal with save errors more cleverly?
@@ -142,7 +143,7 @@ class Form(object):
                     data_out[field] = util.convert_value(extra_field)
 
             for field in self.fields:
-                field.load(self, self, obj, data_out, session)
+                field.load(self, node, obj, data_out, session)
 
             id = data_out.get('id')
             if self.title_field and data_out.has_key(self.title_field):

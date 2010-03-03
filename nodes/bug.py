@@ -28,14 +28,34 @@ class Ticket(TableNode):
 
     list_title = 'ticket %s'
 
-    def view(self, read_only = False):
+    def xview(self, read_only = False):
 
         self.next_node = "bug.ListTicket"
         self.next_data = dict(data = self.data,
                               command = "view")
 
     def finalise(self):
-        self.set_form_buttons([['add', 'bug.Ticket:_save:'], ['cancel', 'BACK']])
+
+        if self.command == '_save' and self["main"].saved:
+            if self.data.get('id',0) == 0:
+
+                self.data["id"] = self["main"].saved[0][1]
+
+                self.next_node = "bug.ListTicket"
+                self.next_data = dict(data = self.data,
+                                      command = "view")
+            else:
+                self.action = 'redirect'
+                self.link = 'BACK'
+        if self.command == 'list':
+            self.set_form_message("These are the current permissions.")
+            self.set_form_buttons([['add new ticket', 'bug.Ticket:new'], ['cancel', 'BACK']])
+        if self.command == 'new':
+            self.set_form_message("Hello, add new ticket")
+            self.set_form_buttons([['add ticket', 'bug.Ticket:_save:'], ['cancel', 'BACK']])
+        if self.command == 'edit':
+            self.set_form_message("Hello, edit {ticket}")
+            self.set_form_buttons([['save ticket', 'bug.Ticket:_save:'], ['delete ticket', 'bug.Ticket:_delete:'], ['cancel', 'BACK']])
 
 class ListTicket(TableNode):
 
@@ -50,7 +70,7 @@ class ListTicket(TableNode):
         subform('comment'),
 
         table = "ticket",
-        params =  {"form_type": "normal"},
+        params =  {"form_type": "action"},
         title_field = 'title',
     )
 
