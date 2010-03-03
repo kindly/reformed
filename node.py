@@ -232,11 +232,6 @@ class TableNode(Node):
     list_title = 'item %s'
     title_field = 'name'
 
-    subforms = {}
-    subform_data = {}
-    subform_field_list = {}
-
-    code_list = {}
     first_run = True
 
     listing = form(
@@ -267,272 +262,24 @@ class TableNode(Node):
         commands['delete'] = dict(command = 'delete')
         commands['new'] = dict(command = 'new')
 
-
-    def save_record_rows(self, session, table, fields, data, join_fields):
-        for row_data in data:
-            row_id = row_data.get('id', 0)
-            root = row_data.get('__root')
-            if row_id:
-                filter = {'id' : row_id}
-            else:
-                filter = {}
-            self.save_record(session, table, fields, row_data, filter, root = root, join_fields = join_fields)
-
-    def save_record(self, session, table, fields, data, filter, root, join_fields = []):
-        print 'table %s' % table
-        #print 'fields %s' % fields
-        errors = None
-        try:
-            if filter:
-                print 'existing record'
-                obj = r.get_class(table)
-                record_data = session.query(obj).filter_by(**filter).one()
-            else:
-                print 'new record'
-                record_data = r.get_instance(table)
-            for field in fields:
-                field.save(self["main"], self, record_data, data, session)
-
-            # if this is a subform we need to update/add the join field
-            # FIXME is this needed here or just for new?
-            # maybe shift up a few lines to new record
-            for field_name in join_fields:
-                    value = data.get(field_name)
-                    print 'join: %s = %s' % (field_name, value)
-                    setattr(record_data, field_name, value)
-            version = data.get("_version")
-            if version:
-                setattr(record_data, "_version", version)
-            try:
-                session.save_or_update(record_data)
-                session.commit()
-                self.saved.append([root, record_data.id, record_data._version])
-                return record_data
-            except fe.Invalid, e:
-                session.rollback()
-                print "failed to save\n%s" % e.msg
-                errors = {}
-                for key, value in e.error_dict.items():
-                    errors[key] = value.msg
-                print repr(errors)
-                self.errors[root] = errors
-        except sa.orm.exc.NoResultFound:
-            self.errors[root] = 'record not found'
-
     def save(self):
-
-        self.saved = []
-        self.errors = {}
-
-        session = r.Session()
-        id = self.data.get('id')
-        root = self.data.get('__root')
-        if id:
-            filter = {'id' : id}
-        else:
-            filter = {}
-        subform = self.data.get("__subform")
-        if subform:
-            child_id = self[subform].child_id
-            fields = list(self[subform].fields) + [input(child_id, data_type = "Integer")]
-            table = self[subform].table
-        else:
-            table = self["main"].table
-            fields = self["main"].fields
-
-        record_data = self.save_record(session, table, fields, self.data, filter, root)
-
-
-        # FIXME how do we deal with save errors more cleverly?
-        # need to think about possible behaviours we want
-        # and add some 'failed save' options
-        if not self.errors:
-            # subforms
-            for subform_name in self.subforms.keys():
-                subform_data = self.data.get(subform_name)
-                if subform_data:
-                    subform = self.subforms.get(subform_name)
-                    table = subform.get('table')
-                    fields = subform.get('fields')
-                    # do we have a joining field?
-                    child_id = subform.get('child_id')
-                    if child_id:
-                        join_fields= [child_id]
-                    self.save_record_rows(session, table, fields, subform_data, join_fields)
-        session.commit()
-        session.close()
-
-        # output data
-        out = {}
-        if self.errors:
-            out['errors'] = self.errors
-        if self.saved:
-            out['saved'] = self.saved
-
-        self.out = out
-        self.action = 'save'
+        self["main"].save()
 
     def new(self):
-
-        data_out = {}
-        data = self._forms["main"].create_form_data(data_out)
-        self.out = data
-        self.action = 'form'
+        self["main"].new()
 
     def edit(self):
         self.view(read_only = False)
 
     def view(self, read_only=True):
-        id = self.data.get('id')
-        if id:
-            where = 'id=%s' % id
-        else:
-            id = self.data.get('__id')
-            where = '_core_entity_id=%s' % id
-
-        try:
-            session = r.Session()
-
-            data_out = {}
-
-            table = self["main"].table or self.table
-
-            obj = r.search_single(table, where, session = session)
-
-            for field in util.INTERNAL_FIELDS:
-                try:
-                    extra_field = getattr(obj, field)
-                except AttributeError:
-                    extra_field = None
-
-                if extra_field:
-                    data_out[field] = util.convert_value(extra_field)
-
-            for field in self["main"].fields:
-                field.load(self["main"], self, obj, data_out, session)
-
-            id = data_out.get('id')
-            if self.title_field and data_out.has_key(self.title_field):
-                self.title = data_out.get(self.title_field)
-            else:
-                self.title = '%s: %s' % (self.table, id)
-
-        except sa.orm.exc.NoResultFound:
-            data = None
-            data_out = {}
-            id = None
-            self.title = 'unknown'
-            print 'no data found'
-
-
-        data = self["main"].create_form_data(data_out, read_only)
-
-        self.out = data
-        self.action = 'form'
-
-        self.bookmark = dict(
-            table_name = obj._table.name,
-            bookmark_string = self.build_node('', 'view', 'id=%s' %  id),
-            entity_id = id
-        )
-
+        self["main"].view(read_only)
 
     def delete(self):
-        assert 1 <> 1
-        id = self.data.get('id')
-        if id:
-            filter = {'id' : id}
-        else:
-            id = self.data.get('__id')
-            filter = {'_core_entity_id' : id}
-        # FIXME i'd rather get this data ourself and not rely on the returned info
-        table = self.data.get('table_name', self.table)
-
-        session = r.Session()
-        obj = r.get_class(table)
-        try:
-            data = session.query(obj).filter_by(**filter).one()
-            # see if fields have special delete
-            for field in self["main"].fields:
-                field.delete(self["main"], self, data, data, session)
-
-            session.delete(data)
-            session.commit()
-            # FIXME this needs to be handled more nicely
-            if self.form_params['form_type'] != 'grid' and self.table == table:
-                self.next_data = {'command': 'list', 'data' : self.extra_data}
-                self.next_node = self.name
-            else:
-                self.out = {'deleted': [self.data]}
-                self.action = 'delete'
-        except sa.orm.exc.NoResultFound:
-            error = 'Record not found.'
-            self.out = error
-            self.action = 'general_error'
-        except sa.exc.IntegrityError, e:
-            print e
-
-            error = 'The record cannot be deleted,\nIt is referenced by another record.'
-            self.out = error
-            self.action = 'general_error'
-            session.rollback()
-        session.close()
-
+        self["main"].delete()
 
     def list(self, limit=20):
-        query = self.data.get('q', '')
-        limit = self.get_data_int('l', limit)
-        offset = self.get_data_int('o')
+        self["main"].list(limit)
 
-        table = self["main"].table or self.table
-
-        if r[table].entity:
-            results = r.search('_core_entity',
-                               where = "%s.id >0" % table,
-                               limit = limit,
-                               offset = offset,
-                               count = True)
-        else:
-            results = r.search(table,
-                               where = "id >0",
-                               limit = limit,
-                               offset = offset,
-                               count = True)
-
-        data = results['data']
-        # build the links
-        if r[table].entity:
-            for row in data:
-                row['title'] = self.build_node(row['title'], 'edit', '__id=%s' % row['id'])
-                row['edit'] = [self.build_node('Edit', 'edit', '__id=%s' % row['id']),
-                               self.build_node('Delete', '_delete', '__id=%s' % row['id']),
-                              ]
-                # the id is actually the _core_entity id so let's rename it to __id
-                row['__id'] = row['id']
-                del row['id']
-        else:
-            for row in data:
-                if self.title_field and row.has_key(self.title_field):
-                    row['title'] = self.build_node(row[self.title_field], 'edit', 'id=%s' % row['id'])
-                else:
-                    row['title'] = self.build_node('%s: %s' % (self["main"].table, row['id']), 'edit', 'id=%s' % row['id'])
-
-                row['edit'] = [self.build_node('Edit', 'edit', 'id=%s' % row['id']),
-                               self.build_node('Delete', '_delete', 'id=%s' % row['id']),
-                              ]
-        data = {'__array' : data}
-
-        out = self["listing"].create_form_data(data)
-
-        # add the paging info
-        out['paging'] = {'row_count' : results['__count'],
-                         'limit' : limit,
-                         'offset' : offset,
-                         'base_link' : 'n:%s:list:q=%s' % (self.name, query)}
-
-        self.out = out
-        self.action = 'form'
-        self.title = 'listing'
 
 
 class AutoForm(TableNode):
