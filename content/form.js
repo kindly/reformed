@@ -1566,6 +1566,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             // subforms
             var $subforms = $input.find('div.SUBFORM');
             var subform;
+            var data;
             for (var i = 0, n = subforms.length; i < n; i ++){
                 subform = subforms[i].item;
                 extra_defaults = {__table: subform.form.table_name,
@@ -1578,7 +1579,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                         break;
                     case 'action':
                     case 'continuous':
-                        $subforms.eq(i).input_form(subform.form, subforms[i].data, extra_defaults);
+                        data = {__array: subforms[i].data};
+                        $subforms.eq(i).input_form(subform.form, data, extra_defaults);
                         break;
                     default:
                         $subforms.eq(i).form(subform.form, subforms[i].data);
