@@ -858,22 +858,22 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
 
     // subforms
     var $subforms = $input.find('div.SUBFORM');
-    var params;
+    var subform;
     for (var i = 0, n = subforms.length; i < n; i ++){
-        params = subforms[i].item;
-        extra_defaults = {__table: params.form.table_name,
+        subform = subforms[i].item;
+        extra_defaults = {__table: subform.form.table_name,
                           __subform: subforms[i].item.name};
-        extra_defaults[params.form.child_id] = row_data[params.form.parent_id];
+        extra_defaults[subform.form.child_id] = row_data[subform.form.parent_id];
 
-        switch (params.form.params.form_type){
+        switch (subform.form.params.form_type){
             case 'grid':
-                $subforms.eq(i).grid(params.form, subforms[i].data);
+                $subforms.eq(i).grid(subform.form, subforms[i].data);
                 break;
             case 'action':
-                $subforms.eq(i).input_form(params.form, subforms[i].data, extra_defaults);
+                $subforms.eq(i).input_form(subform.form, subforms[i].data, extra_defaults);
                 break;
             default:
-                $subforms.eq(i).form(params.form, subforms[i].data);
+                $subforms.eq(i).form(subform.form, subforms[i].data);
         }
     }
 
@@ -1565,23 +1565,23 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         function build_subforms(){
             // subforms
             var $subforms = $input.find('div.SUBFORM');
-            var params;
+            var subform;
             for (var i = 0, n = subforms.length; i < n; i ++){
-                params = subforms[i].item;
-                extra_defaults = {__table: params.form.table_name,
+                subform = subforms[i].item;
+                extra_defaults = {__table: subform.form.table_name,
                                   __subform: subforms[i].item.name};
-                extra_defaults[params.form.child_id] = row_data[params.form.parent_id];
+                extra_defaults[subform.form.child_id] = row_data[subform.form.parent_id];
 
-                switch (params.form.params.form_type){
+                switch (subform.form.params.form_type){
                     case 'grid':
-                        $subforms.eq(i).grid(params.form, subforms[i].data);
+                        $subforms.eq(i).grid(subform.form, subforms[i].data);
                         break;
                     case 'action':
                     case 'continuous':
-                        $subforms.eq(i).input_form(params.form, subforms[i].data, extra_defaults);
+                        $subforms.eq(i).input_form(subform.form, subforms[i].data, extra_defaults);
                         break;
                     default:
-                        $subforms.eq(i).form(params.form, subforms[i].data);
+                        $subforms.eq(i).form(subform.form, subforms[i].data);
                 }
             }
         }
