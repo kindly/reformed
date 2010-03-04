@@ -62,7 +62,7 @@ class PageItem(object):
 
         row = {}
         row['name'] = self.name
-        row['type'] = self.set_data_type(form)
+        row['data_type'] = self.set_data_type(form)
         row['title'] = self.label
         row['params'] = self.set_params(form)
 
@@ -134,7 +134,7 @@ class SubForm(object):
 
         row = {}
         row['name'] = self.name
-        row['type'] = self.data_type
+        row['data_type'] = self.data_type
         row['title'] = self.label
 
         data = subform.create_form_data()

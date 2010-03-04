@@ -135,7 +135,7 @@ $.Util.control_setup = function($control, field){
     // add any events needed by the control
     // but start by removing any existing bound events
     $control.unbind();
-    switch (field.type){
+    switch (field.data_type){
         case 'Integer':
             $control.change($.Util.intbox_change);
             $control.keydown($.Util.intbox_key);
@@ -219,7 +219,7 @@ $.Util.clean_value = function (value, field){
 
     var update_value = value;
     // special controls
-    switch (field.type){
+    switch (field.data_type){
         case 'DateTime':
         case 'Date':
             value = $.Util.date_from_value(value);
@@ -561,7 +561,7 @@ $.Util.FormDataNormalize = function (form_data, node) {
         if (!field.params){
             field.params = {};
         }
-        if (field.type == 'subform'){
+        if (field.data_type == 'subform'){
             console_log(field);
             field.params.form = $.Util.FormDataNormalize(field.params.form, node);
         }

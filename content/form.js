@@ -467,7 +467,7 @@ make_cell_viewable
     function move(direction){
         // find the cell and select it
         var $row = $input.children('div').eq(field_number);
-        if (form_data.fields[field_number].type == 'subform'){
+        if (form_data.fields[field_number].data_type == 'subform'){
             var current_edit_mode;
             if (edit_mode_cache !== undefined){
                 current_edit_mode = edit_mode_cache;
@@ -724,7 +724,7 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
                 }
             }
             // correct data value if needed
-            switch (item.type){
+            switch (item.data_type){
                 case 'DateTime':
                 case 'Date':
                     if (value !== null){
@@ -1153,7 +1153,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             value = item.params['default'];
         }
         // correct data value if needed
-        switch (item.type){
+        switch (item.data_type){
             case 'DateTime':
             case 'Date':
                 if (value !== null){

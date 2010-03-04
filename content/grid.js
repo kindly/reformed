@@ -1370,7 +1370,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
                 }
             }
             // correct data value if needed
-            switch (item.type){
+            switch (item.data_type){
                 case 'DateTime':
                 case 'Date':
                     if (value !== null){
