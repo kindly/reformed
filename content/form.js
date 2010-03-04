@@ -843,7 +843,7 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
         for (var i = 0; i < num_fields; i++){
             item = form_data.fields[i];
             value = $.Util.get_item_value(item, row_data);
-            if (item.control == 'normal' || item.control == 'dropdown' || item.control == 'textarea'))){
+            if (item.control == 'normal' || item.control == 'dropdown' || item.control == 'textarea'){
                 html.push(build_input(item, value));
             } else {
                 html.push(build_control(item, value));
