@@ -545,10 +545,6 @@ $.Util.HTML_Encode_Clear = function (arg) {
 };
 
 $.Util.FormDataNormalize = function (form_data, node) {
-    // add parameters if not
-    if (!form_data.params){
-        form_data.params = {};
-    }
     form_data.node = node;
     // make hash of the fields
     form_data.items = {};
@@ -561,8 +557,7 @@ $.Util.FormDataNormalize = function (form_data, node) {
         if (!field.control){
             field.control = 'normal';
         }
-        if (field.data_type == 'subform'){
-            console_log(field);
+        if (field.control == 'subform'){
             field.form = $.Util.FormDataNormalize(field.form, node);
         }
     }
