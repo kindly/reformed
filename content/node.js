@@ -194,7 +194,8 @@ function node_button_input_form(item, data){
         window.history.back();
         return false;
     }
-    var $obj = $('#main div.INPUT_FORM');
+    var $obj = $(item);
+    var $obj = $obj.parents('div.INPUT_FORM');
     var split_data = data.split(':')
     var node = split_data[0];
     var command = split_data[1];
