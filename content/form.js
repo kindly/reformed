@@ -1052,6 +1052,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     function get_control_value(item, $item){
 
         switch (item.params.control){
+            case 'wmd':
             case 'textarea':
                 return $item.find("textarea:first").val();
                 break;
@@ -1297,13 +1298,22 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         return $control;
     }
 
-    function textarea(item, value){
+    function wmd(item, value){
         var class_list = 'HOLDER';
         if (item.params.css){
             class_list += ' ' + item.params.css;
         }
         var $control = $(add_label(item, 'rf_') + '<div class="' + class_list + '"><textarea>' + HTML_Encode_Clear(value) + '</textarea></div>' + form_description(item));
         $control.find('textarea').wmd();
+        return $control;
+    }
+
+    function textarea(item, value){
+        var class_list = '';
+        if (item.params.css){
+            class_list += ' ' + item.params.css;
+        }
+        var $control = $(add_label(item, 'rf_') + '<textarea class="' + class_list + '>' + HTML_Encode_Clear(value) + '</textarea>' + form_description(item));
         return $control;
     }
 
@@ -1445,6 +1455,9 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 break;
             case 'dropdown':
                 $div.append(dropdown(item, value));
+                break;
+            case 'wmd':
+                $div.append(wmd(item, value));
                 break;
             case 'textarea':
                 $div.append(textarea(item, value));

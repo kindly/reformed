@@ -392,6 +392,10 @@ def dropdown_code(arg, **kw):
 
     return Dropdown("dropdown_code", dict(autocomplete = arg), kw)
 
+def wmd(**kw):
+
+    return Control("wmd", kw)
+
 def textarea(**kw):
 
     return Control("textarea", kw)

@@ -86,7 +86,7 @@ class ListTicket(TableNode):
 
     comment = form(
 
-        input('note', control = textarea(css = "large")),
+        input('note', control = wmd(css = "large")),
         input('moo', control = checkbox()),
         input(label = 'add comment', control = button(node = 'bug.ListTicket:_save:')),
 
