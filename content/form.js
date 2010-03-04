@@ -905,6 +905,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         'get_form_data' : get_form_data_remote
     };
 
+
+    var subforms = [];
     var util_size = $.Util.Size;
     var HTML_Encode = $.Util.HTML_Encode;
     var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
@@ -1547,6 +1549,30 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             }
         }
 
+        function build_subforms(){
+            // subforms
+            var $subforms = $input.find('div.SUBFORM');
+            var params;
+            for (var i = 0, n = subforms.length; i < n; i ++){
+                params = subforms[i].item.params;
+                extra_defaults = {__table: params.form.table_name,
+                                  __subform: subforms[i].item.name};
+                extra_defaults[params.form.child_id] = row_data[params.form.parent_id];
+
+                switch (params.form.params.form_type){
+                    case 'grid':
+                        $subforms.eq(i).grid(params.form, subforms[i].data);
+                        break;
+                    case 'action':
+                    case 'continuous':
+                        $subforms.eq(i).input_form(params.form, subforms[i].data, extra_defaults);
+                        break;
+                    default:
+                        $subforms.eq(i).form(params.form, subforms[i].data);
+                }
+            }
+        }
+
         form_controls_hash = {};
         var $builder = [$('<div/>')];
         var $control;
@@ -1579,6 +1605,10 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             $builder[--builder_depth].append($builder.pop());
         }
         $form.append($builder[0].contents());
+
+        if (subforms.length){
+            build_subforms();
+        }
     }
 
 
