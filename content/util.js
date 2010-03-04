@@ -145,15 +145,15 @@ $.Util.control_setup = function($control, field){
             $control.keydown($.Util.datebox_key);
             break;
     }
-    if (field.params && field.params.control == 'dropdown'){
-        $control.autocomplete(field.params.autocomplete, {'dropdown':true});
+    if (field.control == 'dropdown'){
+        $control.autocomplete(field.autocomplete, {'dropdown':true});
     }
 };
 
 $.Util.control_takedown = function($control, field){
     // add any events needed by the control
     // but start by removing any existing bound events
-    if (field.params && field.params.control == 'dropdown'){
+    if (field.control == 'dropdown'){
         $control.unautocomplete();
     }
     $control.unbind();
@@ -209,8 +209,8 @@ $.Util.get_item_value = function (item, data){
     if (data && data[item.name] !== undefined){
         return data[item.name];
     }
-    if (item.params['default']){
-        return item.params['default'];
+    if (item['default']){
+        return item['default'];
     }
     return null;
 };
@@ -558,12 +558,12 @@ $.Util.FormDataNormalize = function (form_data, node) {
         if (field.name){
             form_data.items[field.name] = field;
         }
-        if (!field.params){
-            field.params = {};
+        if (!field.control){
+            field.control = 'normal';
         }
         if (field.data_type == 'subform'){
             console_log(field);
-            field.params.form = $.Util.FormDataNormalize(field.params.form, node);
+            field.form = $.Util.FormDataNormalize(field.form, node);
         }
     }
     return form_data;

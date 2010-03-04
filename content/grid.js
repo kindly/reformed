@@ -966,7 +966,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             current.$item = $new_item;
             current.col = col;
 
-            current.complex_control = (current.field.params && current.field.params.control == 'dropdown');
+            current.complex_control = (current.field.control == 'dropdown');
 
             // check cell is viewable
             make_cell_viewable();
@@ -1363,8 +1363,8 @@ $.Grid = function(input, form_data, grid_data, paging_data){
             if (row_data && row_data[item.name] !== null){
                 value = row_data[item.name];
             } else {
-                if (item.params['default']){
-                    value = item.params['default'];
+                if (item['default']){
+                    value = item['default'];
                 } else {
                     value = null;
                 }
@@ -1386,7 +1386,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
                 value = '&nbsp;';
             }
 
-            if (item.params.control == 'dropdown'){
+            if (item.control == 'dropdown'){
                 if (value === null){
                     html.push('<td class="null complex"><div class="but_dd"/><div class="data">[NULL]</div></td>');
                 } else {
