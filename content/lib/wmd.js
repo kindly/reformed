@@ -67,7 +67,7 @@ $.Wmd = function (textarea){
 
     function getSelection(){
 
-        if ($textarea[0].selectionStart){
+        if ('selectionStart' in $textarea[0]){
             /* dom 3 */
                 var t = $textarea[0];
 				var l = t.selectionEnd - t.selectionStart;

@@ -135,7 +135,7 @@ $.Util.control_setup = function($control, field){
     // add any events needed by the control
     // but start by removing any existing bound events
     $control.unbind();
-    switch (field.type){
+    switch (field.data_type){
         case 'Integer':
             $control.change($.Util.intbox_change);
             $control.keydown($.Util.intbox_key);
@@ -145,15 +145,15 @@ $.Util.control_setup = function($control, field){
             $control.keydown($.Util.datebox_key);
             break;
     }
-    if (field.params && field.params.control == 'dropdown'){
-        $control.autocomplete(field.params.autocomplete, {'dropdown':true});
+    if (field.control == 'dropdown'){
+        $control.autocomplete(field.autocomplete, {'dropdown':true});
     }
 };
 
 $.Util.control_takedown = function($control, field){
     // add any events needed by the control
     // but start by removing any existing bound events
-    if (field.params && field.params.control == 'dropdown'){
+    if (field.control == 'dropdown'){
         $control.unautocomplete();
     }
     $control.unbind();
@@ -209,8 +209,8 @@ $.Util.get_item_value = function (item, data){
     if (data && data[item.name] !== undefined){
         return data[item.name];
     }
-    if (item.params['default']){
-        return item.params['default'];
+    if (item['default']){
+        return item['default'];
     }
     return null;
 };
@@ -219,7 +219,7 @@ $.Util.clean_value = function (value, field){
 
     var update_value = value;
     // special controls
-    switch (field.type){
+    switch (field.data_type){
         case 'DateTime':
         case 'Date':
             value = $.Util.date_from_value(value);
@@ -545,10 +545,6 @@ $.Util.HTML_Encode_Clear = function (arg) {
 };
 
 $.Util.FormDataNormalize = function (form_data, node) {
-    // add parameters if not
-    if (!form_data.params){
-        form_data.params = {};
-    }
     form_data.node = node;
     // make hash of the fields
     form_data.items = {};
@@ -558,12 +554,11 @@ $.Util.FormDataNormalize = function (form_data, node) {
         if (field.name){
             form_data.items[field.name] = field;
         }
-        if (!field.params){
-            field.params = {};
+        if (!field.control){
+            field.control = 'normal';
         }
-        if (field.type == 'subform'){
-            console_log(field);
-            field.params.form = $.Util.FormDataNormalize(field.params.form, node);
+        if (field.control == 'subform'){
+            field.form = $.Util.FormDataNormalize(field.form, node);
         }
     }
     return form_data;

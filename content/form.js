@@ -109,7 +109,7 @@ $.Checkbox = function(input, item, value){
     }
 
     var $checkbox = $(input);
-    var is_2_state = (item.params.validation && item.params.validation[0].not_empty == true);
+    var is_2_state = (item.validation && item.validation[0].not_empty == true);
     if (is_2_state && value === null){
         value = false;
     }
@@ -357,7 +357,7 @@ $.Form.Movement = function($input, form_data, row_data){
         // return the item to it's normal state
         var $item = current.$item;
         // is this a complex control?
-        var complex_control = (current.field.params && current.field.params.control == 'dropdown');
+        var complex_control = (current.field && current.field.control == 'dropdown');
         if (complex_control){
             $item = $item.find('div.data');
         }
@@ -431,7 +431,7 @@ make_cell_viewable
             }
 
             current.field = form_data.fields[field_number];
-            current.complex_control = (current.field.params && current.field.params.control == 'dropdown');
+            current.complex_control = (current.field && current.field.control == 'dropdown');
 
             current.$item = $new_item;
             if (edit_mode){
@@ -467,7 +467,7 @@ make_cell_viewable
     function move(direction){
         // find the cell and select it
         var $row = $input.children('div').eq(field_number);
-        if (form_data.fields[field_number].type == 'subform'){
+        if (form_data.fields[field_number].data_type == 'subform'){
             var current_edit_mode;
             if (edit_mode_cache !== undefined){
                 current_edit_mode = edit_mode_cache;
@@ -475,7 +475,7 @@ make_cell_viewable
                 current_edit_mode = edit_mode;
             }
             blur();
-            var subform_type = form_data.fields[field_number].params.form.params.form_type;
+            var subform_type = form_data.fields[field_number].form.params.form_type;
             var div_class;
             switch (subform_type){
                 case 'grid':
@@ -717,14 +717,14 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
             if (row_data && row_data[item.name] !== undefined){
                 value = row_data[item.name];
             } else {
-                if (item.params['default']){
-                    value = item.params['default'];
+                if (item['default']){
+                    value = item['default'];
                 } else {
                     value = null;
                 }
             }
             // correct data value if needed
-            switch (item.type){
+            switch (item.data_type){
                 case 'DateTime':
                 case 'Date':
                     if (value !== null){
@@ -740,11 +740,11 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
                 class_list += ' null';
             }
 
-            if (item.params.css){
-                class_list += ' ' + item.params.css;
+            if (item.css){
+                class_list += ' ' + item.css;
             }
 
-            if (item.params.control == 'dropdown'){
+            if (item.control == 'dropdown'){
                 html.push('<span class="' + class_list + ' complex"><div class="but_dd"/><div class="data">' + value + '</div></span>');
             }
             else {
@@ -757,8 +757,8 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
     }
     function link(item, value){
         var class_list = 'link';
-        if (item.params.css){
-            class_list += ' ' + item.params.css;
+        if (item.css){
+            class_list += ' ' + item.css;
         }
         if (!value){
             return '';
@@ -779,18 +779,18 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
 
     function button(item, value){
         var class_list = 'button';
-        if (item.params.css){
-            class_list += ' ' + item.params.css;
+        if (item.css){
+            class_list += ' ' + item.css;
         }
-        return '<button class="' + class_list + '" onclick="node_button(this, \'' + item.params.node + '\', \'' + item.params.action + '\');return false">' + item.title + '</button>';
+        return '<button class="' + class_list + '" onclick="node_button(this, \'' + item.node + '\', \'' + item.action + '\');return false">' + item.title + '</button>';
     }
 
     function button_link(item, value){
         var class_list = 'button_link';
-        if (item.params.css){
-            class_list += ' ' + item.params.css;
+        if (item.css){
+            class_list += ' ' + item.css;
         }
-        return '<a href="#" class="' + class_list + '" onclick="node_button(this, \'' + item.params.node + '\', \'' + item.params.action + '\');return false">' + item.title + '</a>';
+        return '<a href="#" class="' + class_list + '" onclick="node_button(this, \'' + item.node + '\', \'' + item.action + '\');return false">' + item.title + '</a>';
     }
 
 
@@ -799,7 +799,7 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
         var html = [];
 
         html.push('<div>');
-        switch (item.params.control){
+        switch (item.control){
             case 'info':
                 if (value){
                     html.push(value);
@@ -827,7 +827,7 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
                 subforms.push({item: item, data: value});
                 break;
             default:
-                html.push(item.params.control);
+                html.push(item.control);
         }
         html.push('</div>');
 
@@ -843,7 +843,7 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
         for (var i = 0; i < num_fields; i++){
             item = form_data.fields[i];
             value = $.Util.get_item_value(item, row_data);
-            if (!(item.params && item.params.control && (item.params.control != 'dropdown' && item.params.control != 'textarea'))){
+            if (item.control == 'normal' || item.control == 'dropdown' || item.control == 'textarea'){
                 html.push(build_input(item, value));
             } else {
                 html.push(build_control(item, value));
@@ -858,22 +858,22 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
 
     // subforms
     var $subforms = $input.find('div.SUBFORM');
-    var params;
+    var subform;
     for (var i = 0, n = subforms.length; i < n; i ++){
-        params = subforms[i].item.params;
-        extra_defaults = {__table: params.form.table_name,
+        subform = subforms[i].item;
+        extra_defaults = {__table: subform.form.table_name,
                           __subform: subforms[i].item.name};
-        extra_defaults[params.form.child_id] = row_data[params.form.parent_id];
+        extra_defaults[subform.form.child_id] = row_data[subform.form.parent_id];
 
-        switch (params.form.params.form_type){
+        switch (subform.form.params.form_type){
             case 'grid':
-                $subforms.eq(i).grid(params.form, subforms[i].data);
+                $subforms.eq(i).grid(subform.form, subforms[i].data);
                 break;
             case 'action':
-                $subforms.eq(i).input_form(params.form, subforms[i].data, extra_defaults);
+                $subforms.eq(i).input_form(subform.form, subforms[i].data, extra_defaults);
                 break;
             default:
-                $subforms.eq(i).form(params.form, subforms[i].data);
+                $subforms.eq(i).form(subform.form, subforms[i].data);
         }
     }
 
@@ -905,6 +905,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         'get_form_data' : get_form_data_remote
     };
 
+
+    var subforms = [];
     var util_size = $.Util.Size;
     var HTML_Encode = $.Util.HTML_Encode;
     var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
@@ -1014,8 +1016,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         for (var i = 0, n = form_data.fields.length; i < n ; i++){
             item = form_data.fields[i];
 
-            if (item.params.validation){
-                error = validate(item.params.validation, data[item.name], false)
+            if (item.validation){
+                error = validate(item.validation, data[item.name], false)
                 if (error.length > 0){
                     errors[item.name] = error;
                 }
@@ -1049,7 +1051,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     function get_control_value(item, $item){
 
-        switch (item.params.control){
+        switch (item.control){
+            case 'wmd':
             case 'textarea':
                 return $item.find("textarea:first").val();
                 break;
@@ -1071,7 +1074,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     function get_codegroup_values($item){
         var $checkboxes = $item.find("div.CHECKBOX");
-        var codes = item.params.codes;
+        var codes = item.codes;
         var values = {};
         for (var i = 0, n = $checkboxes.size(); i < n; i++){
             values[codes[i][0]] = $checkboxes.eq(i).data('value');
@@ -1082,8 +1085,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     function get_key_from_description(item, value){
         // convert a description into a key
         // used by dropdown_code
-        var descriptions = item.params.autocomplete.descriptions;
-        var keys = item.params.autocomplete.keys;
+        var descriptions = item.autocomplete.descriptions;
+        var keys = item.autocomplete.keys;
         for (var i = 0, n = descriptions.length; i < n; i++){
             if (value == descriptions[i]){
                 return keys[i];
@@ -1104,9 +1107,9 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             item = form_data.fields[i];
             if (item.name){
                 $control = form_controls_hash[item.name];
-                if (item.params.layout){
+                if (item.layout){
                     continue;
-                } else if (item.params.control){
+                } else if (item.control){
                     value = get_control_value(item, $control);
                 } else {
                     value = $control.find("input:first").val();
@@ -1146,11 +1149,11 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     }
 
     function correct_value(item, value){
-        if (value === null && item.params['default'] !== undefined){
-            value = item.params['default'];
+        if (value === null && item['default'] !== undefined){
+            value = item['default'];
         }
         // correct data value if needed
-        switch (item.type){
+        switch (item.data_type){
             case 'DateTime':
             case 'Date':
                 if (value !== null){
@@ -1171,8 +1174,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     }
 
     function form_description(item){
-        if (item.params.description){
-            return '<div class="f_description">' + process_html(item.params.description, row_data, true) + '</div>';
+        if (item.description){
+            return '<div class="f_description">' + process_html(item.description, row_data, true) + '</div>';
         } else {
             return '';
         }
@@ -1191,8 +1194,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 value = '';
             }
 
-            if (item.params.css){
-                class_list += ' ' + item.params.css;
+            if (item.css){
+                class_list += ' ' + item.css;
             }
 
             html.push('<input id="rf_' + item.name + '" class="' + class_list + '" value="' + value + '" />');
@@ -1215,8 +1218,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     function link(item, value){
         var class_list = 'link';
-        if (item.params.css){
-            class_list += ' ' + item.params.css;
+        if (item.css){
+            class_list += ' ' + item.css;
         }
         var split = value.split("|");
         var link_node = split.shift();
@@ -1234,13 +1237,13 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     function button_box(item, value){
         var html = '';
-        var but = {params : {}};
-        var buttons = item.params.buttons;
-        if (item.params.css){
-            button.params.css = item.params.css;
+        var but = {};
+        var buttons = item.buttons;
+        if (item.css){
+            button.css = item.css;
         }
         for (var i = 0, n = buttons.length; i < n; i++){
-            but.params.node = buttons[i][1];
+            but.node = buttons[i][1];
             but.title = buttons[i][0];
             html += button(but);
         }
@@ -1249,23 +1252,23 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     function button_link(item, value){
         var class_list = 'link';
-        if (item.params.css){
-            class_list += ' ' + item.params.css;
+        if (item.css){
+            class_list += ' ' + item.css;
         }
-        return '<a href="#" class="' + class_list + '" onclick="node_button_input_form(this, \'' + item.params.node + '\');return false">' + item.title + '</a>';
+        return '<a href="#" class="' + class_list + '" onclick="node_button_input_form(this, \'' + item.node + '\');return false">' + item.title + '</a>';
     }
 
     function button(item, value){
         var class_list = 'button';
-        if (item.params.css){
-            class_list += ' ' + item.params.css;
+        if (item.css){
+            class_list += ' ' + item.css;
         }
-        return '<button class="' + class_list + '" onclick="node_button_input_form(this, \'' + item.params.node + '\');return false">' + item.title + '</button>';
+        return '<button class="' + class_list + '" onclick="node_button_input_form(this, \'' + item.node + '\');return false">' + item.title + '</button>';
     }
 
     function dropdown_code(item, value){
-        var descriptions = item.params.autocomplete.descriptions;
-        var keys = item.params.autocomplete.keys;
+        var descriptions = item.autocomplete.descriptions;
+        var keys = item.autocomplete.keys;
         for (var i = 0, n = keys.length; i < n; i++){
             if (value == keys[i]){
                 value = descriptions[i];
@@ -1280,28 +1283,37 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     }
 
     function dropdown(item, value){
-        return dropdown_core(item, value, item.params.autocomplete);
+        return dropdown_core(item, value, item.autocomplete);
     }
 
     function dropdown_core(item, value, autocomplete){
         var $control;
         var class_list = 'dropdown_f';
         value = correct_value(item, value);
-        if (item.params.css){
-            class_list += ' ' + item.params.css;
+        if (item.css){
+            class_list += ' ' + item.css;
         }
         $control = $(add_label(item, 'rf_') + '<span class="' + class_list + ' complex"><input id="rf_' + item.name + '" class="DROPDOWN ' + class_list + '" value="' + value + '" /><div class="but_dd_f"/></span>');
         $control.find('input').autocomplete(autocomplete, {dropdown : true});
         return $control;
     }
 
-    function textarea(item, value){
+    function wmd(item, value){
         var class_list = 'HOLDER';
-        if (item.params.css){
-            class_list += ' ' + item.params.css;
+        if (item.css){
+            class_list += ' ' + item.css;
         }
         var $control = $(add_label(item, 'rf_') + '<div class="' + class_list + '"><textarea>' + HTML_Encode_Clear(value) + '</textarea></div>' + form_description(item));
         $control.find('textarea').wmd();
+        return $control;
+    }
+
+    function textarea(item, value){
+        var class_list = '';
+        if (item.css){
+            class_list += ' ' + item.css;
+        }
+        var $control = $(add_label(item, 'rf_') + '<textarea class="' + class_list + '>' + HTML_Encode_Clear(value) + '</textarea>' + form_description(item));
         return $control;
     }
 
@@ -1351,27 +1363,27 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     function htmlarea(item, value){
         var class_list = '';
-        if (item.params.css){
-            class_list += ' ' + item.params.css;
+        if (item.css){
+            class_list += ' ' + item.css;
         }
         return add_label(item, 'rf_') + '<div class="' + class_list + '">' + value + '</div>';
     }
 
     function password(item, value){
         var class_list = '';
-        if (item.params.css){
-            class_list += ' ' + item.params.css;
+        if (item.css){
+            class_list += ' ' + item.css;
         }
         return add_label(item, 'rf_') + '<input type="password" class="' + class_list + '" value="' + HTML_Encode_Clear(value) + '"/>';
     }
 
     function checkbox(item, value){
         var class_list = '';
-        if (item.params.css){
-            class_list += ' ' + item.params.css;
+        if (item.css){
+            class_list += ' ' + item.css;
         }
         var description = form_description(item);
-        if (item.params.reverse){
+        if (item.reverse){
             $control = $('<div class="CHECKBOX ' + class_list + '"><input type="button" style="width:20px;" />&nbsp;</div>' + add_label(item, 'rf_') + description);
             $control.eq(0).filter('div').checkbox(item, value);
         } else {
@@ -1383,15 +1395,15 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     function codegroup(item, value){
 
-        var cbox = {params : {'validation' : [{'not_empty' : true } ]}};
-        if (item.params.css){
-            cbox.params.css = item.params.css;
+        var cbox = {'validation' : [{'not_empty' : true } ]};
+        if (item.css){
+            cbox.css = item.css;
         }
         var $div = $('<div class="CODEGROUP" />');
         if (item.title){
             $div.append('<div class="f_codegroup_title">' + item.title + '</div>');
         }
-        var codes = item.params.codes;
+        var codes = item.codes;
         var holder;
         var code;
         var cbox_value;
@@ -1414,9 +1426,9 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 cbox.title = codes[i][1];
                 cbox.code = codes[i][0];
                 if (codes[i].length > 2){
-                    cbox.params.description = codes[i][2];
+                    cbox.description = codes[i][2];
                 }
-                cbox.params.reverse = true;
+                cbox.reverse = true;
                 $holder = $('<div class="f_codegroup_holder">');
                 $div.append($holder.append(checkbox(cbox, cbox_value)));
             }
@@ -1428,7 +1440,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         var $div = $('<div class="f_control_holder"/>');
 
 
-        switch (item.params.control){
+        switch (item.control){
             case 'info':
                 if (value){
                     value = process_html(value, row_data)
@@ -1443,6 +1455,9 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 break;
             case 'dropdown':
                 $div.append(dropdown(item, value));
+                break;
+            case 'wmd':
+                $div.append(wmd(item, value));
                 break;
             case 'textarea':
                 $div.append(textarea(item, value));
@@ -1478,7 +1493,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 subforms.push({item: item, data: value});
                 break;
             default:
-                $div.append('UNKNOWN: ' + item.params.control);
+                $div.append('UNKNOWN: ' + item.control);
         }
 
         return $div;
@@ -1490,9 +1505,9 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
         $form.empty();
         function add_layout_item(item){
-            switch (item.params.layout){
+            switch (item.layout){
                 case 'text':
-                    var text = process_html(item.params.text, row_data);
+                    var text = process_html(item.text, row_data);
                     $builder[builder_depth].append('<div class="f_control_holder f_text">' + text + '</div>');
                     break;
                 case 'spacer':
@@ -1533,16 +1548,42 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             for (var i = 0; i < num_fields; i++){
                 item = form_data.fields[i];
                 value = $.Util.get_item_value(item, row_data);
-                if (item.params.layout){
+                if (item.layout){
                     add_layout_item(item, $builder, builder_depth);
                 } else {
-                    if (item.params.control){
+                    if (item.control != 'normal'){
                         $control = build_control(item, value);
                     } else {
                         $control = build_input(item, value);
                     }
                     $builder[builder_depth].append($control);
                     form_controls_hash[item.name] = $control;
+                }
+            }
+        }
+
+        function build_subforms(){
+            // subforms
+            var $subforms = $input.find('div.SUBFORM');
+            var subform;
+            var data;
+            for (var i = 0, n = subforms.length; i < n; i ++){
+                subform = subforms[i].item;
+                extra_defaults = {__table: subform.form.table_name,
+                                  __subform: subforms[i].item.name};
+                extra_defaults[subform.form.child_id] = row_data[subform.form.parent_id];
+
+                switch (subform.form.params.form_type){
+                    case 'grid':
+                        $subforms.eq(i).grid(subform.form, subforms[i].data);
+                        break;
+                    case 'action':
+                    case 'continuous':
+                        data = {__array: subforms[i].data};
+                        $subforms.eq(i).input_form(subform.form, data, extra_defaults);
+                        break;
+                    default:
+                        $subforms.eq(i).form(subform.form, subforms[i].data);
                 }
             }
         }
@@ -1579,6 +1620,10 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             $builder[--builder_depth].append($builder.pop());
         }
         $form.append($builder[0].contents());
+
+        if (subforms.length){
+            build_subforms();
+        }
     }
 
 

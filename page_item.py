@@ -60,11 +60,10 @@ class PageItem(object):
 
     def convert(self, form, field_list):
 
-        row = {}
+        row = self.set_params(form)
         row['name'] = self.name
-        row['type'] = self.set_data_type(form)
+        row['data_type'] = self.set_data_type(form)
         row['title'] = self.label
-        row['params'] = self.set_params(form)
 
         return row
 
@@ -132,10 +131,6 @@ class SubForm(object):
 
         subform = form.node[self.name]
 
-        row = {}
-        row['name'] = self.name
-        row['type'] = self.data_type
-        row['title'] = self.label
 
         data = subform.create_form_data()
 
@@ -143,9 +138,12 @@ class SubForm(object):
 
         data['form']['parent_id'] =  subform.parent_id
         data['form']['child_id'] =  subform.child_id
-        data['control'] = 'subform'
 
-        row['params'] = data
+        row = data
+
+        row['name'] = self.name
+        row['control'] = 'subform'
+        row['title'] = self.label
 
         return row
 
@@ -406,6 +404,10 @@ def dropdown(arg, **kw):
 def dropdown_code(arg, **kw):
 
     return Dropdown("dropdown_code", dict(autocomplete = arg), kw)
+
+def wmd(**kw):
+
+    return Control("wmd", kw)
 
 def textarea(**kw):
 
