@@ -36,10 +36,10 @@ class Ticket(TableNode):
 
     def finalise(self):
 
-        if self.command == '_save' and self["main"].saved:
+        if self.command == '_save' and self.saved:
             if self.data.get('id',0) == 0:
 
-                self.data["id"] = self["main"].saved[0][1]
+                self.data["id"] = self.saved[0][1]
 
                 self.next_node = "bug.ListTicket"
                 self.next_data = dict(data = self.data,
@@ -70,7 +70,7 @@ class ListTicket(TableNode):
         subform('comment'),
 
         table = "ticket",
-        params =  {"form_type": "action"},
+        params =  {"form_type": "normal"},
         title_field = 'title',
     )
 
@@ -99,8 +99,7 @@ class ListTicket(TableNode):
     list_title = 'ticket %s'
 
     def save(self):
-
-        super(ListTicket, self).save()
+        self["comment"].save()
         self.action = "redirect"
         self.link = "bug.ListTicket:view:__id=%s" % self.data.get("_core_entity_id")
 

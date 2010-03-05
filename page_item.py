@@ -152,8 +152,23 @@ class SubForm(object):
     def load(self, form, node, object, data, session):
 
         subform = node[self.name]
-        if subform.params["form_type"] != "action":
-            data[self.name] = subform.load_subform(data)
+        data[self.name] = subform.load_subform(data)
+
+    def save(self, form, node, object, data, session):
+
+        subform = form.node[self.name]
+
+        subform_rtable = r[subform.table]
+
+        path, self.relation = subform_rtable.table_path[form.table]
+
+        relation_attr = path[0]
+
+        subform_data = data.get(self.name)
+
+        for row in subform_data:
+            form.save_row(row, session, object, relation_attr)
+
 
 
 class Layout(object):
