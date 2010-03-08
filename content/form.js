@@ -1057,6 +1057,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 return $item.find("textarea:first").val();
                 break;
             case 'dropdown':
+            case 'normal':
             case 'password':
                 return $item.find("input:first").val();
                 break;
