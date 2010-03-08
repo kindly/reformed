@@ -23,6 +23,7 @@ r = global_session.database
 import formencode as fe
 import sqlalchemy as sa
 import reformed.util as util
+import reformed.custom_exceptions as custom_exceptions
 from page_item import input
 
 class Form(object):
@@ -60,60 +61,96 @@ class Form(object):
         self.node.out = data
         self.node.action = 'form'
 
-    def save(self):
+    def save_row(self, data, session, parent_obj = None, relation_attr = None):
 
-        self.saved = []
-        self.errors = {}
-        node =self.node
+        """Saves an individual database row.  Subforms are saved last and
+        the subforms call this method in their own form instance. 
+        relation_attr is the attribute on the newly created object that should
+        have the parent_obj as its value.  This is to allow sqlalchemy to determine
+        the ids for new objects.
+        Both form and subform manipulate the same data which is stored agianst the
+        node."""
 
-        session = r.Session()
-        id = node.data.get('id')
-        root = node.data.get('__root')
+        id = data.get('id')
+        root = data.get('__root')
+        node = self.node
+
         if id:
-            filter = {'id' : id}
+            try:
+                obj = r.search_single(self.table, "id = ?",
+                                      values = [id],
+                                      session = session)
+            except custom_exceptions.SingleResultError:
+                form.errors[root] = 'record not found'
+                raise
         else:
-            filter = {}
+            obj = r.get_instance(self.table)
+
+        ## normal fields
+        for field in self.fields:
+            if field.page_item_type == "subform":
+                continue
+            field.save(self, self.node, obj, data, session)
+
+        ## when subforms are saved on their own
         subform = node.data.get("__subform")
         if subform:
             child_id = node[subform].child_id
-            fields = list(node[subform].fields) + [input(child_id, data_type = "Integer")]
-            table = node[subform].table
-        else:
-            table = self.table
-            fields = self.fields
+            id_field = input(child_id, data_type = "Integer")
+            id_field.save(self, self.node, obj, data, session)
 
-        self.save_record(session, table, fields, node.data, filter, root)
+        ## if a new object and a subform add the parent object to
+        ## relation property
+        if not id and parent_obj:
+            setattr(obj, relation_attr, parent_obj)
 
+        version = data.get("_version")
+        if version:
+            setattr(obj, "_version", version)
 
-        # FIXME how do we deal with save errors more cleverly?
-        # need to think about possible behaviours we want
-        # and add some 'failed save' options
-        #if not self.errors:
-            # subforms
-        #    for subform_name in self.subforms.keys():
-        #        subform_data = self.data.get(subform_name)
-        #        if subform_data:
-        #            subform = self.subforms.get(subform_name)
-        #            table = subform.get('table')
-        #            fields = subform.get('fields')
-        #            # do we have a joining field?
-        #            child_id = subform.get('child_id')
-        #            if child_id:
-        #                join_fields= [child_id]
-        #            self.save_record_rows(session, table, fields, subform_data, join_fields)
+        try:
+            session.save_or_update(obj)
+        except fe.Invalid, e:
+            print "failed to save\n%s" % e.msg
+            errors = {}
+            for key, value in e.error_dict.items():
+                errors[key] = value.msg
+            node.errors[root] = errors
 
-        session.commit()
-        session.close()
+        for field in self.fields:
+            if field.page_item_type <> "subform":
+                continue
+            field.save(self, self.node, obj, data, session)
 
-        # output data
-        out = {}
-        if self.errors:
-            out['errors'] = self.errors
-        if self.saved:
-            out['saved'] = self.saved
+    def save(self):
+        """Save this form. Its job is to set up the node belongs to 
+        and handle errors"""
 
-        self.node.out = out
-        self.node.action = 'save'
+        ## set up data to be stored
+        node = self.node
+        node.saved = []
+        node.errors = {}
+        node.out = {}
+        node.action = 'save'
+
+        session = r.Session()
+
+        data = node.data
+
+        try:
+            self.save_row(data, session)
+            if not node.errors:
+                session.commit()
+        except Exception, e:
+            session.rollback()
+            session.close()
+            raise
+
+        if node.errors:
+            node.out['errors'] = node.errors
+        if node.saved:
+            node.out['saved'] = node.saved
+
 
     def view(self, read_only=True):
         node = self.node
@@ -136,11 +173,9 @@ class Form(object):
             for field in util.INTERNAL_FIELDS:
                 try:
                     extra_field = getattr(obj, field)
+                    data_out[field] = util.convert_value(extra_field)
                 except AttributeError:
                     extra_field = None
-
-                if extra_field:
-                    data_out[field] = util.convert_value(extra_field)
 
             for field in self.fields:
                 field.load(self, node, obj, data_out, session)
@@ -270,57 +305,6 @@ class Form(object):
         node.action = 'form'
         node.title = 'listing'
 
-    def save_record(self, session, table, fields, data, filter, root, join_fields = []):
-        print 'table %s' % table
-        #print 'fields %s' % fields
-        errors = None
-        try:
-            if filter:
-                print 'existing record'
-                obj = r.get_class(table)
-                record_data = session.query(obj).filter_by(**filter).one()
-            else:
-                print 'new record'
-                record_data = r.get_instance(table)
-            for field in fields:
-                field.save(self, self.node, record_data, data, session)
-
-            # if this is a subform we need to update/add the join field
-            # FIXME is this needed here or just for new?
-            # maybe shift up a few lines to new record
-            for field_name in join_fields:
-                    value = data.get(field_name)
-                    print 'join: %s = %s' % (field_name, value)
-                    setattr(record_data, field_name, value)
-            version = data.get("_version")
-            if version:
-                setattr(record_data, "_version", version)
-            try:
-                session.save_or_update(record_data)
-                session.commit()
-                self.saved.append([root, record_data.id, record_data._version])
-                return record_data
-            except fe.Invalid, e:
-                session.rollback()
-                print "failed to save\n%s" % e.msg
-                errors = {}
-                for key, value in e.error_dict.items():
-                    errors[key] = value.msg
-                print repr(errors)
-                self.errors[root] = errors
-        except sa.orm.exc.NoResultFound:
-            self.errors[root] = 'record not found'
-
-    def save_record_rows(self, session, table, fields, data, join_fields):
-        ##not used yet
-        for row_data in data:
-            row_id = row_data.get('id', 0)
-            root = row_data.get('__root')
-            if row_id:
-                filter = {'id' : row_id}
-            else:
-                filter = {}
-            self.save_record(session, table, fields, row_data, filter, root = root, join_fields = join_fields)
 
     def create_form_data(self, data=None, read_only=False):
 

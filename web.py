@@ -74,7 +74,17 @@ def process_node(environ, start_response):
     head = request.params["head"]
 
     print request.params["body"]
-    body = json.loads(request.params["body"])
+    ##FIXME make sure we have a head and a body
+    try:
+        body = json.loads(request.params["body"])
+    except Exception, e:
+        error_msg = 'JSON OUTPUT FAIL\n\n%s' % traceback.format_exc()
+        error_msg += "\n\nSent body\n" + request.params["body"]
+        info = {'action': 'general_error',
+                'node' : 'JSON error',
+                'data' : error_msg}
+        data = [{'data' : info, 'type' : 'node'}]
+        return [json.dumps(data, separators=(',',':'))]
 
     node_interface = interface.Interface()
 

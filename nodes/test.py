@@ -202,7 +202,7 @@ class Search(TableNode):
                            'n:test.%s:view:__id=%s|View' % (table_name,
                                                            row['id'])                                                  ]
 
-        out = self.create_form_data(self.list_fields, self.list_params, data)
+        out = self["listing"].create_form_data(data)
 
         # add the paging info
         out['paging'] = {'row_count' : results['__count'],
