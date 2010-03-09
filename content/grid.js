@@ -615,7 +615,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         'focus' : focus,
         'add_row' : add_row,
         'save' : save_all,
-        'save_return' : save_return,
+        'save_return' : save_return
     };
 
 

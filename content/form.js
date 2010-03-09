@@ -1103,6 +1103,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         var cleaned;
         var field;
         var $control;
+        var item;
 
         for (var i = 0, n = form_data.fields.length; i < n; i++){
             item = form_data.fields[i];
@@ -1546,6 +1547,9 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         }
 
         function build_form_items(row_data){
+            var item;
+            var value;
+            var $control;
             for (var i = 0; i < num_fields; i++){
                 item = form_data.fields[i];
                 value = $.Util.get_item_value(item, row_data);
@@ -1594,6 +1598,9 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         var $control;
         var builder_depth = 0;
         var num_fields = form_data.fields.length;
+        var item;
+        var value;
+
         // form message
         if (!$.Util.is_empty(row_data.__message)){
             $control = message_area(row_data.__message);
