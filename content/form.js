@@ -1211,7 +1211,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 */
     function input_box(item, value){
        // value = correct_value(item, value);
-        var $control = $(add_label(item, 'rf_') + '<input id="rf_' + item.name + '"' + set_class_list(item, 'link') + ' value="' +  HTML_Encode_Clear(value) + '" />' + form_description(item));
+        var $control = $(add_label(item, 'rf_') + '<input id="rf_' + item.name + '"' + set_class_list(item) + ' value="' +  HTML_Encode_Clear(value) + '" />' + form_description(item));
         return $control;
     }
 
