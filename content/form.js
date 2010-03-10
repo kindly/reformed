@@ -1184,7 +1184,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             return '';
         }
     }
-
+/*
     function build_input(item, value){
             var html = [];
             html.push('<div class="f_control_holder">');
@@ -1207,6 +1207,16 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             html.push('</div>');
             return $(html.join(''));
 
+    }
+*/
+    function input_box(item, value){
+        var class_list = '';
+        if (item.css){
+            class_list += ' ' + item.css;
+        }
+       // value = correct_value(item, value);
+        var $control = $(add_label(item, 'rf_') + '<input id="rf_' + item.name + '" class="' + class_list + '" value="' +  HTML_Encode_Clear(value) + '" />' + form_description(item));
+        return $control;
     }
 
     function size_boxes(){
@@ -1445,6 +1455,9 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
 
         switch (item.control){
+            case 'normal':
+                $div.append(input_box(item, value));
+                break;
             case 'info':
                 if (value){
                     value = process_html(value, row_data)
@@ -1564,11 +1577,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 if (item.layout){
                     add_layout_item(item, $builder, builder_depth);
                 } else {
-                    if (item.control != 'normal'){
-                        $control = build_control(item, value);
-                    } else {
-                        $control = build_input(item, value);
-                    }
+                    $control = build_control(item, value);
                     $builder[builder_depth].append($control);
                     form_controls_hash[item.name] = $control;
                 }
