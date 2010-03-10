@@ -1210,12 +1210,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     }
 */
     function input_box(item, value){
-        var class_list = '';
-        if (item.css){
-            class_list += ' ' + item.css;
-        }
        // value = correct_value(item, value);
-        var $control = $(add_label(item, 'rf_') + '<input id="rf_' + item.name + '" class="' + class_list + '" value="' +  HTML_Encode_Clear(value) + '" />' + form_description(item));
+        var $control = $(add_label(item, 'rf_') + '<input id="rf_' + item.name + '"' + set_class_list(item, 'link') + ' value="' +  HTML_Encode_Clear(value) + '" />' + form_description(item));
         return $control;
     }
 
@@ -1231,20 +1227,16 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     }
 
     function link(item, value){
-        var class_list = 'link';
-        if (item.css){
-            class_list += ' ' + item.css;
-        }
         var split = value.split("|");
         var link_node = split.shift();
         value = split.join('|');
   //      var x = (show_label ? '<span class="label">' + item.title + '</span>' : '');
         var x = '';
         if (link_node.substring(0,1) == 'n'){
-            x += '<a href="#" class="' + class_list + '" onclick="node_load(\'' + link_node + '\');return false">' + (value ? value : '&nbsp;') + '</a>';
+            x += '<a href="#"' + set_class_list(item, 'link') + ' onclick="node_load(\'' + link_node + '\');return false">' + (value ? value : '&nbsp;') + '</a>';
         }
         if (link_node.substring(0,1) == 'd'){
-            x += '<a href="#" class="' + class_list + '" onclick ="link_process(this,\'' + link_node + '\');return false;">' + (value ? value : '&nbsp;') + '</a>';
+            x += '<a href="#"' + set_class_list(item, 'link') + ' onclick ="link_process(this,\'' + link_node + '\');return false;">' + (value ? value : '&nbsp;') + '</a>';
         }
         return x;
     }
@@ -1265,19 +1257,11 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     }
 
     function button_link(item, value){
-        var class_list = 'link';
-        if (item.css){
-            class_list += ' ' + item.css;
-        }
-        return '<a href="#" class="' + class_list + '" onclick="node_button_input_form(this, \'' + item.node + '\');return false">' + item.title + '</a>';
+        return '<a href="#"' + set_class_list(item, 'link') + ' onclick="node_button_input_form(this, \'' + item.node + '\');return false">' + item.title + '</a>';
     }
 
     function button(item, value){
-        var class_list = 'button';
-        if (item.css){
-            class_list += ' ' + item.css;
-        }
-        return '<button class="' + class_list + '" onclick="node_button_input_form(this, \'' + item.node + '\');return false">' + item.title + '</button>';
+        return '<button' + set_class_list(item, 'button') + ' onclick="node_button_input_form(this, \'' + item.node + '\');return false">' + item.title + '</button>';
     }
 
     function dropdown_code(item, value){
@@ -1313,21 +1297,13 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     }
 
     function wmd(item, value){
-        var class_list = 'HOLDER';
-        if (item.css){
-            class_list += ' ' + item.css;
-        }
-        var $control = $(add_label(item, 'rf_') + '<div class="' + class_list + '"><textarea>' + HTML_Encode_Clear(value) + '</textarea></div>' + form_description(item));
+        var $control = $(add_label(item, 'rf_') + '<div' + set_class_list(item, 'HOLDER') + '"><textarea>' + HTML_Encode_Clear(value) + '</textarea></div>' + form_description(item));
         $control.find('textarea').wmd();
         return $control;
     }
 
     function textarea(item, value){
-        var class_list = '';
-        if (item.css){
-            class_list += ' ' + item.css;
-        }
-        var $control = $(add_label(item, 'rf_') + '<textarea class="' + class_list + '>' + HTML_Encode_Clear(value) + '</textarea>' + form_description(item));
+        var $control = $(add_label(item, 'rf_') + '<textarea' + set_class_list(item) + '>' + HTML_Encode_Clear(value) + '</textarea>' + form_description(item));
         return $control;
     }
 
@@ -1374,21 +1350,29 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         return out;
     }
 
+    function set_class_list(item, extra_class){
+        if (!item.css && !extra_class){
+            return '';
+        }
 
-    function htmlarea(item, value){
         var class_list = '';
+        if (extra_class){
+           class_list = extra_class;
+        }
         if (item.css){
             class_list += ' ' + item.css;
         }
-        return add_label(item, 'rf_') + '<div class="' + class_list + '">' + value + '</div>';
+
+        return ' class="' + class_list + '" ';
+    }
+
+
+    function htmlarea(item, value){
+        return add_label(item, 'rf_') + '<div' + set_class_list(item) + '>' + value + '</div>';
     }
 
     function password(item, value){
-        var class_list = '';
-        if (item.css){
-            class_list += ' ' + item.css;
-        }
-        return add_label(item, 'rf_') + '<input type="password" class="' + class_list + '" value="' + HTML_Encode_Clear(value) + '"/>';
+        return add_label(item, 'rf_') + '<input type="password"' + set_class_list(item) + ' value="' + HTML_Encode_Clear(value) + '"/>';
     }
 
     function checkbox(item, value){
