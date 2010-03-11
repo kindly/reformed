@@ -45,6 +45,80 @@ $.Grid = function(input, form_data, grid_data, paging_data){
        (` =~~/    (` =~~/    (` =~~/    (` =~~/    (` =~~/
  jgs~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~
 
+            VARIABLES
+
+*/
+
+    var num_fields = form_data.fields.length;
+    var $input = $(input);
+    var $form;
+
+    var $drag_col;
+    var drag_col;
+    var column_widths = [];
+    var last_column_user_width;
+    var column_widths_main = [];
+    var column_widths_header = [];
+
+    var resize_grid_timeout;
+    var resize_column_timeout;
+
+    var util = $.Util;
+    var HTML_Encode = util.HTML_Encode;
+    var util_size = $.Util.Size;
+    var position = $.Util.position;
+    var grid_size = {width : 500, height : 300};
+    var table_size = {width : 0};
+
+    var $grid;
+    var $grid_side;
+    var $grid_head;
+    var $grid_main;
+    var $grid_foot;
+    var $grid_title;
+    var $grid_resizer;
+    var $head;
+    var $main;
+    var $side;
+    var $grid_loader;
+
+    var $header_resizers = [];
+
+    var scroll_left = 0;
+    var scroll_top = 0;
+    var row = 0;
+    var col = 0;
+    var total_cols;
+    var total_rows;
+    var edit_mode = false;
+    var form_in_focus = false;
+
+    var scrollbar_side;
+    var scrollbar_bottom;
+
+    var row_info = {};
+
+    // details of the currently selected control
+    var current = {
+        $item : [undefined],
+        $row : [undefined],
+        $side : undefined,
+        dirty : false,
+        row : undefined,
+        col : undefined,
+        value : undefined,
+        field : undefined,
+        $control : undefined,
+        editing : false,
+        complex_control : undefined
+    };
+
+/*
+       _          _          _          _          _
+     >(')____,  >(')____,  >(')____,  >(')____,  >(') ___,
+       (` =~~/    (` =~~/    (` =~~/    (` =~~/    (` =~~/
+ jgs~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~
+
             EVENT HANDLERS
 
 */
@@ -513,7 +587,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         blur();
 
         grid_data = data.grid_data;
-        paging_data = data.paging_data
+        paging_data = data.paging_data;
         // Update the grid.
         build_grid(false);
         find_grid_elements();
@@ -615,7 +689,7 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         'focus' : focus,
         'add_row' : add_row,
         'save' : save_all,
-        'save_return' : save_return,
+        'save_return' : save_return
     };
 
 
@@ -1205,34 +1279,8 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         }
     }
 
-    var scroll_left = 0;
-    var scroll_top = 0;
-    var row = 0;
-    var col = 0;
-    var total_cols;
-    var total_rows;
-    var edit_mode = false;
-    var form_in_focus = false;
 
-    var row_info = {};
 
-    // details of the currently selected control
-    var current = {
-        $item : [undefined],
-        $row : [undefined],
-        $side : undefined,
-        dirty : false,
-        row : undefined,
-        col : undefined,
-        value : undefined,
-        field : undefined,
-        $control : undefined,
-        editing : false,
-        complex_control : undefined
-    };
-
-    var scrollbar_side;
-    var scrollbar_bottom;
 
 /*
        _          _          _          _          _
@@ -1424,50 +1472,6 @@ $.Grid = function(input, form_data, grid_data, paging_data){
         }
     }
 
-
-/*
-       _          _          _          _          _
-     >(')____,  >(')____,  >(')____,  >(')____,  >(') ___,
-       (` =~~/    (` =~~/    (` =~~/    (` =~~/    (` =~~/
- jgs~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~^`---'~^~^~
-
-            VARIABLES
-
-*/
-
-    var num_fields = form_data.fields.length;
-    var $input = $(input);
-    var $form;
-
-    var $drag_col;
-    var drag_col;
-    var column_widths = [];
-    var last_column_user_width;
-    var column_widths_main = [];
-    var column_widths_header = [];
-
-    var resize_grid_timeout;
-    var resize_column_timeout;
-
-    var util = $.Util;
-    var HTML_Encode = util.HTML_Encode;
-    var util_size = $.Util.Size;
-    var position = $.Util.position;
-    var grid_size = {width : 500, height : 300};
-    var table_size = {width : 0};
-
-    var $grid;
-    var $grid_side;
-    var $grid_head;
-    var $grid_main;
-    var $grid_foot;
-    var $grid_title;
-    var $grid_resizer;
-    var $head;
-    var $main;
-    var $side;
-
-    var $header_resizers = [];
 
     if (!grid_data){
         grid_data = [];

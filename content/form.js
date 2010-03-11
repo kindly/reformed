@@ -49,15 +49,8 @@ $.fn.extend({
 
 $.Checkbox = function(input, item, value){
 
-    function mousedown(){
-        if (is_2_state){
-            mousedown_2_state();
-        } else {
-            mousedown_3_state();
-        }
-        // store the value
-        $checkbox.data('value', value);
-    }
+    var $checkbox = $(input);
+    var is_2_state = (item.validation && item.validation[0].not_empty == true);
 
     function mousedown_2_state(){
         switch (value){
@@ -94,7 +87,17 @@ $.Checkbox = function(input, item, value){
         }
     }
 
-    function set_state(){
+    function mousedown(){
+        if (is_2_state){
+            mousedown_2_state();
+        } else {
+            mousedown_3_state();
+        }
+        // store the value
+        $checkbox.data('value', value);
+    }
+
+   function set_state(){
         switch (value){
             case null:
                 $checkbox.addClass('null');
@@ -108,8 +111,6 @@ $.Checkbox = function(input, item, value){
         }
     }
 
-    var $checkbox = $(input);
-    var is_2_state = (item.validation && item.validation[0].not_empty == true);
     if (is_2_state && value === null){
         value = false;
     }
@@ -137,7 +138,7 @@ $.Form = function(input, form_data, row_data, paging_data){
         $.Form.Movement($form, form_data, row_data);
         $form.data('command')('register_events');
     } else {
-        for (i = 0, n = row_data.length; i < n; i++){
+        for (var i = 0, n = row_data.length; i < n; i++){
         var $sub = $('<div class="f_form_continuous"></div>');
         $form.append($sub);
         $.Form.Build($sub, form_data, row_data[i], paging_data);
@@ -707,6 +708,9 @@ make_cell_viewable
 
 $.Form.Build = function($input, form_data, row_data, paging_data){
 
+    var subforms;
+    var subform;
+
     function build_input(item, value){
             var html = [];
             html.push('<div>');
@@ -852,13 +856,11 @@ $.Form.Build = function($input, form_data, row_data, paging_data){
         return html.join('');
     }
 
-    var subforms = [];
     var HTML_Encode = $.Util.HTML_Encode;
     $input.html(build_form());
 
     // subforms
-    var $subforms = $input.find('div.SUBFORM');
-    var subform;
+    $subforms = $input.find('div.SUBFORM');
     for (var i = 0, n = subforms.length; i < n; i ++){
         subform = subforms[i].item;
         extra_defaults = {__table: subform.form.table_name,
@@ -1057,6 +1059,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 return $item.find("textarea:first").val();
                 break;
             case 'dropdown':
+            case 'normal':
             case 'password':
                 return $item.find("input:first").val();
                 break;
@@ -1102,6 +1105,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         var cleaned;
         var field;
         var $control;
+        var item;
 
         for (var i = 0, n = form_data.fields.length; i < n; i++){
             item = form_data.fields[i];
@@ -1503,7 +1507,13 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     function build_form(){
 
-        $form.empty();
+        var $builder;
+        var $control;
+        var builder_depth;
+        var num_fields;
+        var item;
+        var value;
+
         function add_layout_item(item){
             switch (item.layout){
                 case 'text':
@@ -1545,6 +1555,9 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         }
 
         function build_form_items(row_data){
+            var item;
+            var value;
+            var $control;
             for (var i = 0; i < num_fields; i++){
                 item = form_data.fields[i];
                 value = $.Util.get_item_value(item, row_data);
@@ -1588,11 +1601,11 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             }
         }
 
+        $form.empty();
         form_controls_hash = {};
-        var $builder = [$('<div/>')];
-        var $control;
-        var builder_depth = 0;
-        var num_fields = form_data.fields.length;
+        builder_depth = 0;
+        num_fields = form_data.fields.length;
+        $builder = [$('<div/>')];
         // form message
         if (!$.Util.is_empty(row_data.__message)){
             $control = message_area(row_data.__message);
@@ -1610,7 +1623,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         }
         // form buttons
         if (row_data.__buttons){
-            item = {params : { buttons : row_data.__buttons}};
+            item = { buttons : row_data.__buttons};
             value = $.Util.get_item_value(item, row_data);
             $control = '<div class="f_control_holder">' + button_box(item, value) + '</div>';
             $builder[builder_depth].append($control);
