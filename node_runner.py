@@ -50,13 +50,22 @@ def run(node_name, data, last_node = None):
         data['command'] = app_data.get('default_command')
 
 
-    node_base = node_name.split('.')[0]
+    node_path = node_name.split('.')
+    node_base = node_path[0]
+
     found = False
     if not hasattr(nodes, node_base):
-        print "importing " + 'nodes.' + node_base
         try:
-            globals()['nodes.' + node_base] = __import__('nodes.' + node_base)
-        except:
+            module = __import__('custom_nodes.' + node_base)
+            print "importing " + 'custom_nodes.' + node_base
+        except ImportError:
+            try:
+                module = __import__('nodes.' + node_base)
+                print "importing " + 'nodes.' + node_base
+            except ImportError:
+                module = None
+
+        if not module:
             print "import failed"
             print traceback.print_exc()
             error_msg = 'IMPORT FAIL (%s)\n\n%s' % (node_name, traceback.format_exc())
@@ -65,8 +74,7 @@ def run(node_name, data, last_node = None):
                     'data' : error_msg}
             return info
 
-    search_node = nodes
-    node_path = node_name.split('.')
+    search_node = module
     for node in node_path:
         if hasattr(search_node, node):
             search_node = getattr(search_node, node)
