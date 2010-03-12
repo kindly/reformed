@@ -91,8 +91,12 @@ def run(node_name, data, last_node = None):
             x.call()
             x.finalise()
             x.finish_node_processing()
+
+            if x.prev_node and x.prev_node.next_data_out:
+                x.out["data"].update(x.prev_node.next_data_out)
+
             if x.next_node:
-                return run(x.next_node, x.next_data, node_name)
+                return run(x.next_node, x.next_data, x)
             else:
                 refresh_frontend = False
 
