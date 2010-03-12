@@ -1075,7 +1075,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         }
     }
 
-    function get_codegroup_values($item){
+    function get_codegroup_values($item, item){
         var $checkboxes = $item.find("div.CHECKBOX");
         var codes = item.codes;
         var values = {};
