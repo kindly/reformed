@@ -83,50 +83,51 @@ def run(node_name, data, last_node = None):
             found = False
             break
 
-    if found:
-        print "Node: %s, last: %s" % (node_name, last_node)
-        x = search_node(data, node_name, last_node)
-        if x.allowed:
-            x.initialise()
-            x.call()
-            x.finalise()
-            x.finish_node_processing()
-
-            if x.prev_node and x.prev_node.next_data_out:
-                x.out["data"].update(x.prev_node.next_data_out)
-
-            if x.next_node:
-                return run(x.next_node, x.next_data, x)
-            else:
-                refresh_frontend = False
-
-                info = {'action': x.action,
-                        'node': node_name,
-                        'title' : x.title,
-                        'link' : x.link,
-                        'user' : x.user,
-                        'bookmark' : x.bookmark,
-                        'data' : x.out}
-
-                user_id = global_session.session['user_id']
-                # application data
-                if data.get('request_application_data'):
-                        info['application_data'] = app_data
-                        info['application_data']['__user_id'] = user_id
-                        info['application_data']['__username'] = global_session.session['username']
-                        refresh_frontend = True
-                # bookmarks
-                if (info['user'] or refresh_frontend) and user_id:
-                    # we have logged in so we want our bookmarks
-                    info['bookmark'] = bookmark_list(user_id)
-
-
-                return info
-        else:
-            # the user cannot perform this action
-            return {'action': 'forbidden'}
-    else:
+    if not found:
         print "Node <%s> not found" % node_name
+        return
+
+    print "Node: %s, last: %s" % (node_name, last_node)
+    x = search_node(data, node_name, last_node)
+
+    # the user cannot perform this action
+    if not x.allowed:
+        return {'action': 'forbidden'}
+
+    x.initialise()
+    x.call()
+    x.finalise()
+    x.finish_node_processing()
+
+    if x.prev_node and x.prev_node.next_data_out:
+        x.out["data"].update(x.prev_node.next_data_out)
+
+    if x.next_node:
+        return run(x.next_node, x.next_data, x)
+    else:
+        refresh_frontend = False
+
+        info = {'action': x.action,
+                'node': node_name,
+                'title' : x.title,
+                'link' : x.link,
+                'user' : x.user,
+                'bookmark' : x.bookmark,
+                'data' : x.out}
+
+        user_id = global_session.session['user_id']
+        # application data
+        if data.get('request_application_data'):
+                info['application_data'] = app_data
+                info['application_data']['__user_id'] = user_id
+                info['application_data']['__username'] = global_session.session['username']
+                refresh_frontend = True
+        # bookmarks
+        if (info['user'] or refresh_frontend) and user_id:
+            # we have logged in so we want our bookmarks
+            info['bookmark'] = bookmark_list(user_id)
+
+        return info
 
 
 
