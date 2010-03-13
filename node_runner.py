@@ -54,25 +54,25 @@ def run(node_name, data, last_node = None):
     node_base = node_path[0]
 
     found = False
-    if not hasattr(nodes, node_base):
-        try:
-            module = __import__('custom_nodes.' + node_base)
-            print "importing " + 'custom_nodes.' + node_base
-        except ImportError:
-            try:
-                module = __import__('nodes.' + node_base)
-                print "importing " + 'nodes.' + node_base
-            except ImportError:
-                module = None
 
-        if not module:
-            print "import failed"
-            print traceback.print_exc()
-            error_msg = 'IMPORT FAIL (%s)\n\n%s' % (node_name, traceback.format_exc())
-            info = {'action': 'general_error',
-                    'node': node_name,
-                    'data' : error_msg}
-            return info
+    try:
+        module = __import__('custom_nodes.' + node_base)
+        print "importing " + 'custom_nodes.' + node_base
+    except ImportError:
+        try:
+            module = __import__('nodes.' + node_base)
+            print "importing " + 'nodes.' + node_base
+        except ImportError:
+            module = None
+
+    if not module:
+        print "import failed"
+        print traceback.print_exc()
+        error_msg = 'IMPORT FAIL (%s)\n\n%s' % (node_name, traceback.format_exc())
+        info = {'action': 'general_error',
+                'node': node_name,
+                'data' : error_msg}
+        return info
 
     search_node = module
     for node in node_path:
