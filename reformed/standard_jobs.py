@@ -22,12 +22,10 @@ class Messager(object):
         util.load_local_data(self.database, row)
 
 
-        
+def data_load_from_file(database, job_id, **kw):
 
-
-def data_load_from_file(database, job_id, input = None):
-
-    table, file = [attrib.strip() for attrib in input.strip().split(",")]
+    table = kw.get("table")
+    file = kw.get("file")
 
     flatfile = FlatFile(database,
                         table,
@@ -38,9 +36,13 @@ def data_load_from_file(database, job_id, input = None):
     return flatfile.load(messager = messager)
 
 
-def wait(database, job_id, number):
+def wait(database, job_id, **kw):
+
+    number = kw.get("time")
+
     time.sleep(int(number))
     return "%s is done!" % number
 
-def error(database, job_id, number):
+def error(database, job_id, **kw):
+    number = kw.get("time")
     assert 1 <> 1

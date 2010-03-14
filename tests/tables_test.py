@@ -386,7 +386,7 @@ class test_field_type_validation(object):
         self.Donkey = Database("Donkey",
                             Table("people",
                                   Email("name1", length = 10, mandatory = True),
-                                  Money("name2", nullable = False, type = "new"),
+                                  Money("name2", nullable = False),
                                   Integer("name3", mandatory = True),
                                   DateTime("name4", mandatory = True),
                                   Boolean("name5", mandatory = True),
@@ -456,7 +456,7 @@ class test_field_type_validation(object):
     def test_field_type(self):
 
         assert self.Donkey["people"].fields["name1"].type == "Email"
-        assert self.Donkey["people"].fields["name2"].type == "new"
+        assert self.Donkey["people"].fields["name2"].type == "Money"
 
     def test_column(self):
 

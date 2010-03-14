@@ -618,6 +618,7 @@ class Database(object):
         if one_to_many_tables:
             kw["distinct_many"] = True
         query = search.Search(self, table_name, session, where, *args, **kw).search()
+        session.close()
 
         for cls in one_to_many_tables:
             query = query.add_entity(cls)
@@ -659,8 +660,9 @@ class Database(object):
             return wrapped_results
         except Exception, e:
             session.rollback()
-            session.close()
             raise
+        finally:
+            session.close()
 
     def search_single(self, table_name, *args, **kw):
 

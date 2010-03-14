@@ -175,8 +175,9 @@ class test_modify_table_sqlite(object):
         assert not any([result[num] for num in range(0,4)])
 
         table1 = self.Donkey["rename_field"]
-        
-        assert set([field.order for field in table1.fields.values() if field.category.endswith("field")]) == set([1,2,3,4])
+
+        assert set([field.order for field in table1.fields.values() 
+                    if field.category in ("field", "internal")]) == set([1,2,3,4,5,6,7])
 
         table1.alter_field("man2", type = "Text", nullable = False, default = "wee", validation = "Email")
 
