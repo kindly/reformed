@@ -42,6 +42,9 @@ import networkx as nx
 import job_scheduler
 import threading
 import os
+from ZODB import FileStorage, DB
+from ZODB.PersistentMapping import PersistentMapping
+import transaction
 
 root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 log_file = os.path.join(root, "log.log")
@@ -51,6 +54,7 @@ logger.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s - %(message)s")
 reformedhandler = logging.FileHandler(log_file)
 reformedhandler.setFormatter(formatter)
+
 
 logger.addHandler(reformedhandler)
 
@@ -66,6 +70,9 @@ class Database(object):
         self._Session = kw.pop("session", None)
         self.entity = kw.pop("entity", False)
         self.logging_tables = kw.pop("logging_tables", True)
+
+        self.zodb_store = kw.pop("zodb_store", True)
+
         self.metadata.bind = self.engine
         self.Session = sessionwrapper.SessionClass(self._Session, self)
         self.persisted = False
@@ -73,6 +80,21 @@ class Database(object):
         self.boot_tables = boots.boot_tables
         self.graph = None
         self.fields_to_persist = []
+
+        ## zodb database
+        if self.zodb_store:
+            storage = FileStorage.FileStorage(self.zodb_store)
+            self.db = DB(storage)
+            connection = self.db.open()
+            root = connection.root()
+            if "tables" not in root:
+                root["tables"] = PersistentMapping()
+                root["table_count"] = 0
+                transaction.commit()
+            connection.close()
+        ## zodb database
+
+
         self.load_from_persist()
         if self.entity:
             self.add_entity_table()
@@ -335,12 +357,19 @@ class Database(object):
 
         session = self.Session()
 
+        if self.zodb_store:
+            connection = self.db.open()
+        else:
+            connection = None
+
         try:
             for table in self.tables.itervalues():
                 if not table.persisted:
-                    table.persist(session)
+                    table.persist(session, connection)
             for field in self.fields_to_persist:
-                field.table._persist_extra_field(field, session)
+                field.table._persist_extra_field(field, session, connection)
+
+            transaction.commit()
 
             session._flush()
 
@@ -357,6 +386,8 @@ class Database(object):
             session._commit()
         finally:
             session.close
+            if connection:
+                connection.close()
 
 
         self.load_from_persist(True)
@@ -372,8 +403,14 @@ class Database(object):
 
         session = self.Session()
 
+        if self.zodb_store:
+            connection = self.db.open()
+        else:
+            connection = None
+
         self.tables = {}
         self.clear_sa()
+
         #old boot table state causes issues
         boots = boot_tables.boot_tables()
         self.boot_tables = boots.boot_tables
@@ -439,8 +476,6 @@ class Database(object):
 
             self.add_table(tables.Table(row.table_name.encode("ascii"), *fields, **kw))
 
-        for table in self.tables.itervalues():
-            table.persisted = True
 
             orders = [field.order for field in table.fields.values() if field.order]
 
@@ -450,6 +485,26 @@ class Database(object):
         # for first time do not say database is persisted
         if all_tables:
             self.persisted = True
+
+        if connection:
+            self.tables = {}
+            self.clear_sa()
+            root = connection.root()
+            for table_name, table in root["tables"].iteritems():
+                fields = []
+                for field_name, field in table["fields"].iteritems():
+                    field_cls = getattr(field_types, field["type"])
+                    fields.append(field_cls(field_name,
+                                            field["other"],
+                                            **field["params"]))
+
+                self.add_table(tables.Table(table_name,
+                                            *fields,
+                                            **table["params"]))
+
+
+        for table in self.tables.itervalues():
+            table.persisted = True
 
         self.update_sa()
         self.validate_database()
@@ -510,6 +565,8 @@ class Database(object):
             for table in self.tables.itervalues():
                 for field in table.fields.itervalues():
                     if hasattr(field, "event"):
+                        print table, field
+                        print "*-"*10
                         field.event.add_event(self)
                 table.make_schema_dict()
         except (custom_exceptions.NoDatabaseError,\

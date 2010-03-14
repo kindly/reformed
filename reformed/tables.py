@@ -44,6 +44,9 @@ from sqlalchemy.orm import column_property
 from sqlalchemy.orm.interfaces import AttributeExtension
 import fshp
 
+from ZODB.PersistentMapping import PersistentMapping
+import transaction
+
 LOGGER = logging.getLogger('reformed.main')
 
 class Table(object):
@@ -134,7 +137,7 @@ class Table(object):
     def __repr__(self):
         return "%s - %s" % (self.name, self.columns.keys())
 
-    def persist(self, session):
+    def persist(self, session, connection = None):
         """This puts the information about the this objects parameters
         and its collection of fields into private database tables so that in future they
         no longer need to be explicitely defined"""
@@ -144,6 +147,52 @@ class Table(object):
             if field.category in ("field", "multi_field", "internal"):
                 self.current_order = self.current_order + 1
                 field.order = self.current_order
+
+
+        ########ZODB store##############
+        if connection:
+            root = connection.root()
+            tables = root["tables"]
+            table_count = root["table_count"] + 1
+            root["table_count"] = table_count
+
+            table = PersistentMapping()
+
+            tables[self.name] = table
+            table["field_count"] = 0
+
+            params = PersistentMapping(**self.kw)
+
+            params["table_id"] = table_count
+            params["summary"] = self.summary
+
+            table["params"] = params
+
+            table_fields = PersistentMapping()
+
+            table["fields"] = table_fields
+
+            for field_name, rfield in self.fields.iteritems():
+
+                field = PersistentMapping()
+                table_fields[field_name] = field
+                field_count = table["field_count"] + 1
+                table["field_count"] = field_count
+
+                field["type"] = rfield.__class__.__name__
+                if hasattr(rfield, "other"):
+                    field["other"] = rfield.other
+                else:
+                    field["other"] = None
+
+                params = PersistentMapping(**rfield.kw)
+                params["foreign_key_name"] = rfield.foreign_key_name
+                params["field_id"] = field_count
+                params["order"] = rfield.order
+
+                field["params"] = params
+
+        ########ZODB store##############
 
 
         __table = self.database.tables["__table"].sa_class()
@@ -366,10 +415,16 @@ class Table(object):
         """add a Field object to this Table"""
         if self.persisted == True:
             session = self.database.Session()
+
+            if self.database.zodb_store:
+                connection = self.database.db.open()
+            else:
+                connection = None
+
             field.check_table(self)
             try:
                 self._add_field_no_persist(field)
-                self._persist_extra_field(field, session)
+                self._persist_extra_field(field, session, connection)
                 self._add_field_by_alter_table(field)
             except Exception, e:
                 session.rollback()
@@ -378,10 +433,14 @@ class Table(object):
                 raise
             else:
                 session._commit()
+                if connection:
+                    transaction.commit()
                 if not defer_update_sa:
                     self.database.update_sa(reload = True)
             finally:
                 session.close()
+                if connection:
+                    connection.close()
             return
 
         else:
@@ -543,7 +602,34 @@ class Table(object):
             col = sa.Column(name, column.type, **column.sa_options)
             col.create(self.sa_table)
 
-    def _persist_extra_field(self, field, session):
+    def _persist_extra_field(self, field, session, connection = None):
+
+        if connection:
+
+            root = connection.root()
+            table = root["tables"][self.name]
+            table_fields = table["fields"]
+            rfield = field
+
+            field = PersistentMapping()
+            table_fields[rfield.name] = field
+            field_count = table["field_count"] + 1
+            table["field_count"] = field_count
+
+            field["type"] = rfield.__class__.__name__
+            if hasattr(rfield, "other"):
+                field["other"] = rfield.other
+            else:
+                field["other"] = None
+
+            params = PersistentMapping(**rfield.kw)
+            params["foreign_key_name"] = rfield.foreign_key_name
+            params["field_id"] = field_count
+            params["order"] = rfield.order
+
+            field["params"] = params
+            field = rfield
+
 
         if field.category in ("field", "multi_field", "internal"):
             self.current_order = self.current_order + 1

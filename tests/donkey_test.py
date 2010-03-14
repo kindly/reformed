@@ -27,6 +27,14 @@ class test_donkey(object):
         if not hasattr(cls, "engine"):
             cls.engine = create_engine('sqlite:///:memory:' )
             #cls.engine = create_engine('sqlite:///:memory:')
+
+        try:
+            os.remove("tests/zodb.fs")
+            os.remove("tests/zodb.fs.lock")
+            os.remove("tests/zodb.fs.index")
+            os.remove("tests/zodb.fs.tmp")
+        except OSError:
+            pass
         
 #        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
         cls.meta = sa.MetaData()
@@ -35,7 +43,8 @@ class test_donkey(object):
                         metadata = cls.meta,
                         engine = cls.engine,
                         session = cls.Sess,
-                        entity = True
+                        entity = True,
+                        zodb_store = "tests/zodb.fs"
                         )
 
 
@@ -572,16 +581,16 @@ class test_basic_input(test_donkey):
 
     def test_all_fields_have_different_numbers(self):
 
-        field_ids = []
 
         for table in self.Donkey.tables.values():
             if table.name.startswith("__") or table.name.startswith("_log___"):
                 continue
+            field_ids = []
+
             for field in table.fields.values():
                 field_ids.append(field.field_id)
-            print table.name, field_ids
 
-        assert len(field_ids) == len(set(field_ids))
+            assert len(field_ids) == len(set(field_ids))
 
     def test_dependant_attributes(self):
 

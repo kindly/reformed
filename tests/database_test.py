@@ -4,6 +4,7 @@ from reformed.tables import *
 from reformed.database import *
 from nose.tools import assert_raises,raises
 import logging
+import os
 
 sqlhandler = logging.FileHandler("sql.log")
 sqllogger = logging.getLogger('sqlalchemy.engine')
@@ -18,6 +19,15 @@ class test_database(object):
 
         self.engine = sa.create_engine('sqlite:///:memory:')
         self.meta = sa.MetaData()
+
+        try:
+            os.remove("tests/zodb.fs")
+            os.remove("tests/zodb.fs.lock")
+            os.remove("tests/zodb.fs.index")
+            os.remove("tests/zodb.fs.tmp")
+        except OSError:
+            pass
+    
         self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
         self.Donkey = Database("Donkey",
                          Table("people",
@@ -31,6 +41,7 @@ class test_database(object):
                                metadata = self.meta,
                                engine = self.engine,
                                session = self.Session,
+                               zodb_store = "tests/zodb.fs"
                               )
         #self.Donkey.update_sa()
         self.Donkey.persist()
@@ -52,6 +63,7 @@ class test_database(object):
         assert self.Donkey.name == "Donkey"
         assert "people" in self.Donkey.tables
         assert "email" in  self.Donkey.tables
+        print self.Donkey.tables["people"].fields
         assert len(self.Donkey.tables["people"].fields) == 7 # modified field
         assert len(self.Donkey.tables["email"].fields) == 5
 
