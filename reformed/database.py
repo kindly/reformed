@@ -34,7 +34,6 @@ from collections import defaultdict
 from util import get_paths, get_all_local_data
 from fields import ManyToOne, OneToOne, OneToMany, Integer, CopyTextAfter, CopyTextAfterField, DeleteRow
 import fields as field_types
-import boot_tables
 import sessionwrapper
 import validate_database
 import logging
@@ -76,10 +75,9 @@ class Database(object):
         self.metadata.bind = self.engine
         self.Session = sessionwrapper.SessionClass(self._Session, self)
         self.persisted = False
-        boots = boot_tables.boot_tables()
-        self.boot_tables = boots.boot_tables
         self.graph = None
         self.fields_to_persist = []
+        self.relations = []
 
         ## zodb database
         if self.zodb_store:
@@ -94,8 +92,8 @@ class Database(object):
             connection.close()
         ## zodb database
 
-
         self.load_from_persist()
+
         if self.entity:
             self.add_entity_table()
         for table in args:
@@ -103,15 +101,14 @@ class Database(object):
                 self.add_entity(table)
             else:
                 self.add_table(table)
-        #self.persist()
+
         self.status = "active"
-        #self.job_scheduler = job_scheduler.JobScheduler(self)
         self.manager_thread = ManagerThread(self, threading.currentThread())
         self.manager_thread.start()
 
         self.job_scheduler = job_scheduler.JobScheduler(self)
-
         self.scheduler_thread = job_scheduler.JobSchedulerThread(self, threading.currentThread())
+
 
     def __getitem__(self, item):
         if isinstance(item, int):
@@ -206,7 +203,9 @@ class Database(object):
 
     def drop_table(self, table):
 
-        session = self.Session()
+        connection = self.db.open()
+        root = connection.root()
+        persisted_tables = root["tables"]
 
         try:
             if isinstance(table, tables.Table):
@@ -219,27 +218,25 @@ class Database(object):
                     "cannot delete table %s as the following tables"
                     " depend on it %s" % (table.name, table.dependant_tables)))
 
-            row = table_to_drop.get_table_row_from_table(session)
-            session.delete(row)
+            persisted_tables.pop(table_to_drop.name)
 
             for relations in table_to_drop.tables_with_relations.itervalues():
                 for relation in relations:
-                    row = relation.parent.get_field_row_from_table(session)
-                    session.delete(row)
-
-            session._flush()
+                    field = relation.parant
+                    persisted_tables[field.table]["fields"].pop(field.name)
+                    persisted_tables[field.table]["field_order"].pop(field.name)
 
             table_to_drop.sa_table.drop()
 
         except Exception, e:
-            session.rollback()
+            transaction.abort()
             raise
         else:
-            session.commit()
+            transaction.commit()
             self.load_from_persist(True)
             self.add_relations()
         finally:
-            session.close()
+            connection.close()
 
         if table_to_drop.logged:
             self.drop_table(self.tables["_log_" + table_to_drop.name])
@@ -348,50 +345,40 @@ class Database(object):
 
         self.status = "updating"
 
-        if not self.persisted:
-            for table in self.boot_tables:
-                if table.name in self.tables.iterkeys():
-                    break
-                self.add_table(table)
-        self.update_sa(reload = True)
-
-        session = self.Session()
-
-        if self.zodb_store:
-            connection = self.db.open()
-        else:
-            connection = None
-
+        connection = self.db.open()
         try:
+
+            ## add logging tables
+            for table in self.tables.values():
+                if not self.logging_tables:
+                    table.logged = False
+                if table.logged and "_log_%s" % table.name not in self.tables.iterkeys() :
+                    self.add_table(self.logged_table(table))
+
             for table in self.tables.itervalues():
                 if not table.persisted:
-                    table.persist(session, connection)
+                    table.persist(connection)
+
             for field in self.fields_to_persist:
-                field.table._persist_extra_field(field, session, connection)
-
-            transaction.commit()
-
-            session._flush()
+                field.table._persist_extra_field(field, connection)
 
             for table in self.tables.itervalues():
-                table.persist_foreign_key_columns(session)
+                table.persist_foreign_key_columns(connection)
 
-            session._flush()
+            for table in self.tables.itervalues():
+                table.set_field_order(connection)
 
+            self.update_sa(True)
             self.metadata.create_all(self.engine)
         except Exception, e:
-            session.rollback()
+            transaction.abort()
             raise
         else:
-            session._commit()
+            transaction.commit()
         finally:
-            session.close
-            if connection:
-                connection.close()
-
+            connection.close()
 
         self.load_from_persist(True)
-
 
         self.fields_to_persist = []
         self.persisted = True
@@ -401,90 +388,7 @@ class Database(object):
 
     def load_from_persist(self, restart = False):
 
-        session = self.Session()
-
-        if self.zodb_store:
-            connection = self.db.open()
-        else:
-            connection = None
-
-        self.tables = {}
-        self.clear_sa()
-
-        #old boot table state causes issues
-        boots = boot_tables.boot_tables()
-        self.boot_tables = boots.boot_tables
-
-        for table in self.boot_tables:
-            self.add_table(table)
-
-        self.update_sa()
-        self.metadata.create_all(self.engine)
-
-        all_tables = session.query(self.tables["__table"].sa_class).all()
-
-        self.tables = {}
-        self.clear_sa()
-
-        ## only persist boot tables if first time
-        if not all_tables:
-            self.persist()
-            self.persisted = False #make sure database is not seen as persisted
-            return
-
-        for row in all_tables:
-            fields = []
-            for field in row.field:
-                field_name = field.field_name.encode("ascii")
-                if field.other:
-                    field_other = field.other.encode("ascii")
-                else:
-                    field_other = field.other
-
-                if field.foreign_key_name:
-                    foreign_key_name = field.foreign_key_name.encode("ascii")
-                else:
-                    foreign_key_name = field.foreign_key_name
-
-                field_kw = {}
-                for field_param in field.field_params:
-                    if field_param.value == u"True":
-                        value = True
-                    elif field_param.value == u"False":
-                        value = False
-                    else:
-                        value = field_param.value
-                    field_kw[field_param.item.encode("ascii")] = value
-
-                fields.append(getattr(field_types, field.type)(field_name,
-                                                              field_other,
-                                                              foreign_key_name = foreign_key_name,
-                                                              order = field.order,
-                                                              field_id = field.id,
-                                                              **field_kw))
-            kw = {}
-            for table_param in row.table_params:
-                if table_param.value == u"True":
-                    value = True
-                elif table_param.value == u"False":
-                    value = False
-                else:
-                    value = table_param.value
-                kw[table_param.item.encode("ascii")] = value
-
-            kw["table_id"] = row.id
-
-            self.add_table(tables.Table(row.table_name.encode("ascii"), *fields, **kw))
-
-
-            orders = [field.order for field in table.fields.values() if field.order]
-
-            if orders:
-                table.current_order = max(orders)
-
-        # for first time do not say database is persisted
-        if all_tables:
-            self.persisted = True
+        connection = self.db.open()
 
         if connection:
             self.tables = {}
@@ -500,15 +404,16 @@ class Database(object):
 
                 self.add_table(tables.Table(table_name,
                                             *fields,
-                                            **table["params"]))
-
+                                            field_order = list(table["field_order"]),
+                                            **table["params"])
+                                            )
 
         for table in self.tables.itervalues():
             table.persisted = True
 
-        self.update_sa()
+        self.update_sa(True)
         self.validate_database()
-        session.close()
+        connection.close()
 
     def add_relations(self):     #not property for optimisation
         self.relations = []
@@ -538,15 +443,13 @@ class Database(object):
                                 % (col[0], relation.other)
 
 
-    def update_sa(self, reload = False, update_tables = True):
+    def update_sa(self, reload = False):
         if reload == True and self.status <> "terminated":
             self.status = "updating"
 
         if reload:
             self.clear_sa()
 
-        if update_tables:
-            self.update_tables()
         self.checkrelations()
         self.check_related_order_by()
         self.make_graph()
@@ -565,8 +468,6 @@ class Database(object):
             for table in self.tables.itervalues():
                 for field in table.fields.itervalues():
                     if hasattr(field, "event"):
-                        print table, field
-                        print "*-"*10
                         field.event.add_event(self)
                 table.make_schema_dict()
         except (custom_exceptions.NoDatabaseError,\
@@ -753,20 +654,7 @@ class Database(object):
 
         logging_table.add_field(Integer("_logged_table_id"))
 
-        #logging_table.add_field(ManyToOne(logged_table.name+"_logged"
-        #                                 , logged_table.name ))
-
         return logging_table
-
-    def update_tables(self):
-
-        for table in self.tables.values():
-            if not self.logging_tables:
-                table.logged = False
-            if table.logged and "_log_%s" % table.name not in self.tables.iterkeys() :
-                self.add_table(self.logged_table(table))
-        for table in self.tables.values():
-            table.add_foriegn_key_field()
 
     def get_class(self, table):
 

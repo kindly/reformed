@@ -45,6 +45,7 @@ from sqlalchemy.orm.interfaces import AttributeExtension
 import fshp
 
 from ZODB.PersistentMapping import PersistentMapping
+from ZODB.PersistentList import PersistentList
 import transaction
 
 LOGGER = logging.getLogger('reformed.main')
@@ -72,7 +73,7 @@ class Table(object):
         self.table_id = kw.get("table_id", None)
         self.field_list = args
         self.fields = {}
-        self.field_order = []
+        self.field_order = kw.get("field_order", [])
         self.current_order = 0
         self.primary_key = kw.get("primary_key", None)
         #persisted should be private
@@ -137,19 +138,18 @@ class Table(object):
     def __repr__(self):
         return "%s - %s" % (self.name, self.columns.keys())
 
-    def persist(self, session, connection = None):
+    def set_field_order(self, connection):
+
+        if connection:
+            root = connection.root()
+            root["tables"][self.name]["field_order"] = PersistentList(self.field_order)
+
+
+    def persist(self, connection):
         """This puts the information about the this objects parameters
         and its collection of fields into private database tables so that in future they
         no longer need to be explicitely defined"""
 
-        for field_name in self.field_order:
-            field = self.fields[field_name]
-            if field.category in ("field", "multi_field", "internal"):
-                self.current_order = self.current_order + 1
-                field.order = self.current_order
-
-
-        ########ZODB store##############
         if connection:
             root = connection.root()
             tables = root["tables"]
@@ -188,53 +188,9 @@ class Table(object):
                 params = PersistentMapping(**rfield.kw)
                 params["foreign_key_name"] = rfield.foreign_key_name
                 params["field_id"] = field_count
-                params["order"] = rfield.order
 
                 field["params"] = params
 
-        ########ZODB store##############
-
-
-        __table = self.database.tables["__table"].sa_class()
-        __table.table_name = u"%s" % self.name
-        __table.summary = self.summary
-        session.add(__table)
-
-
-        for name, param in self.kw.iteritems():
-            __table_param = self.database.get_instance("__table_params")
-            __table_param.item = u"%s" % name
-            __table_param.value = u"%s" % str(param)
-            __table.table_params.append(__table_param)
-            session.add(__table_param)
-
-        for field_name, field  in self.fields.iteritems():
-            __field = self.database.tables["__field"].sa_class()
-            __field.field_name = u"%s" % field_name
-            __field.type = u"%s" % field.__class__.__name__
-            if hasattr(field, "other"):
-                __field.other = u"%s" % field.other
-            if field.foreign_key_name:
-                __field.foreign_key_name = u"%s" % field.foreign_key_name
-            if field.order:
-                __field.order = field.order
-            __table.field.append(__field)
-            session.add(__field)
-
-            for name, param in field.kw.iteritems():
-                __field_param = self.database.get_instance("__field_params")
-                __field_param.item = u"%s" % name
-                __field_param.value = u"%s" % str(param)
-                __field.field_params.append(__field_param)
-                session.add(__field_param)
-
-        session._flush()
-        self.table_id = __table.id
-
-        for field in __table.field:
-            self.fields[field.field_name].field_id = field.id
-
-        self.persisted = True
 
     def add_foriegn_key_field(self):
         for column in self.foriegn_key_columns.values():
@@ -246,13 +202,15 @@ class Table(object):
                 field.foreign_key_name = unicode(name)
                 new_field = Integer(name, mandatory = field.many_side_not_null)
                 self.add_field(new_field)
+
                 if field.name in self.field_order:
                     self.field_order.pop()
                     pos = self.field_order.index(field.name)
                     self.field_order.insert(pos, name)
+                
 
 
-    def persist_foreign_key_columns(self, session):
+    def persist_foreign_key_columns(self, connection):
 
         for column in self.foriegn_key_columns.values():
             original_col = column.original_column
@@ -263,11 +221,16 @@ class Table(object):
                 new_field = Integer(name, mandatory = field.many_side_not_null)
 
                 self._add_field_no_persist(new_field)
-                self._persist_extra_field(new_field, session)
+                self._persist_extra_field(new_field, connection)
 
-                row = field.get_field_row_from_table(session)
-                row.foreign_key_name = unicode(name)
-                session.save(row)
+                if field.name in self.field_order:
+                    self.field_order.pop()
+                    pos = self.field_order.index(field.name)
+                    self.field_order.insert(pos, name)
+
+                root = connection.root()
+                
+                root["tables"][field.table.name]["fields"][field.name]["params"]["foreign_key_name"] = name
 
     def add_relation(self, field, defer_update_sa = False):
 
@@ -414,33 +377,21 @@ class Table(object):
     def add_field(self, field, defer_update_sa = False):
         """add a Field object to this Table"""
         if self.persisted == True:
-            session = self.database.Session()
 
-            if self.database.zodb_store:
-                connection = self.database.db.open()
-            else:
-                connection = None
+            connection = self.database.db.open()
 
             field.check_table(self)
             try:
                 self._add_field_no_persist(field)
-                self._persist_extra_field(field, session, connection)
+                self._persist_extra_field(field, connection)
                 self._add_field_by_alter_table(field)
             except Exception, e:
-                session.rollback()
-                if field in self.fields:
-                    self.fields.pop(field.name)
-                raise
+                transaction.abort()
             else:
-                session._commit()
-                if connection:
-                    transaction.commit()
-                if not defer_update_sa:
-                    self.database.update_sa(reload = True)
+                transaction.commit()
+                self.database.update_sa(reload = True)
             finally:
-                session.close()
-                if connection:
-                    connection.close()
+                connection.close()
             return
 
         else:
@@ -602,7 +553,7 @@ class Table(object):
             col = sa.Column(name, column.type, **column.sa_options)
             col.create(self.sa_table)
 
-    def _persist_extra_field(self, field, session, connection = None):
+    def _persist_extra_field(self, field, connection):
 
         if connection:
 
@@ -625,73 +576,21 @@ class Table(object):
             params = PersistentMapping(**rfield.kw)
             params["foreign_key_name"] = rfield.foreign_key_name
             params["field_id"] = field_count
-            params["order"] = rfield.order
 
             field["params"] = params
             field = rfield
 
 
-        if field.category in ("field", "multi_field", "internal"):
-            self.current_order = self.current_order + 1
-            field.order = self.current_order
-
-        __table = session.query(self.database.get_class("__table")).\
-                                filter_by(table_name = u"%s" % self.name).one()
-
-        __field = self.database.tables["__field"].sa_class()
-        __field.field_name = u"%s" % field.name
-        __field.type = u"%s" % field.__class__.__name__
-        if hasattr(field, "other"):
-            __field.other = u"%s" % field.other
-
-        if field.foreign_key_name:
-            __field.foreign_key_name = field.foreign_key_name
-
-        if field.order:
-            __field.order = field.order
-
-        for name, param in field.kw.iteritems():
-            __field_param = self.database.tables["__field_params"].sa_class()
-            __field_param.item = u"%s" % name
-            __field_param.value = u"%s" % str(param)
-            __field.field_params.append(__field_param)
-            session.add(__field_param)
-
-        __table.field.append(__field)
-        session.add(__field)
-
-        session.add(__table)
-
-        session._flush()
-
-        for field in __table.field:
-            self.fields[field.field_name].field_id = field.id
-
-        return __field
-
-    def get_table_row_from_table(self, session):
-
-        sa_class = self.database["__table"].sa_class
-        query = session.query(sa_class)
-        result = query.filter(sa_class.id == self.table_id).one()
-        return result
 
     @property
     def ordered_fields(self):
 
         fields = []
 
-        for field in self.fields.values():
-            if field.category in ("internal", "multi_field", "field"):
-                fields.append(field)
-
-        def sort_order(a, b):
-            first = a.order or -1
-            second = b.order or -1
-            return first - second
-
-        fields.sort(sort_order)
-
+        for field in self.field_order:
+            rfield = self.fields[field]
+            if rfield.category in ("internal", "multi_field", "field"):
+                fields.append(rfield)
         return fields
 
     @property

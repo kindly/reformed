@@ -32,6 +32,14 @@ class test_donkey_persist(test_donkey):
             os.system("rm tests/test_donkey.sqlite")
             cls.engine = create_engine('sqlite:///tests/test_donkey.sqlite')
 
+        try:
+            os.remove("tests/zodb.fs")
+            os.remove("tests/zodb.fs.lock")
+            os.remove("tests/zodb.fs.index")
+            os.remove("tests/zodb.fs.tmp")
+        except OSError:
+            pass
+
         meta_to_drop = sa.MetaData()
         meta_to_drop.reflect(bind=cls.engine)
         for table in reversed(meta_to_drop.sorted_tables):
@@ -39,12 +47,13 @@ class test_donkey_persist(test_donkey):
 
         super(test_donkey_persist, cls).setUpClass()
 
-        cls.meta = sa.MetaData()
-        cls.Session = sa.orm.sessionmaker(bind =cls.engine , autoflush = False)
-        cls.Donkey = Database("Donkey", 
-                        metadata = cls.meta,
-                        engine = cls.engine,
-                        session = cls.Session)
+#        cls.meta = sa.MetaData()
+#        cls.Session = sa.orm.sessionmaker(bind =cls.engine , autoflush = False)
+#        cls.Donkey = Database("Donkey", 
+#                        zodb_store = "tests/zodb.fs",
+#                        metadata = cls.meta,
+#                        engine = cls.engine,
+#                        session = cls.Session)
 
         cls.p = random.randrange(1,10000)
         cls.Donkey.add_table(tables.Table("moo%s" % cls.p, Text("moo")))
@@ -196,13 +205,6 @@ class test_donkey_persist_sqlite(test_donkey_persist):
         assert "moo%s" % self.p not in self.Donkey.tables
         assert "_log_moo%s" % self.p not in self.Donkey.tables
 
-        alltable = self.session.query(self.Donkey.get_class("__table")).all()
-        allfield = self.session.query(self.Donkey.get_class("__field")).all()
-
-        assert u"moo%s" % self.p not in [a.table_name for a in alltable]
-        assert u"_log_moo%s" % self.p not in [a.table_name for a in alltable]
-        assert u"moo%s" % self.p not in [a.table_name for a in allfield]
-        assert u"_log_moo%s" % self.p not in [a.table_name for a in allfield]
 
         assert validate_database(self.Donkey)[0] == []
         assert validate_database(self.Donkey)[1] == []
@@ -222,15 +224,14 @@ class test_donkey_persist_sqlite(test_donkey_persist):
         assert a == b
         
     def test_z_add_drop_existing_table(self):
+        print self.Donkey.tables.keys()
+
 
         self.Donkey.add_table(tables.Table("moo%s" % self.p, Text("moo%s" % self.p)), drop = True)
 
         self.Donkey.persist()
 
-        allfield = self.session.query(self.Donkey.get_class("__field")).all()
 
-        assert (u"moo%s" % self.p, u"moo%s" % self.p)  in [(a.table_name, a.field_name) for a in allfield]
-        assert (u"_log_moo%s" % self.p, u"moo%s" % self.p)  in [(a.table_name, a.field_name) for a in allfield]
 
         print validate_database(self.Donkey)
         diff = schemadiff.getDiffOfModelAgainstDatabase(self.Donkey.metadata,
@@ -304,16 +305,20 @@ class test_donkey_persist_sqlite(test_donkey_persist):
 
     def test_all_fields_have_different_numbers(self):
 
-        field_ids = []
 
         for table in self.Donkey.tables.values():
-            if table.name.startswith("__") or table.name.startswith("_log___"):
+            if table.name.startswith("__") or table.name.startswith("_log_"):
                 continue
-            for field in table.fields.values():
-                field_ids.append(field.field_id)
-            print table.name, field_ids
+            field_ids = []
+            print table
 
-        assert len(field_ids) == len(set(field_ids))
+            for field in table.fields.values():
+                print field.name,field.field_id
+                field_ids.append(field.field_id)
+
+            
+            print field_ids
+            assert len(field_ids) == len(set(field_ids))
         
     ## to test later
     
