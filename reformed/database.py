@@ -136,16 +136,6 @@ class Database(object):
                 raise custom_exceptions.DuplicateTableError("already a table named %s"
                                                             % table.name)
 
-        for field in table.fields.itervalues():
-            if not hasattr(field, "other") or field.other not in self.tables.iterkeys():
-                continue
-            ##TODO Horrible mess, need to do much better checking of relations and
-            ##need to sort out field column divide for relations
-            relation_types= [relation.type for relation in field.relations.itervalues()]
-            if ("onetoone" in relation_types or "onetomany" in relation_types) and \
-               self.tables[field.other].persisted is True:
-                raise custom_exceptions.NoTableAddError("table %s cannot be added"
-                                                        % table.name)
 
         self._add_table_no_persist(table)
 
@@ -156,50 +146,34 @@ class Database(object):
         else:
             table_to_rename = self.tables[table]
 
-        if session:
-            defer_update = True
-        else:
-            session = self.Session()
-            defer_update = False
+        connection = self.db.open()
+        root = connection.root()
+        persisted_tables = root["tables"]
 
         try:
-            #update fields in other tables so that they do not have to change their name
-            for relations in table_to_rename.tables_with_relations.itervalues():
-                for relation in relations:
-                    if relation.foreign_key_table <> table_to_rename.name:
-                        field = relation.parent
-                        foreign_key_name = relation.foriegn_key_id_name
-                        row = field.get_field_row_from_table(session)
-                        row.foreign_key_name = u"%s" % foreign_key_name
-                        session.save(row)
 
             for relations in table_to_rename.tables_with_relations.values():
                 for rel in relations:
                     if rel.other == table_to_rename.name:
                         field = rel.parent
-                        row = field.get_field_row_from_table(session)
-                        row.other = u"%s" % new_name
-                        session.save(row)
+                        persisted_field = persisted_tables[field.table.name]["fields"][field.name]
+                        persisted_field["other"] = new_name
 
-            row = table_to_rename.get_table_row_from_table(session)
-            row.table_name = u"%s" % new_name
-            session.save(row)
-            session._flush()
-
-            if table_to_rename.logged:
-                self.rename_table("_log_%s" % table_to_rename.name, "_log_%s" % new_name, session)
-
+            persisted_table = persisted_tables.pop(table_to_rename.name)
+            persisted_tables[new_name] = persisted_table
             table_to_rename.sa_table.rename(new_name)
+
         except Exception, e:
-            session.rollback()
+            transaction.abort()
             raise
         else:
-            if not defer_update:
-                session._commit()
-                self.load_from_persist(True)
+            transaction.commit()
+            self.load_from_persist(True)
         finally:
-            if not defer_update:
-                session.close()
+            connection.close()
+
+        if table_to_rename.logged:
+            self.rename_table("_log_%s" % table_to_rename.name, "_log_%s" % new_name, session)
 
     def drop_table(self, table):
 
@@ -218,13 +192,13 @@ class Database(object):
                     "cannot delete table %s as the following tables"
                     " depend on it %s" % (table.name, table.dependant_tables)))
 
-            persisted_tables.pop(table_to_drop.name)
-
             for relations in table_to_drop.tables_with_relations.itervalues():
                 for relation in relations:
-                    field = relation.parant
-                    persisted_tables[field.table]["fields"].pop(field.name)
-                    persisted_tables[field.table]["field_order"].pop(field.name)
+                    field = relation.parent
+                    persisted_tables[field.table.name]["fields"].pop(field.name)
+                    persisted_tables[field.table.name]["field_order"].remove(field.name)
+
+            persisted_tables.pop(table_to_drop.name)
 
             table_to_drop.sa_table.drop()
 
@@ -234,7 +208,6 @@ class Database(object):
         else:
             transaction.commit()
             self.load_from_persist(True)
-            self.add_relations()
         finally:
             connection.close()
 
@@ -366,7 +339,8 @@ class Database(object):
                 table.persist_foreign_key_columns(connection)
 
             for table in self.tables.itervalues():
-                table.set_field_order(connection)
+                if not table.persisted:
+                    table.set_field_order(connection)
 
             self.update_sa(True)
             self.metadata.create_all(self.engine)
@@ -405,11 +379,9 @@ class Database(object):
                 self.add_table(tables.Table(table_name,
                                             *fields,
                                             field_order = list(table["field_order"]),
+                                            persisted = True,
                                             **table["params"])
                                             )
-
-        for table in self.tables.itervalues():
-            table.persisted = True
 
         self.update_sa(True)
         self.validate_database()

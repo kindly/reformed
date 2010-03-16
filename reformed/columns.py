@@ -539,7 +539,8 @@ class Field(object):
 
         self.check_table(table)
         table.fields[self.name] = self
-        table.field_order.append(self.name)
+        if not table.persisted:
+            table.field_order.append(self.name)
         table.add_relations()
         if hasattr(table, "database"):
             table.database.add_relations()

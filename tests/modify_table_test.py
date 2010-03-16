@@ -37,9 +37,18 @@ class test_modify_table_sqlite(object):
         for table in reversed(meta_to_drop.sorted_tables):
             table.drop(bind=cls.engine)
 
+        try:
+            os.remove("tests/zodb.fs")
+            os.remove("tests/zodb.fs.lock")
+            os.remove("tests/zodb.fs.index")
+            os.remove("tests/zodb.fs.tmp")
+        except OSError:
+            pass
+
         cls.meta = sa.MetaData()
         cls.Session = sa.orm.sessionmaker(bind =cls.engine , autoflush = False)
         cls.Donkey = Database("Donkey", 
+                        zodb_store = "tests/zodb.fs",
                         metadata = cls.meta,
                         engine = cls.engine,
                         session = cls.Session)
@@ -61,9 +70,6 @@ class test_modify_table_sqlite(object):
         self.Donkey.add_table(tables.Table("moo04%s" % self.randish, Text("moo")))
         self.Donkey.persist()
 
-        for table in self.Donkey.tables.values():
-            assert None not in [field.order for field in table.fields.values() if field.category.endswith("field")]
-
         self.Donkey.load_from_persist(True)
 
         result = validate_database(self.Donkey)
@@ -83,8 +89,12 @@ class test_modify_table_sqlite(object):
         table1.add_relation(OneToMany("moo02%s" % self.randish,
                                       "moo02%s" % self.randish))
 
-        for table in self.Donkey.tables.values():
-            assert None not in [field.order for field in table.fields.values() if field.category.endswith("field")]
+
+        table1 = self.Donkey["moo01%s" % self.randish]
+        table2 = self.Donkey["moo02%s" % self.randish]
+
+        print table1.field_order
+        assert table1.field_order == ['moo', '_version', '_modified_date', '_modified_by', "moo02%s" % self.randish]
 
 
         table1 = self.Donkey["moo01%s" % self.randish]
@@ -104,6 +114,14 @@ class test_modify_table_sqlite(object):
 
         table1 =  self.Donkey["moo01%s" % self.randish]
 
+        connection = self.Donkey.db.open()
+        root = connection.root() 
+
+        print root["tables"]["moo01%s" % self.randish]["field_order"]
+        print table1.field_order
+
+        assert  table1.field_order == ['moo', '_version', '_modified_date', '_modified_by', "moo02%s" % self.randish, "moo03%s" % self.randish, "moo03%s_id" % self.randish]
+
         assert "moo03%s_id" % self.randish in table1.fields
         assert "moo03%s_id" % self.randish in table1.defined_columns
         assert not table1.defined_columns["moo03%s_id" % self.randish].sa_options["nullable"]
@@ -118,8 +136,9 @@ class test_modify_table_sqlite(object):
 
         assert hasattr(table1.sa_class(), "moo04%s" % self.randish)
 
-        for table in self.Donkey.tables.values():
-            assert None not in [field.order for field in table.fields.values() if field.category.endswith("field")]
+        assert  table1.field_order == ['moo', '_version', '_modified_date', '_modified_by', "moo02%s" % self.randish,
+                                       "moo03%s" % self.randish, "moo03%s_id" % self.randish, "moo04%s" % self.randish]
+
 
 
     def test_3_rename_table(self):
@@ -162,6 +181,10 @@ class test_modify_table_sqlite(object):
             assert_raises(Exception, table1.rename_field, "moo", "mooed") 
             return
 
+        print [a.name for a in table1.ordered_user_fields]
+
+        assert [a.name for a in table1.ordered_user_fields] == ["man", "moo", "man2", "man3", "man4"]
+
         table1.rename_field("moo", "mooed") 
 
         result = validate_database(self.Donkey)
@@ -176,8 +199,6 @@ class test_modify_table_sqlite(object):
 
         table1 = self.Donkey["rename_field"]
 
-        assert set([field.order for field in table1.fields.values() 
-                    if field.category in ("field", "internal")]) == set([1,2,3,4,5,6,7])
 
         table1.alter_field("man2", type = "Text", nullable = False, default = "wee", validation = "Email")
 

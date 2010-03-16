@@ -309,12 +309,12 @@ class test_basic_input(test_donkey):
 
     def test_ordered_fields(self):
 
-        print self.Donkey["people"].field_order
-        print [a.name for a in self.Donkey["people"].ordered_fields] == ['name', 'gender_id', 'supporter_address', 'over_18_id', '_version', '_modified_date', '_modified_by', '_core_entity_id', 'name', 'supporter_address', '_version', 'gender_id', '_core_entity_id', '_modified_by', '_modified_date', 'over_18_id']
+        print [a.name for a in self.Donkey["people"].ordered_fields]
+        assert [a.name for a in self.Donkey["people"].ordered_fields] == ['name', 'gender_id', 'supporter_address', 'over_18_id', '_version', '_modified_date', '_modified_by', '_core_entity_id']
 
         print [a.name for a in self.Donkey["people"].ordered_user_fields]
 
-        assert [a.name for a in self.Donkey["people"].ordered_user_fields] == ['name', 'gender_id', 'supporter_address', 'over_18_id', 'name', 'supporter_address', 'gender_id', 'over_18_id']
+        assert [a.name for a in self.Donkey["people"].ordered_user_fields] == ['name', 'gender_id', 'supporter_address', 'over_18_id']
 
     def test_validation_empty_string(self):
 
