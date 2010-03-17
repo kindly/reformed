@@ -50,23 +50,31 @@ def run(node_name, data, last_node = None):
         data['command'] = app_data.get('default_command')
 
 
-    node_base = node_name.split('.')[0]
-    found = False
-    if not hasattr(nodes, node_base):
-        print "importing " + 'nodes.' + node_base
-        try:
-            globals()['nodes.' + node_base] = __import__('nodes.' + node_base)
-        except:
-            print "import failed"
-            print traceback.print_exc()
-            error_msg = 'IMPORT FAIL (%s)\n\n%s' % (node_name, traceback.format_exc())
-            info = {'action': 'general_error',
-                    'node': node_name,
-                    'data' : error_msg}
-            return info
-
-    search_node = nodes
     node_path = node_name.split('.')
+    node_base = node_path[0]
+
+    found = False
+
+    try:
+        module = __import__('custom_nodes.' + node_base)
+        print "importing " + 'custom_nodes.' + node_base
+    except ImportError:
+        try:
+            module = __import__('nodes.' + node_base)
+            print "importing " + 'nodes.' + node_base
+        except ImportError:
+            module = None
+
+    if not module:
+        print "import failed"
+        print traceback.print_exc()
+        error_msg = 'IMPORT FAIL (%s)\n\n%s' % (node_name, traceback.format_exc())
+        info = {'action': 'general_error',
+                'node': node_name,
+                'data' : error_msg}
+        return info
+
+    search_node = module
     for node in node_path:
         if hasattr(search_node, node):
             search_node = getattr(search_node, node)
@@ -75,46 +83,51 @@ def run(node_name, data, last_node = None):
             found = False
             break
 
-    if found:
-        print "Node: %s, last: %s" % (node_name, last_node)
-        x = search_node(data, node_name, last_node)
-        if x.allowed:
-            x.initialise()
-            x.call()
-            x.finalise()
-            x.finish_node_processing()
-            if x.next_node:
-                return run(x.next_node, x.next_data, node_name)
-            else:
-                refresh_frontend = False
-
-                info = {'action': x.action,
-                        'node': node_name,
-                        'title' : x.title,
-                        'link' : x.link,
-                        'user' : x.user,
-                        'bookmark' : x.bookmark,
-                        'data' : x.out}
-
-                user_id = global_session.session['user_id']
-                # application data
-                if data.get('request_application_data'):
-                        info['application_data'] = app_data
-                        info['application_data']['__user_id'] = user_id
-                        info['application_data']['__username'] = global_session.session['username']
-                        refresh_frontend = True
-                # bookmarks
-                if (info['user'] or refresh_frontend) and user_id:
-                    # we have logged in so we want our bookmarks
-                    info['bookmark'] = bookmark_list(user_id)
-
-
-                return info
-        else:
-            # the user cannot perform this action
-            return {'action': 'forbidden'}
-    else:
+    if not found:
         print "Node <%s> not found" % node_name
+        return
+
+    print "Node: %s, last: %s" % (node_name, last_node)
+    x = search_node(data, node_name, last_node)
+
+    # the user cannot perform this action
+    if not x.allowed:
+        return {'action': 'forbidden'}
+
+    x.initialise()
+    x.call()
+    x.finalise()
+    x.finish_node_processing()
+
+    if x.prev_node and x.prev_node.next_data_out:
+        x.out["data"].update(x.prev_node.next_data_out)
+
+    if x.next_node:
+        return run(x.next_node, x.next_data, x)
+    else:
+        refresh_frontend = False
+
+        info = {'action': x.action,
+                'node': node_name,
+                'title' : x.title,
+                'link' : x.link,
+                'user' : x.user,
+                'bookmark' : x.bookmark,
+                'data' : x.out}
+
+        user_id = global_session.session['user_id']
+        # application data
+        if data.get('request_application_data'):
+                info['application_data'] = app_data
+                info['application_data']['__user_id'] = user_id
+                info['application_data']['__username'] = global_session.session['username']
+                refresh_frontend = True
+        # bookmarks
+        if (info['user'] or refresh_frontend) and user_id:
+            # we have logged in so we want our bookmarks
+            info['bookmark'] = bookmark_list(user_id)
+
+        return info
 
 
 

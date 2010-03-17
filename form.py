@@ -39,11 +39,18 @@ class Form(object):
         self.child_id = kw.get("child_id")
         self.parent_id = kw.get("parent_id")
 
+        self.save_next_node = kw.get("save_next_node")
+        self.save_next_command = kw.get("save_next_command")
+
+        self.buttons = {}
+
     def set_name(self, name):
         self.name = name
 
     def set_node(self, node):
         self.node = node
+        self.node_name = node.name.split(':')[0]
+        self.table = self.table or node.table
 
     def load_subform(self, data):
 
@@ -54,9 +61,14 @@ class Form(object):
 
         return out
 
+
     def new(self):
 
         data_out = {}
+        data_out['__buttons'] = [['add %s' % self.table, '%s:_save:' % self.node_name],
+                                 ['cancel', 'BACK']]
+        data_out['__message'] = "Hello, add new %s" % self.table
+
         data = self.create_form_data(data_out)
         self.node.out = data
         self.node.action = 'form'
@@ -80,11 +92,13 @@ class Form(object):
                 obj = r.search_single(self.table, "id = ?",
                                       values = [id],
                                       session = session)
+                obj._new = False
             except custom_exceptions.SingleResultError:
                 form.errors[root] = 'record not found'
                 raise
         else:
             obj = r.get_instance(self.table)
+            obj._new = True
 
         ## normal fields
         for field in self.fields:
@@ -122,6 +136,8 @@ class Form(object):
                 continue
             field.save(self, self.node, obj, data, session)
 
+        return obj
+
     def save(self):
         """Save this form. Its job is to set up the node belongs to 
         and handle errors"""
@@ -138,7 +154,7 @@ class Form(object):
         data = node.data
 
         try:
-            self.save_row(data, session)
+            obj = self.save_row(data, session)
             if not node.errors:
                 session.commit()
         except Exception, e:
@@ -152,10 +168,35 @@ class Form(object):
             node.out['saved'] = node.saved
 
 
-    def view(self, read_only=True):
+        if obj._new:
+            if self.title_field:
+                title = getattr(obj, self.title_field)
+            else:
+                title = obj.id
+            data_out = {}
+            data_out['__buttons'] = [['add %s' % self.table, '%s:_save:' % self.node_name],
+                                     ['cancel', 'BACK']]
+            data_out['__message'] = "%s saved!  Add more?" % title
+
+            node.next_data_out = data_out
+
+            node.data["id"] = obj.id
+
+            node.next_node = self.save_next_node or self.node_name
+            node.next_data = dict(data = node.data,
+                                  command = self.save_next_command or 'new')
+
+        else:
+            node.action = 'redirect'
+            node.link = 'BACK'
+
+
+    def view(self, read_only=True, where = None):
         node = self.node
         id = node.data.get('id')
-        if id:
+        if where:
+            pass
+        elif id:
             where = 'id=%s' % id
         else:
             id = node.data.get('__id')
@@ -193,6 +234,23 @@ class Form(object):
             self.title = 'unknown'
             print 'no data found'
 
+        if self.title_field:
+            title = getattr(obj, self.title_field)
+        else:
+            title = obj.id
+
+        if '__buttons' not in data_out:
+            data_out['__buttons'] = [['save %s' % self.table, '%s:_save:' % self.node_name],
+                                     ['delete %s' % self.table, '%s:_delete:' % self.node_name],
+                                     ['cancel', 'BACK']]
+        if not data_out['__buttons']:
+            data_out.pop('__buttons')
+
+        if '__message' not in data_out:
+            data_out['__message'] = "Hello, edit %s" % title
+
+        if not data_out['__message']:
+            data_out.pop('__message')
 
         data = self.create_form_data(data_out, read_only)
 
@@ -293,6 +351,12 @@ class Form(object):
                               ]
         data = {'__array' : data}
 
+
+        data['__buttons'] = [['add new %s' % self.table, '%s:new' % self.node_name],
+                             ['cancel', 'BACK']]
+
+        data['__message'] = "These are the current %s(s)." % self.table
+
         out = node["listing"].create_form_data(data)
 
         # add the paging info
@@ -334,7 +398,9 @@ class Form(object):
         fields = []
         for field in self.fields:
             row = field.convert(self, self.fields)
-            fields.append(row)
+            #skip invisible fields
+            if row:
+                fields.append(row)
         return fields
 
 def form(self, *args, **kw):

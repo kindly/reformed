@@ -33,7 +33,9 @@ class Node(object):
     permissions = []
     commands = {}
 
-    def __init__(self, data, node_name, last_node = None):
+    def __init__(self, data, node_name, prev_node = None):
+
+        self.name = node_name
 
         self._forms = {}
         for form_name in dir(self):
@@ -44,7 +46,6 @@ class Node(object):
                 self._forms[form_name] = form
 
         self.out = []
-        self.name = node_name
         self.title = None
         self.link = None
 
@@ -53,10 +54,11 @@ class Node(object):
         self.user = None
         self.next_node = None
         self.next_data = None
+        self.next_data_out = None
         self.extra_data = {}
         self.command = data.get('command')
         self.allowed = self.check_permissions()
-
+        self.prev_node = prev_node
         self.last_node = data.get('lastnode')
         self.data = data.get('data')
         if type(self.data).__name__ != 'dict':
@@ -269,7 +271,7 @@ class TableNode(Node):
         self["main"].new()
 
     def edit(self):
-        self.view(read_only = False)
+        self["main"].view(read_only = False)
 
     def view(self, read_only=True):
         self["main"].view(read_only)

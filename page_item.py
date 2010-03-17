@@ -41,10 +41,13 @@ class PageItem(object):
         if self.name and not self.label:
             self.label = self.name + ":"
 
+        self.invisible = kw.pop("invisible", False)
+
         self.control = kw.pop("control", None)
         self.layout = kw.pop("layout", None)
 
         self.extra_params = kw
+
 
     def params(self, form):
 
@@ -59,6 +62,9 @@ class PageItem(object):
         return params
 
     def convert(self, form, field_list):
+
+        if self.invisible:
+            return
 
         row = self.set_params(form)
         row['name'] = self.name
@@ -111,8 +117,6 @@ class PageItem(object):
 
         if self.control and self.control.control_delete:
             self.control.delete(self, form, node, object, data, session)
-
-
 
 class SubForm(object):
 
@@ -227,11 +231,9 @@ class Dropdown(Control):
             return params
 
         if isinstance(autocomplete_options, dict):
-            table = autocomplete_options["table"]
-            target_field = autocomplete_options["field"]
 
-            filter_field = autocomplete_options.get("filter_field")
-            filter_value = autocomplete_options.get("filter_value")
+            params["autocomplete"] = autocomplete_options
+            return params
 
         if autocomplete_options == True:
             rfield = database[form.table].fields[field.name]
@@ -271,6 +273,42 @@ class Dropdown(Control):
             params["autocomplete"] = [item[1] for item in results]
 
         return params
+
+class Buttons(Control):
+
+    def __init__(self, control_type, params = None, extra_params = None, **kw):
+
+        Control.__init__(self, control_type, params, extra_params)
+
+        self.control_load = True
+
+        self.command = kw.get("command")
+
+        self.buttons = kw.get("buttons")
+
+    def load(self, field, form, node, object, data, session):
+
+        if node.command == self.command:
+            data["__buttons"] = self.buttons
+
+class Message(Control):
+
+    def __init__(self, control_type, params = None, extra_params = None, **kw):
+
+        Control.__init__(self, control_type, params, extra_params)
+
+        self.control_load = True
+
+        self.command = kw.get("command")
+
+        self.buttons = kw.get("message")
+
+    def load(self, field, form, node, object, data, session):
+
+        if node.command == self.command:
+            data["__message"] = self.buttons
+
+
 
 class CodeGroup(Control):
 
@@ -389,6 +427,24 @@ def input(*arg, **kw):
 
 def layout(layout_type, **kw):
     form_field = PageItem("layout", layout = Layout(layout_type, kw))
+    return form_field
+
+def buttons(command, buttons, **kw):
+    form_field = PageItem("buttons",
+                          invisible = True,
+                          control = Buttons("buttons",
+                                            kw,
+                                            command = command,
+                                            buttons = buttons))
+    return form_field
+
+def message(command, message, **kw):
+    form_field = PageItem("message",
+                          invisible = True,
+                          control = Message("buttons",
+                                            kw,
+                                            command = command,
+                                            message = message))
     return form_field
 
 def subform(name, **kw):
