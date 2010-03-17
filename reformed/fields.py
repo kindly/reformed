@@ -78,11 +78,13 @@ class Unicode(Field):
 class Created(Field):
 
     def __init__(self, name, *args, **kw):
+        self.cat = "internal"
         self.created_date = Column(sa.DateTime,
                                    default =datetime.datetime.now)
 
 class CreatedBy(Field):
     def __init__(self, name, *args, **kw):
+        self.cat = "internal"
         self.created_by = Column(sa.Integer,
                                  default = get_user_id)
 

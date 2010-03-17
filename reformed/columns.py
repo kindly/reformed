@@ -367,6 +367,8 @@ class Field(object):
         obj.kw = kw
         obj.field_id = kw.get("field_id", None)
 
+        obj.cat = kw.get("category", None)
+
         ## this is popped as we dont want it to appear in field_params
         obj.foreign_key_name = kw.get("foreign_key_name", None)
 
@@ -461,6 +463,9 @@ class Field(object):
 
     @property
     def category(self):
+
+        if self.cat:
+            return self.cat
 
         if self.column:
             if self.column.name.startswith("_"):

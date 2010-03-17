@@ -83,7 +83,7 @@ def delete(args):
         os.remove("%s/%s.fs" % (application_folder, dir))
         os.remove("%s/%s.fs.lock" % (application_folder, dir))
         os.remove("%s/%s.fs.index" % (application_folder, dir))
-        os.remove("%%s/s.fs.tmp" % (application_folder, dir))
+        os.remove("%s/%s.fs.tmp" % (application_folder, dir))
     except OSError:
         print "zodb store not there to remove"
         pass
