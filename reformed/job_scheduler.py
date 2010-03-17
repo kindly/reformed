@@ -7,6 +7,7 @@ import time
 import datetime
 import traceback
 import standard_jobs
+import sys
 import logging
 import json
 from sqlalchemy import and_
@@ -34,6 +35,7 @@ class JobScheduler(object):
                                             table_type = "internal")
                                )
 
+            print "first persist"
             rdatabase.persist()
 
         self.table_name = table_name
@@ -41,15 +43,14 @@ class JobScheduler(object):
 
         self.threadpool = threadpool.ThreadPool(POOL_SIZE)
 
-    def add_job(self, job_type, func, arg = None, **kw):
+    def add_job(self, job_type, func, run_time = datetime.datetime.now(), **kw):
 
         try:
             session = self.database.Session()
-            run_time = kw.get("time", datetime.datetime.now())
             job = self.database.get_instance(self.table_name)
             job.job_type = job_type.decode("utf8")
-            if arg:
-                job.arg = u"%s" % arg
+            if kw:
+                job.arg = u"%s" % json.dumps(kw)
             job.job_start_time = run_time
             job.function = u"%s" % func
             job.message = u'waiting'
@@ -59,7 +60,6 @@ class JobScheduler(object):
             job_id = job.id
             return job_id
         except Exception:
-            import sys
             print >> sys.stderr, "%s %s" % ("error in adding job",
                                             traceback.format_exc())
         finally:
@@ -112,11 +112,12 @@ class JobSchedulerThread(threading.Thread):
                     func = getattr(standard_jobs, result["function"].encode("ascii"))
                     arg = result["arg"]
                     if arg:
-                        arg = arg.encode("ascii")
+                        arg = json.loads(arg, encoding = "ascii")
+                        arg = dict((item[0].encode("ascii"), item[1])
+                                   for item in arg.items())
                     self.make_request(func, arg, result["id"])
                     load_local_data(self.database, result)
             except Exception:
-                import sys
                 print >> sys.stderr, "%s %s" % ("error in schedular thread shutting down",
                                                 traceback.format_exc())
                 self.stop()
@@ -175,7 +176,7 @@ class JobSchedulerThread(threading.Thread):
             session.close()
 
         if arg:
-            request = threadpool.makeRequests(func, [((self.database, job_id, arg), {})], callback, exc_callback)
+            request = threadpool.makeRequests(func, [((self.database, job_id), arg)], callback, exc_callback)
         else:
             request = threadpool.makeRequests(func, [((self.database, job_id), {})], callback, exc_callback)
 

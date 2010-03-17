@@ -309,8 +309,11 @@ FROM donkey_sponsership ORDER BY donkey_sponsership.amount DESC, people.name, do
 
         result1, result2, result3 = self.Donkey.search("people", session = self.session, limit =3)
 
+
         code = self.Donkey.get_instance("code")
         code.type = u"over_18"
+        result1.over_18 = code
+
         self.session.save(code)
 
         result1.over_18 = code

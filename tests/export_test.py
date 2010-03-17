@@ -6,16 +6,6 @@ from reformed.data_loader import *
 class test_export_database(test_donkey):
 
 
-    def test_get_next_keys(self):
-        session = self.Donkey.Session()
-
-        payment = self.Donkey.get_instance("__table")
-        singleobj = SingleObject(payment, self.Donkey)
-
-        print singleobj.next_keys
-
-        assert singleobj.next_keys == {'root': [('field',), ('table_params',)], ('table_params',): [], ('field',): [('field', 'field_params')], ('field', 'field_params'): []}
-
     def test_single_object(self):
 
         session = self.Donkey.Session()

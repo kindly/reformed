@@ -44,6 +44,10 @@ from sqlalchemy.orm import column_property
 from sqlalchemy.orm.interfaces import AttributeExtension
 import fshp
 
+from ZODB.PersistentMapping import PersistentMapping
+from ZODB.PersistentList import PersistentList
+import transaction
+
 LOGGER = logging.getLogger('reformed.main')
 
 class Table(object):
@@ -69,7 +73,7 @@ class Table(object):
         self.table_id = kw.get("table_id", None)
         self.field_list = args
         self.fields = {}
-        self.field_order = []
+        self.field_order = kw.get("field_order", [])
         self.current_order = 0
         self.primary_key = kw.get("primary_key", None)
         #persisted should be private
@@ -134,76 +138,46 @@ class Table(object):
     def __repr__(self):
         return "%s - %s" % (self.name, self.columns.keys())
 
-    def persist(self, session):
+    def set_field_order(self, connection):
+
+        if connection:
+            root = connection.root()
+            root["tables"][self.name]["field_order"] = PersistentList(self.field_order)
+
+
+    def persist(self, connection):
         """This puts the information about the this objects parameters
         and its collection of fields into private database tables so that in future they
         no longer need to be explicitely defined"""
 
-        for field_name in self.field_order:
-            field = self.fields[field_name]
-            if field.category in ("field", "multi_field", "internal"):
-                self.current_order = self.current_order + 1
-                field.order = self.current_order
+        if connection:
+            root = connection.root()
+            tables = root["tables"]
+            table_count = root["table_count"] + 1
+            root["table_count"] = table_count
+
+            table = PersistentMapping()
+
+            tables[self.name] = table
+            table["field_count"] = 0
+
+            params = PersistentMapping(**self.kw)
+
+            params["table_id"] = table_count
+            params["summary"] = self.summary
+
+            table["params"] = params
+
+            table_fields = PersistentMapping()
+
+            table["fields"] = table_fields
+
+            for field_name, rfield in self.fields.iteritems():
+
+                self._persist_extra_field(rfield, connection)
 
 
-        __table = self.database.tables["__table"].sa_class()
-        __table.table_name = u"%s" % self.name
-        __table.summary = self.summary
-        session.add(__table)
-
-
-        for name, param in self.kw.iteritems():
-            __table_param = self.database.get_instance("__table_params")
-            __table_param.item = u"%s" % name
-            __table_param.value = u"%s" % str(param)
-            __table.table_params.append(__table_param)
-            session.add(__table_param)
-
-        for field_name, field  in self.fields.iteritems():
-            __field = self.database.tables["__field"].sa_class()
-            __field.field_name = u"%s" % field_name
-            __field.type = u"%s" % field.__class__.__name__
-            if hasattr(field, "other"):
-                __field.other = u"%s" % field.other
-            if field.foreign_key_name:
-                __field.foreign_key_name = u"%s" % field.foreign_key_name
-            if field.order:
-                __field.order = field.order
-            __table.field.append(__field)
-            session.add(__field)
-
-            for name, param in field.kw.iteritems():
-                __field_param = self.database.get_instance("__field_params")
-                __field_param.item = u"%s" % name
-                __field_param.value = u"%s" % str(param)
-                __field.field_params.append(__field_param)
-                session.add(__field_param)
-
-        session._flush()
-        self.table_id = __table.id
-
-        for field in __table.field:
-            self.fields[field.field_name].field_id = field.id
-
-        self.persisted = True
-
-    def add_foriegn_key_field(self):
-        for column in self.foriegn_key_columns.values():
-            original_col = column.original_column
-            name = column.name
-            if original_col == "id" and name not in self.defined_columns:
-                relation = column.defined_relation
-                field = relation.parent
-                field.foreign_key_name = unicode(name)
-                new_field = Integer(name, mandatory = field.many_side_not_null)
-                self.add_field(new_field)
-                if field.name in self.field_order:
-                    self.field_order.pop()
-                    pos = self.field_order.index(field.name)
-                    self.field_order.insert(pos, name)
-
-
-    def persist_foreign_key_columns(self, session):
+    def persist_foreign_key_columns(self, connection):
 
         for column in self.foriegn_key_columns.values():
             original_col = column.original_column
@@ -214,24 +188,33 @@ class Table(object):
                 new_field = Integer(name, mandatory = field.many_side_not_null)
 
                 self._add_field_no_persist(new_field)
-                self._persist_extra_field(new_field, session)
+                self._persist_extra_field(new_field, connection)
 
-                row = field.get_field_row_from_table(session)
-                row.foreign_key_name = unicode(name)
-                session.save(row)
+                root = connection.root()
 
-    def add_relation(self, field, defer_update_sa = False):
+                if field.name in self.field_order and not self.persisted:
+                    self.field_order.pop()
+                    pos = self.field_order.index(field.name)
+                    self.field_order.insert(pos, name)
 
+                root["tables"][field.table.name]["fields"][field.name]["params"]["foreign_key_name"] = name
+
+    def add_relation(self, field):
+
+        #TODO make into more general add relation, currently 
+        #only works if both tables are already persisted
         if not self.persisted:
             self._add_field_no_persist(field)
             return
 
-        session = self.database.Session()
+        connection = self.database.db.open()
+        root = connection.root()
+
         try:
             self._add_field_no_persist(field)
-            self._persist_extra_field(field, session)
-            self.database.add_relations()
+            self._persist_extra_field(field, connection)
 
+            self.database.add_relations()
             name, relation = field.relations.copy().popitem()
             fk_table = self.database[relation.foreign_key_table]
             pk_table = self.database[relation.primary_key_table]
@@ -243,8 +226,7 @@ class Table(object):
                     if self.database.engine.name == 'sqlite':
                         sa_options["server_default"] = "null"
                     col = sa.Column(name, column.type, **sa_options)
-                    session._flush()
-                    fk_table.persist_foreign_key_columns(session)
+                    fk_table.persist_foreign_key_columns(connection)
                     col.create(fk_table.sa_table)
 
             for name, con in fk_table.foreign_key_constraints.iteritems():
@@ -258,19 +240,14 @@ class Table(object):
                 if name == relation.foreign_key_constraint_name:
                     fk_const.create()
 
-
         except Exception, e:
-            session.rollback()
-            if field in self.fields:
-                self.fields.pop(field.name)
+            transaction.abort()
             raise
         else:
-            session._commit()
-            if not defer_update_sa:
-                self.database.load_from_persist(True)
+            transaction.commit()
+            self.database.load_from_persist(True)
         finally:
-            session.close()
-        return
+            connection.close()
 
     def delete_relation(self, field):
 
@@ -278,22 +255,18 @@ class Table(object):
             field = self.fields[field]
         name, relation = field.relations.copy().popitem()
 
-        session = self.database.Session()
+        connection = self.database.db.open()
 
         try:
             mandatory = True if relation.many_side_not_null else False
             fk_table = self.database[relation.foreign_key_table]
             pk_table = self.database[relation.primary_key_table]
 
-            row = field.get_field_row_from_table(session)
-            session.delete(row)
-
-            session._flush()
+            root = connection.root()
+            root["tables"][field.table.name]["fields"].pop(field.name)
+            root["tables"][field.table.name]["field_order"].remove(field.name)
 
             for name, con in fk_table.foreign_key_constraints.iteritems():
-
-                #fk_const = sa.ForeignKeyConstraint([fk_table.sa_table.c[con[0][0]]],
-                #                                   [pk_table.sa_table.c[con[1][0]]], name = name)
 
                 fk_const = migrate.changeset.constraint.ForeignKeyConstraint(con[0],
                                                    con[1], name = name, table = fk_table.sa_table)
@@ -301,25 +274,21 @@ class Table(object):
                 if name == relation.foreign_key_constraint_name:
                     fk_const.drop()
 
-            #for constraint in fk_table.sa_table.constraints:
-            #    if constraint.name == relation.foreign_key_constraint_name:
-            #        constraint.drop()
-
         except Exception, e:
-            session.rollback()
+            transaction.abort()
             raise
         else:
-            session._commit()
+            transaction.commit()
             self.database.load_from_persist(True)
         finally:
-            session.close()
+            connection.close()
 
     def add_index(self, field, defer_update_sa = False):
 
-        session = self.database.Session()
+        connection = self.database.db.open()
         try:
             self._add_field_no_persist(field)
-            self._persist_extra_field(field, session)
+            self._persist_extra_field(field, connection)
 
             name, index = field.indexes.popitem()
 
@@ -330,58 +299,63 @@ class Table(object):
                 sa.Index(index.name, *ind).create()
 
         except Exception, e:
-            session.rollback()
+            transaction.abort()
             raise
         else:
-            session._commit()
+            transaction.commit()
             self.database.load_from_persist(True)
         finally:
-            session.close()
+            connection.close()
 
-    def delete_index(self, index):
+    def delete_index(self, field):
 
-        if isinstance(index, basestring):
-            field = self.fields[index]
+        if isinstance(field, basestring):
+            field = self.fields[field]
 
-        session = self.database.Session()
+        connection = self.database.db.open()
         try:
-            row = field.get_field_row_from_table(session)
-            session.delete(row)
+            root = connection.root()
+
+            root["tables"][field.table.name]["fields"].pop(field.name)
+            root["tables"][field.table.name]["field_order"].remove(field.name)
+
             for sa_index in self.sa_table.indexes:
                 if sa_index.name == field.name:
                     sa_index.drop()
 
-
         except Exception, e:
-            session.rollback()
+            transaction.abort()
             raise
         else:
-            session._commit()
+            transaction.commit()
             self.database.load_from_persist(True)
         finally:
-            session.close()
+            connection.close()
 
 
     def add_field(self, field, defer_update_sa = False):
         """add a Field object to this Table"""
         if self.persisted == True:
-            session = self.database.Session()
+
+            connection = self.database.db.open()
+
             field.check_table(self)
             try:
                 self._add_field_no_persist(field)
-                self._persist_extra_field(field, session)
+                self._persist_extra_field(field, connection)
                 self._add_field_by_alter_table(field)
+
+                root = connection.root()
+
+
             except Exception, e:
-                session.rollback()
-                if field in self.fields:
-                    self.fields.pop(field.name)
+                transaction.abort()
                 raise
             else:
-                session._commit()
-                if not defer_update_sa:
-                    self.database.update_sa(reload = True)
+                transaction.commit()
+                self.database.load_from_persist(True)
             finally:
-                session.close()
+                connection.close()
             return
 
         else:
@@ -396,26 +370,30 @@ class Table(object):
         if isinstance(field, basestring):
             field = self.fields[field]
 
-        session = self.database.Session()
+        connection = self.database.db.open()
 
         try:
-            column = field.columns[field.column_order[0]] ##TODO make sure only 1 column in field
-            row = field.get_field_row_from_table(session)
-            row.field_name = u"%s" % new_name
-            session.save(row)
+            root = connection.root()
 
+            persistant_fields = root["tables"][field.table.name]["fields"]
+            persistant_field = persistant_fields.pop(field.name)
+            persistant_fields[new_name] = persistant_field
+
+            field_order = root["tables"][field.table.name]["field_order"]
+            index = field_order.index(field.name)
+            field_order[index] = new_name
+
+            column = field.columns[field.column_order[0]] ##TODO make sure only 1 column in field
             self.sa_table.c[column.name].alter(name = new_name)
 
-            session._flush()
-
         except Exception, e:
-            session.rollback()
+            transaction.abort()
             raise
         else:
-            session._commit()
+            transaction.commit()
             self.database.load_from_persist(True)
         finally:
-            session.close()
+            connection.close()
 
     def drop_field(self, field):
 
@@ -426,41 +404,25 @@ class Table(object):
         if isinstance(field, basestring):
             field = self.fields[field]
 
-        session = self.database.Session()
+        connection = self.database.db.open()
 
         try:
-            row = field.get_field_row_from_table(session)
-            session.delete(row)
-            session._flush()
-
-            query = Search(self.database,
-                           "__field",
-                           session,
-                           "table_name = ? and order is ?",
-                           values = [self.name, "not null"]).search()
-
-            query.order_by(self.database["__field"].sa_class.order)
-
-
-            for num, obj in enumerate(query.all()):
-                obj.order = num + 1
-                session.save(obj)
-
-
-            session._flush()
-
+            root = connection.root()
+            root["tables"][field.table.name]["fields"].pop(field.name)
+            root["tables"][field.table.name]["field_order"].remove(field.name)
 
             for column in field.columns.values():
                 self.sa_table.c[column.name].drop()
 
         except Exception, e:
-            session.rollback()
+            transaction.abort()
             raise
         else:
-            session._commit()
+            transaction.commit()
             self.database.load_from_persist(True)
         finally:
-            session.close()
+            connection.close()
+
 
     def alter_field(self, field, **kw):
 
@@ -472,67 +434,42 @@ class Table(object):
             raise Exception(("only fields representing database"
                             "fields can be altered"))
 
-        session = self.database.Session()
+        connection = self.database.db.open()
 
         try:
+            root = connection.root()
+            persisted_field = root["tables"][field.table.name]["fields"][field.name]
+            params = persisted_field["params"]
+
             field_type = kw.pop("type", None)
 
-            row = field.get_field_row_from_table(session)
-
-            new_kw = field.kw.copy()
-            new_kw.update(kw)
-            new_kw["order"] = field.order
-
+            params.update(kw)
 
             if field_type:
                 if isinstance(field_type, basestring):
                     field_type = getattr(fields, field_type)
-                new_field = field_type(field.name, **new_kw)
+                new_field = field_type(field.name, **params)
             else:
-                new_field = field.__class__(field.name, **new_kw)
+                new_field = field.__class__(field.name, **params)
 
             _, column = new_field.columns.copy().popitem()
 
             sa_options = column.sa_options
 
-            # sqlalchemy only accepts strings for server_defaults
-            #if isinstance(column.type, sa.Unicode) and "default" in sa_options:
-            #    if isinstance(sa_options["default"], basestring):
-            #        default = sa_options.pop("default")
-            #        sa_options["server_default"] = default
-
-
-            for param in row.field_params:
-                session.delete(param)
-
-            for name, param in new_field.kw.iteritems():
-                __field_param = self.database.get_instance("__field_params")
-                __field_param.item = u"%s" % name
-                __field_param.value = u"%s" % str(param)
-                row.field_params.append(__field_param)
-                session.add(__field_param)
-            row.type = unicode(new_field.__class__.__name__)
-            session.add(row)
-
-            session._flush()
+            if field_type:
+                persisted_field["type"] = new_field.__class__.__name__
 
             col = self.sa_table.c[column.name]
             col.alter(sa.Column(column.name, column.type, **sa_options))
 
         except Exception, e:
-            session.rollback()
+            transaction.abort()
             raise
         else:
-            session._commit()
+            transaction.commit()
             self.database.load_from_persist(True)
         finally:
-            session.close()
-
-
-
-
-
-
+            connection.close()
 
     def _add_field_no_persist(self, field):
         """add a Field object to this Table"""
@@ -543,69 +480,41 @@ class Table(object):
             col = sa.Column(name, column.type, **column.sa_options)
             col.create(self.sa_table)
 
-    def _persist_extra_field(self, field, session):
+    def _persist_extra_field(self, field, connection):
 
-        if field.category in ("field", "multi_field", "internal"):
-            self.current_order = self.current_order + 1
-            field.order = self.current_order
+        if connection:
 
-        __table = session.query(self.database.get_class("__table")).\
-                                filter_by(table_name = u"%s" % self.name).one()
+            root = connection.root()
+            table = root["tables"][self.name]
+            table_fields = table["fields"]
+            rfield = field
 
-        __field = self.database.tables["__field"].sa_class()
-        __field.field_name = u"%s" % field.name
-        __field.type = u"%s" % field.__class__.__name__
-        if hasattr(field, "other"):
-            __field.other = u"%s" % field.other
+            field = PersistentMapping()
+            table_fields[rfield.name] = field
+            field_count = table["field_count"] + 1
+            table["field_count"] = field_count
 
-        if field.foreign_key_name:
-            __field.foreign_key_name = field.foreign_key_name
+            field["type"] = rfield.__class__.__name__
 
-        if field.order:
-            __field.order = field.order
+            params = PersistentMapping(**rfield.kw)
+            params["foreign_key_name"] = rfield.foreign_key_name
+            params["field_id"] = field_count
 
-        for name, param in field.kw.iteritems():
-            __field_param = self.database.tables["__field_params"].sa_class()
-            __field_param.item = u"%s" % name
-            __field_param.value = u"%s" % str(param)
-            __field.field_params.append(__field_param)
-            session.add(__field_param)
+            field["params"] = params
+            field["args"] = PersistentList(rfield.args)
 
-        __table.field.append(__field)
-        session.add(__field)
-
-        session.add(__table)
-
-        session._flush()
-
-        for field in __table.field:
-            self.fields[field.field_name].field_id = field.id
-
-        return __field
-
-    def get_table_row_from_table(self, session):
-
-        sa_class = self.database["__table"].sa_class
-        query = session.query(sa_class)
-        result = query.filter(sa_class.id == self.table_id).one()
-        return result
+            if self.persisted:
+                table["field_order"].append(rfield.name)
 
     @property
     def ordered_fields(self):
 
         fields = []
 
-        for field in self.fields.values():
-            if field.category in ("internal", "multi_field", "field"):
-                fields.append(field)
-
-        def sort_order(a, b):
-            first = a.order or -1
-            second = b.order or -1
-            return first - second
-
-        fields.sort(sort_order)
-
+        for field in self.field_order:
+            rfield = self.fields[field]
+            if rfield.category in ("internal", "multi_field", "field"):
+                fields.append(rfield)
         return fields
 
     @property

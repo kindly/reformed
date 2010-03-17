@@ -139,8 +139,6 @@ class User(TableNode):
         params = {"form_type": "action"}
     )
 
-    about_me_form_fields = ['login_name', 'about_me']
-
     def setup_extra_commands(self):
         commands = self.__class__.commands
         commands['login'] = dict(command = 'check_login')
@@ -227,9 +225,6 @@ class User(TableNode):
 
 class Permission(TableNode):
 
-    table = "permission"
-    form_params =  {"form_type": "action"}
-    title_field = 'permission'
     main = form(
         layout("box_start"),
         input("permission"),
@@ -244,9 +239,6 @@ class Permission(TableNode):
 
 class UserGroup(TableNode):
 
-    table = "user_group"
-    form_params =  {"form_type": "action"}
-    title_field = 'user group'
     main = form(
         layout("box_start"),
         input('groupname', description = 'The name of the user group'),
@@ -304,10 +296,6 @@ class UserAdmin(TableNode):
 
 class SysInfo(TableNode):
 
-    table = "_system_info"
-    form_params =  {"form_type": "action"}
-    title_field = 'key'
-
     main = form(
         input('key'),
         input('value'),
@@ -319,13 +307,7 @@ class SysInfo(TableNode):
 
     )
 
-
-
 class Page(TableNode):
-
-    table = "page"
-    form_params =  {"form_type": "action"}
-    title_field = 'title'
 
     main = form(
         input("page", css = "large", description = "A reference for the page used for links etc."),
@@ -341,8 +323,15 @@ class Page(TableNode):
         input('title', control = info()),
         input('body', control = info()),
 
+        buttons('view', False),
+
         table = "page",
         params =  {"form_type": "action"},
         title_field = 'title'
     )
+
+    def view(self):
+        where = 'page = %s' % self.data.get("page")
+        self["view_form"].view(where = where)
+
 

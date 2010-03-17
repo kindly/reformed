@@ -27,6 +27,7 @@ from optparse import OptionParser
 import web
 
 def make_application(args):
+    print "make_app"
     if args:
         application = web.WebApplication(args[0])
     else:
@@ -77,6 +78,15 @@ def delete(args):
     application_folder = os.path.join(this_dir, dir)
     sys.path.append(application_folder)
     engine = create_engine('sqlite:///%s/%s.sqlite' % (application_folder,dir))
+
+    try:
+        os.remove("%s/%s.fs" % (application_folder, dir))
+        os.remove("%s/%s.fs.lock" % (application_folder, dir))
+        os.remove("%s/%s.fs.index" % (application_folder, dir))
+        os.remove("%s/%s.fs.tmp" % (application_folder, dir))
+    except OSError:
+        print "zodb store not there to remove"
+        pass
 
     meta.reflect(bind=engine)
 

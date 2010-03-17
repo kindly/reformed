@@ -27,6 +27,14 @@ class test_donkey(object):
         if not hasattr(cls, "engine"):
             cls.engine = create_engine('sqlite:///:memory:' )
             #cls.engine = create_engine('sqlite:///:memory:')
+
+        try:
+            os.remove("tests/zodb.fs")
+            os.remove("tests/zodb.fs.lock")
+            os.remove("tests/zodb.fs.index")
+            os.remove("tests/zodb.fs.tmp")
+        except OSError:
+            pass
         
 #        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
         cls.meta = sa.MetaData()
@@ -35,7 +43,8 @@ class test_donkey(object):
                         metadata = cls.meta,
                         engine = cls.engine,
                         session = cls.Sess,
-                        entity = True
+                        entity = True,
+                        zodb_store = "tests/zodb.fs"
                         )
 
 
@@ -300,13 +309,12 @@ class test_basic_input(test_donkey):
 
     def test_ordered_fields(self):
 
-        print self.Donkey["people"].ordered_fields
+        print [a.name for a in self.Donkey["people"].ordered_fields]
+        assert [a.name for a in self.Donkey["people"].ordered_fields] == ['name', 'gender_id', 'supporter_address', 'over_18_id', '_version', '_modified_date', '_modified_by', '_core_entity_id']
 
-        assert [a.order for a in self.Donkey["people"].ordered_fields] == [1, 2, 3, 4, 5, 6, 7, 8]
+        print [a.name for a in self.Donkey["people"].ordered_user_fields]
 
-        print [a.order for a in self.Donkey["people"].ordered_user_fields]
-
-        assert [a.order for a in self.Donkey["people"].ordered_user_fields] == [1, 2, 3, 4]
+        assert [a.name for a in self.Donkey["people"].ordered_user_fields] == ['name', 'gender_id', 'supporter_address', 'over_18_id']
 
     def test_validation_empty_string(self):
 
@@ -572,16 +580,20 @@ class test_basic_input(test_donkey):
 
     def test_all_fields_have_different_numbers(self):
 
-        field_ids = []
 
         for table in self.Donkey.tables.values():
-            if table.name.startswith("__") or table.name.startswith("_log___"):
+            if table.name.startswith("__") or table.name.startswith("_log_"):
                 continue
-            for field in table.fields.values():
-                field_ids.append(field.field_id)
-            print table.name, field_ids
+            field_ids = []
+            print table
 
-        assert len(field_ids) == len(set(field_ids))
+            for field in table.fields.values():
+                print field.name,field.field_id
+                field_ids.append(field.field_id)
+
+            
+            print field_ids
+            assert len(field_ids) == len(set(field_ids))
 
     def test_dependant_attributes(self):
 
@@ -603,8 +615,6 @@ class test_basic_input(test_donkey):
     def test_parant_col_attributes(self):
 
         assert self.Donkey["people"].parent_columns_attributes == {}
-
-        assert self.Donkey["__field_params"].parent_columns_attributes == {'field_name': '___field', 'table_name': '___field'}
 
         assert self.Donkey["entity_categories"].parent_columns_attributes == {'sub_sub_category_name': 'category', 'sub_category_name': 'category', 'category_name': 'category'}
 

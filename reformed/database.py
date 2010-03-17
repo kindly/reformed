@@ -34,7 +34,6 @@ from collections import defaultdict
 from util import get_paths, get_all_local_data
 from fields import ManyToOne, OneToOne, OneToMany, Integer, CopyTextAfter, CopyTextAfterField, DeleteRow
 import fields as field_types
-import boot_tables
 import sessionwrapper
 import validate_database
 import logging
@@ -42,6 +41,9 @@ import networkx as nx
 import job_scheduler
 import threading
 import os
+from ZODB import FileStorage, DB
+from ZODB.PersistentMapping import PersistentMapping
+import transaction
 
 root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 log_file = os.path.join(root, "log.log")
@@ -51,6 +53,7 @@ logger.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s - %(message)s")
 reformedhandler = logging.FileHandler(log_file)
 reformedhandler.setFormatter(formatter)
+
 
 logger.addHandler(reformedhandler)
 
@@ -66,14 +69,31 @@ class Database(object):
         self._Session = kw.pop("session", None)
         self.entity = kw.pop("entity", False)
         self.logging_tables = kw.pop("logging_tables", True)
+
+        self.zodb_store = kw.pop("zodb_store", True)
+
         self.metadata.bind = self.engine
         self.Session = sessionwrapper.SessionClass(self._Session, self)
         self.persisted = False
-        boots = boot_tables.boot_tables()
-        self.boot_tables = boots.boot_tables
         self.graph = None
         self.fields_to_persist = []
+        self.relations = []
+
+        ## zodb database
+        if self.zodb_store:
+            storage = FileStorage.FileStorage(self.zodb_store)
+            self.db = DB(storage)
+            connection = self.db.open()
+            root = connection.root()
+            if "tables" not in root:
+                root["tables"] = PersistentMapping()
+                root["table_count"] = 0
+                transaction.commit()
+            connection.close()
+        ## zodb database
+
         self.load_from_persist()
+
         if self.entity:
             self.add_entity_table()
         for table in args:
@@ -81,15 +101,14 @@ class Database(object):
                 self.add_entity(table)
             else:
                 self.add_table(table)
-        #self.persist()
+
         self.status = "active"
-        #self.job_scheduler = job_scheduler.JobScheduler(self)
         self.manager_thread = ManagerThread(self, threading.currentThread())
         self.manager_thread.start()
 
         self.job_scheduler = job_scheduler.JobScheduler(self)
-
         self.scheduler_thread = job_scheduler.JobSchedulerThread(self, threading.currentThread())
+
 
     def __getitem__(self, item):
         if isinstance(item, int):
@@ -117,16 +136,6 @@ class Database(object):
                 raise custom_exceptions.DuplicateTableError("already a table named %s"
                                                             % table.name)
 
-        for field in table.fields.itervalues():
-            if not hasattr(field, "other") or field.other not in self.tables.iterkeys():
-                continue
-            ##TODO Horrible mess, need to do much better checking of relations and
-            ##need to sort out field column divide for relations
-            relation_types= [relation.type for relation in field.relations.itervalues()]
-            if ("onetoone" in relation_types or "onetomany" in relation_types) and \
-               self.tables[field.other].persisted is True:
-                raise custom_exceptions.NoTableAddError("table %s cannot be added"
-                                                        % table.name)
 
         self._add_table_no_persist(table)
 
@@ -137,54 +146,40 @@ class Database(object):
         else:
             table_to_rename = self.tables[table]
 
-        if session:
-            defer_update = True
-        else:
-            session = self.Session()
-            defer_update = False
+        connection = self.db.open()
+        root = connection.root()
+        persisted_tables = root["tables"]
 
         try:
-            #update fields in other tables so that they do not have to change their name
-            for relations in table_to_rename.tables_with_relations.itervalues():
-                for relation in relations:
-                    if relation.foreign_key_table <> table_to_rename.name:
-                        field = relation.parent
-                        foreign_key_name = relation.foriegn_key_id_name
-                        row = field.get_field_row_from_table(session)
-                        row.foreign_key_name = u"%s" % foreign_key_name
-                        session.save(row)
 
             for relations in table_to_rename.tables_with_relations.values():
                 for rel in relations:
                     if rel.other == table_to_rename.name:
                         field = rel.parent
-                        row = field.get_field_row_from_table(session)
-                        row.other = u"%s" % new_name
-                        session.save(row)
+                        persisted_field = persisted_tables[field.table.name]["fields"][field.name]
+                        persisted_field["args"][0] = new_name
 
-            row = table_to_rename.get_table_row_from_table(session)
-            row.table_name = u"%s" % new_name
-            session.save(row)
-            session._flush()
-
-            if table_to_rename.logged:
-                self.rename_table("_log_%s" % table_to_rename.name, "_log_%s" % new_name, session)
-
+            persisted_table = persisted_tables.pop(table_to_rename.name)
+            persisted_tables[new_name] = persisted_table
             table_to_rename.sa_table.rename(new_name)
+
         except Exception, e:
-            session.rollback()
+            transaction.abort()
             raise
         else:
-            if not defer_update:
-                session._commit()
-                self.load_from_persist(True)
+            transaction.commit()
+            self.load_from_persist(True)
         finally:
-            if not defer_update:
-                session.close()
+            connection.close()
+
+        if table_to_rename.logged:
+            self.rename_table("_log_%s" % table_to_rename.name, "_log_%s" % new_name, session)
 
     def drop_table(self, table):
 
-        session = self.Session()
+        connection = self.db.open()
+        root = connection.root()
+        persisted_tables = root["tables"]
 
         try:
             if isinstance(table, tables.Table):
@@ -197,27 +192,24 @@ class Database(object):
                     "cannot delete table %s as the following tables"
                     " depend on it %s" % (table.name, table.dependant_tables)))
 
-            row = table_to_drop.get_table_row_from_table(session)
-            session.delete(row)
-
             for relations in table_to_drop.tables_with_relations.itervalues():
                 for relation in relations:
-                    row = relation.parent.get_field_row_from_table(session)
-                    session.delete(row)
+                    field = relation.parent
+                    persisted_tables[field.table.name]["fields"].pop(field.name)
+                    persisted_tables[field.table.name]["field_order"].remove(field.name)
 
-            session._flush()
+            persisted_tables.pop(table_to_drop.name)
 
             table_to_drop.sa_table.drop()
 
         except Exception, e:
-            session.rollback()
+            transaction.abort()
             raise
         else:
-            session.commit()
+            transaction.commit()
             self.load_from_persist(True)
-            self.add_relations()
         finally:
-            session.close()
+            connection.close()
 
         if table_to_drop.logged:
             self.drop_table(self.tables["_log_" + table_to_drop.name])
@@ -326,41 +318,41 @@ class Database(object):
 
         self.status = "updating"
 
-        if not self.persisted:
-            for table in self.boot_tables:
-                if table.name in self.tables.iterkeys():
-                    break
-                self.add_table(table)
-        self.update_sa(reload = True)
-
-        session = self.Session()
-
+        connection = self.db.open()
         try:
+
+            ## add logging tables
+            for table in self.tables.values():
+                if not self.logging_tables:
+                    table.logged = False
+                if table.logged and "_log_%s" % table.name not in self.tables.iterkeys() :
+                    self.add_table(self.logged_table(table))
+
             for table in self.tables.itervalues():
                 if not table.persisted:
-                    table.persist(session)
-            for field in self.fields_to_persist:
-                field.table._persist_extra_field(field, session)
+                    table.persist(connection)
 
-            session._flush()
+            for field in self.fields_to_persist:
+                field.table._persist_extra_field(field, connection)
 
             for table in self.tables.itervalues():
-                table.persist_foreign_key_columns(session)
+                table.persist_foreign_key_columns(connection)
 
-            session._flush()
+            for table in self.tables.itervalues():
+                if not table.persisted:
+                    table.set_field_order(connection)
 
+            self.update_sa(True)
             self.metadata.create_all(self.engine)
         except Exception, e:
-            session.rollback()
+            transaction.abort()
             raise
         else:
-            session._commit()
+            transaction.commit()
         finally:
-            session.close
-
+            connection.close()
 
         self.load_from_persist(True)
-
 
         self.fields_to_persist = []
         self.persisted = True
@@ -370,90 +362,30 @@ class Database(object):
 
     def load_from_persist(self, restart = False):
 
-        session = self.Session()
+        connection = self.db.open()
 
-        self.tables = {}
-        self.clear_sa()
-        #old boot table state causes issues
-        boots = boot_tables.boot_tables()
-        self.boot_tables = boots.boot_tables
+        if connection:
+            self.tables = {}
+            self.clear_sa()
+            root = connection.root()
+            for table_name, table in root["tables"].iteritems():
+                fields = []
+                for field_name, field in table["fields"].iteritems():
+                    field_cls = getattr(field_types, field["type"])
+                    fields.append(field_cls(field_name,
+                                            *field["args"],
+                                            **field["params"]))
 
-        for table in self.boot_tables:
-            self.add_table(table)
+                self.add_table(tables.Table(table_name,
+                                            *fields,
+                                            field_order = list(table["field_order"]),
+                                            persisted = True,
+                                            **table["params"])
+                                            )
 
-        self.update_sa()
-        self.metadata.create_all(self.engine)
-
-        all_tables = session.query(self.tables["__table"].sa_class).all()
-
-        self.tables = {}
-        self.clear_sa()
-
-        ## only persist boot tables if first time
-        if not all_tables:
-            self.persist()
-            self.persisted = False #make sure database is not seen as persisted
-            return
-
-        for row in all_tables:
-            fields = []
-            for field in row.field:
-                field_name = field.field_name.encode("ascii")
-                if field.other:
-                    field_other = field.other.encode("ascii")
-                else:
-                    field_other = field.other
-
-                if field.foreign_key_name:
-                    foreign_key_name = field.foreign_key_name.encode("ascii")
-                else:
-                    foreign_key_name = field.foreign_key_name
-
-                field_kw = {}
-                for field_param in field.field_params:
-                    if field_param.value == u"True":
-                        value = True
-                    elif field_param.value == u"False":
-                        value = False
-                    else:
-                        value = field_param.value
-                    field_kw[field_param.item.encode("ascii")] = value
-
-                fields.append(getattr(field_types, field.type)(field_name,
-                                                              field_other,
-                                                              foreign_key_name = foreign_key_name,
-                                                              order = field.order,
-                                                              field_id = field.id,
-                                                              **field_kw))
-            kw = {}
-            for table_param in row.table_params:
-                if table_param.value == u"True":
-                    value = True
-                elif table_param.value == u"False":
-                    value = False
-                else:
-                    value = table_param.value
-                kw[table_param.item.encode("ascii")] = value
-
-            kw["table_id"] = row.id
-
-            self.add_table(tables.Table(row.table_name.encode("ascii"), *fields, **kw))
-
-        for table in self.tables.itervalues():
-            table.persisted = True
-
-            orders = [field.order for field in table.fields.values() if field.order]
-
-            if orders:
-                table.current_order = max(orders)
-
-        # for first time do not say database is persisted
-        if all_tables:
-            self.persisted = True
-
-        self.update_sa()
+        self.update_sa(True)
         self.validate_database()
-        session.close()
+        connection.close()
 
     def add_relations(self):     #not property for optimisation
         self.relations = []
@@ -483,15 +415,13 @@ class Database(object):
                                 % (col[0], relation.other)
 
 
-    def update_sa(self, reload = False, update_tables = True):
+    def update_sa(self, reload = False):
         if reload == True and self.status <> "terminated":
             self.status = "updating"
 
         if reload:
             self.clear_sa()
 
-        if update_tables:
-            self.update_tables()
         self.checkrelations()
         self.check_related_order_by()
         self.make_graph()
@@ -617,6 +547,7 @@ class Database(object):
 
         if one_to_many_tables:
             kw["distinct_many"] = True
+
         query = search.Search(self, table_name, session, where, *args, **kw).search()
 
         for cls in one_to_many_tables:
@@ -659,8 +590,10 @@ class Database(object):
             return wrapped_results
         except Exception, e:
             session.rollback()
-            session.close()
             raise
+        finally:
+            if not external_session:
+                session.close()
 
     def search_single(self, table_name, *args, **kw):
 
@@ -694,20 +627,7 @@ class Database(object):
 
         logging_table.add_field(Integer("_logged_table_id"))
 
-        #logging_table.add_field(ManyToOne(logged_table.name+"_logged"
-        #                                 , logged_table.name ))
-
         return logging_table
-
-    def update_tables(self):
-
-        for table in self.tables.values():
-            if not self.logging_tables:
-                table.logged = False
-            if table.logged and "_log_%s" % table.name not in self.tables.iterkeys() :
-                self.add_table(self.logged_table(table))
-        for table in self.tables.values():
-            table.add_foriegn_key_field()
 
     def get_class(self, table):
 

@@ -52,40 +52,19 @@ class test_table_basic(object):
         assert self.a.defined_non_primary_key_columns.has_key("col2")
 
 
-class test_table_primary_key(object):
-    
-    def setUp(self):
-        self.engine = sa.create_engine('sqlite:///:memory:')
-        self.meta1 = sa.MetaData()
-        self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
-        self.Donkey1= Database("Donkey1",
-                             Table("poo",
-                           Text("col"),
-                           Text("col2"),
-                           Text("col3"),
-                           primary_key="col,col2",
-                           ),
-                           metadata = self.meta1,
-                           engine = self.engine,
-                           session = self.Session)
-        self.a = self.Donkey1["poo"]
-        
-        
-    def test_primary_key_columns(self):
-        
-        assert self.a.primary_key_columns.has_key("col")
-        assert self.a.primary_key_columns.has_key("col2")
-
-
-    def test_defined_non_primary_key(self):
-        
-        assert self.a.defined_non_primary_key_columns.has_key("col3")
-
 
 class test_database_default_primary_key(object):
     
     @classmethod
     def setUpClass(self):
+
+        try:
+            os.remove("tests/zodb.fs")
+            os.remove("tests/zodb.fs.lock")
+            os.remove("tests/zodb.fs.index")
+            os.remove("tests/zodb.fs.tmp")
+        except OSError:
+            pass
         
         self.engine = sa.create_engine('sqlite:///:memory:')
         self.meta1 = sa.MetaData()
@@ -98,6 +77,7 @@ class test_database_default_primary_key(object):
                          Table("email",
                                Text("email")
                               ),
+                           zodb_store = "tests/zodb.fs",
                            metadata = self.meta1,
                            engine = self.engine,
                            session = self.Session)
@@ -126,6 +106,14 @@ class test_database_primary_key(object):
         self.engine = sa.create_engine('sqlite:///:memory:')
         self.meta = sa.MetaData()
         self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
+
+        try:
+            os.remove("tests/zodb.fs")
+            os.remove("tests/zodb.fs.lock")
+            os.remove("tests/zodb.fs.index")
+            os.remove("tests/zodb.fs.tmp")
+        except OSError:
+            pass
         
         self.Donkey = Database("Donkey2",
                             Table("people",
@@ -147,6 +135,7 @@ class test_database_primary_key(object):
                                   UniqueConstraint("name67", "name6,name7"),
                                   UniqueConstraint("con_name8", "name8"),
                                   primary_key = "name,name2",
+                                  zodb_store = "tests/zodb.fs",
                                  ),
                             Table("email",
                                   Email("email"),
@@ -155,6 +144,7 @@ class test_database_primary_key(object):
                             Table("address",
                                   Address("address")
                                  ),
+                           zodb_store = "tests/zodb.fs",
                            metadata = self.meta,
                            engine = self.engine,
                            session = self.Session)
@@ -382,11 +372,19 @@ class test_field_type_validation(object):
         self.engine = sa.create_engine('sqlite:///:memory:', echo=True)
         self.meta = sa.MetaData()
         self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
+
+        try:
+            os.remove("tests/zodb.fs")
+            os.remove("tests/zodb.fs.lock")
+            os.remove("tests/zodb.fs.index")
+            os.remove("tests/zodb.fs.tmp")
+        except OSError:
+            pass
         
         self.Donkey = Database("Donkey",
                             Table("people",
                                   Email("name1", length = 10, mandatory = True),
-                                  Money("name2", nullable = False, type = "new"),
+                                  Money("name2", nullable = False),
                                   Integer("name3", mandatory = True),
                                   DateTime("name4", mandatory = True),
                                   Boolean("name5", mandatory = True),
@@ -396,6 +394,7 @@ class test_field_type_validation(object):
                                  ),
                            metadata = self.meta,
                            engine = self.engine,
+                           zodb_store = "tests/zodb.fs",
                            session = self.Session)
                         
 
@@ -456,7 +455,7 @@ class test_field_type_validation(object):
     def test_field_type(self):
 
         assert self.Donkey["people"].fields["name1"].type == "Email"
-        assert self.Donkey["people"].fields["name2"].type == "new"
+        assert self.Donkey["people"].fields["name2"].type == "Money"
 
     def test_column(self):
 

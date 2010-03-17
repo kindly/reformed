@@ -31,12 +31,6 @@ class test_donkey_validate_sqlite(test_donkey):
 
         super(test_donkey_validate_sqlite, cls).setUpClass()
 
-        cls.meta = sa.MetaData(cls.engine)
-        cls.Session = sa.orm.sessionmaker(bind =cls.engine , autoflush = False)
-        cls.Donkey = Database("Donkey", 
-                        metadata = cls.meta,
-                        engine = cls.engine,
-                        session = cls.Session)
 
     def test_validate_database(self):
 
@@ -49,7 +43,7 @@ class test_donkey_validate_sqlite(test_donkey):
         rand = random.randrange(1,10000)
         
         self.Donkey._add_table_no_persist(tables.Table("woo%s" % rand , Text("woo")))
-        self.Donkey.update_sa(update_tables = False)
+        self.Donkey.update_sa()
 
         assert_raises(custom_exceptions.DatabaseInvalid, 
                       reformed.validate_database.validate_database, self.Donkey)
@@ -60,23 +54,6 @@ class test_donkey_validate_sqlite(test_donkey):
 
         self.Donkey.persist()
 
-    def test_validate_after_wronly_add_field(self):
-
-        rand = random.randrange(1,100000)
-
-        self.Donkey.tables["people"]._add_field_no_persist( Text("wrong%s" % rand))
-        self.Donkey.update_sa(reload = True)
-        self.Donkey.metadata.create_all(self.Donkey.engine)
-
-        assert_raises(custom_exceptions.DatabaseInvalid,
-                      reformed.validate_database.validate_database, self.Donkey)
-        try:
-            reformed.validate_database.validate_database(self.Donkey)
-        except custom_exceptions.DatabaseInvalid, e:
-            assert u"people.wrong%s" % rand in e.list
-
-
-        self.Donkey.tables["people"]._add_field_by_alter_table(Text("wrong%s" % rand))
 
     def test_validate_after_added_column(self):
 
@@ -98,11 +75,13 @@ class test_donkey_validate_sqlite(test_donkey):
 
         self.Donkey.tables["people"]._add_field_no_persist( Money("wrong%s" % rand))
 
-        self.Donkey.update_sa(reload = True)
+        self.Donkey.load_from_persist(True)
+
 
         tab_def, tab_dat, col_def, col_dat, col_dif = reformed.validate_database.validate_database(self.Donkey) 
+        print tab_def, tab_dat, col_def, col_dat, col_dif
         
-        assert u"people.wrong%s" % rand in col_dif
+        assert u"people.wrong%s" % rand in col_dat
         
 
 

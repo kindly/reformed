@@ -363,14 +363,14 @@ class Field(object):
         obj.constraints = {}
         obj.sa_options = {}
         obj.column_order = []
+        obj.args = args
         obj.kw = kw
-        obj.field_id = kw.pop("field_id", None)
+        obj.field_id = kw.get("field_id", None)
+
+        obj.cat = kw.get("category", None)
 
         ## this is popped as we dont want it to appear in field_params
-        obj.foreign_key_name = kw.pop("foreign_key_name", None)
-
-        obj.order = kw.pop("order", None)
-
+        obj.foreign_key_name = kw.get("foreign_key_name", None)
 
         obj.default = kw.get("default", None)
         if obj.default is not None:
@@ -464,6 +464,9 @@ class Field(object):
     @property
     def category(self):
 
+        if self.cat:
+            return self.cat
+
         if self.column:
             if self.column.name.startswith("_"):
                 return "internal"
@@ -542,7 +545,8 @@ class Field(object):
 
         self.check_table(table)
         table.fields[self.name] = self
-        table.field_order.append(self.name)
+        if not table.persisted:
+            table.field_order.append(self.name)
         table.add_relations()
         if hasattr(table, "database"):
             table.database.add_relations()

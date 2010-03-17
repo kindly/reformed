@@ -23,6 +23,14 @@ class test_donkey_search(object):
         if not hasattr(cls, "engine"):
             cls.engine = create_engine('sqlite:///:memory:', echo = True )
             #cls.engine = create_engine('sqlite:///:memory:')
+
+        try:
+            os.remove("tests/zodb.fs")
+            os.remove("tests/zodb.fs.lock")
+            os.remove("tests/zodb.fs.index")
+            os.remove("tests/zodb.fs.tmp")
+        except OSError:
+            pass
         
 #        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
         cls.meta = sa.MetaData()
@@ -43,6 +51,7 @@ class test_donkey_search(object):
                         metadata = cls.meta,
                         engine = cls.engine,
                         session = cls.Sess,
+                        zodb_store = "tests/zodb.fs",
                         entity = True
                         )
 
