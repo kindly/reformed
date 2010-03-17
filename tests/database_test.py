@@ -26,6 +26,7 @@ class test_database(object):
             os.remove("tests/zodb.fs.index")
             os.remove("tests/zodb.fs.tmp")
         except OSError:
+            raise
             pass
     
         self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
@@ -119,11 +120,11 @@ class test_database(object):
 
         assert self.Donkey.validate_database() == [[],[],[],[],[]]
         
-    @raises(custom_exceptions.NoTableAddError)
-    def test_add_bad_table_after_persist(self):
+    #@raises(custom_exceptions.NoTableAddError)
+    #def test_add_bad_table_after_persist(self):
 
-        self.Donkey.add_table(Table("New2" , Text("new2"),
-                              OneToMany("email","email")))
+    #    self.Donkey.add_table(Table("New2" , Text("new2"),
+    #    OneToMany("email","email")))
     
     def test_get_class(self):
 

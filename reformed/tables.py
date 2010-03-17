@@ -351,18 +351,23 @@ class Table(object):
         """add a Field object to this Table"""
         if self.persisted == True:
 
-            connection = self.database.table.db.open()
+            connection = self.database.db.open()
 
             field.check_table(self)
             try:
                 self._add_field_no_persist(field)
                 self._persist_extra_field(field, connection)
                 self._add_field_by_alter_table(field)
+
+                root = connection.root()
+
+
             except Exception, e:
                 transaction.abort()
+                raise
             else:
                 transaction.commit()
-                self.database.update_sa(reload = True)
+                self.database.load_from_persist(True)
             finally:
                 connection.close()
             return

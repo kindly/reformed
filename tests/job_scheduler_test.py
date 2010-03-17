@@ -3,6 +3,7 @@ import sqlalchemy as sa
 from reformed.database import Database
 import reformed.job_scheduler
 import time
+import os
 
 
 class test_single_request(object):
@@ -12,6 +13,14 @@ class test_single_request(object):
 
         if not hasattr(cls, "engine"):
             cls.engine = create_engine('mysql://localhost/test_donkey' )
+
+        try:
+            os.remove("tests/zodb.fs")
+            os.remove("tests/zodb.fs.lock")
+            os.remove("tests/zodb.fs.index")
+            os.remove("tests/zodb.fs.tmp")
+        except OSError:
+            pass
 
         meta_to_drop = sa.MetaData()
         meta_to_drop.reflect(bind=cls.engine)
@@ -24,7 +33,8 @@ class test_single_request(object):
                         metadata = cls.meta,
                         engine = cls.engine,
                         session = cls.Sess,
-                        entity = True
+                        entity = True,
+                        zodb_store = "tests/zodb.fs"
                         )
 
         cls.session = cls.Donkey.Session()

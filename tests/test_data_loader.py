@@ -49,54 +49,16 @@ class test_record_loader(donkey_test.test_donkey):
 
         peter = yaml.load(peter)
 
-        people_table ="""
-        table_name : people
-        table_params :
-            item : entity
-            value : True
-        field : 
-            - 
-                table_name : people
-                field_name : email
-                field_params :
-                    item : cascade
-                    value : all
-            -
-                table_name : people
-                field_name : name
-                field_params :
-                    item : length
-                    value : 50
-        """
-
-        existing_pk_record = yaml.load(people_table)
-
-        email_order ="""
-        table_name : people
-        field_name : email
-        item : order_by
-        ___field :
-            table_name : people
-            field_name : email
-        """
-
-        existing_field_param = yaml.load(email_order)
-
-        
-
 
 
         cls.session = cls.Donkey.Session()
 
         cls.existing_record = SingleRecord(cls.Donkey, "people", david)
         cls.new_record = SingleRecord(cls.Donkey, "people", peter)        
-        cls.existing_pk = SingleRecord(cls.Donkey, "__table", existing_pk_record)
-        cls.existing_field_param = SingleRecord(cls.Donkey, "__field_params", existing_field_param)
 
-        cls.existing_pk.get_all_obj(cls.session)
         cls.new_record.get_all_obj(cls.session)
         cls.existing_record.get_all_obj(cls.session)
-        cls.existing_field_param.get_all_obj(cls.session)
+
         #cls.new_record.load()
 
     
@@ -169,19 +131,6 @@ class test_record_loader(donkey_test.test_donkey):
         
         assert self.existing_record.all_obj[("donkey_sponsership" , 0, "_donkey", 0)].age == 13
 
-    def test_get_obj_existing_from_key(self):
-
-        assert self.existing_pk.all_obj[("field", 0)].other == "email" 
-
-        assert self.existing_pk.all_obj[("field", 1)].field_name == "name" 
-
-    def test_get_obj_new_from_key(self):
-
-        assert self.existing_pk.all_obj[("field", 1, "field_params", 0)].item  is None
-
-    def test_get_existing_obj_from_key(self):
-
-        assert self.existing_field_param.all_obj[("___field", 0)].field_name == "email"
 
     def test_key_parser(self):
 
@@ -233,7 +182,6 @@ class test_record_loader(donkey_test.test_donkey):
 
         self.existing_record.add_all_values_to_obj()
         self.new_record.add_all_values_to_obj()
-        self.existing_pk.add_all_values_to_obj()
 
         assert self.existing_record.all_obj[u"root"].address_line_1 == u"16 blooey"
         assert self.existing_record.all_obj[(u"donkey_sponsership" , 0)].amount == 10
@@ -244,8 +192,6 @@ class test_record_loader(donkey_test.test_donkey):
         assert self.new_record.all_obj[(u"donkey_sponsership", 0,)].amount == 10
         assert self.new_record.all_obj[(u"donkey_sponsership", 0, "_donkey", 0)].age == 10
         
-        assert self.existing_pk.all_obj[(u"table_params" , 0)].item == u"entity"
-        assert self.existing_pk.all_obj[(u"table_params" , 0)].value == True
 
     def test_zz_load_record(self):
 
