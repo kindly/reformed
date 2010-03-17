@@ -133,7 +133,8 @@ class WebApplication(object):
                                                     metadata = self.metadata,
                                                     engine = self.engine,
                                                     session = Session,
-                                                    logging_tables = False
+                                                    logging_tables = False,
+                                                    zodb_store = "%s/%s.fs" % (application_folder,dir)
                                                     )
 
         global_session.database = self.database
