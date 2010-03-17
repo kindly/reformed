@@ -363,6 +363,7 @@ class Field(object):
         obj.constraints = {}
         obj.sa_options = {}
         obj.column_order = []
+        obj.args = args
         obj.kw = kw
         obj.field_id = kw.get("field_id", None)
 

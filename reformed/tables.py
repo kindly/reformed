@@ -174,22 +174,8 @@ class Table(object):
 
             for field_name, rfield in self.fields.iteritems():
 
-                field = PersistentMapping()
-                table_fields[field_name] = field
-                field_count = table["field_count"] + 1
-                table["field_count"] = field_count
+                self._persist_extra_field(rfield, connection)
 
-                field["type"] = rfield.__class__.__name__
-                if hasattr(rfield, "other"):
-                    field["other"] = rfield.other
-                else:
-                    field["other"] = None
-
-                params = PersistentMapping(**rfield.kw)
-                params["foreign_key_name"] = rfield.foreign_key_name
-                params["field_id"] = field_count
-
-                field["params"] = params
 
     def persist_foreign_key_columns(self, connection):
 
@@ -509,16 +495,13 @@ class Table(object):
             table["field_count"] = field_count
 
             field["type"] = rfield.__class__.__name__
-            if hasattr(rfield, "other"):
-                field["other"] = rfield.other
-            else:
-                field["other"] = None
 
             params = PersistentMapping(**rfield.kw)
             params["foreign_key_name"] = rfield.foreign_key_name
             params["field_id"] = field_count
 
             field["params"] = params
+            field["args"] = PersistentList(rfield.args)
 
             if self.persisted:
                 table["field_order"].append(rfield.name)

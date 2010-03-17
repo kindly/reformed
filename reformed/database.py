@@ -157,7 +157,7 @@ class Database(object):
                     if rel.other == table_to_rename.name:
                         field = rel.parent
                         persisted_field = persisted_tables[field.table.name]["fields"][field.name]
-                        persisted_field["other"] = new_name
+                        persisted_field["args"][0] = new_name
 
             persisted_table = persisted_tables.pop(table_to_rename.name)
             persisted_tables[new_name] = persisted_table
@@ -373,7 +373,7 @@ class Database(object):
                 for field_name, field in table["fields"].iteritems():
                     field_cls = getattr(field_types, field["type"])
                     fields.append(field_cls(field_name,
-                                            field["other"],
+                                            *field["args"],
                                             **field["params"]))
 
                 self.add_table(tables.Table(table_name,
