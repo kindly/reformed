@@ -77,7 +77,8 @@ class ListTicket(TableNode):
         self["comment"].save()
         self.action = "redirect"
         self.link = "bug.ListTicket:view:__id=%s" % self.data.get("_core_entity_id")
-
+        # FIXME this is stupid
+        self.next_node = None
 
 class User(TableNode):
 
