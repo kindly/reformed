@@ -382,7 +382,7 @@ class Form(object):
         if data:
             out['data'] = data
         else:
-            out['data'] = {}
+            out['data'] = []
         if self.params:
             out['form']['params'] = self.params.copy()
         if read_only:
