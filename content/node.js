@@ -399,7 +399,8 @@ var fn = function(packet, job){
              } else if (form_type == 'action' || form_type == 'results'){
                 $('#' + root).input_form(form, data, paging);
              } else {
-                $('#' + root).form(form, data, paging);
+                $('#' + root).input_form(form, data, paging);
+             //   $('#' + root).form(form, data, paging);
              }
              break;
          case 'save_error':
