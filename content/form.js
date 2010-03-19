@@ -1584,6 +1584,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                         $subforms.eq(i).grid(subform.form, subforms[i].data);
                         break;
                     case 'action':
+                        $subforms.eq(i).input_form(subform.form, subforms[i].data, extra_defaults);
+                        break;
                     case 'continuous':
                         data = {__array: subforms[i].data};
                         $subforms.eq(i).input_form(subform.form, data, extra_defaults);
