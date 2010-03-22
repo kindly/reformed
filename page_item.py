@@ -38,6 +38,8 @@ class PageItem(object):
         self.data_type = kw.pop("data_type", None)
         self.label = kw.pop("label", None)
 
+        self.permissions = set(kw.pop("permissions", []))
+
         if self.name and not self.label:
             self.label = self.name + ":"
 
@@ -48,6 +50,14 @@ class PageItem(object):
 
         self.extra_params = kw
 
+    def check_permissions(self):
+
+        user_perms = set(global_session.session.get('permissions'))
+        if not self.permissions:
+            return True
+        if self.permissions.intersection(user_perms):
+            return True
+
 
     def params(self, form):
 
@@ -55,15 +65,18 @@ class PageItem(object):
 
         if self.control:
             params.update(self.control.convert(self, form))
-
-        if self.layout:
+        elif self.layout:
             params.update(self.layout.convert(self, form))
+        else:
+            control = self.set_default_control(form)
+            if control:
+                params["control"] = control
 
         return params
 
     def convert(self, form, field_list):
 
-        if self.invisible:
+        if self.invisible or not self.check_permissions():
             return
 
         row = self.set_params(form)
@@ -72,6 +85,19 @@ class PageItem(object):
         row['title'] = self.label
 
         return row
+
+    def set_default_control(self, form):
+
+        default_controls = dict(Integer = "intbox",
+                                Text = "textbox",
+                                DateTime = "datebox",
+                                Boolean = "checkbox")
+
+        if form.table:
+            rfield = r[form.table].fields.get(self.name)
+            if rfield:
+                return default_controls.get(rfield.type)
+
 
     def set_data_type(self, form):
 
@@ -98,6 +124,9 @@ class PageItem(object):
 
     def save(self, form, node, object, data, session):
 
+        if self.invisible or not self.check_permissions():
+            return
+
         if self.name in object._table.fields:
             value = data.get(self.name)
             setattr(object, self.name, value)
@@ -107,6 +136,9 @@ class PageItem(object):
 
     def load(self, form, node, object, data, session):
 
+        if self.invisible or not self.check_permissions():
+            return
+
         if self.name in object._table.fields:
             data[self.name] = util.convert_value(getattr(object, self.name))
 
@@ -114,6 +146,9 @@ class PageItem(object):
             self.control.load(self, form, node, object, data, session)
 
     def delete(self, form, node, object, data, session):
+
+        if self.invisible or not self.check_permissions():
+            return
 
         if self.control and self.control.control_delete:
             self.control.delete(self, form, node, object, data, session)
