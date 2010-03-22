@@ -909,6 +909,9 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     var control_build_functions = {
         'normal': [input_box, plaintext],
+        'intbox': [input_box, plaintext],
+        'textbox': [input_box, plaintext],
+        'datebox': [input_box, plaintext],
         'dropdown_code': [dropdown_code, plaintext],
         'wmd': [wmd, plaintext],
         'textarea': [textarea, plaintext],
@@ -1079,11 +1082,6 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             case 'textarea':
                 return $item.find("textarea:first").val();
                 break;
-            case 'dropdown':
-            case 'normal':
-            case 'password':
-                return $item.find("input:first").val();
-                break;
             case 'dropdown_code':
                 return get_key_from_description(item, $item.find("input:first").val());
                 break;
@@ -1092,6 +1090,9 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 break;
             case 'codegroup':
                 return get_codegroup_values($item, item);
+                break;
+            default:
+                return $item.find("input:first").val();
                 break;
         }
     }
