@@ -1563,13 +1563,13 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                     $builder[builder_depth].append('<div class="f_control_holder"><hr/></div>');
                     break;
                 case 'column_start':
-                    $builder.push($('<div class="COLUMN">'));
+                    $builder.push($('<div ' + set_class_list(item, "COLUMN") + '>'));
                     builder_depth++;
                     break;
                 case 'column_next':
                     if (builder_depth > 0){
                         $builder[--builder_depth].append($builder.pop());
-                        $builder.push($('<div class="COLUMN">'));
+                        $builder.push($('<div ' + set_class_list(item, "COLUMN") + '>'));
                         builder_depth++;
                     }
                     break;
@@ -1579,7 +1579,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                     }
                     break;
                 case 'box_start':
-                    $builder.push($('<div class="BOX">'));
+                    $builder.push($('<div ' + set_class_list(item, "BOX") + '>'));
                     builder_depth++;
                     break;
                 case 'box_end':
