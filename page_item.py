@@ -124,7 +124,7 @@ class PageItem(object):
 
     def save(self, form, node, object, data, session):
 
-        if self.invisible or not self.check_permissions():
+        if not self.check_permissions():
             return
 
         if self.name in object._table.fields:
@@ -136,7 +136,7 @@ class PageItem(object):
 
     def load(self, form, node, object, data, session):
 
-        if self.invisible or not self.check_permissions():
+        if not self.check_permissions():
             return
 
         if self.name in object._table.fields:
@@ -147,7 +147,7 @@ class PageItem(object):
 
     def delete(self, form, node, object, data, session):
 
-        if self.invisible or not self.check_permissions():
+        if not self.check_permissions():
             return
 
         if self.control and self.control.control_delete:

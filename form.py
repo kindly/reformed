@@ -36,6 +36,8 @@ class Form(object):
         self.params = kw.get("params")
         self.title_field = kw.get("title_field")
 
+        self.save_redirect = kw.get("save_redirect")
+
         self.read_only = kw.get("read_only", False)
 
         self.child_id = kw.get("child_id")
@@ -183,6 +185,11 @@ class Form(object):
             node.next_data_out = data_out
 
             node.data["id"] = obj.id
+
+            if self.save_redirect:
+                node.action = 'redirect'
+                node.link = self.save_redirect + ":id=" + str(obj.id)
+                return
 
             node.next_node = self.save_next_node or self.node_name
             node.next_data = dict(data = node.data,

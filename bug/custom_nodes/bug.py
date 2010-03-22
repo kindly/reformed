@@ -25,8 +25,7 @@ class Ticket(TableNode):
         params =  {"form_type": "action"},
         title_field = 'title',
 
-        save_next_node = "bug.ListTicket",
-        save_next_command = "view",
+        save_redirect = "bug.ListTicket:view"
     )
 
     list_title = 'ticket %s'
@@ -36,14 +35,20 @@ class ListTicket(TableNode):
 
     main = form(
         input('title'),
+        input('summary', control = textarea(css = "large")),
+        layout('box_start'),
+        layout('column_start'),
         input('accepted', control = dropdown(["true", "false"])),
         input('complete_by' ),
-        input('summary', control = textarea(css = "large")),
+        layout('column_next'),
         input('severity', control = dropdown(True)),
-        input('priority_id', control = dropdown(True)),
+        input('priority_id', control = dropdown_code(True)),
+        layout('column_end'),
+        layout('box_end'),
         layout('hr'),
         subform('old_comments'),
         subform('comment'),
+        buttons("view", False),
 
         table = "ticket",
         params =  {"form_type": "normal"},
@@ -64,7 +69,6 @@ class ListTicket(TableNode):
     comment = form(
 
         input('note', control = wmd(css = "large")),
-        input('moo', control = checkbox()),
         input(label = 'add comment', control = button(node = 'bug.ListTicket:_save:')),
 
         parent_id = "_core_entity_id",
