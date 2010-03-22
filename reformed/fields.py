@@ -79,6 +79,7 @@ class Created(Field):
 
     def __init__(self, name, *args, **kw):
         self.cat = "internal"
+        self.data_type = "DateTime"
         self.created_date = Column(sa.DateTime,
                                    default = datetime.datetime.now)
 
