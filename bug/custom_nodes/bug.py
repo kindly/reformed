@@ -57,7 +57,8 @@ class ListTicket(TableNode):
         parent_id = "_core_entity_id",
         child_id = "_core_entity_id",
         table = "comment",
-        params = {"form_type": "continuous"}
+        params = {"form_type": "continuous"},
+        read_only = True
     )
 
     comment = form(

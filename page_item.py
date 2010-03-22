@@ -170,8 +170,7 @@ class SubForm(object):
 
         subform = form.node[self.name]
 
-
-        data = subform.create_form_data()
+        data = subform.create_form_data(read_only = subform.read_only)
 
         data['form']['table_name'] =  subform.table
 

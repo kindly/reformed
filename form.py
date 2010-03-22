@@ -36,6 +36,8 @@ class Form(object):
         self.params = kw.get("params")
         self.title_field = kw.get("title_field")
 
+        self.read_only = kw.get("read_only", False)
+
         self.child_id = kw.get("child_id")
         self.parent_id = kw.get("parent_id")
 
