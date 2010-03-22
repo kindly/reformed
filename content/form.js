@@ -909,9 +909,9 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     var control_build_functions = {
         'normal': [input_box, plaintext],
-        'intbox': [input_box, plaintext],
-        'textbox': [input_box, plaintext],
-        'datebox': [input_box, plaintext],
+        'intbox': [intbox, plaintext],
+        'textbox': [textbox, plaintext],
+        'datebox': [datebox, plaintext],
         'dropdown_code': [dropdown_code, plaintext],
         'wmd': [wmd, plaintext],
         'textarea': [textarea, plaintext],
@@ -1208,8 +1208,30 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     }
 
     function input_box(item, value){
-       // value = correct_value(item, value);
+        value = correct_value(item, value);
+        var $control = $(add_label(item, 'rf_') + '<input id="rf_' + item.name + '"' + set_class_list(item) + ' value="' +  HTML_Encode_Clear(value) + '"/>' + form_description(item));
+        return $control;
+    }
+
+    function textbox(item, value){
+        value = correct_value(item, value);
+        var $control = $(add_label(item, 'rf_') + '<input id="rf_' + item.name + '"' + set_class_list(item) + ' value="' +  HTML_Encode_Clear(value) + '"/>' + form_description(item));
+        return $control;
+    }
+
+    function datebox(item, value){
+        value = correct_value(item, value); // FIXME should this be a more specific fix_date() call
         var $control = $(add_label(item, 'rf_') + '<input id="rf_' + item.name + '"' + set_class_list(item) + ' value="' +  HTML_Encode_Clear(value) + '" />' + form_description(item));
+        // FIXME will fail if no label
+        $control.eq(1).bind('keydown', $.Util.datebox_key);
+        return $control;
+    }
+
+    function intbox(item, value){
+        var $control = $(add_label(item, 'rf_') + '<input id="rf_' + item.name + '"' + set_class_list(item) + ' value="' +  HTML_Encode_Clear(value) + '" />' + form_description(item));
+        // FIXME will fail if no label
+        $control.eq(1).bind('keydown', $.Util.intbox_key);
+        $control.eq(1).bind('change', $.Util.intbox_change);
         return $control;
     }
 
