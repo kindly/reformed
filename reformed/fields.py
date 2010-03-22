@@ -80,7 +80,7 @@ class Created(Field):
     def __init__(self, name, *args, **kw):
         self.cat = "internal"
         self.created_date = Column(sa.DateTime,
-                                   default =datetime.datetime.now)
+                                   default = datetime.datetime.now)
 
 class CreatedBy(Field):
     def __init__(self, name, *args, **kw):
@@ -92,8 +92,8 @@ class Modified(Field):
 
     def __init__(self, name, *args, **kw):
         self._modified_date = Column(sa.DateTime,
-                                     onupdate=datetime.datetime.now,
-                                     default =datetime.datetime.now)
+                                     onupdate = datetime.datetime.now,
+                                     default = datetime.datetime.now)
 
 class ModifiedBySession(Field):
 
@@ -127,7 +127,7 @@ class Address(Field):
 
         self.validation = {"address_line_1": validators.String(
                                                         not_empty = True),
-                           "postcode": validators.String(not_empty =True)
+                           "postcode": validators.String(not_empty = True)
                           }
 
 class RequireIfMissing(Field):
