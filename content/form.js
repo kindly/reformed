@@ -931,10 +931,13 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     var HTML_Encode = $.Util.HTML_Encode;
     var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
     //FIXME how do we deal with data in the form
-    build_form();
-    size_boxes();
-    init_movement();
-    register_events();
+
+    function init(){
+        build_form();
+        size_boxes();
+        init_movement();
+        register_events();
+    }
 
     function init_movement(){
 
@@ -1618,7 +1621,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         }
     }
 
-
+    init();
 };
 
 $.StatusForm = function(input){
