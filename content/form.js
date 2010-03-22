@@ -911,7 +911,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         'normal': [input_box, plaintext],
         'intbox': [intbox, plaintext],
         'textbox': [textbox, plaintext],
-        'datebox': [datebox, plaintext],
+        'datebox': [datebox, plain_date],
         'dropdown_code': [dropdown_code, plaintext],
         'wmd': [wmd, plaintext],
         'textarea': [textarea, plaintext],
@@ -1328,7 +1328,18 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     }
 
     function plaintext(item, value){
+        value = correct_value(item, value);
         var $control = $(add_label(item, 'rf_') + '<span' + set_class_list(item) + '>' + HTML_Encode_Clear(value) + '</span>');
+        return $control;
+    }
+
+    function plain_date(item, value){
+        if (value === null){
+            value = '';
+        } else {
+            value = Date.ISO(value).toLocaleDateString();
+        }
+        var $control = $(add_label(item, 'rf_') + '<span' + set_class_list(item) + '>' + value + '</span>');
         return $control;
     }
 
