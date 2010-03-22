@@ -201,7 +201,7 @@ function node_button_input_form(item, data){
     var command = split_data[1];
     var out = {};
     if (split_data.length == 3){
-        out = $obj.data('command')('get_form_data');
+        out = $obj.data('command')('get_form_data', split_data[2]);
         if (out){
             get_node_return(node, command, out, $obj);
         }

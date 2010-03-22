@@ -916,7 +916,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         'wmd': [wmd, markdown],
         'textarea': [textarea, plaintext],
         'password': [password, plaintext],
-        'button': [button, plaintext],
+        'button': [button, button],
         'button_link': [button_link, plaintext],
         'button_box': [button_box, plaintext],
         'html': [htmlarea, plaintext],
@@ -982,11 +982,12 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         }
     }
 
-    function get_form_data_remote(){
+    function get_form_data_remote(fields){
         //return get_form_data().save_data;
         var data = get_form_data().save_data;
         var errors = validate_form_data(data);
         if ($.Util.is_empty(errors)){
+            //FIXME Toby {id}  if (fields){
             return data;
         } else {
             save_errors(errors)
@@ -1582,7 +1583,12 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                     $builder.push($('<div ' + set_class_list(item, "BOX") + '>'));
                     builder_depth++;
                     break;
+                case 'area_start':
+                    $builder.push($('<div ' + set_class_list(item) + '>'));
+                    builder_depth++;
+                    break;
                 case 'box_end':
+                case 'area_end':
                     if (builder_depth > 0){
                         $builder[--builder_depth].append($builder.pop());
                     }

@@ -40,8 +40,8 @@ class PageItem(object):
 
         self.permissions = set(kw.pop("permissions", []))
 
-        if self.name and not self.label:
-            self.label = self.name + ":"
+        if self.name and self.label is None:
+            self.label = self.name.replace("_", " ") + ":"
 
         self.invisible = kw.pop("invisible", False)
 

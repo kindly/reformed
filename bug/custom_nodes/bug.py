@@ -45,6 +45,8 @@ class ListTicket(TableNode):
         input('priority_id', control = dropdown_code(True)),
         layout('column_end'),
         layout('box_end'),
+        input(label = 'edit', permissions = ['logged_in'], 
+              control = button(node = 'bug.Ticket:edit:{id}')),
         layout('hr'),
         subform('old_comments'),
         subform('comment'),
@@ -56,8 +58,11 @@ class ListTicket(TableNode):
     )
 
     old_comments = form(
+        input('note', label = "", control = wmd(css = "large")),
+        layout('area_start', css = 'record_info'),
+        input('created_by'),
         input('created_date'),
-        input('note', control = wmd(css = "large")),
+        layout('area_end'),
 
         parent_id = "_core_entity_id",
         child_id = "_core_entity_id",
