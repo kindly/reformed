@@ -913,7 +913,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         'textbox': [textbox, plaintext],
         'datebox': [datebox, plain_date],
         'dropdown_code': [dropdown_code, plaintext],
-        'wmd': [wmd, plaintext],
+        'wmd': [wmd, markdown],
         'textarea': [textarea, plaintext],
         'password': [password, plaintext],
         'button': [button, plaintext],
@@ -1330,6 +1330,14 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     function plaintext(item, value){
         value = correct_value(item, value);
         var $control = $(add_label(item, 'rf_') + '<span' + set_class_list(item) + '>' + HTML_Encode_Clear(value) + '</span>');
+        return $control;
+    }
+
+    function markdown(item, value){
+        if (value){
+            value = process_html(value, row_data);
+        }
+        var $control = $(add_label(item, 'rf_') + '<span' + set_class_list(item) + '>' + value + '</span>');
         return $control;
     }
 
