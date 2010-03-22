@@ -912,7 +912,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         'intbox': [intbox, plaintext],
         'textbox': [textbox, plaintext],
         'datebox': [datebox, plain_date],
-        'dropdown_code': [dropdown_code, plaintext],
+        'dropdown_code': [dropdown_code, plaintext_dropdown_code],
         'wmd': [wmd, markdown],
         'textarea': [textarea, plaintext],
         'password': [password, plaintext],
@@ -1349,6 +1349,22 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         }
         var $control = $(add_label(item, 'rf_') + '<span' + set_class_list(item) + '>' + value + '</span>');
         return $control;
+    }
+
+    function plain_dropdown_code(item, value){
+        var descriptions = item.autocomplete.descriptions;
+        var keys = item.autocomplete.keys;
+        for (var i = 0, n = keys.length; i < n; i++){
+            if (value == keys[i]){
+                value = descriptions[i];
+                break;
+            }
+        }
+        if (i == n){
+            // the key is not valid
+            value = null;
+        }
+        return plaintext(item, value);
     }
 
     function message_area(message){
