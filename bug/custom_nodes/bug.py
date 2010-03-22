@@ -52,7 +52,7 @@ class ListTicket(TableNode):
 
     old_comments = form(
         input('created_date'),
-        input('note', control = textarea(css = "large")),
+        input('note', control = wmd(css = "large")),
 
         parent_id = "_core_entity_id",
         child_id = "_core_entity_id",
