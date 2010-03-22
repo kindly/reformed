@@ -912,7 +912,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         'intbox': [intbox, plaintext],
         'textbox': [textbox, plaintext],
         'datebox': [datebox, plain_date],
-        'dropdown_code': [dropdown_code, plaintext_dropdown_code],
+        'dropdown_code': [dropdown_code, plain_dropdown_code],
         'wmd': [wmd, markdown],
         'textarea': [textarea, plaintext],
         'password': [password, plaintext],
