@@ -41,6 +41,7 @@ class ListTicket(TableNode):
         input('summary', control = textarea(css = "large")),
         input('severity', control = dropdown(True)),
         input('priority_id', control = dropdown(True)),
+        layout('hr'),
         subform('old_comments'),
         subform('comment'),
 

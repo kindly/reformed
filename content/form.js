@@ -907,16 +907,37 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         'get_form_data' : get_form_data_remote
     };
 
+    var control_build_functions = {
+        'normal': [input_box, plaintext],
+        'dropdown_code': [dropdown_code, plaintext],
+        'wmd': [wmd, plaintext],
+        'textarea': [textarea, plaintext],
+        'password': [password, plaintext],
+        'button': [button, plaintext],
+        'button_link': [button_link, plaintext],
+        'button_box': [button_box, plaintext],
+        'html': [htmlarea, plaintext],
+        'checkbox': [checkbox, plaintext],
+        'link': [link, link],
+        'dropdown': [dropdown, plaintext],
+        'info': [info_area, info_area],
+        'link_list': [link_list, link_list],
+        'subform': [add_subform, add_subform]
+    }
+
 
     var subforms = [];
     var util_size = $.Util.Size;
     var HTML_Encode = $.Util.HTML_Encode;
     var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
     //FIXME how do we deal with data in the form
-    build_form();
-    size_boxes();
-    init_movement();
-    register_events();
+
+    function init(){
+        build_form();
+        size_boxes();
+        init_movement();
+        register_events();
+    }
 
     function init_movement(){
 
@@ -1184,31 +1205,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             return '';
         }
     }
-/*
-    function build_input(item, value){
-            var html = [];
-            html.push('<div class="f_control_holder">');
 
-            // label
-            html.push(add_label(item, 'rf_'));
-            value = correct_value(item, value);
-
-            var class_list = 'f_cell';
-            if (value === null){
-                value = '';
-            }
-
-            if (item.css){
-                class_list += ' ' + item.css;
-            }
-
-            html.push('<input id="rf_' + item.name + '" class="' + class_list + '" value="' + value + '" />');
-            html.push(form_description(item));
-            html.push('</div>');
-            return $(html.join(''));
-
-    }
-*/
     function input_box(item, value){
        // value = correct_value(item, value);
         var $control = $(add_label(item, 'rf_') + '<input id="rf_' + item.name + '"' + set_class_list(item) + ' value="' +  HTML_Encode_Clear(value) + '" />' + form_description(item));
@@ -1304,6 +1301,11 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     function textarea(item, value){
         var $control = $(add_label(item, 'rf_') + '<textarea' + set_class_list(item) + '>' + HTML_Encode_Clear(value) + '</textarea>' + form_description(item));
+        return $control;
+    }
+
+    function plaintext(item, value){
+        var $control = $(add_label(item, 'rf_') + '<span' + set_class_list(item) + '>' + HTML_Encode_Clear(value) + '</span>');
         return $control;
     }
 
@@ -1434,71 +1436,50 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         return $div;
     }
 
-    function build_control(item, value){
-        var $div = $('<div class="f_control_holder"/>');
 
-
-        switch (item.control){
-            case 'normal':
-                $div.append(input_box(item, value));
-                break;
-            case 'info':
-                if (value){
-                    value = process_html(value, row_data)
-                    $div.append(value);
-                }
-                break;
-            case 'dropdown_code':
-                $div.append(dropdown_code(item, value));
-                break;
-            case 'codegroup':
-                $div.append(codegroup(item, value));
-                break;
-            case 'dropdown':
-                $div.append(dropdown(item, value));
-                break;
-            case 'wmd':
-                $div.append(wmd(item, value));
-                break;
-            case 'textarea':
-                $div.append(textarea(item, value));
-                break;
-            case 'password':
-                $div.append(password(item, value));
-                break;
-            case 'button':
-                $div.append(button(item, value));
-                break;
-            case 'button_link':
-                $div.append(button_link(item, value));
-                break;
-            case 'button_box':
-                $div.append(button_box(item, value));
-                break;
-            case 'html':
-                $div.append(htmlarea(item, value));
-                break;
-            case 'checkbox':
-                $div.append(checkbox(item, value));
-                break;
-            case 'link':
-                $div.append(link(item, value));
-                break;
-            case 'link_list':
-                for (var i = 0, n = value.length; i < n; i++){
-                    $div.append(link(item, value[i]) + '  ');
-                }
-                break;
-            case 'subform':
-                $div.append('<div class="SUBFORM"></div>');
-                subforms.push({item: item, data: value});
-                break;
-            default:
-                $div.append('UNKNOWN: ' + item.control);
+    function info_area(item, value){
+        if (value){
+            value = process_html(value, row_data);
         }
+        return value;
+    }
 
+    function add_subform(item, value){
+        subforms.push({item: item, data: value});
+        return '<div class="SUBFORM"></div>';
+    }
+
+    function link_list(item, value){
+        temp = ''
+        for (var i = 0, n = value.length; i < n; i++){
+             temp += link(item, value[i]) + '  ';
+        }
+        return temp;
+    }
+
+
+    function build_control_normal(item, value){
+        var control = item.control;
+        var $div = $('<div class="f_control_holder"/>');
+            if (control_build_functions[control]){
+                $div.append(control_build_functions[control][0](item, value));
+            } else {
+                $div.append('UNKNOWN: ' + item.control);
+            }
         return $div;
     }
+
+    function build_control_readonly(item, value){
+        var control = item.control;
+        var $div = $('<div class="f_control_holder"/>');
+            if (control_build_functions[control]){
+                $div.append(control_build_functions[control][1](item, value));
+            } else {
+                $div.append('UNKNOWN: ' + item.control);
+            }
+        return $div;
+    }
+
 
     var form_controls_hash; // holder for the form controls
 
@@ -1555,13 +1536,19 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             var item;
             var value;
             var $control;
+            var control_function;
+            if (form_data.params.read_only){
+                control_function = build_control_readonly;
+            } else {
+                control_function = build_control_normal;
+            }
             for (var i = 0; i < num_fields; i++){
                 item = form_data.fields[i];
                 value = $.Util.get_item_value(item, row_data);
                 if (item.layout){
                     add_layout_item(item, $builder, builder_depth);
                 } else {
-                    $control = build_control(item, value);
+                    $control = control_function(item, value);
                     $builder[builder_depth].append($control);
                     form_controls_hash[item.name] = $control;
                 }
@@ -1634,7 +1621,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         }
     }
 
-
+    init();
 };
 
 $.StatusForm = function(input){
