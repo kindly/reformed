@@ -915,6 +915,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         'dropdown_code': [dropdown_code, plain_dropdown_code],
         'wmd': [wmd, markdown],
         'textarea': [textarea, plaintext],
+        'text': [text, text],
         'password': [password, plaintext],
         'button': [button, button],
         'button_link': [button_link, plaintext],
@@ -1431,6 +1432,13 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     function htmlarea(item, value){
         return add_label(item, 'rf_') + '<div' + set_class_list(item) + '>' + value + '</div>';
+    }
+
+    function text(item, value){
+        if (item.text !== undefined){
+            value = process_html(item.text, local_row_data);
+        }
+        return '<div' + set_class_list(item) + '>' + value + '</div>';
     }
 
     function password(item, value){

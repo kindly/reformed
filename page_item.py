@@ -531,6 +531,10 @@ def link_list(**kw):
 
     return Control("link_list", kw)
 
+def text(text, **kw):
+
+    return Control("text", dict(text = text), kw)
+
 def info(**kw):
 
     return Control("info", kw)
