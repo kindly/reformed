@@ -984,7 +984,32 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         }
     }
 
+    function get_form_data_listed_fields(fields){
+        // get the fields from the list
+        fields = fields.split(',');
+        var data = {};
+        var field;
+        for (var i=0, n = fields.length; i < n; i++){
+            field = fields[i].trim();
+            data[field] = null;
+            if (extra_defaults[field] !== undefined){
+                data[field] = extra_defaults[field];
+            }
+            if (row_data[field] !== undefined){
+                data[field] = row_data[field];
+            }
+            if (row_info && row_info[field] !== undefined){
+                data[field] = row_info[field];
+            }
+        }
+        return data;
+    }
+
     function get_form_data_remote(fields){
+        if (fields !== ''){
+            fields = fields.replace(/^{|}$/g, '') + ',';
+            return get_form_data_listed_fields(fields);
+        }
         //return get_form_data().save_data;
         var data = get_form_data().save_data;
         var errors = validate_form_data(data);
