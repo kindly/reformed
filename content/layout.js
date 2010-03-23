@@ -115,6 +115,8 @@ REBASE.layout_manager = function (){
         html.push('<input type="submit" name="search_button" id="search_button" value="search"/>');
         html.push('</form>');
         $user_bar.append(html.join(''));
+        // ajax info
+        $user_bar.append('<span id="ajax_info">Loading ...</span>');
         // login info
         $user_bar.append('<span id="user_login" style="float:right;">user login</span>');
         return $user_bar;

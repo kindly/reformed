@@ -67,6 +67,7 @@ window.$JOB = {
 		}
 		this._number++;
 		// start waiting for a responce
+        this.loading_show();
 		this._timer_on();
 	},
 	
@@ -154,6 +155,7 @@ window.$JOB = {
 		} else {
 			// stop the job timer
 			this._timer_off();
+            this.loading_hide();
 		}
 	},
 	
@@ -191,6 +193,14 @@ window.$JOB = {
 			
 		'status': function(packet, job){}
 	},
+
+    loading_show: function(){
+        $('#ajax_info').show();
+    },
+
+    loading_hide: function(){
+        $('#ajax_info').hide();
+    },
 
 	_ajax: function(request, job_number, type){
 		// this is where we make the ajax request
