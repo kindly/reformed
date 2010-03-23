@@ -1406,21 +1406,44 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         return '<div class="f_message' + css + '">' + message + '</div>';
     }
 
+    function format_data(data, format){
+
+        switch (format){
+            case 'd':
+                // general date
+            case 'df':
+                // date full
+                return Date.ISO(data).toLocaleString();
+            case 'ds':
+                // short date
+                return Date.ISO(data).toLocaleDateString();
+            default:
+                // unknown
+                return data
+        }
+
+    }
+
+
     function process_html(text, data, inline){
         var match;
         var out = text;
         var start;
         var end;
         var substitute_data;
+        var format;
 
         // data substitution
         var offset = 0;
-        var reg = /\{([^}]+)\}/g;
+        var reg = /\{([^}:]+):?([^}]*)\}/g;
         while (match = reg.exec(text)){
-            if (!data[match[1]]){
+            if (data[match[1]] === undefined){
                 continue;
             }
             substitute_data = data[match[1]];
+            if (match[2] && substitute_data){
+                substitute_data = format_data(substitute_data, match[2]);
+            }
 
             start = match.index + offset;
             end = match.index + match[0].length + offset;
