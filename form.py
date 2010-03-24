@@ -383,7 +383,7 @@ class Form(object):
 
         out = {
             "form": {
-                "fields":self.create_fields()
+                "fields":self.create_fields(data)
             },
             "type": "form",
         }
@@ -402,15 +402,16 @@ class Form(object):
 
         return out
 
-    def create_fields(self):
+    def create_fields(self, data):
 
         fields = []
         for field in self.fields:
-            row = field.convert(self, self.fields)
+            row = field.convert(self, self.fields, data)
             #skip invisible fields
             if row:
                 fields.append(row)
         return fields
 
-def form(self, *args, **kw):
-    return Form(self, *args, **kw)
+def form(*args, **kw):
+    return Form(*args, **kw)
+

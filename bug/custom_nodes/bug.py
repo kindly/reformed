@@ -20,7 +20,7 @@ class Ticket(TableNode):
         layout('column_end'),
         layout('hr'),
         input('summary', control = textarea(css = "large")),
-
+        extra_data(["created_by"]),
         table = "ticket",
         params =  {"form_type": "action"},
         title_field = 'title',
