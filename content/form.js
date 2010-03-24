@@ -998,9 +998,6 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             if (row_data[field] !== undefined){
                 data[field] = row_data[field];
             }
-            if (row_info && row_info[field] !== undefined){
-                data[field] = row_info[field];
-            }
         }
         return data;
     }
