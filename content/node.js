@@ -340,7 +340,7 @@ function change_layout(){
 }
 
 
-var fn = function(packet, job){
+function process_node(packet, job){
 
      if (packet.data === null){
          console_log("NULL DATA PACKET");
@@ -433,7 +433,5 @@ var fn = function(packet, job){
             job_processor_status(packet.data.data, packet.data.node, root);
             break;
     }
-};
-
-$JOB.addPacketFunction('node', fn);
+}
 
