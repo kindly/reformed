@@ -28,8 +28,8 @@ entity('ticket', d,
 
        Text("title", mandatory = True),
        Text("summary", length = 4000),
-       LookupTextValidated("severity", "severity.severity", length = 4000),
-       LookupId("priority", "priority", length = 4000),
+       LookupId("severity", "code", filter_field = "code_type"),
+       LookupId("priority", "code", filter_field = "code_type"),
        DateTime("complete_by"),
        Boolean("accepted"),
 
@@ -49,6 +49,23 @@ table("comment", d, ## notes for each user
       valid_entities = "ticket"
 )
 
+relation("involvement", d,
+      LookupId("role", "code", filter_field = "code_type"),
+      Created("created_date"),
+      CreatedBy("created_by"),
+
+      valid_entities1 = "ticket",
+      valid_entities2 = "user,usergroup",
+)
+
+
+table("role", d, ## notes for each user
+      Text("name", mandatory = True),
+      Text("desctiption", length = 2000),
+      valid_entities = "ticket"
+)
+
+
 table("bookmarks",d,
 
     Integer("entity_id"),
@@ -59,22 +76,26 @@ table("bookmarks",d,
     DateTime("accessed_date")
 )
 
-table("severity", d,
-      Text("severity", mandatory = True),
+table("code", d,
+      Text("name", mandatory = True),
       Text("desctiption", length = 2000),
-      Created("created_date"), ## when data was gathered
-      CreatedBy("created_by"),
-      lookup = True
-)
-
-table("priority", d,
-      Text("priority", mandatory = True),
-      Text("desctiption", length = 2000),
-      Created("created_date"), ## when data was gathered
+      LookupTextValidated("code_type", "code_type.code_type"),
+      Boolean("active", default = True),
+      Created("created_date"), 
       CreatedBy("created_by"),
       lookup = True,
-      title_field = "priority",
+
+      title_field = "name"
 )
+
+table("code_type", d,
+      Text("code_type", mandatory = True),
+      Text("name", mandatory = True),
+      Text("desctiption", length = 2000),
+      Created("created_date"), 
+      CreatedBy("created_by")
+)
+
 
 ## application user tables
 
@@ -95,6 +116,7 @@ entity("user",d,
 
     Index("login_name_index", "login_name", unique = True),
 
+    title_field = 'name',
     table_type = "system",
 )
 

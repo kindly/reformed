@@ -326,6 +326,7 @@ class Database(object):
                 if not self.logging_tables:
                     ## FIXME should look at better place to set this
                     table.kw["logged"] = False
+                    table.logged = False
                 if table.logged and "_log_%s" % table.name not in self.tables.iterkeys() :
                     self.add_table(self.logged_table(table))
 
