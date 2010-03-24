@@ -1315,7 +1315,10 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     function dropdown_code(item, value){
         var descriptions = item.autocomplete.descriptions;
         var keys = item.autocomplete.keys;
-        return dropdown_core(item, value[1], descriptions);
+        if (value !== null){
+            value = value[1];
+        }
+        return dropdown_core(item, value, descriptions);
     }
 
     function dropdown(item, value){
@@ -1370,7 +1373,10 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     }
 
     function plain_dropdown_code(item, value){
-        return plaintext(item, value[1]);
+        if (value !== null){
+            value = value[1];
+        }
+        return plaintext(item, value);
     }
 
     function message_area(message){
