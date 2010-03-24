@@ -926,6 +926,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         'dropdown': [dropdown, plaintext],
         'info': [info_area, info_area],
         'link_list': [link_list, link_list],
+        'codegroup': [codegroup, codegroup],
         'subform': [add_subform, add_subform]
     }
 
