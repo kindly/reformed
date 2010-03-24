@@ -40,128 +40,27 @@ var REBASE = {};
 
 
 REBASE.layout_manager = function (){
+    var current_layout;
 
-    function create_main(){
-        $main = $('<div id="main"></div>');
-        position_main();
-        $body.append($main);
-    }
+    var util_size = $.Util.Size;
+    var position_absolute = $.Util.position_absolute;
+    var position = $.Util.position;
+    var $main;
+    var $side;
+    var $logo;
+    var $actions;
+    var first_run = true;
+    var $body = $('<div id="layout_holder">');
 
-    function create_actions(){
-
-
-        function add_action_button(name, data, button_number){
-            
-            var $button = $('<div id="action_' + name + '" class="action"></div>');
-            var $link = $('<a href="javascript:node_load(\'' + data[4] + '\')"></a>');
-            var $img = $('<img src="icon/22x22/' + data[1] + '" />');
-            var $command = $('<span class="command">' + data[0] + '</span>');
-            var $shortcut = $('<span class="shortcut">' + data[2] + '</span>');
-
-            $link.append($img).append($command).append($shortcut);
-            $button.append($link);
-
-            var button_top = (button_number % BUTTONS_PER_COLUMN) * (util_size.ACTION_BUTTON_H + ACTION_BUTTON_SPACING) + ACTION_BUTTON_SPACING;
-            var button_left = (ACTION_BUTTON_SPACING + ACTION_BUTTON_WIDTH) * Math.floor(button_number / BUTTONS_PER_COLUMN);
-            var button_image_size = 12;
-
-            position_absolute($button, button_top, button_left, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
-            position_absolute($link, 0, 0, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
-            position_absolute($img, 0, 0, button_image_size, button_image_size);
-            position_absolute($command, 0, button_image_size, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH - (2 * button_image_size));
-            position_absolute($shortcut, 0, ACTION_BUTTON_WIDTH - button_image_size, util_size.ACTION_BUTTON_H, button_image_size);
-
-            $button_holder.append($button);
-        }
-
-
-        function add_actions(){
-
-            var html = '';
-            for (var i = 0, n = action_list.length; i < n; i++){
-                action = action_list[i];
-                if (action && $.Buttons.action_hash[action]){
-                    add_action_button(action, $.Buttons.action_hash[action], i);
-                }
-            }
-        }
-
-
-        var BUTTONS_PER_COLUMN = 3;
-        var ACTION_BUTTON_SPACING = 5;
-        var ACTION_BUTTON_WIDTH = 200;
-        $actions = $('<div id="actions"></div>');
-        position_actions();
-    
-        var $button_holder = $('<div style="position:relative"></div>');
-        $actions.append($button_holder);
-    
-
-
-        var action_list = $.Buttons.action_list;
-
-        add_actions();
-        var $user_bar = user_bar();$('<div style="position:relative;background-color:#f0f;"></div>');
-        position_absolute($user_bar, (ACTION_BUTTON_SPACING + util_size.ACTION_BUTTON_H) * BUTTONS_PER_COLUMN + ACTION_BUTTON_SPACING, 0, null, info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + util_size.SCROLLBAR_WIDTH));
-        $actions.append($user_bar);
-        $body.append($actions);
-    }
-    function user_bar(){
-        $user_bar = $('<div style="position:relative;background-color:#f0f;"></div>');
-        // search box
-        html = [];
-        html.push('<form action="" onclick="$.Util.Event_Delegator(\'clear\');" onsubmit="return search_box();" style="display:inline">');
-        html.push('<input type="text" name="search" id="search" />');
-        html.push('<input type="submit" name="search_button" id="search_button" value="search"/>');
-        html.push('</form>');
-        $user_bar.append(html.join(''));
-        // login info
-        $user_bar.append('<span id="user_login" style="float:right;">user login</span>');
-        return $user_bar;
-    }
-    function create_side(){
-        $side = $('<div></div>');
-
-        var html = [];
-        // FIXME this wants to be ripped out asap
-        html.push('<div style=\'font-size:12px\'>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 1);" style="font-size:8px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 2);" style="font-size:10px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 3);" style="font-size:12px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 4);" style="font-size:14px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 5);" style="font-size:16px">A</span>');
-        html.push('</div>');
-    
-    
-        html.push('<ul>');
-        html.push('<li><span onclick="$.Util.stress_test(\'n:table.Edit:list:t=9&l=100&o=\', 9900)">stress test</span></li>');
-        html.push('<li><span onclick="node_load(\'n:bug.Ticket:new\')">new ticket</span></li>');
-        html.push('<li><span onclick="node_load(\'n:bug.Ticket:list\')">list tickets</span></li>');
-        html.push('<li><span onclick="node_load(\'n:table.Table:new\')">new table</span></li>');
-        html.push('<li><span onclick="node_load(\'n:table.Table:list\')">table</span></li>');
-        html.push('<li><span onclick="node_load(\'n:test.Sponsorship:\')">sponsor</span></li>');
-        html.push('<li><span onclick="node_load(\'n:test.Login:\')">login</span></li>');
-        html.push('<li><span onclick="$JOB.add({}, {}, \'reload\', true)" ><b>reload</b></span></li>');
-        html.push('<li><span onclick="get_node(\'test.DataLoader\', \'load\', {file:\'data.csv\', table:\'people\'})" ><b>load people</b></span></li>');
-        html.push('<li><span onclick="node_call_from_string(\'/n:test.DataLoader:load:file=donkeys.csv&table=donkey\', true)" ><b>load donkeys</b></span></li>');
-        html.push('</ul>');
-        html.push('<div id="bookmarks"></div>');
-    
-        $side.html(html.join(''));
-
-        position_side();
-        $body.append($side);
-    }
-
-    function create_logo(){
-        $logo = $('<div><img src="logo.png" /></div>');
-        // fixme get height/width correct etc
-        $logo.find('img').css({width : 95, height : 95});
-        $logo.css({overflow : 'hidden'});
-        position_logo();
-        $body.append($logo);
-    }
-
+    var info = {
+        margin_left : 10,
+        margin_right : 10,
+        margin_top : 10,
+        left_width : 200,
+        top_height : 100,
+        spacing : 10,
+        page_width : undefined
+    };
 
     function position_main(){
         var top = info.margin_top + info.top_height + info.spacing;
@@ -194,6 +93,131 @@ REBASE.layout_manager = function (){
         position_absolute($logo, info.margin_top, info.margin_left, info.top_height, info.left_width);
     }
 
+    function create_main(){
+        $main = $('<div id="main"></div>');
+        position_main();
+        $body.append($main);
+    }
+
+    function create_actions(){
+
+        var $button_holder;
+        var BUTTONS_PER_COLUMN = 3;
+        var ACTION_BUTTON_SPACING = 5;
+        var ACTION_BUTTON_WIDTH = 200;
+
+        var action_list = $.Buttons.action_list;
+
+        function add_action_button(name, data, button_number){
+            
+            var $button = $('<div id="action_' + name + '" class="action"></div>');
+            var $link = $('<a href="javascript:node_load(\'' + data[4] + '\')"></a>');
+            var $img = $('<img src="icon/22x22/' + data[1] + '" />');
+            var $command = $('<span class="command">' + data[0] + '</span>');
+            var $shortcut = $('<span class="shortcut">' + data[2] + '</span>');
+
+            $link.append($img).append($command).append($shortcut);
+            $button.append($link);
+
+            var button_top = (button_number % BUTTONS_PER_COLUMN) * (util_size.ACTION_BUTTON_H + ACTION_BUTTON_SPACING) + ACTION_BUTTON_SPACING;
+            var button_left = (ACTION_BUTTON_SPACING + ACTION_BUTTON_WIDTH) * Math.floor(button_number / BUTTONS_PER_COLUMN);
+            var button_image_size = 12;
+
+            position_absolute($button, button_top, button_left, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
+            position_absolute($link, 0, 0, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
+            position_absolute($img, 0, 0, button_image_size, button_image_size);
+            position_absolute($command, 0, button_image_size, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH - (2 * button_image_size));
+            position_absolute($shortcut, 0, ACTION_BUTTON_WIDTH - button_image_size, util_size.ACTION_BUTTON_H, button_image_size);
+
+            $button_holder.append($button);
+        }
+
+        function user_bar(){
+            var $user_bar = $('<div style="position:relative;background-color:#f0f;"></div>');
+            // search box
+            var html = [];
+            html.push('<form action="" onclick="$.Util.Event_Delegator(\'clear\');" onsubmit="return search_box();" style="display:inline">');
+            html.push('<input type="text" name="search" id="search" />');
+            html.push('<input type="submit" name="search_button" id="search_button" value="search"/>');
+            html.push('</form>');
+            $user_bar.append(html.join(''));
+            // ajax info
+            $user_bar.append('<span id="ajax_info">Loading ...</span>');
+            // login info
+            $user_bar.append('<span id="user_login" style="float:right;">user login</span>');
+            return $user_bar;
+        }
+
+
+        function add_actions(){
+            var action;
+            var html = '';
+            for (var i = 0, n = action_list.length; i < n; i++){
+                action = action_list[i];
+                if (action && $.Buttons.action_hash[action]){
+                    add_action_button(action, $.Buttons.action_hash[action], i);
+                }
+            }
+        }
+
+        $actions = $('<div id="actions"></div>');
+        position_actions();
+    
+        $button_holder = $('<div style="position:relative"></div>');
+        $actions.append($button_holder);
+
+
+        add_actions();
+        var $user_bar = user_bar();
+        position_absolute($user_bar, (ACTION_BUTTON_SPACING + util_size.ACTION_BUTTON_H) * BUTTONS_PER_COLUMN + ACTION_BUTTON_SPACING, 0, null, info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + util_size.SCROLLBAR_WIDTH));
+        $actions.append($user_bar);
+        $body.append($actions);
+    }
+
+    function create_side(){
+        $side = $('<div></div>');
+
+        var html = [];
+        // FIXME this wants to be ripped out asap
+        html.push('<div style=\'font-size:12px\'>');
+        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 1);" style="font-size:8px">A</span>');
+        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 2);" style="font-size:10px">A</span>');
+        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 3);" style="font-size:12px">A</span>');
+        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 4);" style="font-size:14px">A</span>');
+        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 5);" style="font-size:16px">A</span>');
+        html.push('</div>');
+    
+    
+        html.push('<ul>');
+        html.push('<li><span onclick="$.Util.stress_test(\'n:table.Edit:list:t=9&l=100&o=\', 9900)">stress test</span></li>');
+        html.push('<li><span onclick="node_load(\'n:table.Table:new\')">new table</span></li>');
+        html.push('<li><span onclick="node_load(\'n:table.Table:list\')">table</span></li>');
+        html.push('<li><span onclick="node_load(\'n:test.Sponsorship:\')">sponsor</span></li>');
+        html.push('<li><span onclick="node_load(\'n:test.Login:\')">login</span></li>');
+        html.push('<li><span onclick="$JOB.add({}, {}, \'reload\', true)" ><b>reload</b></span></li>');
+        html.push('<li><span onclick="get_node(\'test.DataLoader\', \'load\', {file:\'data.csv\', table:\'people\'})" ><b>load people</b></span></li>');
+        html.push('<li><span onclick="node_call_from_string(\'/n:test.DataLoader:load:file=donkeys.csv&table=donkey\', true)" ><b>load donkeys</b></span></li>');
+        html.push('</ul>');
+        html.push('<div id="bookmarks"></div>');
+    
+        $side.html(html.join(''));
+
+        position_side();
+        $body.append($side);
+    }
+
+    function create_logo(){
+        $logo = $('<div><img src="logo.png" /></div>');
+        // fixme get height/width correct etc
+        $logo.find('img').css({width : 95, height : 95});
+        $logo.css({overflow : 'hidden'});
+        position_logo();
+        $body.append($logo);
+    }
+
+
+
+
 
     function create_layout(arg){
         if (first_run){
@@ -223,38 +247,21 @@ REBASE.layout_manager = function (){
     }
 
 
-    var info = {
-        margin_left : 10,
-        margin_right : 10,
-        margin_top : 10,
-        left_width : 200,
-        top_height : 100,
-        spacing : 10,
-        page_width : undefined
-    };
-
-    var current_layout;
-    var util_size = $.Util.Size;
-    var position_absolute = $.Util.position_absolute;
-    var position = $.Util.position;
-    var $main;
-    var $side;
-    var $logo;
-    var $actions;
-    var first_run = true;
-    var $body = $('<div id="layout_holder">');
 
     return {
         layout : function (arg){
             create_layout(arg);
         }
-    }
+    };
 }();
 
 
 
 REBASE.bookmark = function (){
 
+    var bookmark_array = [];
+    var BOOKMARKS_SHOW_MAX = 100;
+    var BOOKMARK_ARRAY_MAX = 100;
 
     function bookmark_add(bookmark){
         // create the bookmark view link
@@ -288,7 +295,7 @@ REBASE.bookmark = function (){
         var html;
 
         for(var i = 0; i < bookmark_array.length && i < BOOKMARKS_SHOW_MAX; i++){
-            entity_table = bookmark_array[i].entity_table
+            entity_table = bookmark_array[i].entity_table;
             if (category_items[entity_table] === undefined){
                 categories.push(entity_table);
                 category_items[entity_table] = [];
@@ -334,14 +341,10 @@ REBASE.bookmark = function (){
          bookmark_display();
     }
 
-    var bookmark_array = [];
-    var BOOKMARKS_SHOW_MAX = 100;
-    var BOOKMARK_ARRAY_MAX = 100;
-
     return {
         process : function (arg){
             bookmark_process(arg);
         }
-    }
+    };
 
 }();

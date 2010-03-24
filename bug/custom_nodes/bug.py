@@ -63,7 +63,7 @@ class ListTicket(TableNode):
         input('created_by'),
         input('created_date'),
         layout('area_end'),
-
+        text('Created {created_date:ds} by user #{created_by}', css = 'record_info'),
         parent_id = "_core_entity_id",
         child_id = "_core_entity_id",
         table = "comment",

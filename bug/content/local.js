@@ -8,7 +8,7 @@ $.Buttons.action_hash = {
     new_user_group: ['new user group', 'go-home.png', 'h', 'general', 'n:bug.UserGroup:new'],
     list_user_group: ['list user group', 'go-home.png', 'h', 'general', 'n:bug.UserGroup:list'],
     new_permission: ['new permission', 'go-home.png', 'h', 'general', 'n:bug.Permission:new'],
-    list_tickets: ['list tickets', 'go-home.png', 'h', 'general', 'n:bug.Ticket:list'],
+    list_tickets: ['list tickets', 'go-home.png', 'h', 'general', 'n:bug.ListTicket:list'],
     list_permission: ['list permisions', 'go-home.png', 'h', 'general', 'n:bug.Permission:list'],
     sys_info: ['sys info', 'go-home.png', 'h', 'general', 'n:bug.SysInfo:list'],
     list_user: ['list Users', 'go-home.png', 'h', 'general', 'n:bug.User:list'],
@@ -16,5 +16,5 @@ $.Buttons.action_hash = {
 };
 
 
-$.Buttons.action_list = ['home', 'new_ticket', 'user_admin', 'user_about_me', 'sys_info', 'list_page'];
+$.Buttons.action_list = ['home', 'new_ticket', 'user_admin', 'user_about_me', 'sys_info', 'list_page', 'list_tickets'];
 

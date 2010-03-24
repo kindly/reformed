@@ -672,6 +672,20 @@ div.f_message_title {
     background-color:transparent;
 }
 
+#ajax_info {
+    margin-left:25px;
+    background-color:yellow;
+    color:blue;
+    border:1px solid blue;
+    padding:1px;
+    display:none;
+}
+
+
+
+
+
+/* experiments */
 div.record_info, .record_info {
     font-size:0.7em;
     color:green;

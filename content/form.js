@@ -915,6 +915,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         'dropdown_code': [dropdown_code, plain_dropdown_code],
         'wmd': [wmd, markdown],
         'textarea': [textarea, plaintext],
+        'text': [text, text],
         'password': [password, plaintext],
         'button': [button, button],
         'button_link': [button_link, plaintext],
@@ -928,6 +929,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         'subform': [add_subform, add_subform]
     }
 
+    var local_row_data;
 
     var subforms = [];
     var util_size = $.Util.Size;
@@ -982,7 +984,32 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         }
     }
 
+    function get_form_data_listed_fields(fields){
+        // get the fields from the list
+        fields = fields.split(',');
+        var data = {};
+        var field;
+        for (var i=0, n = fields.length; i < n; i++){
+            field = fields[i].trim();
+            data[field] = null;
+            if (extra_defaults[field] !== undefined){
+                data[field] = extra_defaults[field];
+            }
+            if (row_data[field] !== undefined){
+                data[field] = row_data[field];
+            }
+            if (row_info && row_info[field] !== undefined){
+                data[field] = row_info[field];
+            }
+        }
+        return data;
+    }
+
     function get_form_data_remote(fields){
+        if (fields !== ''){
+            fields = fields.replace(/^{|}$/g, '') + ',';
+            return get_form_data_listed_fields(fields);
+        }
         //return get_form_data().save_data;
         var data = get_form_data().save_data;
         var errors = validate_form_data(data);
@@ -1379,21 +1406,44 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         return '<div class="f_message' + css + '">' + message + '</div>';
     }
 
+    function format_data(data, format){
+
+        switch (format){
+            case 'd':
+                // general date
+            case 'df':
+                // date full
+                return Date.ISO(data).toLocaleString();
+            case 'ds':
+                // short date
+                return Date.ISO(data).toLocaleDateString();
+            default:
+                // unknown
+                return data
+        }
+
+    }
+
+
     function process_html(text, data, inline){
         var match;
         var out = text;
         var start;
         var end;
         var substitute_data;
+        var format;
 
         // data substitution
         var offset = 0;
-        var reg = /\{([^}]+)\}/g;
+        var reg = /\{([^}:]+):?([^}]*)\}/g;
         while (match = reg.exec(text)){
-            if (!data[match[1]]){
+            if (data[match[1]] === undefined){
                 continue;
             }
             substitute_data = data[match[1]];
+            if (match[2] && substitute_data){
+                substitute_data = format_data(substitute_data, match[2]);
+            }
 
             start = match.index + offset;
             end = match.index + match[0].length + offset;
@@ -1430,6 +1480,13 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     function htmlarea(item, value){
         return add_label(item, 'rf_') + '<div' + set_class_list(item) + '>' + value + '</div>';
+    }
+
+    function text(item, value){
+        if (item.text !== undefined){
+            value = process_html(item.text, local_row_data);
+        }
+        return '<div' + set_class_list(item) + '>' + value + '</div>';
     }
 
     function password(item, value){
@@ -1498,10 +1555,11 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     function info_area(item, value){
         if (value){
-            value = process_html(value, row_data);
+            value = process_html(value, local_row_data);
         }
         return value;
     }
+
 
     function add_subform(item, value){
         subforms.push({item: item, data: value});
@@ -1554,7 +1612,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         function add_layout_item(item){
             switch (item.layout){
                 case 'text':
-                    var text = process_html(item.text, row_data);
+                    var text = process_html(item.text, local_row_data);
                     $builder[builder_depth].append('<div class="f_control_holder f_text">' + text + '</div>');
                     break;
                 case 'spacer':
@@ -1596,7 +1654,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             }
         }
 
-        function build_form_items(row_data){
+        function build_form_items(){
             var item;
             var value;
             var $control;
@@ -1608,7 +1666,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             }
             for (var i = 0; i < num_fields; i++){
                 item = form_data.fields[i];
-                value = $.Util.get_item_value(item, row_data);
+                value = $.Util.get_item_value(item, local_row_data);
                 if (item.layout){
                     add_layout_item(item, $builder, builder_depth);
                 } else {
@@ -1659,10 +1717,12 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         }
         // main form
         if (!row_data.__array){
-            build_form_items(row_data);
+            local_row_data = row_data
+            build_form_items();
         } else {
             for (var i = 0, n = row_data.__array.length; i <  n; i++){
-                build_form_items(row_data.__array[i]);
+                local_row_data = row_data.__array[i];
+                build_form_items();
                 $control = $('<div class="f_control_holder"><hr/></div>');
                 $builder[builder_depth].append($control);
             }
