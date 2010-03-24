@@ -63,7 +63,6 @@ $JOB = function(){
     }
 
 	function add(request, sent_data, type){
-        console_log(sent_data);
 		// this is where we make the ajax request
 		var body = $.toJSON(request);
 		$.post("/ajax", { head: type, body: body },
