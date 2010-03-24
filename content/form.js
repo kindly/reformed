@@ -1315,17 +1315,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     function dropdown_code(item, value){
         var descriptions = item.autocomplete.descriptions;
         var keys = item.autocomplete.keys;
-        for (var i = 0, n = keys.length; i < n; i++){
-            if (value == keys[i]){
-                value = descriptions[i];
-                break;
-            }
-        }
-        if (i == n){
-            // the key is not valid
-            value = null;
-        }
-        return dropdown_core(item, value, descriptions);
+        return dropdown_core(item, value[1], descriptions);
     }
 
     function dropdown(item, value){
