@@ -59,14 +59,14 @@ class PageItem(object):
             return True
 
 
-    def params(self, form):
+    def params(self, form, data):
 
         params = self.extra_params.copy()
 
         if self.control:
-            params.update(self.control.convert(self, form))
+            params.update(self.control.convert(self, form, data))
         elif self.layout:
-            params.update(self.layout.convert(self, form))
+            params.update(self.layout.convert(self, form, data))
         else:
             control = self.set_default_control(form)
             if control:
@@ -74,12 +74,12 @@ class PageItem(object):
 
         return params
 
-    def convert(self, form, field_list):
+    def convert(self, form, field_list, data):
 
         if self.invisible or not self.check_permissions():
             return
 
-        row = self.set_params(form)
+        row = self.set_params(form, data)
         row['name'] = self.name
         row['data_type'] = self.set_data_type(form)
         row['title'] = self.label
@@ -108,9 +108,9 @@ class PageItem(object):
             if rfield:
                 return rfield.type
 
-    def set_params(self, form):
+    def set_params(self, form, data):
 
-        params = self.params(form)
+        params = self.params(form, data)
 
         if form.table and self.validation:
             rfield = r[form.table].fields.get(self.name)
@@ -166,7 +166,7 @@ class SubForm(object):
             self.label = self.name + ":"
 
 
-    def convert(self, form, field_list):
+    def convert(self, form, field_list, data):
 
         subform = form.node[self.name]
 
@@ -205,8 +205,6 @@ class SubForm(object):
         for row in subform_data:
             form.save_row(row, session, object, relation_attr)
 
-
-
 class Layout(object):
 
     def __init__(self, layout_type, params):
@@ -214,7 +212,7 @@ class Layout(object):
         self.layout_type = layout_type
         self.params = params
 
-    def convert(self, field, form):
+    def convert(self, field, form, data):
 
         params = dict(layout = self.layout_type)
         params.update(self.params)
@@ -233,7 +231,7 @@ class Control(object):
         self.control_save = False
         self.control_load = False
 
-    def convert(self, field, form):
+    def convert(self, field, form, data):
 
         params = dict(control = self.control_type)
 
@@ -245,9 +243,32 @@ class Control(object):
 
         return params
 
+
+class ExtraData(Control):
+
+    def __init__(self, control_type, params = None, extra_params = None, **kw):
+
+        Control.__init__(self, control_type, params, extra_params)
+        self.control_load = True
+
+        self.extra_fields = kw.pop("extra_fields")
+
+    def convert(self, field, form, data):
+        return {}
+
+    def load(self, field, form, node, object, data, session):
+        for field in self.extra_fields:
+            data[field] = util.convert_value(getattr(object, field))
+
+
 class Dropdown(Control):
 
-    def convert(self, field, form):
+    def __init__(self, control_type, params = None, extra_params = None, **kw):
+
+        Control.__init__(self, control_type, params, extra_params)
+        self.control_load = True
+
+    def populate(self, field, form, object = None):
 
         params = dict(control = self.control_type)
 
@@ -265,7 +286,6 @@ class Dropdown(Control):
             return params
 
         if isinstance(autocomplete_options, dict):
-
             params["autocomplete"] = autocomplete_options
             return params
 
@@ -294,19 +314,54 @@ class Dropdown(Control):
 
         if filter_field:
             filter_field = getattr(target_class, filter_field)
-            results = session.query(id_field, target_field).filter(filter_field == u"%s" % filter_value).all()
+            self.results = session.query(id_field, target_field).filter(filter_field == u"%s" % filter_value).all()
         else:
-            results = session.query(id_field, target_field).all()
+            self.results = session.query(id_field, target_field).all()
 
         session.close()
 
-        if "control" in params and params["control"] == 'dropdown_code':
-            params["autocomplete"] = dict(keys = [item[0] for item in results],
-                                          descriptions = [item[1] for item in results])
+        if object:
+            self.current_key = getattr(object, field.name) or 1
+
+        self.current_value = None
+
+        keys = []
+        values = []
+        for key, value in self.results:
+            keys.append(key)
+            values.append(value)
+            if object and key == self.current_key:
+                self.current_value = value
+
+        if self.control_type == 'dropdown_code':
+            params["autocomplete"] = dict(keys = keys,
+                                          descriptions = values)
         else:
-            params["autocomplete"] = [item[1] for item in results]
+            params["autocomplete"] = values
 
         return params
+
+    def load(self, field, form, node, object, data, session):
+
+        out_params = self.populate(field, form, object)
+
+        if self.control_type == 'dropdown_code':
+            value = [self.current_key, self.current_value]
+        else:
+            value = getattr(object, field.name)
+
+        data[field.name] = dict(value = value,
+                                out_params = out_params)
+
+    def convert(self, field, form, data):
+
+        if data.get(field.name):
+            result = data[field.name]
+            data[field.name] = result["value"]
+            return result["out_params"]
+        else:
+            return self.populate(field, form)
+
 
 class Buttons(Control):
 
@@ -429,7 +484,7 @@ class CodeGroup(Control):
             session.delete(code)
 
 
-    def convert(self, field, form):
+    def convert(self, field, form, data):
 
         self.configure(form)
         params = dict(control = self.control_type)
@@ -483,6 +538,15 @@ def message(command, message, **kw):
 
 def subform(name, **kw):
     form_field = SubForm(name)
+    return form_field
+
+def extra_data(extra_fields, **kw):
+    form_field = PageItem("extra_data",
+                          invisible = True,
+                          control = ExtraData("extra_fields",
+                                              kw,
+                                              extra_fields = extra_fields)
+                         )
     return form_field
 
 ##Controls
