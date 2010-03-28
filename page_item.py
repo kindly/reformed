@@ -303,6 +303,8 @@ class Dropdown(Control):
         self.control_load = True
         self.default = kw.get("default")
 
+        self.out_params = {}
+
     def populate(self, field, form, data, object = None):
 
         params = dict(control = self.control_type)
@@ -318,11 +320,13 @@ class Dropdown(Control):
         database = r
 
         if isinstance(autocomplete_options, list):
-            return params
+            self.out_params = params
+            return
 
         if isinstance(autocomplete_options, dict):
             params["autocomplete"] = autocomplete_options
-            return params
+            self.out_params = params
+            return
 
         if autocomplete_options == True:
             rfield = database[form.table].fields[field.name]
@@ -384,25 +388,22 @@ class Dropdown(Control):
             if object:
                 data[field.name] = getattr(object, field.name)
 
-        return params
+        self.out_params = params
+
 
     def load(self, field, form, node, object, data, session):
 
         out_params = self.populate(field, form, data, object)
 
-        data[field.name] = dict(value = data[field.name],
-                                out_params = out_params)
-
     def convert(self, field, form, data):
 
         loaded_data = data.get(field.name)
 
-        if loaded_data:
-            out_params = loaded_data["out_params"]
-            data[field.name] = loaded_data["value"]
-            return out_params
-
-        return self.populate(field, form, data)
+        if self.out_params:
+            return self.out_params
+        else:
+            self.populate(field, form, data)
+            return self.out_params
 
 
 class Buttons(Control):
@@ -630,7 +631,7 @@ def codegroup(code_table, **kw):
     code_title = kw.pop('code_title_field', None)
     code_desc = kw.pop('code_desc_field', None)
 
-    return page_item("input", 
+    return page_item("input",
                     control = CodeGroup("codegroup",
                                         code_table = code_table,
                                         code_title = code_title,
