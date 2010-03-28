@@ -25,7 +25,7 @@ import sqlalchemy as sa
 import datetime
 from global_session import global_session
 from page_item import link, link_list, info, input
-from form import form, Form
+from form import form, FormWrapper
 r = global_session.database
 
 class Node(object):
@@ -39,11 +39,9 @@ class Node(object):
 
         self._forms = {}
         for form_name in dir(self):
-            if isinstance(getattr(self, form_name), Form):
-                form = getattr(self, form_name)
-                form.set_name(form_name)
-                form.set_node(self)
-                self._forms[form_name] = form
+            if isinstance(getattr(self, form_name), FormWrapper):
+                formwrapper = getattr(self, form_name)
+                self._forms[form_name] = formwrapper(form_name, self)
 
         self.out = []
         self.title = None

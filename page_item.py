@@ -24,7 +24,7 @@ r = global_session.database
 
 class PageItem(object):
 
-    def __init__(self, page_item_type, *arg, **kw):
+    def __init__(self, form, page_item_type, *arg, **kw):
 
         self.init_kw = kw.copy()
 
@@ -51,8 +51,6 @@ class PageItem(object):
 
         self.extra_params = kw
 
-    def set_form(self, form):
-
         self.form = form
 
         if self.control:
@@ -60,7 +58,6 @@ class PageItem(object):
 
         if not self.control and not self.layout:
             self.control = self.set_default_control(form)
-
 
     def check_permissions(self):
 
@@ -553,18 +550,32 @@ class CodeGroup(Control):
         return params
 
 
+class PageItemWrapper(object):
+
+    def __init__(self, *arg, **kw):
+        self.arg = arg
+        self.kw = kw
+
+    def __call__(self, form):
+        return PageItem(form, *self.arg, **self.kw)
+
+def page_item(*args, **kw):
+
+    return PageItemWrapper(*args, **kw)
+
+
 ##Form fields
 
 def input(*arg, **kw):
-    form_field = PageItem("input", *arg, **kw)
+    form_field = page_item("input", *arg, **kw)
     return form_field
 
 def layout(layout_type, **kw):
-    form_field = PageItem("layout", layout = Layout(layout_type, kw))
+    form_field = page_item("layout", layout = Layout(layout_type, kw))
     return form_field
 
 def buttons(command, buttons, **kw):
-    form_field = PageItem("buttons",
+    form_field = page_item("buttons",
                           invisible = True,
                           control = Buttons("buttons",
                                             kw,
@@ -573,7 +584,7 @@ def buttons(command, buttons, **kw):
     return form_field
 
 def message(command, message, **kw):
-    form_field = PageItem("message",
+    form_field = page_item("message",
                           invisible = True,
                           control = Message("buttons",
                                             kw,
@@ -586,7 +597,7 @@ def subform(name, **kw):
     return form_field
 
 def extra_data(extra_fields, **kw):
-    form_field = PageItem("extra_data",
+    form_field = page_item("extra_data",
                           invisible = True,
                           control = ExtraData("extra_fields",
                                               kw,
@@ -596,7 +607,7 @@ def extra_data(extra_fields, **kw):
 
 def text(text, **kw):
 
-    form_field = PageItem("text",
+    form_field = page_item("text",
                           control = Control("text",
                                             dict(text = text), kw)
                          )
@@ -604,13 +615,13 @@ def text(text, **kw):
 
 def dropdown(name, arg, default = None, **kw):
 
-    return PageItem("input", name,
+    return page_item("input", name,
                     control = dropdown_control(arg, default = default),
                     **kw)
 
 def dropdown_code(name, arg, default = None, **kw):
 
-    return PageItem("input", name,
+    return page_item("input", name,
                     control = dropdown_control(arg, default = default),
                     **kw)
 
@@ -619,7 +630,7 @@ def codegroup(code_table, **kw):
     code_title = kw.pop('code_title_field', None)
     code_desc = kw.pop('code_desc_field', None)
 
-    return PageItem("input", 
+    return page_item("input", 
                     control = CodeGroup("codegroup",
                                         code_table = code_table,
                                         code_title = code_title,
@@ -630,47 +641,47 @@ def codegroup(code_table, **kw):
 
 def wmd(name, **kw):
 
-    return PageItem("input", name, control = Control("wmd"), **kw)
+    return page_item("input", name, control = Control("wmd"), **kw)
 
 def textarea(name, **kw):
 
-    return PageItem("input", name, control = Control("textarea"), **kw)
+    return page_item("input", name, control = Control("textarea"), **kw)
 
 def button(node, **kw):
 
-    return PageItem("input", control = Control("button"),
+    return page_item("input", control = Control("button"),
                     node = node, **kw)
 
 def checkbox(name, **kw):
 
-    return PageItem("input", name, control = Control("checkbox"), **kw)
+    return page_item("input", name, control = Control("checkbox"), **kw)
 
 def password(name = None, **kw):
 
-    return PageItem("input", name, control = Control("password"), **kw)
+    return page_item("input", name, control = Control("password"), **kw)
 
 def button_box(button_list, **kw):
 
-    return PageItem("input", control = Control("button_box"),
+    return page_item("input", control = Control("button_box"),
                     buttons = button_list,
                     **kw)
 
 def button_link(node, **kw):
 
-    return PageItem("input", control = Control("button_link"),
+    return page_item("input", control = Control("button_link"),
                     node = node, **kw)
 
 def link(name = None, **kw):
 
-    return PageItem("input", name, control = Control("link"), **kw)
+    return page_item("input", name, control = Control("link"), **kw)
 
 def link_list(name = None, **kw):
 
-    return PageItem("input", name, control = Control("link_list"), **kw)
+    return page_item("input", name, control = Control("link_list"), **kw)
 
 def info(name, **kw):
 
-    return PageItem("input", name,  control = Control("info"), **kw)
+    return page_item("input", name,  control = Control("info"), **kw)
 
 
 
