@@ -33,10 +33,10 @@ class Table(node.TableNode):
     allowed_join_types = ['OneToMany','OneToOne','ManyToOne']
 
     listing = form(
-        input("title", control = link(css = 'form_title')),
-        input("summary", control = info()),
-        input("table_type", control = info()),
-        input("edit", control = link_list()),
+        link("title", css = 'form_title'),
+        info("summary"),
+        info("table_type"),
+        link_list("edit"),
 
         params = {"form_type": "results"}
     )
@@ -44,8 +44,8 @@ class Table(node.TableNode):
 
     main = form(
         input('table_name'),
-        input('table_type', control = dropdown(allowed_field_types, type = 'list')),
-        input('summary', control = textarea()),
+        dropdown('table_type', allowed_field_types),
+        textarea('summary'),
         input('entity'),
         input('logged'),
         subform('fields'),
@@ -55,7 +55,7 @@ class Table(node.TableNode):
 
     fields = form(
         input('field_name'),
-        input('field_type', control = dropdown(allowed_field_types)),
+        dropdown('field_type', allowed_field_types),
         input('length'),
         input('mandatory'),
         input('default'),
@@ -301,11 +301,9 @@ class Edit(node.TableNode):
                 continue
 
             if field.type == "Text" and field.length > 500:
-                fields.append(input(field.name,
-                                    control = textarea(css = "large")))
+                fields.append(textarea(field.name, css = "large"))
             elif field.type == "Boolean":
-                fields.append(input(field.name,
-                                    control = dropdown(["true", "false"])))
+                fields.append(dropdown(field.name,["true", "false"]))
             else:
                 fields.append(input(field.name))
 

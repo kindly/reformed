@@ -237,9 +237,9 @@ class TableNode(Node):
     first_run = True
 
     listing = form(
-        input('title', data_type = 'link', control = link(css = 'form_title')),
-        input('summarty', data_type = 'info', control = info()),
-        input('edit', data_type = 'link_list', control = link_list()),
+        link('title', data_type = 'link', css = 'form_title'),
+        info('summary', data_type = 'info'),
+        link_list('edit', data_type = 'link_list'),
 
         params = {"form_type": "results"}
     )

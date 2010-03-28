@@ -56,6 +56,7 @@ class Form(object):
         self.node_name = node.name.split(':')[0]
         self.table = self.table or node.table
 
+        ## not in init as fields want to know what table the forms is in
         for field in self.fields:
             field.set_form(self)
 

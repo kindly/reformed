@@ -268,8 +268,7 @@ class AutoFormPlus(TableNode):
                 continue
 
             if field.type == "Text" and field.length > 500:
-                fields.append(input(field.name,
-                                    control = wmd(css = "large")))
+                fields.append(wmd(field.name, css = "large"))
             else:
                 fields.append(input(field.name))
 
