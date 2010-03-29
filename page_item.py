@@ -390,14 +390,11 @@ class Dropdown(Control):
 
         self.out_params = params
 
-
     def load(self, field, form, node, object, data, session):
 
         out_params = self.populate(field, form, data, object)
 
     def convert(self, field, form, data):
-
-        loaded_data = data.get(field.name)
 
         if self.out_params:
             return self.out_params

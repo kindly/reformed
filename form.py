@@ -233,7 +233,7 @@ class Form(object):
 
             data_out = {}
 
-            table = self.table or node.table
+            table = self.table
 
             obj = r.search_single(table, where, session = session)
 
