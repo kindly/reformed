@@ -110,7 +110,7 @@ def reload(host, options):
 
     application = make_application(args)
     paste.reloader.install()
-    run(options.host, options.port, application)
+    run(options.host, options.port, application, options.ssl, options.ssl_cert)
 
 def reloader(args, options):
 
@@ -124,6 +124,10 @@ def reloader(args, options):
                        "--port=%s" % options.port,
                        "--host=%s" % options.host,
                       ]
+            if options.ssl:
+                command.append('--ssl')
+            if options.ssl_cert:
+                command.append('--ssl_cert=%s' % options.ssl_cert)
             if args:
                 command.append(args[0])
             proc = subprocess.Popen(command)
@@ -132,7 +136,7 @@ def reloader(args, options):
             proc.terminate()
             break
 
-def run(host, port, application):
+def run(host, port, application, ssl, ssl_cert):
     print 'starting webserver'
     import beaker.middleware
     database = application.database
@@ -143,7 +147,6 @@ def run(host, port, application):
         BaseCGIHandler(sys.stdin, sys.stdout, sys.stderr, os.environ).run(http.app)
     else:
 
-        #from paste import httpserver
         import cherrypy.wsgiserver as httpserver
 
         application = beaker.middleware.SessionMiddleware(application, {"session.type": "memory",
@@ -152,10 +155,16 @@ def run(host, port, application):
             server = httpserver.CherryPyWSGIServer(
                     (host, int(port)), application,
                     server_name='rebase')
-            server.ssl_certificate = 'host.cert'
-            server.ssl_private_key = 'host.key'
-            #httpserver.serve(application, host = host, port = port)
-            #httpd.serve_forever()
+            if ssl:
+                try:
+                    server.ssl_certificate = '%s.cert' % ssl_cert
+                    server.ssl_private_key = '%s.key' % ssl_cert
+                except:
+                    print 'failed to add ssl certificate or private key'
+                    return
+                print "serving on https://%s:%s" % (host, port)
+            else:
+                print "serving on http://%s:%s" % (host, port)
             server.start()
         except KeyboardInterrupt:
             server.stop()
@@ -203,6 +212,12 @@ if __name__ == "__main__":
     parser.add_option("--port", dest = "port", action="store",
                       default = "8000",
                       help="web server port")
+    parser.add_option("-s", "--ssl",
+                      action="store_true", dest="ssl",
+                      help="serve using ssl")
+    parser.add_option("--ssl_cert", dest = "ssl_cert", action="store",
+                      default = 'host',
+                      help="web server ssl certificate/private key prefix")
     (options, args) = parser.parse_args()
 
 
@@ -230,7 +245,7 @@ if __name__ == "__main__":
         load_data(application, options.load_file)
     if options.run:
         application = make_application(args)
-        run(options.host, options.port, application)
+        run(options.host, options.port, application, options.ssl, options.ssl_cert)
     if options.reload:
         reloader(args, options)
     if options.reloader:
