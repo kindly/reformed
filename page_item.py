@@ -182,8 +182,9 @@ class PageItem(object):
 
 class SubForm(object):
 
-    def __init__(self, name, **kw):
+    def __init__(self, form, name, **kw):
 
+        self.form = form
         self.name = name
         self.page_item_type = "subform"
         self.data_type = "subform"
@@ -191,10 +192,6 @@ class SubForm(object):
 
         if self.name and not self.label:
             self.label = self.name + ":"
-
-    def set_form(self, form):
-
-        self.form = form
 
     def convert(self, form, field_list, data):
 
@@ -390,14 +387,11 @@ class Dropdown(Control):
 
         self.out_params = params
 
-
     def load(self, field, form, node, object, data, session):
 
         out_params = self.populate(field, form, data, object)
 
     def convert(self, field, form, data):
-
-        loaded_data = data.get(field.name)
 
         if self.out_params:
             return self.out_params
@@ -564,6 +558,12 @@ def page_item(*args, **kw):
 
     return PageItemWrapper(*args, **kw)
 
+class SubFormWrapper(PageItemWrapper):
+
+    def __call__(self, form):
+        return SubForm(form, *self.arg, **self.kw)
+
+
 
 ##Form fields
 
@@ -594,7 +594,7 @@ def message(command, message, **kw):
     return form_field
 
 def subform(name, **kw):
-    form_field = SubForm(name)
+    form_field = SubFormWrapper(name)
     return form_field
 
 def extra_data(extra_fields, **kw):
