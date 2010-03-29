@@ -72,8 +72,7 @@ class JobScheduler(object):
 
         threadpool = self.threadpool
 
-        threadpool.dismissWorkers(POOL_SIZE)
-        threadpool.joinAllDismissedWorkers()
+        threadpool.dismissWorkers(POOL_SIZE, do_join = True)
 
 class JobSchedulerThread(threading.Thread):
 
@@ -87,56 +86,55 @@ class JobSchedulerThread(threading.Thread):
 
     def run(self):
 
-        self.alive = True
+        self.alive = Truestop
+        tick_interval = 0.1
+        time_counter = 0.0
 
         while self.alive:
 
-            ## added to make sure query does not run and clean up
+
+            time.sleep(tick_interval)
             if not self.maker_thread.isAlive() or self.database.status == "terminated":
-                print "commmencing shutdown procedures"
+                print "commencing shutdown procedures"
                 self.stop()
                 break
 
+            time_counter = time_counter + tick_interval
+            if time_counter > POLL_INTERVAL:
+                time_counter = 0.0
 
             ## added as last resort 
-            try:
-                to_run = self.database.search("_core_job_scheduler",
-                                              "job_start_time <= now and job_started is null",
-                                              internal = True)["data"]
-
-                for result in to_run:
-                    result["job_started"] = datetime.datetime.now()
-                    result["message"] = "starting"
-                    result["__table"] = "_core_job_scheduler"
-                    func = getattr(standard_jobs, result["function"].encode("ascii"))
-                    arg = result["arg"]
-                    if arg:
-                        arg = json.loads(arg, encoding = "ascii")
-                        arg = dict((item[0].encode("ascii"), item[1])
-                                   for item in arg.items())
-                    self.make_request(func, arg, result["id"])
-                    load_local_data(self.database, result)
-            except Exception:
-                print >> sys.stderr, "%s %s" % ("error in schedular thread shutting down",
-                                                traceback.format_exc())
-                self.stop()
-                break
-
-
-            try:
-                self.database.job_scheduler.threadpool.poll()
-            except threadpool.NoResultsPending:
-                pass
-
-            time_counter = 0
-
-            while time_counter <= POLL_INTERVAL:
-                if not self.maker_thread.isAlive() or self.database.status == "terminated":
-                    print "commencing shutdown procedures"
+            if time_counter == 0:
+                print 'tick'
+                try:
+                    to_run = self.database.search("_core_job_scheduler",
+                                                  "job_start_time <= now and job_started is null",
+                                                  internal = True)["data"]
+    
+                    for result in to_run:
+                        result["job_started"] = datetime.datetime.now()
+                        result["message"] = "starting"
+                        result["__table"] = "_core_job_scheduler"
+                        func = getattr(standard_jobs, result["function"].encode("ascii"))
+                        arg = result["arg"]
+                        if arg:
+                            arg = json.loads(arg, encoding = "ascii")
+                            arg = dict((item[0].encode("ascii"), item[1])
+                                       for item in arg.items())
+                        self.make_request(func, arg, result["id"])
+                        load_local_data(self.database, result)
+                except Exception:
+                    print >> sys.stderr, "%s %s" % ("error in schedular thread shutting down",
+                                                    traceback.format_exc())
                     self.stop()
                     break
-                time_counter = time_counter + 1
-                time.sleep(1)
+    
+    
+                try:
+                    self.database.job_scheduler.threadpool.poll()
+                except threadpool.NoResultsPending:
+                    pass
+    
 
     def stop(self):
 
