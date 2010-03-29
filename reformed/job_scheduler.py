@@ -86,7 +86,7 @@ class JobSchedulerThread(threading.Thread):
 
     def run(self):
 
-        self.alive = Truestop
+        self.alive = True
         tick_interval = 0.1
         time_counter = 0.0
 
