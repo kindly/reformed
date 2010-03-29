@@ -273,8 +273,6 @@ class AutoFormPlus(TableNode):
                 fields.append(input(field.name))
 
         main = form(*fields, table = self.table, params = form_params)
-        main.set_name("main")
-        main.set_node(self)
-        self._forms["main"] = main
+        self._forms["main"] = main("main", self)
 
 
