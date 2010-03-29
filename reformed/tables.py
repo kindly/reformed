@@ -173,8 +173,9 @@ class Table(object):
             table["fields"] = table_fields
 
             for field_name, rfield in self.fields.iteritems():
-
                 self._persist_extra_field(rfield, connection)
+
+            print 'creating %s' % self.name
 
 
     def persist_foreign_key_columns(self, connection):

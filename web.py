@@ -142,7 +142,7 @@ class WebApplication(object):
         try:
             self.application = self.load_application_data(self.database)
         except KeyError:
-            print 'fail loading application data. No tables?'
+            pass
 
     def load_application_data(self, database):
         data = {}

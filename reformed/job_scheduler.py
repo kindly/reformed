@@ -35,7 +35,6 @@ class JobScheduler(object):
                                             table_type = "internal")
                                )
 
-            print "first persist"
             rdatabase.persist()
 
         self.table_name = table_name

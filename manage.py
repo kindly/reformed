@@ -27,7 +27,6 @@ from optparse import OptionParser
 import web
 
 def make_application(args):
-    print "make_app"
     if args:
         application = web.WebApplication(args[0])
     else:
@@ -220,6 +219,7 @@ if __name__ == "__main__":
                       help="web server ssl certificate/private key prefix")
     (options, args) = parser.parse_args()
 
+    application = None
 
     if options.console:
         import code
@@ -227,36 +227,43 @@ if __name__ == "__main__":
         database = application.database
         code.interact(local=locals())
     if options.extract:
-        application = make_application(args)
+        if not application:
+            application = make_application(args)
         extract(application)
-    if options.table_load:
-        application = make_application(args)
-        load(application)
     if options.generate:
-        application = make_application(args)
+        if not application:
+            application = make_application(args)
         generate_data(application)
     if options.delete:
         delete(args)
     if options.create:
-        application = make_application(args)
+        if not application:
+            application = make_application(args)
         create(application)
     if options.load:
-        application = make_application(args)
+        if not application:
+            application = make_application(args)
         load_data(application, options.load_file)
+    if options.table_load:
+        if not application:
+            application = make_application(args)
+        load(application)
     if options.run:
-        application = make_application(args)
+        if not application:
+            application = make_application(args)
         run(options.host, options.port, application, options.ssl, options.ssl_cert)
     if options.reload:
         reloader(args, options)
     if options.reloader:
         reload(args, options)
     if options.all:
-        application = make_application(args)
+        if not application:
+            application = make_application(args)
         print "deleting"
         delete(args)
         application = make_application(args)
         create(application)
         print "loading"
-        load_data(application,options.load_file)
+        load(application)
 
 
