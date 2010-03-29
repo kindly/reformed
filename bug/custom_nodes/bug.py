@@ -19,7 +19,7 @@ class Ticket(TableNode):
         input('code_priority_id', default = 'low', label = "priority:"),
         layout('column_end'),
         layout('hr'),
-        input('summary', control = wmd(css = "large")),
+        wmd('summary', css = 'large'),
         extra_data(["created_by"]),
         table = "ticket",
         params =  {"form_type": "action"},
@@ -35,18 +35,17 @@ class ListTicket(TableNode):
 
     main = form(
         input('title'),
-        input('summary', control = textarea(css = "large")),
+        textarea('summary',css = "large"),
         layout('box_start'),
         layout('column_start'),
         input('accepted'),
         input('complete_by' ),
         layout('column_next'),
-        input('code_severity_id', control = dropdown_code(True), label = "severity:"),
+        dropdown_code('code_severity_id', True, label = "severity:"),
         input('code_priority_id', label = "priority:"),
         layout('column_end'),
         layout('box_end'),
-        input(label = 'edit', permissions = ['logged_in'], 
-              control = button(node = 'bug.Ticket:edit:{id}')),
+        button('bug.Ticket:edit:{id}' ,label = 'edit', permissions = ['logged_in']), 
         layout('hr'),
         subform('old_comments'),
         subform('comment'),
@@ -58,7 +57,7 @@ class ListTicket(TableNode):
     )
 
     old_comments = form(
-        input('note', label = "", control = wmd(css = "large")),
+        wmd('note', label = "", css = "large"),
         layout('area_start', css = 'record_info'),
         layout('area_end'),
         text('Created {created_date:ds} by user #{created_by}', css = 'record_info'),
@@ -74,8 +73,8 @@ class ListTicket(TableNode):
 
     comment = form(
 
-        input('note', control = wmd(css = "large")),
-        input(label = 'add comment', control = button(node = 'bug.ListTicket:_save:')),
+        wmd('note', label = "", css = "large"),
+        button('bug.ListTicket:_save:', label = 'add comment'),
 
         parent_id = "_core_entity_id",
         child_id = "_core_entity_id",
@@ -99,19 +98,19 @@ class User(TableNode):
         layout('column_start'),
         input('name'),
         input('login_name', label = 'login name:'),
-        input('active', control = checkbox()),
+        checkbox('active'),
         input('email'),
         layout('column_next'),
         layout('box_start'),
-        input('password', control = password()),
-        input('password2', control = password()),
+        password('password'),
+        password('password2'),
         layout('box_end'),
         layout('column_end'),
         layout('hr'),
-        input('notes', control = textarea(css = "large")),
+        textarea('notes', css = "large"),
         layout('spacer'),
         layout('box_start'),
-        input('usergroup', control = codegroup(code_table = 'user_group', code_desc_field = 'description')),
+        codegroup('user_group', code_desc_field = 'description'),
         layout('box_end'),
         layout('spacer'),
 
@@ -123,8 +122,8 @@ class User(TableNode):
     login_form = form(
         layout('box_start'),
         input('login_name', label = 'username:'),
-        input('password', control = password()),
-        input(label = 'Log in', control = button(node = 'bug.User:login:')),
+        password('password'),
+        button('bug.User:login:', label = 'Log in'),
         layout('box_end'),
 
         params = {"form_type": "action"}
@@ -138,7 +137,7 @@ class User(TableNode):
     about_me_form = form(
         layout('box_start'),
         input('login_name', label = 'username:'),
-        input('about_me', label = 'about me:', control = textarea(css = "large")),
+        textarea('about_me', css = "large"),
         layout('box_end'),
 
         buttons('about_me',
@@ -241,7 +240,7 @@ class Permission(TableNode):
         layout("box_start"),
         input("permission"),
         input("description", css = 'large'),
-        input("long_description", label = 'long description:', control = textarea(css = 'large')),
+        textarea("long_description", css = 'large'),
 
         table = "permission",
         params =  {"form_type": "action"},
@@ -254,12 +253,12 @@ class UserGroup(TableNode):
     main = form(
         layout("box_start"),
         input('groupname', description = 'The name of the user group'),
-        input('active', control = checkbox(description = 'Only active user groups give members permissions')),
+        checkbox('active', description = 'Only active user groups give members permissions'),
         input('description', description = 'A brief description of the user group', css = 'large'),
-        input('notes', control = textarea(css = "large", description = 'A longer more detailed description')),
+        textarea('notes', css = "large", description = 'A longer more detailed description'),
         layout("spacer"),
         layout("box_start"),
-        input('permission', control = codegroup(code_table = 'permission', code_desc_field = 'description')),
+        codegroup('permission', code_desc_field = 'description'),
         layout("box_end"),
         layout("spacer"),
 
@@ -276,16 +275,16 @@ class UserAdmin(TableNode):
     form_params =  {"form_type": "action"}
     main = form(
         layout('text', text = 'Users {users}'),
-        input(control = button_link('bug.User:new'), label = 'add user'),
-        input(control = button_link('bug.User:list'), label = 'list users'),
+        button_link('bug.User:new', label = 'add user'),
+        button_link('bug.User:list', label = 'list users'),
         layout('spacer'),
         layout('text', text = 'User Groups {user_groups}'),
-        input(control = button_link('bug.UserGroup:new'), label = 'add user group'),
-        input(control = button_link('bug.UserGroup:list'), label = 'list user groups'),
+        button_link('bug.UserGroup:new', label = 'add user group'),
+        button_link('bug.UserGroup:list', label = 'list user groups'),
         layout('spacer'),
         layout('text', text = 'Permissions {permissions}'),
-        input(control = button_link('bug.Permission:new'), label = 'add permission'),
-        input(control = button_link('bug.Permission:list'), label = 'list permissions'),
+        button_link('bug.Permission:new', label = 'add permission'),
+        button_link('bug.Permission:list', label = 'list permissions'),
         layout('spacer'),
 
         params =  {"form_type": "action"},
@@ -311,7 +310,7 @@ class SysInfo(TableNode):
     main = form(
         input('key'),
         input('value'),
-        input('type', control = dropdown_code(dict(keys = [1, 2, 3], descriptions = ['String', 'Integer', 'Boolean']))),
+        dropdown_code('type', dict(keys = [1, 2, 3], descriptions = ['String', 'Integer', 'Boolean'])),
 
         table = "_system_info",
         params =  {"form_type": "action"},
@@ -324,7 +323,7 @@ class Page(TableNode):
     main = form(
         input("page", css = "large", description = "A reference for the page used for links etc."),
         input("title", css = "large", description = "The displayed title for the page."),
-        input("body", control = textarea(css = "large long", description = "A longer more detailed description")),
+        textarea("body", css = "large long", description = "A longer more detailed description"),
 
         table = "page",
         params =  {"form_type": "action"},
@@ -332,8 +331,8 @@ class Page(TableNode):
     )
 
     view_form = form( 
-        input('title', control = info()),
-        input('body', control = info()),
+        info('title'),
+        info('body'),
 
         buttons('view', False),
 

@@ -28,11 +28,24 @@ from page_item import input
 
 class Form(object):
 
-    def __init__(self, *args, **kw):
+    def __init__(self, name, node, *args, **kw):
 
-        self.fields = args
+        self.fieldswrappers = args
 
-        self.table = kw.get("table")
+        self.fields = []
+
+        self.name = name
+
+        self.node = node
+        self.node_name = node.name.split(':')[0]
+        self.table = kw.get("table", node.table)
+
+        ## not in init as fields want to know what table the forms is in
+
+        for field in self.fieldswrappers:
+            self.fields.append(field(self))
+
+
         self.params = kw.get("params")
         self.title_field = kw.get("title_field")
 
@@ -56,6 +69,7 @@ class Form(object):
         self.node_name = node.name.split(':')[0]
         self.table = self.table or node.table
 
+        ## not in init as fields want to know what table the forms is in
         for field in self.fields:
             field.set_form(self)
 
@@ -415,6 +429,16 @@ class Form(object):
                 fields.append(row)
         return fields
 
+class FormWrapper(object):
+
+    def __init__(self, *arg, **kw):
+        self.arg = arg
+        self.kw = kw
+
+    def __call__(self, name, node):
+        return Form(name, node, *self.arg, **self.kw)
+
+
 def form(*args, **kw):
-    return Form(*args, **kw)
+    return FormWrapper(*args, **kw)
 

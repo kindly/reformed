@@ -24,7 +24,7 @@ r = global_session.database
 
 class PageItem(object):
 
-    def __init__(self, page_item_type, *arg, **kw):
+    def __init__(self, form, page_item_type, *arg, **kw):
 
         self.init_kw = kw.copy()
 
@@ -46,17 +46,18 @@ class PageItem(object):
         self.invisible = kw.pop("invisible", False)
 
         self.control = kw.pop("control", None)
+
         self.layout = kw.pop("layout", None)
 
         self.extra_params = kw
 
-    def set_form(self, form):
-
         self.form = form
+
+        if self.control:
+            self.control.add_extra_params(self.extra_params)
 
         if not self.control and not self.layout:
             self.control = self.set_default_control(form)
-
 
     def check_permissions(self):
 
@@ -70,6 +71,7 @@ class PageItem(object):
     def params(self, form, data):
 
         params = {}
+
 
         if self.control:
             params.update(self.control.convert(self, form, data))
@@ -94,12 +96,12 @@ class PageItem(object):
 
         kw = self.extra_params
 
-        default_controls = dict(Integer = Control("intbox"),
-                                Text = Control("textbox"),
-                                DateTime = Control("datebox"),
-                                Boolean = Control("checkbox"),
-                                LookupTextValidated = dropdown(True, **kw),
-                                LookupId = dropdown_code(True, **kw))
+        default_controls = dict(Integer = Control("intbox", **kw),
+                                Text = Control("textbox", **kw),
+                                DateTime = Control("datebox", **kw),
+                                Boolean = Control("checkbox", **kw),
+                                LookupTextValidated = dropdown_control(True, **kw),
+                                LookupId = dropdown_code_control(True, **kw))
 
         if not form.table:
             return
@@ -111,6 +113,7 @@ class PageItem(object):
 
         column = rfield.column
 
+
         if column.defined_relation:
             relation_field = column.defined_relation.parent
             return default_controls.get(relation_field.__class__.__name__)
@@ -119,6 +122,7 @@ class PageItem(object):
 
         if not control:
             control = default_controls.get(rfield.type)
+
 
         return control
 
@@ -248,7 +252,7 @@ class Layout(object):
 
 class Control(object):
 
-    def __init__(self, control_type, params = None, extra_params = None):
+    def __init__(self, control_type, params = None, extra_params = None, **kw):
 
         self.control_type = control_type
         self.params = params or {}
@@ -268,6 +272,10 @@ class Control(object):
             params.update(self.extra_params)
 
         return params
+
+    def add_extra_params(self, params):
+
+        self.params.update(params)
 
 
 class ExtraData(Control):
@@ -295,6 +303,8 @@ class Dropdown(Control):
         self.control_load = True
         self.default = kw.get("default")
 
+        self.out_params = {}
+
     def populate(self, field, form, data, object = None):
 
         params = dict(control = self.control_type)
@@ -310,11 +320,13 @@ class Dropdown(Control):
         database = r
 
         if isinstance(autocomplete_options, list):
-            return params
+            self.out_params = params
+            return
 
         if isinstance(autocomplete_options, dict):
             params["autocomplete"] = autocomplete_options
-            return params
+            self.out_params = params
+            return
 
         if autocomplete_options == True:
             rfield = database[form.table].fields[field.name]
@@ -376,25 +388,22 @@ class Dropdown(Control):
             if object:
                 data[field.name] = getattr(object, field.name)
 
-        return params
+        self.out_params = params
+
 
     def load(self, field, form, node, object, data, session):
 
         out_params = self.populate(field, form, data, object)
 
-        data[field.name] = dict(value = data[field.name],
-                                out_params = out_params)
-
     def convert(self, field, form, data):
 
         loaded_data = data.get(field.name)
 
-        if loaded_data:
-            out_params = loaded_data["out_params"]
-            data[field.name] = loaded_data["value"]
-            return out_params
-
-        return self.populate(field, form, data)
+        if self.out_params:
+            return self.out_params
+        else:
+            self.populate(field, form, data)
+            return self.out_params
 
 
 class Buttons(Control):
@@ -442,9 +451,9 @@ class CodeGroup(Control):
         self.control_save = True
         self.control_load = True
 
-        self.code_table = params.get('code_table')
-        self.code_title = params.get('code_title_field')
-        self.code_desc = params.get('code_desc_field')
+        self.code_table = kw.get('code_table')
+        self.code_title = kw.get('code_title_field')
+        self.code_desc = kw.get('code_desc_field')
 
     def configure(self, form):
 
@@ -542,18 +551,32 @@ class CodeGroup(Control):
         return params
 
 
+class PageItemWrapper(object):
+
+    def __init__(self, *arg, **kw):
+        self.arg = arg
+        self.kw = kw
+
+    def __call__(self, form):
+        return PageItem(form, *self.arg, **self.kw)
+
+def page_item(*args, **kw):
+
+    return PageItemWrapper(*args, **kw)
+
+
 ##Form fields
 
 def input(*arg, **kw):
-    form_field = PageItem("input", *arg, **kw)
+    form_field = page_item("input", *arg, **kw)
     return form_field
 
 def layout(layout_type, **kw):
-    form_field = PageItem("layout", layout = Layout(layout_type, kw))
+    form_field = page_item("layout", layout = Layout(layout_type, kw))
     return form_field
 
 def buttons(command, buttons, **kw):
-    form_field = PageItem("buttons",
+    form_field = page_item("buttons",
                           invisible = True,
                           control = Buttons("buttons",
                                             kw,
@@ -562,7 +585,7 @@ def buttons(command, buttons, **kw):
     return form_field
 
 def message(command, message, **kw):
-    form_field = PageItem("message",
+    form_field = page_item("message",
                           invisible = True,
                           control = Message("buttons",
                                             kw,
@@ -575,7 +598,7 @@ def subform(name, **kw):
     return form_field
 
 def extra_data(extra_fields, **kw):
-    form_field = PageItem("extra_data",
+    form_field = page_item("extra_data",
                           invisible = True,
                           control = ExtraData("extra_fields",
                                               kw,
@@ -585,65 +608,101 @@ def extra_data(extra_fields, **kw):
 
 def text(text, **kw):
 
-    form_field = PageItem("text",
+    form_field = page_item("text",
                           control = Control("text",
                                             dict(text = text), kw)
                          )
     return form_field
 
+def dropdown(name, arg, default = None, **kw):
 
-##Controls
+    return page_item("input", name,
+                    control = dropdown_control(arg, default = default),
+                    **kw)
 
-def dropdown(arg, **kw):
+def dropdown_code(name, arg, default = None, **kw):
 
-    return Dropdown("dropdown", dict(autocomplete = arg), kw)
+    return page_item("input", name,
+                    control = dropdown_control(arg, default = default),
+                    **kw)
 
-def dropdown_code(arg, **kw):
+def codegroup(code_table, **kw):
 
-    default = kw.pop("default", None)
+    code_title = kw.pop('code_title_field', None)
+    code_desc = kw.pop('code_desc_field', None)
 
-    return Dropdown("dropdown_code", dict(autocomplete = arg), kw, default = default)
+    return page_item("input",
+                    control = CodeGroup("codegroup",
+                                        code_table = code_table,
+                                        code_title = code_title,
+                                        code_desc_field = code_desc,
+                                        ),
+                    **kw)
 
-def wmd(**kw):
 
-    return Control("wmd", kw)
+def wmd(name, **kw):
 
-def textarea(**kw):
+    return page_item("input", name, control = Control("wmd"), **kw)
 
-    return Control("textarea", kw)
+def textarea(name, **kw):
+
+    return page_item("input", name, control = Control("textarea"), **kw)
 
 def button(node, **kw):
 
-    return Control("button", dict(node = node), kw)
+    return page_item("input", control = Control("button"),
+                    node = node, **kw)
 
-def checkbox(**kw):
+def checkbox(name, **kw):
 
-    return Control("checkbox", kw)
+    return page_item("input", name, control = Control("checkbox"), **kw)
 
-def password(**kw):
+def password(name = None, **kw):
 
-    return Control("password", kw)
+    return page_item("input", name, control = Control("password"), **kw)
 
 def button_box(button_list, **kw):
 
-    return Control("button_box", dict(buttons = button_list), kw)
+    return page_item("input", control = Control("button_box"),
+                    buttons = button_list,
+                    **kw)
 
 def button_link(node, **kw):
 
-    return Control("button_link", dict(node = node), kw)
+    return page_item("input", control = Control("button_link"),
+                    node = node, **kw)
 
-def link(**kw):
+def link(name = None, **kw):
 
-    return Control("link", kw)
+    return page_item("input", name, control = Control("link"), **kw)
 
-def link_list(**kw):
+def link_list(name = None, **kw):
 
-    return Control("link_list", kw)
+    return page_item("input", name, control = Control("link_list"), **kw)
 
-def info(**kw):
+def info(name, **kw):
 
-    return Control("info", kw)
+    return page_item("input", name,  control = Control("info"), **kw)
 
-def codegroup(**kw):
 
-    return CodeGroup("codegroup", kw)
+
+##Controls
+
+
+def dropdown_control(arg, default = None, **kw):
+
+    return Dropdown("dropdown",
+                    dict(autocomplete = arg),
+                    kw,
+                    default = default,
+                    )
+
+
+def dropdown_code_control(arg, default = None, **kw):
+
+    return Dropdown("dropdown_code",
+                    dict(autocomplete = arg),
+                    kw,
+                    default = default,
+                    )
+
