@@ -926,6 +926,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         'dropdown': [dropdown, plaintext],
         'info': [info_area, info_area],
         'link_list': [link_list, link_list],
+        'codegroup': [codegroup, codegroup],
         'subform': [add_subform, add_subform]
     }
 
@@ -997,9 +998,6 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             }
             if (row_data[field] !== undefined){
                 data[field] = row_data[field];
-            }
-            if (row_info && row_info[field] !== undefined){
-                data[field] = row_info[field];
             }
         }
         return data;

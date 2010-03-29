@@ -95,7 +95,6 @@ class User(TableNode):
 
 
     main = form(
-        layout('text', text = 'user..........'),
         layout('column_start'),
         input('name'),
         input('login_name', label = 'login name:'),
