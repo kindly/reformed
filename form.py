@@ -56,6 +56,9 @@ class Form(object):
         self.node_name = node.name.split(':')[0]
         self.table = self.table or node.table
 
+        for field in self.fields:
+            field.set_form(self)
+
     def load_subform(self, data):
 
         parent_value = data.get(self.parent_id)
@@ -381,17 +384,17 @@ class Form(object):
 
     def create_form_data(self, data=None, read_only=False):
 
+        if not data:
+            data = {}
+
         out = {
             "form": {
                 "fields":self.create_fields(data)
             },
             "type": "form",
+            "data": data
         }
 
-        if data:
-            out['data'] = data
-        else:
-            out['data'] = []
         if self.params:
             out['form']['params'] = self.params.copy()
         if read_only:

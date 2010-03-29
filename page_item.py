@@ -50,6 +50,14 @@ class PageItem(object):
 
         self.extra_params = kw
 
+    def set_form(self, form):
+
+        self.form = form
+
+        if not self.control and not self.layout:
+            self.control = self.set_default_control(form)
+
+
     def check_permissions(self):
 
         user_perms = set(global_session.session.get('permissions'))
@@ -61,16 +69,12 @@ class PageItem(object):
 
     def params(self, form, data):
 
-        params = self.extra_params.copy()
+        params = {}
 
         if self.control:
             params.update(self.control.convert(self, form, data))
-        elif self.layout:
+        if self.layout:
             params.update(self.layout.convert(self, form, data))
-        else:
-            control = self.set_default_control(form)
-            if control:
-                params["control"] = control
 
         return params
 
@@ -88,16 +92,35 @@ class PageItem(object):
 
     def set_default_control(self, form):
 
-        default_controls = dict(Integer = "intbox",
-                                Text = "textbox",
-                                DateTime = "datebox",
-                                Boolean = "checkbox")
+        kw = self.extra_params
 
-        if form.table:
-            rfield = r[form.table].fields.get(self.name)
-            if rfield:
-                return default_controls.get(rfield.type)
+        default_controls = dict(Integer = Control("intbox"),
+                                Text = Control("textbox"),
+                                DateTime = Control("datebox"),
+                                Boolean = Control("checkbox"),
+                                LookupTextValidated = dropdown(True, **kw),
+                                LookupId = dropdown_code(True, **kw))
 
+        if not form.table:
+            return
+
+        rfield = r[form.table].fields.get(self.name)
+
+        if not rfield:
+            return
+
+        column = rfield.column
+
+        if column.defined_relation:
+            relation_field = column.defined_relation.parent
+            return default_controls.get(relation_field.__class__.__name__)
+
+        control = default_controls.get(rfield.__class__.__name__)
+
+        if not control:
+            control = default_controls.get(rfield.type)
+
+        return control
 
     def set_data_type(self, form):
 
@@ -165,6 +188,9 @@ class SubForm(object):
         if self.name and not self.label:
             self.label = self.name + ":"
 
+    def set_form(self, form):
+
+        self.form = form
 
     def convert(self, form, field_list, data):
 
@@ -267,8 +293,9 @@ class Dropdown(Control):
 
         Control.__init__(self, control_type, params, extra_params)
         self.control_load = True
+        self.default = kw.get("default")
 
-    def populate(self, field, form, object = None):
+    def populate(self, field, form, data, object = None):
 
         params = dict(control = self.control_type)
 
@@ -320,47 +347,54 @@ class Dropdown(Control):
 
         session.close()
 
-        if object:
-            self.current_key = getattr(object, field.name) or 1
+        current_key = None
+        current_value = None
 
-        self.current_value = None
+        if object:
+            current_key = getattr(object, field.name)
+        if not object and self.default:
+            current_value = self.default
 
         keys = []
         values = []
+
         for key, value in self.results:
             keys.append(key)
             values.append(value)
-            if object and key == self.current_key:
-                self.current_value = value
+            if object and key == current_key:
+                current_value = value
+            if not object and current_value == value:
+                current_key = key
 
         if self.control_type == 'dropdown_code':
             params["autocomplete"] = dict(keys = keys,
                                           descriptions = values)
+            if current_key:
+                data[field.name] = [current_key, current_value]
         else:
             params["autocomplete"] = values
+            if object:
+                data[field.name] = getattr(object, field.name)
 
         return params
 
     def load(self, field, form, node, object, data, session):
 
-        out_params = self.populate(field, form, object)
+        out_params = self.populate(field, form, data, object)
 
-        if self.control_type == 'dropdown_code':
-            value = [self.current_key, self.current_value]
-        else:
-            value = getattr(object, field.name)
-
-        data[field.name] = dict(value = value,
+        data[field.name] = dict(value = data[field.name],
                                 out_params = out_params)
 
     def convert(self, field, form, data):
 
-        if data.get(field.name):
-            result = data[field.name]
-            data[field.name] = result["value"]
-            return result["out_params"]
-        else:
-            return self.populate(field, form)
+        loaded_data = data.get(field.name)
+
+        if loaded_data:
+            out_params = loaded_data["out_params"]
+            data[field.name] = loaded_data["value"]
+            return out_params
+
+        return self.populate(field, form, data)
 
 
 class Buttons(Control):
@@ -549,6 +583,15 @@ def extra_data(extra_fields, **kw):
                          )
     return form_field
 
+def text(text, **kw):
+
+    form_field = PageItem("text",
+                          control = Control("text",
+                                            dict(text = text), kw)
+                         )
+    return form_field
+
+
 ##Controls
 
 def dropdown(arg, **kw):
@@ -557,7 +600,9 @@ def dropdown(arg, **kw):
 
 def dropdown_code(arg, **kw):
 
-    return Dropdown("dropdown_code", dict(autocomplete = arg), kw)
+    default = kw.pop("default", None)
+
+    return Dropdown("dropdown_code", dict(autocomplete = arg), kw, default = default)
 
 def wmd(**kw):
 
@@ -594,10 +639,6 @@ def link(**kw):
 def link_list(**kw):
 
     return Control("link_list", kw)
-
-def text(text, **kw):
-
-    return Control("text", dict(text = text), kw)
 
 def info(**kw):
 

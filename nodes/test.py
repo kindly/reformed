@@ -269,10 +269,7 @@ class AutoFormPlus(TableNode):
 
             if field.type == "Text" and field.length > 500:
                 fields.append(input(field.name,
-                                    control = textarea(css = "large")))
-            elif field.type == "Boolean":
-                fields.append(input(field.name,
-                                    control = dropdown(["true", "false"])))
+                                    control = wmd(css = "large")))
             else:
                 fields.append(input(field.name))
 
@@ -281,7 +278,4 @@ class AutoFormPlus(TableNode):
         main.set_node(self)
         self._forms["main"] = main
 
-    def finalise(self):
-
-        self.set_form_buttons([['add', 'test.AutoFormPlus:_save:'], ['cancel', 'BACK']])
 

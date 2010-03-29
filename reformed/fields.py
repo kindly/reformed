@@ -206,7 +206,7 @@ class LookupId(Field):
         self.data_type = "Integer"
 
         self.other = other
-        self.filter_field = kw.get("type_field")
+        self.filter_field = kw.get("filter_field")
 
         if self.filter_field:
             foreign_key_name = "%s_%s_id" % (other, name)
