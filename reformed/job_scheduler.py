@@ -105,7 +105,6 @@ class JobSchedulerThread(threading.Thread):
 
             ## added as last resort 
             if time_counter == 0:
-                print 'tick'
                 try:
                     to_run = self.database.search("_core_job_scheduler",
                                                   "job_start_time <= now and job_started is null",
