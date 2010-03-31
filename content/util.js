@@ -204,6 +204,20 @@ $.Util.make_normal = function($item, field){
     return cleaned.value;
 };
 
+$.Util.set_class_list = function (item, extra_class){
+    if (!item.css && !extra_class){
+        return '';
+    }
+    var class_list = '';
+    if (extra_class){
+       class_list = extra_class;
+    }
+    if (item.css){
+        class_list += ' ' + item.css;
+    }
+    return ' class="' + class_list + '" ';
+};
+
 $.Util.get_item_value = function (item, data){
 
     if (data && data[item.name] !== undefined){
