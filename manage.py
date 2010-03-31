@@ -259,7 +259,6 @@ if __name__ == "__main__":
     if options.all:
         if not application:
             application = make_application(args)
-        print "deleting"
         delete(args)
         application = make_application(args)
         create(application)

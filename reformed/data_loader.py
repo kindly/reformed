@@ -340,7 +340,7 @@ class FlatFile(object):
             if chunk_status.error:
                 print chunk_status.error
             self.status.append(chunk_status)
-            self.calculate_stats()
+            print self.calculate_stats()
 
         return self.calculate_stats()
 
@@ -365,7 +365,6 @@ class FlatFile(object):
 
         message = "%s rows in %s seconds  %s rows/s with %s errors" % (completed,
                                    time, rate, other_errors + validation_errors)
-        print message
 
         percent = completed*100/(self.total_lines or 1)
 
