@@ -31,7 +31,7 @@ import resultset
 import tables
 import time
 from collections import defaultdict
-from util import get_paths, get_all_local_data
+from util import get_paths, get_all_local_data, split_table_fields
 from fields import ManyToOne, OneToOne, OneToMany, Integer, CopyTextAfter, CopyTextAfterField, DeleteRow
 import fields as field_types
 import sessionwrapper
@@ -535,47 +535,40 @@ class Database(object):
         tables = kw.get("tables", [table_name])
         fields = kw.get("fields", None)
 
+        join_tables = []
+
+        if fields:
+            join_tables = split_table_fields(fields, table).keys()
+            if table_name in join_tables:
+                join_tables.remove(table_name)
+            tables = None
+        if tables:
+            join_tables.extend(tables)
+            join_tables.remove(table_name)
+
         if "order_by" not in kw:
             kw["order_by"] = "id"
 
+        if join_tables:
+            kw["other_outer"] = join_tables
+            kw["distinct_many"] = False
 
-        one_to_many_tables = []
+        query = search.Search(self, table_name, session, where, *args, **kw)
 
-        for table in tables:
-            if table == table_name:
-                continue
-            if table not in self[table_name].local_tables:
-                one_to_many_tables.append(self.aliases[table])
-
-        if one_to_many_tables:
-            kw["distinct_many"] = True
-
-        query = search.Search(self, table_name, session, where, *args, **kw).search()
-
-        for cls in one_to_many_tables:
-            query = query.add_entity(cls)
-
-        if fields:
-            tables = None
-
+        result = resultset.ResultSet(query, **kw)
 
         try:
-            if limit:
-                results = query[offset: offset + limit]
-            else:
-                results = query.all()
+            result.collect() 
 
             if external_session:
-                return results
+                return result
+
+            results = result.results
 
             data = []
-            for result in results:
-                if one_to_many_tables:
-                    obj = result[0]
-                    extra_obj = result[1:]
-                else:
-                    obj = result
-                    extra_obj = None
+            for res in results:
+                obj = res
+                extra_obj = None
 
                 data.append(get_all_local_data(obj,
                                        tables = tables,
@@ -588,7 +581,7 @@ class Database(object):
             wrapped_results = {"data": data}
 
             if count:
-                wrapped_results["__count"] = query.count()
+                wrapped_results["__count"] = result.row_count
             return wrapped_results
         except Exception, e:
             session.rollback()
@@ -600,13 +593,12 @@ class Database(object):
     def search_single(self, table_name, *args, **kw):
 
         result = self.search(table_name, *args, limit = 2, **kw)
+        data = result.results
 
-        if isinstance(result, dict):
-            result = result["data"]
-
-        if not result or len(result) == 2:
+        if not data or len(data) == 2:
             raise custom_exceptions.SingleResultError("one result not found")
-        return result[0]
+
+        return result
 
 
     def logged_table(self, logged_table):

@@ -270,7 +270,7 @@ class UserGroup(TableNode):
 
 class UserAdmin(TableNode):
 
-    permissions = ['logged_in']
+    #permissions = ['logged_in']
 
     form_params =  {"form_type": "action"}
     main = form(

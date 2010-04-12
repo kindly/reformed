@@ -26,17 +26,39 @@ class ResultSet(object):
 
     def __init__(self, search, *arg, **kw):
 
+
         self.search = search
-        self.database = search.database
         self.session = search.session
+
+        self.limit = kw.get("limit", None)
+        self.offset = kw.get("offset", 0)
+        self.internal = kw.get("internal", None)
+        self.count = kw.get("count", None)
+        self.keep_all = kw.get("keep_all", None)
+        self.join_tables = kw.get("join_tables", [])
+
+        self.database = search.database
+
         self.order_by = kw.pop("order_by", None)
         self.result_num = kw.pop("result_num", 5)
-        self.offset = kw.pop("offset", 0)
-        if self.order_by:
-            self.ordered = getattr(self.database.get_class(self.search.table), self.order_by)
-            self.selection_set = self.search.search().order_by(self.ordered)
+
+
+        self.row_count = None
+
+    def collect(self):
+
+        self.query = self.search.search()
+
+        for cls in self.join_tables:
+            self.query = self.query.add_entity(cls)
+
+        if self.limit:
+            self.results = self.query[self.offset: self.offset + self.limit]
         else:
-            self.selection_set = self.search.search()
+            self.results = self.query.all()
+
+        if self.count:
+            self.row_count = self.query.count()
 
     def get_start_range(self, current_row):
         return current_row - current_row % self.result_num

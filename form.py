@@ -33,6 +33,7 @@ class Form(object):
         self.fieldswrappers = args
 
         self.fields = []
+        self.field_names = []
 
         self.name = name
 
@@ -43,8 +44,10 @@ class Form(object):
         ## not in init as fields want to know what table the forms is in
 
         for field in self.fieldswrappers:
-            self.fields.append(field(self))
-
+            instance = field(self)
+            self.fields.append(instance)
+            if instance.name:
+                self.field_names.append(instance.name)
 
         self.params = kw.get("params")
         self.title_field = kw.get("title_field")
@@ -110,9 +113,10 @@ class Form(object):
 
         if id:
             try:
-                obj = r.search_single(self.table, "id = ?",
+                result = r.search_single(self.table, "id = ?",
                                       values = [id],
                                       session = session)
+                obj = result.results[0]
                 obj._new = False
             except custom_exceptions.SingleResultError:
                 form.errors[root] = 'record not found'
@@ -120,6 +124,8 @@ class Form(object):
         else:
             obj = r.get_instance(self.table)
             obj._new = True
+            if parent_obj:
+                setattr(obj, relation_attr, parent_obj)
 
         ## normal fields
         for field in self.fields:
@@ -131,13 +137,8 @@ class Form(object):
         subform = node.data.get("__subform")
         if subform:
             child_id = node[subform].child_id
-            id_field = input(child_id, data_type = "Integer")
+            id_field = input(child_id, data_type = "Integer")(self)
             id_field.save(self, self.node, obj, data, session)
-
-        ## if a new object and a subform add the parent object to
-        ## relation property
-        if not id and parent_obj:
-            setattr(obj, relation_attr, parent_obj)
 
         version = data.get("_version")
         if version:
@@ -235,7 +236,12 @@ class Form(object):
 
             table = self.table
 
-            obj = r.search_single(table, where, session = session)
+            tables = util.split_table_fields(self.field_names, table).keys()
+
+            result = r.search_single(table, where, 
+                                          session = session, tables = tables)
+
+            obj = result.results[0]
 
             for field in util.INTERNAL_FIELDS:
                 try:

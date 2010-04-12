@@ -26,12 +26,13 @@ class Search(object):
         self.order_by = kw.get("order_by", None)
         self.distinct_many = kw.get("distinct_many", True)
 
+        self.extra_inner = kw.get("extra_inner", [])
+        self.extra_outer = kw.get("extra_outer", [])
+
         self.base_tables = kw.get("base_tables", None)
 
         if self.fields:
             self.tables = util.split_table_fields(self.fields, table).keys()
-
-        self.eager_tables = self.get_eager_tables(self.tables)
 
         self.table_paths_list = create_table_path_list(table_paths) 
 
@@ -45,26 +46,11 @@ class Search(object):
         else:
             self.search_base = self.session.query(self.database.get_class(self.table))
 
-        if self.eager_tables:
-            for eager_join in self.eager_tables:
-                self.search_base = self.search_base.options(sa.orm.eagerload_all(eager_join))
-
         self.queries = []
 
         if args:
             if args[0]:
                 self.add_query(*args, **kw)
-
-    def get_eager_tables(self, table_list):
-
-        local_tables = []
-
-        for table in table_list:
-            if table in self.rtable.local_tables:
-                join_list = self.rtable.local_tables[table]
-                local_tables.append(".".join(join_list))
-
-        return local_tables
 
     def order_by_clauses(self):
         clauses_list = self.order_by.strip().split(",")
@@ -114,6 +100,7 @@ class Search(object):
     def search(self, exclude_mode = None):
 
         if len(self.queries) == 0:
+            ##TODO make this a query so extra join contitions work
             query = self.search_base
             if self.order_by:
                 clauses = self.order_by_clauses()
@@ -125,7 +112,9 @@ class Search(object):
 
         if len(self.queries) == 1:
             ## if query contains a onetomany make the whole query a distinct
-            query = first_query.add_conditions(self.search_base)
+            query = first_query.add_conditions(self.search_base,
+                                               self.extra_inner,
+                                               self.extra_outer)
 
             for table in first_query.inner_joins.union(first_query.outer_joins):
                 if table != self.table and table not in self.rtable.local_tables:
@@ -145,7 +134,9 @@ class Search(object):
             query, exclude = item
             if n == 0 and exclude:
                 raise custom_exceptions.SearchError("can not exclude first query")
-            new_query = query.add_conditions(query_base)
+            new_query = query.add_conditions(query_base, 
+                                             self.extra_inner,
+                                             self.extra_outer)
             sa_queries.append([new_query, exclude])
 
         current_unions = [] 
@@ -281,7 +272,12 @@ class QueryBase(object):
 
             self.recurse_join_tree(node)
 
-    def add_conditions(self, sa_query):
+    def add_conditions(self, sa_query,
+                       extra_outer = [], extra_inner = []):
+
+        self.outer_joins.update(extra_outer)
+        self.inner_joins.update(extra_inner)
+
 
         self.sa_query = sa_query
 
