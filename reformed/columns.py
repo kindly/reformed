@@ -496,7 +496,7 @@ class Field(object):
     @property
     def validation_info(self):
         if not self.column:
-            raise AttributeError("can only get validation info on"
+            raise AttributeError("can only get validation info on "
                                  "fields with one column")
 
         all_validator = self.table.schema_dict[self.column.name]

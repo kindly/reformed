@@ -179,7 +179,7 @@ class FlatFile(object):
 
         self.make_parent_key_dict()
 
-        self.check_fields()
+        self.fields_correct = self.check_fields()
 
         self.get_all_decendants()
         
@@ -313,6 +313,10 @@ class FlatFile(object):
 
     def load(self, validation = True, load_multiprocess = False, batch = 50, messager = None):
 
+        if not self.fields_correct:
+            print "ERROR: fields do not match cannot load %s" % self.table
+            return
+
         self.validation = validation
 
         self.messager = messager
@@ -336,7 +340,7 @@ class FlatFile(object):
             if chunk_status.error:
                 print chunk_status.error
             self.status.append(chunk_status)
-            self.calculate_stats()
+            print self.calculate_stats()
 
         return self.calculate_stats()
 
@@ -361,7 +365,6 @@ class FlatFile(object):
 
         message = "%s rows in %s seconds  %s rows/s with %s errors" % (completed,
                                    time, rate, other_errors + validation_errors)
-        print message
 
         percent = completed*100/(self.total_lines or 1)
 
@@ -399,7 +402,11 @@ class FlatFile(object):
                 table = self.table
             else:
                 table = self.key_data[key].node
-            check_correct_fields(self.key_item_dict[key], self.database, table)
+            try:
+                check_correct_fields(self.key_item_dict[key], self.database, table)
+                return True
+            except custom_exceptions.InvalidField:
+                return False
 
     def get_all_decendants(self):
 

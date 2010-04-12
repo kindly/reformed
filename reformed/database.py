@@ -697,12 +697,13 @@ class ManagerThread(threading.Thread):
             if not self.initiator_thread.isAlive():
                 self.database.status = "terminated"
             if self.database.status == "terminated":
+                print '\nstopping threads, please wait'
                 self.database.job_scheduler.stop()
                 if self.database.scheduler_thread.isAlive():
                     self.database.scheduler_thread.stop()
                     self.database.scheduler_thread.join()
                 break
-            time.sleep(1)
+            time.sleep(0.1)
 
 def table(name, database, *args, **kw):
     """helper to add table to database args and keywords same as Table definition"""

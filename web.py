@@ -142,7 +142,7 @@ class WebApplication(object):
         try:
             self.application = self.load_application_data(self.database)
         except KeyError:
-            print 'fail loading application data. No tables?'
+            pass
 
     def load_application_data(self, database):
         data = {}
@@ -150,15 +150,15 @@ class WebApplication(object):
         for row in results:
             key = row['key']
             value = row['value']
-            type = row['type']
-            if type == 2:
+            var_type = row['type']
+            if var_type == 2:
                 # Integer
                 try:
                     value = Int(value)
                 except:
                     value = 0
 
-            if type == 3:
+            if var_type == 3:
                 # Boolean
                 if value.lower() == 'true':
                     value = True
@@ -180,7 +180,7 @@ class WebApplication(object):
 
         print '\n  Application data\n  ----------------'
         for key in data.keys():
-            print '  %s = %s' % (key, data[key])
+            print '(%s)\t%s = %s' % (type(data[key]).__name__, key, data[key])
         print
 
         data['bookmarks'] = self.get_bookmark_data()

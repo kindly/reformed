@@ -56,13 +56,15 @@ relation("involvement", d,
 
       valid_entities1 = "ticket",
       valid_entities2 = "user,usergroup",
+      table_type = "system",
 )
 
 
 table("role", d, ## notes for each user
       Text("name", mandatory = True),
       Text("desctiption", length = 2000),
-      valid_entities = "ticket"
+      valid_entities = "ticket",
+      table_type = "system",
 )
 
 
@@ -73,7 +75,8 @@ table("bookmarks",d,
     Text("bookmark"),
     Text("title"),
     Text("entity_table"),
-    DateTime("accessed_date")
+    DateTime("accessed_date"),
+    table_type = "system",
 )
 
 table("code", d,
@@ -85,6 +88,7 @@ table("code", d,
       CreatedBy("created_by"),
       lookup = True,
 
+      table_type = "system",
       title_field = "name"
 )
 
@@ -93,7 +97,8 @@ table("code_type", d,
       Text("name", mandatory = True),
       Text("desctiption", length = 2000),
       Created("created_date"), 
-      CreatedBy("created_by")
+      CreatedBy("created_by"),
+      table_type = "system",
 )
 
 
