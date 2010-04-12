@@ -631,7 +631,9 @@ def codegroup(code_table, **kw):
     code_title = kw.pop('code_title_field', None)
     code_desc = kw.pop('code_desc_field', None)
 
-    return page_item("input",
+    name = kw.pop("name", code_table)
+
+    return page_item("input", name,
                     control = CodeGroup("codegroup",
                                         code_table = code_table,
                                         code_title = code_title,
