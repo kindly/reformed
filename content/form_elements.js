@@ -31,7 +31,7 @@ $FormElements = function(){
 
     function form_description(item){
         if (item.description){
-            return '<div class="f_description">' + process_html(item.description, row_data, true) + '</div>';
+            return '<div class="f_description">' + process_html(item.description, local_row_data, true) + '</div>';
         } else {
             return '';
         }
@@ -65,16 +65,6 @@ $FormElements = function(){
         return $control;
     }
 
-    function size_boxes(){
-        var $box;
-        var width;
-        var $boxes = $form.find('div.BOX');
-        for (var i = 0, n = $boxes.size(); i < n ; i++){
-            $box = $boxes.eq(i);
-            width = $box.parent().width() - util_size.FORM_BOX_W;
-            $box.width(width);
-        }
-    }
 
     function link(item, value){
         var split = value.split("|");
@@ -208,43 +198,6 @@ $FormElements = function(){
                 return data
         }
 
-    }
-
-
-    function process_html(text, data, inline){
-        var match;
-        var out = text;
-        var start;
-        var end;
-        var substitute_data;
-        var format;
-
-        // data substitution
-        var offset = 0;
-        var reg = /\{([^}:]+):?([^}]*)\}/g;
-        while (match = reg.exec(text)){
-            if (data[match[1]] === undefined){
-                continue;
-            }
-            substitute_data = data[match[1]];
-            if (match[2] && substitute_data){
-                substitute_data = format_data(substitute_data, match[2]);
-            }
-
-            start = match.index + offset;
-            end = match.index + match[0].length + offset;
-            offset += substitute_data.length - match[0].length;
-            out = out.substring(0, start) + substitute_data + out.substring(end);
-        }
-
-        var mode = Showdown.MODE_FULL;
-        if (inline){
-            mode = Showdown.MODE_SIMPLE;
-        }
-        var converter = new Showdown.converter();
-        out = converter.makeHtml(out, mode);
-
-        return out;
     }
 
 
@@ -386,6 +339,7 @@ $FormElements = function(){
     var HTML_Encode = $.Util.HTML_Encode;
     var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
     var set_class_list = $.Util.set_class_list;
+    var process_html = $.Util.process_html;
 
     return {
         'build' : function(readonly, item, value){

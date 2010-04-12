@@ -907,11 +907,23 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         'get_form_data' : get_form_data_remote
     };
 
+    function size_boxes(){
+        var $box;
+        var width;
+        var $boxes = $form.find('div.BOX');
+        for (var i = 0, n = $boxes.size(); i < n ; i++){
+            $box = $boxes.eq(i);
+            width = $box.parent().width() - util_size.FORM_BOX_W;
+            $box.width(width);
+        }
+    }
+
     var local_row_data;
 
     var subforms = [];
     var util_size = $.Util.Size;
     var HTML_Encode = $.Util.HTML_Encode;
+    var process_html = $.Util.process_html;
     var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
     //FIXME how do we deal with data in the form
 
