@@ -163,12 +163,11 @@ class User(TableNode):
         if vdata['login_name'] and vdata['password']:
             where = "login_name='%s' and password='%s'" % (vdata['login_name'], vdata['password'])
             try:
-                data_out = r.search_single('user', where)
+                data_out = r.search_single_data('user', where)
                 if data_out.get('active') != True:
                     message = '# Login failed\n\nThis account is disabled.'
                     self.show_login_form(message)
                 else:
-
                     result = r.search('permission', 'user_group_user.user_id = %s and permission="Login"' % data_out.get('id'), fields=['permission'])['data']
                     if not result:
                         message = '# Login failed\n\nThis account is not allowed to log into the system.'
@@ -179,6 +178,7 @@ class User(TableNode):
             except:
                 message = '# Login failed\n\nuser name or password incorrect, try again.'
                 self.show_login_form(message)
+                raise
         else:
             message = '# Login.\n\nWelcome to %s enter your login details to continue' % global_session.application['name']
             self.show_login_form(message)

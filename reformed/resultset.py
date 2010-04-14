@@ -22,6 +22,8 @@
 ##	
 ##	This file is produces a result set.
 
+import reformed.util as util
+
 class ResultSet(object):
 
     def __init__(self, search, *arg, **kw):
@@ -32,9 +34,9 @@ class ResultSet(object):
 
         self.limit = kw.get("limit", None)
         self.offset = kw.get("offset", 0)
-        self.internal = kw.get("internal", None)
-        self.count = kw.get("count", None)
-        self.keep_all = kw.get("keep_all", None)
+        self.internal = kw.get("internal", False)
+        self.count = kw.get("count", False)
+        self.keep_all = kw.get("keep_all", True)
         self.join_tables = kw.get("join_tables", [])
 
         self.database = search.database
@@ -42,10 +44,47 @@ class ResultSet(object):
         self.order_by = kw.pop("order_by", None)
         self.result_num = kw.pop("result_num", 5)
 
+        self.tables = kw.get("tables", [search.table])
+        self.fields = kw.get("fields", None)
 
         self.row_count = None
+        self.results = None
+
+    def __getitem__(self, item):
+        """only here for compatability"""
+        if item == "data":
+            self.create_data()
+            return self.data 
+        if item == "__count":
+            if self.results is None:
+                self.collect()
+            return self.row_count
+
+        
+    def create_data(self):
+
+        if self.results is None:
+            self.collect()
+        
+        results = self.results
+
+        self.data = []
+        for res in results:
+            obj = res
+            extra_obj = None
+
+            self.data.append(util.get_all_local_data(obj,
+                                   tables = self.tables,
+                                   fields = self.fields,
+                                   internal = self.internal,
+                                   keep_all = self.keep_all,
+                                   allow_system = True,
+                                   extra_obj = extra_obj))
 
     def collect(self):
+
+        if self.results is not None:
+            return
 
         self.query = self.search.search()
 

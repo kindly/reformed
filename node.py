@@ -155,7 +155,7 @@ class Node(object):
         # only update bookmarks for proper users
         if user_id:
             try:
-                result = r.search_single("bookmarks",
+                result = r.search_single_data("bookmarks",
                                          "user_id = ? and bookmark = ?",
                                          fields = ['title', 'bookmark', 'entity_table', 'entity_id', 'accessed_date'],
                                          values = [user_id, self.bookmark["bookmark_string"]])

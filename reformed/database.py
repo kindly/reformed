@@ -554,35 +554,14 @@ class Database(object):
             kw["distinct_many"] = False
 
         query = search.Search(self, table_name, session, where, *args, **kw)
-
         result = resultset.ResultSet(query, **kw)
 
         try:
+            query = search.Search(self, table_name, session, where, *args, **kw)
+            result = resultset.ResultSet(query, **kw)
             result.collect() 
+            return result
 
-            if external_session:
-                return result
-
-            results = result.results
-
-            data = []
-            for res in results:
-                obj = res
-                extra_obj = None
-
-                data.append(get_all_local_data(obj,
-                                       tables = tables,
-                                       fields = fields,
-                                       internal = internal,
-                                       keep_all = keep_all,
-                                       allow_system = True,
-                                       extra_obj = extra_obj))
-
-            wrapped_results = {"data": data}
-
-            if count:
-                wrapped_results["__count"] = result.row_count
-            return wrapped_results
         except Exception, e:
             session.rollback()
             raise
@@ -599,6 +578,16 @@ class Database(object):
             raise custom_exceptions.SingleResultError("one result not found")
 
         return result
+
+    def search_single_data(self, table_name, *args, **kw):
+
+        result = self.search(table_name, *args, limit = 2, **kw)
+        data = result.results
+
+        if not data or len(data) == 2:
+            raise custom_exceptions.SingleResultError("one result not found")
+
+        return result["data"][0]
 
 
     def logged_table(self, logged_table):
