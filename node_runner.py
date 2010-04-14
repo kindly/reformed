@@ -141,5 +141,5 @@ def bookmark_list(user_id, limit = 100):
                                   values = [user_id],
                                   order_by = "accessed_date",
                                   keep_all = False,
-                                  limit = limit)["data"]
+                                  limit = limit).data
     return bookmarks

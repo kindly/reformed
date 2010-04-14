@@ -24,6 +24,7 @@ import formencode as fe
 import sqlalchemy as sa
 import reformed.util as util
 import reformed.custom_exceptions as custom_exceptions
+import urllib
 from page_item import input
 
 class Form(object):
@@ -81,7 +82,7 @@ class Form(object):
         parent_value = data.get(self.parent_id)
 
         where = "%s=%s" % (self.child_id, parent_value)
-        out = r.search(self.table, where)["data"]
+        out = r.search(self.table, where).data
 
         return out
 
@@ -360,7 +361,7 @@ class Form(object):
                                offset = offset,
                                count = True)
 
-        data = results['data']
+        data = results.data
         # build the links
         if r[table].entity:
             for row in data:
@@ -383,8 +384,9 @@ class Form(object):
                               ]
         data = {'__array' : data}
 
+        encoded_data = urllib.urlencode(node.extra_data)
 
-        data['__buttons'] = [['add new %s' % self.table, '%s:new' % self.node_name],
+        data['__buttons'] = [['add new %s' % self.table, '%s:new:%s:' % (self.node_name, encoded_data)],
                              ['cancel', 'BACK']]
 
         data['__message'] = "These are the current %s(s)." % self.table
@@ -392,7 +394,7 @@ class Form(object):
         out = node["listing"].create_form_data(data)
 
         # add the paging info
-        out['paging'] = {'row_count' : results['__count'],
+        out['paging'] = {'row_count' : results.row_count,
                          'limit' : limit,
                          'offset' : offset,
                          'base_link' : 'n:%s:list:q=%s' % (self.name, query)}

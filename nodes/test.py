@@ -186,7 +186,7 @@ class Search(TableNode):
                             fields=['table', 'title', 'summary'],
                             count = True,
                            )
-        data = results['data']
+        data = results.data
 
         for row in data:
             # FIXME want nicer way of getting the table name
@@ -205,7 +205,7 @@ class Search(TableNode):
         out = self["listing"].create_form_data(data)
 
         # add the paging info
-        out['paging'] = {'row_count' : results['__count'],
+        out['paging'] = {'row_count' : results.row_count,
                          'limit' : limit,
                          'offset' : offset,
                          'base_link' : 'n:%s::q=%s' % (self.name, query)}

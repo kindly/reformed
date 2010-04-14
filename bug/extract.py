@@ -10,7 +10,7 @@ def extract(database, dir):
 
     for table in database.tables:
         print 'extracting ', table
-        results = database.search(table, tables = [table])["data"]
+        results = database.search(table, tables = [table]).data
         with file(os.path.join(data_folder, "%s.csv" % table), mode = "w+") as out_file:
             csv_file = csv.writer(out_file,quoting=csv.QUOTE_ALL)
 

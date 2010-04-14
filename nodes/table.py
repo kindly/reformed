@@ -320,11 +320,11 @@ class Edit(node.TableNode):
         offset = self.get_data_int('o')
 
         obj = r[self.table_id]
-        results = r.search(obj.name, limit=limit, offset=offset, count=True)
-        data = self["main"].create_form_data(results['data'])
+        results = r.search(obj.name, limit=limit, offset=offset, count=True).data
+        data = self["main"].create_form_data(results)
 
         # add the paging info
-        data['paging'] = {'row_count' : results['__count'],
+        data['paging'] = {'row_count' : results.row_count,
                          'limit' : limit,
                          'offset' : offset,
                          'base_link' : 'n:%s:list:t=%s' % (self.name, self.table_id)}

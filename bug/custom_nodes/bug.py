@@ -168,7 +168,7 @@ class User(TableNode):
                     message = '# Login failed\n\nThis account is disabled.'
                     self.show_login_form(message)
                 else:
-                    result = r.search('permission', 'user_group_user.user_id = %s and permission="Login"' % data_out.get('id'), fields=['permission'])['data']
+                    result = r.search('permission', 'user_group_user.user_id = %s and permission="Login"' % data_out.get('id'), fields=['permission']).data
                     if not result:
                         message = '# Login failed\n\nThis account is not allowed to log into the system.'
                         self.show_login_form(message)
@@ -194,7 +194,7 @@ class User(TableNode):
 
     def about_me(self):
         where = 'id = %s' % global_session.session['user_id']
-        self["about_me_form"].view(where = where)
+        self["about_me_form"].view(read_only = False, where = where)
 
     def save_about_me(self):
         self["about_me_form"].save()
@@ -217,7 +217,7 @@ class User(TableNode):
 
     def get_permissions(self, user_id):
 
-        result = r.search('permission', 'user_group_user.user_id = %s' % user_id, fields=['permission'])['data']
+        result = r.search('permission', 'user_group_user.user_id = %s' % user_id, fields=['permission']).data
         permissions = ['logged_in']
         for row in result:
             permissions.append(row.get('permission'))

@@ -146,7 +146,7 @@ class WebApplication(object):
 
     def load_application_data(self, database):
         data = {}
-        results = database.search('_system_info')['data']
+        results = database.search('_system_info').data
         for row in results:
             key = row['key']
             value = row['value']

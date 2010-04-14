@@ -49,17 +49,14 @@ class ResultSet(object):
 
         self.row_count = None
         self.results = None
+        self._data = None
 
-    def __getitem__(self, item):
-        """only here for compatability"""
-        if item == "data":
+    @property
+    def data(self):
+        if self._data is None:
             self.create_data()
-            return self.data 
-        if item == "__count":
-            if self.results is None:
-                self.collect()
-            return self.row_count
 
+        return self._data
         
     def create_data(self):
 
@@ -68,12 +65,12 @@ class ResultSet(object):
         
         results = self.results
 
-        self.data = []
+        self._data = []
         for res in results:
             obj = res
             extra_obj = None
 
-            self.data.append(util.get_all_local_data(obj,
+            self._data.append(util.get_all_local_data(obj,
                                    tables = self.tables,
                                    fields = self.fields,
                                    internal = self.internal,

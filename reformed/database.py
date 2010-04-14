@@ -587,7 +587,7 @@ class Database(object):
         if not data or len(data) == 2:
             raise custom_exceptions.SingleResultError("one result not found")
 
-        return result["data"][0]
+        return result.data[0]
 
 
     def logged_table(self, logged_table):

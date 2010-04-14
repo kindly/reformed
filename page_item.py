@@ -531,7 +531,7 @@ class CodeGroup(Control):
         if self.code_desc:
             fields.append(self.code_desc)
 
-        codes = r.search(self.code_table, fields = fields)['data']
+        codes = r.search(self.code_table, fields = fields).data
 
         code_array = []
         for row in codes:
