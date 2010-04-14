@@ -1268,6 +1268,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             var $subforms = $input.find('div.SUBFORM');
             var subform;
             var data;
+            var subforms = $FormElements.get_subforms();
             for (var i = 0, n = subforms.length; i < n; i ++){
                 subform = subforms[i].item;
                 extra_defaults = {__table: subform.form.table_name,
@@ -1290,7 +1291,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 }
             }
         }
-
+        $FormElements.clear_subforms();
         $form.empty();
         form_controls_hash = {};
         builder_depth = 0;
@@ -1326,9 +1327,9 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         }
         $form.append($builder[0].contents());
 
-        if (subforms.length){
+       // if (subforms.length){
             build_subforms();
-        }
+      //  }
     }
 
     init();

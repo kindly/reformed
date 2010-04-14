@@ -229,6 +229,24 @@ $.Util.get_item_value = function (item, data){
     return null;
 };
 
+$.Util.format_data = function (data, format){
+
+    switch (format){
+        case 'd':
+            // general date
+        case 'df':
+            // date full
+            return Date.ISO(data).toLocaleString();
+        case 'ds':
+            // short date
+            return Date.ISO(data).toLocaleDateString();
+        default:
+            // unknown
+            return data
+    }
+
+};
+
 $.Util.process_html = function (text, data, inline){
     var match;
     var out = text;
@@ -236,7 +254,6 @@ $.Util.process_html = function (text, data, inline){
     var end;
     var substitute_data;
     var format;
-
     // data substitution
     var offset = 0;
     var reg = /\{([^}:]+):?([^}]*)\}/g;
@@ -246,7 +263,7 @@ $.Util.process_html = function (text, data, inline){
         }
         substitute_data = data[match[1]];
         if (match[2] && substitute_data){
-            substitute_data = format_data(substitute_data, match[2]);
+            substitute_data = $.Util.format_data(substitute_data, match[2]);
         }
 
         start = match.index + offset;

@@ -148,7 +148,7 @@ $FormElements = function(){
 
     function markdown(item, value){
         if (value){
-            value = process_html(value, row_data);
+            value = process_html(value, local_row_data);
         }
         var $control = $(add_label(item, 'rf_') + '<span' + set_class_list(item) + '>' + value + '</span>');
         return $control;
@@ -180,24 +180,6 @@ $FormElements = function(){
             css = '';
         }
         return '<div class="f_message' + css + '">' + message + '</div>';
-    }
-
-    function format_data(data, format){
-
-        switch (format){
-            case 'd':
-                // general date
-            case 'df':
-                // date full
-                return Date.ISO(data).toLocaleString();
-            case 'ds':
-                // short date
-                return Date.ISO(data).toLocaleDateString();
-            default:
-                // unknown
-                return data
-        }
-
     }
 
 
@@ -335,6 +317,7 @@ $FormElements = function(){
     }
 
     var local_row_data = {};
+    var subforms = [];
 
     var HTML_Encode = $.Util.HTML_Encode;
     var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
@@ -347,6 +330,12 @@ $FormElements = function(){
         },
         'set_data' : function(data){
             local_row_data = data;
+        },
+        'clear_subforms' : function (){
+            subforms = [];
+        },
+        'get_subforms' : function (){
+            return subforms;
         }
     }
 
