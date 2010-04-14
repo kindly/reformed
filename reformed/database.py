@@ -519,19 +519,6 @@ class Database(object):
             session = self.Session()
             external_session = False
 
-        # convert string values to int
-        try:
-            limit = int(kw.get("limit", None))
-        except:
-            limit = None
-        count = kw.get("count", False)
-        # convert string values to int
-        try:
-            offset = int(kw.get("offset", 0))
-        except:
-            offset = 0
-        keep_all = kw.get("keep_all", True)
-        internal = kw.get("internal", False)
         tables = kw.get("tables", [table_name])
         fields = kw.get("fields", None)
 
@@ -550,11 +537,8 @@ class Database(object):
             kw["order_by"] = "id"
 
         if join_tables:
-            kw["other_outer"] = join_tables
+            kw["extra_outer"] = join_tables
             kw["distinct_many"] = False
-
-        query = search.Search(self, table_name, session, where, *args, **kw)
-        result = resultset.ResultSet(query, **kw)
 
         try:
             query = search.Search(self, table_name, session, where, *args, **kw)

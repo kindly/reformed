@@ -32,8 +32,8 @@ class ResultSet(object):
         self.search = search
         self.session = search.session
 
-        self.limit = kw.get("limit", None)
-        self.offset = kw.get("offset", 0)
+        self.limit = int(kw.get("limit", 0))
+        self.offset = int(kw.get("offset", 0))
         self.internal = kw.get("internal", False)
         self.count = kw.get("count", False)
         self.keep_all = kw.get("keep_all", True)
