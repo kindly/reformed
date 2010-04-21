@@ -51,18 +51,20 @@ class ResultSet(object):
         self.results = None
         self._data = None
 
+        self.current_row = 0
+
     @property
     def data(self):
         if self._data is None:
             self.create_data()
 
         return self._data
-        
+
     def create_data(self):
 
         if self.results is None:
             self.collect()
-        
+
         results = self.results
 
         self._data = []
@@ -96,14 +98,36 @@ class ResultSet(object):
         if self.count:
             self.row_count = self.query.count()
 
+    def get(self, name):
+
+        split_name = name.split(".")
+
+        if len(split_name) == 1:
+            table, field = self.search.table, split_name[0]
+        else:
+            table, field = split_name
+
+        if self.join_tables:
+            if table == self.search.table:
+                obj = self.results[self.current_row][0]
+            else:
+                index = self.join_tables.index(table) + 1
+                obj = self.results[self.current_row][index]
+        else:
+            obj = self.results[self.current_row]
+
+        if field in obj._table.fields:
+            return util.convert_value(getattr(obj, field))
+
+
     def get_start_range(self, current_row):
         return current_row - current_row % self.result_num
-    
+
     def all(self):
 
         return self.selection_set.all()
 
-    def first(self):        
+    def first(self):
 
         self.current_row = 0
         return self.selection_set[0]

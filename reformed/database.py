@@ -525,7 +525,7 @@ class Database(object):
         join_tables = []
 
         if fields:
-            join_tables = split_table_fields(fields, table).keys()
+            join_tables = split_table_fields(fields, table_name).keys()
             if table_name in join_tables:
                 join_tables.remove(table_name)
             tables = None

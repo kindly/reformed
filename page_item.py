@@ -161,15 +161,20 @@ class PageItem(object):
         if self.control and self.control.control_save:
             self.control.save(self, form, node, object, data, session)
 
-    def load(self, form, node, object, data, session):
+    def load(self, form, node, result, data, session):
 
         if not self.check_permissions():
             return
+        if not self.name:
+            return
 
-        if self.name in object._table.fields:
-            data[self.name] = util.convert_value(getattr(object, self.name))
+        value = result.get(self.name)
+        if value:
+            data[self.name] = value
+            #util.convert_value(getattr(object, self.name))
 
         if self.control and self.control.control_load:
+            object = result.results[0]
             self.control.load(self, form, node, object, data, session)
 
     def delete(self, form, node, object, data, session):

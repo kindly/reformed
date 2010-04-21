@@ -252,7 +252,7 @@ class Form(object):
                     extra_field = None
 
             for field in self.fields:
-                field.load(self, node, obj, data_out, session)
+                field.load(self, node, result, data_out, session)
 
             id = data_out.get('id')
             if self.title_field and data_out.has_key(self.title_field):
