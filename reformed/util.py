@@ -277,15 +277,12 @@ def create_table_path(table_path_list, table):
         table_name = edge.node
         relation = edge.relation
 
-        table_path[edge.name] = [list(key), relation]
-
-        #new_name = ".".join(one_ways + [table_name])
-        #if new_name in table_path:
-        #    old_keys, old_relation = table_path.pop(new_name)
-        #    table_path["%s.%s" % (new_name, old_relation.name)] = [old_keys, old_relation] 
-        #    table_path["%s.%s" % (new_name, relation.name)] = [list(key), relation] 
-        #else:
-        #    table_path[new_name] = [list(key), relation]
+        if relation.no_auto_path:
+            continue
+        elif edge.name in table_path:
+            table_path[edge.name] = "ambiguous"
+        else:
+            table_path[edge.name] = [list(key), relation]
 
     return table_path
 

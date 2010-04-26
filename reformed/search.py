@@ -26,8 +26,27 @@ class Search(object):
         self.order_by = kw.get("order_by", None)
         self.distinct_many = kw.get("distinct_many", True)
 
-        self.extra_inner = kw.get("extra_inner", [])
-        self.extra_outer = kw.get("extra_outer", [])
+        self._extra_inner = kw.get("extra_inner", [])
+        self._extra_outer = kw.get("extra_outer", [])
+
+        self.extra_inner, self.custom_inner, self.special_inner = [], [] ,[]
+        self.extra_outer, self.custom_outer, self.special_outer = [], [] ,[]
+
+        for table in self._extra_inner:
+            if table.count(">>") == 1:
+                self.special_inner.append(table)
+            elif table.count(">") >= 1:
+                self.custom_inner.append(table)
+            else:
+                self.extra_inner.append(table)
+
+        for table in self._extra_outer:
+            if table.count(">>") == 1:
+                self.special_outer.append(table)
+            elif table.count(">") >= 1:
+                self.custom_outer.append(table)
+            else:
+                self.extra_outer.append(table)
 
         self.base_tables = kw.get("base_tables", None)
 
@@ -277,7 +296,6 @@ class QueryBase(object):
 
         self.outer_joins.update(extra_outer)
         self.inner_joins.update(extra_inner)
-
 
         self.sa_query = sa_query
 

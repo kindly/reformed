@@ -307,7 +307,7 @@ FROM donkey_sponsership ORDER BY donkey_sponsership.amount DESC, people.name, do
 
     def test_search_split(self):
 
-        result1, result2, result3 = self.Donkey.search("people", session = self.session, limit =3)
+        result1, result2, result3 = self.Donkey.search("people", session = self.session, limit =3).results
 
 
         code = self.Donkey.get_instance("code")
@@ -340,18 +340,4 @@ FROM donkey_sponsership ORDER BY donkey_sponsership.amount DESC, people.name, do
         a = Search(self.Donkey, "people", self.session, "over_18.code.type = 'over_18' or gender.code.type = gender")
 
         assert len(a.search().all()) == 2
-
-        
-    def test_eager_loads(self):
-
-        search = Search(self.Donkey, "donkey_sponsership", self.session, tables = ["people", "donkey", "donkey_sponsership", "donkey_pics"])
-
-        print dir(search.search())
-        print search.search()
-
-        assert search.eager_tables ==  ['_people', '_donkey', '_donkey.donkey_pics']
-
-        search = Search(self.Donkey, "donkey_sponsership", self.session, fields = ["people.id", "donkey.name", "amount", "donkey_pics.pic_name"], tables = ["people", "donkey", "donkey_sponsership", "donkey_pics"])
-
-        assert set(search.eager_tables) ==  set(['_people', '_donkey', '_donkey.donkey_pics'])
 

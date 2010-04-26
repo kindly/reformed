@@ -222,6 +222,7 @@ class Relation(BaseSchema):
         if backref:
             self.sa_options["backref"] = backref
         self.one_way = kw.pop("one_way", None)
+        self.no_auto_path = kw.get("no_auto_path", False)
         self.parent = None
 
     @property
@@ -250,6 +251,8 @@ class Relation(BaseSchema):
                 self.many_side_mandatory = parent.many_side_mandatory
             if parent.one_way:
                 self.one_way = True
+            if parent.no_auto_path:
+                self.no_auto_path = True
             if parent.foreign_key_name:
                 self.foreign_key_name = parent.foreign_key_name
 
@@ -409,6 +412,8 @@ class Field(object):
         obj.many_side_mandatory = kw.get("many_side_mandatory", False)
 
         obj.one_way = kw.get("one_way", None)
+
+        obj.no_auto_path = kw.get("no_auto_path", False)
 
         obj.data_type = None
         return obj
