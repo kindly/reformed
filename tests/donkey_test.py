@@ -93,7 +93,7 @@ class test_donkey(object):
         table("email", cls.Donkey,
               Email("email"),
               Counter("email_number", base_level = "people"),
-              Boolean("active_email", default = True)
+              Boolean("active_email", default = False)
              )
         entity("donkey", cls.Donkey,
               Text("name", validation = '__^[a-zA-Z0-9]*$'),
@@ -569,12 +569,19 @@ class test_basic_input(test_donkey):
         b.Type = None
         a.transactions.append(b)
 
+        email = self.Donkey.get_instance("email")
+        email.email = "poop@poop.com"
+
+        a.email.append(email)
+
         self.session.add(a)
         self.session.add(b)
+        self.session.add(email)
 
         self.session.commit()
 
         assert b.Type == "payment"
+        assert email.active_email is False
 
 
     def test_all_fields_have_different_numbers(self):
