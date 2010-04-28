@@ -110,7 +110,7 @@ def reload(host, options):
     import paste.reloader
     print "reloading"
 
-    application = make_application(args)
+    application = make_application()
     paste.reloader.install()
     run(options.host, options.port, application, options.ssl, options.ssl_cert)
 
