@@ -27,16 +27,13 @@ from optparse import OptionParser
 import application as app
 
 application = None
+dir = None
 
 def make_application(args):
 
     global application
 
     if not application:
-        if args:
-            dir = args[0]
-        else:
-            dir = "sample"
         application = app.Application(dir)
     return application
 
@@ -231,6 +228,12 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args()
 
     application = None
+
+    # default application directory
+    if args:
+        dir = args[0]
+    else:
+        dir = "sample"
 
     if options.extract:
         extract(make_application(args))
