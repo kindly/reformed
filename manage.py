@@ -113,11 +113,11 @@ def output_sys_info(application):
     # FIXME this maybe an issue with ones added by modules
     # are the modules loaded?
     import web
-    print '\n  Application data\n  ----------------'
+    print '\n----- Application Data -----\n'
     sys_info = application.database.sys_info_full
 
     for key in sys_info.keys():
-        print '(%s)\t%s = %s\t%s' % (type(sys_info[key]['value']).__name__,
+        print '(%s)\t%s = %s\n - %s' % (type(sys_info[key]['value']).__name__,
                                      key,
                                      sys_info[key]['value'],
                                      sys_info[key]['description'])
