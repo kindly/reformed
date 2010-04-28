@@ -138,71 +138,44 @@ class WebApplication(object):
                                                     )
 
         global_session.database = self.database
-        # temporary system wide settings
-        try:
-            self.application = self.load_application_data(self.database)
-        except KeyError:
-            pass
 
-    def load_application_data(self, database):
-        data = {}
-        results = database.search('_system_info').data
-        for row in results:
-            key = row['key']
-            value = row['value']
-            var_type = row['type']
-            if var_type == 2:
-                # Integer
-                try:
-                    value = Int(value)
-                except:
-                    value = 0
-
-            if var_type == 3:
-                # Boolean
-                if value.lower() == 'true':
-                    value = True
-                else:
-                    value = False
-
-            if key:
-                data[key] = value
-
-        # list of default data if none provided
-        defaults = dict(public = True,
-                        name = 'Reformed Application',
-                        test_default = 'test')
-
-        for key in defaults.keys():
-            if not data.has_key(key):
-                data[key] = defaults[key]
-
+        self.load_application_data()
+        # system wide settings
+        self.application = self.database.sys_info
 
         print '\n  Application data\n  ----------------'
-        for key in data.keys():
-            print '(%s)\t%s = %s' % (type(data[key]).__name__, key, data[key])
+        for key in self.application.keys():
+            print '(%s)\t%s = %s' % (type(self.application[key]).__name__, key, self.application[key])
         print
 
-        data['bookmarks'] = self.get_bookmark_data()
 
-        return data
+    def load_application_data(self):
+
+        # list of default data if none provided
+        register = self.database.register_info
+
+        register("public", True)
+        register("name", 'Reformed Application')
+        register("test_default", "test")
+
+        self.get_bookmark_data()
+
 
     def get_bookmark_data(self):
         # FIXME this is hard coded for bugs
-        data = dict(
-            user = dict(title = 'Users', node = 'bug.User'),
-            ticket = dict(title = 'Ticket', node = 'bug.Ticket'),
-            user_group = dict(title = 'User Group', node = 'bug.UserGroup'),
-            permission = dict(title = 'Permission', node = 'bug.Permission'),
-            _system_info = dict(title = 'System Settings', node = 'bug.SysInfo'),
-        )
 
-        print '\n  Bookmark data\n  -------------'
-        for key in data.keys():
-            print '  table: %s, \t%s \tnode: %s' % (key, data[key]['title'], data[key]['node'])
-        print
+        register = self.database.register_info
+        register("bookmarks>user>title", "Users")
+        register("bookmarks>user>node", "bug.User")
+        register("bookmarks>ticket>title", "Ticket")
+        register("bookmarks>ticket>node", "bug.Ticket")
+        register("bookmarks>user_group>title", "User Group")
+        register("bookmarks>user_group>node", "bug.UserGroup")
+        register("bookmarks>permission>title", "Permission")
+        register("bookmarks>permission>node", "bug.Permission")
+        register("bookmarks>_system_info>title", "System Settings")
+        register("bookmarks>_system_info>node", "bug.SysInfo")
 
-        return data
 
     def static(self, environ, start_response, path):
         """Serve static content"""

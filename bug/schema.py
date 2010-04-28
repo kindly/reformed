@@ -162,15 +162,6 @@ table("permission",d,
     title_field = 'permission'
 )
 
-table("_system_info",d,
-
-    Text("key", length = 100, mandatory = True),
-    Text("value", length = 2000),
-    Integer("type", default = 1),
-    table_type = "system"
-)
-
-
 table("page",d,
     Text("page", length = 50, mandatory = True),
     Text("title", length = 200, mandatory = True),
