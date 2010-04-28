@@ -78,7 +78,8 @@ class Database(object):
         self.graph = None
         self.fields_to_persist = []
         self.relations = []
-        self.sys_info = {}
+        self.sys_info = {}  # used for quick access to the system variables
+        self.sys_info_full = {} # store of the full system info
 
         ## zodb database
         if self.zodb_store:
@@ -94,7 +95,7 @@ class Database(object):
                 root["sys_info"] = PersistentMapping()
                 transaction.commit()
             else:
-                self.cache_sys_info(root["sys_info"], self.sys_info)
+                self.cache_sys_info(root["sys_info"])
 
             connection.close()
         ## zodb database
@@ -116,26 +117,18 @@ class Database(object):
         self.job_scheduler = job_scheduler.JobScheduler(self)
         self.scheduler_thread = job_scheduler.JobSchedulerThread(self, threading.currentThread())
 
-    def register_info(self, path, value, force = False):
 
-        path_list = path.lower().split(">")
+    def register_info(self, key, value, description = '', force = False):
+        """register system info adds the info if it is not already there"""
 
         connection = self.db.open()
         root = connection.root()
-        current_key = root["sys_info"]
-        current_cache_key = self.sys_info
 
-        for item in path_list[:-1]:
-            if not item in current_key:
-                current_key[item] = PersistentMapping()
-                current_cache_key[item] = {}
-            current_key = current_key[item]
-            current_cache_key = current_cache_key[item]
-
-        item = path_list[-1]
-        if force or item not in current_key:
-            current_key[item] = value
-            current_cache_key[item] = value
+        if force or key not in root["sys_info"]:
+            data = dict(value = value, description = description, read_only = force)
+            root["sys_info"][key] = data
+            self.sys_info_full[key] = data
+            self.sys_info[key] = value
 
         #TODO make sure on concurrent changes recache data?
         try:
@@ -143,18 +136,15 @@ class Database(object):
         except:
             raise
 
-
         connection.close()
 
-    def cache_sys_info(self, sys_info, cache):
 
-        for key, value in sys_info.iteritems():
-            if isinstance(value, PersistentMapping):
-                if key not in cache:
-                    cache[key] = {}
-                self.cache_sys_info(sys_info[key], cache[key])
-            else:
-                cache[key] = value
+    def cache_sys_info(self, sys_info_db):
+        """get system info out of the database"""
+        for key, value in sys_info_db.iteritems():
+            self.sys_info_full[key] = value
+            self.sys_info[key] = value['value']
+
 
     def __getitem__(self, item):
         if isinstance(item, int):

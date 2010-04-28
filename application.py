@@ -41,8 +41,13 @@ class Application(object):
         global_session.database = self.database
 
         print '\n  Application data\n  ----------------'
-        for key in self.application.keys():
-            print '(%s)\t%s = %s' % (type(self.application[key]).__name__, key, self.application[key])
+        sys_info = self.database.sys_info_full
+
+        for key in sys_info.keys():
+            print '(%s)\t%s = %s\t%s' % (type(sys_info[key]['value']).__name__,
+                                         key,
+                                         sys_info[key]['value'],
+                                         sys_info[key]['description'])
         print
 
 
@@ -51,9 +56,8 @@ class Application(object):
         # list of default data if none provided
         register = self.database.register_info
 
-        register("public", True)
-        register("name", 'Reformed Application')
-        register("test_default", "test")
+        register("public", True, "Allow unregistered users to use the application")
+        register("name", 'Reformed Application', "Name of the application")
 
         self.get_bookmark_data()
 
