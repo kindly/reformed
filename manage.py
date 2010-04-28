@@ -106,6 +106,23 @@ def undump(application):
     print 'undumping data'
     load_json_from_file('data/users.json', application.database, 'user')
 
+
+def output_sys_info(application):
+
+    # import web so that all the system variariables get registered
+    # FIXME this maybe an issue with ones added by modules
+    # are the modules loaded?
+    import web
+    print '\n  Application data\n  ----------------'
+    sys_info = application.database.sys_info_full
+
+    for key in sys_info.keys():
+        print '(%s)\t%s = %s\t%s' % (type(sys_info[key]['value']).__name__,
+                                     key,
+                                     sys_info[key]['value'],
+                                     sys_info[key]['description'])
+    print
+
 def reload(host, options):
     import paste.reloader
     print "reloading"
@@ -176,7 +193,6 @@ def run(host, port, application, ssl, ssl_cert):
             server.stop()
 
 if __name__ == "__main__":
-
     usage = "usage: %prog [options] package"
 
     parser = OptionParser(usage=usage)
@@ -224,6 +240,8 @@ if __name__ == "__main__":
     parser.add_option("--ssl_cert", dest = "ssl_cert", action="store",
                       default = 'host',
                       help="web server ssl certificate/private key prefix")
+    parser.add_option("--sysinfo", dest = "sysinfo", action="store_true",
+                      help="output system information")
     (options, args) = parser.parse_args()
 
     application = None
@@ -249,6 +267,8 @@ if __name__ == "__main__":
         generate_data(make_application())
     if options.create:
         create(make_application())
+    if options.sysinfo:
+        output_sys_info(make_application())
     if options.load:
         load_data(make_application(), options.load_file)
     if options.table_load:

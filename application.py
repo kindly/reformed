@@ -40,16 +40,6 @@ class Application(object):
 
         global_session.database = self.database
 
-        print '\n  Application data\n  ----------------'
-        sys_info = self.database.sys_info_full
-
-        for key in sys_info.keys():
-            print '(%s)\t%s = %s\t%s' % (type(sys_info[key]['value']).__name__,
-                                         key,
-                                         sys_info[key]['value'],
-                                         sys_info[key]['description'])
-        print
-
 
     def load_application_data(self):
 
