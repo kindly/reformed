@@ -29,10 +29,9 @@ import application as app
 application = None
 dir = None
 
-def make_application(args):
+def make_application():
 
     global application
-
     if not application:
         application = app.Application(dir)
     return application
@@ -192,10 +191,10 @@ if __name__ == "__main__":
     parser.add_option("-e", "--extract",
                       action="store_true", dest="extract",
                       help="extract all tables")
-    parser.add_option("-t", "--tableload",
+    parser.add_option("-l", "--load",
                       action="store_true", dest="table_load",
                       help="load all tables")
-    parser.add_option("-l", "--load",
+    parser.add_option("--loadfile",
                       action="store_true", dest="load",
                       help="load the data, use -f to change the file (default data.csv)")
     parser.add_option("-f", "--file",
@@ -236,7 +235,7 @@ if __name__ == "__main__":
         dir = "sample"
 
     if options.extract:
-        extract(make_application(args))
+        extract(make_application())
     if options.delete:
         delete(args)
         application = None
@@ -247,15 +246,15 @@ if __name__ == "__main__":
         database = application.database
         code.interact(local=locals())
     if options.generate:
-        generate_data(make_application(args))
+        generate_data(make_application())
     if options.create:
-        create(make_application(args))
+        create(make_application())
     if options.load:
-        load_data(make_application(args), options.load_file)
+        load_data(make_application(), options.load_file)
     if options.table_load:
-        load(make_application(args))
+        load(make_application())
     if options.run:
-        run(options.host, options.port, make_application(args), options.ssl, options.ssl_cert)
+        run(options.host, options.port, make_application(), options.ssl, options.ssl_cert)
     if options.reload:
         reloader(args, options)
     if options.reloader:
@@ -263,8 +262,8 @@ if __name__ == "__main__":
     if options.all:
         delete(args)
         application = None
-        create(make_application(args))
+        create(make_application())
         print "loading"
-        load(make_application(args))
+        load(make_application())
 
 
