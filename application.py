@@ -49,7 +49,7 @@ class Application(object):
         register("public", True, "Allow unregistered users to use the application")
         register("name", 'Reformed Application', "Name of the application")
 
-        self.get_bookmark_data()
+   #     self.get_bookmark_data()
 
 
     def get_bookmark_data(self):
