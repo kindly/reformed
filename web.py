@@ -110,72 +110,14 @@ def process_node(environ, start_response):
 class WebApplication(object):
     """New leaner webapplication server."""
 
-    def __init__(self, dir):
+    def __init__(self, application):
 
-        ##FIXME may not be the correct place for this
-        from sqlalchemy import MetaData, create_engine
-        from sqlalchemy.orm import sessionmaker
-        import reformed.database
+        print "-----web app started------"
 
-        self.metadata = MetaData()
-        self.dir = dir
-        this_dir = os.path.dirname(os.path.abspath(__file__))
-        application_folder = os.path.join(this_dir, dir)
-
-        sys.path.append(application_folder)
-
-        self.engine = create_engine('sqlite:///%s/%s.sqlite' % (application_folder,dir))
-        self.metadata.bind = self.engine
-        Session = sessionmaker(bind=self.engine, autoflush = False)
-
-        self.database = reformed.database.Database("reformed",
-                                                    entity = True,
-                                                    metadata = self.metadata,
-                                                    engine = self.engine,
-                                                    session = Session,
-                                                    logging_tables = False,
-                                                    zodb_store = "%s/%s.fs" % (application_folder,dir)
-                                                    )
-
+        self.application = application
+        self.database = application.database
+        self.dir = application.dir
         global_session.database = self.database
-
-        self.load_application_data()
-        # system wide settings
-        self.application = self.database.sys_info
-
-        print '\n  Application data\n  ----------------'
-        for key in self.application.keys():
-            print '(%s)\t%s = %s' % (type(self.application[key]).__name__, key, self.application[key])
-        print
-
-
-    def load_application_data(self):
-
-        # list of default data if none provided
-        register = self.database.register_info
-
-        register("public", True)
-        register("name", 'Reformed Application')
-        register("test_default", "test")
-
-        self.get_bookmark_data()
-
-
-    def get_bookmark_data(self):
-        # FIXME this is hard coded for bugs
-
-        register = self.database.register_info
-        register("bookmarks>user>title", "Users")
-        register("bookmarks>user>node", "bug.User")
-        register("bookmarks>ticket>title", "Ticket")
-        register("bookmarks>ticket>node", "bug.Ticket")
-        register("bookmarks>user_group>title", "User Group")
-        register("bookmarks>user_group>node", "bug.UserGroup")
-        register("bookmarks>permission>title", "Permission")
-        register("bookmarks>permission>node", "bug.Permission")
-        register("bookmarks>_system_info>title", "System Settings")
-        register("bookmarks>_system_info>node", "bug.SysInfo")
-
 
     def static(self, environ, start_response, path):
         """Serve static content"""
@@ -228,7 +170,7 @@ class WebApplication(object):
         """Request handler"""
 
         global_session.database = self.database
-        global_session.application = self.application
+        global_session.application = self.application.application
         request_url = environ['PATH_INFO']
         if request_url == '/ajax':
             return (process_node(environ, start_response))

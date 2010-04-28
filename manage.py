@@ -24,13 +24,20 @@ from reformed.export import json_dump_all_from_table
 from reformed.data_loader import load_json_from_file
 from reformed.util import get_dir
 from optparse import OptionParser
-import web
+import application as app
+
+application = None
 
 def make_application(args):
-    if args:
-        application = web.WebApplication(args[0])
-    else:
-        application = web.WebApplication("sample")
+
+    global application
+
+    if not application:
+        if args:
+            dir = args[0]
+        else:
+            dir = "sample"
+        application = app.Application(dir)
     return application
 
 def create(application):
@@ -138,6 +145,10 @@ def reloader(args, options):
 def run(host, port, application, ssl, ssl_cert):
     print 'starting webserver'
     import beaker.middleware
+    import web
+
+    web_application = web.WebApplication(application)
+
     database = application.database
     database.scheduler_thread.start()
 
@@ -148,11 +159,11 @@ def run(host, port, application, ssl, ssl_cert):
 
         import cherrypy.wsgiserver as httpserver
 
-        application = beaker.middleware.SessionMiddleware(application, {"session.type": "memory",
+        web_application = beaker.middleware.SessionMiddleware(web_application, {"session.type": "memory",
                                                                         "session.auto": True})
         try:
             server = httpserver.CherryPyWSGIServer(
-                    (host, int(port)), application,
+                    (host, int(port)), web_application,
                     server_name='rebase')
             if ssl:
                 try:
@@ -184,7 +195,7 @@ if __name__ == "__main__":
     parser.add_option("-e", "--extract",
                       action="store_true", dest="extract",
                       help="extract all tables")
-    parser.add_option("--tableload",
+    parser.add_option("-t", "--tableload",
                       action="store_true", dest="table_load",
                       help="load all tables")
     parser.add_option("-l", "--load",
@@ -221,48 +232,36 @@ if __name__ == "__main__":
 
     application = None
 
-    if options.console:
-        import code
-        application = make_application(args)
-        database = application.database
-        code.interact(local=locals())
     if options.extract:
-        if not application:
-            application = make_application(args)
-        extract(application)
-    if options.generate:
-        if not application:
-            application = make_application(args)
-        generate_data(application)
+        extract(make_application(args))
     if options.delete:
         delete(args)
+        application = None
+
+
+    if options.console:
+        import code
+        database = application.database
+        code.interact(local=locals())
+    if options.generate:
+        generate_data(make_application(args))
     if options.create:
-        if not application:
-            application = make_application(args)
-        create(application)
+        create(make_application(args))
     if options.load:
-        if not application:
-            application = make_application(args)
-        load_data(application, options.load_file)
+        load_data(make_application(args), options.load_file)
     if options.table_load:
-        if not application:
-            application = make_application(args)
-        load(application)
+        load(make_application(args))
     if options.run:
-        if not application:
-            application = make_application(args)
-        run(options.host, options.port, application, options.ssl, options.ssl_cert)
+        run(options.host, options.port, make_application(args), options.ssl, options.ssl_cert)
     if options.reload:
         reloader(args, options)
     if options.reloader:
         reload(args, options)
     if options.all:
-        if not application:
-            application = make_application(args)
         delete(args)
-        application = make_application(args)
-        create(application)
+        application = None
+        create(make_application(args))
         print "loading"
-        load(application)
+        load(make_application(args))
 
 
