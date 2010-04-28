@@ -30,10 +30,6 @@ class Application(object):
 
     def __init__(self, dir):
 
-        print "-----app started------"
-
-        ##FIXME may not be the correct place for this
-
         self.metadata = MetaData()
         self.dir = dir
         this_dir = os.path.dirname(os.path.abspath(__file__))
