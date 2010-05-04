@@ -51,22 +51,11 @@ class Application(object):
                                                     )
 
 
-        self.load_application_data()
         # system wide settings
-        self.application = self.database.sys_info
+
+        self.sys_info = self.database.sys_info
 
         global_session.database = self.database
-
-
-    def load_application_data(self):
-
-        # list of default data if none provided
-        register = self.database.register_info
-
-        register("public", True, "Allow unregistered users to use the application")
-        register("name", 'Reformed Application', "Name of the application")
-
-   #     self.get_bookmark_data()
 
 
     def get_bookmark_data(self):

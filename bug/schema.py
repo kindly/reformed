@@ -22,6 +22,11 @@ from reformed.database import table, entity, relation
 from reformed.fields import *
 from global_session import global_session
 
+# define defaults
+from predefine import sysinfo
+sysinfo("public", True, "Allow unregistered users to use the application")
+sysinfo("name", 'Reformed Application', "Name of the application")
+
 d =  global_session.database
 
 entity('ticket', d,
