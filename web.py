@@ -170,7 +170,7 @@ class WebApplication(object):
         """Request handler"""
 
         global_session.database = self.database
-        global_session.application = self.application.application
+        global_session.sys_info = self.application.sys_info
         request_url = environ['PATH_INFO']
         if request_url == '/ajax':
             return (process_node(environ, start_response))
