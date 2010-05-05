@@ -158,20 +158,22 @@ table("user_group_permission",d,
 )
 
 
-table("permission",d,
-
-    Text("permission"),
-    Text("description", length = 200),
-    Text("long_description", length = 4000),
-    table_type = "system",
-    title_field = 'permission'
-)
 
 table("page",d,
     Text("page", length = 50, mandatory = True),
     Text("title", length = 200, mandatory = True),
     Text("body", length = 8000),
     table_type = "system"
+)
+
+entity('upload', d,
+    Text("filename", mandatory = True),
+    Text("path"),
+    Created("created_date"),
+    CreatedBy("created_by"),
+
+    title_field = "filename",
+    summary_fields = "filename"
 )
 
 d.persist()
