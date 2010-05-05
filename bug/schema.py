@@ -169,6 +169,8 @@ table("page",d,
 entity('upload', d,
     Text("filename", mandatory = True),
     Text("path"),
+    Text("mimetype"),
+    Integer("size"),
     Created("created_date"),
     CreatedBy("created_by"),
 

@@ -19,11 +19,13 @@
 ##
 
 import os.path
+import os
 import tempfile
 import hashlib
 import cgi
 import time #FIXME testing only
 import json
+import mimetypes
 
 import reformed.util
 from global_session import global_session
@@ -31,7 +33,6 @@ r =  global_session.database
 
 # set defaults
 from predefine import sysinfo, permission
-sysinfo("file_uploads>fake_save", True, "Do not save uploaded files")
 sysinfo("file_uploads>dir_depth", 2, "How many levels of directories for uploaded files")
 sysinfo("file_uploads>root_directory", 'files', "Root directory for uploaded files, relative to the application directory")
 
@@ -64,6 +65,7 @@ def create_file_path(filename, id):
         path = os.path.join(hash[i * 2 : (i + 1) * 2], path)
 
     return (path, file_id)
+
 
 
 def fileupload_status(environ, start_response):
@@ -147,11 +149,10 @@ def fileupload(environ, start_response):
         chunk = data.read(size)
         bytes_left -= size
         temp.write(chunk)
-     #   percent = ((length - bytes_left) * 9900)/length
         status['bytes_left'] = bytes_left
         http_session.persist()
         # FIXME testing slowdown remove
-        time.sleep(1)
+        time.sleep(0.01)
 
     # ? do we need a flush here.
     # I think proberbly not as we are just reading the file again
@@ -178,20 +179,26 @@ def fileupload(environ, start_response):
             session.add(obj)
             session.commit()
             (path, file_id) = create_file_path(item.filename, obj.id)
-            if r.sys_info['file_uploads>fake_save']:
-                dir = os.path.join(root, r.sys_info['file_uploads>root_directory'], path)
-                if not os.path.exists(dir):
-                    os.makedirs(dir)
-                full_path = os.path.join(dir, file_id)
-                f = open(full_path, 'wb')
-                while True:
-                    chunk = item.file.read(4096)
-                    if not chunk:
-                        break
-                    f.write(chunk)
-                f.close()
-            # update database
-            obj.path = os.path.join(path, file_id)
+            # save the file in the correct location
+            dir = os.path.join(root, r.sys_info['file_uploads>root_directory'], path)
+            if not os.path.exists(dir):
+                os.makedirs(dir)
+            full_path = os.path.join(dir, file_id)
+            f = open(full_path, 'wb')
+            while True:
+                chunk = item.file.read(4096)
+                if not chunk:
+                    break
+                f.write(chunk)
+            f.close()
+            # update the data for the file
+            mimetype = mimetypes.guess_type(full_path)[0] or 'application/octet-stream'
+            obj.mimetype = mimetype
+            stat = os.stat(full_path)
+            size = str(stat.st_size)
+            obj.size = size
+            path = os.path.join(path, file_id)
+            obj.path = path
             session.add(obj)
             session.commit()
 
