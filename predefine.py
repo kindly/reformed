@@ -18,9 +18,49 @@
 ##   Copyright (c) 2008-2010 Toby Dacre & David Raznick
 ##  
 
+
+from reformed.database import table
+from reformed.fields import *
+
 from global_session import global_session
 
 r = global_session.database
 
 def sysinfo(name, value, description = ''):
     r.register_info(name, value, description)
+
+
+permissions_defined = None
+
+def permission(code, name, description = u''):
+    """check permission exists in the database, add it if not there"""
+    global permissions_defined
+    # cache permissions list if we don't have it already
+    if permissions_defined == None:
+        permissions_defined = []
+        try:
+            permissions = r.search('permission', fields = ['permission']).data
+            for record in permissions:
+                permissions_defined.append(record['permission'])
+        except KeyError:
+            # add permission table as it does not exist
+            table("permission", r,
+                Text("permission"), #FIXME ascii
+                Text("description", length = 200),
+                Text("long_description", length = 4000),
+                table_type = "system",
+                title_field = 'permission'
+            )
+            r.persist()
+
+    # add permission if not in database
+    if code not in permissions_defined:
+        print 'add permision: %s' % code
+        new_permission = r.get_instance('permission')
+        new_permission.permission = code
+        new_permission.description = name
+        new_permission.long_description = description
+        session = r.Session()
+        session.add(new_permission)
+        session.commit()
+        session.close()
