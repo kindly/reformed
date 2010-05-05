@@ -32,6 +32,7 @@ import json
 from global_session import global_session
 import interface
 import fileupload
+import reformed.util
 
 import logging
 logger = logging.getLogger('reformed.main')
@@ -76,6 +77,28 @@ def process_fileupload(environ, start_response, request_url):
     else:
         # start upload
         return fileupload.fileupload(environ, start_response)
+
+
+def process_attachment(environ, start_response):
+
+    session(environ)
+    reference = environ['QUERY_STRING']
+    # FIXME need to check can view this file
+    try:
+        reference = int(reference)
+        r =  global_session.database
+        data = r.search('upload', 'id=%s' % reference, fields = ['path', 'filename']).data
+    except ValueError:
+        data = None
+    if data:
+        full_path = fileupload.get_dir(data[0]['path']) + '.thumbnail'
+        return get_file(environ, start_response, full_path)
+    else:
+        start_response('404 Not Found', [])
+        return []
+
+
+
 
 def process_node(environ, start_response):
 
@@ -134,47 +157,12 @@ class WebApplication(object):
     def static(self, environ, start_response, path):
         """Serve static content"""
         # FIXME security limit path directory traversal etc
-        print self.dir
-        print path
-        root = os.path.dirname(os.path.abspath(__file__))
+        root = reformed.util.get_dir()
         if path.startswith('/local/'):
-            path = '%s/%s/content%s' % (root, self.dir, path[6:]) # does this work in windows?
+            path = os.path.join(root, self.dir, 'content', path[7:])
         else:
-            path = '%s/content%s' % (root, path) # does this work in windows?
-        print path
-        if os.path.isfile(path):
-            stat = os.stat(path)
-            mimetype = mimetypes.guess_type(path)[0] or 'application/octet-stream'
-            max_age = None # FIXME: not done
-            last_modified = stat.st_mtime
-            not_modified = False
-            if 'HTTP_IF_MODIFIED_SINCE' in environ:
-                value = parse_date_timestamp(environ['HTTP_IF_MODIFIED_SINCE'])
-                if value >= last_modified:
-                    not_modified = True
-            etag = '%s-%s' % (last_modified, hash(path))
-            if 'HTTP_IF_NONE_MATCH' in environ:
-                value = environ['HTTP_IF_NONE_MATCH'].strip('"')
-                if value == etag:
-                    not_modified = True
-            headers = [
-                ('Content-Type', mimetype),
-                ('Content-Length', str(stat.st_size)),
-                ('ETag', etag),
-        ## FIXME           ('Last-Modified', serialize_date(last_modified))
-        ]
-            if max_age:
-                headers.append(('Cache-control', 'max-age=%s' % max_age))
-            if not_modified:
-                start_response('304 Not Modified', headers)
-                return []
-            else:
-                start_response('200 OK', headers)
-                f = open(path, 'rb')
-                return wsgiref.util.FileWrapper(f)
-        else:
-            start_response('404 Not Found', [])
-            return []
+            path = os.path.join(root, 'content', path[1:])
+        return get_file(environ, start_response, path)
 
 
 
@@ -192,8 +180,50 @@ class WebApplication(object):
         elif request_url.startswith('/upload'):
             # file upload
             return (process_fileupload(environ, start_response, request_url))
+        elif request_url.startswith('/attach'):
+            # file upload
+            return (process_attachment(environ, start_response))
         else:
             # content request
             return (self.static(environ, start_response, request_url))
 
 
+def get_file(environ, start_response, path):
+
+    """returns the file in path to the browser
+    NOTE: there is no security at this point all
+    authorisation must be checked before this is called"""
+
+    if os.path.isfile(path):
+        stat = os.stat(path)
+        mimetype = mimetypes.guess_type(path)[0] or 'application/octet-stream'
+        max_age = None # FIXME: not done
+        last_modified = stat.st_mtime
+        not_modified = False
+        if 'HTTP_IF_MODIFIED_SINCE' in environ:
+            value = parse_date_timestamp(environ['HTTP_IF_MODIFIED_SINCE'])
+            if value >= last_modified:
+                not_modified = True
+        etag = '%s-%s' % (last_modified, hash(path))
+        if 'HTTP_IF_NONE_MATCH' in environ:
+            value = environ['HTTP_IF_NONE_MATCH'].strip('"')
+            if value == etag:
+                not_modified = True
+        headers = [
+            ('Content-Type', mimetype),
+            ('Content-Length', str(stat.st_size)),
+            ('ETag', etag),
+    ## FIXME           ('Last-Modified', serialize_date(last_modified))
+    ]
+        if max_age:
+            headers.append(('Cache-control', 'max-age=%s' % max_age))
+        if not_modified:
+            start_response('304 Not Modified', headers)
+            return []
+        else:
+            start_response('200 OK', headers)
+            f = open(path, 'rb')
+            return wsgiref.util.FileWrapper(f)
+    else:
+        start_response('404 Not Found', [])
+        return []

@@ -83,6 +83,10 @@ $.FileUpload = function (input){
                 data.$info.text('ERROR: ' + return_data.error);
             } else {
                 data.$info.text('completed');
+                if (return_data.thumb){
+                    var $img = $('<img src="/attach?' + return_data.thumb + '" />');
+                    data.$info.append($img);
+                }
             }
             data.$form.remove();
             data.$iframe.remove();

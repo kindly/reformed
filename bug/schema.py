@@ -171,6 +171,7 @@ entity('upload', d,
     Text("path"),
     Text("mimetype"),
     Integer("size"),
+    Boolean("thumb", default = False),
     Created("created_date"),
     CreatedBy("created_by"),
 

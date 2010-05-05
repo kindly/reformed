@@ -26,6 +26,7 @@ import cgi
 import time #FIXME testing only
 import json
 import mimetypes
+from PIL import Image
 
 import reformed.util
 from global_session import global_session
@@ -33,7 +34,7 @@ r =  global_session.database
 
 # set defaults
 from predefine import sysinfo, permission
-sysinfo("file_uploads>dir_depth", 2, "How many levels of directories for uploaded files")
+sysinfo("file_uploads>dir_depth", 1, "How many levels of directories for uploaded files")
 sysinfo("file_uploads>root_directory", 'files', "Root directory for uploaded files, relative to the application directory")
 sysinfo("file_uploads>max_file_size", 100000, "Maximum file size for uploaded files (in bytes)")
 
@@ -56,7 +57,7 @@ def create_file_path(filename, id):
     """Create a name for the file based on it's id and origional extension
     create a 'random' path if needed to balance file system"""
 
-    num_levels =  r.sys_info['file_uploads>fake_save']
+    num_levels =  r.sys_info['file_uploads>dir_depth']
     (null, ext) = os.path.splitext(filename)
     file_id = str(id) + ext
 
@@ -90,6 +91,7 @@ def fileupload_status(environ, start_response):
     out = dict(bytes_left = result['bytes_left'],
                bytes = result['bytes'],
                completed = result['complete'],
+               thumb = result['thumb'],
                error = result['error'])
 
     # TODO if completed kill reference from database
@@ -136,6 +138,7 @@ def fileupload(environ, start_response):
     status['bytes_left'] = length
     status['bytes'] = length
     status['error'] = ""
+    status['thumb'] = False
 
     if length > r.sys_info['file_uploads>max_file_size']:
         status['error'] = "File too large"
@@ -181,7 +184,6 @@ def fileupload(environ, start_response):
                         keep_blank_values=1)
 
     session = r.Session()
-    root = reformed.util.get_dir()
     # find all files and save them
     for field in formdata:
         item = formdata[field]
@@ -195,7 +197,7 @@ def fileupload(environ, start_response):
             session.commit()
             (path, file_id) = create_file_path(item.filename, obj.id)
             # save the file in the correct location
-            dir = os.path.join(root, r.sys_info['file_uploads>root_directory'], path)
+            dir = get_dir(path)
             if not os.path.exists(dir):
                 os.makedirs(dir)
             full_path = os.path.join(dir, file_id)
@@ -208,6 +210,9 @@ def fileupload(environ, start_response):
             f.close()
             # update the data for the file
             mimetype = mimetypes.guess_type(full_path)[0] or 'application/octet-stream'
+            if mimetype.startswith('image/'):
+                make_thumbs(dir, file_id, obj)
+                status['thumb'] = obj.id
             obj.mimetype = mimetype
             stat = os.stat(full_path)
             size = str(stat.st_size)
@@ -226,4 +231,19 @@ def fileupload(environ, start_response):
             
     start_response('200 OK', [('Content-Type', 'text/html')])
     return ['moo']
+
+
+def get_dir(path):
+    root = reformed.util.get_dir()
+    return os.path.join(root, r.sys_info['file_uploads>root_directory'], path)
+
+
+def make_thumbs(dir, file_id, obj):
+    full_path = os.path.join(dir, file_id)
+    size = 128, 128
+    img = Image.open(full_path)
+    img.thumbnail(size, Image.ANTIALIAS)
+    img.save(full_path + ".thumbnail", "JPEG")
+    obj.thumb = True
+
 
