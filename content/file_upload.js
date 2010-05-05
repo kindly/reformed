@@ -51,7 +51,6 @@ $.FileUpload = function (input){
 
     function nice_time(time){
         time = Math.floor(time);
-        console_log(time);
         if (time < 60){
             return String(Math.floor(time)) + 's ';
         }
