@@ -135,6 +135,12 @@ $FormElements = function(){
         return $control;
     }
 
+    function file_upload(item, value){
+        var $control = $(add_label(item, 'rf_') + '<div' + set_class_list(item, 'HOLDER') + '"><input type="file" /></div>' + form_description(item));
+        $control.find('input').file_upload();
+        return $control
+    }
+
     function textarea(item, value){
         var $control = $(add_label(item, 'rf_') + '<textarea' + set_class_list(item) + '>' + HTML_Encode_Clear(value) + '</textarea>' + form_description(item));
         return $control;
@@ -313,6 +319,7 @@ $FormElements = function(){
         'info': [info_area, info_area],
         'link_list': [link_list, link_list],
         'codegroup': [codegroup, codegroup],
+        'file_upload' : [file_upload, file_upload],
         'subform': [add_subform, add_subform]
     }
 

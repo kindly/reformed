@@ -20,6 +20,7 @@ class Ticket(TableNode):
         layout('column_end'),
         layout('hr'),
         wmd('summary', css = 'large'),
+        file_upload('attachment'),
         extra_data(["created_by"]),
         table = "ticket",
         params =  {"form_type": "action"},

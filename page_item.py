@@ -691,6 +691,9 @@ def info(name, **kw):
 
     return page_item("input", name,  control = Control("info"), **kw)
 
+def file_upload(name, **kw):
+
+    return page_item("input", name,  control = Control("file_upload"), **kw)
 
 
 ##Controls

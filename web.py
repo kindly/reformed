@@ -31,6 +31,7 @@ import wsgiref.util
 import json
 from global_session import global_session
 import interface
+import fileupload
 
 import logging
 logger = logging.getLogger('reformed.main')
@@ -64,6 +65,17 @@ def process_autocomplete(environ, start_response):
     start_response('200 OK', [('Content-Type', 'text/html')])
 
     return lookup.table_lookup(q, limit, request, http_session)
+
+
+def process_fileupload(environ, start_response, request_url):
+
+    session(environ)
+    if request_url.startswith("/uploadstatus"):
+        # get status for this upload
+        return fileupload.fileupload_status(environ, start_response)
+    else:
+        # start upload
+        return fileupload.fileupload(environ, start_response)
 
 def process_node(environ, start_response):
 
@@ -177,6 +189,9 @@ class WebApplication(object):
         elif request_url.startswith('/ajax'):
             # ajax request
             return (process_autocomplete(environ, start_response))
+        elif request_url.startswith('/upload'):
+            # file upload
+            return (process_fileupload(environ, start_response, request_url))
         else:
             # content request
             return (self.static(environ, start_response, request_url))
