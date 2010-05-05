@@ -35,6 +35,7 @@ r =  global_session.database
 from predefine import sysinfo, permission
 sysinfo("file_uploads>dir_depth", 2, "How many levels of directories for uploaded files")
 sysinfo("file_uploads>root_directory", 'files', "Root directory for uploaded files, relative to the application directory")
+sysinfo("file_uploads>max_file_size", 100000, "Maximum file size for uploaded files (in bytes)")
 
 permission("FileUploader", u'File uploader', u'can upload files to the server')
 permission("FileUploaderLargeFiles", u'Large files', u'can upload files large files to the server')
@@ -86,7 +87,10 @@ def fileupload_status(environ, start_response):
         raise UploadUnknownReference
 
     result = http_session['file_uploads'][reference]
-    out = dict(bytes_left = result['bytes_left'], bytes = result['bytes'], completed = result['complete'])
+    out = dict(bytes_left = result['bytes_left'],
+               bytes = result['bytes'],
+               completed = result['complete'],
+               error = result['error'])
 
     # TODO if completed kill reference from database
 
@@ -115,6 +119,8 @@ def fileupload(environ, start_response):
     reference = environ['QUERY_STRING']
     length = int(environ['CONTENT_LENGTH'])
 
+
+
     http_session = global_session.session
     # create file_uploads hash if doesn't exist
     if not http_session.has_key('file_uploads'):
@@ -129,7 +135,16 @@ def fileupload(environ, start_response):
     status['complete'] = False
     status['bytes_left'] = length
     status['bytes'] = length
-  
+    status['error'] = ""
+
+    if length > r.sys_info['file_uploads>max_file_size']:
+        status['error'] = "File too large"
+        status['complete'] = True
+        http_session.persist()
+        start_response('200 OK', [('Content-Type', 'text/html')])
+        return ['error']
+
+
     http_session.persist()
 
 

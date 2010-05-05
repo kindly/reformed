@@ -79,7 +79,11 @@ $.FileUpload = function (input){
             data.$info.text(percent + '% ' + time_info);
             var timer = setTimeout(function() {update_status(data)}, 1000);
         } else {
-            data.$info.text('completed');
+            if (return_data.error !== ''){
+                data.$info.text('ERROR: ' + return_data.error);
+            } else {
+                data.$info.text('completed');
+            }
             data.$form.remove();
             data.$iframe.remove();
         }
