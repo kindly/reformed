@@ -54,13 +54,12 @@ class Application(object):
         # system wide settings
 
         self.sys_info = self.database.sys_info
-
         global_session.database = self.database
 
 
     def get_bookmark_data(self):
         # FIXME this is hard coded for bugs
-
+        # FIXME can this be removed
         register = self.database.register_info
         register("bookmarks>user>title", "Users")
         register("bookmarks>user>node", "bug.User")

@@ -324,7 +324,7 @@ class Page(TableNode):
     main = form(
         input("page", css = "large", description = "A reference for the page used for links etc."),
         input("title", css = "large", description = "The displayed title for the page."),
-        textarea("body", css = "large long", description = "A longer more detailed description"),
+        wmd("body", css = "large long", description = "A longer more detailed description"),
 
         table = "page",
         params =  {"form_type": "action"},

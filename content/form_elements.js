@@ -130,7 +130,7 @@ $FormElements = function(){
     }
 
     function wmd(item, value){
-        var $control = $(add_label(item, 'rf_') + '<div' + set_class_list(item, 'HOLDER') + '"><textarea>' + HTML_Encode_Clear(value) + '</textarea></div>' + form_description(item));
+        var $control = $(add_label(item, 'rf_') + '<div' + set_class_list(item, 'HOLDER') + '><textarea>' + HTML_Encode_Clear(value) + '</textarea></div>' + form_description(item));
         $control.find('textarea').wmd();
         return $control;
     }
@@ -285,6 +285,8 @@ $FormElements = function(){
         return temp;
     }
 
+
+
     function build(readonly, item, value){
         var ro = readonly ? 1 : 0;
         var control = item.control;
@@ -296,7 +298,6 @@ $FormElements = function(){
             }
         return $div;
     }
-
 
     var control_build_functions = {
         'normal': [input_box, plaintext],
