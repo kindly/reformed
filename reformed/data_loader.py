@@ -143,7 +143,7 @@ class ChunkStatus(object):
 
 class FlatFile(object):
 
-    def __init__(self, database, table, data, headers = None):
+    def __init__(self, database, table, data, headers = None, from_load = False):
 
         self.data = data
         self.database = database
@@ -151,6 +151,7 @@ class FlatFile(object):
 
         self.validation = True
 
+        self.from_load = from_load
         self.dialect = None
         self.total_lines = None
 
@@ -443,13 +444,19 @@ class FlatFile(object):
 
 class SingleRecord(object):
 
-    def __init__(self, database, table, data = None, flat_file = None, all_rows = None):
+    def __init__(self, database, table, data = None,
+                 flat_file = None, all_rows = None):
 
         self.data = data
         self.database = database
         self.table = table
         self.all_rows = all_rows
         self.flat_file = flat_file
+
+        if self.flat_file:
+            self.from_load = flat_file.from_load
+        else:
+            self.from_load = False
 
         if flat_file:
             self.all_rows = flat_file.create_all_rows(data)
@@ -505,7 +512,8 @@ class SingleRecord(object):
         invalid_dict = {} 
         
         for key, obj in self.all_obj.iteritems():
-            obj._from_load = True
+            if self.from_load:
+                obj._from_load = True
             try:
                 if self.flat_file and not self.flat_file.validation:
                     session.add_no_validate(obj)

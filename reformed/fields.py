@@ -83,11 +83,18 @@ class Created(Field):
         self.created_date = Column(sa.DateTime,
                                    default = datetime.datetime.now)
 
+
 class CreatedBy(Field):
-    def __init__(self, name, *args, **kw):
+    def __init__(self, *args, **kw):
         self.cat = "internal"
-        self.created_by = Column(sa.Integer,
-                                 default = get_user_id)
+        self.name = "_created_by"
+        #self.created_by = Column(sa.Integer,
+        #                         default = get_user_id)
+        self._created_by = Relation("manytoone", "user",
+                                    foreign_key_name = "created_by",
+                                    no_auto_path = True,
+                                    many_side_default = get_user_id,
+                                    backref = False)
 
 class Modified(Field):
 
@@ -99,10 +106,22 @@ class Modified(Field):
 class ModifiedBySession(Field):
 
     def __init__(self, name, *args, **kw):
+        self.name = "__modified_by"
+        self.modified_by = Relation("manytoone", "user",
+                                    foreign_key_name = "_modified_by",
+                                    no_auto_path = True,
+                                    many_side_onupdate = get_user_id,
+                                    many_side_default = get_user_id,
+                                    many_side_not_null = False,
+                                    backref = False)
+
+class ModifiedByNoRelation(Field):
+
+    def __init__(self, name, *args, **kw):
+
         self._modified_by = Column(sa.Integer,
                                   onupdate = get_user_id,
                                   default = get_user_id)
-
 
 class DateTime(Field):
 

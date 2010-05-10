@@ -32,7 +32,7 @@ from columns import Column
 from custom_exceptions import NoMetadataError, NoDatabaseError
 import formencode
 from formencode import validators
-from validators import All, UnicodeString
+from validators import All, UnicodeString, RequireIfMissing
 from fields import Modified, ModifiedBySession, Integer
 import fields
 from util import get_paths, make_local_tables, create_table_path_list, create_table_path
@@ -42,6 +42,7 @@ import datetime
 from search import Search
 from sqlalchemy.orm import column_property
 from sqlalchemy.orm.interfaces import AttributeExtension
+from sqlalchemy.sql import func, select, text
 import fshp
 
 from ZODB.PersistentMapping import PersistentMapping
@@ -61,8 +62,8 @@ class Table(object):
         primary_key:   a comma delimited string stating what field
                        should act as a primary key.
         logged: Boolean stating if the table should be logged
-        modified_date: Boolean stating if the table should have a last
-                       modified date
+        modified_by: Boolean stating if the table should have a last
+                       modified by
         index:  a semicolon (;) delimited list of the columns to be indexed
         unique_constraint : a semicolon delimeited list of colums with a
                            unique constraint
@@ -96,7 +97,11 @@ class Table(object):
 
         self.logged = kw.get("logged", True)
         self.validated = kw.get("validated", True)
+
         self.modified_date = kw.get("modified_date", True)
+        self.modified_by = kw.get("modified_by", True)
+        self.version = kw.get("version", True)
+
         self.unique_constraint = kw.get("unique_constraint", None)
         self.table_type = kw.get("table_type", "user")
         self.entity_relationship = kw.get("entity_relationship", False)
@@ -118,10 +123,12 @@ class Table(object):
         for field in args:
             field._set_parent(self)
 
-        if "_modified_date" not in self.fields.iterkeys() and self.modified_date:
-            self.add_field(Integer("_version"))
+        if "_version" not in self.fields and self.version:
+            self.add_field(Integer("_version")) 
+        if "_modified_date" not in self.fields and self.modified_date:
             self.add_field(Modified("_modified_date"))
-            self.add_field(ModifiedBySession("_modified_by" ))
+        if "_modified_by" not in self.fields and self.modified_by:
+            self.add_field(ModifiedBySession("modified_bygfjskfjsaklfja"))
 
         self.foriegn_key_columns_current = None
         #sqlalchemy objects
@@ -186,7 +193,10 @@ class Table(object):
             if original_col == "id" and name not in self.defined_columns:
                 relation = column.defined_relation
                 field = relation.parent
-                new_field = Integer(name, mandatory = field.many_side_not_null)
+                new_field = Integer(name, mandatory = relation.many_side_not_null,
+                                    cat = "internal",
+                                    default = field.many_side_default,
+                                    onupdate = field.many_side_onupdate)
 
                 self._add_field_no_persist(new_field)
                 self._persist_extra_field(new_field, connection)
@@ -643,7 +653,10 @@ class Table(object):
                 if relation.table is self:
                     relation_attributes[relation.name] = relation
                 else:
-                    relation_attributes[relation.sa_options["backref"]] = relation
+                    backref = relation.sa_options["backref"]
+                    if backref:
+                        relation_attributes[backref] = relation
+
         return relation_attributes
 
     @property
@@ -657,7 +670,9 @@ class Table(object):
                 if relation.table is self and relation.type <> "manytoone":
                     dependant_attributes[relation.name] = relation
                 elif relation.table is not self and relation.type == "manytoone":
-                    dependant_attributes[relation.sa_options["backref"]] = relation
+                    backref = relation.sa_options["backref"]
+                    if backref:
+                        dependant_attributes[backref] = relation
         return dependant_attributes
 
     @property
@@ -681,7 +696,9 @@ class Table(object):
                 if relation.table is self and relation.type == "manytoone":
                     parent_attributes[relation.name] = relation
                 elif relation.table is not self and relation.type <> "manytoone":
-                    parent_attributes[relation.sa_options["backref"]] = relation
+                    backref = relation.sa_options["backref"]
+                    if backref:
+                        parent_attributes[backref] = relation
         return parent_attributes
 
     @property
@@ -696,7 +713,8 @@ class Table(object):
                 else:
                     relation_attribute = relation.sa_options["backref"]
 
-                columns[column_name] = relation_attribute
+                if relation_attribute:
+                    columns[column_name] = relation_attribute
         return columns
 
 
@@ -771,6 +789,9 @@ class Table(object):
         ##  could be made simpler
         for tab, relations in self.tables_with_relations.iteritems():
             table, pos = tab
+            ## not allowed self joining constraints
+            if table == self.name:
+                continue
             for rel in relations:
                 other_table_columns=[]
                 this_table_columns=[]
@@ -795,7 +816,11 @@ class Table(object):
             raise NoMetadataError("table not assigned a metadata")
         sa_table = sa.Table(self.name, self.database.metadata)
 
-        sa_table.append_column(sa.Column("id", sa.Integer, primary_key = True))
+        if self.database.engine.name == 'postgres':
+            statement = text("coalesce((select max(id) from (select * from %s) inner ),0) + 1" % self.name)
+            sa_table.append_column(sa.Column("id", sa.Integer, primary_key = True, server_default = statement))
+        else:
+            sa_table.append_column(sa.Column("id", sa.Integer, primary_key = True))
 
         for name, column in self.foriegn_key_columns.iteritems():
             sa_options = column.sa_options
@@ -807,12 +832,6 @@ class Table(object):
             name = column
             column = defined_columns[column]
             sa_options = column.sa_options
-
-            ## sqlalchemy only accepts strings for server_defaults
-            #if isinstance(column.type, sa.Unicode) and "default" in sa_options:
-            #    if isinstance(sa_options["default"], basestring):
-            #        default = sa_options.pop("default")
-            #        sa_options["server_default"] = default
 
             sa_table.append_column(sa.Column(name, column.type, **sa_options))
 
@@ -901,15 +920,24 @@ class Table(object):
             if "backref" not in sa_options:
                 sa_options["backref"] = "_%s"% self.name
 
+            ##copy as if update_sa is run will try to add backref
+            sa_options = sa_options.copy()
+            if sa_options["backref"] is False:
+                sa_options.pop("backref")
+
             joined_columns = []
+            foriegn_key_columns = []
+
 
             for name, column in self.foriegn_key_columns.iteritems():
                 if relation == column.defined_relation and column.original_column == "id":
                     joined_columns.append([name, column.original_column])
+                    foriegn_key_columns.append(getattr(self.sa_table.c, name))
             if not joined_columns:
                 for name, col in other_rtable.foriegn_key_columns.iteritems():
                     if relation == col.defined_relation and col.original_column == "id":
                         joined_columns.append([col.original_column, name])
+                        foriegn_key_columns.append(getattr(other_table.c, name))
 
             join_conditions = []
             for col1, col2 in joined_columns:
@@ -917,6 +945,7 @@ class Table(object):
                                        getattr(other_table.c, col2))
 
             sa_options["primaryjoin"] = sa.sql.and_(*join_conditions)
+            sa_options["foreign_keys"] = foriegn_key_columns
 
             properties[relation.name] = sa.orm.relation(other_class,
                                                     **sa_options)
@@ -1013,7 +1042,7 @@ class Table(object):
                     chained_validators.append(field.chained_validator)
 
         # Non nullable foriegn keys are validated on the
-        # relationship attribute
+        # relationship attribute for relationships with attributes 
         for column in self.foriegn_key_columns.itervalues():
             mand = not column.sa_options.get("nullable", True)
             relation = column.defined_relation
@@ -1022,12 +1051,17 @@ class Table(object):
                 if relation.table is self:
                     attribute = relation.name
                 else:
-                    attribute = relation.sa_options["backref"].encode("ascii")
+                    attribute = relation.sa_options["backref"]
 
-                validator = validators.FancyValidator()
-                chained_validators.append(validators.RequireIfMissing(column.name, missing = attribute))
 
-                schema_dict[attribute] = validator
+                if attribute:
+                    validator = validators.FancyValidator()
+                    chained_validators.append(RequireIfMissing(column.name, missing = attribute))
+                    schema_dict[attribute] = validator
+                else:
+                    validation = validators.FancyValidator(not_empty = True)
+                    schema_dict[column.name].validators.append(validation)
+
 
         # many side mandatory validators
         for tab, relations in self.tables_with_relations.iteritems():
@@ -1038,7 +1072,10 @@ class Table(object):
                 if rel.type in ("onetomany", "onetone") and pos == "here":
                     schema_dict[rel.name] = validators.FancyValidator(not_empty = True)
                 if rel.type == "manytoone" and pos == "other":
-                    schema_dict[rel.sa_options["backref"]] = validators.FancyValidator(not_empty = True)
+                    backref = rel.sa_options["backref"]
+                    if backref:
+                        validator = validators.FancyValidator(not_empty = True)
+                        schema_dict[backref] = validator
 
         if chained_validators:
             schema_dict["chained_validators"] = chained_validators
