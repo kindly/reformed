@@ -11,9 +11,6 @@ def load(database, dir):
     application_folder = os.path.join(this_dir, dir)
     data_folder = os.path.join(this_dir, "data")
 
-    for i in range(20):
-        print [table.name for table in database.metadata.sorted_tables]
-
     for table in database.metadata.sorted_tables:
         if table.name in TABLES:
             print table.name
