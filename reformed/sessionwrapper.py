@@ -159,7 +159,8 @@ class SessionWrapper(object):
     def add_events(self):
 
         for obj in self.session.new:
-
+            if hasattr(obj, "_from_load"):
+                continue
             ##  special event to get values from parent table
             for column, property in obj._table.parent_columns_attributes.iteritems():
                 new_value = self.get_value_from_parent(obj, column)
@@ -169,6 +170,8 @@ class SessionWrapper(object):
                 events.insert_action(self, obj)
 
         for obj in self.session.new:
+            if hasattr(obj, "_from_load"):
+                continue
             for events in obj._table.events:
                 events.insert_action(self, obj)
 
@@ -240,6 +243,8 @@ class SessionWrapper(object):
     def add_entity_instance(self):
 
         for obj in self.session.new:
+            if hasattr(obj, "_from_load"):
+                continue
             table = get_table_from_instance(obj, self.database)
             if table.entity == True:
                 entity = self.database.get_instance("_core_entity")

@@ -18,7 +18,8 @@ def load(database, dir):
                 flatfile = reformed.data_loader.FlatFile(
                     database,
                     table.name,
-                    os.path.join(data_folder, "%s.csv" % table.name)
+                    os.path.join(data_folder, "%s.csv" % table.name),
+                    from_load = True
                 )
                 flatfile.load()
             except IOError:

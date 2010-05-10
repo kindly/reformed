@@ -91,10 +91,12 @@ class Edge(object):
         else:
             self.join = relation.type
 
-        name_change = [name_change for name_change in name_changes if name_change]
-        self.name = ".".join(name_change + [self.node])
+        self.name = self.node
 
-        self.changed_table_names = self.changed_table_names + [self.name]
+        name_change = [name_change for name_change in name_changes if name_change]
+        self.alt_name = ".".join(name_change + [self.node])
+
+        self.changed_table_names = self.changed_table_names + [self.alt_name]
 
         self.table_path = zip(self.changed_table_names, self.path)
             
@@ -115,6 +117,9 @@ def get_next_relation(gr, path_dict, edge):
         rtables = relation.table.database.tables
         old_table = rtables[node1]
         new_table = rtables[node2]
+
+        if relation.no_auto_path:
+            continue
         if rtables[node1].lookup and not rtables[node2].lookup:
             continue
         if len(tables) > 1 and rtables[node2].entity and rtables[tables[-1]].name == "_core_entity" and rtables[tables[-2]].entity:
@@ -170,6 +175,8 @@ def get_next_relation(gr, path_dict, edge):
         old_table = rtables[node2]
         new_table = rtables[node1]
 
+        if relation.no_auto_path:
+            continue
         if rtables[node2].lookup and not rtables[node1].lookup:
             continue
         if len(tables) > 1 and rtables[node1].entity and rtables[tables[-1]].name == "_core_entity" and rtables[tables[-2]].entity:
@@ -185,6 +192,8 @@ def get_next_relation(gr, path_dict, edge):
             split = relation.name
 
         backref = relation.sa_options.get("backref", "_%s" % node1)
+        if not backref:
+            continue
         new_path = current_path + [backref.encode("ascii")] 
 
         ##relationships only defined from entity
@@ -232,7 +241,7 @@ def get_paths(gr, table):
 def get_local_tables(path_dict, one_to_many_tables, local_tables, current_pos):
 
     edge = path_dict[current_pos]  
-    new_name = edge.name
+    new_name = edge.alt_name
     if edge.join in ("manytoone", "onetoone"):
         local_tables[new_name] = current_pos
     else:
@@ -272,17 +281,30 @@ def create_table_path(table_path_list, table):
 
     table_path[table] = "root"
 
+    tables = set()
+    duplicate_tables = set()
+
     for item in table_path_list:
         key, edge = item
         table_name = edge.node
         relation = edge.relation
-
         if relation.no_auto_path:
             continue
-        elif edge.name in table_path:
-            table_path[edge.name] = "ambiguous"
+        if table_name in tables:
+            duplicate_tables.add(table_name)
+        tables.add(table_name)
+
+
+    for item in table_path_list:
+        key, edge = item
+        table_name = edge.node
+        relation = edge.relation
+        if relation.no_auto_path:
+            continue
+        elif edge.name in duplicate_tables:
+            table_path[edge.alt_name] = [list(key), relation]
         else:
-            table_path[edge.name] = [list(key), relation]
+            table_path[edge.node] = [list(key), relation]
 
     return table_path
 

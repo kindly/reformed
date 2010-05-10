@@ -249,3 +249,32 @@ class UnicodeString(UnicodeString):
 
         
 
+class RequireIfMissing(FormValidator):
+
+    """
+    missing changed for being falsey to be being actually missing
+    """
+
+    # Field that potentially is required:
+    required = None
+    # If this field is missing, then it is required:
+    missing = None
+    # If this field is present, then it is required:
+    present = None
+    __unpackargs__ = ('required',)
+
+    def _to_python(self, value_dict, state):
+        is_required = False
+        if self.missing and value_dict.get(self.missing) is None:
+            is_required = True
+        if self.present and value_dict.get(self.present):
+            is_required = True
+        if is_required and value_dict.get(self.required) is None:
+            raise Invalid('You must give a value for %s' % self.required,
+                          value_dict, state,
+                          error_dict={self.required: Invalid(self.message(
+                              'empty', state), value_dict, state)})
+        return value_dict
+
+RequireIfPresent = RequireIfMissing
+

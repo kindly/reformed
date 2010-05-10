@@ -44,6 +44,7 @@ import os
 from ZODB import FileStorage, DB
 from ZODB.PersistentMapping import PersistentMapping
 import transaction
+import user_tables
 
 root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 log_file = os.path.join(root, "log.log")
@@ -114,6 +115,7 @@ class Database(object):
         self.manager_thread = ManagerThread(self, threading.currentThread())
         self.manager_thread.start()
 
+        self.user_tables = user_tables.UserTables(self)
         self.job_scheduler = job_scheduler.JobScheduler(self)
         self.scheduler_thread = job_scheduler.JobSchedulerThread(self, threading.currentThread())
 
@@ -289,8 +291,10 @@ class Database(object):
                                   field_types.Integer("table"),
                                   field_types.Text("title"),
                                   field_types.Text("summary"),
+                                  field_types.ModifiedByNoRelation("modified_by"),
                                   table_type = "internal",
-                                  summary = u'The entity table'
+                                  summary = u'The entity table',
+                                  modified_by = False
                                   )
 
             self.add_table(entity_table)
@@ -614,7 +618,10 @@ class Database(object):
 
         logging_table = tables.Table("_log_"+ logged_table.name,
                                      logged = False,
-                                     modified_date = False)
+                                     modified_date = False,
+                                     version = False,
+                                     modified_by = False,
+                                    )
 
         for column in logged_table.columns.itervalues():
 

@@ -218,8 +218,11 @@ class Relation(BaseSchema):
 
         self.many_side_not_null = kw.pop("many_side_not_null", True)
         self.many_side_mandatory = kw.pop("many_side_mandatory", False)
+        self.many_side_default = kw.get("many_side_default", None)
+        self.many_side_onupdate = kw.get("many_side_onupdate", None)
+
         backref = kw.pop("backref", None)
-        if backref:
+        if backref is not None:
             self.sa_options["backref"] = backref
         self.one_way = kw.pop("one_way", None)
         self.no_auto_path = kw.get("no_auto_path", False)
@@ -249,6 +252,10 @@ class Relation(BaseSchema):
                 self.many_side_not_null = parent.many_side_not_null
             if parent.many_side_mandatory is True:
                 self.many_side_mandatory = parent.many_side_mandatory
+            if parent.many_side_default is not None:
+                self.many_side_default = parent.many_side_default
+            if parent.many_side_onupdate is not None:
+                self.many_side_onupdate = parent.many_side_onupdate
             if parent.one_way:
                 self.one_way = True
             if parent.no_auto_path:
@@ -396,7 +403,7 @@ class Field(object):
         if obj.cascade:
             obj.sa_options["cascade"] = obj.cascade
         obj.backref = kw.get("backref", None)
-        if obj.backref:
+        if obj.backref is not None:
             obj.sa_options["backref"] = obj.backref
         obj.field_validation = kw.get("validation", None)
         if obj.field_validation:
@@ -410,6 +417,9 @@ class Field(object):
             obj.length = int(obj.length)
         obj.many_side_not_null = kw.get("many_side_not_null", True)
         obj.many_side_mandatory = kw.get("many_side_mandatory", False)
+
+        obj.many_side_default = kw.get("many_side_default", None)
+        obj.many_side_onupdate = kw.get("many_side_onupdate", None)
 
         obj.one_way = kw.get("one_way", None)
 

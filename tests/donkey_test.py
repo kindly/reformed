@@ -184,9 +184,7 @@ class test_donkey(object):
            Text("desctiption", length = 2000),
            Created("created_date"), ## when data was gathered
            CreatedBy("created_by"),
-
            lookup = True
-
         ) 
 
 
@@ -391,12 +389,11 @@ class test_basic_input(test_donkey):
 ##FIXME need these to be corrected
 
         print self.Donkey.tables["relation"].local_tables 
-        assert self.Donkey.tables["relation"].local_tables == {'relation.over_18.code': ('_secondary', 'people', 'over_18'), 'relation.donkey': ('_secondary', 'donkey'), 'relation.people': ('_secondary', 'people'), 'relation.contact_summary': ('_secondary', 'people', 'contact_summary'), 'relation.gender.code': ('_secondary', 'people', 'gender'), 'relation._core_entity': ('_secondary',), 'relation.donkey_pics': ('_secondary', 'donkey', 'donkey_pics')} 
-
+        assert self.Donkey.tables["relation"].local_tables == {'relation.over_18.code': ('_primary', 'people', 'over_18'), 'relation.donkey': ('_primary', 'donkey'), 'relation.user_group': ('_primary', 'user_group'), 'relation.people': ('_primary', 'people'), 'relation.user': ('_primary', 'user'), 'relation.contact_summary': ('_primary', 'people', 'contact_summary'), 'relation.gender.code': ('_primary', 'people', 'gender'), 'relation._core_entity': ('_primary',), 'relation.donkey_pics': ('_primary', 'donkey', 'donkey_pics')} 
 
         print self.Donkey.tables["relation"].one_to_many_tables
 
-        assert self.Donkey.tables["relation"].one_to_many_tables == {'relation.relation': ('_secondary', 'relation_primary'), 'relation.membership': ('_secondary', '_membership'), 'relation.donkey_sponsership': ('_secondary', 'donkey', 'donkey_sponsership'), 'relation.email': ('_secondary', 'people', 'email'), 'relation.entity_categories': ('_secondary', 'categories'), 'relation.transactions': ('_secondary', 'people', 'transactions')}
+        assert self.Donkey.tables["relation"].one_to_many_tables == {'relation.relation': ('_secondary', 'relation_primary'), 'relation.membership': ('_primary', '_membership'), 'relation.donkey_sponsership': ('_primary', 'donkey', 'donkey_sponsership'), 'relation.email': ('_primary', 'people', 'email'), 'relation.user.user_group_user': ('_primary', 'user', '_user'), 'relation.entity_categories': ('_primary', 'categories'), 'relation.user_group_user': ('_primary', 'user_group', '_user_group'), 'relation.transactions': ('_primary', 'people', 'transactions'), 'relation.user_group_permission': ('_primary', 'user_group', '_user_group_name')}
         
     def test_zz_add_local(self):
 
@@ -608,7 +605,7 @@ class test_basic_input(test_donkey):
 
         print self.Donkey["_core_entity"].dependant_attributes.keys()
 
-        assert set(self.Donkey["_core_entity"].dependant_attributes.keys()) == set(['_membership', 'donkey', 'people', 'relation_primary', 'donkey_relation_secondary', 'relation_secondary', u'categories', 'donkey_relation_primary'])
+        assert set(self.Donkey["_core_entity"].dependant_attributes.keys()) == set(['_membership', 'donkey', 'people', 'relation_primary', 'relation_secondary', 'donkey_relation_secondary', 'user', 'user_group', 'categories', 'donkey_relation_primary'])
 
     def test_dependant_tables(self):
 
@@ -616,7 +613,7 @@ class test_basic_input(test_donkey):
 
         print set(self.Donkey["_core_entity"].dependant_tables)
 
-        assert set(self.Donkey["_core_entity"].dependant_tables) == set(['donkey_relation', 'donkey', 'people', 'entity_categories', 'membership', 'relation'])
+        assert set(self.Donkey["_core_entity"].dependant_tables) == set(['donkey_relation', 'donkey', 'people', 'entity_categories', 'membership', 'relation', 'user', 'user_group'])
 
     def test_parant_col_attributes(self):
 
@@ -688,6 +685,13 @@ class test_basic_input(test_donkey):
         payment.password = "fhdsfhaoifeio9"
 
         assert payment.password == "fhdsfhaoifeio9"
+
+
+    def test_no_auto_path(self):
+        import pprint
+
+        pprint.pprint(self.Donkey["_core_entity"].table_path)
+        raise
 
 
 
