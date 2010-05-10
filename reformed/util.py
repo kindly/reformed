@@ -5,6 +5,7 @@ import datetime
 import decimal
 import os
 
+root_dir = None
 
 def get_dir(file = None, extra_path = None):
 
@@ -13,9 +14,14 @@ def get_dir(file = None, extra_path = None):
         file to be added to end of path
     extra path:
         path from this directory"""
-    root_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-    # clean up the path
-    root_dir = os.path.normpath(root_dir)
+
+    # is root_dir cached
+    global root_dir
+    if not root_dir:
+        root_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+        # clean up the path
+        root_dir = os.path.normpath(root_dir)
+
     if not file:
         if extra_path:
             return os.path.join(root_dir, extra_path)
