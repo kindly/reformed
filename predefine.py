@@ -38,20 +38,9 @@ def permission(code, name, description = u''):
     # cache permissions list if we don't have it already
     if permissions_defined == None:
         permissions_defined = []
-        try:
-            permissions = r.search('permission', fields = ['permission']).data
-            for record in permissions:
-                permissions_defined.append(record['permission'])
-        except KeyError:
-            # add permission table as it does not exist
-            table("permission", r,
-                Text("permission"), #FIXME ascii
-                Text("description", length = 200),
-                Text("long_description", length = 4000),
-                table_type = "system",
-                title_field = 'permission'
-            )
-            r.persist()
+        permissions = r.search('permission', fields = ['permission']).data
+        for record in permissions:
+            permissions_defined.append(record['permission'])
 
     # add permission if not in database
     if code not in permissions_defined:
