@@ -128,7 +128,7 @@ class Table(object):
         if "_modified_date" not in self.fields and self.modified_date:
             self.add_field(Modified("_modified_date"))
         if "_modified_by" not in self.fields and self.modified_by:
-            self.add_field(ModifiedBySession("modified_bygfjskfjsaklfja"))
+            self.add_field(ModifiedBySession("_modified_by"))
 
         self.foriegn_key_columns_current = None
         #sqlalchemy objects
