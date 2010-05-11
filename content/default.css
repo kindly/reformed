@@ -699,4 +699,22 @@ div.record_info > div {
     width:200px;
 }
 
+.img_upload_label {
+    border:1px solid #999;
+    width: 128px;
+    height: 128px;
+    display: block;
+    overflow: hidden;
+    cursor: pointer;
+}
 
+
+.img_upload_label > input.img_uploader {
+    position: relative;
+    height: 128px;
+    font-size: 128px;
+    width: auto;
+    opacity: 0;
+    -moz-opacity: 0;
+    filter:progid:DXImageTransform.Microsoft.Alpha(opacity=0);
+}
