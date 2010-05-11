@@ -28,7 +28,7 @@ from global_session import global_session
 
 class Application(object):
 
-    def __init__(self, dir):
+    def __init__(self, dir, quiet = False):
 
         self.metadata = MetaData()
         self.dir = dir
@@ -47,6 +47,7 @@ class Application(object):
                                                     engine = self.engine,
                                                     session = Session,
                                                     logging_tables = False,
+                                                    quiet = quiet,
                                                     zodb_store = "%s/%s.fs" % (application_folder,dir)
                                                     )
 
