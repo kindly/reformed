@@ -5,7 +5,10 @@ import datetime
 import decimal
 import os
 
-root_dir = None
+# root_dir holds the root directory of the application
+root_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+root_dir = os.path.normpath(root_dir)
+
 
 def get_dir(file = None, extra_path = None):
 
@@ -15,12 +18,7 @@ def get_dir(file = None, extra_path = None):
     extra path:
         path from this directory"""
 
-    # is root_dir cached
     global root_dir
-    if not root_dir:
-        root_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-        # clean up the path
-        root_dir = os.path.normpath(root_dir)
 
     if not file:
         if extra_path:
