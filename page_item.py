@@ -695,6 +695,10 @@ def file_upload(name, **kw):
 
     return page_item("input", name,  control = Control("file_upload"), **kw)
 
+def image(name, **kw):
+
+    return page_item("input", name,  control = Control("image"), **kw)
+
 
 ##Controls
 
