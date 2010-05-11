@@ -95,8 +95,11 @@ def confirm_request(msg, default = 'n'):
     return response
 
 def purge_attachments(application):
-
-    attachments_path = os.path.join(application.database.application_dir, application.sys_info['file_uploads>root_directory'])
+    try:
+        attachments_path = os.path.join(application.database.application_dir, application.sys_info['file_uploads>root_directory'])
+    except KeyError:
+        print 'no attachment directory found'
+        return
     if not os.path.exists(attachments_path):
         print "directory '%s' does not exist cannot purge attachments" % attachments_path
         return
@@ -246,7 +249,7 @@ if __name__ == "__main__":
 
     parser.add_option("-a", "--all",
                       action="store_true", dest="all",
-                      help="equivilent to delete create load")
+                      help="equivilent to delete purge create load")
 
     parser.add_option("-c", "--create",
                       action="store_true", dest="create",
@@ -335,7 +338,9 @@ if __name__ == "__main__":
     if options.reloader:
         reload(args, options)
     if options.all:
+        make_application()
         delete(args)
+        purge_attachments(make_application())
         application = None
         create(make_application())
         load(make_application())
