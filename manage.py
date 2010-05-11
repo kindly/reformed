@@ -71,9 +71,8 @@ def confirm_request(msg, default = 'n'):
         return True
     if default == 'y' or default == 'yes':
         opts = '[Yes, no, quit]'
-    if default == 'n' or default == 'no':
+    elif default == 'n' or default == 'no':
         opts = '[Yes, No, quit]'
-        default = 'n'
     else:
         opts = '[yes, no, Quit]'
         default = 'q'
