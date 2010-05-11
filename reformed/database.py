@@ -713,7 +713,6 @@ class ManagerThread(threading.Thread):
             if not self.initiator_thread.isAlive():
                 self.database.status = "terminated"
             if self.database.status == "terminated":
-                print '\nstopping threads, please wait'
                 self.database.job_scheduler.stop()
                 if self.database.scheduler_thread.isAlive():
                     self.database.scheduler_thread.stop()

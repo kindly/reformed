@@ -10,7 +10,8 @@ import standard_jobs
 import sys
 import logging
 import json
-from sqlalchemy import and_
+from sqlalchemy import and_ #FIXME this does not appear to be used
+from custom_exceptions import ThreadPoolNotInitialised
 
 logger = logging.getLogger('reformed.main')
 
@@ -40,10 +41,17 @@ class JobScheduler(object):
         self.table_name = table_name
         self.database = rdatabase
 
-        self.threadpool = threadpool.ThreadPool(POOL_SIZE)
+        self._threadpool = None
+
+    def get_threadpool(self):
+        # we only want the threadpool to be created if it is actually going to be used
+        # FIXME do we want some form of locking to ensure that this can only be
+        # called once?
+        if not self._threadpool:
+            self._threadpool = threadpool.ThreadPool(POOL_SIZE)
+        return self._threadpool
 
     def add_job(self, job_type, func, run_time = datetime.datetime.now(), **kw):
-
         try:
             session = self.database.Session()
             job = self.database.get_instance(self.table_name)
@@ -70,9 +78,10 @@ class JobScheduler(object):
 
     def shut_down_all_threads(self):
 
-        threadpool = self.threadpool
-
-        threadpool.dismissWorkers(POOL_SIZE, do_join = True)
+        threadpool = self._threadpool
+        if threadpool:
+            print 'Stopping job scheduler'
+            threadpool.dismissWorkers(POOL_SIZE, do_join = True)
 
 class JobSchedulerThread(threading.Thread):
 
@@ -81,11 +90,12 @@ class JobSchedulerThread(threading.Thread):
         self.database = database
         self.maker_thread = maker_thread
         self.job_scheduler = database.job_scheduler
-        self.threadpool = self.job_scheduler.threadpool
         self.alive = False
+        self.threadpool = None
 
     def run(self):
-
+        # get the threadpool (start if needed)
+        self.threadpool = self.job_scheduler.get_threadpool()
         self.alive = True
         tick_interval = 0.1
         time_counter = 0.0
@@ -138,6 +148,7 @@ class JobSchedulerThread(threading.Thread):
     def stop(self):
 
         if self.alive:
+            print 'Stopping job scheduler thread'
             self.alive = False
 
     def make_request(self, func, arg, job_id):
@@ -176,6 +187,7 @@ class JobSchedulerThread(threading.Thread):
         else:
             request = threadpool.makeRequests(func, [((self.database, job_id), {})], callback, exc_callback)
 
-        self.threadpool.putRequest(request[0])
-
-
+        if self.threadpool:
+            self.threadpool.putRequest(request[0])
+        else:
+            raise ThreadPoolNotInitialised()

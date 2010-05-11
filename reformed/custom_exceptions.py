@@ -56,6 +56,8 @@ class SingleResultError(Exception):
     pass
 class NotValidatedError(Exception):
     pass
+class ThreadPoolNotInitialised(Exception):
+    pass
 class LockingError(Exception):
     def __init__(self, msg, obj):
         self.msg = msg
