@@ -79,6 +79,7 @@ class Table(object):
         self.primary_key = kw.get("primary_key", None)
         #persisted should be private
         self.persisted = kw.get("persisted", False)
+        self.quiet = kw.get("quiet", False)
 
         # table types
         self.entity = kw.get("entity", False)
@@ -182,7 +183,8 @@ class Table(object):
             for field_name, rfield in self.fields.iteritems():
                 self._persist_extra_field(rfield, connection)
 
-            print 'creating %s' % self.name
+            if not self.quiet:
+                print 'creating %s' % self.name
 
 
     def persist_foreign_key_columns(self, connection):

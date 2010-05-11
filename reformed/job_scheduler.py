@@ -33,6 +33,7 @@ class JobScheduler(object):
                                             Text("error", length = 2000),
                                             Text("message", length = 2000),
                                             Integer("percent"),
+                                            quiet = rdatabase.quiet,
                                             table_type = "internal")
                                )
 

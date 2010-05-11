@@ -33,7 +33,7 @@ def make_application():
 
     global application
     if not application:
-        application = app.Application(dir)
+        application = app.Application(dir, quiet = options.quiet)
     return application
 
 def create(application):
@@ -93,7 +93,8 @@ def delete(args):
     meta.reflect(bind=engine)
 
     for table in reversed(meta.sorted_tables):
-        print 'deleting %s...' % table.name
+        if not options.quiet:
+            print 'deleting %s...' % table.name
         table.drop(bind=engine)
 
 def dump(application):
@@ -222,6 +223,8 @@ if __name__ == "__main__":
                       help="delete current database")
     parser.add_option("-r", "--run", dest = "run", action="store_true",
                       help="run the web server")
+    parser.add_option("-q", "--quiet", dest = "quiet", action="store_true",
+                      help="make the application less noisy")
     parser.add_option("--console", dest = "console", action="store_true",
                       help="start application and drop to interactive python console")
     parser.add_option("--reload", dest = "reload", action="store_true",

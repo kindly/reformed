@@ -82,6 +82,8 @@ class Database(object):
         self.sys_info = {}  # used for quick access to the system variables
         self.sys_info_full = {} # store of the full system info
 
+        self.quiet = kw.pop("quiet", False)
+
         ## zodb database
         if self.zodb_store:
             storage = FileStorage.FileStorage(self.zodb_store)
@@ -294,6 +296,7 @@ class Database(object):
                                   field_types.ModifiedByNoRelation("modified_by"),
                                   table_type = "internal",
                                   summary = u'The entity table',
+                                  quiet = self.quiet,
                                   modified_by = False
                                   )
 
@@ -722,13 +725,13 @@ class ManagerThread(threading.Thread):
 
 def table(name, database, *args, **kw):
     """helper to add table to database args and keywords same as Table definition"""
-    database.add_table(tables.Table(name, *args, **kw))
+    database.add_table(tables.Table(name, *args, quiet = database.quiet, **kw))
 
 def entity(name, database, *args, **kw):
     """helper to add entity to database args and keywords same as Table definition"""
-    database.add_entity(tables.Table(name, *args, **kw))
+    database.add_entity(tables.Table(name, *args, quiet = database.quiet, **kw))
 
 def relation(name, database, *args, **kw):
     """helper to add entity to database args and keywords same as Table definition"""
-    database.add_relation_table(tables.Table(name, *args, **kw))
+    database.add_relation_table(tables.Table(name, *args, quiet = database.quiet, **kw))
 
