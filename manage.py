@@ -64,11 +64,39 @@ def generate_data(application):
     import data_creator
     data_creator.create_csv()
 
+def confirm_request(msg, default = 'n'):
+
+    if options.yes_to_all:
+        return True
+    if default == 'y' or default == 'y':
+        opts = '[Yes, no, quit]'
+    else:
+        opts = '[yes, No, quit]'
+        default = 'n'
+    while True:
+        response = raw_input('%s %s ' % (msg, opts)).lower()
+        if response == '':
+            response = default
+        if response == 'y' or response == 'yes':
+            response = True
+            break
+        if response == 'n' or response == 'no':
+            response = False
+            break
+        if response == 'q' or response == 'quit':
+            sys.exit()
+
+        print 'Answer Yes or No'
+
+    return response
+
+
 def delete(args):
 
+    if not confirm_request('Delete database?', 'y'):
+        return
     from sqlalchemy import MetaData, create_engine
     print 'deleting database'
-
     meta = MetaData()
 
     if args:
@@ -225,6 +253,8 @@ if __name__ == "__main__":
                       help="run the web server")
     parser.add_option("-q", "--quiet", dest = "quiet", action="store_true",
                       help="make the application less noisy")
+    parser.add_option("-y", "--yes", dest = "yes_to_all", action="store_true",
+                      help="automatically choose yes")
     parser.add_option("--console", dest = "console", action="store_true",
                       help="start application and drop to interactive python console")
     parser.add_option("--reload", dest = "reload", action="store_true",
