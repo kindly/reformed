@@ -55,6 +55,7 @@ def load_data(application, file):
     flatfile.load()
 
 def load(application):
+    print "loading data"
     import load
     load.load(application.database,
                  application.dir)
@@ -316,7 +317,5 @@ if __name__ == "__main__":
         delete(args)
         application = None
         create(make_application())
-        print "loading"
         load(make_application())
-
 
