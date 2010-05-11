@@ -223,7 +223,7 @@ if __name__ == "__main__":
     parser.add_option("-r", "--run", dest = "run", action="store_true",
                       help="run the web server")
     parser.add_option("--console", dest = "console", action="store_true",
-                      help="return to the repl")
+                      help="start application and drop to interactive python console")
     parser.add_option("--reload", dest = "reload", action="store_true",
                       help="run with reloader")
     parser.add_option("--reloader", dest = "reloader", action="store_true",
@@ -261,7 +261,7 @@ if __name__ == "__main__":
 
     if options.console:
         import code
-        database = application.database
+        database = make_application().database
         code.interact(local=locals())
     if options.generate:
         generate_data(make_application())
