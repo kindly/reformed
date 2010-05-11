@@ -311,10 +311,14 @@ if __name__ == "__main__":
     if options.extract:
         extract(make_application())
     if options.delete:
+        if options.purge_attachments:
+            make_application()
         delete(args)
+        if options.purge_attachments:
+            purge_attachments(make_application())
         # kill application as it is no longer valid
         application = None
-    if options.purge_attachments:
+    if options.purge_attachments and not options.delete:
         purge_attachments(make_application())
 
     if options.console:
