@@ -83,6 +83,7 @@ class Database(object):
         self.sys_info_full = {} # store of the full system info
 
         self.quiet = kw.pop("quiet", False)
+        self.application_dir = kw.pop("application_dir")
 
         ## zodb database
         if self.zodb_store:

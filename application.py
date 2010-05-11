@@ -48,6 +48,7 @@ class Application(object):
                                                     session = Session,
                                                     logging_tables = False,
                                                     quiet = quiet,
+                                                    application_dir = application_folder,
                                                     zodb_store = "%s/%s.fs" % (application_folder,dir)
                                                     )
 
