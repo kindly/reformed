@@ -107,22 +107,28 @@ def purge_attachments(application):
 
 def delete(args):
 
-    if not confirm_request('Delete database?', 'y'):
-        return
-    from sqlalchemy import MetaData, create_engine
-    print 'deleting database'
-    meta = MetaData()
-
     if args:
         dir = args[0]
     else:
         dir = "sample"
 
+    from sqlalchemy import MetaData, create_engine
+
     this_dir = os.path.dirname(os.path.abspath(__file__))
     application_folder = os.path.join(this_dir, dir)
     sys.path.append(application_folder)
     engine = create_engine('sqlite:///%s/%s.sqlite' % (application_folder,dir))
+    meta = MetaData()
+    meta.reflect(bind=engine)
 
+    if not (meta.sorted_tables and os.path.exists("%s/%s.fs" % (application_folder, dir))):
+        print 'no database to delete'
+        return
+
+    if not confirm_request('Delete database?', 'y'):
+        return
+
+    print 'deleting database'
     try:
         os.remove("%s/%s.fs" % (application_folder, dir))
         os.remove("%s/%s.fs.lock" % (application_folder, dir))
@@ -131,8 +137,6 @@ def delete(args):
     except OSError:
         print "zodb store not there to remove"
         pass
-
-    meta.reflect(bind=engine)
 
     for table in reversed(meta.sorted_tables):
         if not options.quiet:
