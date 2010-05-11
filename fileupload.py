@@ -234,7 +234,7 @@ def fileupload(environ, start_response):
 
 
 def get_dir(path):
-    root = reformed.util.get_dir()
+    root = global_session.database.application_dir
     return os.path.join(root, r.sys_info['file_uploads>root_directory'], path)
 
 
