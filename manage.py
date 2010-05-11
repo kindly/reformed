@@ -20,6 +20,7 @@
 
 
 import os, os.path, sys
+import shutil
 from reformed.export import json_dump_all_from_table
 from reformed.data_loader import load_json_from_file
 from reformed.util import get_dir
@@ -93,6 +94,16 @@ def confirm_request(msg, default = 'n'):
 
     return response
 
+def purge_attachments(application):
+
+    attachments_path = os.path.join(application.database.application_dir, application.sys_info['file_uploads>root_directory'])
+    if not os.path.exists(attachments_path):
+        print "directory '%s' does not exist cannot purge attachments" % attachments_path
+        return
+    if not confirm_request("Purge attachments from '%s'?" % attachments_path, 'y'):
+        return
+    print 'purging attachments'
+    shutil.rmtree(attachments_path)
 
 def delete(args):
 
@@ -258,6 +269,8 @@ if __name__ == "__main__":
                       help="make the application less noisy")
     parser.add_option("-y", "--yes", dest = "yes_to_all", action="store_true",
                       help="automatically choose yes")
+    parser.add_option("-p", "--purge", dest = "purge_attachments", action="store_true",
+                      help="remove all attachment files from the file system")
     parser.add_option("--console", dest = "console", action="store_true",
                       help="start application and drop to interactive python console")
     parser.add_option("--reload", dest = "reload", action="store_true",
@@ -293,7 +306,8 @@ if __name__ == "__main__":
     if options.delete:
         delete(args)
         application = None
-
+    if options.purge_attachments:
+        purge_attachments(make_application())
 
     if options.console:
         import code
