@@ -69,11 +69,14 @@ def confirm_request(msg, default = 'n'):
 
     if options.yes_to_all:
         return True
-    if default == 'y' or default == 'y':
+    if default == 'y' or default == 'yes':
         opts = '[Yes, no, quit]'
-    else:
-        opts = '[yes, No, quit]'
+    if default == 'n' or default == 'no':
+        opts = '[Yes, No, quit]'
         default = 'n'
+    else:
+        opts = '[yes, no, Quit]'
+        default = 'q'
     while True:
         response = raw_input('%s %s ' % (msg, opts)).lower()
         if response == '':
