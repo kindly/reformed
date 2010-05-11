@@ -305,6 +305,7 @@ if __name__ == "__main__":
         extract(make_application())
     if options.delete:
         delete(args)
+        # kill application as it is no longer valid
         application = None
     if options.purge_attachments:
         purge_attachments(make_application())
