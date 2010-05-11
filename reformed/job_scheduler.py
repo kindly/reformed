@@ -52,6 +52,9 @@ class JobScheduler(object):
             self._threadpool = threadpool.ThreadPool(POOL_SIZE)
         return self._threadpool
 
+    def poll(self):
+        self._threadpool.poll()
+
     def add_job(self, job_type, func, run_time = datetime.datetime.now(), **kw):
         try:
             session = self.database.Session()
@@ -141,7 +144,7 @@ class JobSchedulerThread(threading.Thread):
     
     
                 try:
-                    self.database.job_scheduler.threadpool.poll()
+                    self.database.job_scheduler.poll()
                 except threadpool.NoResultsPending:
                     pass
     
