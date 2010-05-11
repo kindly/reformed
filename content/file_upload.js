@@ -31,12 +31,13 @@
 	
 $.fn.extend({
 
-	file_upload: function(){
-		$.FileUpload(this);
+	file_upload: function(data){
+		$.FileUpload(this, data);
 	}
 });
 
-$.FileUpload = function (input){
+
+$.FileUpload = function (input, data){
 
     function create_uid(length){
         // generate a unique id
@@ -82,12 +83,15 @@ $.FileUpload = function (input){
             if (return_data.error !== ''){
                 data.$info.text('ERROR: ' + return_data.error);
             } else {
-                data.$info.text('completed');
-                if (return_data.thumb){
-                    var $img = $('<img src="/attach?' + return_data.thumb + '" />');
-                    data.$info.append($img);
+                if (type == 'image' && return_data.thumb){
+                    data.$info.remove();
+                    $input_parent.css('background', 'url("/attach?' + return_data.thumb + '") center center no-repeat');
+                } else {
+                    data.$info.text('completed');
                 }
             }
+            $input = $('<input class="img_uploader" type="file" />').change(file_changed);
+            $input_parent.append($input);
             data.$form.remove();
             data.$iframe.remove();
         }
@@ -102,17 +106,18 @@ $.FileUpload = function (input){
 
     function file_changed(){
         var uid = create_uid(30);
-        var $input = $(input);
-        var $info = $('<div>hello</div>');
-        $info.insertAfter($input);
+        var $input_copy = $input;
         var $iframe = $('<iframe name="fileuploader_' + uid + '"></iframe>');
         $('body').append($iframe);
         var $form = $('<form action="/upload?~' + uid + '" method="POST" enctype="multipart/form-data" target="fileuploader_' + uid + '"></form>');
-        $input.attr('name', uid);
-        $input.detach();
-        $form.append($input);
+        $input_copy.attr('name', uid);
+        $input_copy.detach();
+        $form.append($input_copy);
         $('body').append($form);
         $form.submit();
+        $input_parent.empty();
+        var $info = $('<div>uploading</div>');
+        $input_parent.append($info);
 
         var start = new Date().getTime();
         var data = { uid : uid, $info : $info, $form : $form, $iframe : $iframe, start : start};
@@ -120,6 +125,25 @@ $.FileUpload = function (input){
         var timer = setTimeout(function() {update_status(data)}, 1000);
     }
 
+    var type = 'normal';
+    var $input = $(input);
+    var $input_parent = $(input).parent();
+
+    function init(){
+        if (data && data.type){
+            type = data.type;
+        }
+        if (type == 'image'){
+            if (data.img_url){
+                $input_parent.css('background', 'url("' + data.img_url + '") 0 0 no-repeat');
+            } else {
+                var $info = $('<div>click to add</div>');
+                $info.insertBefore($input);
+            }
+        }
+    }
+
+    init();
     $(input).change(file_changed);
 
 };
