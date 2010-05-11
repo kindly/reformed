@@ -181,7 +181,7 @@ class User(TableNode):
                 self.show_login_form(message)
                 raise
         else:
-            message = '# Login.\n\nWelcome to %s enter your login details to continue' % global_session.application['name']
+            message = '# Login.\n\nWelcome to %s enter your login details to continue' % global_session.sys_info['name']
             self.show_login_form(message)
 
     def show_login_form(self, message = None):
