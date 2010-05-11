@@ -285,7 +285,15 @@ $FormElements = function(){
         return temp;
     }
 
-
+    function image(item, value){
+        var $control = $(add_label(item, 'rf_') + '<div' + set_class_list(item, 'HOLDER') + '"><label class="img_upload_label"><input class="img_uploader" type="file" /></label></div>' + form_description(item));
+        if (value != null){
+            value = '/attach?' + value;
+        }
+        var data = {type : 'image', img_url : value}
+        $control.find('input').file_upload(data);
+        return $control
+    }
 
     function build(readonly, item, value){
         var ro = readonly ? 1 : 0;
@@ -321,6 +329,7 @@ $FormElements = function(){
         'link_list': [link_list, link_list],
         'codegroup': [codegroup, codegroup],
         'file_upload' : [file_upload, file_upload],
+        'image' : [image, image],
         'subform': [add_subform, add_subform]
     }
 
