@@ -3,6 +3,7 @@ from formencode import validators
 from page_item import *
 import reformed.search
 from form import form
+from reformed.custom_exceptions import SingleResultError
 from global_session import global_session
 r = global_session.database
 
@@ -176,10 +177,9 @@ class User(TableNode):
                     else:
                         self.login(data_out)
 
-            except:
+            except SingleResultError:
                 message = '# Login failed\n\nuser name or password incorrect, try again.'
                 self.show_login_form(message)
-                raise
         else:
             message = '# Login.\n\nWelcome to %s enter your login details to continue' % global_session.sys_info['name']
             self.show_login_form(message)
