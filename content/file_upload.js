@@ -83,14 +83,17 @@ $.FileUpload = function (input, data){
             if (return_data.error !== ''){
                 data.$info.text('ERROR: ' + return_data.error);
             } else {
-                if (type == 'image' && return_data.thumb){
+                if (type == 'image' && return_data.id){
                     data.$info.remove();
-                    $input_parent.css('background', 'url("/attach?' + return_data.thumb + '") center center no-repeat');
+                    $input_parent.css('background', 'url("/attach?' + return_data.id + '") center center no-repeat');
                 } else {
                     data.$info.text('completed');
                 }
+                // store value
+                value = return_data.id;
             }
             $input = $('<input class="img_uploader" type="file" />').change(file_changed);
+            $input.data('value', value);
             $input_parent.append($input);
             data.$form.remove();
             data.$iframe.remove();
@@ -125,7 +128,9 @@ $.FileUpload = function (input, data){
         var timer = setTimeout(function() {update_status(data)}, 1000);
     }
 
+
     var type = 'normal';
+    var value = data.value;
     var $input = $(input);
     var $input_parent = $(input).parent();
 
@@ -134,17 +139,17 @@ $.FileUpload = function (input, data){
             type = data.type;
         }
         if (type == 'image'){
-            if (data.img_url){
-                $input_parent.css('background', 'url("' + data.img_url + '") 0 0 no-repeat');
+            if (value){
+                $input_parent.css('background', 'url("/attach?' + value + '") center center no-repeat');
             } else {
                 var $info = $('<div>click to add</div>');
                 $info.insertBefore($input);
             }
         }
+        $input.change(file_changed);
+        $input.data('value', value);
     }
 
     init();
-    $(input).change(file_changed);
-
 };
 })(jQuery);

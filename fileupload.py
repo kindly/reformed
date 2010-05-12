@@ -91,7 +91,7 @@ def fileupload_status(environ, start_response):
     out = dict(bytes_left = result['bytes_left'],
                bytes = result['bytes'],
                completed = result['complete'],
-               thumb = result['thumb'],
+               id = result['id'],
                error = result['error'])
 
     # TODO if completed kill reference from database
@@ -138,7 +138,7 @@ def fileupload(environ, start_response):
     status['bytes_left'] = length
     status['bytes'] = length
     status['error'] = ""
-    status['thumb'] = False
+    status['id'] = False
 
     if length > r.sys_info['file_uploads>max_file_size']:
         status['error'] = "File too large"
@@ -212,7 +212,7 @@ def fileupload(environ, start_response):
             mimetype = mimetypes.guess_type(full_path)[0] or 'application/octet-stream'
             if mimetype.startswith('image/'):
                 make_thumbs(dir, file_id, obj)
-                status['thumb'] = obj.id
+                status['id'] = obj.id
             obj.mimetype = mimetype
             stat = os.stat(full_path)
             size = str(stat.st_size)
