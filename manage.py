@@ -179,7 +179,7 @@ def reload(host, options):
 
     application = make_application()
     paste.reloader.install()
-    run(options.host, options.port, application, options.ssl, options.ssl_cert)
+    run(options.host, options.port, application, options.ssl, options.ssl_cert, options.no_job_scheduler)
 
 def reloader(args, options):
 
@@ -197,6 +197,8 @@ def reloader(args, options):
                 command.append('--ssl')
             if options.ssl_cert:
                 command.append('--ssl_cert=%s' % options.ssl_cert)
+            if options.no_job_scheduler:
+                command.append('-J')
             if args:
                 command.append(args[0])
             proc = subprocess.Popen(command)
@@ -205,7 +207,7 @@ def reloader(args, options):
             proc.terminate()
             break
 
-def run(host, port, application, ssl, ssl_cert):
+def run(host, port, application, ssl, ssl_cert, no_job_scheduler):
     print 'starting webserver'
     import beaker.middleware
     import web
@@ -213,7 +215,8 @@ def run(host, port, application, ssl, ssl_cert):
     web_application = web.WebApplication(application)
 
     database = application.database
-    database.scheduler_thread.start()
+    if not no_job_scheduler:
+        database.scheduler_thread.start()
 
     if os.environ.get("REQUEST_METHOD", ""):
         from wsgiref.handlers import BaseCGIHandler
@@ -266,6 +269,8 @@ if __name__ == "__main__":
     parser.add_option("-f", "--file",
                       action="store", dest="load_file", default = "data.csv",
                       help="specify load file (default data.csv)")
+    parser.add_option("-J", "--nojobs", dest="no_job_scheduler", action="store_true",
+                      help="disable job scheduler")
     parser.add_option("-g", "--generate", action="store_true",
                       help="generate sample file")
     parser.add_option("-d", "--delete", dest = "delete", action="store_true",
@@ -336,7 +341,7 @@ if __name__ == "__main__":
     if options.table_load:
         load(make_application())
     if options.run:
-        run(options.host, options.port, make_application(), options.ssl, options.ssl_cert)
+        run(options.host, options.port, make_application(), options.ssl, options.ssl_cert, options.no_job_scheduler)
     if options.reload:
         reloader(args, options)
     if options.reloader:
