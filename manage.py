@@ -90,7 +90,7 @@ def confirm_request(msg, default = 'n'):
         if response == 'q' or response == 'quit':
             sys.exit()
 
-        print 'Answer Yes or No'
+        print 'Answer Yes, No or Quit'
 
     return response
 
