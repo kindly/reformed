@@ -37,7 +37,8 @@ class Application(object):
 
         sys.path.append(application_folder)
 
-        self.engine = create_engine('sqlite:///%s/%s.sqlite' % (application_folder,dir))
+        #self.engine = create_engine('sqlite:///%s/%s.sqlite' % (application_folder,dir))
+        self.engine = create_engine('postgres://kindly:ytrewq@localhost:5432/bug')
         self.metadata.bind = self.engine
         Session = sessionmaker(bind=self.engine, autoflush = False)
 
