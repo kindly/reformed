@@ -382,18 +382,17 @@ class test_basic_input(test_donkey):
 
         assert make_local_tables(self.Donkey.tables["people"].paths) == [{'_core_entity': ('_entity',), 'contact_summary': ('contact_summary',), 'over_18.code': ('over_18',), 'gender.code': ('gender',)}, {'donkey_relation': ('_entity', 'donkey_relation_primary'), 'transactions': ('transactions',), 'email': ('email',), 'entity_categories': ('_entity', 'categories'), 'membership': ('_entity', '_membership'), 'relation': ('_entity', 'relation_primary'), 'donkey_sponsership': ('donkey_sponsership',)}] 
 
-
         print make_local_tables(self.Donkey.tables["donkey"].paths)
         assert make_local_tables(self.Donkey.tables["donkey"].paths) == [{'_core_entity': ('_entity',), 'donkey_pics': ('donkey_pics',)}, {'donkey_relation': ('_entity', 'donkey_relation_secondary'), 'entity_categories': ('_entity', 'categories'), 'membership': ('_entity', '_membership'), 'relation': ('_entity', 'relation_primary'), 'donkey_sponsership': ('donkey_sponsership',)}] 
         
 ##FIXME need these to be corrected
 
         print self.Donkey.tables["relation"].local_tables 
-        assert self.Donkey.tables["relation"].local_tables == {'relation.over_18.code': ('_primary', 'people', 'over_18'), 'relation.donkey': ('_primary', 'donkey'), 'relation.user_group': ('_primary', 'user_group'), 'relation.people': ('_primary', 'people'), 'relation.user': ('_primary', 'user'), 'relation.contact_summary': ('_primary', 'people', 'contact_summary'), 'relation.gender.code': ('_primary', 'people', 'gender'), 'relation._core_entity': ('_primary',), 'relation.donkey_pics': ('_primary', 'donkey', 'donkey_pics')} 
+        assert self.Donkey.tables["relation"].local_tables == {'relation.over_18.code': ('_secondary', 'people', 'over_18'), 'relation.donkey': ('_secondary', 'donkey'), 'relation.user_group': ('_secondary', 'user_group'), 'relation.people': ('_secondary', 'people'), 'relation.user': ('_secondary', 'user'), 'relation.contact_summary': ('_secondary', 'people', 'contact_summary'), 'relation.gender.code': ('_secondary', 'people', 'gender'), 'relation._core_entity': ('_secondary',), 'relation.donkey_pics': ('_secondary', 'donkey', 'donkey_pics')} 
 
         print self.Donkey.tables["relation"].one_to_many_tables
 
-        assert self.Donkey.tables["relation"].one_to_many_tables == {'relation.relation': ('_secondary', 'relation_primary'), 'relation.membership': ('_primary', '_membership'), 'relation.donkey_sponsership': ('_primary', 'donkey', 'donkey_sponsership'), 'relation.email': ('_primary', 'people', 'email'), 'relation.user.user_group_user': ('_primary', 'user', '_user'), 'relation.entity_categories': ('_primary', 'categories'), 'relation.user_group_user': ('_primary', 'user_group', '_user_group'), 'relation.transactions': ('_primary', 'people', 'transactions'), 'relation.user_group_permission': ('_primary', 'user_group', '_user_group_name')}
+        assert self.Donkey.tables["relation"].one_to_many_tables == {'relation.relation': ('_secondary', 'relation_primary'), 'relation.membership': ('_secondary', '_membership'), 'relation.donkey_sponsership': ('_secondary', 'donkey', 'donkey_sponsership'), 'relation.email': ('_secondary', 'people', 'email'), 'relation.entity_categories': ('_secondary', 'categories'), 'relation.user_group_user': ('_secondary', 'user_group', '_user_group'), 'relation.transactions': ('_secondary', 'people', 'transactions'), 'relation.user_group_permission': ('_secondary', 'user_group', '_user_group_name')}
         
     def test_zz_add_local(self):
 
@@ -690,8 +689,10 @@ class test_basic_input(test_donkey):
     def test_no_auto_path(self):
         import pprint
 
-        pprint.pprint(self.Donkey["_core_entity"].table_path)
-        raise
+        pprint.pprint(self.Donkey["people"].table_path)
+
+        aa = get_paths(self.Donkey.graph, "people")
+
 
 
 

@@ -159,8 +159,8 @@ def get_next_relation(gr, path_dict, edge):
         split = None
 
         if not rtables[node2].relationship:
-            all_relations = old_table.tables_with_relations[(node1, "here")]
-            auto_path = [relation for relation in all_relations if not relation.no_auto_path]
+            all_relations = old_table.tables_with_relations[(node2, "here")]
+            auto_path = [rel for rel in all_relations if not rel.no_auto_path]
             if len(auto_path) > 1:
                 split = relation.name
 
@@ -198,7 +198,7 @@ def get_next_relation(gr, path_dict, edge):
         split = None
 
         all_relations = old_table.tables_with_relations[(node1, "other")]
-        auto_path = [relation for relation in all_relations if not relation.no_auto_path]
+        auto_path = [rel for rel in all_relations if not rel.no_auto_path]
         if len(auto_path) > 1:
             split = relation.name
 
@@ -254,6 +254,8 @@ def get_local_tables(path_dict, one_to_many_tables, local_tables, current_pos):
 
     edge = path_dict[current_pos]  
     new_name = edge.alt_name
+    if edge.relation.no_auto_path:
+        return
     if edge.join in ("manytoone", "onetoone"):
         local_tables[new_name] = current_pos
     else:
