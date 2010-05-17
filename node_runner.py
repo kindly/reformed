@@ -18,11 +18,7 @@
 ##   Copyright (c) 2008-2009 Toby Dacre & David Raznick
 ##
 
-import nodes
 import traceback
-import imp
-import sys
-import paste
 
 from global_session import global_session
 
