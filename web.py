@@ -30,7 +30,7 @@ import traceback
 import wsgiref.util
 import json
 from global_session import global_session
-import interface
+import node_runner
 import fileupload
 import reformed.util
 
@@ -122,7 +122,7 @@ def process_node(environ, start_response):
         data = [{'data' : info, 'type' : 'node'}]
         return [json.dumps(data, separators=(',',':'))]
 
-    node_interface = interface.Interface()
+    node_interface = node_runner.Interface()
 
 
     node_interface.add_command(head, body)

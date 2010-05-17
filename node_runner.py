@@ -26,6 +26,33 @@ import paste
 
 from global_session import global_session
 
+class Interface(object):
+
+    def __init__(self):
+        self.command_queue = []
+        self.output = [] # this will be returned
+
+    def add_command(self, command, data):
+        self.command_queue.append((command, data))
+
+    def process(self):
+        print "PROCESS"
+        try:
+
+            while self.command_queue:
+                (command, data) = self.command_queue.pop()
+                print command, repr(data)
+
+                if command == 'node':
+                    node(data, self)
+        except:
+            error_msg = 'ERROR\n\n%s' % (traceback.format_exc())
+            out = {'action': 'general_error',
+                    'node': 'moo',
+                    'data' : error_msg}
+
+            self.output.append({'type' : 'node',
+                                'data' : out})
 def node(data, caller):
     node = data.get('node')
     out = run(node, data)
