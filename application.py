@@ -20,6 +20,7 @@
 
 
 import os
+import os.path
 import sys
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
@@ -37,8 +38,8 @@ class Application(object):
 
         sys.path.append(application_folder)
 
-        #self.engine = create_engine('sqlite:///%s/%s.sqlite' % (application_folder,dir))
-        self.engine = create_engine('postgres://kindly:ytrewq@localhost:5432/bug')
+        self.engine = create_engine('sqlite:///%s/%s.sqlite' % (application_folder,dir))
+       # self.engine = create_engine('postgres://kindly:ytrewq@localhost:5432/bug')
         self.metadata.bind = self.engine
         Session = sessionmaker(bind=self.engine, autoflush = False)
 
@@ -50,7 +51,7 @@ class Application(object):
                                                     logging_tables = False,
                                                     quiet = quiet,
                                                     application_dir = application_folder,
-                                                    zodb_store = "%s/%s.fs" % (application_folder,dir)
+                                                    zodb_store = os.path.join(application_folder, 'zodb.fs')
                                                     )
 
 

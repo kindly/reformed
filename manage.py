@@ -125,27 +125,29 @@ def delete(args):
     meta = MetaData()
     meta.reflect(bind=engine)
 
-    if not (meta.sorted_tables and os.path.exists("%s/%s.fs" % (application_folder, dir))):
-        print 'no database to delete'
-        return
+    # check for zodb files
+    zodb_file_names = ["zodb.fs", "zodb.fs.lock", "zodb.fs.index", "zodb.fs.tmp"]
+    zodb_files = []
+    for zodb_file in zodb_file_names:
+        zodb_path = os.path.join(application_folder, zodb_file)
+        if os.path.exists(zodb_path):
+            zodb_files.append(zodb_path)
 
-    if not confirm_request('Delete database?', 'y'):
-        return
+    if (meta.sorted_tables or zodb_files) and confirm_request('Delete database?', 'y'):
 
-    print 'deleting database'
-    try:
-        os.remove("%s/%s.fs" % (application_folder, dir))
-        os.remove("%s/%s.fs.lock" % (application_folder, dir))
-        os.remove("%s/%s.fs.index" % (application_folder, dir))
-        os.remove("%s/%s.fs.tmp" % (application_folder, dir))
-    except OSError:
-        print "zodb store not there to remove"
-        pass
+        # delete the zodb
+        if zodb_files:
+            print 'deleting zodb'
+            for zodb_file in zodb_files:
+                os.remove(zodb_file)
 
-    for table in reversed(meta.sorted_tables):
-        if not options.quiet:
-            print 'deleting %s...' % table.name
-        table.drop(bind=engine)
+        # delete main database tables
+        if meta.sorted_tables:
+            print 'deleting database'
+            for table in reversed(meta.sorted_tables):
+                if not options.quiet:
+                    print 'deleting %s...' % table.name
+                table.drop(bind=engine)
 
 def dump(application):
     print 'dumping data'
