@@ -603,7 +603,7 @@ class Database(object):
         data = result.results
 
         if not data or len(data) == 2:
-            raise custom_exceptions.SingleResultError("one result not found")
+            raise custom_exceptions.SingleResultError("one result not found\n\n table:\n %s \nargs:\n %s\ndata:\n%s" % (table_name, args, data))
 
         return result
 
