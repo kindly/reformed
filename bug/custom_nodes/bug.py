@@ -5,7 +5,12 @@ import reformed.search
 from form import form
 from reformed.custom_exceptions import SingleResultError
 from global_session import global_session
+import reformed.fshp
 r = global_session.database
+
+from predefine import permission
+
+permission("Login", u'User login', u'Login to system.')
 
 class Ticket(TableNode):
 
@@ -161,24 +166,35 @@ class User(TableNode):
 
     def check_login(self):
         message = None
+        fail_message = '# Login failed\n\nuser name or password incorrect, try again.'
         vdata = self.validate_data_full(self.data, self.login_validations)
         if vdata['login_name'] and vdata['password']:
-            where = "login_name='%s' and password='%s'" % (vdata['login_name'], vdata['password'])
+            where = "login_name='%s'" % vdata['login_name']
+            #where = "login_name='%s' and password='%s'" % (vdata['login_name'], vdata['password'])
             try:
                 data_out = r.search_single_data('user', where)
-                if data_out.get('active') != True:
-                    message = '# Login failed\n\nThis account is disabled.'
+                if not reformed.fshp.check(vdata['password'], data_out.get("password")):
+                    message = fail_message
                     self.show_login_form(message)
                 else:
-                    result = r.search('permission', 'user_group_user.user_id = %s and permission="Login"' % data_out.get('id'), fields=['permission']).data
-                    if not result:
-                        message = '# Login failed\n\nThis account is not allowed to log into the system.'
+                    if data_out.get('active') != True:
+                        message = '# Login failed\n\nThis account is disabled.'
                         self.show_login_form(message)
                     else:
-                        self.login(data_out)
+                        result = r.search('permission', 'user_group_user.user_id = %s and permission="Login"' % data_out.get('id')).data
+                        if not result:
+                            ## see if you are in sysadmin group
+                            result = r.search('user_group_user', 'user_id = %s and user_group_id = 1' % data_out.get('id')).data
+                            if not result:
+                                message = '# Login failed\n\nThis account is not allowed to log into the system.'
+                                self.show_login_form(message)
+                            else:
+                                self.login(data_out)
+                        else:
+                            self.login(data_out)
 
             except SingleResultError:
-                message = '# Login failed\n\nuser name or password incorrect, try again.'
+                message = fail_message
                 self.show_login_form(message)
         else:
             message = '# Login.\n\nWelcome to %s enter your login details to continue' % global_session.sys_info['name']

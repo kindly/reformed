@@ -17,7 +17,7 @@ class UserTables(object):
             Boolean("active", default = True, mandatory = True),
             Boolean("locked", default = False),
             Text("login_name", mandatory = True),
-            Text("password"),
+            Password("password"),
             Email("email"),
             DateTime("last_logged_in"),
             Text("notes", length = 4000),
