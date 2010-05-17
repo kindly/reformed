@@ -106,8 +106,6 @@ def process_node(environ, start_response):
 
     request = webob.Request(environ)
 
-    head = request.params["head"]
-
     print request.params["body"]
     ##FIXME make sure we have a head and a body
     try:
@@ -125,7 +123,7 @@ def process_node(environ, start_response):
     node_interface = node_runner.Interface()
 
 
-    node_interface.add_command(head, body)
+    node_interface.add_command(body)
     node_interface.process()
     data = node_interface.output
 

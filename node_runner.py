@@ -32,19 +32,18 @@ class Interface(object):
         self.command_queue = []
         self.output = [] # this will be returned
 
-    def add_command(self, command, data):
-        self.command_queue.append((command, data))
+    def add_command(self, data):
+        self.command_queue.append(data)
 
     def process(self):
         print "PROCESS"
         try:
 
             while self.command_queue:
-                (command, data) = self.command_queue.pop()
-                print command, repr(data)
+                data = self.command_queue.pop()
+                print repr(data)
 
-                if command == 'node':
-                    self.node(data)
+                self.node(data)
         except:
             error_msg = 'ERROR\n\n%s' % (traceback.format_exc())
             out = {'action': 'general_error',

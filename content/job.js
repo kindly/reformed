@@ -62,10 +62,10 @@ $JOB = function(){
         }
     }
 
-	function add(request, sent_data, type){
+	function add(request, sent_data){
 		// this is where we make the ajax request
 		var body = $.toJSON(request);
-		$.post("/ajax", { head: type, body: body },
+		$.post("/ajax", {body: body},
 		  function(return_data){
 			 process_return(return_data, sent_data, request_number);
 		  }, "json");
@@ -76,8 +76,8 @@ $JOB = function(){
 
 
     return {
-        'add' : function (request, data, type){
-            add(request, data, type);
+        'add' : function (request, data){
+            add(request, data);
         }
     }
 
