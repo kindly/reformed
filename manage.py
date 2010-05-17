@@ -90,7 +90,7 @@ def confirm_request(msg, default = 'n'):
         if response == 'q' or response == 'quit':
             sys.exit()
 
-        print 'Answer Yes or No'
+        print 'Answer Yes, No or Quit'
 
     return response
 
@@ -125,27 +125,29 @@ def delete(args):
     meta = MetaData()
     meta.reflect(bind=engine)
 
-    if not (meta.sorted_tables and os.path.exists("%s/%s.fs" % (application_folder, dir))):
-        print 'no database to delete'
-        return
+    # check for zodb files
+    zodb_file_names = ["zodb.fs", "zodb.fs.lock", "zodb.fs.index", "zodb.fs.tmp"]
+    zodb_files = []
+    for zodb_file in zodb_file_names:
+        zodb_path = os.path.join(application_folder, zodb_file)
+        if os.path.exists(zodb_path):
+            zodb_files.append(zodb_path)
 
-    if not confirm_request('Delete database?', 'y'):
-        return
+    if (meta.sorted_tables or zodb_files) and confirm_request('Delete database?', 'y'):
 
-    print 'deleting database'
-    try:
-        os.remove("%s/%s.fs" % (application_folder, dir))
-        os.remove("%s/%s.fs.lock" % (application_folder, dir))
-        os.remove("%s/%s.fs.index" % (application_folder, dir))
-        os.remove("%s/%s.fs.tmp" % (application_folder, dir))
-    except OSError:
-        print "zodb store not there to remove"
-        pass
+        # delete the zodb
+        if zodb_files:
+            print 'deleting zodb'
+            for zodb_file in zodb_files:
+                os.remove(zodb_file)
 
-    for table in reversed(meta.sorted_tables):
-        if not options.quiet:
-            print 'deleting %s...' % table.name
-        table.drop(bind=engine)
+        # delete main database tables
+        if meta.sorted_tables:
+            print 'deleting database'
+            for table in reversed(meta.sorted_tables):
+                if not options.quiet:
+                    print 'deleting %s...' % table.name
+                table.drop(bind=engine)
 
 def dump(application):
     print 'dumping data'
@@ -180,7 +182,7 @@ def reload(host, options):
 
     application = make_application()
     paste.reloader.install()
-    run(options.host, options.port, application, options.ssl, options.ssl_cert)
+    run(options.host, options.port, application, options.ssl, options.ssl_cert, options.no_job_scheduler)
 
 def reloader(args, options):
 
@@ -198,6 +200,8 @@ def reloader(args, options):
                 command.append('--ssl')
             if options.ssl_cert:
                 command.append('--ssl_cert=%s' % options.ssl_cert)
+            if options.no_job_scheduler:
+                command.append('-J')
             if args:
                 command.append(args[0])
             proc = subprocess.Popen(command)
@@ -206,7 +210,7 @@ def reloader(args, options):
             proc.terminate()
             break
 
-def run(host, port, application, ssl, ssl_cert):
+def run(host, port, application, ssl, ssl_cert, no_job_scheduler):
     print 'starting webserver'
     import beaker.middleware
     import web
@@ -214,7 +218,8 @@ def run(host, port, application, ssl, ssl_cert):
     web_application = web.WebApplication(application)
 
     database = application.database
-    database.scheduler_thread.start()
+    if not no_job_scheduler:
+        database.scheduler_thread.start()
 
     if os.environ.get("REQUEST_METHOD", ""):
         from wsgiref.handlers import BaseCGIHandler
@@ -267,6 +272,8 @@ if __name__ == "__main__":
     parser.add_option("-f", "--file",
                       action="store", dest="load_file", default = "data.csv",
                       help="specify load file (default data.csv)")
+    parser.add_option("-J", "--nojobs", dest="no_job_scheduler", action="store_true",
+                      help="disable job scheduler")
     parser.add_option("-g", "--generate", action="store_true",
                       help="generate sample file")
     parser.add_option("-d", "--delete", dest = "delete", action="store_true",
@@ -337,7 +344,7 @@ if __name__ == "__main__":
     if options.table_load:
         load(make_application())
     if options.run:
-        run(options.host, options.port, make_application(), options.ssl, options.ssl_cert)
+        run(options.host, options.port, make_application(), options.ssl, options.ssl_cert, options.no_job_scheduler)
     if options.reload:
         reloader(args, options)
     if options.reloader:

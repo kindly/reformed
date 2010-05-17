@@ -136,8 +136,9 @@ $FormElements = function(){
     }
 
     function file_upload(item, value){
-        var $control = $(add_label(item, 'rf_') + '<div' + set_class_list(item, 'HOLDER') + '"><input type="file" /></div>' + form_description(item));
-        $control.find('input').file_upload();
+        var $control = $(add_label(item, 'rf_') + '<div' + set_class_list(item, 'HOLDER') + '"><input class="img_uploader" type="file" /></div>' + form_description(item));
+        var data = {type : 'normal', value : value}
+        $control.find('input').file_upload(data);
         return $control
     }
 
@@ -287,10 +288,7 @@ $FormElements = function(){
 
     function image(item, value){
         var $control = $(add_label(item, 'rf_') + '<div' + set_class_list(item, 'HOLDER') + '"><label class="img_upload_label"><input class="img_uploader" type="file" /></label></div>' + form_description(item));
-        if (value != null){
-            value = '/attach?' + value;
-        }
-        var data = {type : 'image', img_url : value}
+        var data = {type : 'image', value : value}
         $control.find('input').file_upload(data);
         return $control
     }

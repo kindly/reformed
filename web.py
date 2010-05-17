@@ -30,7 +30,7 @@ import traceback
 import wsgiref.util
 import json
 from global_session import global_session
-import interface
+import node_runner
 import fileupload
 import reformed.util
 
@@ -102,45 +102,42 @@ def process_attachment(environ, start_response):
 
 def process_node(environ, start_response):
 
+    start_response('200 OK', [('Content-Type', 'text/html')])
     session(environ)
 
     request = webob.Request(environ)
-
-    head = request.params["head"]
 
     print request.params["body"]
     ##FIXME make sure we have a head and a body
     try:
         body = json.loads(request.params["body"])
     except Exception, e:
-        error_msg = 'JSON OUTPUT FAIL\n\n%s' % traceback.format_exc()
-        error_msg += "\n\nSent body\n" + request.params["body"]
-        info = {'action': 'general_error',
-                'node' : 'JSON error',
-                'data' : error_msg}
-        data = [{'data' : info, 'type' : 'node'}]
-        return [json.dumps(data, separators=(',',':'))]
+        return throw_error('Sent JSON Error:')
 
-    node_interface = interface.Interface()
+    node_interface = node_runner.Interface()
 
+    node_interface.add_command(body)
+    try:
+        node_interface.process()
+    except:
+        return throw_error('Node Error:')
 
-    node_interface.add_command(head, body)
-    node_interface.process()
     data = node_interface.output
 
-    start_response('200 OK', [('Content-Type', 'text/html')])
     try:
         return [json.dumps(data, sort_keys=False, indent=4)]#, separators=(',',':'))]
     except TypeError:
-        # we had a problem with the JSON conversion
-        # let's send the error to the front-end
-        error_msg = 'JSON OUTPUT FAIL\n\n%s' % traceback.format_exc()
-        info = {'action': 'general_error',
-                'node' : 'JSON error',
-                'data' : error_msg}
-        data = [{'data' : info, 'type' : 'node'}]
-        return [json.dumps(data, separators=(',',':'))]
+        return throw_error('Output JSON Error:')
 
+def throw_error(title):
+
+    """an exception was thrown generate the traceback info and send to the frontend"""
+
+    error_msg = '%s\n\n%s' % (title, traceback.format_exc())
+    info = {'action': 'general_error',
+            'data' : error_msg}
+    data = [{'data' : info, 'type' : 'node'}]
+    return [json.dumps(data, separators=(',',':'))]
 
 class WebApplication(object):
     """New leaner webapplication server."""
