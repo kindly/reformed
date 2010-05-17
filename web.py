@@ -113,7 +113,8 @@ def process_node(environ, start_response):
     try:
         body = json.loads(request.params["body"])
     except Exception, e:
-        error_msg = 'JSON OUTPUT FAIL\n\n%s' % traceback.format_exc()
+        start_response('200 OK', [('Content-Type', 'text/html')])
+        error_msg = 'JSON INPUT FAIL\n\n%s' % traceback.format_exc()
         error_msg += "\n\nSent body\n" + request.params["body"]
         info = {'action': 'general_error',
                 'node' : 'JSON error',
