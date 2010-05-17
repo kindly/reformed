@@ -115,24 +115,27 @@ def get_next_relation(gr, path_dict, edge):
     name_changes = edge.name_changes
     changed_table_names = edge.changed_table_names
     last_relation = edge.relation
+
+    if last_relation and last_relation.no_auto_path:
+        return
+        
     
     for edge in gr.out_edges(node, data = True):
         node1, node2, relation = edge
             
         relation = relation["relation"]
+
         rtables = relation.table.database.tables
         old_table = rtables[node1]
         new_table = rtables[node2]
 
-        if relation.no_auto_path:
+        if relation == last_relation:
             continue
         if rtables[node1].lookup and not rtables[node2].lookup:
             continue
         if len(tables) > 1 and rtables[node2].entity and rtables[tables[-1]].name == "_core_entity" and rtables[tables[-2]].entity:
             continue
         if len(tables) > 1 and check_two_entities(tables, node2, rtables):
-            continue
-        if relation == last_relation:
             continue
 
         
@@ -156,7 +159,9 @@ def get_next_relation(gr, path_dict, edge):
         split = None
 
         if not rtables[node2].relationship:
-            if len(old_table.tables_with_relations[(node2, "here")]) > 1:
+            all_relations = old_table.tables_with_relations[(node1, "here")]
+            auto_path = [relation for relation in all_relations if not relation.no_auto_path]
+            if len(auto_path) > 1:
                 split = relation.name
 
         new_name_changes = name_changes + [split]
@@ -181,7 +186,7 @@ def get_next_relation(gr, path_dict, edge):
         old_table = rtables[node2]
         new_table = rtables[node1]
 
-        if relation.no_auto_path:
+        if relation == last_relation:
             continue
         if rtables[node2].lookup and not rtables[node1].lookup:
             continue
@@ -189,13 +194,14 @@ def get_next_relation(gr, path_dict, edge):
             continue
         if len(tables) > 1 and check_two_entities(tables, node1, rtables):
             continue
-        if relation == last_relation:
-            continue
 
         split = None
 
-        if len(old_table.tables_with_relations[(node1, "other")]) > 1:
+        all_relations = old_table.tables_with_relations[(node1, "other")]
+        auto_path = [relation for relation in all_relations if not relation.no_auto_path]
+        if len(auto_path) > 1:
             split = relation.name
+
 
         backref = relation.sa_options.get("backref", "_%s" % node1)
         if not backref:

@@ -819,7 +819,7 @@ class Table(object):
         sa_table = sa.Table(self.name, self.database.metadata)
 
         if self.database.engine.name == 'postgres':
-            statement = text("coalesce((select max(id) from (select * from %s) inner ),0) + 1" % self.name)
+            statement = text("coalesce((select max(id) from (select * from public.%s) inner_table),0) + 1" % self.name)
             sa_table.append_column(sa.Column("id", sa.Integer, primary_key = True, server_default = statement))
         else:
             sa_table.append_column(sa.Column("id", sa.Integer, primary_key = True))
