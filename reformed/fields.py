@@ -93,6 +93,7 @@ class CreatedBy(Field):
         self._created_by = Relation("manytoone", "user",
                                     foreign_key_name = "created_by",
                                     no_auto_path = True,
+                                    many_side_not_null = False,
                                     many_side_default = get_user_id,
                                     backref = False)
 
