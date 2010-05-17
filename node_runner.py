@@ -31,14 +31,6 @@ def node(data, caller):
     out = run(node, data)
     caller.output.append({'type' : 'node',
                           'data' : out})
-def reload_nodes():
-    global nodes
-    nodes = reload(nodes)
-
-    for node in globals():
-        if node[:6] == 'nodes.':
-            print 'reloading %s' % node
-            imp.reload(sys.modules[node])
 
 
 def run(node_name, data, last_node = None):
@@ -52,8 +44,6 @@ def run(node_name, data, last_node = None):
 
     node_path = node_name.split('.')
     node_base = node_path[0]
-
-    found = False
 
     try:
         module = __import__('custom_nodes.' + node_base)
@@ -82,10 +72,6 @@ def run(node_name, data, last_node = None):
         else:
             found = False
             break
-
-    if not found:
-        print "Node <%s> not found" % node_name
-        return
 
     print "Node: %s, last: %s" % (node_name, last_node)
     x = search_node(data, node_name, last_node)
