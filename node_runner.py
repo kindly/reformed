@@ -18,9 +18,10 @@
 ##   Copyright (c) 2008-2009 Toby Dacre & David Raznick
 ##
 
-import traceback
-
 from global_session import global_session
+
+class NodeNotFound(Exception):
+    pass
 
 class Interface(object):
 
@@ -33,21 +34,12 @@ class Interface(object):
 
     def process(self):
         print "PROCESS"
-        try:
 
-            while self.command_queue:
-                data = self.command_queue.pop()
-                print repr(data)
+        while self.command_queue:
+            data = self.command_queue.pop()
+            print repr(data)
 
-                self.node(data)
-        except:
-            error_msg = 'ERROR\n\n%s' % (traceback.format_exc())
-            out = {'action': 'general_error',
-                    'node': 'moo',
-                    'data' : error_msg}
-
-            self.output.append({'type' : 'node',
-                                'data' : out})
+            self.node(data)
 
     def node(self, data):
         node = data.get('node')
@@ -76,24 +68,14 @@ class Interface(object):
                 module = __import__('nodes.' + node_base)
                 print "importing " + 'nodes.' + node_base
             except ImportError:
-                module = None
-
-        if not module:
-            print "import failed"
-            print traceback.print_exc()
-            error_msg = 'IMPORT FAIL (%s)\n\n%s' % (node_name, traceback.format_exc())
-            info = {'action': 'general_error',
-                    'node': node_name,
-                    'data' : error_msg}
-            return info
+                raise
 
         search_node = module
         for node in node_path:
             if hasattr(search_node, node):
                 search_node = getattr(search_node, node)
-                found = True
             else:
-                found = False
+                raise NodeNotFound(node_name)
                 break
 
         print "Node: %s, last: %s" % (node_name, last_node)

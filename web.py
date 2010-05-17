@@ -102,6 +102,7 @@ def process_attachment(environ, start_response):
 
 def process_node(environ, start_response):
 
+    start_response('200 OK', [('Content-Type', 'text/html')])
     session(environ)
 
     request = webob.Request(environ)
@@ -111,35 +112,32 @@ def process_node(environ, start_response):
     try:
         body = json.loads(request.params["body"])
     except Exception, e:
-        start_response('200 OK', [('Content-Type', 'text/html')])
-        error_msg = 'JSON INPUT FAIL\n\n%s' % traceback.format_exc()
-        error_msg += "\n\nSent body\n" + request.params["body"]
-        info = {'action': 'general_error',
-                'node' : 'JSON error',
-                'data' : error_msg}
-        data = [{'data' : info, 'type' : 'node'}]
-        return [json.dumps(data, separators=(',',':'))]
+        return throw_error('Sent JSON Error:')
 
     node_interface = node_runner.Interface()
 
-
     node_interface.add_command(body)
-    node_interface.process()
+    try:
+        node_interface.process()
+    except:
+        return throw_error('Node Error:')
+
     data = node_interface.output
 
-    start_response('200 OK', [('Content-Type', 'text/html')])
     try:
         return [json.dumps(data, sort_keys=False, indent=4)]#, separators=(',',':'))]
     except TypeError:
-        # we had a problem with the JSON conversion
-        # let's send the error to the front-end
-        error_msg = 'JSON OUTPUT FAIL\n\n%s' % traceback.format_exc()
-        info = {'action': 'general_error',
-                'node' : 'JSON error',
-                'data' : error_msg}
-        data = [{'data' : info, 'type' : 'node'}]
-        return [json.dumps(data, separators=(',',':'))]
+        return throw_error('Output JSON Error:')
 
+def throw_error(title):
+
+    """an exception was thrown generate the traceback info and send to the frontend"""
+
+    error_msg = '%s\n\n%s' % (title, traceback.format_exc())
+    info = {'action': 'general_error',
+            'data' : error_msg}
+    data = [{'data' : info, 'type' : 'node'}]
+    return [json.dumps(data, separators=(',',':'))]
 
 class WebApplication(object):
     """New leaner webapplication server."""
