@@ -33,23 +33,35 @@ def sysinfo(name, value, description = ''):
 permissions_defined = None
 
 def permission(code, name, description = u''):
-    """check permission exists in the database, add it if not there"""
-    global permissions_defined
-    # cache permissions list if we don't have it already
-    if permissions_defined == None:
-        permissions_defined = []
-        permissions = r.search('permission', fields = ['permission']).data
-        for record in permissions:
-            permissions_defined.append(record['permission'])
+    data = dict(description = name,
+                long_description = description)
+    add_data("permission", "permission", code, data)
 
-    # add permission if not in database
-    if code not in permissions_defined:
-        print 'add permision: %s' % code
-        new_permission = r.get_instance('permission')
-        new_permission.permission = code
-        new_permission.description = name
-        new_permission.long_description = description
+
+cached_data = {}
+
+def add_data(table, key_field, key_data, data):
+    """check code_type exists in the database, add it if not there"""
+    global cached_data
+
+    # cache data if we don't have it already
+    if table not in cached_data:
+        cached_data[table] = []
+        values = r.search(table, fields = [key_field]).data
+        for record in values:
+            cached_data[table].append(record[key_field])
+
+    # add data if not in database
+    if key_data not in cached_data[table]:
+        new_row = r.get_instance(table)
+        setattr(new_row, key_field, key_data)
+
+        for key, value in data.iteritems():
+            setattr(new_row, key, value)
+
         session = r.Session()
-        session.add(new_permission)
+        session.add(new_row)
         session.commit()
         session.close()
+
+        cached_data[table].append(key_data)

@@ -2,12 +2,12 @@ from reformed.fields import *
 
 class UserTables(object):
 
-    def __init__(self, rdatabase):
-        
-        if "user" in rdatabase.tables:
+    def __init__(self, database):
+
+        if "user" in database.tables:
             return
 
-        d = rdatabase
+        d = database
 
         from reformed.database import *
 
@@ -69,4 +69,32 @@ class UserTables(object):
             title_field = 'permission'
         )
 
-        rdatabase.persist()
+        database.persist()
+
+        sys_admin = database.get_instance("user")
+        sys_admin.name = u"admin"
+        sys_admin.login_name = u"admin"
+        sys_admin.password = u"admin"
+        sys_admin.active = True
+        sys_admin.created_by = 1
+        sys_admin._modified_by = 1
+
+
+        admin_group = database.get_instance("user_group")
+        admin_group.groupname = u"admin"
+        admin_group.created_by = 1
+        admin_group._modified_by = 1
+        admin_group.active = True
+
+        user_group_user = database.get_instance("user_group_user")
+        user_group_user.user = sys_admin
+        user_group_user.user_group = admin_group
+
+        session = database.Session()
+        session.add(sys_admin)
+        session.add(user_group_user)
+        session.add(admin_group)
+        session.commit()
+
+
+
