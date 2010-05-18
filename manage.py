@@ -34,7 +34,7 @@ def make_application():
 
     global application
     if not application:
-        application = app.Application(dir, quiet = options.quiet)
+        application = app.Application(dir, options)
     return application
 
 def create(application):

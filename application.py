@@ -32,7 +32,7 @@ import reformed.job_scheduler as job_scheduler
 
 class Application(object):
 
-    def __init__(self, dir, quiet = False):
+    def __init__(self, dir, runtime_options):
 
         self.metadata = MetaData()
         self.dir = dir
@@ -45,6 +45,11 @@ class Application(object):
        # self.engine = create_engine('postgres://kindly:ytrewq@localhost:5432/bug')
         self.metadata.bind = self.engine
         Session = sessionmaker(bind=self.engine, autoflush = False)
+
+        if options and options.quiet:
+            quiet = True
+        else:
+            quiet = False
 
         self.database = reformed.database.Database("reformed",
                                                     entity = True,
