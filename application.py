@@ -32,7 +32,7 @@ import reformed.job_scheduler as job_scheduler
 
 class Application(object):
 
-    def __init__(self, dir, runtime_options):
+    def __init__(self, dir, runtime_options = None):
 
         self.metadata = MetaData()
         self.dir = dir
@@ -46,7 +46,7 @@ class Application(object):
         self.metadata.bind = self.engine
         Session = sessionmaker(bind=self.engine, autoflush = False)
 
-        if options and options.quiet:
+        if runtime_options and runtime_options.quiet:
             quiet = True
         else:
             quiet = False
