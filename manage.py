@@ -39,6 +39,7 @@ def make_application():
 
 def create(application):
     print 'creating database structure'
+    import reformed.user_tables
     import schema
 
 def extract(application):

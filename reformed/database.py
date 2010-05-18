@@ -43,7 +43,7 @@ import os
 from ZODB import FileStorage, DB
 from ZODB.PersistentMapping import PersistentMapping
 import transaction
-import user_tables
+#import user_tables
 
 root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 log_file = os.path.join(root, "log.log")
