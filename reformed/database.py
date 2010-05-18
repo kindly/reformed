@@ -115,8 +115,6 @@ class Database(object):
 
         self.status = "active"
 
-        self.job_scheduler = job_scheduler.JobScheduler(self)
-        self.scheduler_thread = job_scheduler.JobSchedulerThread(self, threading.currentThread())
 
 
     def register_info(self, key, value, description = '', force = False):

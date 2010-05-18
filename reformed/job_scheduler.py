@@ -19,10 +19,15 @@ POLL_INTERVAL = 10
 
 class JobScheduler(object):
 
-    def __init__(self, rdatabase, table_name = "_core_job_scheduler"):
+    def __init__(self, application, table_name = "_core_job_scheduler"):
+
+        self.table_name = table_name
+        self.database = application.database
+        self._threadpool = None
+
         ## FIXME why does this need the user table?
-        if not table_name in rdatabase.tables and 'user' in rdatabase.tables:
-            rdatabase.add_table(tables.Table(table_name, 
+        if not table_name in self.database.tables and 'user' in self.database.tables:
+            self.database.add_table(tables.Table(table_name,
                                             Text("job_type"), 
                                             Text("function"), 
                                             Text("arg"), 
@@ -32,16 +37,11 @@ class JobScheduler(object):
                                             Text("error", length = 2000),
                                             Text("message", length = 2000),
                                             Integer("percent"),
-                                            quiet = rdatabase.quiet,
+                                            quiet = self.database.quiet,
                                             table_type = "internal")
                                )
 
-            rdatabase.persist()
-
-        self.table_name = table_name
-        self.database = rdatabase
-
-        self._threadpool = None
+            self.database.persist()
 
     def get_threadpool(self):
         # we only want the threadpool to be created if it is actually going to be used
@@ -88,11 +88,12 @@ class JobScheduler(object):
 
 class JobSchedulerThread(threading.Thread):
 
-    def __init__(self, database, maker_thread):
+    def __init__(self, application, maker_thread):
         super(JobSchedulerThread, self).__init__()
-        self.database = database
+        self.application = application
+        self.database = application.database
         self.maker_thread = maker_thread
-        self.job_scheduler = database.job_scheduler
+        self.job_scheduler = application.job_scheduler
         self.alive = False
         self.threadpool = None
 
@@ -143,7 +144,7 @@ class JobSchedulerThread(threading.Thread):
     
     
                 try:
-                    self.database.job_scheduler.poll()
+                    self.job_scheduler.poll()
                 except threadpool.NoResultsPending:
                     pass
     

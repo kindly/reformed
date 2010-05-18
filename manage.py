@@ -218,9 +218,8 @@ def run(host, port, application, ssl, ssl_cert, no_job_scheduler):
 
     web_application = web.WebApplication(application)
 
-    database = application.database
     if not no_job_scheduler:
-        database.scheduler_thread.start()
+        application.scheduler_thread.start()
 
     if os.environ.get("REQUEST_METHOD", ""):
         from wsgiref.handlers import BaseCGIHandler

@@ -28,6 +28,7 @@ from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
 import reformed.database
 from global_session import global_session
+import reformed.job_scheduler as job_scheduler
 
 class Application(object):
 
@@ -56,12 +57,16 @@ class Application(object):
                                                     zodb_store = os.path.join(application_folder, 'zodb.fs')
                                                     )
 
+        self.job_scheduler = job_scheduler.JobScheduler(self)
+        self.scheduler_thread = job_scheduler.JobSchedulerThread(self, threading.currentThread())
+
         self.manager_thread = ManagerThread(self, threading.currentThread())
         self.manager_thread.start()
 
         # system wide settings
 
         self.sys_info = self.database.sys_info
+        global_session.application = self
         global_session.database = self.database
 
 
@@ -94,7 +99,7 @@ class ManagerThread(threading.Thread):
         while True:
             if not self.initiator_thread.isAlive():
                 self.application.database.status = "terminated"
-                if self.application.database.job_scheduler:
-                    self.application.database.job_scheduler.stop()
+                if self.application.job_scheduler:
+                    self.application.job_scheduler.stop()
                 break
             time.sleep(0.1)
