@@ -700,23 +700,6 @@ class Database(object):
         self.aliases = aliases
 
 
-class ManagerThread(threading.Thread):
-
-    def __init__(self, database, initiator_thread):
-
-        super(ManagerThread, self).__init__()
-        self.initiator_thread = initiator_thread
-        self.database = database
-
-    def run(self):
-
-        while True:
-            if not self.initiator_thread.isAlive():
-                self.database.status = "terminated"
-                if self.database.job_scheduler:
-                    self.database.job_scheduler.stop()
-                break
-            time.sleep(0.1)
 
 def table(name, database, *args, **kw):
     """helper to add table to database args and keywords same as Table definition"""
