@@ -69,6 +69,7 @@ class Application(object):
         self.manager_thread.start()
 
         # system wide settings
+        self.sys_info = self.database.sys_info
         global_session.application = self
         global_session.database = self.database
 
