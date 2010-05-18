@@ -716,11 +716,8 @@ class ManagerThread(threading.Thread):
         while True:
             if not self.initiator_thread.isAlive():
                 self.database.status = "terminated"
-            if self.database.status == "terminated":
-                self.database.job_scheduler.stop()
-                if self.database.scheduler_thread.isAlive():
-                    self.database.scheduler_thread.stop()
-                    self.database.scheduler_thread.join()
+                if self.database.job_scheduler:
+                    self.database.job_scheduler.stop()
                 break
             time.sleep(0.1)
 
