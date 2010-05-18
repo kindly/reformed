@@ -291,7 +291,7 @@ class Database(object):
 
         if "_core_entity" not in self.tables:
             entity_table = tables.Table("_core_entity",
-                                  field_types.Integer("table"),
+                                  field_types.Text("table"),
                                   field_types.Text("title"),
                                   field_types.Text("summary"),
                                   field_types.ModifiedByNoRelation("modified_by"),

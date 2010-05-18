@@ -348,6 +348,7 @@ class Form(object):
 
         table = self.table or node.table
 
+        ##FIXME do we need these seperated?
         if r[table].entity:
             results = r.search('_core_entity',
                                where = "%s.id >0" % table,
@@ -356,7 +357,6 @@ class Form(object):
                                count = True)
         else:
             results = r.search(table,
-                               where = "id >0",
                                limit = limit,
                                offset = offset,
                                count = True)

@@ -248,7 +248,7 @@ class SessionWrapper(object):
             table = get_table_from_instance(obj, self.database)
             if table.entity == True:
                 entity = self.database.get_instance("_core_entity")
-                entity.table = table.table_id
+                entity.table = unicode(table.name)
                 obj._entity = entity
                 self.add(obj)
                 self.add(entity)
