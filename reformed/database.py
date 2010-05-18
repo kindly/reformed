@@ -703,13 +703,22 @@ class Database(object):
 
 def table(name, database, *args, **kw):
     """helper to add table to database args and keywords same as Table definition"""
+    if name in database.tables:
+        print '<%s> exists will not create' % name
+        return
     database.add_table(tables.Table(name, *args, quiet = database.quiet, **kw))
 
 def entity(name, database, *args, **kw):
     """helper to add entity to database args and keywords same as Table definition"""
+    if name in database.tables:
+        print '<%s> exists will not create' % name
+        return
     database.add_entity(tables.Table(name, *args, quiet = database.quiet, **kw))
 
 def relation(name, database, *args, **kw):
     """helper to add entity to database args and keywords same as Table definition"""
+    if name in database.tables:
+        print '<%s> exists will not create' % name
+        return
     database.add_relation_table(tables.Table(name, *args, quiet = database.quiet, **kw))
 
