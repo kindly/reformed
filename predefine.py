@@ -19,29 +19,38 @@
 ##  
 
 
-from reformed.database import table
-from reformed.fields import *
-
 from global_session import global_session
 
 r = global_session.database
+
 
 def sysinfo(name, value, description = ''):
     r.register_info(name, value, description)
 
 
-permissions_defined = None
 
 def permission(code, name, description = u''):
     data = dict(description = name,
                 long_description = description)
     add_data("permission", "permission", code, data)
 
+def user_group(name, description = u''):
+    data = dict(description = description,
+                created_by = 1,
+                _modified_by = 1,
+                active = True)
+    add_data("user_group", "groupname", name, data)
+
 
 cached_data = {}
 
 def add_data(table, key_field, key_data, data):
-    """check code_type exists in the database, add it if not there"""
+    """check data exists in the database, add it if not there"""
+
+    global r
+    if table not in r.tables:
+        print 'Table <%s> does not exist cannot add data <%s>' % (table, key_data)
+        return
     global cached_data
 
     # cache data if we don't have it already
@@ -63,5 +72,5 @@ def add_data(table, key_field, key_data, data):
         session.add(new_row)
         session.commit()
         session.close()
-
+        # add to cache
         cached_data[table].append(key_data)
