@@ -37,7 +37,6 @@ import sessionwrapper
 import validate_database
 import logging
 import networkx as nx
-import job_scheduler
 import threading
 import os
 from ZODB import FileStorage, DB
