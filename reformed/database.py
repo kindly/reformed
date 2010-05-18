@@ -115,7 +115,6 @@ class Database(object):
 
         self.status = "active"
 
-        self.user_tables = user_tables.UserTables(self)
         self.job_scheduler = job_scheduler.JobScheduler(self)
         self.scheduler_thread = job_scheduler.JobSchedulerThread(self, threading.currentThread())
 
