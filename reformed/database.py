@@ -29,7 +29,6 @@ import custom_exceptions
 import search
 import resultset
 import tables
-import time
 from collections import defaultdict
 from util import get_paths, get_all_local_data, split_table_fields
 from fields import ManyToOne, OneToOne, OneToMany, Integer, CopyTextAfter, CopyTextAfterField, DeleteRow
@@ -115,8 +114,6 @@ class Database(object):
                 self.add_table(table)
 
         self.status = "active"
-        self.manager_thread = ManagerThread(self, threading.currentThread())
-        self.manager_thread.start()
 
         self.user_tables = user_tables.UserTables(self)
         self.job_scheduler = job_scheduler.JobScheduler(self)

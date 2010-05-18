@@ -19,7 +19,9 @@
 ##
 
 
+import threading
 import os
+import time
 import os.path
 import sys
 from sqlalchemy import MetaData, create_engine
@@ -54,6 +56,8 @@ class Application(object):
                                                     zodb_store = os.path.join(application_folder, 'zodb.fs')
                                                     )
 
+        self.manager_thread = ManagerThread(self, threading.currentThread())
+        self.manager_thread.start()
 
         # system wide settings
 
@@ -75,3 +79,22 @@ class Application(object):
         register("bookmarks>permission>node", "bug.Permission")
         register("bookmarks>_system_info>title", "System Settings")
         register("bookmarks>_system_info>node", "bug.SysInfo")
+
+
+class ManagerThread(threading.Thread):
+
+    def __init__(self, application, initiator_thread):
+
+        super(ManagerThread, self).__init__()
+        self.initiator_thread = initiator_thread
+        self.application = application
+
+    def run(self):
+
+        while True:
+            if not self.initiator_thread.isAlive():
+                self.application.database.status = "terminated"
+                if self.application.database.job_scheduler:
+                    self.application.database.job_scheduler.stop()
+                break
+            time.sleep(0.1)
