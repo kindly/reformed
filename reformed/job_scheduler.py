@@ -1,6 +1,6 @@
 import threadpool
 import threading
-from util import load_local_data, get_all_local_data
+from util import load_local_data
 import tables
 from fields import Text, DateTime, Integer
 import time
@@ -10,7 +10,6 @@ import standard_jobs
 import sys
 import logging
 import json
-from sqlalchemy import and_ #FIXME this does not appear to be used
 from custom_exceptions import ThreadPoolNotInitialised
 
 logger = logging.getLogger('reformed.main')
@@ -21,8 +20,8 @@ POLL_INTERVAL = 10
 class JobScheduler(object):
 
     def __init__(self, rdatabase, table_name = "_core_job_scheduler"):
-
-        if not table_name in rdatabase.tables:
+        ## FIXME why does this need the user table?
+        if not table_name in rdatabase.tables and 'user' in rdatabase.tables:
             rdatabase.add_table(tables.Table(table_name, 
                                             Text("job_type"), 
                                             Text("function"), 
