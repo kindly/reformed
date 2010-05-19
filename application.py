@@ -50,7 +50,6 @@ class Application(object):
 
         sys.path.append(self.application_folder)
 
-        log.info(sys.path)
 
         if engine:
             self.engine = create_engine(engine)
@@ -143,12 +142,14 @@ class Application(object):
 
         handler = logging.FileHandler(log_file)
         handler.setFormatter(formatter)
+        if error_logger:
+            handler.setLevel(logging.ERROR)
+        else:
+            handler.setLevel(logging.DEBUG)
 
         logger = logging.getLogger(logger_name)
-        if error_logger:
-            logger.setLevel(logging.ERROR)
-        else:
-            logger.setLevel(logging.INFO)
+        logger.setLevel(logging.DEBUG)
+
         logger.addHandler(handler)
 
 
