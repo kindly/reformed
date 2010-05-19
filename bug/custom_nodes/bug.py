@@ -8,9 +8,8 @@ from global_session import global_session
 import reformed.fshp
 r = global_session.database
 
-from predefine import permission
 
-permission("Login", u'User login', u'Login to system.')
+global_session.application.predefine.permission("Login", u'User login', u'Login to system.')
 
 class Ticket(TableNode):
 
