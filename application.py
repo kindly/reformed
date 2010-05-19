@@ -90,6 +90,7 @@ class Application(object):
         self.manager_thread.start()
 
 
+        self.get_bookmark_data()
         # system wide settings
         global_session.application = self
         global_session.database = self.database
@@ -97,18 +98,20 @@ class Application(object):
 
     def get_bookmark_data(self):
         # FIXME this is hard coded for bugs
-        # FIXME can this be removed
-        register = self.database.register_info
-        register("bookmarks>user>title", "Users")
-        register("bookmarks>user>node", "bug.User")
-        register("bookmarks>ticket>title", "Ticket")
-        register("bookmarks>ticket>node", "bug.Ticket")
-        register("bookmarks>user_group>title", "User Group")
-        register("bookmarks>user_group>node", "bug.UserGroup")
-        register("bookmarks>permission>title", "Permission")
-        register("bookmarks>permission>node", "bug.Permission")
-        register("bookmarks>_system_info>title", "System Settings")
-        register("bookmarks>_system_info>node", "bug.SysInfo")
+        # need a better solution
+        # maybe get the nodes to register themselves?
+
+        bookmarks = {}
+        bookmarks['user'] = dict(title = "Users", node = "bug.User")
+        bookmarks['ticket'] = dict(title = "Ticket", node = "bug.Ticket")
+        bookmarks['user_group'] = dict(title = "User Group", node = "bug.UserGroup")
+        bookmarks['permission'] = dict(title = "Permission", node = "bug.Permission")
+        bookmarks['permission'] = dict(title = "Permission", node = "bug.Permission")
+        self.register_info('bookmarks', bookmarks)
+
+        #register("bookmarks>_system_info>title", "System Settings")
+        #register("bookmarks>_system_info>node", "bug.SysInfo")
+
 
 
 
