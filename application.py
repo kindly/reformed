@@ -120,18 +120,24 @@ class Application(object):
         root = connection.root()
 
         if force or key not in root["sys_info"]:
+            # add/update the value
             data = dict(value = value, description = description, read_only = force)
             root["sys_info"][key] = data
             self.sys_info_full[key] = data
             self.sys_info[key] = value
 
-        #TODO make sure on concurrent changes recache data?
-        try:
-            transaction.commit()
-        except:
-            raise
+            #TODO make sure on concurrent changes recache data?
+            try:
+                transaction.commit()
+            except:
+                raise
+
+        else:
+            value = self.sys_info[key]
 
         connection.close()
+
+        return value
 
 
     def cache_sys_info(self, sys_info_db):

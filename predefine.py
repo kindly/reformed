@@ -24,8 +24,9 @@ from global_session import global_session
 r = global_session.database
 
 
-def sysinfo(name, value, description = ''):
-    global_session.application.register_info(name, value, description)
+def sysinfo(key, value, description = '', force = False):
+    """add/update system infomation and return the current value for the given key"""
+    return global_session.application.register_info(name, value, description, force)
 
 
 
