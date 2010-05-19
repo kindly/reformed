@@ -95,7 +95,7 @@ def crypt(passwd, salt=None, saltlen=8, rounds=4096, variant=1):
     if salt is None:
         salt = ''
         for i in range(saltlen):
-            salt += chr(random.randint(1, 128))
+            salt += chr(random.randint(0, 127))
     else:
         saltlen = len(salt)
 
