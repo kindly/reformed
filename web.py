@@ -33,9 +33,9 @@ from global_session import global_session
 import node_runner
 import fileupload
 import reformed.util
-
+import pprint
 import logging
-logger = logging.getLogger('reformed.main')
+log = logging.getLogger('rebase.web')
 
 def session(environ):
     global_session.session = environ['beaker.session']
@@ -44,6 +44,7 @@ def session(environ):
         global_session.session['user_id'] = 0
         global_session.session['username'] = ''
         global_session.session['permissions'] = []
+        log.info('creating new http session\n%s' % pprint.pformat(global_session.session))
 
 
 # I'd like to put this in the WebApplication class but it
@@ -107,7 +108,6 @@ def process_node(environ, start_response):
 
     request = webob.Request(environ)
 
-    print request.params["body"]
     ##FIXME make sure we have a head and a body
     try:
         body = json.loads(request.params["body"])
@@ -134,6 +134,7 @@ def throw_error(title):
     """an exception was thrown generate the traceback info and send to the frontend"""
 
     error_msg = '%s\n\n%s' % (title, traceback.format_exc())
+    log.error(error_msg)
     info = {'action': 'general_error',
             'data' : error_msg}
     data = [{'data' : info, 'type' : 'node'}]
@@ -145,6 +146,7 @@ class WebApplication(object):
     def __init__(self, application):
 
         print "-----web app started------"
+        log.info("----- web app started ------")
 
         self.application = application
         self.database = application.database
@@ -171,6 +173,8 @@ class WebApplication(object):
         global_session.sys_info = self.application.sys_info
 
         request_url = environ['PATH_INFO']
+        log.info("url: %s" % request_url)
+
         if request_url == '/ajax':
             return (process_node(environ, start_response))
         elif request_url.startswith('/ajax'):
@@ -217,12 +221,15 @@ def get_file(environ, start_response, path):
         if max_age:
             headers.append(('Cache-control', 'max-age=%s' % max_age))
         if not_modified:
+            log.info('file not modified %s' % path)
             start_response('304 Not Modified', headers)
             return []
         else:
+            log.info('serving file %s' % path)
             start_response('200 OK', headers)
             f = open(path, 'rb')
             return wsgiref.util.FileWrapper(f)
     else:
+        log.warn('file %s not found' % path)
         start_response('404 Not Found', [])
         return []
