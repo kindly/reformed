@@ -168,7 +168,7 @@ def output_sys_info(application):
     # are the modules loaded?
     import web
     print '\n----- Application Data -----\n'
-    sys_info = application.database.sys_info_full
+    sys_info = application.sys_info_full
 
     for key in sys_info.keys():
         print '(%s)\t%s = %s\n - %s' % (type(sys_info[key]['value']).__name__,

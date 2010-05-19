@@ -25,7 +25,7 @@ r = global_session.database
 
 
 def sysinfo(name, value, description = ''):
-    r.register_info(name, value, description)
+    global_session.application.register_info(name, value, description)
 
 
 

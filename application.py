@@ -27,6 +27,8 @@ import sys
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
 from ZODB import FileStorage, DB
+from ZODB.PersistentMapping import PersistentMapping
+import transaction
 import reformed.database
 from global_session import global_session
 import reformed.job_scheduler as job_scheduler
@@ -57,6 +59,20 @@ class Application(object):
         storage = FileStorage.FileStorage(zodb_store)
         self.zodb = DB(storage)
 
+        # sys info
+        self.sys_info = {}  # used for quick access to the system variables
+        self.sys_info_full = {} # store of the full system info
+
+        connection = self.zodb.open()
+        root = connection.root()
+        if "sys_info" not in root:
+            root["sys_info"] = PersistentMapping()
+            transaction.commit()
+        else:
+            self.cache_sys_info(root["sys_info"])
+        connection.close()
+
+
         self.database = reformed.database.Database("reformed",
                                                     application = self,
                                                     entity = True,
@@ -73,8 +89,8 @@ class Application(object):
         self.manager_thread = ManagerThread(self, threading.currentThread())
         self.manager_thread.start()
 
+
         # system wide settings
-        self.sys_info = self.database.sys_info
         global_session.application = self
         global_session.database = self.database
 
@@ -93,6 +109,37 @@ class Application(object):
         register("bookmarks>permission>node", "bug.Permission")
         register("bookmarks>_system_info>title", "System Settings")
         register("bookmarks>_system_info>node", "bug.SysInfo")
+
+
+
+
+    def register_info(self, key, value, description = '', force = False):
+        """register system info adds the info if it is not already there"""
+
+        connection = self.zodb.open()
+        root = connection.root()
+
+        if force or key not in root["sys_info"]:
+            data = dict(value = value, description = description, read_only = force)
+            root["sys_info"][key] = data
+            self.sys_info_full[key] = data
+            self.sys_info[key] = value
+
+        #TODO make sure on concurrent changes recache data?
+        try:
+            transaction.commit()
+        except:
+            raise
+
+        connection.close()
+
+
+    def cache_sys_info(self, sys_info_db):
+        """get system info out of the database"""
+        for key, value in sys_info_db.iteritems():
+            self.sys_info_full[key] = value
+            self.sys_info[key] = value['value']
+
 
 
 class ManagerThread(threading.Thread):

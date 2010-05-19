@@ -78,8 +78,6 @@ class Database(object):
         self.graph = None
         self.fields_to_persist = []
         self.relations = []
-        self.sys_info = {}  # used for quick access to the system variables
-        self.sys_info_full = {} # store of the full system info
 
         self.quiet = kw.pop("quiet", False)
 
@@ -90,11 +88,6 @@ class Database(object):
             root["tables"] = PersistentMapping()
             root["table_count"] = 0
             transaction.commit()
-        if "sys_info" not in root:
-            root["sys_info"] = PersistentMapping()
-            transaction.commit()
-        else:
-            self.cache_sys_info(root["sys_info"])
         connection.close()
 
 
@@ -110,34 +103,6 @@ class Database(object):
 
         self.status = "active"
 
-
-
-    def register_info(self, key, value, description = '', force = False):
-        """register system info adds the info if it is not already there"""
-
-        connection = self.zodb.open()
-        root = connection.root()
-
-        if force or key not in root["sys_info"]:
-            data = dict(value = value, description = description, read_only = force)
-            root["sys_info"][key] = data
-            self.sys_info_full[key] = data
-            self.sys_info[key] = value
-
-        #TODO make sure on concurrent changes recache data?
-        try:
-            transaction.commit()
-        except:
-            raise
-
-        connection.close()
-
-
-    def cache_sys_info(self, sys_info_db):
-        """get system info out of the database"""
-        for key, value in sys_info_db.iteritems():
-            self.sys_info_full[key] = value
-            self.sys_info[key] = value['value']
 
 
     def __getitem__(self, item):
