@@ -19,58 +19,58 @@
 ##  
 
 
-from global_session import global_session
+class Predefine(object):
 
-r = global_session.database
+    def __init__(self, application):
+        self.cached_data = {}
+        self.application = application
+        self.database = application.database
 
-
-def sysinfo(key, value, description = '', force = False):
-    """add/update system infomation and return the current value for the given key"""
-    return global_session.application.register_info(key, value, description, force)
-
-
-
-def permission(code, name, description = u''):
-    data = dict(description = name,
-                long_description = description)
-    add_data("permission", "permission", code, data)
-
-def user_group(name, description = u''):
-    data = dict(description = description,
-                created_by = 1,
-                _modified_by = 1,
-                active = True)
-    add_data("user_group", "groupname", name, data)
+    def sysinfo(self, key, value, description = '', force = False):
+        """add/update system infomation and return the current value for the given key"""
+        return self.application.register_info(key, value, description, force)
 
 
 
-def add_data(table, key_field, key_data, data):
-    """check data exists in the database, add it if not there"""
+    def permission(self, code, name, description = u''):
+        data = dict(description = name,
+                    long_description = description)
+        self.add_data("permission", "permission", code, data)
 
-    global r
-    if table not in r.tables:
-        print 'Table <%s> does not exist cannot add data <%s>' % (table, key_data)
-        return
-    cached_data = global_session.application.predefine_cached_data
+    def user_group(self, name, description = u''):
+        data = dict(description = description,
+                    created_by = 1,
+                    _modified_by = 1,
+                    active = True)
+        self.add_data("user_group", "groupname", name, data)
 
-    # cache data if we don't have it already
-    if table not in cached_data:
-        cached_data[table] = []
-        values = r.search(table, fields = [key_field]).data
-        for record in values:
-            cached_data[table].append(record[key_field])
 
-    # add data if not in database
-    if key_data not in cached_data[table]:
-        new_row = r.get_instance(table)
-        setattr(new_row, key_field, key_data)
 
-        for key, value in data.iteritems():
-            setattr(new_row, key, value)
+    def add_data(self, table, key_field, key_data, data):
+        """check data exists in the database, add it if not there"""
 
-        session = r.Session()
-        session.add(new_row)
-        session.commit()
-        session.close()
-        # add to cache
-        cached_data[table].append(key_data)
+        if table not in self.database.tables:
+            print 'Table <%s> does not exist cannot add data <%s>' % (table, key_data)
+            return
+
+        # cache data if we don't have it already
+        if table not in self.cached_data:
+            self.cached_data[table] = []
+            values = self.database.search(table, fields = [key_field]).data
+            for record in values:
+                self.cached_data[table].append(record[key_field])
+
+        # add data if not in database
+        if key_data not in self.cached_data[table]:
+            new_row = self.database.get_instance(table)
+            setattr(new_row, key_field, key_data)
+
+            for key, value in data.iteritems():
+                setattr(new_row, key, value)
+
+            session = self.database.Session()
+            session.add(new_row)
+            session.commit()
+            session.close()
+            # add to cache
+            self.cached_data[table].append(key_data)

@@ -33,7 +33,9 @@ from global_session import global_session
 r =  global_session.database
 
 # set defaults
-from predefine import sysinfo, permission
+sysinfo = global_session.application.predefine.sysinfo
+permission = global_session.application.predefine.permission
+
 sysinfo("file_uploads>dir_depth", 1, "How many levels of directories for uploaded files")
 sysinfo("file_uploads>root_directory", 'files', "Root directory for uploaded files, relative to the application directory")
 sysinfo("file_uploads>max_file_size", 100000, "Maximum file size for uploaded files (in bytes)")
