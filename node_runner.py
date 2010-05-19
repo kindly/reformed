@@ -19,6 +19,10 @@
 ##
 
 from global_session import global_session
+import logging
+import pprint
+
+log = logging.getLogger('rebase.node')
 
 class NodeNotFound(Exception):
     pass
@@ -33,12 +37,8 @@ class Interface(object):
         self.command_queue.append(data)
 
     def process(self):
-        print "PROCESS"
-
         while self.command_queue:
             data = self.command_queue.pop()
-            print repr(data)
-
             self.node(data)
 
     def node(self, data):
@@ -49,12 +49,15 @@ class Interface(object):
 
 
     def run(self, node_name, data, last_node = None):
-        print 'RUNNING NODE %s' % node_name
+        log.info('running node: %s, user id: %s' % (node_name, global_session.session['user_id']))
+        log.debug('sent data: \n%s' %  pprint.pformat(data))
+
         sys_info = global_session.sys_info
         # check if application is private
         if not sys_info.get('public') and not global_session.session['user_id']:
             node_name = sys_info.get('default_node')
             data['command'] = sys_info.get('default_command')
+            log.info('User not logged in.  Switching to node %s, command %s' % (node_name, data['command']))
 
 
         node_path = node_name.split('.')
@@ -62,12 +65,11 @@ class Interface(object):
 
         try:
             module = __import__('custom_nodes.' + node_base)
-            print "importing " + 'custom_nodes.' + node_base
         except ImportError:
             try:
                 module = __import__('nodes.' + node_base)
-                print "importing " + 'nodes.' + node_base
             except ImportError:
+                log.error("node module %s not found" % node_base)
                 raise
 
         search_node = module
@@ -75,14 +77,16 @@ class Interface(object):
             if hasattr(search_node, node):
                 search_node = getattr(search_node, node)
             else:
+                log.error("node %s not found" % node_name)
                 raise NodeNotFound(node_name)
                 break
 
-        print "Node: %s, last: %s" % (node_name, last_node)
+      #  print "Node: %s, last: %s" % (node_name, last_node)
         x = search_node(data, node_name, last_node)
 
         # the user cannot perform this action
         if not x.allowed:
+            log.warn('forbidden node or command')
             return {'action': 'forbidden'}
 
         x.initialise()
@@ -94,6 +98,7 @@ class Interface(object):
             x.out["data"].update(x.prev_node.next_data_out)
 
         if x.next_node:
+            log.info('redirect to next node %s' % x.next_node)
             return self.run(x.next_node, x.next_data, x)
         else:
             refresh_frontend = False
@@ -117,7 +122,7 @@ class Interface(object):
             if (info['user'] or refresh_frontend) and user_id:
                 # we have logged in so we want our bookmarks
                 info['bookmark'] = self.bookmark_list(user_id)
-
+            log.debug('returned data\n%s\n----- end of node processing -----' % pprint.pformat(info))
             return info
 
 
