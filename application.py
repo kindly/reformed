@@ -26,6 +26,7 @@ import os.path
 import sys
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
+from ZODB import FileStorage, DB
 import reformed.database
 from global_session import global_session
 import reformed.job_scheduler as job_scheduler
@@ -37,11 +38,11 @@ class Application(object):
         self.metadata = MetaData()
         self.dir = dir
         this_dir = os.path.dirname(os.path.abspath(__file__))
-        application_folder = os.path.join(this_dir, dir)
+        self.application_folder = os.path.join(this_dir, dir)
 
-        sys.path.append(application_folder)
+        sys.path.append(self.application_folder)
 
-        self.engine = create_engine('sqlite:///%s/%s.sqlite' % (application_folder,dir))
+        self.engine = create_engine('sqlite:///%s/%s.sqlite' % (self.application_folder,dir))
        # self.engine = create_engine('postgres://kindly:ytrewq@localhost:5432/bug')
         self.metadata.bind = self.engine
         Session = sessionmaker(bind=self.engine, autoflush = False)
@@ -51,15 +52,19 @@ class Application(object):
         else:
             quiet = False
 
+        # zodb data store
+        zodb_store = os.path.join(self.application_folder, 'zodb.fs')
+        storage = FileStorage.FileStorage(zodb_store)
+        self.zodb = DB(storage)
+
         self.database = reformed.database.Database("reformed",
+                                                    application = self,
                                                     entity = True,
                                                     metadata = self.metadata,
                                                     engine = self.engine,
                                                     session = Session,
                                                     logging_tables = False,
-                                                    quiet = quiet,
-                                                    application_dir = application_folder,
-                                                    zodb_store = os.path.join(application_folder, 'zodb.fs')
+                                                    quiet = quiet
                                                     )
 
         self.job_scheduler = job_scheduler.JobScheduler(self)

@@ -39,7 +39,6 @@ import logging
 import networkx as nx
 import threading
 import os
-from ZODB import FileStorage, DB
 from ZODB.PersistentMapping import PersistentMapping
 import transaction
 #import user_tables
@@ -61,7 +60,7 @@ class Database(object):
     def __init__(self, name, *args, **kw):
 
         self.status = "updating"
-        self.name =name
+        self.name = name
         self.tables = {}
         self.metadata = kw.pop("metadata", None)
         self.engine = kw.pop("engine", None)
@@ -69,7 +68,9 @@ class Database(object):
         self.entity = kw.pop("entity", False)
         self.logging_tables = kw.pop("logging_tables", True)
 
-        self.zodb_store = kw.pop("zodb_store", True)
+        self.application = kw.pop("application", None)
+        self.zodb = self.application.zodb
+        self.application_dir = self.application.application_folder
 
         self.metadata.bind = self.engine
         self.Session = sessionwrapper.SessionClass(self._Session, self)
@@ -81,26 +82,21 @@ class Database(object):
         self.sys_info_full = {} # store of the full system info
 
         self.quiet = kw.pop("quiet", False)
-        self.application_dir = kw.pop("application_dir", False)
 
-        ## zodb database
-        if self.zodb_store:
-            storage = FileStorage.FileStorage(self.zodb_store)
-            self.db = DB(storage)
-            connection = self.db.open()
-            root = connection.root()
-            if "tables" not in root:
-                root["tables"] = PersistentMapping()
-                root["table_count"] = 0
-                transaction.commit()
-            if "sys_info" not in root:
-                root["sys_info"] = PersistentMapping()
-                transaction.commit()
-            else:
-                self.cache_sys_info(root["sys_info"])
 
-            connection.close()
-        ## zodb database
+        connection = self.zodb.open()
+        root = connection.root()
+        if "tables" not in root:
+            root["tables"] = PersistentMapping()
+            root["table_count"] = 0
+            transaction.commit()
+        if "sys_info" not in root:
+            root["sys_info"] = PersistentMapping()
+            transaction.commit()
+        else:
+            self.cache_sys_info(root["sys_info"])
+        connection.close()
+
 
         self.load_from_persist()
 
@@ -119,7 +115,7 @@ class Database(object):
     def register_info(self, key, value, description = '', force = False):
         """register system info adds the info if it is not already there"""
 
-        connection = self.db.open()
+        connection = self.zodb.open()
         root = connection.root()
 
         if force or key not in root["sys_info"]:
@@ -180,7 +176,7 @@ class Database(object):
         else:
             table_to_rename = self.tables[table]
 
-        connection = self.db.open()
+        connection = self.zodb.open()
         root = connection.root()
         persisted_tables = root["tables"]
 
@@ -211,7 +207,7 @@ class Database(object):
 
     def drop_table(self, table):
 
-        connection = self.db.open()
+        connection = self.zodb.open()
         root = connection.root()
         persisted_tables = root["tables"]
 
@@ -355,7 +351,7 @@ class Database(object):
 
         self.status = "updating"
 
-        connection = self.db.open()
+        connection = self.zodb.open()
         try:
 
             ## add logging tables
@@ -401,7 +397,7 @@ class Database(object):
 
     def load_from_persist(self, restart = False):
 
-        connection = self.db.open()
+        connection = self.zodb.open()
 
         if connection:
             self.tables = {}
