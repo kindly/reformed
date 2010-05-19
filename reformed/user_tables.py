@@ -1,7 +1,6 @@
 from reformed.fields import *
 from reformed.database import table, entity
 
-import predefine
 
 def initialise(application):
 
@@ -92,5 +91,5 @@ def initialise(application):
 ##        session.add(admin_group)
     session.commit()
 
-    predefine.user_group('admin', 'System Administrators')
+    application.predefine.user_group('admin', 'System Administrators')
 
