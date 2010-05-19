@@ -104,8 +104,9 @@ class Application(object):
 
     def logging_setup(self):
 
-        ##FIXME make sure directory exists
         self.log_dir = os.path.join(self.application_folder, "log")
+        if not os.path.exists(self.log_dir):
+            os.makedirs(self.log_dir)
 
         self.create_logger("database", "rebase.application.database")
         self.create_logger("application")
