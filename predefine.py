@@ -43,7 +43,6 @@ def user_group(name, description = u''):
     add_data("user_group", "groupname", name, data)
 
 
-cached_data = {}
 
 def add_data(table, key_field, key_data, data):
     """check data exists in the database, add it if not there"""
@@ -52,7 +51,7 @@ def add_data(table, key_field, key_data, data):
     if table not in r.tables:
         print 'Table <%s> does not exist cannot add data <%s>' % (table, key_data)
         return
-    global cached_data
+    cached_data = global_session.application.predefine_cached_data
 
     # cache data if we don't have it already
     if table not in cached_data:

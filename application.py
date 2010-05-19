@@ -89,6 +89,7 @@ class Application(object):
         self.manager_thread = ManagerThread(self, threading.currentThread())
         self.manager_thread.start()
 
+        self.predefine_cached_data = {} # used by predefine.py
 
         self.get_bookmark_data()
         # system wide settings
