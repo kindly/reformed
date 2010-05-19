@@ -42,6 +42,9 @@ def create(application):
     import reformed.user_tables
     import schema
 
+    reformed.user_tables.initialise(application)
+    schema.initialise(application)
+
 def extract(application):
     import extract
     extract.extract(application.database,

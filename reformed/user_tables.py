@@ -1,78 +1,79 @@
 from reformed.fields import *
 from reformed.database import table, entity
 
-from global_session import global_session
-d = global_session.database
-
 import predefine
 
-entity("user",d,
+def initialise(application):
 
-    Text("name"),
-    Boolean("active", default = True, mandatory = True),
-    Boolean("locked", default = False),
-    Text("login_name", mandatory = True),
-    Password("password"),
-    Email("email"),
-    DateTime("last_logged_in"),
-    Text("notes", length = 4000),
-    Text("about_me", length = 4000),
+    database = application.database
 
-    Created("created_date"),
-    CreatedBy("created_by"),
+    entity("user",database,
 
-    Index("login_name_index", "login_name", unique = True),
+        Text("name"),
+        Boolean("active", default = True, mandatory = True),
+        Boolean("locked", default = False),
+        Text("login_name", mandatory = True),
+        Password("password"),
+        Email("email"),
+        DateTime("last_logged_in"),
+        Text("notes", length = 4000),
+        Text("about_me", length = 4000),
 
-    title_field = 'name',
-    table_type = "system",
-)
+        Created("created_date"),
+        CreatedBy("created_by"),
 
-entity("user_group",d,
+        Index("login_name_index", "login_name", unique = True),
 
-    Text("groupname", mandatory = True),
-    Text("description", length = 200),
-    Text("notes", length = 4000),
-    Boolean("active", default = True, mandatory = True),
+        title_field = 'name',
+        table_type = "system",
+    )
+
+    entity("user_group",database,
+
+        Text("groupname", mandatory = True),
+        Text("description", length = 200),
+        Text("notes", length = 4000),
+        Boolean("active", default = True, mandatory = True),
 
 
-    table_type = "system",
-    title_field = 'groupname'
-)
+        table_type = "system",
+        title_field = 'groupname'
+    )
 
-table("user_group_user",d,
+    table("user_group_user",database,
 
-    LookupId("user", "user"),
-    LookupId("user_group", "user_group"),
+        LookupId("user", "user"),
+        LookupId("user_group", "user_group"),
 
-    table_type = "system"
-)
+        table_type = "system"
+    )
 
-table("user_group_permission",d,
+    table("user_group_permission",database,
 
-    ##TODO Sort out backref problems
-    LookupId("user_group_name", "user_group"),
-    LookupId("permission_name", "permission"),
-    table_type = "system"
-)
+        ##TODO Sort out backref problems
+        LookupId("user_group_name", "user_group"),
+        LookupId("permission_name", "permission"),
+        table_type = "system"
+    )
 
-table("permission",d,
+    table("permission",database,
 
-    Text("permission"),
-    Text("description", length = 200),
-    Text("long_description", length = 4000),
-    table_type = "system",
-    title_field = 'permission'
-)
+        Text("permission"),
+        Text("description", length = 200),
+        Text("long_description", length = 4000),
+        table_type = "system",
+        title_field = 'permission'
+    )
 
-d.persist()
+    database.persist()
 
-sys_admin = d.get_instance("user")
-sys_admin.name = u"admin"
-sys_admin.login_name = u"admin"
-sys_admin.password = u"admin"
-sys_admin.active = True
-sys_admin.created_by = 1
-sys_admin._modified_by = 1
+    sys_admin = database.get_instance("user")
+    sys_admin.name = u"admin"
+    sys_admin.login_name = u"admin"
+    sys_admin.password = u"admin"
+    sys_admin.active = True
+    sys_admin.created_by = 1
+    sys_admin._modified_by = 1
 
 
 ##        admin_group = database.get_instance("user_group")
@@ -85,11 +86,11 @@ sys_admin._modified_by = 1
 ##        user_group_user.user = sys_admin
 ##        user_group_user.user_group = admin_group
 
-session = d.Session()
-session.add(sys_admin)
+    session = database.Session()
+    session.add(sys_admin)
 ##        session.add(user_group_user)
 ##        session.add(admin_group)
-session.commit()
+    session.commit()
 
-predefine.user_group('admin', 'System Administrators')
+    predefine.user_group('admin', 'System Administrators')
 
