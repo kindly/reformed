@@ -8,12 +8,14 @@ from reformed.data_loader import SingleRecord
 from sqlalchemy import create_engine
 from reformed.util import get_paths, get_table_from_instance, create_data_dict, make_local_tables, get_all_local_data, load_local_data
 import datetime
+import application
 import reformed.fshp as fshp
 from decimal import Decimal
 import formencode as fe
 import yaml
 import os
 import logging
+import reformed.user_tables
 
 sqlhandler = logging.FileHandler("sql.log")
 sqllogger = logging.getLogger('sqlalchemy.engine')
@@ -25,27 +27,21 @@ class test_donkey(object):
     @classmethod
     def setUpClass(cls):
         if not hasattr(cls, "engine"):
-            cls.engine = create_engine('sqlite:///:memory:' )
-            #cls.engine = create_engine('sqlite:///:memory:')
+            cls.engine = 'sqlite:///:memory:'
 
         try:
-            os.remove("tests/zodb.fs")
-            os.remove("tests/zodb.fs.lock")
-            os.remove("tests/zodb.fs.index")
-            os.remove("tests/zodb.fs.tmp")
+            os.remove("test_application/zodb.fs")
+            os.remove("test_application/zodb.fs.lock")
+            os.remove("test_application/zodb.fs.index")
+            os.remove("test_application/zodb.fs.tmp")
         except OSError:
             pass
+
+        cls.application = application.Application("test_application", engine = cls.engine)
         
-#        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
-        cls.meta = sa.MetaData()
-        cls.Sess = sa.orm.sessionmaker(bind =cls.engine, autoflush = False)
-        cls.Donkey = Database("Donkey", 
-                        metadata = cls.meta,
-                        engine = cls.engine,
-                        session = cls.Sess,
-                        entity = True,
-                        zodb_store = "tests/zodb.fs"
-                        )
+        cls.Donkey = cls.application.database
+
+        reformed.user_tables.initialise(cls.application)
 
 
         entity("people", cls.Donkey,

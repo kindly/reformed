@@ -39,9 +39,9 @@ log = logging.getLogger('rebase.application')
 
 class Application(object):
 
-    def __init__(self, dir, runtime_options = None):
+    def __init__(self, dir, runtime_options = None, engine = None):
 
-        self.metadata = MetaData()
+
         self.dir = dir
         this_dir = os.path.dirname(os.path.abspath(__file__))
         self.application_folder = os.path.join(this_dir, dir)
@@ -50,8 +50,15 @@ class Application(object):
 
         sys.path.append(self.application_folder)
 
-        self.engine = create_engine('sqlite:///%s/%s.sqlite' % (self.application_folder,dir))
-       # self.engine = create_engine('postgres://kindly:ytrewq@localhost:5432/bug')
+        log.info(sys.path)
+
+        if engine:
+            self.engine = create_engine(engine)
+        else:
+            self.engine = create_engine('sqlite:///%s/%s.sqlite' % (self.application_folder,dir))
+            #self.engine = create_engine('postgres://kindly:ytrewq@localhost:5432/bug')
+
+        self.metadata = MetaData()
         self.metadata.bind = self.engine
         Session = sessionmaker(bind=self.engine, autoflush = False)
 
@@ -59,6 +66,9 @@ class Application(object):
             quiet = True
         else:
             quiet = False
+
+        ##FIXME need proper options
+        logging_tables = False if runtime_options else True
 
         # zodb data store
         zodb_store = os.path.join(self.application_folder, 'zodb.fs')
@@ -85,7 +95,7 @@ class Application(object):
                                                     metadata = self.metadata,
                                                     engine = self.engine,
                                                     session = Session,
-                                                    logging_tables = False,
+                                                    logging_tables = logging_tables,
                                                     quiet = quiet
                                                     )
 
@@ -112,6 +122,9 @@ class Application(object):
         self.create_logger("node")
         self.create_logger("rebase", "rebase", log_name = True)
         self.create_logger("rebase", "rebase", log_name = True, error_logger = True)
+
+        self.create_logger("zodb", "ZODB.FileStorage")
+        self.create_logger("sql", "sqlalchemy.engine")
 
     def create_logger(self, name, logger_name = None, log_name = False, error_logger = False):
 
