@@ -351,7 +351,7 @@ class Form(object):
         ##FIXME do we need these seperated?
         if r[table].entity:
             results = r.search('_core_entity',
-                               where = "%s.id >0" % table,
+                               where = "table = %s" % table,
                                limit = limit,
                                offset = offset,
                                count = True)
