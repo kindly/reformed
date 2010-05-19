@@ -26,7 +26,10 @@ import datetime
 from global_session import global_session
 from page_item import link, link_list, info, input
 from form import form, FormWrapper
+import logging
 r = global_session.database
+
+log = logging.getLogger('rebase.node')
 
 class Node(object):
 

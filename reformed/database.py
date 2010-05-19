@@ -43,21 +43,13 @@ from ZODB.PersistentMapping import PersistentMapping
 import transaction
 #import user_tables
 
-root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-log_file = os.path.join(root, "log.log")
-
-logger = logging.getLogger('reformed.main')
-logger.setLevel(logging.INFO)
-formatter = logging.Formatter("%(asctime)s - %(message)s")
-reformedhandler = logging.FileHandler(log_file)
-reformedhandler.setFormatter(formatter)
-
-
-logger.addHandler(reformedhandler)
+log = logging.getLogger('rebase.application.database')
 
 class Database(object):
 
     def __init__(self, name, *args, **kw):
+
+        log.info("initialising database")
 
         self.status = "updating"
         self.name = name
@@ -121,6 +113,8 @@ class Database(object):
                 return table
 
     def add_table(self, table, ignore = False, drop = False):
+
+        log.info("adding table %s" % table.name)
 
         if table.name in self.tables.iterkeys():
             if ignore:

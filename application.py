@@ -33,6 +33,9 @@ import reformed.database
 from global_session import global_session
 import reformed.job_scheduler as job_scheduler
 import predefine
+import logging
+
+log = logging.getLogger('rebase.application')
 
 class Application(object):
 
@@ -42,6 +45,8 @@ class Application(object):
         self.dir = dir
         this_dir = os.path.dirname(os.path.abspath(__file__))
         self.application_folder = os.path.join(this_dir, dir)
+
+        self.logging_setup()
 
         sys.path.append(self.application_folder)
 
@@ -96,6 +101,42 @@ class Application(object):
         # system wide settings
         global_session.application = self
         global_session.database = self.database
+
+    def logging_setup(self):
+
+        ##FIXME make sure directory exists
+        self.log_dir = os.path.join(self.application_folder, "log")
+
+        self.create_logger("database", "rebase.application.database")
+        self.create_logger("application")
+        self.create_logger("node")
+        self.create_logger("rebase", "rebase", log_name = True)
+        self.create_logger("rebase", "rebase", log_name = True, error_logger = True)
+
+    def create_logger(self, name, logger_name = None, log_name = False, error_logger = False):
+
+        if not logger_name:
+            logger_name = 'rebase.%s' % name
+
+        if log_name:
+            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        else:
+            formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+
+        if error_logger:
+            log_file = os.path.join(self.log_dir, "%s.error" % name)
+        else:
+            log_file = os.path.join(self.log_dir, "%s.log" % name)
+
+        handler = logging.FileHandler(log_file)
+        handler.setFormatter(formatter)
+
+        logger = logging.getLogger(logger_name)
+        if error_logger:
+            logger.setLevel(logging.ERROR)
+        else:
+            logger.setLevel(logging.INFO)
+        logger.addHandler(handler)
 
 
     def get_bookmark_data(self):
