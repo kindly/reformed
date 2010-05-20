@@ -66,30 +66,27 @@ def initialise(application):
 
     database.persist()
 
-    sys_admin = database.get_instance("user")
-    sys_admin.name = u"admin"
-    sys_admin.login_name = u"admin"
-    sys_admin.password = u"admin"
-    sys_admin.active = True
-    sys_admin.created_by = 1
-    sys_admin._modified_by = 1
 
 
-##        admin_group = database.get_instance("user_group")
-##        admin_group.groupname = u"admin"
-##        admin_group.created_by = 1
-##        admin_group._modified_by = 1
-##        admin_group.active = True
+    # add admin user
+    # this is a special case as no other users should be auto created
+    data = dict(name = u"admin",
+                created_by = 1,
+                _modified_by = 1,
+                active = True,
+                password = u"admin")
+    application.predefine.add_data("user", "login_name", u"admin", data)
 
-##        user_group_user = database.get_instance("user_group_user")
-##        user_group_user.user = sys_admin
-##        user_group_user.user_group = admin_group
+    # sys admin user_group
+    application.predefine.user_group(u'admin', u'System Administrators')
+
+    # FIXME dodgy hack needs replacing
+    user_group_user = database.get_instance("user_group_user")
+    user_group_user.user_id = 1
+    user_group_user.user_group_id = 1
 
     session = database.Session()
-    session.add(sys_admin)
-##        session.add(user_group_user)
-##        session.add(admin_group)
+    session.add(user_group_user)
     session.commit()
 
-    application.predefine.user_group('admin', 'System Administrators')
 
