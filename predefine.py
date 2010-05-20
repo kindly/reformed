@@ -44,7 +44,24 @@ class Predefine(object):
                     active = True)
         self.add_data("user_group", "groupname", name, data)
 
+    def code_type(self, code_type, name, description = u''):
+        data = dict(description = description,
+                    created_by = 1,
+                    _modified_by = 1,
+                    name = name)
+        self.add_data("code_type", "code_type", code_type, data)
 
+    def code(self, code, code_type, name, description = u''):
+        if 'code_type' not in self.database.tables:
+            print 'code_type table does not exist cannot add code'
+            return
+        data = dict(description = description,
+                    created_by = 1,
+                    code_type = code_type,
+                    _modified_by = 1,
+                    name = name,
+                    active = True)
+        self.add_data("code", "name", code, data)
 
     def add_data(self, table, key_field, key_data, data):
         """check data exists in the database, add it if not there"""
@@ -72,5 +89,6 @@ class Predefine(object):
             session.add(new_row)
             session.commit()
             session.close()
+            print 'add %s to %s' % (key_data, table)
             # add to cache
             self.cached_data[table].append(key_data)
