@@ -34,6 +34,7 @@ from global_session import global_session
 import reformed.job_scheduler as job_scheduler
 import predefine
 import logging
+import node_runner
 
 log = logging.getLogger('rebase.application')
 
@@ -43,8 +44,8 @@ class Application(object):
 
         self.metadata = MetaData()
         self.dir = dir
-        this_dir = os.path.dirname(os.path.abspath(__file__))
-        self.application_folder = os.path.join(this_dir, dir)
+        self.root_folder = os.path.dirname(os.path.abspath(__file__))
+        self.application_folder = os.path.join(self.root_folder, dir)
 
         self.logging_setup()
 
@@ -101,6 +102,18 @@ class Application(object):
         # system wide settings
         global_session.application = self
         global_session.database = self.database
+        self.load_nodes()
+
+
+    def load_nodes(self):
+        self.node_manager = node_runner.NodeManager(self)
+        # FIXME this is a dirty hack
+        # we need to store state about the application
+        # at least empty/tables created
+        # but really this is part of application.py restructuring and being able to handle
+        # delete create etc
+        if len(self.database.tables) > 1:
+            self.node_manager.get_nodes()
 
     def logging_setup(self):
 
