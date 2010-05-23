@@ -632,12 +632,9 @@ class Database(object):
 
         if root_table:
             unique_aliases = set()
-            paths = get_paths(self.graph, root_table)
             unique_aliases.update([root_table])
-            for key, edge in paths.iteritems():
-                unique_aliases.update([edge.name])
-            for key, value in self.tables.iteritems():
-                unique_aliases.update([key])
+            for item, value in self.tables[root_table].table_path.iteritems():
+                unique_aliases.add(item)
 
             for item in unique_aliases:
                 if len(item.split(".")) == 1:

@@ -228,7 +228,8 @@ class SubForm(object):
 
         subform_rtable = r[subform.table]
 
-        path, self.relation = subform_rtable.table_path[form.table]
+        path = subform_rtable.table_path[form.table].path
+        self.relation = subform_rtable.table_path[form.table].relation
 
         relation_attr = path[0]
 
@@ -467,7 +468,9 @@ class CodeGroup(Control):
         if not self.code_desc:
             self.code_desc = r[self.code_table].description_field
 
-        path, self.relation = self.rtable.table_path[self.code_table]
+        path = self.rtable.table_path[self.code_table].path
+        
+        self.relation = self.rtable.table_path[self.code_table].relation
 
         path_node = self.rtable.paths[(path[0],)]
 

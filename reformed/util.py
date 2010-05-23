@@ -316,9 +316,9 @@ def create_table_path(table_path_list, table):
         if relation.no_auto_path:
             continue
         elif edge.name in duplicate_tables:
-            table_path[edge.alt_name] = [list(key), relation]
+            table_path[edge.alt_name] = edge #[list(key), relation]
         else:
-            table_path[edge.node] = [list(key), relation]
+            table_path[edge.node] = edge #[list(key), relation]
 
     return table_path
 

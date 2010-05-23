@@ -51,7 +51,9 @@ class ChangeEvent(object):
         else:
             self.base_table = self.database.tables[self.base_level]
 
-        relation_path, self.relation_type = self.base_table.table_path[self.table.name]
+        #relation_path, self.relation_type = self.base_table.table_path[self.table.name]
+        relation_path = self.base_table.table_path[self.table.name].path
+
         if len(relation_path) > 1:
             raise InvalidEvent(("updated table can not be more then one"
                                 "join away from base table"))
@@ -60,7 +62,7 @@ class ChangeEvent(object):
         if target_table == self.base_table:
             self.target_to_base_path = []
         else:
-            self.target_to_base_path = target_table.table_path[self.base_table.name][0]
+            self.target_to_base_path = target_table.table_path[self.base_table.name].path
 
         if self.initial_event:
             target_table.initial_events.append(self)

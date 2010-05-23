@@ -152,6 +152,9 @@ class test_query_from_string(donkey_test.test_donkey):
         search = Search(self.Donkey, "people", self.session)
         t = self.Donkey.t
 
+        import pprint
+        print self.Donkey.tables["people"]
+
         session = self.Donkey.Session()
 
         people_class = self.Donkey.get_class("people")
@@ -162,6 +165,11 @@ class test_query_from_string(donkey_test.test_donkey):
         assert set(QueryFromString(search, 'name < "popp02"').add_conditions(base_query).all()).symmetric_difference(
                set(session.query(people_class.id).filter(people_class.name < u"popp02").all())) == set()
               
+        print QueryFromString(search, 'name < "popp02" and email.email like "popi%"').add_conditions(base_query)
+        print session.query(people_class.id).join(["email"]).filter(and_(people_class.name < u"popp02", email_class.email.like(u"popi%")))
+
+        print QueryFromString(search, 'name < "popp02" and email.email like "popi%"').add_conditions(base_query).all()
+        print session.query(people_class.id).join(["email"]).filter(and_(people_class.name < u"popp02", email_class.email.like(u"popi%"))).all()
 
         assert set(QueryFromString(search, 'name < "popp02" and email.email like "popi%"').add_conditions(base_query).all()).symmetric_difference(
                set(session.query(people_class.id).join(["email"]).filter(and_(people_class.name < u"popp02", email_class.email.like(u"popi%"))).all())) == set()
@@ -189,11 +197,20 @@ class test_query_from_string(donkey_test.test_donkey):
         people_class = self.Donkey.get_class(u"people")
         email_class = self.Donkey.get_class(u"email")
 
+        print search.search()
+        print session.query(people_class).outerjoin(["email"]).\
+                   filter(and_(people_class.name < u"popp02", or_(email_class.email == None, not_(email_class.email.like(u"popi%")))))
+
+        print search.search().all()
+        print session.query(people_class).outerjoin(["email"]).\
+                   filter(and_(people_class.name < u"popp02", or_(email_class.email == None, not_(email_class.email.like(u"popi%"))))).all()
+
+        assert len(search.search()[0:15]) == 15
+
         assert set(search.search().all()).symmetric_difference( 
                set(session.query(people_class).outerjoin(["email"]).\
                    filter(and_(people_class.name < u"popp02", or_(email_class.email == None, not_(email_class.email.like(u"popi%"))))).all())) == set()
 
-        assert len(search.search()[0:15]) == 15
 
 
     def test_search_with_union(self):

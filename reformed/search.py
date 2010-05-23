@@ -14,12 +14,14 @@ class Search(object):
 
     def __init__(self, database, table, session, *args, **kw):
 
-        table_paths = database.tables[table].paths
+        self.rtable = database.tables[table]
+        table_paths = self.rtable.paths
+        self.table_paths_list = self.rtable.table_path_list
+        self.aliased_name_path = self.rtable.table_path
 
         self.database = database
         self.table = table
         self.session = session
-        self.rtable = database.tables[table]
 
         self.tables = kw.get("tables", [table])
         self.fields = kw.get("fields", None)
@@ -53,10 +55,7 @@ class Search(object):
         if self.fields:
             self.tables = util.split_table_fields(self.fields, table).keys()
 
-        self.table_paths_list = create_table_path_list(table_paths) 
 
-        self.aliased_name_path = {} 
-        self.create_aliased_path()
 
         if self.base_tables:
             base_tables = [self.database.get_class(self.table)]
@@ -218,13 +217,6 @@ class Search(object):
 
         return query
 
-    def create_aliased_path(self):
-        
-        for item in self.table_paths_list:
-            key, edge = item
-            self.aliased_name_path[edge.name] = edge
-
-
 class QueryBase(object):
 
     """useful function for both paramararised and normal queries"""
@@ -274,7 +266,7 @@ class QueryBase(object):
                     old_tree["tree"][node] = sub_tree
 
         return join_tree
-                
+
     def recurse_join_tree(self, current_node):
 
         for node in current_node["tree"].values():
