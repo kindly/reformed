@@ -8,9 +8,22 @@ from global_session import global_session
 import reformed.fshp
 r = global_session.database
 
-from predefine import permission
 
-permission("Login", u'User login', u'Login to system.')
+def initialise():
+    print 'initialising'
+    predefine = global_session.application.predefine
+    # permission
+    predefine.permission("Login", u'User login', u'Login to system.')
+    # priority codes
+    predefine.code_type(u'priority', u'Ticket priority', u'How important')
+    predefine.code(u'Low', u'priority', u'low priority', u'Not very important')
+    predefine.code(u'Medium', u'priority', u'medium priority', u'Not very important')
+    predefine.code(u'High', u'priority', u'high priority', u'Not very important')
+    # severity codes
+    predefine.code_type(u'severity', u'Ticket severity', u'How important')
+    predefine.code(u'Low ', u'severity', u'low severity', u'Not very important')
+    predefine.code(u'Medium ', u'severity', u'medium severity', u'Not very important')
+    predefine.code(u'High ', u'severity', u'high severity', u'Not very important')
 
 class Ticket(TableNode):
 
@@ -21,8 +34,8 @@ class Ticket(TableNode):
         input('accepted'),
         input('complete_by'),
         layout('column_next'),
-        input('code_severity_id', default = 'low', label = "severity:"),
-        input('code_priority_id', default = 'low', label = "priority:"),
+        input('code_severity_id', default = 'low severity', label = "severity:"),
+        input('code_priority_id', default = 'low priority', label = "priority:"),
         layout('column_end'),
         layout('hr'),
         wmd('summary', css = 'large'),
