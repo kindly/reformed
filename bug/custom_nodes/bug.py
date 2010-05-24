@@ -268,7 +268,7 @@ class Permission(TableNode):
 
     main = form(
         layout("box_start"),
-        input("permission"),
+        info("permission"),
         input("name", css = 'large'),
         textarea("description", css = 'large'),
 
