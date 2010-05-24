@@ -93,7 +93,7 @@ class Predefine(object):
             self.cached_data[table] = {}
             values = self.database.search(table, fields = [key_field, 'id']).data
             for record in values:
-                self.cached_data[table][key_field] = record['id']
+                self.cached_data[table][record[key_field]] = record['id']
 
 
     def add_data(self, table, key_field, key_data, data):
