@@ -54,12 +54,12 @@ class Application(object):
         self.engine = create_engine('sqlite:///%s/%s.sqlite' % (self.application_folder,dir))
        # self.engine = create_engine('postgres://kindly:ytrewq@localhost:5432/bug')
         self.metadata.bind = self.engine
-        Session = sessionmaker(bind=self.engine, autoflush = False)
+        self.Session = sessionmaker(bind=self.engine, autoflush = False)
 
         if runtime_options and runtime_options.quiet:
-            quiet = True
+            self.quiet = True
         else:
-            quiet = False
+            self.quiet = False
 
         # zodb data store
         zodb_store = os.path.join(self.application_folder, 'zodb.fs')
@@ -79,16 +79,11 @@ class Application(object):
             self.cache_sys_info(root["sys_info"])
         connection.close()
 
+        self.entity = True
+        self.logging_tables = False
 
-        self.database = reformed.database.Database("reformed",
-                                                    application = self,
-                                                    entity = True,
-                                                    metadata = self.metadata,
-                                                    engine = self.engine,
-                                                    session = Session,
-                                                    logging_tables = False,
-                                                    quiet = quiet
-                                                    )
+
+        self.database = reformed.database.Database(self)
 
         self.job_scheduler = job_scheduler.JobScheduler(self)
         self.scheduler_thread = job_scheduler.JobSchedulerThread(self, threading.currentThread())
@@ -150,7 +145,7 @@ class Application(object):
         if error_logger:
             logger.setLevel(logging.ERROR)
         else:
-            logger.setLevel(logging.INFO)
+            logger.setLevel(logging.DEBUG)
         logger.addHandler(handler)
 
 

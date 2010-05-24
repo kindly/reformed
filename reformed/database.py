@@ -47,20 +47,20 @@ log = logging.getLogger('rebase.application.database')
 
 class Database(object):
 
-    def __init__(self, name, *args, **kw):
+    def __init__(self, application):
 
         log.info("initialising database")
-
         self.status = "updating"
-        self.name = name
-        self.tables = {}
-        self.metadata = kw.pop("metadata", None)
-        self.engine = kw.pop("engine", None)
-        self._Session = kw.pop("session", None)
-        self.entity = kw.pop("entity", False)
-        self.logging_tables = kw.pop("logging_tables", True)
 
-        self.application = kw.pop("application", None)
+        self.application = application
+        self.metadata = application.metadata
+        self.engine = application.engine
+        self._Session = application.Session
+        self.entity = application.entity
+        self.logging_tables = application.logging_tables
+        self.quiet = application.quiet
+
+
         self.zodb = self.application.zodb
         self.application_dir = self.application.application_folder
 
@@ -71,8 +71,7 @@ class Database(object):
         self.fields_to_persist = []
         self.relations = []
 
-        self.quiet = kw.pop("quiet", False)
-
+        self.tables = {}
 
         connection = self.zodb.open()
         root = connection.root()
@@ -87,11 +86,6 @@ class Database(object):
 
         if self.entity:
             self.add_entity_table()
-        for table in args:
-            if table.entity is True:
-                self.add_entity(table)
-            else:
-                self.add_table(table)
 
         self.status = "active"
 
