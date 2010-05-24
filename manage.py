@@ -38,12 +38,7 @@ def make_application():
     return application
 
 def create(application):
-    print 'creating database structure'
-    import reformed.user_tables
-    import schema
-
-    reformed.user_tables.initialise(application)
-    schema.initialise(application)
+    application.create_database()
 
 def extract(application):
     import extract
@@ -124,8 +119,8 @@ def delete(args):
     this_dir = os.path.dirname(os.path.abspath(__file__))
     application_folder = os.path.join(this_dir, dir)
     sys.path.append(application_folder)
-    #engine = create_engine('sqlite:///%s/%s.sqlite' % (application_folder,dir))
-    engine = create_engine('postgres://kindly:ytrewq@localhost:5432/bug')
+    engine = create_engine('sqlite:///%s/%s.sqlite' % (application_folder,dir))
+    #engine = create_engine('postgres://kindly:ytrewq@localhost:5432/bug')
     meta = MetaData()
     meta.reflect(bind=engine)
 

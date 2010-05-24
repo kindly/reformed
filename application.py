@@ -99,6 +99,13 @@ class Application(object):
         global_session.database = self.database
         self.load_nodes()
 
+    def create_database(self):
+        print 'creating database structure'
+        import reformed.user_tables
+        import schema
+    
+        reformed.user_tables.initialise(self)
+        schema.initialise(self)
 
     def load_nodes(self):
         self.node_manager = node_runner.NodeManager(self)
