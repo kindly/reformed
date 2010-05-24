@@ -30,13 +30,14 @@ def initialise(application):
     entity("user_group",database,
 
         Text("groupname", mandatory = True),
+        Text("name", mandatory = True),
         Text("description", length = 200),
         Text("notes", length = 4000),
         Boolean("active", default = True, mandatory = True),
 
 
         table_type = "system",
-        title_field = 'groupname'
+        title_field = 'name'
     )
 
     table("user_group_user",database,
@@ -80,7 +81,7 @@ def initialise(application):
     application.predefine.add_data("user", "login_name", u"admin", data)
 
     # sys admin user_group
-    application.predefine.user_group(u'admin', u'System Administrators', permissions = ['sysadmin'])
+    application.predefine.user_group(u'admin', u'System Administrators', u'Full system access', permissions = ['sysadmin'])
 
     # this is a special case too
     # make admin a sysadmin

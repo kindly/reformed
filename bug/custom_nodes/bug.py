@@ -282,7 +282,8 @@ class UserGroup(TableNode):
 
     main = form(
         layout("box_start"),
-        input('groupname', description = 'The name of the user group'),
+        info('groupname'),
+        input('name', description = 'The name of the user group'),
         checkbox('active', description = 'Only active user groups give members permissions'),
         input('description', description = 'A brief description of the user group', css = 'large'),
         textarea('notes', css = "large", description = 'A longer more detailed description'),
@@ -294,7 +295,7 @@ class UserGroup(TableNode):
 
         table = "user_group",
         params =  {"form_type": "action"},
-        title_field = 'groupname'
+        title_field = 'name'
     )
 
 

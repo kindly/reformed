@@ -37,12 +37,13 @@ class Predefine(object):
                     description = description)
         self.add_data("permission", "permission", code, data)
 
-    def user_group(self, name, description = u'', permissions = []):
-        data = dict(description = description,
+    def user_group(self, group_name, name, description = u'', permissions = []):
+        data = dict(name = name,
+                    description = description,
                     created_by = 1,
                     _modified_by = 1,
                     active = True)
-        id = self.add_data("user_group", "groupname", name, data)
+        id = self.add_data("user_group", "groupname", group_name, data)
         if id and permissions:
             self.add_permissions_to_user_group(id, permissions)
 

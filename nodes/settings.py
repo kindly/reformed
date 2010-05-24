@@ -35,4 +35,4 @@ def initialise():
     permission(u"FileUploaderLargeFiles", u'Large files', u'can upload files large files to the server')
     
     # sys admin user_group
-    user_group(u'fileuploaders', u'File Uploaders', permissions = ['FileUploader'])
+    user_group(u'fileuploaders', u'File Uploaders', u'Able to upload files', permissions = ['FileUploader'])
