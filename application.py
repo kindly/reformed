@@ -42,10 +42,12 @@ class Application(object):
 
     def __init__(self, directory, runtime_options = None):
 
-
         self.dir = directory
         self.root_folder = os.path.dirname(os.path.abspath(__file__))
         self.application_folder = os.path.join(self.root_folder, directory)
+
+        self.connection_string = 'sqlite:///%s/%s.sqlite' % (self.application_folder,dir)
+        #self.connection_string = 'postgres://kindly:ytrewq@localhost:5432/bug'
 
         sys.path.append(self.application_folder)
 
@@ -67,31 +69,71 @@ class Application(object):
             self.quiet = False
 
         # zodb data store
-        self.zodb = self.get_zodb()
+        self.zodb = None
 
         # system info
         self.sys_info = {}  # used for quick access to the system variables
         self.sys_info_full = {} # store of the full system info
-        self.initialise_sys_info()
-
 
         self.entity = True
         self.logging_tables = False
 
-
-
-        self.get_bookmark_data()
         # system wide settings
         global_session.application = self
         global_session.database = None
 
+    def refresh_database(self):
+        """remake any data needed"""
+        self.get_zodb()
+        self.sys_info = {}
+        self.sys_info_full = {}
+        self.initialise_sys_info()
+        self.get_bookmark_data()
+        self.database = None
+
+    def delete_database(self):
+        """remove database and zodb"""
+        engine = create_engine(self.connection_string)
+        meta = MetaData()
+        meta.reflect(bind=engine)
+
+        # check for zodb files
+        zodb_file_names = ["zodb.fs", "zodb.fs.lock", "zodb.fs.index", "zodb.fs.tmp"]
+        zodb_files = []
+        for zodb_file in zodb_file_names:
+            zodb_path = os.path.join(self.application_folder, zodb_file)
+            if os.path.exists(zodb_path):
+                zodb_files.append(zodb_path)
+
+        # delete the zodb
+        if zodb_files:
+            print 'deleting zodb'
+            for zodb_file in zodb_files:
+                os.remove(zodb_file)
+
+        # delete main database tables
+        if meta.sorted_tables:
+            print 'deleting database'
+            for table in reversed(meta.sorted_tables):
+                if not self.quiet:
+                    print 'deleting %s...' % table.name
+                table.drop(bind=engine)
+
+        self.database = None
+        self.zodb = None
+
+
     def get_zodb(self):
+        """open the zodb if it has not yet been"""
         # zodb data store
-        zodb_store = os.path.join(self.application_folder, 'zodb.fs')
-        storage = FileStorage.FileStorage(zodb_store)
-        return DB(storage)
+        if not self.zodb:
+            zodb_store = os.path.join(self.application_folder, 'zodb.fs')
+            storage = FileStorage.FileStorage(zodb_store)
+            self.zodb = DB(storage)
 
     def initialise_sys_info(self):
+        """create sys_info in zodb if not there
+        or pull all sys_info data out of the store"""
         connection = self.zodb.open()
         root = connection.root()
         if "sys_info" not in root:
@@ -113,9 +155,10 @@ class Application(object):
     def initialise_database(self):
         if not self.database:
             print 'initializing database'
+            self.get_zodb()
+            self.refresh_database()
             self.metadata = MetaData()
-            self.engine = create_engine('sqlite:///%s/%s.sqlite' % (self.application_folder,dir))
-           # self.engine = create_engine('postgres://kindly:ytrewq@localhost:5432/bug')
+            self.engine = create_engine(self.connection_string)
             self.metadata.bind = self.engine
             self.Session = sessionmaker(bind=self.engine, autoflush = False)
             self.database = reformed.database.Database(self)
@@ -132,7 +175,12 @@ class Application(object):
         import schema
         reformed.user_tables.initialise(self)
         schema.initialise(self)
+        # FIXME botch to get _job_schedulat table added
         self.start_job_scheduler()
+
+        # the database has changed so needs reloading
+        self.database = None
+        self.initialise_database()
 
     def load_nodes(self):
         self.node_manager = node_runner.NodeManager(self)
@@ -198,9 +246,6 @@ class Application(object):
 
         #register("bookmarks>_system_info>title", "System Settings")
         #register("bookmarks>_system_info>node", "bug.SysInfo")
-
-
-
 
 
     def register_info(self, key, value, description = '', force = False):
