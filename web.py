@@ -149,6 +149,8 @@ class WebApplication(object):
         log.info("----- web app started ------")
 
         self.application = application
+        self.application.initialise_database()
+        self.application.process_nodes()
         self.database = application.database
         self.dir = application.dir
         global_session.database = self.database

@@ -47,6 +47,7 @@ class NodeManager(object):
         self.nodes = {}
         self.modules = {}
         self.processed_nodes = {}
+        self.get_nodes()
 
     def __getitem__(self, value):
         return self.nodes[value]
@@ -103,29 +104,37 @@ class NodeManager(object):
             try:
                 # import node
                 module = self.import_node('%s.%s' % (node_root, root))
-                self.modules[root] = module
-                for name in dir(module):
-                    item = getattr(module, name)
-                    if inspect.isclass(item):
-                        if item.__module__ == node_root + '.' + root:
-                            node_title = '%s.%s' % (root, name)
-                    #        print 'importing %s' % node_title
-                            self.nodes[node_title] = item
-                if root not in self.processed_nodes:
-                    # new node, call initialize() if needed
-                    if 'initialise' in dir(module) and inspect.isfunction(module.initialise):
-                        log.info('initialising')
-                        module.initialise()
-                    # store node processed in zodb
-                    connection = self.application.zodb.open()
-                    zodb_root = connection.root()
-                    zodb_root["nodes"][root] = True
-                    transaction.commit()
-                    connection.close()
-
+                self.modules[root] = (module, node_root, root)
             except ImportError:
                 log.critical('cannot import %s' % file)
                 raise
+
+
+    def process_nodes(self):
+        for module, node_root, root in self.modules.itervalues():
+            for name in dir(module):
+                item = getattr(module, name)
+                if inspect.isclass(item):
+                    if item.__module__ == node_root + '.' + root:
+                        node_title = '%s.%s' % (root, name)
+                        self.nodes[node_title] = item
+
+
+    def initialise_nodes(self):
+        for module, node_root, root in self.modules.itervalues():
+
+            if root not in self.processed_nodes:
+                # new node, call initialize() if needed
+                if 'initialise' in dir(module) and inspect.isfunction(module.initialise):
+                    log.info('initialising')
+                    module.initialise()
+                # store node processed in zodb
+                connection = self.application.zodb.open()
+                zodb_root = connection.root()
+                zodb_root["nodes"][root] = True
+                transaction.commit()
+                connection.close()
+
 
 
 class NodeRunner(object):

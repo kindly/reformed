@@ -60,6 +60,8 @@ class Application(object):
         self.scheduler_thread = None
         self.manager_thread = None
 
+        self.node_manager = None
+
         self.logging_setup()
 
 
@@ -121,6 +123,7 @@ class Application(object):
 
         self.database = None
         self.zodb = None
+        self.node_manager = None
 
 
     def get_zodb(self):
@@ -166,7 +169,6 @@ class Application(object):
             global_session.database = self.database
 
             self.predefine = predefine.Predefine(self)
-            self.load_nodes()
 
     def create_database(self):
         self.initialise_database()
@@ -181,16 +183,16 @@ class Application(object):
         # the database has changed so needs reloading
         self.database = None
         self.initialise_database()
+        self.load_nodes()
+        self.node_manager.initialise_nodes()
+
+    def process_nodes(self):
+        self.load_nodes()
+        self.node_manager.process_nodes()
 
     def load_nodes(self):
-        self.node_manager = node_runner.NodeManager(self)
-        # FIXME this is a dirty hack
-        # we need to store state about the application
-        # at least empty/tables created
-        # but really this is part of application.py restructuring and being able to handle
-        # delete create etc
-        if len(self.database.tables) > 1:
-            self.node_manager.get_nodes()
+        if not self.node_manager:
+            self.node_manager = node_runner.NodeManager(self)
 
     def logging_setup(self):
 
