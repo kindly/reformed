@@ -69,12 +69,7 @@ class Node(object):
             self.first_call = False
         else:
             self.first_call = True
-        print '~~~~ NODE DATA ~~~~'
-        print 'command:', self.command
-        print 'last node:', self.last_node
-        print 'first call:', self.first_call
-        print 'data:', self.data
-        print '~' * 19
+
 
     def __getitem__(self, value):
         return self._forms[value]
