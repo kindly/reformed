@@ -41,7 +41,6 @@ import threading
 import os
 from ZODB.PersistentMapping import PersistentMapping
 import transaction
-#import user_tables
 
 log = logging.getLogger('rebase.application.database')
 
@@ -66,7 +65,7 @@ class Database(object):
 
         self.metadata.bind = self.engine
         self.Session = sessionwrapper.SessionClass(self._Session, self)
-        # update the applications Session
+        # update the application Session
         self.application.Session = self.Session
 
         self.persisted = False
