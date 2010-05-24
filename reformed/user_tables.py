@@ -67,6 +67,8 @@ def initialise(application):
     database.persist()
 
 
+    # permission
+    application.predefine.permission("sysadmin", u'System Administrators', u'Administer the system.')
 
     # add admin user
     # this is a special case as no other users should be auto created
@@ -78,7 +80,7 @@ def initialise(application):
     application.predefine.add_data("user", "login_name", u"admin", data)
 
     # sys admin user_group
-    application.predefine.user_group(u'admin', u'System Administrators')
+    application.predefine.user_group(u'admin', u'System Administrators', permissions = ['sysadmin'])
 
     # FIXME dodgy hack needs replacing
     user_group_user = database.get_instance("user_group_user")
