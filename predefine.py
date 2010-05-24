@@ -87,7 +87,6 @@ class Predefine(object):
         if table not in self.database.tables:
             print 'Table <%s> does not exist cannot add data <%s>' % (table, key_data)
             raise #FIXME what exception?
-        print key_field
         # cache data if we don't have it already
         if table not in self.cached_data:
             self.cached_data[table] = {}
