@@ -46,7 +46,7 @@ class Application(object):
         self.root_folder = os.path.dirname(os.path.abspath(__file__))
         self.application_folder = os.path.join(self.root_folder, directory)
 
-        self.connection_string = 'sqlite:///%s/%s.sqlite' % (self.application_folder,dir)
+        self.connection_string = 'sqlite:///%s/%s.sqlite' % (self.application_folder, directory)
         #self.connection_string = 'postgres://kindly:ytrewq@localhost:5432/bug'
 
         sys.path.append(self.application_folder)
