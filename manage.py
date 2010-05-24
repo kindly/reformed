@@ -214,6 +214,8 @@ def run(host, port, application, ssl, ssl_cert, no_job_scheduler):
     import beaker.middleware
     import web
 
+    application.initialise_database()
+
     web_application = web.WebApplication(application)
 
     if not no_job_scheduler:

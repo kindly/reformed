@@ -40,21 +40,26 @@ log = logging.getLogger('rebase.application')
 
 class Application(object):
 
-    def __init__(self, dir, runtime_options = None):
+    def __init__(self, directory, runtime_options = None):
 
-        self.metadata = MetaData()
-        self.dir = dir
+
+        self.dir = directory
         self.root_folder = os.path.dirname(os.path.abspath(__file__))
-        self.application_folder = os.path.join(self.root_folder, dir)
-
-        self.logging_setup()
+        self.application_folder = os.path.join(self.root_folder, directory)
 
         sys.path.append(self.application_folder)
 
-        self.engine = create_engine('sqlite:///%s/%s.sqlite' % (self.application_folder,dir))
-       # self.engine = create_engine('postgres://kindly:ytrewq@localhost:5432/bug')
-        self.metadata.bind = self.engine
-        self.Session = sessionmaker(bind=self.engine, autoflush = False)
+        self.database = None
+        self.engine = None
+        self.metadata = None
+        self.Session = None
+
+        self.job_scheduler = None
+        self.scheduler_thread = None
+        self.manager_thread = None
+
+        self.logging_setup()
+
 
         if runtime_options and runtime_options.quiet:
             self.quiet = True
@@ -62,14 +67,31 @@ class Application(object):
             self.quiet = False
 
         # zodb data store
-        zodb_store = os.path.join(self.application_folder, 'zodb.fs')
-        storage = FileStorage.FileStorage(zodb_store)
-        self.zodb = DB(storage)
+        self.zodb = self.get_zodb()
 
-        # sys info
+        # system info
         self.sys_info = {}  # used for quick access to the system variables
         self.sys_info_full = {} # store of the full system info
+        self.initialise_sys_info()
 
+
+        self.entity = True
+        self.logging_tables = False
+
+
+
+        self.get_bookmark_data()
+        # system wide settings
+        global_session.application = self
+        global_session.database = None
+
+    def get_zodb(self):
+        # zodb data store
+        zodb_store = os.path.join(self.application_folder, 'zodb.fs')
+        storage = FileStorage.FileStorage(zodb_store)
+        return DB(storage)
+
+    def initialise_sys_info(self):
         connection = self.zodb.open()
         root = connection.root()
         if "sys_info" not in root:
@@ -79,33 +101,38 @@ class Application(object):
             self.cache_sys_info(root["sys_info"])
         connection.close()
 
-        self.entity = True
-        self.logging_tables = False
 
-
-        self.database = reformed.database.Database(self)
-
+    def start_job_scheduler(self):
         self.job_scheduler = job_scheduler.JobScheduler(self)
         self.scheduler_thread = job_scheduler.JobSchedulerThread(self, threading.currentThread())
 
         self.manager_thread = ManagerThread(self, threading.currentThread())
         self.manager_thread.start()
 
-        self.predefine = predefine.Predefine(self)
 
-        self.get_bookmark_data()
-        # system wide settings
-        global_session.application = self
-        global_session.database = self.database
-        self.load_nodes()
+    def initialise_database(self):
+        if not self.database:
+            print 'initializing database'
+            self.metadata = MetaData()
+            self.engine = create_engine('sqlite:///%s/%s.sqlite' % (self.application_folder,dir))
+           # self.engine = create_engine('postgres://kindly:ytrewq@localhost:5432/bug')
+            self.metadata.bind = self.engine
+            self.Session = sessionmaker(bind=self.engine, autoflush = False)
+            self.database = reformed.database.Database(self)
+            # add to global session
+            global_session.database = self.database
+
+            self.predefine = predefine.Predefine(self)
+            self.load_nodes()
 
     def create_database(self):
+        self.initialise_database()
         print 'creating database structure'
         import reformed.user_tables
         import schema
-    
         reformed.user_tables.initialise(self)
         schema.initialise(self)
+        self.start_job_scheduler()
 
     def load_nodes(self):
         self.node_manager = node_runner.NodeManager(self)
