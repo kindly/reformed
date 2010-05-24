@@ -33,8 +33,8 @@ class Predefine(object):
 
 
     def permission(self, code, name, description = u''):
-        data = dict(description = name,
-                    long_description = description)
+        data = dict(name = name,
+                    description = description)
         self.add_data("permission", "permission", code, data)
 
     def user_group(self, name, description = u'', permissions = []):

@@ -58,10 +58,10 @@ def initialise(application):
     table("permission",database,
 
         Text("permission"),
-        Text("description", length = 200),
-        Text("long_description", length = 4000),
+        Text("name", length = 200),
+        Text("description", length = 4000),
         table_type = "system",
-        title_field = 'permission'
+        title_field = 'name'
     )
 
     database.persist()

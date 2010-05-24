@@ -269,12 +269,12 @@ class Permission(TableNode):
     main = form(
         layout("box_start"),
         input("permission"),
-        input("description", css = 'large'),
-        textarea("long_description", css = 'large'),
+        input("name", css = 'large'),
+        textarea("description", css = 'large'),
 
         table = "permission",
         params =  {"form_type": "action"},
-        title_field = 'permission'
+        title_field = 'name'
     )
 
 
