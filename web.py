@@ -114,7 +114,7 @@ def process_node(environ, start_response):
     except Exception, e:
         return throw_error('Sent JSON Error:')
 
-    node_interface = node_runner.Interface(global_session.application.node_manager)
+    node_interface = node_runner.NodeRunner(global_session.application.node_manager)
 
     node_interface.add_command(body)
     try:

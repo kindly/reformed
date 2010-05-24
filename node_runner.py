@@ -125,7 +125,7 @@ class NodeManager(object):
                 raise
 
 
-class Interface(object):
+class NodeRunner(object):
 
     def __init__(self, node_manager):
         self.node_manager = node_manager
