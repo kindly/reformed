@@ -82,13 +82,10 @@ def initialise(application):
     # sys admin user_group
     application.predefine.user_group(u'admin', u'System Administrators', permissions = ['sysadmin'])
 
-    # FIXME dodgy hack needs replacing
-    user_group_user = database.get_instance("user_group_user")
-    user_group_user.user_id = 1
-    user_group_user.user_group_id = 1
-
-    session = database.Session()
-    session.add(user_group_user)
-    session.commit()
-
-
+    # this is a special case too
+    # make admin a sysadmin
+    data = dict(created_by = 1,
+                _modified_by = 1,
+                user_id = 1,
+                user_group_id = 1,)
+    application.predefine.add_data("user_group_user", "user_id", 1, data)
