@@ -66,6 +66,9 @@ class Database(object):
 
         self.metadata.bind = self.engine
         self.Session = sessionwrapper.SessionClass(self._Session, self)
+        # update the applications Session
+        self.application.Session = self.Session
+
         self.persisted = False
         self.graph = None
         self.fields_to_persist = []
