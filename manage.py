@@ -148,6 +148,10 @@ def reload(host, options):
 
 def reloader(args, options):
 
+    global application
+    if application:
+        application.release_all()
+
     import subprocess
 
     while 1:

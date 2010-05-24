@@ -120,11 +120,14 @@ class Application(object):
                 if not self.quiet:
                     print 'deleting %s...' % table.name
                 table.drop(bind=engine)
+        self.release_all()
 
+    def release_all(self):
+        if self.zodb:
+            self.zodb.close()
+            self.zodb = None
         self.database = None
-        self.zodb = None
         self.node_manager = None
-
 
     def get_zodb(self):
         """open the zodb if it has not yet been"""
