@@ -48,6 +48,9 @@ class NodeManager(object):
         self.modules = {}
         self.processed_nodes = {}
 
+    def __getitem__(self, value):
+        return self.nodes[value]
+
     def get_nodes(self):
         # get details of previously known nodes
         connection = self.application.zodb.open()
@@ -159,9 +162,9 @@ class NodeRunner(object):
             log.info('User not logged in.  Switching to node %s, command %s' % (node_name, data['command']))
 
         # get node from node_manager
-        if node_name in self.node_manager.nodes:
-            node_class = self.node_manager.nodes[node_name]
-        else:
+        try:
+            node_class = self.node_manager[node_name]
+        except KeyError:
             raise NodeNotFound(node_name)
 
         x = node_class(data, node_name, last_node)
