@@ -41,7 +41,7 @@ def initialise(application):
 
     entity("user_group",database,
 
-        Text("groupname", mandatory = True),
+        Text("groupname"),
         Text("name", mandatory = True),
         Text("description", length = 200),
         Text("notes", length = 4000),
