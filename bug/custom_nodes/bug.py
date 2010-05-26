@@ -183,7 +183,6 @@ class User(TableNode):
         vdata = self.validate_data_full(self.data, self.login_validations)
         if vdata['login_name'] and vdata['password']:
             where = "login_name='%s'" % vdata['login_name']
-            #where = "login_name='%s' and password='%s'" % (vdata['login_name'], vdata['password'])
             try:
                 data_out = r.search_single_data('user', where)
                 if not reformed.fshp.check(vdata['password'], data_out.get("password")):
@@ -194,18 +193,9 @@ class User(TableNode):
                         message = '# Login failed\n\nThis account is disabled.'
                         self.show_login_form(message)
                     else:
-                        result = r.search('permission', 'user_group_user.user_id = %s and permission="Login"' % data_out.get('id')).data
-                        if not result:
-                            ## see if you are in sysadmin group
-                            result = r.search('user_group_user', 'user_id = %s and user_group_id = 1' % data_out.get('id')).data
-                            if not result:
-                                message = '# Login failed\n\nThis account is not allowed to log into the system.'
-                                self.show_login_form(message)
-                            else:
-                                self.login(data_out)
-                        else:
+                        result = r.search('permission', 'user_group_user.user_id = %s and (permission="Login" or permission="sysadmin")' % data_out.get('id')).data
+                        if result:
                             self.login(data_out)
-
             except SingleResultError:
                 message = fail_message
                 self.show_login_form(message)
