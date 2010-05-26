@@ -63,7 +63,8 @@ class TestParserParams(test_donkey):
 
         assert ast[0][2].pos == 20 
 
-        query = QueryFromStringParam(None, "donkey.name = ? and name in ({moo}, ?, {poo})",
+        search = Search(self.Donkey, "people", self.session)
+        query = QueryFromStringParam(search, "donkey.name = ? and name in ({moo}, ?, {poo})",
                                    pos_args = ["pop", "pooop"],
                                    named_args = {"moo": "cow", "poo": "man"})
 
@@ -76,7 +77,8 @@ class TestParserParams(test_donkey):
         assert query.expressions[0].param_values == ["pop"]
         assert query.expressions[1].param_values == ['cow', 'pooop', 'man']
 
-        query = QueryFromStringParam(None, 
+        search = Search(self.Donkey, "people", self.session)
+        query = QueryFromStringParam(search, 
                                    "(donkey.name between {} and ?)"
                                    "or (email.email <= {} "
                                    "and name in ({moo}, ?, {poo}))"
@@ -94,14 +96,20 @@ class TestParserParams(test_donkey):
         assert query.expressions[2].param_values == ["cow", "pooop", "man"]
         assert query.expressions[3].param_values == ["not null"]
 
-        expression = query.expressions[0].make_sa_expression(self.Donkey, "people")
-        expression = query.expressions[3].make_sa_expression(self.Donkey, "people")
+
+
+        query.sa_query = search.search_base
+        join_tree = query.make_join_tree()
+        query.recurse_join_tree(join_tree)
+
+        expression = query.expressions[0].make_sa_expression(search, "people")
+        expression = query.expressions[3].make_sa_expression(search, "people")
 
         assert query.expressions[0].parsed_values == [u'yes', u'pop']
         assert query.expressions[3].parsed_values == [False]
 
-
-        query = QueryFromStringParam(None, 
+        search = Search(self.Donkey, "people", self.session)
+        query = QueryFromStringParam(search, 
                                    "(donkey.name between {} and ?)"
                                    "or (email.email <= {} "
                                    "and name in ({moo}, ?, {poo}))"
@@ -119,13 +127,18 @@ class TestParserParams(test_donkey):
         assert query.expressions[2].param_values == ["cow", "pooop", "man"]
         assert query.expressions[3].param_values == ["not null"]
 
-        expression = query.expressions[0].make_sa_expression(self.Donkey, "people")
-        expression = query.expressions[3].make_sa_expression(self.Donkey, "people")
+        query.sa_query = search.search_base
+        join_tree = query.make_join_tree()
+        query.recurse_join_tree(join_tree)
+
+        expression = query.expressions[0].make_sa_expression(search, "people")
+        expression = query.expressions[3].make_sa_expression(search, "people")
 
         assert query.expressions[0].parsed_values == [u'yes', u'pop']
         assert query.expressions[3].parsed_values == [False]
 
-        query = QueryFromStringParam(None, 
+        search = Search(self.Donkey, "people", self.session)
+        query = QueryFromStringParam(search, 
                                    "(donkey._modified_date between {} and ?)"
                                    "or (email.active_email = {}"
                                    "and name in ({moo}, ?, {poo}))"
@@ -136,12 +149,17 @@ class TestParserParams(test_donkey):
                                                   "moo": "cow",
                                                   "poo": "man"} 
                                     )
-        expression = query.expressions[0].make_sa_expression(self.Donkey, "people")
+
+        query.sa_query = search.search_base
+        join_tree = query.make_join_tree()
+        query.recurse_join_tree(join_tree)
+
+        expression = query.expressions[0].make_sa_expression(search, "people")
 
         assert query.expressions[0].parsed_values == [datetime.datetime(2019, 1, 1),
                                                       datetime.datetime(2009, 1, 1)] 
 
-        expression = query.expressions[1].make_sa_expression(self.Donkey, "people")
+        expression = query.expressions[1].make_sa_expression(search, "people")
 
         assert query.expressions[1].parsed_values == [True] 
 
@@ -151,16 +169,25 @@ class TestParserParams(test_donkey):
 
         query = QueryFromStringParam(s, """ name = ? or email.email = {} """, pos_args = ["david"], named_args = {"email.email": "poo@poo.com"})
 
+        query.sa_query = s.search_base
+        join_tree = query.make_join_tree()
+        query.recurse_join_tree(join_tree)
+
         where = query.convert_where(query.ast[0])
 
-        assert str(where.compile()) == "people.name = ? AND people.id IS NOT NULL OR email.email = ? AND email.id IS NOT NULL"
-        assert where.compile().params == {u'email_1': 'poo@poo.com', u'name_1': 'david'}
+        assert str(where.compile()) == "people.name = ? AND people.id IS NOT NULL OR email_1.email = ? AND email_1.id IS NOT NULL"
+        assert where.compile().params == {u'email_2': 'poo@poo.com', u'name_1': 'david'}
 
+        s = Search(self.Donkey, "people", self.session)
 
         query = QueryFromStringParam(s, """ name = ? or not (email.email < {} and donkey.name = ?)  """, pos_args = ["david", "fred"], named_args = {"email.email" : "poo@poo.com"})
+        query.sa_query = s.search_base
+        join_tree = query.make_join_tree()
+        query.recurse_join_tree(join_tree)
+
         where = query.convert_where(query.ast[0])
-        assert str(where.compile()) == "people.name = ? AND people.id IS NOT NULL OR NOT ((email.email < ? OR email.id IS NULL) AND donkey.name = ? AND donkey.id IS NOT NULL)"
-        assert where.compile().params == {u'name_2': 'fred', u'email_1': 'poo@poo.com', u'name_1': 'david'}
+        assert str(where.compile()) == "people.name = ? AND people.id IS NOT NULL OR NOT ((email_1.email < ? OR email_1.id IS NULL) AND donkey_1.name = ? AND donkey_1.id IS NOT NULL)"
+        assert where.compile().params == {u'name_2': 'fred', u'email_2': 'poo@poo.com', u'name_1': 'david'}
 
 
         assert query.covering_ors == set(["email","donkey"])

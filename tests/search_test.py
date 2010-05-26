@@ -137,15 +137,25 @@ class test_query_from_string(donkey_test.test_donkey):
         s = Search(self.Donkey, "people", self.session)
 
         query = QueryFromString(s, """ name = david or email.email = 'poo@poo.com' """)
+        query.sa_query = s.search_base
+        join_tree = query.make_join_tree()
+        query.recurse_join_tree(join_tree)
+
         where = query.convert_where(query.ast[0])
-        assert str(where.compile()) == "people.name = ? AND people.id IS NOT NULL OR email.email = ? AND email.id IS NOT NULL"
-        assert where.compile().params == {u'email_1': 'poo@poo.com', u'name_1': 'david'}
+        print str(where.compile())
+        assert str(where.compile()) == "people.name = ? AND people.id IS NOT NULL OR email_1.email = ? AND email_1.id IS NOT NULL"
+        print where.compile().params
+        assert where.compile().params == {u'email_2': u'poo@poo.com', u'name_1': u'david'}
 
 
         query = QueryFromString(s, """ name = david or not (email.email < 'poo@poo.com' and donkey.name = "fred")  """)
+        query.sa_query = s.search_base
+        join_tree = query.make_join_tree()
+        query.recurse_join_tree(join_tree)
         where = query.convert_where(query.ast[0])
-        assert str(where.compile()) == "people.name = ? AND people.id IS NOT NULL OR NOT ((email.email < ? OR email.id IS NULL) AND donkey.name = ? AND donkey.id IS NOT NULL)"
-        assert where.compile().params == {u'name_2': 'fred', u'email_1': 'poo@poo.com', u'name_1': 'david'}
+        assert str(where.compile()) == "people.name = ? AND people.id IS NOT NULL OR NOT ((email_1.email < ? OR email_1.id IS NULL) AND donkey_1.name = ? AND donkey_1.id IS NOT NULL)"
+        print where.compile().params
+        assert where.compile().params == {u'email_2': u'poo@poo.com', u'name_2': u'fred', u'name_1': u'david'}
 
     def test_single_query(self):
 
@@ -197,6 +207,7 @@ class test_query_from_string(donkey_test.test_donkey):
         people_class = self.Donkey.get_class(u"people")
         email_class = self.Donkey.get_class(u"email")
 
+        print search.name_to_alias
         print search.search()
         print session.query(people_class).outerjoin(["email"]).\
                    filter(and_(people_class.name < u"popp02", or_(email_class.email == None, not_(email_class.email.like(u"popi%")))))
@@ -355,6 +366,7 @@ FROM donkey_sponsership ORDER BY donkey_sponsership.amount DESC, people.name, do
         self.session.commit()
 
         a = Search(self.Donkey, "people", self.session, "over_18.code.type = 'over_18' or gender.code.type = gender")
+        print a.search().all()
 
         assert len(a.search().all()) == 2
 

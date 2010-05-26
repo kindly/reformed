@@ -28,6 +28,10 @@ class Search(object):
         self.order_by = kw.get("order_by", None)
         self.distinct_many = kw.get("distinct_many", True)
 
+        self.aliases = {() : self.rtable.sa_class}
+        self.name_to_path = {self.table: ()}
+        self.name_to_alias = {self.table: self.rtable.sa_class}
+
         self._extra_inner = kw.get("extra_inner", [])
         self._extra_outer = kw.get("extra_outer", [])
 
@@ -223,8 +227,13 @@ class QueryBase(object):
 
     def make_join_tree(self):
 
+        self.aliases = self.search.aliases
+        self.name_to_path = self.search.name_to_path
+        self.name_to_alias = self.search.name_to_alias
+
         join_tree = dict(type = "root",
                          table = self.search.table,
+                         path = (),
                          tree = {})
 
         for join in self.outer_joins.union(self.covering_ors):
@@ -233,18 +242,30 @@ class QueryBase(object):
             sub_tree = join_tree
 
             edge = self.search.aliased_name_path[join]
+            table_path = zip(edge.path, edge.tables[1:])
+            current_path = []
 
-            for node in edge.table_path:
+            for node in table_path:
+                current_path = current_path + [node[0]]
+                if tuple(current_path) not in self.aliases:
+                    alias = sa.orm.aliased(self.search.database[node[1]].sa_class)
+                    self.aliases[tuple(current_path)] = alias
+                
                 if node in sub_tree["tree"]:
-                    sub_tree = sub_tree["tree"]
+                    sub_tree = sub_tree["tree"][node]
                 else:
                     old_tree = sub_tree
                     sub_tree = dict(type = "outer",
                                     tree = {},
-                                    table = node[0],
-                                    join = node[1],
+                                    table = node[1],
+                                    join = node[0],
+                                    path = tuple(current_path),
+                                    old_path = tuple(old_tree["path"]),
                                     old_table = old_tree["table"])
                     old_tree["tree"][node] = sub_tree
+
+            self.name_to_path[join] = tuple(current_path)
+            self.name_to_alias[join] = self.aliases[tuple(current_path)]
 
         for join in self.inner_joins:
             if join == self.search.table:
@@ -253,25 +274,39 @@ class QueryBase(object):
 
             edge = self.search.aliased_name_path[join]
 
-            for node in edge.table_path:
+            table_path = zip(edge.path, edge.tables[1:])
+            current_path = []
+
+            for node in table_path:
+                current_path = current_path + [node[0]]
+
+                if tuple(current_path) not in self.aliases:
+                    alias = sa.orm.aliased(self.search.database[node[1]].sa_class)
+                    self.aliases[tuple(current_path)] = alias
+
                 if node in sub_tree["tree"]:
-                    sub_tree = sub_tree["tree"]
+                    sub_tree = sub_tree["tree"][node]
                 else:
                     old_tree = sub_tree
                     sub_tree = dict(type = "inner",
                                     tree = {},
-                                    table = node[0],
-                                    join = node[1],
+                                    table = node[1],
+                                    join = node[0],
+                                    path = tuple(current_path),
+                                    old_path = tuple(old_tree["path"]),
                                     old_table = old_tree["table"])
                     old_tree["tree"][node] = sub_tree
+
+            self.name_to_path[join] = tuple(current_path)
+            self.name_to_alias[join] = self.aliases[tuple(current_path)]
 
         return join_tree
 
     def recurse_join_tree(self, current_node):
 
         for node in current_node["tree"].values():
-            old_table = self.search.database.aliases[node["old_table"]]
-            table = self.search.database.aliases[node["table"]]
+            old_table = self.aliases[node["old_path"]]
+            table = self.aliases[node["path"]]
             relation = node["join"]
             join_tuple = (table, getattr(old_table, relation))
 
@@ -295,7 +330,9 @@ class QueryBase(object):
 
         self.recurse_join_tree(join_tree)
 
-        self.sa_query = self.sa_query.filter(self.where)
+        where = self.convert_where(self.ast[0])
+
+        self.sa_query = self.sa_query.filter(where)
 
         return self.sa_query
 
@@ -324,7 +361,7 @@ class QueryFromString(QueryBase):
         if kw.get("test", False) == True:
             return
 
-        self.where = self.convert_where(self.ast[0])
+        #self.where = self.convert_where(self.ast[0])
 
 
     def gather_covering_ors(self, node, notted, ored):
@@ -373,9 +410,9 @@ class QueryFromString(QueryBase):
 
         if node.operator:
             if node.table:
-                table_class = self.search.database.aliases[node.table]
+                table_class = self.search.name_to_alias[node.table]
             else:
-                table_class = self.search.database.aliases[self.search.table]
+                table_class = self.search.name_to_alias[self.search.table]
             
             field = getattr(table_class, node.field)
 
@@ -577,17 +614,19 @@ class Expression(object):
         else:
             self.params.append(self.field_name)
 
-    def make_sa_expression(self, database, root_table):
+    def make_sa_expression(self, search, root_table):
 
-        self.database = database
+        self.search = search
         self.root_table = root_table
 
         if self.table:
-            self.table_class = getattr(database.t, self.table)
+            table = self.table
         else:
-            self.table_class = getattr(database.t, root_table)
+            table = root_table
 
-        rtable = self.table_class()._table
+        self.table_class = self.search.name_to_alias[table]
+
+        rtable = self.search.database[table]
 
         if self.field == "id":
             self.type = sa.Integer
@@ -763,7 +802,7 @@ class QueryFromStringParam(QueryBase):
         self.gather_joins(self.ast, False)
         self.gather_covering_ors(self.ast, False, False)
 
-        self.where = self.convert_where(self.ast[0])
+        #self.where = self.convert_where(self.ast[0])
 
     def gather_covering_ors(self, node, notted, ored):
 
@@ -802,7 +841,7 @@ class QueryFromStringParam(QueryBase):
     def convert_where(self, node):
 
         if isinstance(node, Expression):
-            return node.make_sa_expression(self.search.database, self.search.table)
+            return node.make_sa_expression(self.search, self.search.table)
 
         for item in node:
             to_not = True if item == "not" else False
