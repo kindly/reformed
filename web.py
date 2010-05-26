@@ -114,7 +114,7 @@ def process_node(environ, start_response):
     except Exception, e:
         return throw_error('Sent JSON Error:')
 
-    node_interface = node_runner.Interface(global_session.application.node_manager)
+    node_interface = node_runner.NodeRunner(global_session.application.node_manager)
 
     node_interface.add_command(body)
     try:
@@ -149,6 +149,8 @@ class WebApplication(object):
         log.info("----- web app started ------")
 
         self.application = application
+        self.application.initialise_database()
+        self.application.process_nodes()
         self.database = application.database
         self.dir = application.dir
         global_session.database = self.database

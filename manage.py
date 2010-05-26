@@ -38,12 +38,7 @@ def make_application():
     return application
 
 def create(application):
-    print 'creating database structure'
-    import reformed.user_tables
-    import schema
-
-    reformed.user_tables.initialise(application)
-    schema.initialise(application)
+    application.create_database()
 
 def extract(application):
     import extract
@@ -112,46 +107,9 @@ def purge_attachments(application):
     print 'purging attachments'
     shutil.rmtree(attachments_path)
 
-def delete(args):
+def delete(application):
 
-    if args:
-        dir = args[0]
-    else:
-        dir = "sample"
-
-    from sqlalchemy import MetaData, create_engine
-
-    this_dir = os.path.dirname(os.path.abspath(__file__))
-    application_folder = os.path.join(this_dir, dir)
-    sys.path.append(application_folder)
-    engine = create_engine('sqlite:///%s/%s.sqlite' % (application_folder,dir))
-    #engine = create_engine('postgres://kindly:ytrewq@localhost:5432/bug')
-    meta = MetaData()
-    meta.reflect(bind=engine)
-
-    # check for zodb files
-    zodb_file_names = ["zodb.fs", "zodb.fs.lock", "zodb.fs.index", "zodb.fs.tmp"]
-    zodb_files = []
-    for zodb_file in zodb_file_names:
-        zodb_path = os.path.join(application_folder, zodb_file)
-        if os.path.exists(zodb_path):
-            zodb_files.append(zodb_path)
-
-    if (meta.sorted_tables or zodb_files) and confirm_request('Delete database?', 'y'):
-
-        # delete the zodb
-        if zodb_files:
-            print 'deleting zodb'
-            for zodb_file in zodb_files:
-                os.remove(zodb_file)
-
-        # delete main database tables
-        if meta.sorted_tables:
-            print 'deleting database'
-            for table in reversed(meta.sorted_tables):
-                if not options.quiet:
-                    print 'deleting %s...' % table.name
-                table.drop(bind=engine)
+    application.delete_database()
 
 def dump(application):
     print 'dumping data'
@@ -190,6 +148,10 @@ def reload(host, options):
 
 def reloader(args, options):
 
+    global application
+    if application:
+        application.release_all()
+
     import subprocess
 
     while 1:
@@ -218,6 +180,7 @@ def run(host, port, application, ssl, ssl_cert, no_job_scheduler):
     print 'starting webserver'
     import beaker.middleware
     import web
+
 
     web_application = web.WebApplication(application)
 
@@ -322,13 +285,10 @@ if __name__ == "__main__":
     if options.extract:
         extract(make_application())
     if options.delete:
-        if options.purge_attachments:
-            make_application()
-        delete(args)
+        delete(make_application())
         if options.purge_attachments:
             purge_attachments(make_application())
-        # kill application as it is no longer valid
-        application = None
+
     if options.purge_attachments and not options.delete:
         purge_attachments(make_application())
 

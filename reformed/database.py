@@ -41,38 +41,38 @@ import threading
 import os
 from ZODB.PersistentMapping import PersistentMapping
 import transaction
-#import user_tables
 
 log = logging.getLogger('rebase.application.database')
 
 class Database(object):
 
-    def __init__(self, name, *args, **kw):
+    def __init__(self, application):
 
         log.info("initialising database")
-
         self.status = "updating"
-        self.name = name
-        self.tables = {}
-        self.metadata = kw.pop("metadata", None)
-        self.engine = kw.pop("engine", None)
-        self._Session = kw.pop("session", None)
-        self.entity = kw.pop("entity", False)
-        self.logging_tables = kw.pop("logging_tables", True)
 
-        self.application = kw.pop("application", None)
+        self.application = application
+        self.metadata = application.metadata
+        self.engine = application.engine
+        self._Session = application.Session
+        self.logging_tables = application.logging_tables
+        self.quiet = application.quiet
+
+
         self.zodb = self.application.zodb
         self.application_dir = self.application.application_folder
 
         self.metadata.bind = self.engine
         self.Session = sessionwrapper.SessionClass(self._Session, self)
+        # update the application Session
+        self.application.Session = self.Session
+
         self.persisted = False
         self.graph = None
         self.fields_to_persist = []
         self.relations = []
 
-        self.quiet = kw.pop("quiet", False)
-
+        self.tables = {}
 
         connection = self.zodb.open()
         root = connection.root()
@@ -84,14 +84,6 @@ class Database(object):
 
 
         self.load_from_persist()
-
-        if self.entity:
-            self.add_entity_table()
-        for table in args:
-            if table.entity is True:
-                self.add_entity(table)
-            else:
-                self.add_table(table)
 
         self.status = "active"
 
@@ -233,23 +225,6 @@ class Database(object):
         if self.tables["_core_entity"].persisted:
             self.fields_to_persist.append(primary)
             self.fields_to_persist.append(secondary)
-
-
-    def add_entity_table(self):
-
-        if "_core_entity" not in self.tables:
-            entity_table = tables.Table("_core_entity",
-                                  field_types.Text("table"),
-                                  field_types.Text("title"),
-                                  field_types.Text("summary"),
-                                  field_types.ModifiedByNoRelation("modified_by"),
-                                  table_type = "internal",
-                                  summary = u'The entity table',
-                                  quiet = self.quiet,
-                                  modified_by = False
-                                  )
-
-            self.add_table(entity_table)
 
 
     def add_entity(self, table):

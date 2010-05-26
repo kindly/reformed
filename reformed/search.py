@@ -92,7 +92,7 @@ class Search(object):
                 field = field_parts[1]
 
             # the table is got from here as we need the aliased one
-            table = getattr(self.database.t, table)
+            table = self.name_to_alias[table]
 
             if ordering == "desc":
                 clauses.append(getattr(table, field).desc())

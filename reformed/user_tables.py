@@ -6,6 +6,18 @@ def initialise(application):
 
     database = application.database
 
+
+    table("_core_entity", database,
+        Text("table"),
+        Text("title"),
+        Text("summary"),
+        ModifiedByNoRelation("modified_by"),
+        table_type = "internal",
+        summary = u'The entity table',
+        modified_by = False
+    )
+
+
     entity("user",database,
 
         Text("name"),
@@ -29,14 +41,15 @@ def initialise(application):
 
     entity("user_group",database,
 
-        Text("groupname", mandatory = True),
+        Text("groupname"),
+        Text("name", mandatory = True),
         Text("description", length = 200),
         Text("notes", length = 4000),
         Boolean("active", default = True, mandatory = True),
 
 
         table_type = "system",
-        title_field = 'groupname'
+        title_field = 'name'
     )
 
     table("user_group_user",database,
@@ -58,15 +71,17 @@ def initialise(application):
     table("permission",database,
 
         Text("permission"),
-        Text("description", length = 200),
-        Text("long_description", length = 4000),
+        Text("name", length = 200),
+        Text("description", length = 4000),
         table_type = "system",
-        title_field = 'permission'
+        title_field = 'name'
     )
 
     database.persist()
 
 
+    # permission
+    application.predefine.permission("sysadmin", u'System Administrators', u'Administer the system.')
 
     # add admin user
     # this is a special case as no other users should be auto created
@@ -78,15 +93,12 @@ def initialise(application):
     application.predefine.add_data("user", "login_name", u"admin", data)
 
     # sys admin user_group
-    application.predefine.user_group(u'admin', u'System Administrators')
+    application.predefine.user_group(u'admin', u'System Administrators', u'Full system access', permissions = ['sysadmin'])
 
-    # FIXME dodgy hack needs replacing
-    user_group_user = database.get_instance("user_group_user")
-    user_group_user.user_id = 1
-    user_group_user.user_group_id = 1
-
-    session = database.Session()
-    session.add(user_group_user)
-    session.commit()
-
-
+    # this is a special case too
+    # make admin a sysadmin
+    data = dict(created_by = 1,
+                _modified_by = 1,
+                user_id = 1,
+                user_group_id = 1,)
+    application.predefine.add_data("user_group_user", "user_id", 1, data)
