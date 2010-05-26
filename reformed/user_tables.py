@@ -6,6 +6,18 @@ def initialise(application):
 
     database = application.database
 
+
+    table("_core_entity", database,
+        Text("table"),
+        Text("title"),
+        Text("summary"),
+        ModifiedByNoRelation("modified_by"),
+        table_type = "internal",
+        summary = u'The entity table',
+        modified_by = False
+    )
+
+
     entity("user",database,
 
         Text("name"),

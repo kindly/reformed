@@ -77,7 +77,6 @@ class Application(object):
         self.sys_info = {}  # used for quick access to the system variables
         self.sys_info_full = {} # store of the full system info
 
-        self.entity = True
         self.logging_tables = False
 
         # system wide settings

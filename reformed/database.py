@@ -55,7 +55,6 @@ class Database(object):
         self.metadata = application.metadata
         self.engine = application.engine
         self._Session = application.Session
-        self.entity = application.entity
         self.logging_tables = application.logging_tables
         self.quiet = application.quiet
 
@@ -85,9 +84,6 @@ class Database(object):
 
 
         self.load_from_persist()
-
-        if self.entity:
-            self.add_entity_table()
 
         self.status = "active"
 
@@ -229,23 +225,6 @@ class Database(object):
         if self.tables["_core_entity"].persisted:
             self.fields_to_persist.append(primary)
             self.fields_to_persist.append(secondary)
-
-
-    def add_entity_table(self):
-
-        if "_core_entity" not in self.tables:
-            entity_table = tables.Table("_core_entity",
-                                  field_types.Text("table"),
-                                  field_types.Text("title"),
-                                  field_types.Text("summary"),
-                                  field_types.ModifiedByNoRelation("modified_by"),
-                                  table_type = "internal",
-                                  summary = u'The entity table',
-                                  quiet = self.quiet,
-                                  modified_by = False
-                                  )
-
-            self.add_table(entity_table)
 
 
     def add_entity(self, table):
