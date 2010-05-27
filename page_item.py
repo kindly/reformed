@@ -61,9 +61,11 @@ class PageItem(object):
 
     def check_permissions(self):
 
-        user_perms = set(global_session.session.get('permissions'))
+        # no permissions needed
         if not self.permissions:
             return True
+
+        user_perms = set(global_session.session.get('permissions'))
         if self.permissions.intersection(user_perms):
             return True
 
