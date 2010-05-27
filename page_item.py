@@ -96,6 +96,15 @@ class PageItem(object):
 
     def set_default_control(self, form):
 
+        if not form.table:
+            return
+
+        rfield = r[form.table].fields.get(self.name)
+        if not rfield:
+            return
+
+        column = rfield.column
+
         kw = self.extra_params
 
         default_controls = dict(Integer = Control("intbox", **kw),
@@ -105,17 +114,6 @@ class PageItem(object):
                                 LookupTextValidated = dropdown_control(True, **kw),
                                 LookupId = dropdown_code_control(True, **kw))
 
-        if not form.table:
-            return
-
-        rfield = r[form.table].fields.get(self.name)
-
-        if not rfield:
-            return
-
-        column = rfield.column
-
-
         if column.defined_relation:
             relation_field = column.defined_relation.parent
             return default_controls.get(relation_field.__class__.__name__)
@@ -124,7 +122,6 @@ class PageItem(object):
 
         if not control:
             control = default_controls.get(rfield.type)
-
 
         return control
 
