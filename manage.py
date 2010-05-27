@@ -30,22 +30,17 @@ import application as app
 application = None
 dir = None
 
-def make_application():
 
-    global application
-    if not application:
-        application = app.Application(dir, options)
-    return application
 
-def create(application):
+def create():
     application.create_database()
 
-def extract(application):
+def extract():
     import extract
     extract.extract(application.database,
                  application.dir)
 
-def load_data(application, file):
+def load_data(file):
     print 'loading data'
     from reformed.data_loader import FlatFile
     flatfile = FlatFile(application.database,
@@ -54,13 +49,13 @@ def load_data(application, file):
 
     flatfile.load()
 
-def load(application):
+def load():
     print "loading data"
     import load
     load.load(application.database,
                  application.dir)
 
-def generate_data(application):
+def generate_data():
     print 'generating data'
     import data_creator
     data_creator.create_csv()
@@ -93,31 +88,33 @@ def confirm_request(msg, default = 'n'):
 
     return response
 
-def purge_attachments(application):
+def purge_attachments():
     application.purge_attachments()
 
-def delete(application):
+def delete():
     application.delete_database()
 
-def dump(application):
+def dump():
     print 'dumping data'
     session = application.database.Session()
     json_dump_all_from_table(session, 'user', application.database, 'data/users.json', style = "clear")
     session.close()
 
-def undump(application):
+def undump():
     print 'undumping data'
     load_json_from_file('data/users.json', application.database, 'user')
 
 
-def output_sys_info(application):
+def output_sys_info():
 
     # import web so that all the system variariables get registered
     # FIXME this maybe an issue with ones added by modules
     # are the modules loaded?
     import web
+
+    application.initialise_sys_info()
     print '\n----- Application Data -----\n'
-    sys_info = application.sys_info_full
+    sys_info = application.sys_info
 
     for key in sys_info.keys():
         print '(%s)\t%s = %s\n - %s' % (type(sys_info[key]['value']).__name__,
@@ -129,19 +126,14 @@ def output_sys_info(application):
 def reload(host, options):
     import paste.reloader
     print "reloading"
-
-    application = make_application()
     paste.reloader.install()
-    run(options.host, options.port, application, options.ssl, options.ssl_cert, options.no_job_scheduler)
+    run(options.host, options.port, options.ssl, options.ssl_cert, options.no_job_scheduler)
 
 def reloader(args, options):
 
-    global application
-    if application:
-        application.release_all()
-
     import subprocess
 
+    application.release_all()
     while 1:
         try:
             command = ["python",
@@ -164,7 +156,7 @@ def reloader(args, options):
             proc.terminate()
             break
 
-def run(host, port, application, ssl, ssl_cert, no_job_scheduler):
+def run(host, port, ssl, ssl_cert, no_job_scheduler):
     print 'starting webserver'
     import beaker.middleware
     import web
@@ -270,37 +262,39 @@ if __name__ == "__main__":
     else:
         dir = "sample"
 
+    # make application
+    application = app.Application(dir, options)
+
     if options.extract:
-        extract(make_application())
+        extract()
     if options.delete:
-        delete(make_application())
+        delete()
 
     if options.purge_attachments and not options.delete:
-        purge_attachments(make_application())
+        purge_attachments()
 
     if options.console:
         import code
         database = make_application().database
         code.interact(local=locals())
     if options.generate:
-        generate_data(make_application())
+        generate_data()
     if options.create:
-        create(make_application())
+        create()
     if options.sysinfo:
-        output_sys_info(make_application())
+        output_sys_info()
     if options.load:
-        load_data(make_application(), options.load_file)
+        load_data(options.load_file)
     if options.table_load:
-        load(make_application())
+        load()
     if options.run:
-        run(options.host, options.port, make_application(), options.ssl, options.ssl_cert, options.no_job_scheduler)
+        run(options.host, options.port, options.ssl, options.ssl_cert, options.no_job_scheduler)
     if options.reload:
         reloader(args, options)
     if options.reloader:
         reload(args, options)
     if options.all:
-        delete(make_application())
-        application = None
-        create(make_application())
-        load(make_application())
+        delete()
+        create()
+        load()
 
