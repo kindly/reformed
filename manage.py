@@ -52,8 +52,7 @@ def load_data(file):
 def load():
     print "loading data"
     import load
-    load.load(application.database,
-                 application.dir)
+    load.load(application)
 
 def generate_data():
     print 'generating data'

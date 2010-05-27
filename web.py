@@ -152,7 +152,7 @@ class WebApplication(object):
         self.application.initialise_database()
         self.application.process_nodes()
         self.database = application.database
-        self.dir = application.dir
+        self.directory = application.directory
         global_session.database = self.database
 
     def static(self, environ, start_response, path):
@@ -160,7 +160,7 @@ class WebApplication(object):
         # FIXME security limit path directory traversal etc
         root = reformed.util.get_dir()
         if path.startswith('/local/'):
-            path = os.path.join(root, self.dir, 'content', path[7:])
+            path = os.path.join(root, self.directory, 'content', path[7:])
         else:
             path = os.path.join(root, 'content', path[1:])
         return get_file(environ, start_response, path)

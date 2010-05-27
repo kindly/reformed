@@ -42,7 +42,7 @@ class Application(object):
 
     def __init__(self, directory, runtime_options = None):
 
-        self.dir = directory
+        self.directory = directory
         self.root_folder = os.path.dirname(os.path.abspath(__file__))
         self.application_folder = os.path.join(self.root_folder, directory)
 

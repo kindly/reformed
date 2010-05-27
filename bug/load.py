@@ -5,11 +5,13 @@ import os
 TABLES = ['_core_entity', 'comment', 'user', 'severity', 'priority', 'ticket', 'bookmarks', 
           'permission', 'user_group', 'user_group_permission', 'user_group_user', 'code', 'code_type']
 
-def load(database, dir):
+def load(application):
 
-    this_dir = os.path.dirname(os.path.abspath(__file__))
-    application_folder = os.path.join(this_dir, dir)
-    data_folder = os.path.join(this_dir, "data")
+    application.initialise_database()
+
+    database = application.database
+    application_folder = application.application_folder
+    data_folder = os.path.join(application_folder, "data")
 
     for table in database.metadata.sorted_tables:
         if table.name in TABLES:
