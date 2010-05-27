@@ -275,7 +275,8 @@ if __name__ == "__main__":
 
     if options.console:
         import code
-        database = make_application().database
+        application.initialise_database()
+        database = application.database
         code.interact(local=locals())
     if options.generate:
         generate_data()
