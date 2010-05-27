@@ -140,6 +140,10 @@ class Application(object):
         print 'purging attachments'
         shutil.rmtree(attachments_path)
 
+    def start_scheduler(self):
+        self.start_job_scheduler()
+        self.scheduler_thread.start()
+
     def release_all(self):
         if self.zodb:
             self.zodb.close()

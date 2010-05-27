@@ -165,7 +165,7 @@ def run(host, port, ssl, ssl_cert, no_job_scheduler):
     web_application = web.WebApplication(application)
 
     if not no_job_scheduler:
-        application.scheduler_thread.start()
+        application.start_scheduler()
 
     if os.environ.get("REQUEST_METHOD", ""):
         from wsgiref.handlers import BaseCGIHandler
