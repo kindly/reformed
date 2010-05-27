@@ -18,7 +18,7 @@
 ##   Copyright (c) 2008-2010 Toby Dacre & David Raznick
 ##
 
-
+import shutil
 import threading
 import os
 import time
@@ -95,10 +95,9 @@ class Application(object):
         self.database = None
 
     def delete_database(self):
-        """remove database and zodb"""
-        engine = create_engine(self.connection_string)
-        meta = MetaData()
-        meta.reflect(bind=engine)
+        """remove database, zodb and any uploaded files"""
+        # remove files
+        self.purge_attachments()
 
         # check for zodb files
         zodb_file_names = ["zodb.fs", "zodb.fs.lock", "zodb.fs.index", "zodb.fs.tmp"]
@@ -115,6 +114,10 @@ class Application(object):
                 os.remove(zodb_file)
 
         # delete main database tables
+        engine = create_engine(self.connection_string)
+        meta = MetaData()
+        meta.reflect(bind=engine)
+
         if meta.sorted_tables:
             print 'deleting database'
             for table in reversed(meta.sorted_tables):
@@ -122,6 +125,20 @@ class Application(object):
                     print 'deleting %s...' % table.name
                 table.drop(bind=engine)
         self.release_all()
+
+    def purge_attachments(self):
+        self.initialise_sys_info()
+        try:
+            file_directory = self.sys_info['file_uploads>root_directory']
+        except:
+            print 'database not initialised cannot purge files'
+            return
+        attachments_path = os.path.join(self.application_folder, file_directory)
+        if not os.path.exists(attachments_path):
+            print "directory '%s' does not exist cannot purge attachments" % attachments_path
+            return
+        print 'purging attachments'
+        shutil.rmtree(attachments_path)
 
     def release_all(self):
         if self.zodb:
@@ -141,6 +158,7 @@ class Application(object):
     def initialise_sys_info(self):
         """create sys_info in zodb if not there
         or pull all sys_info data out of the store"""
+        self.get_zodb()
         connection = self.zodb.open()
         root = connection.root()
         if "sys_info" not in root:

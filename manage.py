@@ -19,12 +19,12 @@
 ##
 
 
-import os, os.path, sys
-import shutil
+import os
+import sys
+from optparse import OptionParser
+
 from reformed.export import json_dump_all_from_table
 from reformed.data_loader import load_json_from_file
-from reformed.util import get_dir
-from optparse import OptionParser
 import application as app
 
 application = None
@@ -94,21 +94,9 @@ def confirm_request(msg, default = 'n'):
     return response
 
 def purge_attachments(application):
-    try:
-        attachments_path = os.path.join(application.database.application_dir, application.sys_info['file_uploads>root_directory'])
-    except KeyError:
-        print 'no attachment directory found'
-        return
-    if not os.path.exists(attachments_path):
-        print "directory '%s' does not exist cannot purge attachments" % attachments_path
-        return
-    if not confirm_request("Purge attachments from '%s'?" % attachments_path, 'y'):
-        return
-    print 'purging attachments'
-    shutil.rmtree(attachments_path)
+    application.purge_attachments()
 
 def delete(application):
-
     application.delete_database()
 
 def dump(application):
@@ -286,8 +274,6 @@ if __name__ == "__main__":
         extract(make_application())
     if options.delete:
         delete(make_application())
-        if options.purge_attachments:
-            purge_attachments(make_application())
 
     if options.purge_attachments and not options.delete:
         purge_attachments(make_application())
@@ -313,9 +299,7 @@ if __name__ == "__main__":
     if options.reloader:
         reload(args, options)
     if options.all:
-        make_application()
-        delete(args)
-        purge_attachments(make_application())
+        delete(make_application())
         application = None
         create(make_application())
         load(make_application())
