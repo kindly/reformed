@@ -115,9 +115,7 @@ class User(TableNode):
             data = dict(__message = message)
         else:
             data = {}
-        out = self["login_form"].create_form_data(data)
-        self.action = 'form'
-        self.out = out
+        self["login_form"].show(data)
 
     def about_me(self):
         where = 'id = %s' % global_session.session['user_id']

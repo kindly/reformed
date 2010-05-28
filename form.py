@@ -86,6 +86,15 @@ class Form(object):
 
         return out
 
+    def show(self, data = None):
+        """display for on front end including data if supplied"""
+
+        if not data:
+            data = {}
+
+        self.node.out = self.create_form_data(data)
+        self.node.action = 'form'
+
 
     def new(self):
 
