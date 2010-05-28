@@ -324,9 +324,9 @@ function change_user(user){
 function change_user_bar(){
 
     if (REBASE.application_data.__user_id === 0){
-        $('#user_login').html('<a href="#" onclick="node_button_input_form(this, \'bug.User:login\');return false">Login</a>');
+        $('#user_login').html('<a href="#" onclick="node_button_input_form(this, \'user.User:login\');return false">Login</a>');
     } else {
-        $('#user_login').html(REBASE.application_data.__username + ' <a href="#" onclick="node_button_input_form(this, \'bug.User:logout\');return false">Log out</a>');
+        $('#user_login').html(REBASE.application_data.__username + ' <a href="#" onclick="node_button_input_form(this, \'user.User:logout\');return false">Log out</a>');
     }
 }
 
