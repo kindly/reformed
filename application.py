@@ -228,6 +228,7 @@ class Application(object):
 
         self.create_logger("database", "rebase.application.database")
         self.create_logger("application")
+        self.create_logger("authentication")
         self.create_logger("node")
         self.create_logger("web")
         self.create_logger("rebase", "rebase", log_name = True)

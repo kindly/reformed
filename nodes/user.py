@@ -5,6 +5,7 @@ from node import TableNode
 from form import form
 from page_item import *
 from formencode import validators
+import authenticate
 
 from global_session import global_session
 r = global_session.database
@@ -15,7 +16,8 @@ def initialise():
     predefine.permission("Login", u'User login', u'Login to system.')
     predefine.permission("UserAdmin", u'User Administration', u'Administer user accounts.')
     # user group
-    predefine.user_group(u'UserAdmins', u'User Administrators', u'Administer user accounts', permissions = ['UserAdmin'])
+    predefine.user_group(u'UserAdmins', u'User Administrators', u'Administer user accounts', permissions = ['UserAdmin', 'Login'])
+    predefine.user_group(u'Users', u'User', u'General user accounts', permissions = ['Login'])
 
 
 class User(TableNode):
@@ -216,35 +218,26 @@ class User(TableNode):
 
 
     def login(self, data):
-        user_id = data.get('id')
-        username = data.get('login_name')
-        global_session.session['user_id'] = user_id
-        global_session.session['username'] = username
-
-        global_session.session['permissions'] = self.get_permissions(user_id)
-        global_session.session.persist()
+        authenticate.loggin(data)
 
         user_name = data.get('name')
         user_id = data.get('id')
+        auto_loggin = data.get('auto_loggin')
+
         self.user = dict(name = user_name, id = user_id)
+
+        # auto loggin cookie
+        if auto_loggin:
+            self.auto_loggin_cookie = '%s:%s' % (user_id, auto_loggin)
 
         self.action = 'html'
         data = "<p>Hello %s you are now logged in, what fun!</p>" % data['name']
         self.out = {'html': data}
 
-    def get_permissions(self, user_id):
 
-        result = r.search('permission', 'user_group_user.user_id = %s' % user_id, fields=['permission']).data
-        permissions = ['LoggedIn']
-        for row in result:
-            permissions.append(row.get('permission'))
-        return permissions
 
     def logout(self):
-        global_session.session['user_id'] = 0
-        global_session.session['username'] = ''
-        global_session.session['permissions'] = []
-        global_session.session.persist()
+        authenticate.clear_user_session()
 
         self.user = dict(name = None, id = 0)
         message = dict(title = "You are now logged out", body = '')
@@ -252,6 +245,8 @@ class User(TableNode):
         # clear bookmarks
         self.bookmark = 'CLEAR'
 
+        # auto loggin cookie
+        self.auto_loggin_cookie = 'CLEAR'
 
 
 class UserGroup(TableNode):

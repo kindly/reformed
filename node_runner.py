@@ -143,6 +143,7 @@ class NodeRunner(object):
         self.node_manager = node_manager
         self.command_queue = []
         self.output = [] # this will be returned
+        self.auto_loggin_cookie = None
 
     def add_command(self, data):
         self.command_queue.append(data)
@@ -187,6 +188,10 @@ class NodeRunner(object):
         x.call()
         x.finalise()
         x.finish_node_processing()
+
+        # auto loggin cookie info
+        if x.auto_loggin_cookie:
+            self.auto_loggin_cookie = x.auto_loggin_cookie
 
         if x.prev_node and x.prev_node.next_data_out:
             x.out["data"].update(x.prev_node.next_data_out)

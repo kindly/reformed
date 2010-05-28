@@ -56,6 +56,8 @@ class Node(object):
         self.next_node = None
         self.next_data = None
         self.next_data_out = None
+        self.auto_loggin_cookie = None
+
         self.extra_data = {}
         self.command = data.get('command')
         self.allowed = self.check_permissions()
