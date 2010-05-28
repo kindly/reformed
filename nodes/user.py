@@ -124,13 +124,48 @@ class User(TableNode):
     def save_about_me(self):
         self["about_me_form"].save()
 
+    def change_password(self, message = None):
+        if not message:
+            message = "Change your password"
+        data = dict(__buttons = [['change password', 'user.User:_save_change_password:'],
+                                 ['cancel', 'BACK']],
+                    __message = message)
+
+        self["change_my_password"].show(data)
+
+    def save_change_password(self):
+        vdata = self.validate_data_full(self.data, self.change_password_validators)
+        if vdata['newpassword'] != vdata['newpassword2']:
+            # new password not confirmed
+            self.change_password('new password does not match')
+        else:
+            where = 'id=%s' % global_session.session['user_id']
+            current_password = r.search_single_data("user", where = where, fields = ['password'])['password']
+
+            if not reformed.fshp.check(vdata['oldpassword'], current_password):
+                # old password incorrect
+                self.change_password('old password does not match')
+            else:
+                # all good update password
+                # FIXME actually update the database
+                self.action = 'html'
+                data = "<p>Your password has been updated (this is a lie)</p>"
+                self.out = {'html': data}
+
+
+
+
+
+
+
     def login(self, data):
         user_id = data.get('id')
         username = data.get('login_name')
         global_session.session['user_id'] = user_id
         global_session.session['username'] = username
 
-        global_session.session['permissions'] = self.get_permissions(user_id)#['logged_in']
+        global_session.session['permissions'] = self.get_permissions(user_id)
+        global_session.session.persist()
 
         user_name = data.get('name')
         user_id = data.get('id')
@@ -152,6 +187,7 @@ class User(TableNode):
         global_session.session['user_id'] = 0
         global_session.session['username'] = ''
         global_session.session['permissions'] = []
+        global_session.session.persist()
 
         self.user = dict(name = None, id = 0)
         message = dict(title = "You are now logged out", body = '')
