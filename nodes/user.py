@@ -277,7 +277,7 @@ class UserGroup(TableNode):
 
 class UserAdmin(TableNode):
 
-    #permissions = ['logged_in']
+    permissions = ['UserAdmin']
 
     form_params =  {"form_type": "action"}
     main = form(
