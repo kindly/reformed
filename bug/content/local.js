@@ -5,6 +5,7 @@ $.Buttons.action_hash = {
     new_user: ['new user', 'go-home.png', 'h', 'general', 'n:user.User:new'],
     user_admin : ['user admin', 'go-home.png', 'h', 'general', 'n:user.UserAdmin:'],
     user_about_me : ['about me', 'go-home.png', 'h', 'general', 'n:user.User:about_me'],
+    user_about_me : ['change password', 'go-home.png', 'h', 'general', 'n:user.User:change_password'],
     new_user_group: ['new user group', 'go-home.png', 'h', 'general', 'n:user.UserGroup:new'],
     list_user_group: ['list user group', 'go-home.png', 'h', 'general', 'n:user.UserGroup:list'],
 //    new_permission: ['new permission', 'go-home.png', 'h', 'general', 'n:bug.Permission:new'],

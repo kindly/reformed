@@ -46,6 +46,17 @@ class User(TableNode):
         title_field = 'name'
     )
 
+    change_my_password = form(
+        layout('box_start'),
+        password('oldpassword'),
+        password('newpassword'),
+        password('newpassword2'),
+        buttons('about_me',
+               [['Save Changes', 'user.User:_save_password_change:'],
+               ['cancel', 'BACK']]),       layout('box_end'),
+        params = {"form_type": "action"}
+    )
+
     login_form = form(
         layout('box_start'),
         input('login_name', label = 'username:'),
@@ -59,6 +70,13 @@ class User(TableNode):
     login_validations = [
         ['login_name', validators.UnicodeString],
         ['password', validators.UnicodeString]
+    ]
+
+    change_password_validators = [
+
+        ['oldpassword', validators.UnicodeString],
+        ['newpassword', validators.UnicodeString],
+        ['newpassword2', validators.UnicodeString]
     ]
 
     about_me_form = form(
@@ -82,7 +100,9 @@ class User(TableNode):
         commands['login'] = dict(command = 'check_login')
         commands['logout'] = dict(command = 'logout')
         commands['about_me'] = dict(command = 'about_me', permissions = ['logged_in'])
-        commands['_save_about_me'] = dict(command = 'save_about_me')
+        commands['_save_about_me'] = dict(command = 'save_about_me', permissions = ['logged_in'])
+        commands['change_password'] = dict(command = 'change_password', permissions = ['logged_in'])
+        commands['_save_change_password'] = dict(command = 'save_change_password', permissions = ['logged_in'])
 
     def check_login(self):
         message = None
