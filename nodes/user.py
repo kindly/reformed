@@ -53,7 +53,19 @@ class User(TableNode):
         password('newpassword2'),
         buttons('about_me',
                [['Save Changes', 'user.User:_save_password_change:'],
-               ['cancel', 'BACK']]),       layout('box_end'),
+               ['cancel', 'BACK']]),
+        layout('box_end'),
+        params = {"form_type": "action"}
+    )
+
+    change_other_password_form = form(
+        layout('box_start'),
+        password('newpassword'),
+        password('newpassword2'),
+        buttons('about_me',
+               [['Save Changes', 'user.User:_save_password_change:'],
+               ['cancel', 'BACK']]),
+        layout('box_end'),
         params = {"form_type": "action"}
     )
 
@@ -103,6 +115,8 @@ class User(TableNode):
         commands['_save_about_me'] = dict(command = 'save_about_me', permissions = ['logged_in'])
         commands['change_password'] = dict(command = 'change_password', permissions = ['logged_in'])
         commands['_save_change_password'] = dict(command = 'save_change_password', permissions = ['logged_in'])
+        commands['change_other_password'] = dict(command = 'change_other_password', permissions = ['UserAdmin'])
+        commands['_save_change_other_password'] = dict(command = 'save_change_other_password', permissions = ['UserAdmin'])
 
     def check_login(self):
         message = None
@@ -173,8 +187,31 @@ class User(TableNode):
                 self.out = {'html': data}
 
 
+    def change_other_password(self, message = None):
+        where = 'id=%s' % self.data.get('id') #FIXME insecure
+        user = r.search_single_data("user", where = where, fields = ['login_name'])['login_name']
+        if not message:
+            message = "Change password for user `%s`" % user
+        data = dict(__buttons = [['change password', 'user.User:_save_change_other_password:'],
+                                 ['cancel', 'BACK']],
+                    __message = message,
+                   id = self.data['id'])
 
+        self["change_other_password_form"].show(data)
 
+    def save_change_other_password(self):
+        vdata = self.validate_data_full(self.data, self.change_password_validators)
+        if vdata['newpassword'] != vdata['newpassword2']:
+            # new password not confirmed
+            self.change_other_password('new password does not match')
+        else:
+            where = 'id=%s' % self.data.get('id') #FIXME insecure
+            user = r.search_single_data("user", where = where, fields = ['login_name'])['login_name']
+
+            # FIXME actually update the database
+            self.action = 'html'
+            data = "<p>Password for user `%s` has been updated (this is a lie)</p>" % user
+            self.out = {'html': data}
 
 
 
