@@ -85,7 +85,8 @@ class Node(object):
 
         if command_info.get('permissions'):
             user_perms = set(global_session.session.get('permissions'))
-            if not set(command_info.get('permissions')).intersection(user_perms):
+            # check have required permission or are a SysAdmin
+            if'SysAdmin' not in user_perms and not set(command_info.get('permissions')).intersection(user_perms):
                 self.action = 'forbidden'
                 self.command = None
                 print 'forbidden'
@@ -100,6 +101,9 @@ class Node(object):
 
     def check_permissions(self):
         if self.permissions:
+            # SysAdmin permission give automatic access
+            if 'SysAdmin' in global_session.session.get('permissions'):
+                return True
             user_perms = set(global_session.session.get('permissions'))
             if not set(self.permissions).intersection(user_perms):
                 return False
