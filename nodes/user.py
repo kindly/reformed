@@ -111,10 +111,10 @@ class User(TableNode):
         commands = self.__class__.commands
         commands['login'] = dict(command = 'check_login')
         commands['logout'] = dict(command = 'logout')
-        commands['about_me'] = dict(command = 'about_me', permissions = ['logged_in'])
-        commands['_save_about_me'] = dict(command = 'save_about_me', permissions = ['logged_in'])
-        commands['change_password'] = dict(command = 'change_password', permissions = ['logged_in'])
-        commands['_save_change_password'] = dict(command = 'save_change_password', permissions = ['logged_in'])
+        commands['about_me'] = dict(command = 'about_me', permissions = ['LoggedIn'])
+        commands['_save_about_me'] = dict(command = 'save_about_me', permissions = ['LoggedIn'])
+        commands['change_password'] = dict(command = 'change_password', permissions = ['LoggedIn'])
+        commands['_save_change_password'] = dict(command = 'save_change_password', permissions = ['LoggedIn'])
         commands['change_other_password'] = dict(command = 'change_other_password', permissions = ['UserAdmin'])
         commands['_save_change_other_password'] = dict(command = 'save_change_other_password', permissions = ['UserAdmin'])
 
@@ -235,7 +235,7 @@ class User(TableNode):
     def get_permissions(self, user_id):
 
         result = r.search('permission', 'user_group_user.user_id = %s' % user_id, fields=['permission']).data
-        permissions = ['logged_in']
+        permissions = ['LoggedIn']
         for row in result:
             permissions.append(row.get('permission'))
         return permissions
