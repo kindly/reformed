@@ -125,26 +125,14 @@ class User(TableNode):
         fail_message = '# Login failed\n\nuser name or password incorrect, try again.'
         vdata = self.validate_data_full(self.data, self.login_validations)
         if vdata['login_name'] and vdata['password']:
-            where = "login_name='%s'" % vdata['login_name']
-            try:
-                data_out = r.search_single_data('user', where)
-                if not reformed.fshp.check(vdata['password'], data_out.get("password")):
-                    message = fail_message
-                    self.show_login_form(message)
-                else:
-                    if data_out.get('active') != True:
-                        message = '# Login failed\n\nThis account is disabled.'
-                        self.show_login_form(message)
-                    else:
-                        result = r.search('permission', 'user_group_user.user_id = %s and (permission="Login" or permission="SysAdmin")' % data_out.get('id')).data
-                        if result:
-                            self.login(data_out)
-            except SingleResultError:
-                message = fail_message
-                self.show_login_form(message)
-        else:
+            (message, data) = authenticate.check_login(vdata['login_name'], vdata['password'])
+            # if data is returned then the login was a success
+            if data:
+                self.login(data)
+                return
+        if not message:
             message = '# Login.\n\nWelcome to %s enter your login details to continue' % global_session.sys_info['name']
-            self.show_login_form(message)
+        self.show_login_form(message)
 
     def show_login_form(self, message = None):
         if message:
@@ -218,7 +206,6 @@ class User(TableNode):
 
 
     def login(self, data):
-        authenticate.loggin(data)
 
         user_name = data.get('name')
         user_id = data.get('id')

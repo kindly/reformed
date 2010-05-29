@@ -23,6 +23,7 @@ import random
 import hashlib
 import base64
 
+import reformed.fshp
 from reformed.custom_exceptions import SingleResultError
 from global_session import global_session
 
@@ -69,6 +70,42 @@ def clear_user_session():
     global_session.session['permissions'] = []
     global_session.session.persist()
 
+def check_login(login_name, password):
+    message = None
+    data = None
+    fail_message = '# Login failed\n\nuser name or password incorrect, try again.'
+
+    r = global_session.database
+    if login_name and password:
+        where = "login_name='%s'" % login_name
+        try:
+            data_out = r.search_single_data('user', where)
+            if not reformed.fshp.check(password, data_out.get("password")):
+                # password incorrect
+                message = fail_message
+                log.info('Login Fail for `%s` incorrect password' % login_name)
+            else:
+                if data_out.get('active') != True:
+                    # account disabled
+                    message = '# Login failed\n\nThis account is disabled.'
+                    log.info('Login Fail for `%s` account disabled' % login_name)
+                else:
+                    where = 'user_group_user.user_id = %s and (permission="Login" or permission="SysAdmin")' % data_out.get('id')
+                    result = r.search('permission', where).data
+                    if result:
+                        # login successful
+                        loggin(data_out)
+                        data = data_out
+                    else:
+                        # no login permissions for this user
+                        message = '# Login failed\n\nThis account does not have permission to log in to the system.'
+                    log.info('Login Fail for `%s` does not have permission' % login_name)
+        except SingleResultError:
+            # no such user
+            message = fail_message
+            log.info('Unknown user `%s`' % login_name)
+
+    return (message, data)
 
 def auto_loggin(auto_cookie):
     """attempt an auto login using the info in the auto_cookie string
