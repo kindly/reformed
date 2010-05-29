@@ -75,6 +75,7 @@ class User(TableNode):
         layout('box_start'),
         input('login_name', label = 'username:'),
         password('password'),
+        checkbox('remember_me', label = 'remember me'),
         button('user.User:login:', label = 'Log in'),
         layout('box_end'),
 
@@ -214,7 +215,7 @@ class User(TableNode):
         self.user = dict(name = user_name, id = user_id)
 
         # auto loggin cookie
-        if auto_loggin:
+        if self.data.get('remember_me') and auto_loggin:
             self.auto_loggin_cookie = '%s:%s' % (user_id, auto_loggin)
 
         self.action = 'html'
