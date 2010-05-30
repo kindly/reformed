@@ -127,6 +127,23 @@ def auto_loggin(auto_cookie):
 
     return True
 
+def check_permission(permissions):
+    """check if a user has the required permission to perform an action"""
+    # no permission so allowed
+    if not permissions:
+        return True
+
+    # SysAdmin permission give automatic access
+    if 'SysAdmin' in global_session.session.get('permissions'):
+        return True
+
+    # general case does the user have one of the required permissions
+    user_perms = set(global_session.session.get('permissions'))
+    if set(self.permissions).intersection(user_perms):
+        return True
+
+    # action not allowed
+    return False
 
 def create_auto_loggin_id():
     """generate hard to guess random string for auto loggin"""

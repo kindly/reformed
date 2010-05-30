@@ -18,6 +18,7 @@
 ##   Copyright (c) 2008-2009 Toby Dacre & David Raznick
 ##
 
+import authenticate
 import reformed.util as util
 from reformed import custom_exceptions
 import formencode as fe
@@ -86,9 +87,7 @@ class Node(object):
         command = command_info.get('command')
 
         if command_info.get('permissions'):
-            user_perms = set(global_session.session.get('permissions'))
-            # check have required permission or are a SysAdmin
-            if'SysAdmin' not in user_perms and not set(command_info.get('permissions')).intersection(user_perms):
+            if not authenticate.check_permission(command_info.get('permissions')):
                 self.action = 'forbidden'
                 self.command = None
                 print 'forbidden'
@@ -102,14 +101,8 @@ class Node(object):
             self.out = "Command '%s' in node '%s' not known" % (self.command, self.name)
 
     def check_permissions(self):
-        if self.permissions:
-            # SysAdmin permission give automatic access
-            if 'SysAdmin' in global_session.session.get('permissions'):
-                return True
-            user_perms = set(global_session.session.get('permissions'))
-            if not set(self.permissions).intersection(user_perms):
-                return False
-        return True
+        return authenticate.check_permission(self.permissions)
+
 
     def build_node(self, title, command, data = '', node = None):
         if not node:

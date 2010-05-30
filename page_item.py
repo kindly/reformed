@@ -17,6 +17,8 @@
 ##   Reformed
 ##   Copyright (c) 2008-2009 Toby Dacre & David Raznick
 ##
+
+import authenticate
 from global_session import global_session
 import reformed.util as util
 r = global_session.database
@@ -60,14 +62,7 @@ class PageItem(object):
             self.control = self.set_default_control(form)
 
     def check_permissions(self):
-
-        # no permissions needed
-        if not self.permissions:
-            return True
-
-        user_perms = set(global_session.session.get('permissions'))
-        if self.permissions.intersection(user_perms):
-            return True
+        return authenticate.check_permission(self.permissions)
 
 
     def params(self, form, data):
