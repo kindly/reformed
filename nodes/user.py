@@ -48,6 +48,27 @@ class User(TableNode):
         title_field = 'name'
     )
 
+    user = form(
+        layout('column_start'),
+        input('name'),
+        input('login_name', label = 'login name:'),
+        checkbox('active'),
+        input('email'),
+        layout('column_next'),
+
+        layout('column_end'),
+        layout('hr'),
+        textarea('notes', css = "large"),
+        layout('spacer'),
+        layout('box_start'),
+        codegroup('user_group', code_desc_field = 'description'),
+        layout('box_end'),
+        layout('spacer'),
+
+        table = "user",
+        params =  {"form_type": "action"},
+        title_field = 'name'
+    )
     change_my_password = form(
         layout('box_start'),
         password('oldpassword'),
@@ -109,6 +130,12 @@ class User(TableNode):
         table = "user",
         params = {"form_type": "action"}
     )
+
+    def edit(self):
+        self["user"].view(read_only = False)
+
+    def view(self, read_only=True):
+        self["user"].view(read_only)
 
     def setup_extra_commands(self):
         commands = self.__class__.commands
