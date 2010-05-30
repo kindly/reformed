@@ -51,7 +51,7 @@ def get_permissions(user_id):
     """return an array of permissions for the user_id provided"""
 
     r = global_session.database
-    result = r.search('permission', 'user_group_user.user_id = %s' % user_id, fields=['permission']).data
+    result = r.search('permission', 'user_group_user.user_id = ?', values = [user_id], fields=['permission']).data
     permissions = ['LoggedIn']
     for row in result:
         permissions.append(row.get('permission'))
@@ -77,9 +77,9 @@ def check_login(login_name, password):
 
     r = global_session.database
     if login_name and password:
-        where = "login_name='%s'" % login_name
+        where = "login_name = ?"
         try:
-            data_out = r.search_single_data('user', where)
+            data_out = r.search_single_data('user', where, values = [login_name])
             if not reformed.fshp.check(password, data_out.get("password")):
                 # password incorrect
                 message = fail_message
@@ -90,8 +90,8 @@ def check_login(login_name, password):
                     message = '# Login failed\n\nThis account is disabled.'
                     log.info('Login Fail for `%s` account disabled' % login_name)
                 else:
-                    where = 'user_group_user.user_id = %s and (permission="Login" or permission="SysAdmin")' % data_out.get('id')
-                    result = r.search('permission', where).data
+                    where = 'user_group_user.user_id = ? and (permission = ? or permission = ?)'
+                    result = r.search('permission', where, values = [data_out.get('id'), 'LogIn', 'SysAdmin']).data
                     if result:
                         # login successful
                         loggin(data_out)
@@ -117,9 +117,9 @@ def auto_loggin(auto_cookie):
     except ValueError:
         return False
     r = global_session.database
-    where = "id = %s and auto_loggin= '%s'" % (user_id, token)
+    where = "id = ? and auto_loggin = ?"
     try:
-        data = r.search_single_data('user', where)
+        data = r.search_single_data('user', where, values = [user_id, token])
     except SingleResultError:
         # not allowed
         return False
