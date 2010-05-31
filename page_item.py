@@ -61,8 +61,6 @@ class PageItem(object):
         if not self.control and not self.layout:
             self.control = self.set_default_control(form)
 
-    def check_permissions(self):
-        return authenticate.check_permission(self.permissions)
 
 
     def params(self, form, data):
@@ -79,7 +77,7 @@ class PageItem(object):
 
     def convert(self, form, field_list, data):
 
-        if self.invisible or not self.check_permissions():
+        if self.invisible or not authenticate.check_permission(self.permissions):
             return
 
         row = self.set_params(form, data)
@@ -145,7 +143,7 @@ class PageItem(object):
 
     def save(self, form, node, object, data, session):
 
-        if not self.check_permissions():
+        if not authenticate.check_permission(self.permissions):
             return
 
         if self.name in object._table.fields:
@@ -157,7 +155,7 @@ class PageItem(object):
 
     def load(self, form, node, result, data, session):
 
-        if not self.check_permissions():
+        if not authenticate.check_permission(self.permissions):
             return
         if not self.name:
             return
@@ -173,7 +171,7 @@ class PageItem(object):
 
     def delete(self, form, node, object, data, session):
 
-        if not self.check_permissions():
+        if not authenticate.check_permission(self.permissions):
             return
 
         if self.control and self.control.control_delete:
