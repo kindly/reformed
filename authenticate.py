@@ -139,7 +139,7 @@ def check_permission(permissions):
 
     # general case does the user have one of the required permissions
     user_perms = set(global_session.session.get('permissions'))
-    if set(self.permissions).intersection(user_perms):
+    if set(permissions).intersection(user_perms):
         return True
 
     # action not allowed
