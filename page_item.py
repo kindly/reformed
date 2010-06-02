@@ -28,111 +28,131 @@ class PageItem(object):
 
     def __init__(self, form, page_item_type, *arg, **kw):
 
-        self.init_kw = kw.copy()
-
-        self.name = None
-        if arg:
-            self.name = arg[0]
-
-        self.validation = kw.pop("validation", True)
-
         self.page_item_type = page_item_type
+
+        # keywords
+        self.name = kw.pop("name", None)
+        # additional validation rules database level ones will be
+        # automatically added
+        self.validation = kw.pop("validation", True)
         self.data_type = kw.pop("data_type", None)
         self.label = kw.pop("label", None)
 
         self.permissions = set(kw.pop("permissions", []))
 
-        if self.name and self.label is None:
-            self.label = self.name.replace("_", " ") + ":"
-
         self.invisible = kw.pop("invisible", False)
 
         self.control = kw.pop("control", None)
 
-        self.layout = kw.pop("layout", None)
-
+        # store any unused keywords
         self.extra_params = kw
 
+        # if no label supplied auto generate one
+        if self.name and self.label is None:
+            # TD do we want to have different formats eg no : at the end?
+            self.label = self.name.replace("_", " ") + ":"
+
+        # reference to the form containing this page item
         self.form = form
 
-        if self.control:
+        # add any extra key words to the control
+        try:
             self.control.add_extra_params(self.extra_params)
+        except AttributeError:
+            pass
 
-        if not self.control and not self.layout:
-            self.control = self.set_default_control(form)
+        # if no control is supplied then auto generate
+        if not self.control:
+            self.control = self.get_default_page_item_control()
 
 
 
-    def params(self, form, data):
-
+    def get_page_item_params(self, data):
+        # FIXME this should be removable by making sure that
+        # get_control_params gives us a 'fresh' hash
         params = {}
-
-
-        if self.control:
-            params.update(self.control.convert(self, form, data))
-        if self.layout:
-            params.update(self.layout.convert(self, form, data))
-
+        params.update(self.control.get_control_params(self, self.form, data))
         return params
 
-    def convert(self, form, field_list, data):
+    def get_page_item_structure(self, data):
+
 
         if self.invisible or not authenticate.check_permission(self.permissions):
             return
 
-        row = self.set_params(form, data)
+        row = self.get_full_page_item_params(data)
         row['name'] = self.name
-        row['data_type'] = self.set_data_type(form)
+        row['data_type'] = self.get_data_type()
         row['title'] = self.label
 
         return row
 
-    def set_default_control(self, form):
 
-        if not form.table:
+    def get_default_page_item_control(self):
+        """set control for a page item which has had none specified
+        if no control found just return nothing"""
+
+        # check that the page_item refers to an actual field
+        try:
+            page_item_field = r[self.form.table].fields[self.name]
+        except KeyError:
             return
 
-        rfield = r[form.table].fields.get(self.name)
-        if not rfield:
+        if not page_item_field:
             return
 
-        column = rfield.column
+        column = page_item_field.column
+        # standard controls initiated via Control()
+        default_controls = dict(Integer = "intbox",
+                                Text = "textbox",
+                                DateTime = "datebox",
+                                Boolean = "checkbox")
+        # non-standard controls called via function
+        # FIXME these may break if new types appear
+        special_controls = dict(LookupTextValidated = dropdown_control,
+                                LookupId = dropdown_code_control)
 
-        kw = self.extra_params
-
-        default_controls = dict(Integer = Control("intbox", **kw),
-                                Text = Control("textbox", **kw),
-                                DateTime = Control("datebox", **kw),
-                                Boolean = Control("checkbox", **kw),
-                                LookupTextValidated = dropdown_control(True, **kw),
-                                LookupId = dropdown_code_control(True, **kw))
-
+        # if this field refers to a different field
+        # via a relationship then use that field to
+        # decide what control to use
         if column.defined_relation:
             relation_field = column.defined_relation.parent
-            return default_controls.get(relation_field.__class__.__name__)
+            field_type = relation_field.__class__.__name__
+        else:
+            field_type = page_item_field.type
 
-        control = default_controls.get(rfield.__class__.__name__)
+        kw = self.extra_params
+        # standard control
+        if field_type in default_controls:
+            return Control(default_controls[field_type], **kw)
+        # non-standard control
+        if field_type in special_controls:
+            return special_controls[field_type](True, **kw)
 
-        if not control:
-            control = default_controls.get(rfield.type)
 
-        return control
 
-    def set_data_type(self, form):
+    def get_data_type(self):
+        """return the data type for the page item"""
 
         if self.data_type:
             return self.data_type
-        if form.table:
-            rfield = r[form.table].fields.get(self.name)
+        # TD more pythonic? as above
+        # TD also an explicit return None would be nice
+        if self.form.table:
+            rfield = r[self.form.table].fields.get(self.name)
             if rfield:
                 return rfield.type
 
-    def set_params(self, form, data):
+    def get_full_page_item_params(self, data):
+        """return parameters for the page item
+        including any validation/defaults defined for the database column
+        referenced by page item"""
 
-        params = self.params(form, data)
+        params = self.get_page_item_params(data)
 
-        if form.table and self.validation:
-            rfield = r[form.table].fields.get(self.name)
+        # get any validation/defaults defined in the database
+        if self.form.table and self.validation:
+            rfield = r[self.form.table].fields.get(self.name)
             if rfield:
                 if "validation" not in params:
                     params["validation"] = rfield.validation_info
@@ -140,42 +160,77 @@ class PageItem(object):
                     params["default"] = rfield.default
 
         return params
+        # TD general rfield keeps being refound
+        # maybe we should get this during initialisation?
+        # or at least caching it if we only use it in limited paths
 
     def save(self, form, node, object, data, session):
+        raise Exception('renamed -> save_page_item')
+        #FIXME kill this off soon
 
+    def save_page_item(self, node, object, data, session):
+        # TD doc string
+
+        # check we are allowed to save this item
+        # TD what about invisibles?
         if not authenticate.check_permission(self.permissions):
             return
 
-        if self.name in object._table.fields:
-            value = data.get(self.name)
-            setattr(object, self.name, value)
+        try:
+            # use custom save for control if it has one
+            self.control.custom_control_save(self, self.form, node, object, data, session)
+        except AttributeError:
+            if self.name in object._table.fields:
+                value = data.get(self.name)
+                setattr(object, self.name, value)
 
-        if self.control and self.control.control_save:
-            self.control.save(self, form, node, object, data, session)
+
 
     def load(self, form, node, result, data, session):
+        raise Exception('renamed -> load_page_item')
+        #FIXME kill this off soon
 
+    def load_page_item(self, node, result, data, session):
+        # TD rename load_page_item() still don't like
+        # TD doc string
+
+        # check permissions etc
         if not authenticate.check_permission(self.permissions):
             return
         if not self.name:
             return
 
-        value = result.get(self.name)
-        if value:
-            data[self.name] = value
-            #util.convert_value(getattr(object, self.name))
+        try:
+            # use custom load for control if it has one
+            # FIXME result.results[0] is horrible
+            self.control.custom_control_load(self, self.form, node, result.results[0], data, session)
+        except AttributeError:
+            # TD do we want data[self.name] = 0/None ?
+            # FIXME fucked by david
+            value = result.get(self.name)
+            if value:
+                data[self.name] = value
 
-        if self.control and self.control.control_load:
-            object = result.results[0]
-            self.control.load(self, form, node, object, data, session)
 
     def delete(self, form, node, object, data, session):
+        raise Exception('renamed -> delete_page_item')
+        #FIXME kill this off soon
 
+    def delete_page_item(self, node, object, data, session):
+        # TD rename delete_page_item_data()
+        # TD form vs self.form
+        # TD doc string
+
+        # check permissions etc
         if not authenticate.check_permission(self.permissions):
             return
 
-        if self.control and self.control.control_delete:
-            self.control.delete(self, form, node, object, data, session)
+        try:
+            # use custom delete for control if it has one
+            self.control.custom_control_delete(self, self.form, node, object, data, session)
+        except AttributeError:
+            pass
+
 
 class SubForm(object):
 
@@ -190,9 +245,9 @@ class SubForm(object):
         if self.name and not self.label:
             self.label = self.name + ":"
 
-    def convert(self, form, field_list, data):
+    def get_page_item_structure(self, data):
 
-        subform = form.node[self.name]
+        subform = self.form.node[self.name]
 
         data = subform.create_form_data(read_only = subform.read_only)
 
@@ -209,12 +264,12 @@ class SubForm(object):
 
         return row
 
-    def load(self, form, node, object, data, session):
+    def load_page_item(self, node, object, data, session):
 
         subform = node[self.name]
         data[self.name] = subform.load_subform(data)
 
-    def save(self, form, node, object, data, session):
+    def save_page_item(self, node, object, data, session):
 
         subform = form.node[self.name]
 
@@ -237,7 +292,7 @@ class Layout(object):
         self.layout_type = layout_type
         self.params = params
 
-    def convert(self, field, form, data):
+    def get_control_params(self, field, form, data):
 
         params = dict(layout = self.layout_type)
         params.update(self.params)
@@ -253,10 +308,8 @@ class Control(object):
         self.params = params or {}
         self.extra_params = extra_params or {}
 
-        self.control_save = False
-        self.control_load = False
 
-    def convert(self, field, form, data):
+    def get_control_params(self, field, form, data):
 
         params = dict(control = self.control_type)
 
@@ -278,14 +331,13 @@ class ExtraData(Control):
     def __init__(self, control_type, params = None, extra_params = None, **kw):
 
         Control.__init__(self, control_type, params, extra_params)
-        self.control_load = True
 
         self.extra_fields = kw.pop("extra_fields")
 
-    def convert(self, field, form, data):
+    def get_control_params(self, field, form, data):
         return {}
 
-    def load(self, field, form, node, object, data, session):
+    def custom_control_load(self, field, form, node, object, data, session):
         for field in self.extra_fields:
             data[field] = util.convert_value(getattr(object, field))
 
@@ -295,7 +347,6 @@ class Dropdown(Control):
     def __init__(self, control_type, params = None, extra_params = None, **kw):
 
         Control.__init__(self, control_type, params, extra_params)
-        self.control_load = True
         self.default = kw.get("default")
 
         self.out_params = {}
@@ -385,11 +436,11 @@ class Dropdown(Control):
 
         self.out_params = params
 
-    def load(self, field, form, node, object, data, session):
+    def custom_control_load(self, field, form, node, object, data, session):
 
         out_params = self.populate(field, form, data, object)
 
-    def convert(self, field, form, data):
+    def get_control_params(self, field, form, data):
 
         if self.out_params:
             return self.out_params
@@ -404,13 +455,12 @@ class Buttons(Control):
 
         Control.__init__(self, control_type, params, extra_params)
 
-        self.control_load = True
 
         self.command = kw.get("command")
 
         self.buttons = kw.get("buttons")
 
-    def load(self, field, form, node, object, data, session):
+    def custom_control_load(self, field, form, node, object, data, session):
 
         if node.command == self.command:
             data["__buttons"] = self.buttons
@@ -421,13 +471,12 @@ class Message(Control):
 
         Control.__init__(self, control_type, params, extra_params)
 
-        self.control_load = True
 
         self.command = kw.get("command")
 
         self.buttons = kw.get("message")
 
-    def load(self, field, form, node, object, data, session):
+    def custom_control_load(self, field, form, node, object, data, session):
 
         if node.command == self.command:
             data["__message"] = self.buttons
@@ -440,8 +489,6 @@ class CodeGroup(Control):
 
         Control.__init__(self, control_type, params, extra_params)
 
-        self.control_save = True
-        self.control_load = True
 
         self.code_table = kw.get('code_table')
         self.code_title = kw.get('code_title_field')
@@ -471,7 +518,7 @@ class CodeGroup(Control):
 
         self.join_key = self.relation.join_keys_from_table(self.flag_table)[0][0]
 
-    def save(self, field, form, node, object, data, session):
+    def custom_control_save(self, field, form, node, object, data, session):
 
         self.configure(form)
 
@@ -501,7 +548,7 @@ class CodeGroup(Control):
             code_groups.append(new)
             session.save_or_update(new)
 
-    def load(self, field, form, node, object, data, session):
+    def custom_control_load(self, field, form, node, object, data, session):
 
         self.configure(form)
 
@@ -513,7 +560,7 @@ class CodeGroup(Control):
 
         data[field.name] = out
 
-    def delete(self, field, form, node, object, data, session):
+    def custom_control_delete(self, field, form, node, object, data, session):
 
         self.configure(form)
         code_groups = getattr(object, self.relation_attr)
@@ -521,7 +568,7 @@ class CodeGroup(Control):
             session.delete(code)
 
 
-    def convert(self, field, form, data):
+    def get_control_params(self, field, form, data):
 
         self.configure(form)
         params = dict(control = self.control_type)
@@ -546,7 +593,6 @@ class CodeGroup(Control):
 
 
 class PageItemWrapper(object):
-
     def __init__(self, *arg, **kw):
         self.arg = arg
         self.kw = kw
@@ -567,12 +613,12 @@ class SubFormWrapper(PageItemWrapper):
 
 ##Form fields
 
-def input(*arg, **kw):
-    form_field = page_item("input", *arg, **kw)
+def input(name, *arg, **kw):
+    form_field = page_item("input", name = name, *arg, **kw)
     return form_field
 
 def layout(layout_type, **kw):
-    form_field = page_item("layout", layout = Layout(layout_type, kw))
+    form_field = page_item("layout", control = Layout(layout_type, kw))
     return form_field
 
 def buttons(command, buttons, **kw):
@@ -616,13 +662,13 @@ def text(text, **kw):
 
 def dropdown(name, arg, default = None, **kw):
 
-    return page_item("input", name,
+    return page_item("input", name = name,
                     control = dropdown_control(arg, default = default),
                     **kw)
 
 def dropdown_code(name, arg, default = None, **kw):
 
-    return page_item("input", name,
+    return page_item("input", name = name,
                     control = dropdown_control(arg, default = default),
                     **kw)
 
@@ -633,7 +679,7 @@ def codegroup(code_table, **kw):
 
     name = kw.pop("name", code_table)
 
-    return page_item("input", name,
+    return page_item("input", name = name,
                     control = CodeGroup("codegroup",
                                         code_table = code_table,
                                         code_title = code_title,
@@ -644,11 +690,11 @@ def codegroup(code_table, **kw):
 
 def wmd(name, **kw):
 
-    return page_item("input", name, control = Control("wmd"), **kw)
+    return page_item("input", name = name, control = Control("wmd"), **kw)
 
 def textarea(name, **kw):
 
-    return page_item("input", name, control = Control("textarea"), **kw)
+    return page_item("input", name = name, control = Control("textarea"), **kw)
 
 def button(node, **kw):
 
@@ -657,11 +703,11 @@ def button(node, **kw):
 
 def checkbox(name, **kw):
 
-    return page_item("input", name, control = Control("checkbox"), **kw)
+    return page_item("input", name = name, control = Control("checkbox"), **kw)
 
 def password(name = None, **kw):
 
-    return page_item("input", name, control = Control("password"), **kw)
+    return page_item("input", name = name, control = Control("password"), **kw)
 
 def button_box(button_list, **kw):
 
@@ -676,23 +722,23 @@ def button_link(node, **kw):
 
 def link(name = None, **kw):
 
-    return page_item("input", name, control = Control("link"), **kw)
+    return page_item("input", name = name, control = Control("link"), **kw)
 
 def link_list(name = None, **kw):
 
-    return page_item("input", name, control = Control("link_list"), **kw)
+    return page_item("input", name = name, control = Control("link_list"), **kw)
 
 def info(name, **kw):
 
-    return page_item("input", name,  control = Control("info"), **kw)
+    return page_item("input", name = name,  control = Control("info"), **kw)
 
 def file_upload(name, **kw):
 
-    return page_item("input", name,  control = Control("file_upload"), **kw)
+    return page_item("input", name = name,  control = Control("file_upload"), **kw)
 
 def image(name, **kw):
 
-    return page_item("input", name,  control = Control("image"), **kw)
+    return page_item("input", name = name,  control = Control("image"), **kw)
 
 
 ##Controls

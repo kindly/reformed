@@ -20,8 +20,8 @@
 
 from global_session import global_session
 r = global_session.database
-import formencode as fe
-import sqlalchemy as sa
+import formencode
+import sqlalchemy
 import reformed.util as util
 import reformed.custom_exceptions as custom_exceptions
 import urllib
@@ -31,80 +31,97 @@ class Form(object):
 
     def __init__(self, name, node, *args, **kw):
 
-        self.fieldswrappers = args
+        self.provided_form_items = args
 
-        self.fields = []
-        self.field_names = []
-
+        # TD why have a name?
         self.name = name
 
         self.node = node
-        self.node_name = node.name.split(':')[0]
+        self.node_name = node.name
+
+        # provided keywords
+        # TD document `table`
+        # use default table for the node if none specified
         self.table = kw.get("table", node.table)
-
-        ## not in init as fields want to know what table the forms is in
-
-        for field in self.fieldswrappers:
-            instance = field(self)
-            self.fields.append(instance)
-            if instance.name:
-                self.field_names.append(instance.name)
-
+        # general
         self.params = kw.get("params")
         self.title_field = kw.get("title_field")
-
-        self.save_redirect = kw.get("save_redirect")
-
         self.read_only = kw.get("read_only", False)
 
+        # subform
         self.child_id = kw.get("child_id")
         self.parent_id = kw.get("parent_id")
 
+        # save actions
         self.save_next_node = kw.get("save_next_node")
         self.save_next_command = kw.get("save_next_command")
+        self.save_redirect = kw.get("save_redirect")
 
         self.buttons = {}
 
+        self.form_items = []
+        self.form_item_name_list = []
+
+        self.initiate_form_items()
+
+    def initiate_form_items(self):
+        """set up the form_items supplied to the form"""
+
+        ## not in init as fields want to know what table the forms is in
+        for form_item in self.provided_form_items:
+            form_item_instance = form_item(self)
+            self.form_items.append(form_item_instance)
+            if form_item_instance.name:
+                self.form_item_name_list.append(form_item_instance.name)
+
+
     def set_name(self, name):
+        # don't like want to kill TD
+        # only used in TableNode
         self.name = name
 
     def set_node(self, node):
+        # don't like want to kill TD
+        # only used in TableNode
         self.node = node
-        self.node_name = node.name.split(':')[0]
+        self.node_name = node.name
         self.table = self.table or node.table
 
+        # TD wtf?
         ## not in init as fields want to know what table the forms is in
-        for field in self.fields:
-            field.set_form(self)
+        for form_item in self.form_items:
+            form_item.set_form(self)
 
     def load_subform(self, data):
-
+        # TD wtf how can be called load subform when returns data?
+        # can we get a better name for this?
+        # get_subform_data()?
         parent_value = data.get(self.parent_id)
-
-        where = "%s=%s" % (self.child_id, parent_value)
-        out = r.search(self.table, where).data
+        where = "%s=?" % self.child_id
+        out = r.search(self.table, where, values = [parent_value]).data
 
         return out
 
     def show(self, data = None):
-        """display for on front end including data if supplied"""
+        """display form on front end including data if supplied"""
 
         if not data:
             data = {}
-
+        # update the node that the form is associated with
         self.node.out = self.create_form_data(data)
         self.node.action = 'form'
 
 
     def new(self):
+        """display a 'blank' form on the front end"""
 
         data_out = {}
         data_out['__buttons'] = [['add %s' % self.table, '%s:_save:' % self.node_name],
                                  ['cancel', 'BACK']]
         data_out['__message'] = "Hello, add new %s" % self.table
 
-        data = self.create_form_data(data_out)
-        self.node.out = data
+        # update the node that the form is associated with
+        self.node.out = self.create_form_data(data_out)
         self.node.action = 'form'
 
     def save_row(self, data, session, parent_obj = None, relation_attr = None):
@@ -119,60 +136,67 @@ class Form(object):
 
         id = data.get('id')
         root = data.get('__root')
-        node = self.node
 
         if id:
+            # existing record
             try:
                 result = r.search_single(self.table, "id = ?",
                                       values = [id],
                                       session = session)
                 obj = result.results[0]
                 obj._new = False
+                # update the version if we have it to ensure it
+                # is not being overwritten badley
+                version = data.get("_version")
+                setattr(obj, "_version", version)
             except custom_exceptions.SingleResultError:
                 form.errors[root] = 'record not found'
                 raise
         else:
+            # new record (create blank one)
             obj = r.get_instance(self.table)
             obj._new = True
+            # subform data will have a parent_obj
+            # which we need to link
             if parent_obj:
                 setattr(obj, relation_attr, parent_obj)
 
-        ## normal fields
-        for field in self.fields:
-            if field.page_item_type == "subform":
-                continue
-            field.save(self, self.node, obj, data, session)
+        ## prepare save data for normal fields
+        for form_item in self.form_items:
+            if form_item.page_item_type not in ["subform", "layout"]:
+                form_item.save_page_item(self.node, obj, data, session)
 
         ## when subforms are saved on their own
-        subform = node.data.get("__subform")
+        # TD this is crap we NEVER trust user data as it is ALWAYS 100% bullshit
+        # FIXME use server side data only
+        # if the form doesn't know about subforms it's broken
+        subform = self.node.data.get("__subform")
         if subform:
-            child_id = node[subform].child_id
+            child_id = self.node[subform].child_id
             id_field = input(child_id, data_type = "Integer")(self)
-            id_field.save(self, self.node, obj, data, session)
+            id_field.save_page_item(self.node, obj, data, session)
 
-        version = data.get("_version")
-        if version:
-            setattr(obj, "_version", version)
 
         try:
             session.save_or_update(obj)
-        except fe.Invalid, e:
+        except formencode.Invalid, e:
             print "failed to save\n%s" % e.msg
             errors = {}
             for key, value in e.error_dict.items():
                 errors[key] = value.msg
-            node.errors[root] = errors
+            self.node.errors[root] = errors
 
-        for field in self.fields:
-            if field.page_item_type <> "subform":
+        for form_item in self.form_items:
+            if form_item.page_item_type <> "subform":
                 continue
-            field.save(self, self.node, obj, data, session)
+            form_item.save(self, self.node, obj, data, session)
 
         return obj
 
     def save(self):
         """Save this form. Its job is to set up the node belongs to 
         and handle errors"""
+        # TD not reviewed
 
         ## set up data to be stored
         node = self.node
@@ -229,6 +253,7 @@ class Form(object):
 
 
     def view(self, read_only=True, where = None):
+        # TD not reviewed
         node = self.node
         id = node.data.get('id')
         if where:
@@ -246,7 +271,7 @@ class Form(object):
 
             table = self.table
 
-            tables = util.split_table_fields(self.field_names, table).keys()
+            tables = util.split_table_fields(self.form_item_name_list, table).keys()
 
             result = r.search_single(table, where, 
                                           session = session, tables = tables)
@@ -260,8 +285,8 @@ class Form(object):
                 except AttributeError:
                     extra_field = None
 
-            for field in self.fields:
-                field.load(self, node, result, data_out, session)
+            for form_item in self.form_items:
+                form_item.load_page_item(node, result, data_out, session)
 
             id = data_out.get('id')
             if self.title_field and data_out.has_key(self.title_field):
@@ -269,7 +294,7 @@ class Form(object):
             else:
                 self.title = '%s: %s' % (self.table, id)
 
-        except sa.orm.exc.NoResultFound:
+        except sqlalchemy.orm.exc.NoResultFound:
             data = None
             data_out = {}
             id = None
@@ -306,6 +331,7 @@ class Form(object):
         )
 
     def delete(self):
+        # TD not reviewed
         ##FIXME does not work and has not been tested
         node = self.node
         id = node.data.get('id')
@@ -322,8 +348,8 @@ class Form(object):
         try:
             data = session.query(obj).filter_by(**filter).one()
 
-            for field in self.fields:
-                field.delete(self, node, data, data, session)
+            for form_item in self.form_items:
+                form_item.delete(self, node, data, data, session)
 
             session.delete(data)
             session.commit()
@@ -334,11 +360,11 @@ class Form(object):
             else:
                 node.out = {'deleted': [self.data]}
                 node.action = 'delete'
-        except sa.orm.exc.NoResultFound:
+        except sqlalchemy.orm.exc.NoResultFound:
             error = 'Record not found.'
             node.out = error
             node.action = 'general_error'
-        except sa.exc.IntegrityError, e:
+        except sqlalchemy.exc.IntegrityError, e:
             print e
 
             error = 'The record cannot be deleted,\nIt is referenced by another record.'
@@ -348,6 +374,7 @@ class Form(object):
         session.close()
 
     def list(self, limit=20):
+        # TD not reviewed
 
         node = self.node
 
@@ -357,7 +384,7 @@ class Form(object):
 
         table = self.table or node.table
 
-        ##FIXME do we need these seperated?
+        ##FIXME do we need these separated?
         if r[table].entity:
             results = r.search('_core_entity',
                                where = "table = %s" % table,
@@ -414,18 +441,25 @@ class Form(object):
 
 
     def create_form_data(self, data=None, read_only=False):
+        """creates and returns the data stucture required by the front end
+        for the this form"""
+
+        # TD maybe we should just pass data to the front end
+        # if some actually exists?
+        # not much in it though
 
         if not data:
             data = {}
 
         out = {
             "form": {
-                "fields":self.create_fields(data)
+                "fields":self.create_form_item_output(data)
             },
             "type": "form",
             "data": data
         }
-
+        # add copy of params if there are some
+        # copy is used as it may get modified
         if self.params:
             out['form']['params'] = self.params.copy()
         if read_only:
@@ -433,18 +467,19 @@ class Form(object):
                 out['form']['params'] = {}
             out['form']['params']['read_only'] = True
 
-
         return out
 
-    def create_fields(self, data):
+    def create_form_item_output(self, data):
+        """create and return the form data stucture used by the front end"""
 
-        fields = []
-        for field in self.fields:
-            row = field.convert(self, self.fields, data)
-            #skip invisible fields
+        form_items = []
+        for form_item in self.form_items:
+            row = form_item.get_page_item_structure(data)
             if row:
-                fields.append(row)
-        return fields
+                form_items.append(row)
+        return form_items
+
+
 
 class FormWrapper(object):
 
