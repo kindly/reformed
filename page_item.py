@@ -71,7 +71,10 @@ class PageItem(object):
         # FIXME this should be removable by making sure that
         # get_control_params gives us a 'fresh' hash
         params = {}
-        params.update(self.control.get_control_params(self, self.form, data))
+        try:
+            params.update(self.control.get_control_params(self, self.form, data))
+        except AttributeError:
+            pass
         return params
 
     def get_page_item_structure(self, data):
