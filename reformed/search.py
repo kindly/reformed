@@ -247,10 +247,8 @@ class QueryBase(object):
 
             for node in table_path:
                 current_path = current_path + [node[0]]
-                if tuple(current_path) not in self.aliases:
-                    alias = sa.orm.aliased(self.search.database[node[1]].sa_class)
-                    self.aliases[tuple(current_path)] = alias
-                
+                self.make_aliases(current_path, node)
+
                 if node in sub_tree["tree"]:
                     sub_tree = sub_tree["tree"][node]
                 else:
@@ -279,10 +277,7 @@ class QueryBase(object):
 
             for node in table_path:
                 current_path = current_path + [node[0]]
-
-                if tuple(current_path) not in self.aliases:
-                    alias = sa.orm.aliased(self.search.database[node[1]].sa_class)
-                    self.aliases[tuple(current_path)] = alias
+                self.make_aliases(current_path, node)
 
                 if node in sub_tree["tree"]:
                     sub_tree = sub_tree["tree"][node]
@@ -301,6 +296,13 @@ class QueryBase(object):
             self.name_to_alias[join] = self.aliases[tuple(current_path)]
 
         return join_tree
+    
+    def make_aliases(self, current_path, node):
+
+        if tuple(current_path) not in self.aliases:
+            alias = sa.orm.aliased(self.search.database[node[1]].sa_class)
+            self.aliases[tuple(current_path)] = alias
+
 
     def recurse_join_tree(self, current_node):
 

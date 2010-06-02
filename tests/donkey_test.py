@@ -29,20 +29,14 @@ class test_donkey(object):
         if not hasattr(cls, "engine"):
             cls.engine = 'sqlite:///:memory:'
 
-        try:
-            os.remove("test_application/zodb.fs")
-            os.remove("test_application/zodb.fs.lock")
-            os.remove("test_application/zodb.fs.index")
-            os.remove("test_application/zodb.fs.tmp")
-        except OSError:
-            pass
+        cls.application = application.Application("test_donkey")
+        cls.application.logging_tables = True
 
-        cls.application = application.Application("test_application", engine = cls.engine)
-        
+        cls.application.delete_database()
+
+        cls.application.create_database()
+
         cls.Donkey = cls.application.database
-
-        reformed.user_tables.initialise(cls.application)
-
 
         entity("people", cls.Donkey,
               Text("name", mandatory = True, length = 30),

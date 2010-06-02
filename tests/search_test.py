@@ -321,17 +321,18 @@ class test_query_from_string(donkey_test.test_donkey):
 
     def test_order_by(self):
 
-        search = Search(self.Donkey, "donkey_sponsership", 
-                        self.session, 
+        search = Search(self.Donkey, "donkey_sponsership",
+                        self.session,
+                        """ donkey.name = "fred" and people.name = "fred" """,
                         order_by = "amount desc, people.name, donkey.age  desc")
 
 
-        print search.order_by_clauses()
-        assert len(search.order_by_clauses()) == 3
-
         print str(search.search())
         assert str(search.search()) == """SELECT donkey_sponsership.giving_date AS donkey_sponsership_giving_date, donkey_sponsership._version AS donkey_sponsership__version, donkey_sponsership.amount AS donkey_sponsership_amount, donkey_sponsership._modified_by AS donkey_sponsership__modified_by, donkey_sponsership._modified_date AS donkey_sponsership__modified_date, donkey_sponsership.people_id AS donkey_sponsership_people_id, donkey_sponsership.donkey_id AS donkey_sponsership_donkey_id, donkey_sponsership.id AS donkey_sponsership_id 
-FROM donkey_sponsership ORDER BY donkey_sponsership.amount DESC, people.name, donkey.age DESC"""
+FROM donkey_sponsership JOIN people AS people_1 ON people_1.id = donkey_sponsership.people_id JOIN donkey AS donkey_1 ON donkey_1.id = donkey_sponsership.donkey_id 
+WHERE donkey_1.name = ? AND donkey_1.id IS NOT NULL AND people_1.name = ? AND people_1.id IS NOT NULL ORDER BY donkey_sponsership.amount DESC, people_1.name, donkey_1.age DESC"""
+
+        assert len(search.order_by_clauses()) == 3
 
     def test_search_split(self):
 
