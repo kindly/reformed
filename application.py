@@ -271,9 +271,9 @@ class Application(object):
         # maybe get the nodes to register themselves?
 
         bookmarks = {}
-        bookmarks['user'] = dict(title = "Users", node = "bug.User")
+        bookmarks['user'] = dict(title = "Users", node = "user.User")
         bookmarks['ticket'] = dict(title = "Ticket", node = "bug.Ticket")
-        bookmarks['user_group'] = dict(title = "User Group", node = "bug.UserGroup")
+        bookmarks['user_group'] = dict(title = "User Group", node = "user.UserGroup")
         bookmarks['permission'] = dict(title = "Permission", node = "bug.Permission")
         bookmarks['permission'] = dict(title = "Permission", node = "bug.Permission")
         self.register_info('bookmarks', bookmarks)
