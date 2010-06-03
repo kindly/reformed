@@ -289,10 +289,11 @@ class Form(object):
                 form_item.load_page_item(node, result, data_out, session)
 
             id = data_out.get('id')
+            # set the title for bookmarks
             if self.title_field and data_out.has_key(self.title_field):
-                self.title = data_out.get(self.title_field)
+                self.node.title = data_out.get(self.title_field)
             else:
-                self.title = '%s: %s' % (self.table, id)
+                self.node.title = '%s: %s' % (self.table, id)
 
         except sqlalchemy.orm.exc.NoResultFound:
             data = None
