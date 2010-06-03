@@ -75,6 +75,7 @@ def initialise(application):
         Text("permission"),
         Text("name", length = 200),
         Text("description", length = 4000),
+        Integer("access_level", default = 0),
         table_type = "system",
         title_field = 'name'
     )
@@ -83,7 +84,7 @@ def initialise(application):
 
 
     # permission
-    application.predefine.permission("SysAdmin", u'System Administrators', u'Administer the system.')
+    application.predefine.permission("SysAdmin", u'System Administrators', u'Administer the system.', 2)
 
     # add admin user
     # this is a special case as no other users should be auto created

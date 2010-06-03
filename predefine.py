@@ -32,9 +32,10 @@ class Predefine(object):
 
 
 
-    def permission(self, code, name, description = u''):
+    def permission(self, code, name, description = u'', access_level = 0):
         data = dict(name = name,
-                    description = description)
+                    description = description,
+                    access_level = access_level)
         self.add_data("permission", "permission", code, data)
 
     def user_group(self, group_name, name, description = u'', permissions = []):

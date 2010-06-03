@@ -496,6 +496,7 @@ class CodeGroup(Control):
         self.code_table = kw.get('code_table')
         self.code_title = kw.get('code_title_field')
         self.code_desc = kw.get('code_desc_field')
+        self.filter = kw.get('filter')
 
     def configure(self, form):
 
@@ -581,7 +582,7 @@ class CodeGroup(Control):
         if self.code_desc:
             fields.append(self.code_desc)
 
-        codes = r.search(self.code_table, fields = fields).data
+        codes = r.search(self.code_table, fields = fields, where = self.filter).data
 
         code_array = []
         for row in codes:
@@ -679,6 +680,7 @@ def codegroup(code_table, **kw):
 
     code_title = kw.pop('code_title_field', None)
     code_desc = kw.pop('code_desc_field', None)
+    filter = kw.pop('filter', None)
 
     name = kw.pop("name", code_table)
 
@@ -687,6 +689,7 @@ def codegroup(code_table, **kw):
                                         code_table = code_table,
                                         code_title = code_title,
                                         code_desc_field = code_desc,
+                                        filter = filter
                                         ),
                     **kw)
 

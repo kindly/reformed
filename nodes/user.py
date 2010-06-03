@@ -14,7 +14,7 @@ def initialise():
     predefine = global_session.application.predefine
     # permission
     predefine.permission("Login", u'User login', u'Login to system.')
-    predefine.permission("UserAdmin", u'User Administration', u'Administer user accounts.')
+    predefine.permission("UserAdmin", u'User Administration', u'Administer user accounts.', 2)
     # user group
     predefine.user_group(u'UserAdmins', u'User Administrators', u'Administer user accounts', permissions = ['UserAdmin', 'Login'])
     predefine.user_group(u'Users', u'User', u'General user accounts', permissions = ['Login'])
@@ -275,7 +275,8 @@ class UserGroup(TableNode):
         textarea('notes', css = "large", description = 'A longer more detailed description'),
         layout("spacer"),
         layout("box_start"),
-        codegroup('permission', code_desc_field = 'description'),
+        codegroup('permission', code_desc_field = 'description', label = 'General Permissions', filter = 'access_level = 0'),
+        codegroup('permission', code_desc_field = 'description', label = 'Admin Permissions', filter = 'access_level > 0', permissions = ['SysAdmin']),
         layout("box_end"),
         layout("spacer"),
 
