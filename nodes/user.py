@@ -39,7 +39,8 @@ class User(TableNode):
         textarea('notes', css = "large"),
         layout('spacer'),
         layout('box_start'),
-        codegroup('user_group', code_desc_field = 'description'),
+        codegroup('user_group', code_desc_field = 'description', label = 'User Groups', filter = 'access_level = 0'),
+        codegroup('user_group', code_desc_field = 'description', label = 'Restricted User Groups', filter = 'access_level > 0', permissions = ['SysAdmin']),
         layout('box_end'),
         layout('spacer'),
 
@@ -61,7 +62,8 @@ class User(TableNode):
         textarea('notes', css = "large"),
         layout('spacer'),
         layout('box_start'),
-        codegroup('user_group', code_desc_field = 'description'),
+        codegroup('user_group', code_desc_field = 'description', label = 'User Groups', filter = 'access_level = 0'),
+        codegroup('user_group', code_desc_field = 'description', label = 'Restricted User Groups', filter = 'access_level > 0', permissions = ['SysAdmin']),
         layout('box_end'),
         layout('spacer'),
 

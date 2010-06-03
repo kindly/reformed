@@ -48,7 +48,7 @@ def initialise(application):
         Text("description", length = 200),
         Text("notes", length = 4000),
         Boolean("active", default = True, mandatory = True),
-
+        Integer("access_level", default = 0),
 
         table_type = "system",
         title_field = 'name'
@@ -97,7 +97,7 @@ def initialise(application):
     application.predefine.add_data("user", "login_name", u"admin", data)
 
     # sys admin user_group
-    application.predefine.user_group(u'SysAdmins', u'System Administrators', u'Full system access', permissions = ['SysAdmin'])
+    application.predefine.user_group(u'SysAdmins', u'System Administrators', u'Full system access', permissions = ['SysAdmin'], access_level = 2)
 
     # this is a special case too
     # make admin a sysadmin
