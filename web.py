@@ -148,7 +148,9 @@ def process_node(environ, start_response):
         else:
             response.set_cookie('auto',  cookie,
                                 domain = '127.0.0.1', # FIXME this needs to be set correctly
-                                secure = False, max_age = 360, path = '/')
+                                secure = False, # can be sent over plain http (risky)
+                                max_age = 31536000, # cookie lifetime in seconds (1 year)
+                                path = '/')
         response.headers['Set-Cookie']
 
     response.body = ''.join(output)
