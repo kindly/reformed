@@ -111,6 +111,15 @@ $.Checkbox = function(input, item, value){
         }
     }
 
+    function keydown(e){
+        // space toggles the control
+        var key = e.keyCode;
+        if (key == 32){
+            mousedown();
+        }
+        return true;
+    }
+
     if (is_2_state && value === null){
         value = false;
     }
@@ -118,6 +127,7 @@ $.Checkbox = function(input, item, value){
     $checkbox.data('value', value);
     // FIXME need to unbind this
     $checkbox.mousedown(mousedown);
+    $checkbox.keydown(keydown);
 
 };
 
