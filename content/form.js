@@ -1103,12 +1103,12 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     function get_control_value(item, $item){
 
         switch (item.control){
-            case 'wmd':
             case 'image':
             case 'file_upload':
                 console_log($item);
                 return $item.find("input:first").data('value');
                 break;
+            case 'wmd':
             case 'textarea':
                 return $item.find("textarea:first").val();
                 break;
