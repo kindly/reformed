@@ -340,7 +340,23 @@ class TestParserParams(test_donkey):
 
         assert len(search.search()[0:2]) == 2
 
-        
+    def test_search_custom(self):
+
+        search = Search(self.Donkey, "people", self.session, "id>0", extra_inner = ["email>email"])
+
+        assert str(search.search()) ==  """SELECT people.town AS people_town, people.name AS people_name, people.country AS people_country, people._version AS people__version, people.gender_id AS people_gender_id, people._modified_by AS people__modified_by, people._core_entity_id AS people__core_entity_id, people.postcode AS people_postcode, people._modified_date AS people__modified_date, people.over_18_id AS people_over_18_id, people.address_line_2 AS people_address_line_2, people.address_line_3 AS people_address_line_3, people.address_line_1 AS people_address_line_1, people.id AS people_id, email_1.active_email AS email_1_active_email, email_1._version AS email_1__version, email_1._modified_by AS email_1__modified_by, email_1._modified_date AS email_1__modified_date, email_1.people_id AS email_1_people_id, email_1.email_number AS email_1_email_number, email_1.email AS email_1_email, email_1.id AS email_1_id 
+FROM people JOIN email AS email_2 ON people.id = email_2.people_id LEFT OUTER JOIN email AS email_1 ON people.id = email_1.people_id 
+WHERE people.id > ? AND people.id IS NOT NULL ORDER BY email_1.email"""
+
+
+        search = Search(self.Donkey, "people", self.session, "id>0", extra_outer = ["gender>code", "over_18>code"])
+        assert str(search.search()) == """SELECT people.town AS people_town, people.name AS people_name, people.country AS people_country, people._version AS people__version, people.gender_id AS people_gender_id, people._modified_by AS people__modified_by, people._core_entity_id AS people__core_entity_id, people.postcode AS people_postcode, people._modified_date AS people__modified_date, people.over_18_id AS people_over_18_id, people.address_line_2 AS people_address_line_2, people.address_line_3 AS people_address_line_3, people.address_line_1 AS people_address_line_1, people.id AS people_id, email_1.active_email AS email_1_active_email, email_1._version AS email_1__version, email_1._modified_by AS email_1__modified_by, email_1._modified_date AS email_1__modified_date, email_1.people_id AS email_1_people_id, email_1.email_number AS email_1_email_number, email_1.email AS email_1_email, email_1.id AS email_1_id 
+FROM people LEFT OUTER JOIN code AS code_1 ON people.gender_id = code_1.id LEFT OUTER JOIN code AS code_2 ON people.over_18_id = code_2.id LEFT OUTER JOIN email AS email_1 ON people.id = email_1.people_id 
+WHERE people.id > ? AND people.id IS NOT NULL ORDER BY email_1.email"""
+
+
+
+
 
 
 

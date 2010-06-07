@@ -15,7 +15,7 @@ class Search(object):
     def __init__(self, database, table, session, *args, **kw):
 
         self.rtable = database.tables[table]
-        table_paths = self.rtable.paths
+        self.table_paths = self.rtable.paths
         self.table_paths_list = self.rtable.table_path_list
         self.aliased_name_path = self.rtable.table_path
 
@@ -245,8 +245,8 @@ class QueryBase(object):
         ### outer joins with > in table name
         for join in self.search.custom_outer:
             ## do not need the table at end
-            path = tuple(join.split(">")[-1])
-            edge = self.table_paths[path]
+            path = tuple(join.split(">")[:-1])
+            edge = self.search.table_paths[path]
             self.make_join("outer", join, edge, join_tree)
 
         ### normal inner joins
@@ -260,8 +260,8 @@ class QueryBase(object):
         ### inner joins with > in table name
         for join in self.search.custom_inner:
             ## do not need the table at end
-            path = tuple(join.split(">")[-1])
-            edge = self.table_paths[path]
+            path = tuple(join.split(">")[:-1])
+            edge = self.search.table_paths[path]
             self.make_join("inner", join, edge, join_tree)
 
         return join_tree
