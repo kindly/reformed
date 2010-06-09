@@ -447,7 +447,8 @@ class Database(object):
 
         return resultset.ResultSet(search)
 
-    def search(self, table_name, where = None, *args, **kw):
+    def search(self, table_name, where = "id>0", *args, **kw):
+        ##FIXME id>0 should be changed to none once search is sorted
 
         """
         :param table_name: specifies the base table you will be query from (required)

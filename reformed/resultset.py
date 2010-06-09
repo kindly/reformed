@@ -30,6 +30,7 @@ class ResultSet(object):
 
 
         self.search = search
+
         self.session = search.session
 
         self.limit = int(kw.get("limit", 0))
@@ -37,7 +38,6 @@ class ResultSet(object):
         self.internal = kw.get("internal", False)
         self.count = kw.get("count", False)
         self.keep_all = kw.get("keep_all", True)
-        self.join_tables = kw.get("join_tables", [])
 
         self.database = search.database
 
@@ -69,7 +69,10 @@ class ResultSet(object):
 
         self._data = []
         for res in results:
-            obj = res
+            if self.select_path_list:
+                obj = res[0]
+            else:
+                obj = res
             extra_obj = None
 
             self._data.append(util.get_all_local_data(obj,
@@ -87,8 +90,14 @@ class ResultSet(object):
 
         self.query = self.search.search()
 
-        for cls in self.join_tables:
-            self.query = self.query.add_entity(cls)
+        distict_select_paths = set()
+        for table in self.search.all_extra:
+            distict_select_paths.add(self.search.name_to_path[table])
+
+        self.select_path_list = list(distict_select_paths)
+
+        for key in self.select_path_list:
+            self.query = self.query.add_entity(self.search.aliases[key])
 
         if self.limit:
             self.results = self.query[self.offset: self.offset + self.limit]
@@ -100,24 +109,33 @@ class ResultSet(object):
 
     def get(self, name):
 
-        split_name = name.split(".")
-
-        if len(split_name) == 1:
-            table, field = self.search.table, split_name[0]
+        if name.count(">"):
+            table, field = name.split(".")
         else:
-            table, field = split_name
+            name_list = name.split(".") 
+            field = name_list[-1]
+            if len(name_list) > 1:
+                table = ".".join(name_list[:-1])
+            else:
+                table = self.search.table
 
-        if self.join_tables:
+        if self.select_path_list:
             if table == self.search.table:
                 obj = self.results[self.current_row][0]
             else:
-                index = self.join_tables.index(table) + 1
+                path = self.search.name_to_path[table]
+                index = self.select_path_list.index(path) + 1
                 obj = self.results[self.current_row][index]
         else:
             obj = self.results[self.current_row]
 
-        if field in obj._table.fields:
+        """ when a left join in not there none is returned"""
+        if obj is None:
+            return
+
+        if field in obj._table.columns.keys() + ["id"]:
             return util.convert_value(getattr(obj, field))
+
 
 
     def get_start_range(self, current_row):

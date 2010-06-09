@@ -49,7 +49,7 @@ from ZODB.PersistentMapping import PersistentMapping
 from ZODB.PersistentList import PersistentList
 import transaction
 
-LOGGER = logging.getLogger('reformed.main')
+log = logging.getLogger('rebase.application.database')
 
 class Table(object):
     """ this holds metadata relating to a database table.  It also
@@ -197,8 +197,8 @@ class Table(object):
                 field = relation.parent
                 new_field = Integer(name, mandatory = relation.many_side_not_null,
                                     cat = "internal",
-                                    default = field.many_side_default,
-                                    onupdate = field.many_side_onupdate)
+                                    default = relation.many_side_default,
+                                    onupdate = relation.many_side_onupdate)
 
                 self._add_field_no_persist(new_field)
                 self._persist_extra_field(new_field, connection)

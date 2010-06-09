@@ -38,6 +38,8 @@ class Search(object):
         self.extra_inner, self.custom_inner, self.special_inner = [], [] ,[]
         self.extra_outer, self.custom_outer, self.special_outer = [], [] ,[]
 
+        self.all_extra = self._extra_inner + self._extra_outer
+
         for table in self._extra_inner:
             if table.count(">>") == 1:
                 self.special_inner.append(table)
@@ -134,7 +136,9 @@ class Search(object):
 
         if len(self.queries) == 1:
             ## if query contains a onetomany make the whole query a distinct
-            query = first_query.add_conditions(self.search_base)
+            query = first_query.add_conditions(self.search_base,
+                                               self.extra_inner,
+                                               self.extra_outer)
 
             for table in first_query.inner_joins.union(first_query.outer_joins):
                 if table != self.table and table not in self.rtable.local_tables:
