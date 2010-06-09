@@ -197,7 +197,7 @@ class SubForm(FormItem):
 
         subform = self.form.node[self.name]
 
-        params = subform.create_form_data(read_only = subform.read_only)
+        params = subform.create_form_data(node_token, read_only = subform.read_only)
 
         params['form']['table_name'] =  subform.table
         params['form']['parent_id'] =  subform.parent_id
