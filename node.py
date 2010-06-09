@@ -21,12 +21,10 @@
 import authenticate
 import reformed.util as util
 from reformed import custom_exceptions
-import formencode as fe
-import sqlalchemy as sa
 import datetime
 from global_session import global_session
 from page_item import link, link_list, info, input
-from form import form, FormWrapper
+from form import form, FormFactory
 import logging
 r = global_session.database
 
@@ -41,10 +39,13 @@ class Node(object):
 
         self.name = node_name
 
+        # TD prepare the forms.  ? does this need doing for all the forms
+        # or can we take a more lazy approach?
         self._forms = {}
         for form_name in dir(self):
-            if isinstance(getattr(self, form_name), FormWrapper):
+            if isinstance(getattr(self, form_name), FormFactory):
                 formwrapper = getattr(self, form_name)
+                # this is where we get the form initialised
                 self._forms[form_name] = formwrapper(form_name, self)
 
         self.out = []

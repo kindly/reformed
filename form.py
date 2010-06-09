@@ -69,6 +69,8 @@ class Form(object):
 
         ## not in init as fields want to know what table the forms is in
         for form_item in self.provided_form_items:
+            # here is where we call our form_items
+            # FIXME should we check they are actually FormItems?
             form_item_instance = form_item(self)
             self.form_items.append(form_item_instance)
             if form_item_instance.name:
@@ -162,20 +164,26 @@ class Form(object):
                 setattr(obj, relation_attr, parent_obj)
 
         ## prepare save data for normal fields
+
+        # TD we loop through the form items and try to save them
+
         for form_item in self.form_items:
-            if form_item.page_item_type not in ["subform", "layout"]:
-                form_item.save_page_item(self.node, obj, data, session)
+      #      if form_item.page_item_type not in ["subform", "layout"]:
+          # we dn't care if the item saves or not that's it's lookout
+            form_item.save_page_item(obj, data, session)
 
         ## when subforms are saved on their own
         # TD this is crap we NEVER trust user data as it is ALWAYS 100% bullshit
         # FIXME use server side data only
         # if the form doesn't know about subforms it's broken
-        subform = self.node.data.get("__subform")
-        if subform:
-            child_id = self.node[subform].child_id
-            id_field = input(child_id, data_type = "Integer")(self)
-            id_field.save_page_item(self.node, obj, data, session)
 
+# FIXME send this extra work to the subform save
+####        subform = self.node.data.get("__subform")
+####        if subform:
+####            child_id = self.node[subform].child_id
+####            id_field = input(child_id, data_type = "Integer")(self)
+####            id_field.save_page_item(obj, data, session)
+####
 
         try:
             session.save_or_update(obj)
@@ -186,10 +194,11 @@ class Form(object):
                 errors[key] = value.msg
             self.node.errors[root] = errors
 
-        for form_item in self.form_items:
-            if form_item.page_item_type <> "subform":
-                continue
-            form_item.save(self, self.node, obj, data, session)
+# FIXME more subform guff
+###        for form_item in self.form_items:
+###            if form_item.page_item_type <> "subform":
+###                continue
+###            form_item.save(self, self.node, obj, data, session)
 
         return obj
 
@@ -220,6 +229,9 @@ class Form(object):
 
         if node.errors:
             node.out['errors'] = node.errors
+            # If there are errors during the save we want to show them at the front end
+            # FIXME is this the best way to do this?
+            return
         if node.saved:
             node.out['saved'] = node.saved
 
@@ -240,6 +252,7 @@ class Form(object):
 
             if self.save_redirect:
                 node.action = 'redirect'
+                print 'redirect', obj.id
                 node.link = self.save_redirect + ":id=" + str(obj.id)
                 return
 
@@ -286,7 +299,7 @@ class Form(object):
                     extra_field = None
 
             for form_item in self.form_items:
-                form_item.load_page_item(node, result, data_out, session)
+                form_item.display_page_item(result, data_out, session)
 
             id = data_out.get('id')
             # set the title for bookmarks
@@ -482,7 +495,7 @@ class Form(object):
 
 
 
-class FormWrapper(object):
+class FormFactory(object):
 
     def __init__(self, *arg, **kw):
         self.arg = arg
@@ -493,5 +506,5 @@ class FormWrapper(object):
 
 
 def form(*args, **kw):
-    return FormWrapper(*args, **kw)
+    return FormFactory(*args, **kw)
 
