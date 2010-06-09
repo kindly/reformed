@@ -249,7 +249,8 @@ class NodeRunner(object):
         # the user cannot perform this action
         if not node.allowed:
             log.warn('forbidden node or command')
-            return {'action': 'forbidden'}
+            node_token.output = {'action': 'forbidden'}
+            return
 
         node.initialise(node_token)
         node.call(node_token)

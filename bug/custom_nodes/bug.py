@@ -101,7 +101,7 @@ class ListTicket(TableNode):
     def save(self, node_token):
         self["comment"].save(node_token)
         node_token.action = "redirect"
-        node_token.link = "bug.ListTicket:view:__id=%s" % self.data.get("_core_entity_id")
+        node_token.link = "bug.ListTicket:view:__id=%s" % node_token.data.get("_core_entity_id")
         # FIXME this is stupid
         node_token.next_node = None
 
