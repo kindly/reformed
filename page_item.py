@@ -25,11 +25,12 @@ r = global_session.database
 
 class FormItem(object):
 
-    static = True
+    static = True # If True form item is thread safe
 
-    def __init__(self, factory):
+    def __init__(self, factory, form):
 
-        self.factory = factory
+        self.factory = factory # the containing FormItemFactory
+
         # pull some usefull info out of factory
         # into local object
         self.name = factory.name
@@ -37,9 +38,10 @@ class FormItem(object):
         self.data_type = factory.data_type
         self.label = factory.label
         self.permissions = factory.permissions
-        self.form = factory.form
         self.control_type = factory.control_type
         self.kw = factory.kw
+
+        self.form = form # the containing form
 
         # get out the database field if there is one
         try:
@@ -67,49 +69,49 @@ class FormItem(object):
         self.params.update(params)
 
 
-    def save_page_item(self, object, data, session):
+    def save_page_item(self, node_token, object, data, session):
         # TD doc string
 
         # check we are allowed to save this item
         # TD what about invisibles?
         if authenticate.check_permission(self.permissions):
-            self.custom_control_save(object, data, session)
+            self.custom_control_save(node_token, object, data, session)
 
 
-    def display_page_item(self, result, data, session):
+    def display_page_item(self, node_token, result, data, session):
         # TD doc string
 
         # check permissions etc
         if authenticate.check_permission(self.permissions):
             # FIXME result.results[0] is horrible
-            self.custom_control_display(result.results[0], data, session)
+            self.custom_control_display(node_token, result.results[0], data, session)
 
 
-    def delete_page_item(self, object, data, session):
+    def delete_page_item(self, node_token, object, data, session):
         # TD doc string
         # FIXME Not called from anywhere AFAIK
         # check permissions etc
         if authenticate.check_permission(self.permissions):
-            self.custom_control_delete(self, object, data, session)
+            self.custom_control_delete(self, node_token, object, data, session)
 
-    def get_page_item_structure(self, data):
+    def get_page_item_structure(self, node_token, data):
 
         if authenticate.check_permission(self.permissions):
-            return self.custom_page_item_structure(data)
+            return self.custom_page_item_structure(node_token, data)
 
 
-    def custom_control_save(self, object, data, session):
+    def custom_control_save(self, node_token, object, data, session):
         """save the data to the database object.
         override for custom behaviour"""
         pass
 
-    def custom_control_display(self, object, data, session):
+    def custom_control_display(self, node_token, object, data, session):
         pass
 
-    def custom_control_delete(self, item_wrapper, object, data, session):
+    def custom_control_delete(self, node_token, object, data, session):
         pass
 
-    def custom_page_item_structure(self, data):
+    def custom_page_item_structure(self, node_token, data):
         pass
 
 
@@ -117,7 +119,7 @@ class FormControl(FormItem):
 
     """This is a control that gets shown on a form"""
 
-    def custom_page_item_structure(self, data):
+    def custom_page_item_structure(self, node_token, data):
 
         params = self.get_control_params(data)
         params['name'] = self.name
@@ -152,7 +154,7 @@ class FormControl(FormItem):
         self.params.update(params)
 
 
-    def custom_control_display(self, object, data, session):
+    def custom_control_display(self, node_token, object, data, session):
         try:
             data[self.name] = getattr(object, self.name)
         except AttributeError:
@@ -160,7 +162,7 @@ class FormControl(FormItem):
             pass
 
 
-    def custom_control_save(self, object, data, session):
+    def custom_control_save(self, node_token, object, data, session):
         """save the data to the database object.
         override for custom behaviour"""
         if self.name in object._table.fields:
@@ -172,26 +174,26 @@ class ActionItem(FormControl):
 
     """These are buttons, links etc"""
 
-    def custom_page_item_structure(self, data):
+    def custom_page_item_structure(self, node_token, data):
 
         params = self.get_control_params(data)
-        params['node'] = self.factory.kw.get('node')
+        params['node'] = self.kw.get('link')
         params['title'] = self.label
 
         return params
 
-    def custom_control_display(self, object, data, session):
+    def custom_control_display(self, node_token, object, data, session):
         # has no special data
         pass
 
-    def custom_control_save(self, object, data, session):
+    def custom_control_save(self, node_token, object, data, session):
         # do not save
         pass
 
 class SubForm(FormItem):
 
 
-    def custom_page_item_structure(self, data):
+    def custom_page_item_structure(self, node_token, data):
 
         subform = self.form.node[self.name]
 
@@ -203,16 +205,16 @@ class SubForm(FormItem):
 
         params['name'] = self.name
         params['control'] = 'subform'
-        params['title'] = self.factory.kw.get('label', None)
+        params['title'] = self.label
 
         return params
 
-    def custom_control_display(self, object, data, session):
+    def custom_control_display(self, node_token, object, data, session):
 
         subform = self.form.node[self.name]
         data[self.name] = subform.load_subform(data)
 
-    def custom_control_save(self, object, data, session):
+    def custom_control_save(self, node_token, object, data, session):
 
         subform = self.form.node[self.name]
 
@@ -236,7 +238,7 @@ class Layout(FormItem):
     eg boxes, columns, spacers
     they do not update data"""
 
-    def custom_page_item_structure(self, data):
+    def custom_page_item_structure(self, node_token, data):
 
         params = {}
         # layouts are funny and send all their keywords through
@@ -253,13 +255,13 @@ class ExtraData(FormItem):
     """This item allows extra data fields to be included in what
     is sent to the front end.  They cannot change values in the database"""
 
-    def __init__(self, factory):
-        super(ExtraData, self).__init__(factory)
+    def __init__(self, factory, form):
+        super(ExtraData, self).__init__(factory, form)
 
         self.extra_fields = factory.kw.get("extra_fields")
 
 
-    def custom_control_display(self, object, data, session):
+    def custom_control_display(self, node_token, object, data, session):
         for field in self.extra_fields:
             # FIXME does this need a try except?
             data[field] = util.convert_value(getattr(object, field))
@@ -268,26 +270,26 @@ class ExtraData(FormItem):
 
 class Buttons(FormItem):
 
-    def __init__(self, factory):
-        super(Buttons, self).__init__(factory)
+    def __init__(self, factory, form):
+        super(Buttons, self).__init__(factory, form)
 
         self.command = factory.kw.get("command")
         self.buttons = factory.kw.get("buttons")
 
-    def custom_control_display(self, object, data, session):
-        if self.form.node.command == self.command:
+    def custom_control_display(self, node_token, object, data, session):
+        if node_token.command == self.command:
             data["__buttons"] = self.buttons
 
 
 class Message(FormItem):
 
-    def __init__(self, factory):
-        super(Message, self).__init__(factory)
+    def __init__(self, factory, form):
+        super(Message, self).__init__(factory, form)
 
         self.command = factory.kw.get("command")
         self.buttons = factory.kw.get("message")
 
-    def custom_control_display(self, object, data, session):
+    def custom_control_display(self, node_token, object, data, session):
         if self.form.node.command == self.command:
             data["__message"] = self.buttons
 
@@ -296,9 +298,9 @@ class Dropdown(FormControl):
 
     static = False
 
-    def __init__(self, factory):
+    def __init__(self, factory, form):
 
-        super(Dropdown, self).__init__(factory)
+        super(Dropdown, self).__init__(factory, form)
         self.default = self.kw.get("default")
         self.autocomplete = self.kw.get("autocomplete", True)
         self.out_params = {}
@@ -384,7 +386,7 @@ class Dropdown(FormControl):
 
         self.out_params = params
 
-    def custom_control_display(self, object, data, session):
+    def custom_control_display(self, node_token, object, data, session):
 
         # FIXME this always returns None?
         out_params = self.populate(data, object)
@@ -403,8 +405,8 @@ class CodeGroup(FormControl):
 
     static = False
 
-    def __init__(self, factory):
-        super(CodeGroup, self).__init__(factory)
+    def __init__(self, factory, form):
+        super(CodeGroup, self).__init__(factory, form)
 
         self.code_table = self.kw.get('code_table', None)
         self.code_title = self.kw.get('code_title_field', None)
@@ -432,7 +434,7 @@ class CodeGroup(FormControl):
 
         self.join_key = self.relation.join_keys_from_table(self.flag_table)[0][0]
 
-    def custom_control_save(self, object, data, session):
+    def custom_control_save(self, node_token, object, data, session):
         # FIXME this is broken
         return
         self.configure(self.form)
@@ -462,7 +464,7 @@ class CodeGroup(FormControl):
             code_groups.append(new)
             session.save_or_update(new)
 
-    def custom_control_display(self, object, data, session):
+    def custom_control_display(self, node_token, object, data, session):
 
         self.configure(self.form)
         code_groups = getattr(object, self.relation_attr)
@@ -473,7 +475,7 @@ class CodeGroup(FormControl):
 
         data[self.name] = out
 
-    def custom_control_delete(self, object, data, session):
+    def custom_control_delete(self, node_token, object, data, session):
 
         self.configure(self.form)
         code_groups = getattr(object, self.relation_attr)
@@ -485,7 +487,6 @@ class CodeGroup(FormControl):
 
         self.configure(self.form)
         params = dict(control = self.control_type)
-        # FIXME not used? name = self.name
 
         fields = ["id", self.code_title]
         if self.code_desc:
@@ -548,22 +549,20 @@ class FormItemFactory(object):
         self.volatile = False
 
     def __call__(self, form):
-        self.form = form
 
         if self.instance:
-            print 'cached %s %s' % (self.form.name, self.name)
             return self.instance
 
         # see if we have a form item class or if not create one
         if not self.form_item_class:
-            self.set_default_page_item_class()
+            self.set_default_page_item_class(form)
         if self.volatile:
             # return a new instance of the FormItem
-            print 'creating %s' % self.name
-            return self.form_item_class(self)
+            print 'creating volatile form item %s (%s)' % (self.name, self.form_item_class)
+            return self.form_item_class(self, form)
         else:
-            print 'creating %s %s' % (self.form.name, self.name)
-            instance = self.form_item_class(self)
+            print 'creating form item %s (%s)' % (self.name, self.form_item_class)
+            instance = self.form_item_class(self, form)
             if instance.static:
                 self.instance = instance
             else:
@@ -572,14 +571,14 @@ class FormItemFactory(object):
 
 
 
-    def set_default_page_item_class(self):
+    def set_default_page_item_class(self, form):
 
         """set class for a form item which has none specified
         using the database schema if possible"""
 
         # check that the form_item refers to an actual field
         try:
-            page_item_field = r[self.form.table].fields[self.name]
+            page_item_field = r[form.table].fields[self.name]
         except KeyError:
             page_item_field = None
 
@@ -638,13 +637,13 @@ def textarea(name, **kw):
     return FormItemFactory('textarea', FormControl, **kw)
 
 
-def button(node, **kw):
-    kw['node'] = node
+def button(link, **kw):
+    kw['link'] = link
     return FormItemFactory('button', ActionItem, **kw)
 
 
-def button_link(node, **kw):
-    kw['node'] = node
+def button_link(link, **kw):
+    kw['link'] = link
     return FormItemFactory('button_link', ActionItem, **kw)
 
 

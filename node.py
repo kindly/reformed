@@ -30,76 +30,69 @@ r = global_session.database
 
 log = logging.getLogger('rebase.node')
 
+
+
+
+
 class Node(object):
 
     permissions = []
     commands = {}
 
-    def __init__(self, data, node_name, prev_node = None):
+    static = True # If True the node is thread safe
 
+    def __init__(self, node_name):
+
+        # FIXME can this die?
         self.name = node_name
 
         # TD prepare the forms.  ? does this need doing for all the forms
         # or can we take a more lazy approach?
         self._forms = {}
+        self.volatile = False # set to True if forms are volatile
+
+        self.extra_data = {}
+        self.allowed = self.check_permissions()
+
+        # initiate forms
         for form_name in dir(self):
             if isinstance(getattr(self, form_name), FormFactory):
                 formwrapper = getattr(self, form_name)
                 # this is where we get the form initialised
-                self._forms[form_name] = formwrapper(form_name, self)
+                form = formwrapper(form_name, self)
+                if form.volatile:
+                    self.volatile = True
 
-        self.out = []
-        self.title = None
-        self.link = None
-
-        self.action = None
-        self.bookmark = None
-        self.user = None
-        self.next_node = None
-        self.next_data = None
-        self.next_data_out = None
-        self.auto_loggin_cookie = None
-
-        self.extra_data = {}
-        self.command = data.get('command')
-        self.allowed = self.check_permissions()
-        self.prev_node = prev_node
-        self.last_node = data.get('lastnode')
-        self.data = data.get('data')
-        if type(self.data).__name__ != 'dict':
-            self.data = {}
-
-        if self.last_node == self.__class__.__name__:
-            self.first_call = False
-        else:
-            self.first_call = True
+                self._forms[form_name] = form
 
 
     def __getitem__(self, value):
         return self._forms[value]
 
-    def call(self):
+    def call(self, node_token):
         """called when the node is used.  Checks to see if there
         is a function to call for the given command"""
 
-        command_info = self.commands.get(self.command)
+        # first check if the command is available
+        command_info = self.commands.get(node_token.command)
         if not command_info:
             return
-        command = command_info.get('command')
-
+        # check we have the needed permissions
         if command_info.get('permissions'):
             if not authenticate.check_permission(command_info.get('permissions')):
-                self.action = 'forbidden'
-                self.command = None
+                node_token.action = 'forbidden'
+                node_token.command = None
                 print 'forbidden'
                 return
 
+        command = command_info.get('command')
+
         if command:
             command = getattr(self, command)
-            command()
+            command(node_token)
         else:
-            self.action = 'general_error'
-            self.out = "Command '%s' in node '%s' not known" % (self.command, self.name)
+            node_token.action = 'general_error'
+            node_token.out = "Command '%s' in node '%s' not known" % (node_token.command, self.name)
 
     def check_permissions(self):
         return authenticate.check_permission(self.permissions)
@@ -138,15 +131,9 @@ class Node(object):
             out.append('%s=%s' % (key, dict[key]))
         return '&'.join(out)
 
-    def get_data_int(self, key, default = 0):
-        """ Get integer value out of self.data[key] or default """
-        try:
-            value = int(self.data.get(key, default))
-        except:
-            value = default
-        return value
+ 
 
-    def update_bookmarks(self):
+    def update_bookmarks(self, node_token):
 
         user_id = global_session.session['user_id']
 
@@ -156,16 +143,16 @@ class Node(object):
                 result = r.search_single_data("bookmarks",
                                          "user_id = ? and bookmark = ?",
                                          fields = ['title', 'bookmark', 'entity_table', 'entity_id', 'accessed_date'],
-                                         values = [user_id, self.bookmark["bookmark_string"]])
+                                         values = [user_id, node_token.bookmark["bookmark_string"]])
                 result["accessed_date"] = util.convert_value(datetime.datetime.now())
-                result["title"] = self.title
+                result["title"] = node_token.title
             except custom_exceptions.SingleResultError:
                 result = {"__table": "bookmarks",
-                          "entity_id": self.bookmark["entity_id"],
+                          "entity_id": node_token.bookmark["entity_id"],
                           "user_id": user_id,
-                          "bookmark": self.bookmark["bookmark_string"],
-                          "title": self.title,
-                          "entity_table": self.bookmark["table_name"],
+                          "bookmark": node_token.bookmark["bookmark_string"],
+                          "title": node_token.title,
+                          "entity_table": node_token.bookmark["table_name"],
                           "accessed_date": util.convert_value(datetime.datetime.now())}
             # save
             util.load_local_data(r, result)
@@ -173,26 +160,17 @@ class Node(object):
         else:
             # anonymous user
             result = {"__table": "bookmarks",
-                      "entity_id": self.bookmark["entity_id"],
-                      "bookmark": self.bookmark["bookmark_string"],
-                      "title": self.title,
-                      "entity_table": self.bookmark["table_name"],
+                      "entity_id": node_token.bookmark["entity_id"],
+                      "bookmark": node_token.bookmark["bookmark_string"],
+                      "title": node_token.title,
+                      "entity_table": node_token.bookmark["table_name"],
                       "accessed_date": util.convert_value(datetime.datetime.now())}
 
         # update bookmark output to front-end
-        self.bookmark = result
+        node_token.bookmark = result
 
 
-    def set_form_message(self, message):
-        """Sets the button info to be displayed by a form."""
-        self.out['data']['__message'] = message
 
-    def set_form_buttons(self, button_list):
-        """Sets the button info to be displayed by a form."""
-        if not self.out.get('data'):
-            self.out["data"] = {}
-
-        self.out['data']['__buttons'] = button_list
 
     def validate_data(self, data, field, validator):
         try:
@@ -206,16 +184,16 @@ class Node(object):
             validated_data[field] = self.validate_data(data, field, validator)
         return validated_data
 
-    def finish_node_processing(self):
+    def finish_node_processing(self, node_token):
 
-        if self.bookmark and self.bookmark != 'CLEAR':
-            self.update_bookmarks()
+        if node_token.bookmark and node_token.bookmark != 'CLEAR':
+            self.update_bookmarks(node_token)
 
-    def initialise(self):
+    def initialise(self, node_token):
         """called first when the node is used"""
         pass
 
-    def finalise(self):
+    def finalise(self, node_token):
         """called last when node is used"""
         pass
 
@@ -260,23 +238,23 @@ class TableNode(Node):
         commands['delete'] = dict(command = 'delete')
         commands['new'] = dict(command = 'new')
 
-    def save(self):
-        self["main"].save()
+    def save(self, node_token):
+        self["main"].save(node_token)
 
-    def new(self):
-        self["main"].new()
+    def new(self, node_token):
+        self["main"].new(node_token)
 
-    def edit(self):
-        self["main"].view(read_only = False)
+    def edit(self, node_token):
+        self["main"].view(node_token, read_only = False)
 
-    def view(self, read_only=True):
-        self["main"].view(read_only)
+    def view(self, node_token, read_only=True):
+        self["main"].view(node_token, read_only)
 
-    def delete(self):
-        self["main"].delete()
+    def delete(self, node_token):
+        self["main"].delete(node_token, node_token)
 
-    def list(self, limit=20):
-        self["main"].list(limit)
+    def list(self, node_token, limit=20):
+        self["main"].list(node_token, limit)
 
 
 

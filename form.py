@@ -25,7 +25,7 @@ import sqlalchemy
 import reformed.util as util
 import reformed.custom_exceptions as custom_exceptions
 import urllib
-from page_item import input
+from page_item import input, FormItemFactory
 
 class Form(object):
 
@@ -62,6 +62,8 @@ class Form(object):
         self.form_items = []
         self.form_item_name_list = []
 
+        self.volatile = False # Set to True if any form items are declared non thread safe
+
         self.initiate_form_items()
 
     def initiate_form_items(self):
@@ -69,13 +71,17 @@ class Form(object):
 
         ## not in init as fields want to know what table the forms is in
         for form_item in self.provided_form_items:
-            # here is where we call our form_items
-            # FIXME should we check they are actually FormItems?
-            form_item_instance = form_item(self)
-            self.form_items.append(form_item_instance)
-            if form_item_instance.name:
-                self.form_item_name_list.append(form_item_instance.name)
-
+            if isinstance(form_item, FormItemFactory):
+                # here is where we call our form_items
+                form_item_instance = form_item(self)
+                # check if form item declared non thread safe
+                if not form_item_instance.static:
+                    self.volatile = True
+                self.form_items.append(form_item_instance)
+                if form_item_instance.name:
+                    self.form_item_name_list.append(form_item_instance.name)
+            else:
+                raise Exception('Item is not FormItemFactory')
 
     def set_name(self, name):
         # don't like want to kill TD
@@ -104,17 +110,17 @@ class Form(object):
 
         return out
 
-    def show(self, data = None):
+    def show(self, node_token, data = None):
         """display form on front end including data if supplied"""
 
         if not data:
             data = {}
         # update the node that the form is associated with
-        self.node.out = self.create_form_data(data)
+        self.node.out = self.create_form_data(node_token, data)
         self.node.action = 'form'
 
 
-    def new(self):
+    def new(self, node_token):
         """display a 'blank' form on the front end"""
 
         data_out = {}
@@ -123,10 +129,10 @@ class Form(object):
         data_out['__message'] = "Hello, add new %s" % self.table
 
         # update the node that the form is associated with
-        self.node.out = self.create_form_data(data_out)
+        self.node.out = self.create_form_data(node_token, data_out)
         self.node.action = 'form'
 
-    def save_row(self, data, session, parent_obj = None, relation_attr = None):
+    def save_row(self, node_token, data, session, parent_obj = None, relation_attr = None):
 
         """Saves an individual database row.  Subforms are saved last and
         the subforms call this method in their own form instance. 
@@ -170,7 +176,7 @@ class Form(object):
         for form_item in self.form_items:
       #      if form_item.page_item_type not in ["subform", "layout"]:
           # we dn't care if the item saves or not that's it's lookout
-            form_item.save_page_item(obj, data, session)
+            form_item.save_page_item(node_token, obj, data, session)
 
         ## when subforms are saved on their own
         # TD this is crap we NEVER trust user data as it is ALWAYS 100% bullshit
@@ -192,7 +198,7 @@ class Form(object):
             errors = {}
             for key, value in e.error_dict.items():
                 errors[key] = value.msg
-            self.node.errors[root] = errors
+            node_token.errors[root] = errors
 
 # FIXME more subform guff
 ###        for form_item in self.form_items:
@@ -202,13 +208,13 @@ class Form(object):
 
         return obj
 
-    def save(self):
+    def save(self, node_token):
         """Save this form. Its job is to set up the node belongs to 
         and handle errors"""
         # TD not reviewed
 
         ## set up data to be stored
-        node = self.node
+        node = node_token ##FIXME
         node.saved = []
         node.errors = {}
         node.out = {}
@@ -219,7 +225,7 @@ class Form(object):
         data = node.data
 
         try:
-            obj = self.save_row(data, session)
+            obj = self.save_row(node_token, data, session)
             if not node.errors:
                 session.commit()
         except Exception, e:
@@ -265,16 +271,17 @@ class Form(object):
             node.link = 'BACK'
 
 
-    def view(self, read_only=True, where = None):
+    def view(self, node_token, read_only=True, where = None):
         # TD not reviewed
         node = self.node
-        id = node.data.get('id')
+        print 'VIEW', node_token.data
+        id = node_token.data.get('id')
         if where:
             pass
         elif id:
             where = 'id=%s' % id
         else:
-            id = node.data.get('__id')
+            id = node_token.data.get('__id')
             where = '_core_entity_id=%s' % id
 
         try:
@@ -285,7 +292,7 @@ class Form(object):
             table = self.table
 
             tables = util.split_table_fields(self.form_item_name_list, table).keys()
-
+            print 'VIEW', table, where
             result = r.search_single(table, where, 
                                           session = session, tables = tables)
 
@@ -299,20 +306,20 @@ class Form(object):
                     extra_field = None
 
             for form_item in self.form_items:
-                form_item.display_page_item(result, data_out, session)
+                form_item.display_page_item(node_token, result, data_out, session)
 
             id = data_out.get('id')
             # set the title for bookmarks
             if self.title_field and data_out.has_key(self.title_field):
-                self.node.title = data_out.get(self.title_field)
+                node_token.title = data_out.get(self.title_field)
             else:
-                self.node.title = '%s: %s' % (self.table, id)
+                node_token.title = '%s: %s' % (self.table, id)
 
         except sqlalchemy.orm.exc.NoResultFound:
             data = None
             data_out = {}
             id = None
-            self.title = 'unknown'
+            node_token.title = 'unknown'
             print 'no data found'
 
         if self.title_field:
@@ -333,21 +340,21 @@ class Form(object):
         if not data_out['__message']:
             data_out.pop('__message')
 
-        data = self.create_form_data(data_out, read_only)
+        data = self.create_form_data(node_token, data_out, read_only)
 
-        node.out = data
-        node.action = 'form'
+        node_token.out = data
+        node_token.action = 'form'
 
-        node.bookmark = dict(
+        node_token.bookmark = dict(
             table_name = obj._table.name,
             bookmark_string = node.build_node('', 'view', 'id=%s' %  id),
             entity_id = id
         )
 
-    def delete(self):
+    def delete(self, node_token):
         # TD not reviewed
         ##FIXME does not work and has not been tested
-        node = self.node
+        node = node_token  # FIXME
         id = node.data.get('id')
         if id:
             filter = {'id' : id}
@@ -387,14 +394,14 @@ class Form(object):
             session.rollback()
         session.close()
 
-    def list(self, limit=20):
+    def list(self, node_token, limit=20):
         # TD not reviewed
 
-        node = self.node
+        node = node_token.node
 
-        query = node.data.get('q', '')
-        limit = node.get_data_int('l', limit)
-        offset = node.get_data_int('o')
+        query = node_token.data.get('q', '')
+        limit = node_token.get_data_int('l', limit)
+        offset = node_token.get_data_int('o')
 
         table = self.table or node.table
 
@@ -441,7 +448,7 @@ class Form(object):
 
         data['__message'] = "These are the current %s(s)." % self.table
 
-        out = node["listing"].create_form_data(data)
+        out = node["listing"].create_form_data(node_token, data)
 
         # add the paging info
         out['paging'] = {'row_count' : results.row_count,
@@ -449,12 +456,12 @@ class Form(object):
                          'offset' : offset,
                          'base_link' : 'n:%s:list:q=%s' % (self.name, query)}
 
-        node.out = out
-        node.action = 'form'
-        node.title = 'listing'
+        node_token.out = out
+        node_token.action = 'form'
+        node_token.title = 'listing'
 
 
-    def create_form_data(self, data=None, read_only=False):
+    def create_form_data(self, node_token, data=None, read_only=False):
         """creates and returns the data stucture required by the front end
         for the this form"""
 
@@ -467,7 +474,7 @@ class Form(object):
 
         out = {
             "form": {
-                "fields":self.create_form_item_output(data)
+                "fields":self.create_form_item_output(node_token, data)
             },
             "type": "form",
             "data": data
@@ -483,12 +490,12 @@ class Form(object):
 
         return out
 
-    def create_form_item_output(self, data):
+    def create_form_item_output(self, node_token, data):
         """create and return the form data stucture used by the front end"""
 
         form_items = []
         for form_item in self.form_items:
-            row = form_item.get_page_item_structure(data)
+            row = form_item.get_page_item_structure(node_token, data)
             if row:
                 form_items.append(row)
         return form_items
@@ -497,14 +504,26 @@ class Form(object):
 
 class FormFactory(object):
 
-    def __init__(self, *arg, **kw):
-        self.arg = arg
+    def __init__(self, *form_items, **kw):
+        self.form_items = form_items
         self.kw = kw
+        self.instance = None
 
     def __call__(self, name, node):
-        return Form(name, node, *self.arg, **self.kw)
+
+        if  not self.instance:
+            print 'create form %s' % name
+            instance = Form(name, node, *self.form_items, **self.kw)
+            if instance.volatile:
+                return instance
+            else:
+                self.instance = instance
+        else:
+            print 'reuse form %s' % name
+
+        return self.instance
 
 
-def form(*args, **kw):
-    return FormFactory(*args, **kw)
+def form(*form_items, **kw):
+    return FormFactory(*form_items, **kw)
 

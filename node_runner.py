@@ -32,7 +32,57 @@ log = logging.getLogger('rebase.node')
 class NodeNotFound(Exception):
     pass
 
+class NodeToken(object):
 
+    """This holds state information for the current transaction"""
+
+    def __init__(self, data):
+
+        self.last_node = None
+        self.first_call = False
+        self.command = data.pop('command', None)
+
+        self.data = data.pop('data', None)
+        if type(self.data).__name__ != 'dict':
+            self.data = {}
+
+        self.request_application_data = data.pop('request_application_data', False)
+        self.output = None
+        # output stuff
+        self.out = []
+        self.title = None
+        self.link = None
+
+        self.action = None
+        self.bookmark = None
+        self.user = None
+        self.next_node = None
+        self.next_data = None
+        self.next_data_out = None
+        self.auto_loggin_cookie = None
+
+    def get_data_int(self, key, default = 0):
+        """ Get integer value out of self.data[key] or default """
+        try:
+            value = int(self.data.get(key, default))
+        except:
+            value = default
+        return value
+
+    def set_form_message(self, message):
+        """Sets the button info to be displayed by a form."""
+        self.out['data']['__message'] = message
+
+    def set_form_buttons(self, button_list):
+        """Sets the button info to be displayed by a form."""
+        if not self.out.get('data'):
+            self.out["data"] = {}
+
+        self.out['data']['__buttons'] = button_list
+
+
+
+        
 class NodeManager(object):
 
     """NodeManager imports and stores nodes form
@@ -45,12 +95,22 @@ class NodeManager(object):
     def __init__(self, application):
         self.application = application
         self.nodes = {}
+        self.node_instances = {}
         self.modules = {}
         self.processed_nodes = {}
         self.get_nodes()
 
-    def __getitem__(self, value):
-        return self.nodes[value]
+
+    def get_node_instance(self, node_name):
+        if node_name in self.node_instances:
+            print 'reuse node %s' % node_name
+            return self.node_instances[node_name]
+        else:
+            print 'create node %s' % node_name
+            instance = self.nodes[node_name](node_name)
+            if not instance.volatile and instance.static:
+                self.node_instances[node_name] = instance
+        return instance
 
     def get_nodes(self):
         # get details of previously known nodes
@@ -144,7 +204,7 @@ class NodeRunner(object):
         self.command_queue = []
         self.output = [] # this will be returned
         self.auto_loggin_cookie = None
-
+        
     def add_command(self, data):
         self.command_queue.append(data)
 
@@ -154,75 +214,86 @@ class NodeRunner(object):
             self.node(data)
 
     def node(self, data):
+
+        # create our node token to hold state
+        node_token = NodeToken(data)
+
         node = data.get('node')
-        out = self.run(node, data)
+        self.run(node, node_token)
         self.output.append({'type' : 'node',
-                              'data' : out})
+                              'data' : node_token.output})
 
 
-    def run(self, node_name, data, last_node = None):
+    def run(self, node_name, node_token, last_node = None):
         log.info('running node: %s, user id: %s' % (node_name, global_session.session['user_id']))
-        log.debug('sent data: \n%s' %  pprint.pformat(data))
+        log.debug('sent data: \n%s' %  pprint.pformat(node_token.data))
 
         sys_info = global_session.sys_info
         # check if application is private
         if not sys_info.get('public') and not global_session.session['user_id']:
             node_name = sys_info.get('default_node')
-            data['command'] = sys_info.get('default_command')
-            log.info('User not logged in.  Switching to node %s, command %s' % (node_name, data['command']))
+            node_token.data['command'] = sys_info.get('default_command')
+            log.info('User not logged in.  Switching to node %s, command %s' % (node_name, node_token.data['command']))
 
         # get node from node_manager
         try:
-            node_class = self.node_manager[node_name]
+            # this should really get an existing node
+            # node_class = self.node_manager[node_name]
+            node = self.node_manager.get_node_instance(node_name)
         except KeyError:
             raise NodeNotFound(node_name)
 
-        x = node_class(data, node_name, last_node)
+        node_token.node = node
+    #    x = node_class(node_name, last_node)
 
         # the user cannot perform this action
-        if not x.allowed:
+        if not node.allowed:
             log.warn('forbidden node or command')
             return {'action': 'forbidden'}
 
-        x.initialise()
-        x.call()
-        x.finalise()
-        x.finish_node_processing()
+        node.initialise(node_token)
+        node.call(node_token)
+        node.finalise(node_token)
+        node.finish_node_processing(node_token)
+## todo
+## todo        # auto loggin cookie info
+## todo        if xnode_token.auto_loggin_cookie:
+## todo            self.auto_loggin_cookie = node.auto_loggin_cookie
+## todo
+## todo        if node.prev_node and node.prev_node.next_data_out:
+## todo            node.out["data"].update(node.prev_node.next_data_out)
+## todo
+## todo        if node.next_node:
+## todo            log.info('redirect to next node %s' % node.next_node)
+## todo            return self.run(node.next_node, node.next_data, node)
+## todo        else:
+## todo            refresh_frontend = False
 
-        # auto loggin cookie info
-        if x.auto_loggin_cookie:
-            self.auto_loggin_cookie = x.auto_loggin_cookie
+        # FIXME hack
+        refresh_frontend = True
+        info = {'action': node_token.action,
+                'node': node_name,
+                'title' : node_token.title,
+                'link' : node_token.link,
+                'user' : node_token.user,
+                'bookmark' : node_token.bookmark,
+                'data' : node_token.out}
 
-        if x.prev_node and x.prev_node.next_data_out:
-            x.out["data"].update(x.prev_node.next_data_out)
+        user_id = global_session.session['user_id']
+        # application data
+        if node_token.request_application_data:
+            info['application_data'] = sys_info
+            info['application_data']['__user_id'] = user_id
+            info['application_data']['__username'] = global_session.session['username']
+            refresh_frontend = True
+        # bookmarks
+        if (info['user'] or refresh_frontend) and user_id:
+            # we have logged in so we want our bookmarks
+            info['bookmark'] = self.bookmark_list(user_id)
+        log.debug('returned data\n%s\n----- end of node processing -----' % pprint.pformat(info))
 
-        if x.next_node:
-            log.info('redirect to next node %s' % x.next_node)
-            return self.run(x.next_node, x.next_data, x)
-        else:
-            refresh_frontend = False
-
-            info = {'action': x.action,
-                    'node': node_name,
-                    'title' : x.title,
-                    'link' : x.link,
-                    'user' : x.user,
-                    'bookmark' : x.bookmark,
-                    'data' : x.out}
-
-            user_id = global_session.session['user_id']
-            # application data
-            if data.get('request_application_data'):
-                    info['application_data'] = sys_info
-                    info['application_data']['__user_id'] = user_id
-                    info['application_data']['__username'] = global_session.session['username']
-                    refresh_frontend = True
-            # bookmarks
-            if (info['user'] or refresh_frontend) and user_id:
-                # we have logged in so we want our bookmarks
-                info['bookmark'] = self.bookmark_list(user_id)
-            log.debug('returned data\n%s\n----- end of node processing -----' % pprint.pformat(info))
-            return info
+        ## FIXME botch
+        node_token.output = info
 
 
     def bookmark_list(self, user_id, limit = 100):
