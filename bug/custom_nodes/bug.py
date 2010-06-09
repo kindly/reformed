@@ -98,12 +98,12 @@ class ListTicket(TableNode):
 
     list_title = 'ticket %s'
 
-    def save(self):
-        self["comment"].save()
-        self.action = "redirect"
-        self.link = "bug.ListTicket:view:__id=%s" % self.data.get("_core_entity_id")
+    def save(self, node_token):
+        self["comment"].save(node_token)
+        node_token.action = "redirect"
+        node_token.link = "bug.ListTicket:view:__id=%s" % self.data.get("_core_entity_id")
         # FIXME this is stupid
-        self.next_node = None
+        node_token.next_node = None
 
 
 class Permission(TableNode):
@@ -157,8 +157,8 @@ class Page(TableNode):
         title_field = 'title'
     )
 
-    def view(self):
-        where = 'page = %s' % self.data.get("page")
-        self["view_form"].view(where = where)
+    def view(self, node_token):
+        where = 'page = %s' % node_token.data.get("page")
+        self["view_form"].view(node_token, where = where)
 
 
