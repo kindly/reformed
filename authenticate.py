@@ -80,7 +80,7 @@ def check_login(login_name, password):
         where = "login_name = ?"
         try:
             data_out = r.search_single_data('user', where, values = [login_name])
-            if not reformed.fshp.check(password, data_out.get("password")):
+            if not data_out.get("password") or not reformed.fshp.check(password, data_out.get("password")):
                 # password incorrect
                 message = fail_message
                 log.info('Login Fail for `%s` incorrect password' % login_name)
