@@ -133,6 +133,9 @@ class User(TableNode):
         params = {"form_type": "action"}
     )
 
+    def save(self):
+        self["user"].save()
+
     def edit(self):
         self["user"].view(read_only = False)
 
