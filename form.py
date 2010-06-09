@@ -116,8 +116,8 @@ class Form(object):
         if not data:
             data = {}
         # update the node that the form is associated with
-        self.node.out = self.create_form_data(node_token, data)
-        self.node.action = 'form'
+        node_token.out = self.create_form_data(node_token, data)
+        node_token.action = 'form'
 
 
     def new(self, node_token):
@@ -129,8 +129,8 @@ class Form(object):
         data_out['__message'] = "Hello, add new %s" % self.table
 
         # update the node that the form is associated with
-        self.node.out = self.create_form_data(node_token, data_out)
-        self.node.action = 'form'
+        node_token.out = self.create_form_data(node_token, data_out)
+        node_token.action = 'form'
 
     def save_row(self, node_token, data, session, parent_obj = None, relation_attr = None):
 
