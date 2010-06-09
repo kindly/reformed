@@ -193,7 +193,6 @@ REBASE.layout_manager = function (){
         html.push('<li><span onclick="node_load(\'n:table.Table:new\')">new table</span></li>');
         html.push('<li><span onclick="node_load(\'n:table.Table:list\')">table</span></li>');
         html.push('<li><span onclick="node_load(\'n:test.Sponsorship:\')">sponsor</span></li>');
-        html.push('<li><span onclick="node_load(\'n:test.Login:\')">login</span></li>');
         html.push('<li><span onclick="$JOB.add({}, {}, \'reload\', true)" ><b>reload</b></span></li>');
         html.push('<li><span onclick="get_node(\'test.DataLoader\', \'load\', {file:\'data.csv\', table:\'people\'})" ><b>load people</b></span></li>');
         html.push('<li><span onclick="node_call_from_string(\'/n:test.DataLoader:load:file=donkeys.csv&table=donkey\', true)" ><b>load donkeys</b></span></li>');

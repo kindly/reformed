@@ -18,14 +18,13 @@
 ##   Copyright (c) 2008-2009 Toby Dacre & David Raznick
 ##
 
+import authenticate
 import reformed.util as util
 from reformed import custom_exceptions
-import formencode as fe
-import sqlalchemy as sa
 import datetime
 from global_session import global_session
 from page_item import link, link_list, info, input
-from form import form, FormWrapper
+from form import form, FormFactory
 import logging
 r = global_session.database
 
@@ -40,10 +39,13 @@ class Node(object):
 
         self.name = node_name
 
+        # TD prepare the forms.  ? does this need doing for all the forms
+        # or can we take a more lazy approach?
         self._forms = {}
         for form_name in dir(self):
-            if isinstance(getattr(self, form_name), FormWrapper):
+            if isinstance(getattr(self, form_name), FormFactory):
                 formwrapper = getattr(self, form_name)
+                # this is where we get the form initialised
                 self._forms[form_name] = formwrapper(form_name, self)
 
         self.out = []
@@ -56,6 +58,8 @@ class Node(object):
         self.next_node = None
         self.next_data = None
         self.next_data_out = None
+        self.auto_loggin_cookie = None
+
         self.extra_data = {}
         self.command = data.get('command')
         self.allowed = self.check_permissions()
@@ -84,8 +88,7 @@ class Node(object):
         command = command_info.get('command')
 
         if command_info.get('permissions'):
-            user_perms = set(global_session.session.get('permissions'))
-            if not set(command_info.get('permissions')).intersection(user_perms):
+            if not authenticate.check_permission(command_info.get('permissions')):
                 self.action = 'forbidden'
                 self.command = None
                 print 'forbidden'
@@ -99,11 +102,8 @@ class Node(object):
             self.out = "Command '%s' in node '%s' not known" % (self.command, self.name)
 
     def check_permissions(self):
-        if self.permissions:
-            user_perms = set(global_session.session.get('permissions'))
-            if not set(self.permissions).intersection(user_perms):
-                return False
-        return True
+        return authenticate.check_permission(self.permissions)
+
 
     def build_node(self, title, command, data = '', node = None):
         if not node:

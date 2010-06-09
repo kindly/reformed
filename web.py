@@ -33,17 +33,25 @@ from global_session import global_session
 import node_runner
 import fileupload
 import reformed.util
+import authenticate
 import pprint
 import logging
 log = logging.getLogger('rebase.web')
 
 def session(environ):
+    authenticate.create_auto_loggin_id()
     global_session.session = environ['beaker.session']
     # if this is a new session set up the defaults
     if global_session.session.get('user_id') == None:
-        global_session.session['user_id'] = 0
-        global_session.session['username'] = ''
-        global_session.session['permissions'] = []
+        # auto loggin
+        request = webob.Request(environ)
+        auto_cookie = request.cookies.get('auto')
+        if auto_cookie:
+            if authenticate.auto_loggin(auto_cookie):
+                return
+        # normal session start
+        authenticate.clear_user_session()
+
         log.info('creating new http session\n%s' % pprint.pformat(global_session.session))
 
 
@@ -103,7 +111,6 @@ def process_attachment(environ, start_response):
 
 def process_node(environ, start_response):
 
-    start_response('200 OK', [('Content-Type', 'text/html')])
     session(environ)
 
     request = webob.Request(environ)
@@ -120,14 +127,38 @@ def process_node(environ, start_response):
     try:
         node_interface.process()
     except:
+        start_response('200 OK', [('Content-Type', 'text/plain')])
         return throw_error('Node Error:')
 
     data = node_interface.output
 
     try:
-        return [json.dumps(data, sort_keys=False, indent=4)]#, separators=(',',':'))]
+        output = [json.dumps(data, sort_keys=False, indent=4)]#, separators=(',',':'))]
     except TypeError:
+        start_response('200 OK', [('Content-Type', 'text/plain')])
         return throw_error('Output JSON Error:')
+
+    response = webob.Response(environ)
+    response.content_type = 'text/plain'
+    if node_interface.auto_loggin_cookie:
+        cookie = node_interface.auto_loggin_cookie
+        if cookie == 'CLEAR':
+            response.delete_cookie('auto')
+
+        else:
+            response.set_cookie('auto',  cookie,
+                                domain = '127.0.0.1', # FIXME this needs to be set correctly
+                                secure = False, # can be sent over plain http (risky)
+                                max_age = 31536000, # cookie lifetime in seconds (1 year)
+                                path = '/')
+        response.headers['Set-Cookie']
+
+    response.body = ''.join(output)
+
+    return response(environ, start_response)
+
+
+
 
 def throw_error(title):
 
@@ -152,7 +183,7 @@ class WebApplication(object):
         self.application.initialise_database()
         self.application.process_nodes()
         self.database = application.database
-        self.dir = application.dir
+        self.directory = application.directory
         global_session.database = self.database
 
     def static(self, environ, start_response, path):
@@ -160,7 +191,7 @@ class WebApplication(object):
         # FIXME security limit path directory traversal etc
         root = reformed.util.get_dir()
         if path.startswith('/local/'):
-            path = os.path.join(root, self.dir, 'content', path[7:])
+            path = os.path.join(root, self.directory, 'content', path[7:])
         else:
             path = os.path.join(root, 'content', path[1:])
         return get_file(environ, start_response, path)

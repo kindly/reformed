@@ -1,5 +1,6 @@
 from reformed.fields import *
 from reformed.database import table, entity
+import authenticate
 
 
 def initialise(application):
@@ -24,6 +25,7 @@ def initialise(application):
         Boolean("active", default = True, mandatory = True),
         Boolean("locked", default = False),
         Text("login_name", mandatory = True),
+        Text("auto_loggin", length = 100),
         Password("password"),
         Email("email"),
         DateTime("last_logged_in"),
@@ -46,7 +48,7 @@ def initialise(application):
         Text("description", length = 200),
         Text("notes", length = 4000),
         Boolean("active", default = True, mandatory = True),
-
+        Integer("access_level", default = 0),
 
         table_type = "system",
         title_field = 'name'
@@ -73,6 +75,7 @@ def initialise(application):
         Text("permission"),
         Text("name", length = 200),
         Text("description", length = 4000),
+        Integer("access_level", default = 0),
         table_type = "system",
         title_field = 'name'
     )
@@ -81,7 +84,7 @@ def initialise(application):
 
 
     # permission
-    application.predefine.permission("sysadmin", u'System Administrators', u'Administer the system.')
+    application.predefine.permission("SysAdmin", u'System Administrators', u'Administer the system.', 2)
 
     # add admin user
     # this is a special case as no other users should be auto created
@@ -89,11 +92,12 @@ def initialise(application):
                 created_by = 1,
                 _modified_by = 1,
                 active = True,
+                auto_loggin = authenticate.create_auto_loggin_id(),
                 password = u"admin")
     application.predefine.add_data("user", "login_name", u"admin", data)
 
     # sys admin user_group
-    application.predefine.user_group(u'admin', u'System Administrators', u'Full system access', permissions = ['sysadmin'])
+    application.predefine.user_group(u'SysAdmins', u'System Administrators', u'Full system access', permissions = ['SysAdmin'], access_level = 2)
 
     # this is a special case too
     # make admin a sysadmin
