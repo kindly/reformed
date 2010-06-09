@@ -165,7 +165,7 @@ class User(TableNode):
             (message, data) = authenticate.check_login(vdata['login_name'], vdata['password'])
             # if data is returned then the login was a success
             if data:
-                self.login(data)
+                self.login(node_token, data)
                 return
         if not message:
             message = '# Login.\n\nWelcome to %s enter your login details to continue' % global_session.sys_info['name']
