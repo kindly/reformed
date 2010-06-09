@@ -264,11 +264,17 @@ class NodeRunner(object):
 ## todo        if node.prev_node and node.prev_node.next_data_out:
 ## todo            node.out["data"].update(node.prev_node.next_data_out)
 ## todo
-## todo        if node.next_node:
-## todo            log.info('redirect to next node %s' % node.next_node)
-## todo            return self.run(node.next_node, node.next_data, node)
-## todo        else:
-## todo            refresh_frontend = False
+        if node_token.next_node:
+            log.info('redirect to next node %s' % node_token.next_node)
+            node_token.data = node_token.next_data['data']
+            node_token.command = node_token.next_data['command']
+            next_node = node_token.next_node
+            node_token.next_node = None
+            node_token.next_data = None
+            print node_token.next_node, node_token, node_name
+            return self.run(next_node, node_token, node_name)
+        else:
+            refresh_frontend = False
 
         # FIXME hack
         refresh_frontend = True
