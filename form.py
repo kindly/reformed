@@ -116,8 +116,8 @@ class Form(object):
         if not data:
             data = {}
         # update the node that the form is associated with
-        self.node.out = self.create_form_data(node_token, data)
-        self.node.action = 'form'
+        node_token.out = self.create_form_data(node_token, data)
+        node_token.action = 'form'
 
 
     def new(self, node_token):
