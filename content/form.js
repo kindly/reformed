@@ -1257,6 +1257,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                         $builder[--builder_depth].append($builder.pop());
                     }
                     break;
+                default:
+                    console_log('unknown layout ' + item.layout)
             }
         }
 
