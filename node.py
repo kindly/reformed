@@ -41,6 +41,8 @@ class Node(object):
 
     static = True # If True the node is thread safe
 
+    table = None # forms need this defined
+
     def __init__(self, node_name):
 
         # FIXME can this die?
