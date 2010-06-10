@@ -247,7 +247,6 @@ class NodeRunner(object):
             raise NodeNotFound(node_name)
 
         node_token.node = node
-    #    x = node_class(node_name, last_node)
 
         # the user cannot perform this action
         if not node.allowed:
@@ -277,8 +276,6 @@ class NodeRunner(object):
         else:
             refresh_frontend = False
 
-        # FIXME hack
-        refresh_frontend = True
         info = {'action': node_token.action,
                 'node': node_name,
                 'title' : node_token.title,
