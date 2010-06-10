@@ -50,7 +50,9 @@ $.fn.extend({
 $.Checkbox = function(input, item, value){
 
     var $checkbox = $(input);
-    var is_2_state = (item.validation && item.validation[0].not_empty == true);
+    // default to being a 2 state control
+    // unless explicit validation rule
+    var is_2_state = !(item.validation && item.validation[0].not_empty == false);
 
     function mousedown_2_state(){
         switch (value){
