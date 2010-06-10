@@ -48,14 +48,14 @@ def loggin(data, auto = False):
 
 
 def get_permissions(user_id):
-    """return an array of permissions for the user_id provided"""
+    """return a set of permissions for the user_id provided"""
 
     r = global_session.database
     result = r.search('permission', 'user_group_user.user_id = ?', values = [user_id], fields=['permission']).data
     permissions = ['LoggedIn']
     for row in result:
         permissions.append(row.get('permission'))
-    return permissions
+    return set(permissions)
 
 
 def clear_user_session():
@@ -67,7 +67,7 @@ def clear_user_session():
 
     global_session.session['user_id'] = 0
     global_session.session['username'] = ''
-    global_session.session['permissions'] = []
+    global_session.session['permissions'] = set()
     global_session.session.persist()
 
 def check_login(login_name, password):
@@ -133,13 +133,14 @@ def check_permission(permissions):
     if not permissions:
         return True
 
+    user_perms = global_session.session.get('permissions')
+
     # SysAdmin permission give automatic access
-    if 'SysAdmin' in global_session.session.get('permissions'):
+    if 'SysAdmin' in user_perms:
         return True
 
     # general case does the user have one of the required permissions
-    user_perms = set(global_session.session.get('permissions'))
-    if set(permissions).intersection(user_perms):
+    if len(set(permissions).intersection(user_perms)):
         return True
 
     # action not allowed
