@@ -9,6 +9,14 @@ body {
 	border:0;
 }
 
+h1, h2, h3, h4, h5 ,h6 {
+    margin:4px;
+}
+
+p {
+    margin:2px;
+}
+
 .label {
 	color:darkblue;
 	padding:0 15px;
