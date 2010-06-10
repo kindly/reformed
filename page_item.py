@@ -35,6 +35,7 @@ class FormItem(object):
         # into local object
         self.name = factory.name
         self.validation = factory.validation
+        self.default = factory.default
         self.data_type = factory.data_type
         self.label = factory.label
         self.permissions = factory.permissions
@@ -127,13 +128,23 @@ class FormControl(FormItem):
         params['title'] = self.label
 
         # get any validation/defaults defined in the database
-        # FIXME why check for self.validation?
-        if self.database_field and self.validation:
-            if "validation" not in params:
-                # FIXME is this safe? can we miss rules?
+        try:
+            if self.database_field.validation_info:
                 params["validation"] = self.database_field.validation_info
             if self.database_field.default:
                 params["default"] = self.database_field.default
+        except AttributeError:
+            # no database field
+            pass
+
+        if self.validation:
+            if 'validation' in params:
+                 params["validation"].append(self.validation)
+            else:
+                params["validation"] = [self.validation]
+
+        if self.default:
+            params["default"] = self.default
 
         return params
 
@@ -146,6 +157,9 @@ class FormControl(FormItem):
 
         if self.extra_params:
             params.update(self.extra_params)
+
+        if self.kw:
+            params.update(self.kw)
 
         return params
 
@@ -528,13 +542,13 @@ class FormItemFactory(object):
         self.control_type = control_type
         # This is the class used to create the form item
         self.form_item_class = form_item_class
-        self.kw = kw
 
         # process basic keywords
         self.name = kw.pop("name", None)
         # additional validation rules database level ones will be
         # automatically added
-        self.validation = kw.pop("validation", True)
+        self.validation = kw.pop("validation", None)
+        self.default = kw.pop("default", None)
         self.data_type = kw.pop("data_type", None)
         # label for the item
         self.label = kw.pop("label", None)
@@ -544,6 +558,10 @@ class FormItemFactory(object):
         if self.name and self.label is None:
             # TD do we want to have different formats eg no : at the end?
             self.label = self.name.replace("_", " ") + ":"
+
+        # store all other keywords
+        # these will end up getting sent to the front end
+        self.kw = kw
 
         self.instance = None
         self.volatile = False
@@ -620,6 +638,21 @@ def input(name, **kw):
     # so we pass a class of None and we work it out later
     kw['name'] = name
     return FormItemFactory(None, None, **kw)
+
+
+def textbox(name, **kw):
+    kw['name'] = name
+    return FormItemFactory('textbox', FormControl, **kw)
+
+
+def intbox(name, **kw):
+    kw['name'] = name
+    return FormItemFactory('intbox', FormControl, **kw)
+
+
+def datebox(name, **kw):
+    kw['name'] = name
+    return FormItemFactory('datebox', FormControl, **kw)
 
 
 def layout(layout_type, **kw):
@@ -732,8 +765,11 @@ def extra_data(extra_fields, **kw):
 
 
 def text(text, **kw):
+    """adds some text is shorthand for layout('text', text = text)"""
+
     kw['text'] = text
-    return FormItemFactory('text', FormControl, **kw)
+    kw['layout'] = 'text'
+    return FormItemFactory('text', Layout, **kw)
 
 
 def subform(name, **kw):
