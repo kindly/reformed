@@ -222,6 +222,9 @@ class NodeRunner(object):
         self.run(node, node_token)
         self.output.append({'type' : 'node',
                               'data' : node_token.output})
+        # auto loggin cookie info
+        if node_token.auto_loggin_cookie:
+            self.auto_loggin_cookie = node_token.auto_loggin_cookie
 
 
     def run(self, node_name, node_token, last_node = None):
@@ -256,11 +259,9 @@ class NodeRunner(object):
         node.call(node_token)
         node.finalise(node_token)
         node.finish_node_processing(node_token)
-## todo
-## todo        # auto loggin cookie info
-## todo        if xnode_token.auto_loggin_cookie:
-## todo            self.auto_loggin_cookie = node.auto_loggin_cookie
-## todo
+
+
+
 ## todo        if node.prev_node and node.prev_node.next_data_out:
 ## todo            node.out["data"].update(node.prev_node.next_data_out)
 ## todo
