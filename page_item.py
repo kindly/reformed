@@ -755,6 +755,7 @@ def image(name, **kw):
 ##
 # WHY are these different ^v ?
 
+# FIXME remove default
 def dropdown(name, autocomplete, default = None, **kw):
     kw['name'] = name
     kw['autocomplete'] = autocomplete
@@ -762,6 +763,7 @@ def dropdown(name, autocomplete, default = None, **kw):
     return FormItemFactory('dropdown', Dropdown, **kw)
 
 
+# FIXME remove default
 def dropdown_code(name, autocomplete, default = None, **kw):
     kw['name'] = name
     kw['autocomplete'] = autocomplete
