@@ -315,7 +315,6 @@ class Dropdown(FormControl):
     def __init__(self, factory, form):
 
         super(Dropdown, self).__init__(factory, form)
-        self.default = self.kw.get("default")
         self.autocomplete = self.kw.get("autocomplete", True)
         self.out_params = {}
 
@@ -374,8 +373,6 @@ class Dropdown(FormControl):
 
         if object:
             current_key = getattr(object, self.name)
-        if not object and self.default:
-            current_value = self.default
 
         keys = []
         values = []
@@ -406,14 +403,39 @@ class Dropdown(FormControl):
         out_params = self.populate(data, object)
 
     def get_control_params(self, data):
-        params = dict(control = self.control_type)
 
+        # FIXME needs rewrite
         if self.out_params:
-            return self.out_params
+            params = self.out_params
         else:
             self.populate(data)
-            return self.out_params
+            params = self.out_params
 
+        if self.kw:
+            params.update(self.kw)
+
+        # get any validation/defaults defined in the database
+        try:
+            if self.database_field.validation_info:
+                params["validation"] = self.database_field.validation_info
+            if self.database_field.default:
+                params["default"] = self.database_field.default
+        except AttributeError:
+            # no database field
+            pass
+
+        if self.validation:
+            if 'validation' in params:
+                 params["validation"].append(self.validation)
+            else:
+                params["validation"] = [self.validation]
+
+        if self.default:
+            params["default"] = self.default
+
+        print 'FUCK', params
+
+        return params
 
 class CodeGroup(FormControl):
 
