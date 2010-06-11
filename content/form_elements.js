@@ -124,7 +124,7 @@ $FormElements = function(){
         if (item.css){
             class_list += ' ' + item.css;
         }
-        $control = $(add_label(item, 'rf_') + '<span class="' + class_list + ' complex"><input id="rf_' + item.name + '" class="DROPDOWN ' + class_list + '" value="' + value + '" /><div class="but_dd_f"/></span>');
+        $control = $(add_label(item, 'rf_') + '<span class="' + class_list + ' complex"><input id="rf_' + item.name + '" class="DROPDOWN ' + class_list + '" value="' + value + '" /><div class="but_dd_f"/></span>' + form_description(item));
         $control.find('input').autocomplete(autocomplete, {dropdown : true});
         return $control;
     }
@@ -202,7 +202,7 @@ $FormElements = function(){
     }
 
     function password(item, value){
-        return add_label(item, 'rf_') + '<input type="password"' + set_class_list(item) + ' value="' + HTML_Encode_Clear(value) + '"/>';
+        return add_label(item, 'rf_') + '<input type="password"' + set_class_list(item) + ' value="' + HTML_Encode_Clear(value) + '"/>' + form_description(item);
     }
 
     function checkbox(item, value){
