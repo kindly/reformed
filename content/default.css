@@ -726,3 +726,9 @@ div.record_info > div {
     -moz-opacity: 0;
     filter:progid:DXImageTransform.Microsoft.Alpha(opacity=0);
 }
+
+
+.color_background > div {
+    background-color: yellow;
+    position: relative;
+}
