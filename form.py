@@ -279,10 +279,10 @@ class Form(object):
         if where:
             pass
         elif id:
-            where = 'id=%s' % id
+            where = 'id=?'
         else:
             id = node_token.data.get('__id')
-            where = '_core_entity_id=%s' % id
+            where = '_core_entity_id=?'
 
         try:
             session = r.Session()
@@ -294,14 +294,12 @@ class Form(object):
             tables = util.split_table_fields(self.form_item_name_list, table).keys()
             print 'VIEW', table, where
             result = r.search_single(table, where, 
-                                          session = session, tables = tables)
-
-            obj = result.results[0]
+                                          session = session, tables = tables,
+                                          values = [id])
 
             for field in util.INTERNAL_FIELDS:
                 try:
-                    extra_field = getattr(obj, field)
-                    data_out[field] = util.convert_value(extra_field)
+                    data_out[field] = result.get(field)
                 except AttributeError:
                     extra_field = None
 
@@ -323,9 +321,9 @@ class Form(object):
             print 'no data found'
 
         if self.title_field:
-            title = getattr(obj, self.title_field)
+            title = result.get(self.title_field)
         else:
-            title = obj.id
+            title = result.get("id")
 
         if '__buttons' not in data_out:
             data_out['__buttons'] = [['save %s' % self.table, '%s:_save:' % self.node_name],
@@ -346,7 +344,7 @@ class Form(object):
         node_token.action = 'form'
 
         node_token.bookmark = dict(
-            table_name = obj._table.name,
+            table_name = table,
             bookmark_string = node.build_node('', 'view', 'id=%s' %  id),
             entity_id = id
         )
