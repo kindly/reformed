@@ -145,21 +145,21 @@ class Form(object):
         id = data.get('id')
         root = data.get('__root')
 
+        # existing record
         if id:
-            # existing record
             try:
                 result = r.search_single(self.table, "id = ?",
                                       values = [id],
                                       session = session)
                 obj = result.results[0]
                 obj._new = False
-                # update the version if we have it to ensure it
-                # is not being overwritten badley
-                version = data.get("_version")
-                setattr(obj, "_version", version)
             except custom_exceptions.SingleResultError:
                 form.errors[root] = 'record not found'
                 raise
+
+            version = data["_version"]
+            result.set("_version", version)
+
         else:
             # new record (create blank one)
             obj = r.get_instance(self.table)
@@ -214,32 +214,31 @@ class Form(object):
         # TD not reviewed
 
         ## set up data to be stored
-        node = node_token ##FIXME
-        node.saved = []
-        node.errors = {}
-        node.out = {}
-        node.action = 'save'
+        node_token.saved = []
+        node_token.errors = {}
+        node_token.out = {}
+        node_token.action = 'save'
 
         session = r.Session()
 
-        data = node.data
+        data = node_token.data
 
         try:
             obj = self.save_row(node_token, data, session)
-            if not node.errors:
+            if not node_token.errors:
                 session.commit()
         except Exception, e:
             session.rollback()
             session.close()
             raise
 
-        if node.errors:
-            node.out['errors'] = node.errors
+        if node_token.errors:
+            node_token.out['errors'] = node_token.errors
             # If there are errors during the save we want to show them at the front end
             # FIXME is this the best way to do this?
             return
-        if node.saved:
-            node.out['saved'] = node.saved
+        if node_token.saved:
+            node_token.out['saved'] = node_token.saved
 
 
         if obj._new:
@@ -252,23 +251,23 @@ class Form(object):
                                      ['cancel', 'BACK']]
             data_out['__message'] = "%s saved!  Add more?" % title
 
-            node.next_data_out = data_out
+            node_token.next_data_out = data_out
 
-            node.data["id"] = obj.id
+            node_token.data["id"] = obj.id
 
             if self.save_redirect:
-                node.action = 'redirect'
+                node_token.action = 'redirect'
                 print 'redirect', obj.id
-                node.link = self.save_redirect + ":id=" + str(obj.id)
+                node_token.link = self.save_redirect + ":id=" + str(obj.id)
                 return
 
-            node.next_node = self.save_next_node or self.node_name
-            node.next_data = dict(data = node.data,
+            node_token.next_node = self.save_next_node or self.node_name
+            node_token.next_data = dict(data = node_token.data,
                                   command = self.save_next_command or 'new')
 
         else:
-            node.action = 'redirect'
-            node.link = 'BACK'
+            node_token.action = 'redirect'
+            node_token.link = 'BACK'
 
 
     def view(self, node_token, read_only=True, where = None):
