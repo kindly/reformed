@@ -97,7 +97,7 @@ class Node1(Node):
         dropdown('dropdown', ['Red', 'Blue', 'Green'], default = 'Blue', description = 'Blue'),
         dropdown_code('dropdown_code', dict(descriptions = ['Red', 'Blue', 'Green'], keys = [1, 2, 3]), description = "Blue **THIS IS WRONG WE ARE SENDING DEFAULT = 'Blue' NOT DEFAULT = 1**", label = 'dropdown_code', default = 'Blue'),
         textarea('textarea', default = 'default\ntext', description = 'default \\n text'),
-        wmd('wmd', default = 'default text \*\*what fun\** ;p', description = 'default text \*\*what fun\*\* ;p'),
+        wmd('wmd', default = 'default text **what fun** ;p', description = 'default text \*\*what fun\*\* ;p'),
 
 
 
