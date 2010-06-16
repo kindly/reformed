@@ -108,7 +108,7 @@ $FormElements = function(){
         var descriptions = item.autocomplete.descriptions;
         var keys = item.autocomplete.keys;
         if (value !== null){
-            value = value;
+            value = value[1];
         }
         return dropdown_core(item, value, descriptions);
     }
@@ -126,6 +126,19 @@ $FormElements = function(){
         }
         $control = $(add_label(item, 'rf_') + '<span class="' + class_list + ' complex"><input id="rf_' + item.name + '" class="DROPDOWN ' + class_list + '" value="' + value + '" /><div class="but_dd_f"/></span>' + form_description(item));
         $control.find('input').autocomplete(autocomplete, {dropdown : true});
+        return $control;
+    }
+
+    function autocomplete(item, value){
+        var $control;
+        var autocomplete = '/ajax/' + item.autocomplete;
+        var class_list = 'dropdown_f';
+        value = correct_value(item, value);
+        if (item.css){
+            class_list += ' ' + item.css;
+        }
+        $control = $(add_label(item, 'rf_') + '<span class="' + class_list + ' complex"><input id="rf_' + item.name + '" class="DROPDOWN ' + class_list + '" value="' + value + '" /></span>' + form_description(item));
+        $control.find('input').autocomplete(autocomplete, {dropdown : false});
         return $control;
     }
 
@@ -350,6 +363,7 @@ $FormElements = function(){
         'codegroup': [codegroup, codegroup],
         'file_upload' : [file_upload, file_upload],
         'image' : [image, image],
+        'autocomplete' : [autocomplete, plaintext],
         'subform': [add_subform, add_subform]
     }
 
