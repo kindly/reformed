@@ -164,7 +164,7 @@ class DataLoader(Node):
 
 
     table = '_core_job_scheduler'
-    permissions = ['logIn']
+    permissions = ['LoggedIn']
 
     def call(self, node_token):
 
