@@ -64,6 +64,10 @@ class Form(object):
 
         self.volatile = False # Set to True if any form items are declared non thread safe
 
+        ## get title field from table if needed
+        if not self.title_field and self.table:
+            self.title_field = r[self.table].title_field
+
         self.initiate_form_items()
 
     def initiate_form_items(self):
