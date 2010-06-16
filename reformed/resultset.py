@@ -136,6 +136,9 @@ class ResultSet(object):
         if field in obj._table.columns.keys() + ["id"]:
             return util.convert_value(getattr(obj, field))
 
+        if field in obj._table.relation_attributes:
+            return getattr(obj, field)
+
 
 
     def get_start_range(self, current_row):

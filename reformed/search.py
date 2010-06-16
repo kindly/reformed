@@ -80,7 +80,7 @@ class Search(object):
 
         if not join_tree:
             join_tree = dict(type = "root",
-                             table = self.search.table,
+                             table = self.table,
                              path = (),
                              tree = {})
 

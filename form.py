@@ -80,6 +80,8 @@ class Form(object):
                 self.form_items.append(form_item_instance)
                 if form_item_instance.name:
                     self.form_item_name_list.append(form_item_instance.name)
+                if hasattr(form_item_instance, "extra_fields"):
+                    self.form_item_name_list.extend(form_item_instance.extra_fields)
             else:
                 raise Exception('Item is not FormItemFactory')
 
@@ -100,15 +102,41 @@ class Form(object):
         for form_item in self.form_items:
             form_item.set_form(self)
 
-    def load_subform(self, data):
+    def load_subform(self, node_token, parent_result, data, session):
         # TD wtf how can be called load subform when returns data?
         # can we get a better name for this?
         # get_subform_data()?
+
+        node = self.node
+        session = r.Session()
+        data_out = {}
+        table = self.table
+        tables = util.split_table_fields(self.form_item_name_list, table).keys()
+
         parent_value = data.get(self.parent_id)
         where = "%s=?" % self.child_id
-        out = r.search(self.table, where, values = [parent_value]).data
+
+        result = r.search(self.table, where, session = session, 
+                          tables = tables, values = [parent_value])
+
+        out = []
+
+        for counter in range(0, len(result.results)):
+            result.current_row = counter
+            data_out = {}
+            for field in util.INTERNAL_FIELDS:
+                try:
+                    data_out[field] = result.get(field)
+                except AttributeError:
+                    extra_field = None
+
+            for form_item in self.form_items:
+                form_item.display_page_item(node_token, result, data_out, session)
+
+            out.append(data_out)
 
         return out
+
 
     def show(self, node_token, data = None):
         """display form on front end including data if supplied"""
@@ -132,7 +160,7 @@ class Form(object):
         node_token.out = self.create_form_data(node_token, data_out)
         node_token.action = 'form'
 
-    def save_row(self, node_token, data, session, parent_obj = None, relation_attr = None):
+    def save_row(self, node_token, data, session, as_subform, parent_obj = None, relation_attr = None):
 
         """Saves an individual database row.  Subforms are saved last and
         the subforms call this method in their own form instance. 
@@ -158,7 +186,7 @@ class Form(object):
                 raise
 
             version = data["_version"]
-            result.set("_version", version)
+            setattr(obj, "_version", version)
 
         else:
             # new record (create blank one)
@@ -175,21 +203,12 @@ class Form(object):
 
         for form_item in self.form_items:
       #      if form_item.page_item_type not in ["subform", "layout"]:
-          # we dn't care if the item saves or not that's it's lookout
+      #     we may need this if we decide to save subforms with main form
             form_item.save_page_item(node_token, obj, data, session)
 
-        ## when subforms are saved on their own
-        # TD this is crap we NEVER trust user data as it is ALWAYS 100% bullshit
-        # FIXME use server side data only
-        # if the form doesn't know about subforms it's broken
-
-# FIXME send this extra work to the subform save
-####        subform = self.node.data.get("__subform")
-####        if subform:
-####            child_id = self.node[subform].child_id
-####            id_field = input(child_id, data_type = "Integer")(self)
-####            id_field.save_page_item(obj, data, session)
-####
+        if as_subform:
+            child_id = self.child_id
+            setattr(obj, child_id, data[child_id])
 
         try:
             session.save_or_update(obj)
@@ -200,7 +219,7 @@ class Form(object):
                 errors[key] = value.msg
             node_token.errors[root] = errors
 
-# FIXME more subform guff
+# FIXME subform 
 ###        for form_item in self.form_items:
 ###            if form_item.page_item_type <> "subform":
 ###                continue
@@ -208,7 +227,7 @@ class Form(object):
 
         return obj
 
-    def save(self, node_token):
+    def save(self, node_token, as_subform = False):
         """Save this form. Its job is to set up the node belongs to 
         and handle errors"""
         # TD not reviewed
@@ -224,7 +243,7 @@ class Form(object):
         data = node_token.data
 
         try:
-            obj = self.save_row(node_token, data, session)
+            obj = self.save_row(node_token, data, session, as_subform)
             if not node_token.errors:
                 session.commit()
         except Exception, e:

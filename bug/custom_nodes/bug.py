@@ -74,9 +74,9 @@ class ListTicket(TableNode):
         wmd('note', label = "", css = "large"),
         layout('area_start', css = 'record_info'),
         layout('area_end'),
-        text('Created {created_date:ds} by user #{created_by}', css = 'record_info'),
+        text('Created {created_date:ds} by user #{_created_by>user.name}', css = 'record_info'),
 
-        extra_data(["created_by", "created_date"]),
+        extra_data(["created_by", "created_date", "_created_by>user.name"]),
 
         parent_id = "_core_entity_id",
         child_id = "_core_entity_id",
@@ -99,7 +99,7 @@ class ListTicket(TableNode):
     list_title = 'ticket %s'
 
     def save(self, node_token):
-        self["comment"].save(node_token)
+        self["comment"].save(node_token, as_subform = True)
         node_token.action = "redirect"
         node_token.link = "bug.ListTicket:view:__id=%s" % node_token.data.get("_core_entity_id")
         # FIXME this is stupid
