@@ -245,34 +245,5 @@ class Sponsorship(Node):
             self.action = 'form'
         self.out = data
 
-class AutoFormPlus(TableNode):
-
-    def initialise(self):
-
-        self.table = self.data.get('table')
-
-        rtable = r[self.table]
-
-        self.extra_data = {'table':self.table}
-
-        title_field = rtable.title_field
-
-        form_params =  {"form_type": "action",
-                        "extras" : self.extra_data,
-                        "title" : rtable.name
-                        }
-        fields = []
-
-        for name, field in rtable.fields.iteritems():
-            if field.category <> "field":
-                continue
-
-            if field.type == "Text" and field.length > 500:
-                fields.append(wmd(field.name, css = "large"))
-            else:
-                fields.append(input(field.name))
-
-        main = form(*fields, table = self.table, params = form_params)
-        self._forms["main"] = main("main", self)
 
 
