@@ -335,6 +335,9 @@ def convert_value(value):
         value = '%sZ' % value.isoformat()
         if len(value) == 20:
             value = '%s.000Z' % value[:19]
+    if isinstance(value, datetime.date):
+        value = '%sT00:00:00.000Z' % value.isoformat()
+
     if isinstance(value, decimal.Decimal):
         value = str(value)
     return value

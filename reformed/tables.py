@@ -901,6 +901,10 @@ class Table(object):
             elif column.type == sa.DateTime:
                 properties[col_name] = column_property(getattr(self.sa_table.c,col_name),
                                                          extension = ConvertDate())
+            ##FIXME do we want to keep this as date?
+            elif column.type == sa.Date:
+                properties[col_name] = column_property(getattr(self.sa_table.c,col_name),
+                                                         extension = ConvertDate())
             elif column.type == sa.Boolean:
                 properties[col_name] = column_property(getattr(self.sa_table.c,col_name),
                                                          extension = ConvertBoolean())
