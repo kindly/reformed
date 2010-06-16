@@ -30,7 +30,8 @@ from PIL import Image
 
 import reformed.util
 from global_session import global_session
-r =  global_session.database
+application =  global_session.application
+r =  global_session.application.database
 
 
 # upload exceptions
@@ -49,7 +50,7 @@ def create_file_path(filename, id):
     """Create a name for the file based on it's id and origional extension
     create a 'random' path if needed to balance file system"""
 
-    num_levels =  r.sys_info['file_uploads>dir_depth']
+    num_levels =  application.sys_info['file_uploads>dir_depth']
     (null, ext) = os.path.splitext(filename)
     file_id = str(id) + ext
 
@@ -132,7 +133,7 @@ def fileupload(environ, start_response):
     status['error'] = ""
     status['id'] = False
 
-    if length > r.sys_info['file_uploads>max_file_size']:
+    if length > application.sys_info['file_uploads>max_file_size']:
         status['error'] = "File too large"
         status['complete'] = True
         http_session.persist()
@@ -175,6 +176,7 @@ def fileupload(environ, start_response):
                         environ=environ,
                         keep_blank_values=1)
 
+    r = application.database
     session = r.Session()
     # find all files and save them
     for field in formdata:
@@ -227,7 +229,7 @@ def fileupload(environ, start_response):
 
 def get_dir(path):
     root = global_session.database.application_dir
-    return os.path.join(root, r.sys_info['file_uploads>root_directory'], path)
+    return os.path.join(root, application.sys_info['file_uploads>root_directory'], path)
 
 
 def make_thumbs(dir, file_id, obj):
