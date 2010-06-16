@@ -265,12 +265,12 @@ function job_processor_status(data, node, root){
         $('#' + root).status_form();
     }
     // show info on form
-    if (data.status){
-        $('div.STATUS_FORM').data('command')('update', data.status);
+    if (data.data){
+        $('div.STATUS_FORM').data('command')('update', data.data);
     }
     // set data refresh if job not finished
-    if (!data.status || !data.status.end){
-        status_timer = setTimeout("get_status('/n:" + node + ":status:id=" + data.jobId + "')",1000);
+    if (!data.data || !data.data.end){
+        status_timer = setTimeout("get_status('/n:" + node + ":status:id=" + data.data.id + "')",1000);
     }
 }
 

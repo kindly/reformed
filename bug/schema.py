@@ -74,63 +74,6 @@ def initialise(application):
     )
 
 
-    table("bookmarks",database,
-
-        Integer("entity_id"),
-        Integer("user_id"),
-        Text("bookmark"),
-        Text("title"),
-        Text("entity_table"),
-        DateTime("accessed_date"),
-        table_type = "system",
-    )
-
-    table("code", database,
-          Text("name", mandatory = True),
-          Text("desctiption", length = 2000),
-          LookupTextValidated("code_type", "code_type.code_type"),
-          Boolean("active", default = True),
-          Created("created_date"),
-          CreatedBy("created_by"),
-          lookup = True,
-
-          table_type = "system",
-          title_field = "name"
-    )
-
-    table("code_type", database,
-          Text("code_type", mandatory = True),
-          Text("name", mandatory = True),
-          Text("desctiption", length = 2000),
-          Created("created_date"),
-          CreatedBy("created_by"),
-          table_type = "system",
-    )
-
-
-## application user tables
-
-
-    table("page",database,
-        Text("page", length = 50, mandatory = True),
-        Text("title", length = 200, mandatory = True),
-        Text("body", length = 8000),
-        table_type = "system"
-    )
-
-    entity('upload', database,
-        Text("filename", mandatory = True),
-        Text("path"),
-        Text("mimetype"),
-        Integer("size"),
-        Boolean("thumb", default = False),
-        Created("created_date"),
-        CreatedBy("created_by"),
-
-        title_field = "filename",
-        summary_fields = "filename"
-    )
-
     database.persist()
 
 

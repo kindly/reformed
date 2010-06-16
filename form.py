@@ -276,7 +276,6 @@ class Form(object):
 
             if self.save_redirect:
                 node_token.action = 'redirect'
-                print 'redirect', obj.id
                 node_token.link = self.save_redirect + ":id=" + str(obj.id)
                 return
 

@@ -18,9 +18,13 @@
 ##   Copyright (c) 2008-2010 Toby Dacre & David Raznick
 ##
 
-from node import Node
+from node import Node, TableNode
 from form import form
 from page_item import *
+
+from global_session import global_session
+r = global_session.database
+application = global_session.application
 
 class Node1(Node):
     main = form(
@@ -145,3 +149,51 @@ class Node2(Node):
                          ['Link List Data 4', 'n:toby.Node2:Link+List+Data+4'],
                          ['Link List Data 5', 'n:toby.Node2:Link+List+Data+5']]
         self['main'].show(node_token, data)
+
+class Node3(TableNode):
+
+    main = form(
+        input('name'),
+        input('hex'),
+        table = "colour",
+        params =  {"form_type": "action"},
+        title_field = 'name'
+    )
+
+class DataLoader(Node):
+
+
+    table = '_core_job_scheduler'
+    permissions = ['logIn']
+
+    def call(self, node_token):
+
+        if node_token.command == 'load':
+            file = node_token.data.get('file')
+            table = node_token.data.get('table')
+            jobId = application.job_scheduler.add_job("loader", "data_load_from_file", table = table, file = file)
+            node_token.link = "%s:refresh:id=%s" % (self.name, jobId)
+            node_token.action = 'redirect'
+
+        elif node_token.command == 'refresh':
+            jobId = node_token.data.get('id')
+            node_token.out = dict(data = self.get_status(jobId), form = True)
+            node_token.action = 'status'
+
+        elif node_token.command == 'status':
+            jobId = node_token.data.get('id')
+            node_token.out = dict(data = self.get_status(jobId))
+            node_token.action = 'status'
+
+        node_token.title = "job %s" % jobId
+
+
+    def get_status(self, jobId):
+            data_out = r.search_single_data(self.table, where = "id=%s" % jobId)
+            out = dict(id = jobId,
+                       start = data_out['job_started'],
+                       message = data_out['message'],
+                       percent = data_out['percent'],
+                       end = data_out['job_ended'])
+            return out
+
