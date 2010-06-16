@@ -1379,7 +1379,7 @@ $.StatusForm = function(input){
     $form.data('command', command_caller);
 
     function update_status(data){
-        $('#status_job_id').text(data.jobId);
+        $('#status_job_id').text(data.id);
         $('#status_job_started').text(data.start);
         $('#status_job_message').text(data.message);
         if (data.percent === null){
