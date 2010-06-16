@@ -1,23 +1,24 @@
-import reformed.reformed as r
+from global_session import global_session
 
 
-def table_lookup(q, limit, request, http_session):
+def table_lookup(q, limit, request):
 
+    r = global_session.database
     out = ''
     table = request[0]
     field = request[1]
 
     print 't:%s, f:%s' % (table, field)
 
-    session = r.reformed.Session()
-    obj = r.reformed.get_class(table)
+    session = r.Session()
+    obj = r.get_class(table)
     search_field = getattr(obj, field)
     filter = search_field.like(unicode('%' + q + '%'))
 
-    data = session.query(search_field).filter(filter).all()[:limit]
+    data = session.query(search_field, obj.id).filter(filter).all()[:limit]
 
     for item in data:
-        out += getattr(item, field) + '\n'
+        out += "%s|%s\n" % (getattr(item, field), item.id)
     session.close()
 
     return str(out)
