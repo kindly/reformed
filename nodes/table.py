@@ -308,6 +308,7 @@ class Edit(node.TableNode):
                 fields.append(input(field.name))
 
         main = form(*fields, table = self.table, params = form_params)
+        # what's going on here? TD
         main.set_name("main")
         main.set_node(self)
         self._forms["main"] = main
