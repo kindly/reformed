@@ -36,6 +36,7 @@ import reformed.util
 import authenticate
 import pprint
 import logging
+import lookup
 log = logging.getLogger('rebase.web')
 
 def session(environ):
@@ -74,7 +75,7 @@ def process_autocomplete(environ, start_response):
 
     start_response('200 OK', [('Content-Type', 'text/html')])
 
-    return lookup.table_lookup(q, limit, request, http_session)
+    return lookup.table_lookup(q, limit, request)
 
 
 def process_fileupload(environ, start_response, request_url):
