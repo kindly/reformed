@@ -556,11 +556,18 @@ class FormItemFactory(object):
     default_controls = dict(Integer = [FormControl, "intbox"],
                             Text = [FormControl, "textbox"],
                             DateTime = [FormControl, "datebox"],
+                            #FIXME no date control
+                            Date = [FormControl, "datebox"],
                             Email = [FormControl, "textbox"], # FIXME should we have email control?
                             Boolean = [FormControl, "checkbox"],
+
+                            Password = [FormControl, 'password'],
+                            Image = [FormControl, 'image'],
+                            #FIXME
+                            Money = [FormControl, 'textbox'],
+
                             LookupTextValidated = [Dropdown, 'dropdown'],
                             LookupId = [Dropdown, 'dropdown_code'])
-
 
     def __init__(self, control_type, form_item_class, **kw):
 
@@ -760,6 +767,11 @@ def dropdown_code(name, autocomplete, default = None, **kw):
     kw['autocomplete'] = autocomplete
     kw['default'] = default
     return FormItemFactory('dropdown_code', Dropdown, **kw)
+
+def autocomplete(name, autocomplete, **kw):
+    kw['name'] = name
+    kw['autocomplete'] = autocomplete
+    return FormItemFactory('autocomplete', FormControl, **kw)
 
 
 def buttons(command, buttons, **kw):
