@@ -316,6 +316,13 @@ $.Util.clean_value = function (value, field){
             }
             update_value = value;
             break;
+        case 'Money':
+            //FIXME sort out properly
+            if (value === ''){
+                value = null;
+            }
+            update_value = value;
+            break;
     }
 
     // FIXME it would be nicer if we do not need to check for this
