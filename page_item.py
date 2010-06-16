@@ -85,7 +85,7 @@ class FormItem(object):
         # check permissions etc
         if authenticate.check_permission(self.permissions):
             # FIXME result.results[0] is horrible
-            self.custom_control_display(node_token, result.results[0], data, session)
+            self.custom_control_display(node_token, result, data, session)
 
 
     def delete_page_item(self, node_token, object, data, session):
@@ -106,7 +106,7 @@ class FormItem(object):
         override for custom behaviour"""
         pass
 
-    def custom_control_display(self, node_token, object, data, session):
+    def custom_control_display(self, node_token, result, data, session):
         pass
 
     def custom_control_delete(self, node_token, object, data, session):
@@ -168,9 +168,9 @@ class FormControl(FormItem):
         self.params.update(params)
 
 
-    def custom_control_display(self, node_token, object, data, session):
+    def custom_control_display(self, node_token, result, data, session):
         try:
-            data[self.name] = getattr(object, self.name)
+            data[self.name] = result.get(self.name)
         except AttributeError:
             # control is anonymous
             pass
@@ -197,7 +197,7 @@ class ActionItem(FormControl):
 
         return params
 
-    def custom_control_display(self, node_token, object, data, session):
+    def custom_control_display(self, node_token, result, data, session):
         # has no special data
         pass
 
@@ -224,10 +224,10 @@ class SubForm(FormItem):
 
         return params
 
-    def custom_control_display(self, node_token, object, data, session):
+    def custom_control_display(self, node_token, result, data, session):
 
         subform = self.form.node[self.name]
-        data[self.name] = subform.load_subform(data)
+        data[self.name] = subform.load_subform(node_token, result, data, session)
 
     def custom_control_save(self, node_token, object, data, session):
 
@@ -276,10 +276,10 @@ class ExtraData(FormItem):
         self.extra_fields = factory.kw.get("extra_fields")
 
 
-    def custom_control_display(self, node_token, object, data, session):
+    def custom_control_display(self, node_token, result, data, session):
         for field in self.extra_fields:
             # FIXME does this need a try except?
-            data[field] = util.convert_value(getattr(object, field))
+            data[field] = result.get(field)
 
 
 
@@ -291,7 +291,7 @@ class Buttons(FormItem):
         self.command = factory.kw.get("command")
         self.buttons = factory.kw.get("buttons")
 
-    def custom_control_display(self, node_token, object, data, session):
+    def custom_control_display(self, node_token, result, data, session):
         if node_token.command == self.command:
             data["__buttons"] = self.buttons
 
@@ -304,7 +304,7 @@ class Message(FormItem):
         self.command = factory.kw.get("command")
         self.buttons = factory.kw.get("message")
 
-    def custom_control_display(self, node_token, object, data, session):
+    def custom_control_display(self, node_token, result, data, session):
         if self.form.node.command == self.command:
             data["__message"] = self.buttons
 
@@ -320,7 +320,7 @@ class Dropdown(FormControl):
         self.out_params = {}
 
 
-    def populate(self, data, object = None):
+    def populate(self, data, result = None):
 
         params = dict(control = self.control_type)
         params.update(self.kw)
@@ -372,8 +372,10 @@ class Dropdown(FormControl):
         current_key = None
         current_value = None
 
-        if object:
-            current_key = getattr(object, self.name)
+        if result:
+            current_key = result.get(self.name)
+        if not result and self.default:
+            current_value = self.default
 
         keys = []
         values = []
@@ -381,9 +383,9 @@ class Dropdown(FormControl):
         for key, value in self.results:
             keys.append(key)
             values.append(value)
-            if object and key == current_key:
+            if result and key == current_key:
                 current_value = value
-            if not object and current_value == value:
+            if not result and current_value == value:
                 current_key = key
 
         if self.control_type == 'dropdown_code':
@@ -393,15 +395,15 @@ class Dropdown(FormControl):
                 data[self.name] = [current_key, current_value]
         else:
             params["autocomplete"] = values
-            if object:
-                data[self.name] = getattr(object, self.name)
+            if result:
+                data[self.name] = result.get(self.name)
 
         self.out_params = params
 
-    def custom_control_display(self, node_token, object, data, session):
+    def custom_control_display(self, node_token, result, data, session):
 
         # FIXME this always returns None?
-        out_params = self.populate(data, object)
+        out_params = self.populate(data, result)
 
     def get_control_params(self, data):
 
@@ -500,10 +502,10 @@ class CodeGroup(FormControl):
             code_groups.append(new)
             session.save_or_update(new)
 
-    def custom_control_display(self, node_token, object, data, session):
+    def custom_control_display(self, node_token, result, data, session):
 
         self.configure(self.form)
-        code_groups = getattr(object, self.relation_attr)
+        code_groups = result.get(self.relation_attr)
 
         out = []
         for row in code_groups:

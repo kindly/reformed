@@ -80,6 +80,8 @@ class Form(object):
                 self.form_items.append(form_item_instance)
                 if form_item_instance.name:
                     self.form_item_name_list.append(form_item_instance.name)
+                if hasattr(form_item_instance, "extra_fields"):
+                    self.form_item_name_list.extend(form_item_instance.extra_fields)
             else:
                 raise Exception('Item is not FormItemFactory')
 
@@ -100,15 +102,41 @@ class Form(object):
         for form_item in self.form_items:
             form_item.set_form(self)
 
-    def load_subform(self, data):
+    def load_subform(self, node_token, parent_result, data, session):
         # TD wtf how can be called load subform when returns data?
         # can we get a better name for this?
         # get_subform_data()?
+
+        node = self.node
+        session = r.Session()
+        data_out = {}
+        table = self.table
+        tables = util.split_table_fields(self.form_item_name_list, table).keys()
+
         parent_value = data.get(self.parent_id)
         where = "%s=?" % self.child_id
-        out = r.search(self.table, where, values = [parent_value]).data
+
+        result = r.search(self.table, where, session = session, 
+                          tables = tables, values = [parent_value])
+
+        out = []
+
+        for counter in range(0, len(result.results)):
+            result.current_row = counter
+            data_out = {}
+            for field in util.INTERNAL_FIELDS:
+                try:
+                    data_out[field] = result.get(field)
+                except AttributeError:
+                    extra_field = None
+
+            for form_item in self.form_items:
+                form_item.display_page_item(node_token, result, data_out, session)
+
+            out.append(data_out)
 
         return out
+
 
     def show(self, node_token, data = None):
         """display form on front end including data if supplied"""
@@ -132,7 +160,7 @@ class Form(object):
         node_token.out = self.create_form_data(node_token, data_out)
         node_token.action = 'form'
 
-    def save_row(self, node_token, data, session, parent_obj = None, relation_attr = None):
+    def save_row(self, node_token, data, session, as_subform, parent_obj = None, relation_attr = None):
 
         """Saves an individual database row.  Subforms are saved last and
         the subforms call this method in their own form instance. 
@@ -145,21 +173,21 @@ class Form(object):
         id = data.get('id')
         root = data.get('__root')
 
+        # existing record
         if id:
-            # existing record
             try:
                 result = r.search_single(self.table, "id = ?",
                                       values = [id],
                                       session = session)
                 obj = result.results[0]
                 obj._new = False
-                # update the version if we have it to ensure it
-                # is not being overwritten badley
-                version = data.get("_version")
-                setattr(obj, "_version", version)
             except custom_exceptions.SingleResultError:
                 form.errors[root] = 'record not found'
                 raise
+
+            version = data["_version"]
+            setattr(obj, "_version", version)
+
         else:
             # new record (create blank one)
             obj = r.get_instance(self.table)
@@ -175,21 +203,12 @@ class Form(object):
 
         for form_item in self.form_items:
       #      if form_item.page_item_type not in ["subform", "layout"]:
-          # we dn't care if the item saves or not that's it's lookout
+      #     we may need this if we decide to save subforms with main form
             form_item.save_page_item(node_token, obj, data, session)
 
-        ## when subforms are saved on their own
-        # TD this is crap we NEVER trust user data as it is ALWAYS 100% bullshit
-        # FIXME use server side data only
-        # if the form doesn't know about subforms it's broken
-
-# FIXME send this extra work to the subform save
-####        subform = self.node.data.get("__subform")
-####        if subform:
-####            child_id = self.node[subform].child_id
-####            id_field = input(child_id, data_type = "Integer")(self)
-####            id_field.save_page_item(obj, data, session)
-####
+        if as_subform:
+            child_id = self.child_id
+            setattr(obj, child_id, data[child_id])
 
         try:
             session.save_or_update(obj)
@@ -200,7 +219,7 @@ class Form(object):
                 errors[key] = value.msg
             node_token.errors[root] = errors
 
-# FIXME more subform guff
+# FIXME subform 
 ###        for form_item in self.form_items:
 ###            if form_item.page_item_type <> "subform":
 ###                continue
@@ -208,38 +227,37 @@ class Form(object):
 
         return obj
 
-    def save(self, node_token):
+    def save(self, node_token, as_subform = False):
         """Save this form. Its job is to set up the node belongs to 
         and handle errors"""
         # TD not reviewed
 
         ## set up data to be stored
-        node = node_token ##FIXME
-        node.saved = []
-        node.errors = {}
-        node.out = {}
-        node.action = 'save'
+        node_token.saved = []
+        node_token.errors = {}
+        node_token.out = {}
+        node_token.action = 'save'
 
         session = r.Session()
 
-        data = node.data
+        data = node_token.data
 
         try:
-            obj = self.save_row(node_token, data, session)
-            if not node.errors:
+            obj = self.save_row(node_token, data, session, as_subform)
+            if not node_token.errors:
                 session.commit()
         except Exception, e:
             session.rollback()
             session.close()
             raise
 
-        if node.errors:
-            node.out['errors'] = node.errors
+        if node_token.errors:
+            node_token.out['errors'] = node_token.errors
             # If there are errors during the save we want to show them at the front end
             # FIXME is this the best way to do this?
             return
-        if node.saved:
-            node.out['saved'] = node.saved
+        if node_token.saved:
+            node_token.out['saved'] = node_token.saved
 
 
         if obj._new:
@@ -252,23 +270,23 @@ class Form(object):
                                      ['cancel', 'BACK']]
             data_out['__message'] = "%s saved!  Add more?" % title
 
-            node.next_data_out = data_out
+            node_token.next_data_out = data_out
 
-            node.data["id"] = obj.id
+            node_token.data["id"] = obj.id
 
             if self.save_redirect:
-                node.action = 'redirect'
+                node_token.action = 'redirect'
                 print 'redirect', obj.id
-                node.link = self.save_redirect + ":id=" + str(obj.id)
+                node_token.link = self.save_redirect + ":id=" + str(obj.id)
                 return
 
-            node.next_node = self.save_next_node or self.node_name
-            node.next_data = dict(data = node.data,
+            node_token.next_node = self.save_next_node or self.node_name
+            node_token.next_data = dict(data = node_token.data,
                                   command = self.save_next_command or 'new')
 
         else:
-            node.action = 'redirect'
-            node.link = 'BACK'
+            node_token.action = 'redirect'
+            node_token.link = 'BACK'
 
 
     def view(self, node_token, read_only=True, where = None):
@@ -279,10 +297,10 @@ class Form(object):
         if where:
             pass
         elif id:
-            where = 'id=%s' % id
+            where = 'id=?'
         else:
             id = node_token.data.get('__id')
-            where = '_core_entity_id=%s' % id
+            where = '_core_entity_id=?'
 
         try:
             session = r.Session()
@@ -294,14 +312,12 @@ class Form(object):
             tables = util.split_table_fields(self.form_item_name_list, table).keys()
             print 'VIEW', table, where
             result = r.search_single(table, where, 
-                                          session = session, tables = tables)
-
-            obj = result.results[0]
+                                          session = session, tables = tables,
+                                          values = [id])
 
             for field in util.INTERNAL_FIELDS:
                 try:
-                    extra_field = getattr(obj, field)
-                    data_out[field] = util.convert_value(extra_field)
+                    data_out[field] = result.get(field)
                 except AttributeError:
                     extra_field = None
 
@@ -323,9 +339,9 @@ class Form(object):
             print 'no data found'
 
         if self.title_field:
-            title = getattr(obj, self.title_field)
+            title = result.get(self.title_field)
         else:
-            title = obj.id
+            title = result.get("id")
 
         if '__buttons' not in data_out:
             data_out['__buttons'] = [['save %s' % self.table, '%s:_save:' % self.node_name],
@@ -346,7 +362,7 @@ class Form(object):
         node_token.action = 'form'
 
         node_token.bookmark = dict(
-            table_name = obj._table.name,
+            table_name = table,
             bookmark_string = node.build_node('', 'view', 'id=%s' %  id),
             entity_id = id
         )

@@ -76,6 +76,83 @@ class Search(object):
             if args[0]:
                 self.add_query(*args, **kw)
 
+    def make_join_tree(self, join_tree = None):
+
+        if not join_tree:
+            join_tree = dict(type = "root",
+                             table = self.table,
+                             path = (),
+                             tree = {})
+
+        ### normal outer joins
+        for join in self.extra_outer:
+            if join == self.table:
+                continue
+            edge = self.aliased_name_path[join]
+            table_path = zip(edge.path, edge.tables[1:])
+            self.make_join("outer", join, edge, join_tree)
+
+        ### outer joins with > in table name
+        for join in self.custom_outer:
+            ## do not need the table at end
+            path = tuple(join.split(">")[:-1])
+            edge = self.table_paths[path]
+            self.make_join("outer", join, edge, join_tree)
+
+        ### normal inner joins
+        for join in self.extra_inner:
+            if join == self.table:
+                continue
+            edge = self.aliased_name_path[join]
+            table_path = zip(edge.path, edge.tables[1:])
+            self.make_join("inner", join, edge, join_tree)
+
+        ### inner joins with > in table name
+        for join in self.custom_inner:
+            ## do not need the table at end
+            path = tuple(join.split(">")[:-1])
+            edge = self.table_paths[path]
+            self.make_join("inner", join, edge, join_tree)
+
+        return join_tree
+
+    def make_aliases(self, current_path, node):
+
+        if tuple(current_path) not in self.aliases:
+            alias = sa.orm.aliased(self.database[node[1]].sa_class)
+            self.aliases[tuple(current_path)] = alias
+
+    def make_join(self, type, join, edge, join_tree):
+
+        if join == self.table:
+            return
+        sub_tree = join_tree
+
+        table_path = zip(edge.path, edge.tables[1:])
+        current_path = []
+
+        for node in table_path:
+            current_path = current_path + [node[0]]
+            self.make_aliases(current_path, node)
+
+            if node in sub_tree["tree"]:
+                sub_tree = sub_tree["tree"][node]
+            else:
+                old_tree = sub_tree
+                sub_tree = dict(type = type,
+                                tree = {},
+                                table = node[1],
+                                join = node[0],
+                                path = tuple(current_path),
+                                old_path = tuple(old_tree["path"]),
+                                old_table = old_tree["table"])
+                old_tree["tree"][node] = sub_tree
+
+        self.name_to_path[join] = tuple(current_path)
+        self.name_to_alias[join] = self.aliases[tuple(current_path)]
+
+        return sub_tree
+
     def order_by_clauses(self):
         clauses_list = self.order_by.strip().split(",")
         clauses = []
@@ -102,6 +179,22 @@ class Search(object):
                 clauses.append(getattr(table, field))
         return clauses
 
+    def recurse_join_tree(self, current_node):
+
+        for node in current_node["tree"].values():
+            old_table = self.aliases[node["old_path"]]
+            table = self.aliases[node["path"]]
+            relation = node["join"]
+            join_tuple = (table, getattr(old_table, relation))
+
+            if node["type"] == "outer":
+                self.sa_query = self.sa_query.outerjoin(join_tuple)
+
+            if node["type"] == "inner":
+                self.sa_query = self.sa_query.join(join_tuple)
+
+            self.recurse_join_tree(node)
+
 
     def add_query(self, *args, **kw):
 
@@ -112,7 +205,7 @@ class Search(object):
 
         query = args[0]
 
-        if not hasattr(query, "add_conditions"):
+        if not hasattr(query, "add_where"):
             if named_args or pos_args:
                 query = QueryFromStringParam(self, *args, named_args = named_args,
                                                           pos_args = pos_args)
@@ -125,20 +218,26 @@ class Search(object):
 
         if len(self.queries) == 0:
             ##TODO make this a query so extra join contitions work
-            query = self.search_base
+            self.sa_query = self.search_base
+            join_tree = self.make_join_tree()
+            self.recurse_join_tree(join_tree)
             if self.order_by:
                 clauses = self.order_by_clauses()
-                query = query.order_by(*clauses)
-
-            return query
+                self.sa_query = self.sa_query.order_by(*clauses)
+            return self.sa_query
 
         first_query = self.queries[0][0]
 
         if len(self.queries) == 1:
             ## if query contains a onetomany make the whole query a distinct
-            query = first_query.add_conditions(self.search_base,
-                                               self.extra_inner,
-                                               self.extra_outer)
+            first_query.make_sa_query(self.search_base)
+            join_tree = first_query.make_join_tree()
+            join_tree = self.make_join_tree(join_tree)
+
+            first_query.recurse_join_tree(join_tree)
+            first_query.add_where()
+
+            query = first_query.sa_query
 
             for table in first_query.inner_joins.union(first_query.outer_joins):
                 if table != self.table and table not in self.rtable.local_tables:
@@ -158,9 +257,12 @@ class Search(object):
             query, exclude = item
             if n == 0 and exclude:
                 raise custom_exceptions.SearchError("can not exclude first query")
-            new_query = query.add_conditions(query_base, 
-                                             self.extra_inner,
-                                             self.extra_outer)
+
+            query.make_sa_query(query_base)
+            join_tree = query.make_join_tree()
+            query.recurse_join_tree(join_tree)
+            new_query = query.add_where()
+
             sa_queries.append([new_query, exclude])
 
         current_unions = [] 
@@ -244,14 +346,7 @@ class QueryBase(object):
                 continue
             edge = self.search.aliased_name_path[join]
             table_path = zip(edge.path, edge.tables[1:])
-            self.make_join("outer", join, edge, join_tree)
-
-        ### outer joins with > in table name
-        for join in self.search.custom_outer:
-            ## do not need the table at end
-            path = tuple(join.split(">")[:-1])
-            edge = self.search.table_paths[path]
-            self.make_join("outer", join, edge, join_tree)
+            self.search.make_join("outer", join, edge, join_tree)
 
         ### normal inner joins
         for join in self.inner_joins:
@@ -259,55 +354,11 @@ class QueryBase(object):
                 continue
             edge = self.search.aliased_name_path[join]
             table_path = zip(edge.path, edge.tables[1:])
-            self.make_join("inner", join, edge, join_tree)
-
-        ### inner joins with > in table name
-        for join in self.search.custom_inner:
-            ## do not need the table at end
-            path = tuple(join.split(">")[:-1])
-            edge = self.search.table_paths[path]
-            self.make_join("inner", join, edge, join_tree)
+            self.search.make_join("inner", join, edge, join_tree)
 
         return join_tree
+
     
-    def make_aliases(self, current_path, node):
-
-        if tuple(current_path) not in self.aliases:
-            alias = sa.orm.aliased(self.search.database[node[1]].sa_class)
-            self.aliases[tuple(current_path)] = alias
-
-    def make_join(self, type, join, edge, join_tree):
-
-        if join == self.search.table:
-            return
-        sub_tree = join_tree
-
-        table_path = zip(edge.path, edge.tables[1:])
-        current_path = []
-
-        for node in table_path:
-            current_path = current_path + [node[0]]
-            self.make_aliases(current_path, node)
-
-            if node in sub_tree["tree"]:
-                sub_tree = sub_tree["tree"][node]
-            else:
-                old_tree = sub_tree
-                sub_tree = dict(type = type,
-                                tree = {},
-                                table = node[1],
-                                join = node[0],
-                                path = tuple(current_path),
-                                old_path = tuple(old_tree["path"]),
-                                old_table = old_tree["table"])
-                old_tree["tree"][node] = sub_tree
-
-        self.name_to_path[join] = tuple(current_path)
-        self.name_to_alias[join] = self.aliases[tuple(current_path)]
-
-        return sub_tree
-
-
     def recurse_join_tree(self, current_node):
 
         for node in current_node["tree"].values():
@@ -324,24 +375,15 @@ class QueryBase(object):
 
             self.recurse_join_tree(node)
 
-    def add_conditions(self, sa_query,
-                       extra_outer = [], extra_inner = []):
-
-        self.outer_joins.update(extra_outer)
-        self.inner_joins.update(extra_inner)
+    def make_sa_query(self, sa_query):
 
         self.sa_query = sa_query
 
-        join_tree = self.make_join_tree()
-
-        self.recurse_join_tree(join_tree)
+    def add_where(self):
 
         where = self.convert_where(self.ast[0])
-
         self.sa_query = self.sa_query.filter(where)
-
         return self.sa_query
-
 
 
 class QueryFromString(QueryBase):

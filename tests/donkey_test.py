@@ -277,7 +277,7 @@ class test_donkey(object):
 
         cls.session.close()
         cls.Donkey.status = "terminated"
-
+        cls.application.release_all()
 
 class test_basic_input(test_donkey):
 
