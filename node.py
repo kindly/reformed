@@ -23,7 +23,7 @@ import reformed.util as util
 from reformed import custom_exceptions
 import datetime
 from global_session import global_session
-from page_item import link, link_list, info, input
+from page_item import link, link_list, info, input, wmd
 from form import form, FormFactory
 import logging
 r = global_session.database
@@ -54,7 +54,6 @@ class Node(object):
         self.volatile = False # set to True if forms are volatile
 
         self.extra_data = {}
-        self.allowed = self.check_permissions()
 
         # initiate forms
         for form_name in dir(self):
@@ -259,23 +258,29 @@ class TableNode(Node):
         self["main"].list(node_token, limit)
 
 
-
 class AutoForm(TableNode):
 
-    def __init__(self, *args, **kw):
-        if self.__class__.first_run:
-            self.setup()
-        super(AutoForm, self).__init__(*args, **kw)
+    def initialise(self, node_token):
 
-    def setup(self):
+        rtable = r[self.table]
+
+        self.extra_data = {'table':self.table}
+
+        title_field = rtable.title_field
+
         fields = []
-        obj = r.get_instance(self.table)
-        columns = obj._table.schema_info
-        for field in columns.keys():
-            if field not in ['_modified_date', '_modified_by']:
-                fields.append([field, 'Text', '%s:' % field])
-        self.__class__.fields = fields
 
+        for field in rtable.ordered_fields:
+            if field.category <> "field":
+                continue
+
+            if field.type == "Text" and field.length > 500:
+                fields.append(wmd(field.name, css = "large"))
+            else:
+                fields.append(input(field.name))
+
+        main = form(*fields, table = self.table, params = self.form_params)
+        self._forms["main"] = main("main", self)
 
 
 
