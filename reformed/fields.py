@@ -49,12 +49,12 @@ def get_user_id():
 class Text(Field):
 
     def __init__(self, name, *args, **kw):
-        self.text = Column(sa.Unicode(100),  use_parent = True)
+        self.text = Column(sa.Unicode(100, assert_unicode = False), use_parent = True)
 
 class Password(Field):
 
     def __init__(self, name, *args, **kw):
-        self.text = Column(sa.Unicode(70),  use_parent = True)
+        self.text = Column(sa.Unicode(70, assert_unicode = False),  use_parent = True)
 
 class LookupTextValidated(Field):
 
@@ -233,6 +233,7 @@ class LookupId(Field):
         self.other = other
         self.filter_field = kw.get("filter_field")
 
+        ##FIXME use name for actual database column name
         if self.filter_field:
             foreign_key_name = "%s_%s_id" % (other, name)
             backref = name
