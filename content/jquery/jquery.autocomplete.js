@@ -164,7 +164,7 @@ $.Autocompleter = function(input, options) {
 	}).blur(function() {
 		hasFocus = 0;
 		if (!config.mouseDownOnSelect) {
-//			hideResults();
+			hideResults();
 		}
 	}).click(function(event) {
 		// show select when clicking in a focused field
