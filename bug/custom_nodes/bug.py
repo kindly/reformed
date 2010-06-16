@@ -74,9 +74,9 @@ class ListTicket(TableNode):
         wmd('note', label = "", css = "large"),
         layout('area_start', css = 'record_info'),
         layout('area_end'),
-        text('Created {created_date:ds} by user #{_created_by>user.name}', css = 'record_info'),
+        text('Created {created_date:ds} by user {_created_by>user.name}', css = 'record_info'),
 
-        extra_data(["created_by", "created_date", "_created_by>user.name"]),
+        extra_data(["created_date", "_created_by>user.name"]),
 
         parent_id = "_core_entity_id",
         child_id = "_core_entity_id",
