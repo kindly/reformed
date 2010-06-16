@@ -65,7 +65,7 @@ class NodeToken(object):
         """ Get integer value out of self.data[key] or default """
         try:
             value = int(self.data.get(key, default))
-        except:
+        except ValueError:
             value = default
         return value
 
@@ -103,11 +103,13 @@ class NodeManager(object):
 
     def get_node_instance(self, node_name):
         if node_name in self.node_instances:
-            print 'reuse node %s' % node_name
             return self.node_instances[node_name]
         else:
-            print 'create node %s' % node_name
-            instance = self.nodes[node_name](node_name)
+            try:
+                node_class = self.nodes[node_name]
+            except KeyError:
+                raise NodeNotFound(node_name)
+            instance = node_class(node_name)
             if not instance.volatile and instance.static:
                 self.node_instances[node_name] = instance
         return instance
@@ -239,17 +241,14 @@ class NodeRunner(object):
             log.info('User not logged in.  Switching to node %s, command %s' % (node_name, node_token.data['command']))
 
         # get node from node_manager
-        try:
-            # this should really get an existing node
-            # node_class = self.node_manager[node_name]
-            node = self.node_manager.get_node_instance(node_name)
-        except KeyError:
-            raise NodeNotFound(node_name)
+        # this should really get an existing node
+        # node_class = self.node_manager[node_name]
+        node = self.node_manager.get_node_instance(node_name)
 
         node_token.node = node
 
         # the user cannot perform this action
-        if not node.allowed:
+        if not node.check_permissions():
             log.warn('forbidden node or command')
             # FIXME this should be appended
             node_token.output = {'action': 'forbidden'}
