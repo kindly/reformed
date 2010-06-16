@@ -21,6 +21,7 @@
 
 import os
 import sys
+import shutil
 from optparse import OptionParser
 
 from reformed.export import json_dump_all_from_table
@@ -86,6 +87,13 @@ def confirm_request(msg, default = 'n'):
         print 'Answer Yes, No or Quit'
 
     return response
+
+def purge_application():
+    root_folder = os.path.dirname(os.path.abspath(__file__))
+    application_folder = os.path.join(root_folder, dir)
+    if confirm_request('This will destroy the application in %s' % application_folder):
+        shutil.rmtree(application_folder)
+
 
 def purge_attachments():
     application.purge_attachments()
@@ -229,6 +237,8 @@ if __name__ == "__main__":
                       help="make the application less noisy")
     parser.add_option("-y", "--yes", dest = "yes_to_all", action="store_true",
                       help="automatically choose yes")
+    parser.add_option("--kill", dest = "purge_application", action="store_true",
+                      help="delete application directory and all files")
     parser.add_option("-p", "--purge", dest = "purge_attachments", action="store_true",
                       help="remove all attachment files from the file system")
     parser.add_option("--console", dest = "console", action="store_true",
@@ -271,6 +281,9 @@ if __name__ == "__main__":
 
     if options.purge_attachments and not options.delete:
         purge_attachments()
+
+    if options.purge_application:
+        purge_application()
 
     if options.console:
         import code

@@ -25,7 +25,7 @@ $FormElements = function(){
                     return "False"
                 }
             default:
-                return HTML_Encode(value);
+                return HTML_Encode_Clear(value);
         }
     }
 
@@ -97,7 +97,7 @@ $FormElements = function(){
     }
 
     function button_link(item, value){
-        return '<a href="#"' + set_class_list(item, 'link') + ' onclick="node_button_input_form(this, \'' + item.node + '\');return false">' + item.title + '</a>';
+        return '<a href="#/n:' + item.node + '"' + set_class_list(item, 'link') + ' onclick="node_button_input_form(this, \'' + item.node + '\');return false">' + item.title + '</a>';
     }
 
     function button(item, value){
@@ -108,7 +108,7 @@ $FormElements = function(){
         var descriptions = item.autocomplete.descriptions;
         var keys = item.autocomplete.keys;
         if (value !== null){
-            value = value[1];
+            value = value;
         }
         return dropdown_core(item, value, descriptions);
     }
@@ -124,7 +124,7 @@ $FormElements = function(){
         if (item.css){
             class_list += ' ' + item.css;
         }
-        $control = $(add_label(item, 'rf_') + '<span class="' + class_list + ' complex"><input id="rf_' + item.name + '" class="DROPDOWN ' + class_list + '" value="' + value + '" /><div class="but_dd_f"/></span>');
+        $control = $(add_label(item, 'rf_') + '<span class="' + class_list + ' complex"><input id="rf_' + item.name + '" class="DROPDOWN ' + class_list + '" value="' + value + '" /><div class="but_dd_f"/></span>' + form_description(item));
         $control.find('input').autocomplete(autocomplete, {dropdown : true});
         return $control;
     }
@@ -202,7 +202,7 @@ $FormElements = function(){
     }
 
     function password(item, value){
-        return add_label(item, 'rf_') + '<input type="password"' + set_class_list(item) + ' value="' + HTML_Encode_Clear(value) + '"/>';
+        return add_label(item, 'rf_') + '<input type="password"' + set_class_list(item) + ' value="' + HTML_Encode_Clear(value) + '"/>' + form_description(item);
     }
 
     function checkbox(item, value){
@@ -278,10 +278,32 @@ $FormElements = function(){
         return '<div class="SUBFORM"></div>';
     }
 
+
+    function link_new(item, value){
+        var link_node = value[1];
+        value = value[0];
+        var x = '';
+        if (link_node.substring(0,1) == 'n'){
+            x += '<a href="#/' + link_node + '"' + set_class_list(item, 'link') + ' onclick="node_load(\'' + link_node + '\');return false">' + (value ? value : '&nbsp;') + '</a>';
+        }
+        if (link_node.substring(0,1) == 'd'){
+            x += '<a href="#"' + set_class_list(item, 'link') + ' onclick ="link_process(this,\'' + link_node + '\');return false;">' + (value ? value : '&nbsp;') + '</a>';
+        }
+        return x;
+    }
+
+
     function link_list(item, value){
-        temp = ''
-        for (var i = 0, n = value.length; i < n; i++){
-             temp += link(item, value[i]) + '  ';
+        var values;
+        if (item.values){
+            values = item.values;
+        } else {
+            values = value;
+        }
+        var temp = '';
+        for (var i = 0, n = values.length; i < n; i++){
+             //temp += link(item, value[i]) + '  ';
+             temp += link_new(item, values[i]) + '  ';
         }
         return temp;
     }

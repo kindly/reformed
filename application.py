@@ -45,12 +45,12 @@ class Application(object):
         self.directory = directory
         self.root_folder = os.path.dirname(os.path.abspath(__file__))
         self.application_folder = os.path.join(self.root_folder, directory)
-
+        # check that we have the application directory
+        self.check_filesystem()
         self.connection_string = 'sqlite:///%s/%s.sqlite' % (self.application_folder, directory)
         #self.connection_string = 'postgres://kindly:ytrewq@localhost:5432/bug'
 
         sys.path.append(self.application_folder)
-
         self.database = None
         self.engine = None
         self.metadata = None
@@ -200,8 +200,8 @@ class Application(object):
         self.initialise_database()
         print 'creating database structure'
         import reformed.user_tables
-        import schema
         reformed.user_tables.initialise(self)
+        import schema
         schema.initialise(self)
         # FIXME botch to get _job_schedulat table added
         self.start_job_scheduler()
@@ -211,6 +211,14 @@ class Application(object):
         self.initialise_database()
         self.load_nodes()
         self.node_manager.initialise_nodes()
+
+    def check_filesystem(self):
+        """Check if the app directory exists.  If not create and populate from template"""
+
+        if not os.path.exists(self.application_folder):
+            path = os.path.join(self.root_folder, 'template')
+            shutil.copytree(path, self.application_folder)
+
 
     def process_nodes(self):
         self.load_nodes()

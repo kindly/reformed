@@ -192,7 +192,8 @@ class ActionItem(FormControl):
 
         params = self.get_control_params(data)
         params['node'] = self.kw.get('link')
-        params['title'] = self.label
+        if self.label:
+            params['title'] = self.label
 
         return params
 
@@ -315,7 +316,6 @@ class Dropdown(FormControl):
     def __init__(self, factory, form):
 
         super(Dropdown, self).__init__(factory, form)
-        self.default = self.kw.get("default")
         self.autocomplete = self.kw.get("autocomplete", True)
         self.out_params = {}
 
@@ -406,14 +406,38 @@ class Dropdown(FormControl):
         out_params = self.populate(data, result)
 
     def get_control_params(self, data):
-        params = dict(control = self.control_type)
 
+        # FIXME needs rewrite
         if self.out_params:
-            return self.out_params
+            params = self.out_params
         else:
             self.populate(data)
-            return self.out_params
+            params = self.out_params
 
+        if self.kw:
+            params.update(self.kw)
+
+        # get any validation/defaults defined in the database
+        try:
+            if self.database_field.validation_info:
+                params["validation"] = self.database_field.validation_info
+            if self.database_field.default:
+                params["default"] = self.database_field.default
+        except AttributeError:
+            # no database field
+            pass
+
+        if self.validation:
+            if 'validation' in params:
+                 params["validation"].append(self.validation)
+            else:
+                params["validation"] = [self.validation]
+
+        if self.default:
+            params["default"] = self.default
+
+
+        return params
 
 class CodeGroup(FormControl):
 
@@ -516,6 +540,7 @@ class CodeGroup(FormControl):
             code_array.append(code_row)
 
         params.update(dict(codes = code_array))
+
 
         return params
 
@@ -692,7 +717,7 @@ def password(name = None, **kw):
 
 def button_box(button_list, **kw):
     kw['buttons'] = button_list
-    return FormItemFactory('button_box', FormControl, **kw)
+    return FormItemFactory('button_box', ActionItem, **kw)
 
 
 def link(name = None, **kw):
@@ -719,20 +744,9 @@ def image(name, **kw):
     kw['name'] = name
     return FormItemFactory('image', FormControl, **kw)
 
-##
-##def dropdown_control(autocomplete, default = None, **kw):
-##    kw['autocomplete'] = autocomplete
-##    kw['default'] = default
-##    return FormItemFactory('dropdown', Dropdown, **kw)
-##
-##
-##def dropdown_code_control(autocomplete, default = None, **kw):
-##    kw['autocomplete'] = autocomplete
-##    kw['default'] = default
-##    return FormItemFactory('dropdown_code', Dropdown, **kw)
-##
-# WHY are these different ^v ?
 
+
+# FIXME remove default
 def dropdown(name, autocomplete, default = None, **kw):
     kw['name'] = name
     kw['autocomplete'] = autocomplete
@@ -740,6 +754,7 @@ def dropdown(name, autocomplete, default = None, **kw):
     return FormItemFactory('dropdown', Dropdown, **kw)
 
 
+# FIXME remove default
 def dropdown_code(name, autocomplete, default = None, **kw):
     kw['name'] = name
     kw['autocomplete'] = autocomplete
