@@ -19,6 +19,22 @@ def initialise(application):
           title_field = 'name',
     )
 
+    entity('table1', database,
+          Text('text'),
+          Integer('int'),
+          Text('longtext', length = 1000),
+          Password('password'),
+          DateTime('DateTime'),
+          Image('Image'),
+          Boolean('Boolean'),
+          Money('Money'),
+          Email('Email'),
+          Date('Date'),
+          LookupId('LookupId', "colour"),
+
+          title_field = 'text',
+    )
+
     database.persist()
 
 

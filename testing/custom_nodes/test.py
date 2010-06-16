@@ -18,7 +18,7 @@
 ##   Copyright (c) 2008-2010 Toby Dacre & David Raznick
 ##
 
-from node import Node, TableNode
+from node import Node, TableNode, AutoForm
 from form import form
 from page_item import *
 
@@ -117,22 +117,22 @@ class Node2(Node):
 
     main = form(
         text('**Buttons**'),
-        button('toby.Node2:Single+Button', label = 'Single Button'),
-        button_box([['Button Box 1', 'toby.Node2:Button+Box+1'],
-                    ['Button Box 2', 'toby.Node2:Button+Box+2'],
-                    ['Button Box 3', 'toby.Node2:Button+Box+3'],
-                    ['Button Box 4', 'toby.Node2:Button+Box+4'],
-                    ['Button Box 5', 'toby.Node2:Button+Box+5']]),
+        button('test.Node2:Single+Button', label = 'Single Button'),
+        button_box([['Button Box 1', 'test.Node2:Button+Box+1'],
+                    ['Button Box 2', 'test.Node2:Button+Box+2'],
+                    ['Button Box 3', 'test.Node2:Button+Box+3'],
+                    ['Button Box 4', 'test.Node2:Button+Box+4'],
+                    ['Button Box 5', 'test.Node2:Button+Box+5']]),
         text('**Lists**'),
-        button_link('toby.Node2:Single+Link', label = 'Single Link'),
+        button_link('test.Node2:Single+Link', label = 'Single Link'),
         text('List of links using data.'),
         link_list('links'),
         text('List of links using fixed values.'),
-        link_list(values = [['Link List Values 1', 'n:toby.Node2:Link+List+Values+1'],
-                            ['Link List Values 2', 'n:toby.Node2:Link+List+Values+2'],
-                            ['Link List Values 3', 'n:toby.Node2:Link+List+Values+3'],
-                            ['Link List Values 4', 'n:toby.Node2:Link+List+Values+4'],
-                            ['Link List Values 5', 'n:toby.Node2:Link+List+Values+5']]),
+        link_list(values = [['Link List Values 1', 'n:test.Node2:Link+List+Values+1'],
+                            ['Link List Values 2', 'n:test.Node2:Link+List+Values+2'],
+                            ['Link List Values 3', 'n:test.Node2:Link+List+Values+3'],
+                            ['Link List Values 4', 'n:test.Node2:Link+List+Values+4'],
+                            ['Link List Values 5', 'n:test.Node2:Link+List+Values+5']]),
         params = {"form_type": "action"}
     )
 
@@ -143,11 +143,11 @@ class Node2(Node):
             data = dict(__message = 'clicked: %s' % name)
         else:
             data = {}
-        data['links'] = [['Link List Data 1', 'n:toby.Node2:Link+List+Data+1'],
-                         ['Link List Data 2', 'n:toby.Node2:Link+List+Data+2'],
-                         ['Link List Data 3', 'n:toby.Node2:Link+List+Data+3'],
-                         ['Link List Data 4', 'n:toby.Node2:Link+List+Data+4'],
-                         ['Link List Data 5', 'n:toby.Node2:Link+List+Data+5']]
+        data['links'] = [['Link List Data 1', 'n:test.Node2:Link+List+Data+1'],
+                         ['Link List Data 2', 'n:test.Node2:Link+List+Data+2'],
+                         ['Link List Data 3', 'n:test.Node2:Link+List+Data+3'],
+                         ['Link List Data 4', 'n:test.Node2:Link+List+Data+4'],
+                         ['Link List Data 5', 'n:test.Node2:Link+List+Data+5']]
         self['main'].show(node_token, data)
 
 class Node3(TableNode):
@@ -159,6 +159,21 @@ class Node3(TableNode):
         params =  {"form_type": "action"},
         title_field = 'name'
     )
+
+class Node4(TableNode):
+
+    main = form(
+        input('text'),
+        input('int'),
+        autocomplete('colour', 'colour/name'),
+
+        table = "table1",
+        params =  {"form_type": "action"},
+    )
+
+class Node5(AutoForm):
+
+    table = "table1"
 
 class DataLoader(Node):
 
@@ -189,11 +204,11 @@ class DataLoader(Node):
 
 
     def get_status(self, jobId):
-            data_out = r.search_single_data(self.table, where = "id=%s" % jobId)
-            out = dict(id = jobId,
-                       start = data_out['job_started'],
-                       message = data_out['message'],
-                       percent = data_out['percent'],
-                       end = data_out['job_ended'])
-            return out
+        data_out = r.search_single_data(self.table, where = "id=%s" % jobId)
+        out = dict(id = jobId,
+                   start = data_out['job_started'],
+                   message = data_out['message'],
+                   percent = data_out['percent'],
+                   end = data_out['job_ended'])
+        return out
 
