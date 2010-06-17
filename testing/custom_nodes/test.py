@@ -212,3 +212,53 @@ class DataLoader(Node):
                    end = data_out['job_ended'])
         return out
 
+
+
+class Truncate(Node):
+
+    main = form(
+        text("Truncate table :)"),
+        dropdown('table', 'DATA', data_field = 'tables'),
+        button('test.Truncate:truncate:', label = 'Truncate'),
+        params =  {"form_type": "action"},
+    )
+    completed = form(
+        text("Table {table} has been truncated.  {records} record(s)."),
+        extra_data('table'),
+        extra_data('records'),
+        params =  {"form_type": "action"},
+    )
+    def call(self, node_token):
+        if node_token.command == 'list':
+            self.list_tables(node_token)
+        elif node_token.command == 'truncate':
+            table_name = node_token.data.get('table')
+            if table_name:
+                self.truncate_table(node_token, table_name)
+
+    def truncate_table(self, node_token, table_name):
+        # FIXME this needs a proper method in database.py
+        table = r[table_name]
+        if table.table_type == 'user':
+            records = r.search(table_name).results
+            session = r.Session()
+            count = 0
+            for record in records:
+                session.delete(record)
+                count += 1
+            session.commit()
+            session.close()
+            data = dict(table = table_name,
+                        records = count)
+            self['completed'].show(node_token, data)
+
+
+    def list_tables(self, node_token):
+        tables = []
+        for table in r.tables:
+            if r[table].table_type == 'user':
+                tables.append(r[table].name)
+
+        data = dict(tables = tables)
+        self['main'].show(node_token, data)
+
