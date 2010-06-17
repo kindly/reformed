@@ -334,12 +334,11 @@ class Form(object):
             else:
                 node_token.title = '%s: %s' % (self.table, id)
 
-        except sqlalchemy.orm.exc.NoResultFound:
-            data = None
-            data_out = {}
-            id = None
-            node_token.title = 'unknown'
-            print 'no data found'
+        except custom_exceptions.SingleResultError:
+            # no result found so return error to front end
+            node_token.action = 'general_error'
+            node_token.out = 'No record found for give id'
+            return
 
         if self.title_field:
             title = result.get(self.title_field)
