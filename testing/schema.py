@@ -35,6 +35,14 @@ def initialise(application):
            title_field = 'text',
     )
 
+    entity('people', database,
+           Text('name'),
+           Integer('age'),
+           Text('town'),
+           Text('postcode'),
+           title_field = 'name',
+    )
+
     database.persist()
 
 
