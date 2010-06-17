@@ -342,6 +342,12 @@ class Dropdown(FormControl):
 
         autocomplete_options = self.autocomplete
 
+        if autocomplete_options == 'DATA':
+            params['autocomplete'] = 'DATA'
+            self.out_params = params
+            return
+
+
         database = r
 
         if isinstance(autocomplete_options, list):
