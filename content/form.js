@@ -38,8 +38,8 @@ $.fn.extend({
 		$.Form(this, form_data, grid_data, paging_data);
 	},
 
-	input_form: function(form_data, grid_data, extra_defaults){
-		$.InputForm(this, form_data, grid_data, extra_defaults);
+	input_form: function(form_data, grid_data, paging_data){
+		$.InputForm(this, form_data, grid_data, paging_data);
 	},
 
 	status_form: function(){
@@ -1215,6 +1215,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         var item;
         var value;
 
+        var paging_bar;
+
         function add_layout_item(item){
             switch (item.layout){
                 case 'text':
@@ -1282,6 +1284,58 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             }
         }
 
+        function make_paging(){
+            // build a paging bar
+            var PAGING_SIZE = 5;
+            var offset = extra_defaults.offset;
+            var limit = extra_defaults.limit;
+            var count = extra_defaults.row_count;
+            var base = extra_defaults.base_link;
+
+            var pages = Math.ceil(count/limit);
+            var current = Math.floor(offset/limit);
+            var link;
+
+            var html = '<div class="PAGING_BAR">';
+            html += 'paging: ';
+
+            if (current>0){
+                link = base + '&o=0&l=' + limit;
+                html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">|&lt;</a> ';
+                link = base + '&o=' + (current-1) * limit + '&l=' + limit;
+                html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">&lt;</a> ';
+            } else {
+                html += '|&lt; ';
+                html += '&lt; ';
+            }
+            for (var i=0; i < pages; i++){
+                if (i == current){
+                    html += (i+1) + ' ';
+                } else {
+                    if ( Math.abs(current-i)<PAGING_SIZE ||
+                         (i<(PAGING_SIZE*2)-1 && current<PAGING_SIZE) ||
+                         (pages-i<(PAGING_SIZE*2) && current>pages-PAGING_SIZE)
+                    ){
+                        link = base + '&o=' + i * limit + '&l=' + limit;
+                        html += '<a href="#' + link + '" onclick="node_load(\'' + link + '\');return false;">' + (i+1) + '</a> ';
+                    }
+                }
+            }
+            if (current<pages - 1){
+                link = base + '&o=' + (current+1) * limit + '&l=' + limit;
+                html += '<a href="#' + link + '" onclick="node_load(\'' + link + '\');return false;">&gt;</a> ';
+                link = base + '&o=' + (pages-1) * limit + '&l=' + limit;
+                html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">&gt;|</a> ';
+            } else {
+                html += '&gt; ';
+                html += '&gt;| ';
+            }
+
+            html += 'page ' + (current+1) + ' of ' + pages;
+            html += '</div>';
+            return html;
+        }
+
         function build_subforms(){
             // subforms
             var $subforms = $input.find('div.SUBFORM');
@@ -1321,6 +1375,13 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             $control = $FormElements.build(true, {control : 'message_area'}, row_data.__message);
             $builder[builder_depth].append($control);
         }
+        // paging bar
+        // FIXME why extra_data should be paging_data?
+        if (extra_defaults){
+            // cache the html for reuse
+            paging_bar = make_paging();
+            $builder[builder_depth].append(paging_bar);
+        }
         // main form
         if (!row_data.__array){
             local_row_data = row_data;
@@ -1340,10 +1401,15 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             $control = $FormElements.build(true, item, value);
             $builder[builder_depth].append($control);
         }
+        // second paging bar
+        if (paging_bar){
+            $builder[builder_depth].append(paging_bar);
+        }
         // close any builder divs
         while (builder_depth > 0){
             $builder[--builder_depth].append($builder.pop());
         }
+
         $form.append($builder[0].contents());
 
        // if (subforms.length){

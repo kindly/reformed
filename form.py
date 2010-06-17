@@ -473,7 +473,7 @@ class Form(object):
         out['paging'] = {'row_count' : results.row_count,
                          'limit' : limit,
                          'offset' : offset,
-                         'base_link' : 'n:%s:list:q=%s' % (self.name, query)}
+                         'base_link' : 'n:%s:list:q=%s' % (self.node.name, query)}
 
         node_token.out = out
         node_token.action = 'form'
