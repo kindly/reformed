@@ -713,12 +713,12 @@ div.record_info > div {
     height: 128px;
     display: block;
     overflow: hidden;
-    cursor: pointer;
 }
 
 
 .img_upload_label > input.img_uploader {
-    position: relative;
+    position: absolute;
+    top:0;
     height: 128px;
     font-size: 128px;
     width: auto;
