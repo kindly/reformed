@@ -184,6 +184,21 @@ class FormControl(FormItem):
             setattr(object, self.name, value)
 
 
+class Password(FormControl):
+    """Password fields do not display data to the front end
+    nor do they overwrite data when empty/null"""
+
+    def custom_control_display(self, node_token, result, data, session):
+        pass
+
+    def custom_control_save(self, node_token, object, data, session):
+        if self.name in object._table.fields:
+            value = data.get(self.name)
+            if value:
+                setattr(object, self.name, value)
+
+
+
 class ActionItem(FormControl):
 
     """These are buttons, links etc"""
@@ -561,7 +576,7 @@ class FormItemFactory(object):
                             Email = [FormControl, "textbox"], # FIXME should we have email control?
                             Boolean = [FormControl, "checkbox"],
 
-                            Password = [FormControl, 'password'],
+                            Password = [Password, 'password'],
                             Image = [FormControl, 'image'],
                             #FIXME
                             Money = [FormControl, 'textbox'],
@@ -719,7 +734,7 @@ def checkbox(name, **kw):
 
 def password(name = None, **kw):
     kw['name'] = name
-    return FormItemFactory('password', FormControl, **kw)
+    return FormItemFactory('password', Password, **kw)
 
 
 def button_box(button_list, **kw):
