@@ -54,7 +54,6 @@ def make_road():
 
 def make_town(base = None):
     if base:
-        base = current[base]
         if postcodes.get(base[:2]):
             towns = postcodes.get(base[:2])
         else:
@@ -69,7 +68,7 @@ def make_postcode():
 def make_name():
     return make_list('first_names') + ' ' + make_list('last_names')
 
-def make_int(min, max):
+def make_int(min = 0, max = 100):
     return random.randint(min,max)
 
 def make_char(min, max, extras = '', chars= u'aabbcddeeeefghijklmnnoppqrssttuvwxyz'):
