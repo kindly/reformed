@@ -191,9 +191,43 @@ class DataLoader(JobNode):
 
 
 
+class DataGenerate(JobNode):
 
+    main = form(
+        text("##Data Generator##"),
+        dropdown('table', 'DATA', data_field = 'tables'),
+        intbox('number_records'),
+        button('test.DataGenerate:_generate:', label = 'Generate'),
+        params =  {"form_type": "action"},
+    )
 
+    job_type = 'generate'
+    job_function = 'generate'
+    params = []
 
+    def setup_extra_commands(self):
+        commands = self.__class__.commands
+        commands['select'] = dict(command = 'select')
+        commands['_generate'] = dict(command = 'generate')
+
+    def select(self, node_token):
+        tables = []
+        for table in r.tables:
+            if r[table].table_type == 'user':
+                tables.append(r[table].name)
+
+        data = dict(tables = tables)
+        self['main'].show(node_token, data)
+
+    def generate(self, node_token):
+        table = node_token.data.get('table')
+        try:
+            number = int(node_token.data.get('number_records', 0))
+        except ValueError:
+            number = 0
+        if r[table].table_type == 'user' and number:
+            self.base_params = dict(table = table, number_requested = number)
+            self.load(node_token)
 
 
 class Truncate(Node):
@@ -210,6 +244,7 @@ class Truncate(Node):
         extra_data('records'),
         params =  {"form_type": "action"},
     )
+
     def call(self, node_token):
         if node_token.command == 'list':
             self.list_tables(node_token)
