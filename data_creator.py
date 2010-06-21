@@ -29,7 +29,7 @@ for line in lines:
         postcodes[code]=towns
 
 
-def make_word(min, max, delimit = ' '):
+def make_word(min = 0, max = 10, delimit = ' '):
     out = []
     for i in xrange(random.randint(min, max)):
         x = random.randint(1,3)
@@ -43,7 +43,7 @@ def make_word(min, max, delimit = ' '):
     return out
 
 
-def make_list(list):
+def make_list(list = 'nouns'):
     out = None
     while not out:
         out = lists[list][random.randint(0,len(lists[list])-1)]
@@ -71,7 +71,7 @@ def make_name():
 def make_int(min = 0, max = 100):
     return random.randint(min,max)
 
-def make_char(min, max, extras = '', chars= u'aabbcddeeeefghijklmnnoppqrssttuvwxyz'):
+def make_char(min = 0, max = 50, extras = '', chars= u'aabbcddeeeefghijklmnnoppqrssttuvwxyz'):
     chars = chars + extras
     out = u''
     for i in xrange(random.randint(min,max)):
@@ -79,7 +79,7 @@ def make_char(min, max, extras = '', chars= u'aabbcddeeeefghijklmnnoppqrssttuvwx
     return out
 
 def make_bool():
-    options = ['true','false', 1, 0]
+    options = [True, False]
     return options[random.randint(0,len(options)-1)]
 
 def make_date(min = 0, max = 0):
