@@ -134,7 +134,9 @@ def initialise(application):
         CreatedBy("created_by"),
 
         title_field = "filename",
-        summary_fields = "filename"
+        summary_fields = "filename",
+
+        table_type = "system",
     )
 
     database.persist()
