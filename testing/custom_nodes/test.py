@@ -262,8 +262,9 @@ class Truncate(Node):
             count = 0
             for record in records:
                 session.delete(record)
+                session.commit()
                 count += 1
-            session.commit()
+                print count
             session.close()
             data = dict(table = table_name,
                         records = count)
