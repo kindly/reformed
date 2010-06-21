@@ -379,7 +379,6 @@ class Field(object):
 
         obj.cat = kw.get("category", None)
 
-        ## this is popped as we dont want it to appear in field_params
         obj.foreign_key_name = kw.get("foreign_key_name", None)
 
         obj.default = kw.get("default", None)
