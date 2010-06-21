@@ -186,10 +186,10 @@ class JobSchedulerThread(threading.Thread):
             session.commit()
             session.close()
 
-        if arg:
-            request = threadpool.makeRequests(func, [((self.database, job_id), arg)], callback, exc_callback)
-        else:
-            request = threadpool.makeRequests(func, [((self.database, job_id), {})], callback, exc_callback)
+        if not arg:
+            arg = {}
+
+        request = threadpool.makeRequests(func, [((self.application, job_id), arg)], callback, exc_callback)
 
         if self.threadpool:
             self.threadpool.putRequest(request[0])
