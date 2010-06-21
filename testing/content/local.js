@@ -7,7 +7,7 @@ $.Buttons.action_hash = {
     test5: ['Simple Form database', 'go-home.png', 'h', 'general', 'n:test.Node4:list:'],
     test6: ['Simple Form autoform', 'go-home.png', 'h', 'general', 'n:test.Node5:list:'],
     test7: ['Truncate', 'go-home.png', 'h', 'general', 'n:test.Truncate:list:'],
-    test8: ['Generate Data', 'go-home.png', 'h', 'general', 'n:test.Generate:create:'],
+    test8: ['Generate Data', 'go-home.png', 'h', 'general', 'n:test.DataGenerate:select:'],
     test9: ['People', 'go-home.png', 'h', 'general', 'n:test.People:list:'],
 };
 
