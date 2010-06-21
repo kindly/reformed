@@ -1446,9 +1446,14 @@ $.StatusForm = function(input){
     $form.data('command', command_caller);
 
     function update_status(data){
+        var message = data.message
+        if (message !== null){
+            // make readable especially errors
+            message = String(message).replace(/\n/g, '<br/>');
+        }
         $('#status_job_id').text(data.id);
         $('#status_job_started').text(data.start);
-        $('#status_job_message').text(data.message);
+        $('#status_job_message').html(message);
         if (data.percent === null){
             data.percent = 0;
         }
