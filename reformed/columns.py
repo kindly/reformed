@@ -425,6 +425,9 @@ class Field(object):
         obj.no_auto_path = kw.get("no_auto_path", False)
 
         obj.data_type = None
+
+        obj.generator = kw.get("generator", None)
+
         return obj
 
     def __eq__(self, other):
