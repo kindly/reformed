@@ -1331,7 +1331,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 html += '&gt;| ';
             }
 
-            html += 'page ' + (current+1) + ' of ' + pages;
+            html += 'page ' + (current+1) + ' of ' + pages + ' pages';
+            html += ', ' + (count) + ' records';
             html += '</div>';
             return html;
         }
