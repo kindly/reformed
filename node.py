@@ -263,6 +263,64 @@ class TableNode(Node):
         self["main"].list(node_token, limit)
 
 
+class JobNode(Node):
+
+    """Job nodes send a job to the processer and allow the job to be monitored"""
+
+    job_type = None
+    job_function = None
+    params = []
+    base_params = {}
+
+    table = '_core_job_scheduler'
+
+    def setup_commands(self):
+        commands = self.__class__.commands
+        commands['load'] = dict(command = 'load')
+        commands['refresh'] = dict(command = 'refresh')
+        commands['status'] = dict(command = 'status')
+
+    def load(self, node_token):
+
+        # add the job to the scheduler
+
+        # build up the parameters to pass
+        params = self.base_params.copy()
+        for param in self.params:
+            params[param] = node_token.data.get(param)
+        jobId = global_session.application.job_scheduler.add_job(self.job_type, self.job_function, **params)
+        node_token.link = "%s:refresh:id=%s" % (self.name, jobId)
+        node_token.action = 'redirect'
+
+
+    def refresh(self, node_token):
+        # TD does this need to be different from status? can we combine?
+        jobId = node_token.data.get('id')
+        node_token.out = dict(data = self.get_status(jobId), form = True)
+        node_token.action = 'status'
+        print 'status'
+        # ??
+     #   node_token.title = "job %s" % jobId
+
+    def status(self, node_token):
+        # report the status of the job
+        jobId = node_token.data.get('id')
+        node_token.out = dict(data = self.get_status(jobId))
+        node_token.action = 'status'
+
+
+
+    def get_status(self, jobId):
+        data_out = r.search_single_data(self.table, where = "id=%s" % jobId)
+        out = dict(id = jobId,
+                   start = data_out['job_started'],
+                   message = data_out['message'],
+                   percent = data_out['percent'],
+                   end = data_out['job_ended'])
+        return out
+
+
+
 class AutoForm(TableNode):
 
     def initialise(self, node_token):
