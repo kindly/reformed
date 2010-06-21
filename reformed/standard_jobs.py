@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import time
 import util
 from data_loader import FlatFile
+from sqlalchemy.exceptions import ConcurrentModificationError, ProgrammingError
 
 class Messager(object):
 
@@ -20,7 +21,11 @@ class Messager(object):
         if percent:
             row["percent"] = percent
 
-        util.load_local_data(self.database, row)
+        # FIXME don't like this here
+        try:
+            util.load_local_data(self.database, row)
+        except ConcurrentModificationError:
+            pass
 
 
 
