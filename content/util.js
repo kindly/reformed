@@ -220,12 +220,15 @@ $.Util.set_class_list = function (item, extra_class){
 
 $.Util.get_item_value = function (item, data){
 
+    // use data with the name of the item
     if (data && data[item.name] !== undefined){
         return data[item.name];
     }
+    // else the default
     if (item['default']){
         return item['default'];
     }
+    // all else fails null
     return null;
 };
 

@@ -23,7 +23,7 @@ import reformed.util as util
 from reformed import custom_exceptions
 import datetime
 from global_session import global_session
-from page_item import link, link_list, info, input, wmd
+from page_item import link, link_list, info, input, textarea
 from form import form, FormFactory
 import logging
 r = global_session.database
@@ -275,7 +275,7 @@ class AutoForm(TableNode):
                 continue
 
             if field.type == "Text" and field.length > 500:
-                fields.append(wmd(field.name, css = "large"))
+                fields.append(textarea(field.name, css = "large"))
             else:
                 fields.append(input(field.name))
 
