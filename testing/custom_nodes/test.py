@@ -18,7 +18,7 @@
 ##   Copyright (c) 2008-2010 Toby Dacre & David Raznick
 ##
 
-from node import Node, TableNode, AutoForm
+from node import Node, TableNode, AutoForm, JobNode
 from form import form
 from page_item import *
 
@@ -179,42 +179,20 @@ class People(AutoForm):
 
     table = "people"
 
-class DataLoader(Node):
 
 
-    table = '_core_job_scheduler'
-    permissions = ['LoggedIn']
+class DataLoader(JobNode):
 
-    def call(self, node_token):
+    job_type = 'loader'
+    job_function = 'data_load_from_file'
+    params = ['file', 'table']
 
-        if node_token.command == 'load':
-            file = node_token.data.get('file')
-            table = node_token.data.get('table')
-            jobId = application.job_scheduler.add_job("loader", "data_load_from_file", table = table, file = file)
-            node_token.link = "%s:refresh:id=%s" % (self.name, jobId)
-            node_token.action = 'redirect'
-
-        elif node_token.command == 'refresh':
-            jobId = node_token.data.get('id')
-            node_token.out = dict(data = self.get_status(jobId), form = True)
-            node_token.action = 'status'
-
-        elif node_token.command == 'status':
-            jobId = node_token.data.get('id')
-            node_token.out = dict(data = self.get_status(jobId))
-            node_token.action = 'status'
-
-        node_token.title = "job %s" % jobId
+  #  permissions = ['LoggedIn']
 
 
-    def get_status(self, jobId):
-        data_out = r.search_single_data(self.table, where = "id=%s" % jobId)
-        out = dict(id = jobId,
-                   start = data_out['job_started'],
-                   message = data_out['message'],
-                   percent = data_out['percent'],
-                   end = data_out['job_ended'])
-        return out
+
+
+
 
 
 
