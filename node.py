@@ -39,6 +39,8 @@ class Node(object):
     permissions = []
     commands = {}
 
+    first_run = True # used for setting up commands etc
+
     static = True # If True the node is thread safe
 
     table = None # forms need this defined
@@ -66,6 +68,18 @@ class Node(object):
 
                 self._forms[form_name] = form
 
+        # do any command setup
+        if self.__class__.first_run:
+            self.__class__.first_run = False
+            self.setup_commands()
+            # TD do we need this?
+            self.setup_extra_commands()
+
+    def setup_commands(self):
+        pass
+
+    def setup_extra_commands(self):
+        pass
 
     def __getitem__(self, value):
         return self._forms[value]
@@ -209,7 +223,6 @@ class TableNode(Node):
     list_title = 'item %s'
     title_field = 'name'
 
-    first_run = True
 
     listing = form(
         link('title', data_type = 'link', css = 'form_title'),
@@ -220,15 +233,7 @@ class TableNode(Node):
     )
 
 
-    def __init__(self, *args, **kw):
-        super(TableNode, self).__init__(*args, **kw)
-        if self.__class__.first_run:
-            self.__class__.first_run = False
-            self.setup_commands()
-            self.setup_extra_commands()
 
-    def setup_extra_commands(self):
-        pass
 
     def setup_commands(self):
         commands = self.__class__.commands
