@@ -59,21 +59,21 @@ class test_donkey(object):
               )
 
         table("contact_summary", cls.Donkey,
-              SumDecimal("total_amount", "transactions.amount", base_level = "people"),
-              AddRow("new_row", "people", initial_event = True),
-              CountRows("transaction_count", "transactions.id", base_level = "people"),
-              MaxDate("membership", "membership", base_level = "people"),
-              CopyText("email", "email", 
-                       base_level = "people", 
-                       fields = "email,email", 
-                       update_when_flag = "active_email",
-                       counter = "email_number"),
-              CopyTextAfter("address", "people",
-                            base_level = "people",
-                            fields = "address_line_1,postcode",
-                            changed_flag = "modified"),
-              Boolean("modified", default = True),
-              logged = False, validated = False
+#              SumDecimal("total_amount", "transactions.amount", base_level = "people"),
+#              AddRow("new_row", "people", initial_event = True),
+#              CountRows("transaction_count", "transactions.id", base_level = "people"),
+#              MaxDate("membership", "membership", base_level = "people"),
+#              CopyText("email", "email", 
+#                       base_level = "people", 
+#                       fields = "email,email", 
+#                       update_when_flag = "active_email",
+#                       counter = "email_number"),
+#              CopyTextAfter("address", "people",
+#                            base_level = "people",
+#                            fields = "address_line_1,postcode",
+#                            changed_flag = "modified"),
+#              Boolean("modified", default = True),
+#              logged = False, validated = False
              )
 
         table("transactions", cls.Donkey,
@@ -82,7 +82,7 @@ class test_donkey(object):
                Text("Type", default = u"payment"))
         table("email", cls.Donkey,
               Email("email"),
-              Counter("email_number", base_level = "people"),
+              #Counter("email_number", base_level = "people"),
               Boolean("active_email", default = False)
              )
         entity("donkey", cls.Donkey,
@@ -162,7 +162,7 @@ class test_donkey(object):
         cls.Donkey.add_table(Table("entity_categories",
                              DateTime("start_date"),
                              DateTime("end_date"),
-                             Counter("category_number", base_level = "_core_entity"),
+                             #Counter("category_number", base_level = "_core_entity"),
                              ManyToOne("entity", "_core_entity",
                                        backref = "categories"),
                              CheckOverLappingDates("check_dates", parent_table = "_core_entity"))

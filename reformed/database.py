@@ -30,7 +30,7 @@ import search
 import resultset
 import tables
 from collections import defaultdict
-from util import get_paths, get_all_local_data, split_table_fields
+from util import split_table_fields
 from fields import ManyToOne, OneToOne, OneToMany, Integer, CopyTextAfter, CopyTextAfterField, DeleteRow
 import fields as field_types
 import sessionwrapper
@@ -41,6 +41,8 @@ import threading
 import os
 from ZODB.PersistentMapping import PersistentMapping
 import transaction
+from events import Event
+import actions
 
 log = logging.getLogger('rebase.application.database')
 
@@ -243,39 +245,39 @@ class Database(object):
         if self.tables["_core_entity"].persisted:
             self.fields_to_persist.append(relation)
 
-        #add title events
+        ##add title events
 
-        if table.title_field:
-            target_field = table.title_field
-        else:
-            target_field = "name"
+        #if table.title_field:
+        #    target_field = table.title_field
+        #else:
+        #    target_field = "name"
 
-        title_event = CopyTextAfter("%s_title" % table.name, table.name, field_name = "title", fields = target_field)
+        #title_event = CopyTextAfter("%s_title" % table.name, table.name, field_name = "title", fields = target_field)
 
 
-        self.tables["_core_entity"]._add_field_no_persist(title_event)
+        #self.tables["_core_entity"]._add_field_no_persist(title_event)
 
-        if self.tables["_core_entity"].persisted:
-            self.fields_to_persist.append(title_event)
+        #if self.tables["_core_entity"].persisted:
+        #    self.fields_to_persist.append(title_event)
 
-        #add summary events
+        ##add summary events
 
-        if table.summary_fields:
-            summary_fields = table.summary_fields
+        #if table.summary_fields:
+        #    summary_fields = table.summary_fields
 
-            summary_event = CopyTextAfterField("%s_summary" % table.name, table.name, field_name = "summary", fields = summary_fields)
-            self.tables["_core_entity"]._add_field_no_persist(summary_event)
+        #    summary_event = CopyTextAfterField("%s_summary" % table.name, table.name, field_name = "summary", fields = summary_fields)
+        #    self.tables["_core_entity"]._add_field_no_persist(summary_event)
 
-            if self.tables["_core_entity"].persisted:
-                self.fields_to_persist.append(summary_event)
+        #    if self.tables["_core_entity"].persisted:
+        #        self.fields_to_persist.append(summary_event)
 
-        ## add delete event
+        ### add delete event
 
-        delete_event = DeleteRow("delete_%s" % table.name, table.name)
-        self.tables["_core_entity"]._add_field_no_persist(delete_event)
+        #delete_event = DeleteRow("delete_%s" % table.name, table.name)
+        #self.tables["_core_entity"]._add_field_no_persist(delete_event)
 
-        if self.tables["_core_entity"].persisted:
-            self.fields_to_persist.append(delete_event)
+        #if self.tables["_core_entity"].persisted:
+        #    self.fields_to_persist.append(delete_event)
 
     def _add_table_no_persist(self, table):
 
@@ -351,6 +353,16 @@ class Database(object):
                                             persisted = True,
                                             **table["params"])
                                             )
+
+                for event_type in table["events"]:
+                    action_list = []
+                    for class_name, args, kw in table["events"][event_type]:
+                        ##FIXME find a better way of finding the classes
+                        action_class = getattr(actions, class_name)
+                        action_list.append(action_class(*args, **kw))
+                    event = Event(event_type, *action_list)
+                    event._set_parent
+
 
         self.update_sa(True)
         self.validate_database()
@@ -428,8 +440,9 @@ class Database(object):
             table.paths = None
             table.local_tables = None
             table.one_to_many_tables = None
-            table.events = []
-            table.initial_events = []
+            table.events = dict(new = [],
+                                delete = [],
+                                change = [])
             table.schema_dict = None
         self.graph = None
 

@@ -340,9 +340,11 @@ WHERE donkey_1.name = ? AND donkey_1.id IS NOT NULL AND people_1.name = ? AND pe
 
 
         code = self.Donkey.get_instance("code")
-        code.type = u"over_18"
+        code.code_type = u"over_18"
+        code.name = u"over_18"
         result1.over_18 = code
 
+        print code
         self.session.save(code)
 
         result1.over_18 = code
@@ -359,7 +361,8 @@ WHERE donkey_1.name = ? AND donkey_1.id IS NOT NULL AND people_1.name = ? AND pe
         assert len(a.search().all()) == 1
 
         code = self.Donkey.get_instance("code")
-        code.type = u"gender"
+        code.code_type = u"gender"
+        code.name = u"gender"
         self.session.save(code)
         
         result2.gender = code

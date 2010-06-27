@@ -158,6 +158,7 @@ class test_events(test_donkey):
         self.session.add(entity)
         self.session.commit()
 
+        print entity.people.contact_summary.membership
         assert entity.people.contact_summary.membership == datetime.datetime(2013,06,02)
 
         person2 = self.session.query(self.Donkey.aliases["people"]).first()
@@ -279,6 +280,7 @@ class test_events(test_donkey):
         assert entity_categories.category_number == 1
 
         print person.contact_summary
+        print person.contact_summary.categories
         assert person.contact_summary.categories == "this is a this is ab this is abc"
 
 
