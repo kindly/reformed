@@ -494,15 +494,8 @@ class CodeGroup(FormControl):
     def custom_control_save(self, node_token, object, data, session):
         # FIXME this is broken
 
-        import pprint
-        pprint.pprint(data)
-
-        print node_token
-        pprint.pprint(node_token.data)
-
         code_groups = getattr(object, self.relation_attr)
         code_group_data = data.get(self.name, [])
-        print "<<~~~~page_item~~~~  %s" % code_group_data
         yes_codes = set()
         no_codes = set()
 
