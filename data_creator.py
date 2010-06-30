@@ -2,6 +2,7 @@ import random
 import re
 import datetime
 from sqlalchemy.exceptions import ProgrammingError
+from formencode import Invalid
 
 
 class MarkovText(object):
@@ -196,7 +197,6 @@ class DataGenerator(object):
         else:
             towns = self.postcodes.get(base[:1])
         return random.choice(towns)
-
 
 
     def make_postcode(self):
@@ -492,6 +492,7 @@ class DataGenerator(object):
             # set the value
             if value is not None:
                 setattr(obj, field['name'], value)
+                print field['name'], value
 
 class Generator(object):
 
@@ -541,23 +542,16 @@ class Generator(object):
 
                 try:
                     session.save(obj)
-                except:
-                    # FIXME catch Invalid
+                except Invalid:
                     # cannot save due to validation error
-                    # skip this
+                    # skip this attempt
                     batch_size -= 1
 
-            try:
-                session.commit()
-                number_generated += batch_size
-                records_needed -= batch_size
-                messager.message('%s generated' % number_generated, (number_generated * 100)/self.number_requested)
-            except ProgrammingError:
-                # FIXME we are getting funny unicode error due to
-                # town names with none ascii names
-                print 'GGGRR we are struck by the evil unicode error'
-                session.rollback()
-                pass
+            session.commit()
+            number_generated += batch_size
+            records_needed -= batch_size
+            messager.message('%s generated' % number_generated, (number_generated * 100)/self.number_requested)
+
 
         session.close()
 
