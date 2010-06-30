@@ -94,6 +94,11 @@ class Column(BaseSchema):
         if onupdate:
             self.sa_options["onupdate"] = onupdate
 
+        try:
+            self.length = self.type.length
+        except AttributeError:
+            self.length = None
+
         self.nullable = kw.pop("nullable", True)
         self.mandatory = kw.pop("mandatory", False)
         if self.mandatory:
@@ -112,6 +117,8 @@ class Column(BaseSchema):
         if self.use_parent:
             if parent.length:
                 self.type.length = parent.length
+            else:
+                parent.length = self.length
             if parent.field_validation:
                 self.validation = parent.field_validation
             if parent.mandatory:
