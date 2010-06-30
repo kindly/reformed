@@ -13,20 +13,22 @@ class Event(object):
 
     def __init__(self, event_cause, *actions):
 
-        self.event_cause = event_cause
+        self.event_causes = event_cause.split(",")
         self.actions = actions
 
     def _set_parent(self, table):
 
-        table.events[self.event_cause].extend(self.actions)
+        for event_cause in self.event_causes:
+            table.events[event_cause].extend(self.actions)
 
 
 class EventState(object):
 
-    def __init__(self, object, session):
+    def __init__(self, object, session, event_type):
 
         self.object = object
         self.session = session
+        self.event_type = event_type
 
 
 

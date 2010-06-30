@@ -25,7 +25,7 @@ class Action(PersistBaseClass):
 
     def __call__(self, action_state):
 
-        self.run(self, action_state)
+        self.run(action_state)
     
 #    def __init__(self, target, field = None, base_level = None, initial_event = False, **kw):
 
@@ -288,7 +288,7 @@ class Action(PersistBaseClass):
 
 #        join_conditions = self.join_conditions()
 
-#        return table.join(self.table2, and_(*join_conditions))
+#        return table.join(self.tablhacker newse2, and_(*join_conditions))
 
 
 #    def join_statement(self):
@@ -312,27 +312,49 @@ class AddRow(Action):
 
     def run(self, action_state):
 
-        table = action_state.table
-        database = table.database
         object = action_state.object
+        table = object._table
+        database = table.database
         session = action_state.session
 
-        ##FIXME we should be making a call like this instead
-        ##path = table.get_path(self.related_table)
-        path = table.table_path[self.related_table].path
+        path = table.get_path(self.related_table)
 
         if len(path) != 1:
             raise custom_exceptions.InvalidTableReferenceValue(
                 "table %s not one join away from objects table %s"
                 % (self.related_table, table.name))
 
-        new_obj = self.database[self.related_table].sa_class()
+        new_obj = database[self.related_table].sa_class()
 
         setattr(object, path[0], new_obj)
         session.save(new_obj)
 
 
 class DeleteRow(Action):
+
+    def __init__(self, related_table):
+
+        self.related_table = related_table
+
+    def run(self, action_state):
+
+        object = action_state.object
+
+        table = object._table
+        database = table.database
+        session = action_state.session
+
+        path = table.get_path(self.related_table)
+
+        if len(path) != 1:
+            raise custom_exceptions.InvalidTableReferenceValue(
+                "table %s not one join away from objects table %s"
+                % (self.related_table, table.name))
+
+        to_delete = getattr(object, path[0])
+
+        session.delete(to_delete)
+
 
     def add(self, result, base_table_obj, object, session, initial_event = True):
 
@@ -363,6 +385,11 @@ class DeleteRow(Action):
 
 class SumEvent(Action):
 
+    def __init__(self, result_field, number_field):
+
+        self.result_field = result_field
+        self.number_field = number_field
+
     def add(self, result, base_table_obj, object, session):
 
         value = getattr(object, self.target_field)
@@ -370,6 +397,50 @@ class SumEvent(Action):
         setattr(result, self.field_name, self.table.sa_table.c[self.field_name] + value)
 
         session.add(result)
+
+    def run(self, action_state):
+
+        object = action_state.object
+        table = object._table
+        database = table.database
+        session = action_state.session
+        event_type = action_state.event_type
+
+        path = table.get_path_from_field(self.result_field)
+        result_field = self.result_field.split(".")[-1]
+
+        new_obj = object
+
+        for relation in path:
+            new_obj = getattr(new_obj, relation)
+            assert new_obj is not None
+
+
+        value = getattr(object, self.number_field)
+
+        new_table = new_obj._table
+
+        if event_type == "delete":
+            diff = -value
+        elif event_type == "new":
+            diff = value
+        elif event_type == "change":
+            a, b, c = attributes.get_history(
+                attributes.instance_state(object),
+                self.number_field,
+                passive = False
+            )
+            if not c:
+                return
+            diff = value - c[0]
+        else:
+            return
+
+
+        setattr(new_obj, result_field,
+                new_table.sa_table.c[result_field] + diff)
+
+        action_state.session.save(new_obj)
 
 
     def delete(self, result, base_table_obj, object, session):
@@ -408,6 +479,42 @@ class SumEvent(Action):
 
 
 class CountEvent(Action):
+
+    def __init__(self, result_field, number_field):
+
+        self.result_field = result_field
+        self.number_field = number_field
+
+    def run(self, action_state):
+
+        object = action_state.object
+        table = object._table
+        database = table.database
+        session = action_state.session
+        event_type = action_state.event_type
+
+        path = table.get_path_from_field(self.result_field)
+        result_field = self.result_field.split(".")[-1]
+
+        new_obj = object
+
+        for relation in path:
+            new_obj = getattr(new_obj, relation)
+            assert new_obj is not None
+
+        new_table = new_obj._table
+
+        if event_type == "delete":
+            diff = -1
+        elif event_type == "new":
+            diff = 1
+        else:
+            return
+
+        setattr(new_obj, result_field,
+                new_table.sa_table.c[result_field] + diff)
+
+        action_state.session.save(new_obj)
 
     def add(self, result, base_table_obj, object, session):
 
@@ -530,15 +637,36 @@ class CopyTextAfter(Action):
 
     ##TODO rename class and update_initial method
 
-    def __init__(self, target, field, base_level = None, initial_event = False, **kw):
+    def __init__(self, result_field, fields, **kw):
 
-        super(CopyTextAfter, self).__init__(target, field, base_level, initial_event, **kw)
+        self.result_field = result_field
 
-        fields = kw.get("field_list", self.target_field)
-        self.changed_flag = kw.get("changed_flag", None)
-        self.update_when_flag = kw.get("update_when_flag" , None)
+        #self.changed_flag = kw.get("changed_flag", None)
+        #self.update_when_flag = kw.get("update_when_flag" , None)
 
         self.field_list = [s.strip() for s in fields.split(",")]
+
+    def run(self, action_state):
+
+        object = action_state.object
+        table = object._table
+        database = table.database
+
+        path = table.get_path_from_field(self.result_field)
+        result_field = self.result_field.split(".")[-1]
+
+        new_obj = object
+
+        for relation in path:
+            new_obj = getattr(new_obj, relation)
+            assert new_obj is not None
+        
+        values = [getattr(object, field) for field in self.field_list]
+
+        value = u' '.join([val for val in values if val])
+
+        setattr(new_obj, result_field, value)
+        action_state.session.save(new_obj)
 
     def update_after(self, object, result, session):
 
@@ -626,6 +754,30 @@ class CopyTextAfter(Action):
 class CopyTextAfterField(CopyTextAfter):
 
     ## rename class and update_initial method
+
+    def run(self, action_state):
+
+        object = action_state.object
+        table = object._table
+        database = table.database
+
+        path = table.get_path_from_field(self.result_field)
+        result_field = self.result_field.split(".")[-1]
+
+        new_obj = object
+
+        for relation in path:
+            new_obj = getattr(new_obj, relation)
+            assert new_obj is not None
+        
+        values = [getattr(object, field) for field in self.field_list]
+
+        values = [u"%s: %s" % (field, getattr(object, field)) for field in self.field_list]
+
+        value = u' -- '.join([val for val in values if val])
+
+        setattr(new_obj, result_field, value)
+        action_state.session.save(new_obj)
 
     def update_initial(self, object, result, session):
 

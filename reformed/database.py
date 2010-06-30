@@ -87,6 +87,7 @@ class Database(object):
 
         self.load_from_persist()
 
+
         self.status = "active"
 
 
@@ -247,10 +248,16 @@ class Database(object):
 
         ##add title events
 
-        #if table.title_field:
-        #    target_field = table.title_field
-        #else:
-        #    target_field = "name"
+        if table.title_field:
+            title_field = table.title_field
+        else:
+            title_field = "name"
+
+        event = Event("new", 
+                      actions.CopyTextAfter("_core_entity.title", title_field))
+
+        table.add_event(event)
+
 
         #title_event = CopyTextAfter("%s_title" % table.name, table.name, field_name = "title", fields = target_field)
 
@@ -262,14 +269,23 @@ class Database(object):
 
         ##add summary events
 
-        #if table.summary_fields:
-        #    summary_fields = table.summary_fields
+        if table.summary_fields:
+            summary_fields = ",".join(table.summary_fields)
 
-        #    summary_event = CopyTextAfterField("%s_summary" % table.name, table.name, field_name = "summary", fields = summary_fields)
-        #    self.tables["_core_entity"]._add_field_no_persist(summary_event)
+            #summary_event = CopyTextAfterField("%s_summary" % table.name, table.name, field_name = "summary", fields = summary_fields)
+            #self.tables["_core_entity"]._add_field_no_persist(summary_event)
 
-        #    if self.tables["_core_entity"].persisted:
-        #        self.fields_to_persist.append(summary_event)
+            event = Event("new", 
+                          actions.CopyTextAfterField("_core_entity.summary", title_field))
+
+            table.add_event(event)
+
+        event = Event("delete", 
+                      actions.DeleteRow("_core_entity"))
+        table.add_event(event)
+
+            #if self.tables["_core_entity"].persisted:
+            #    self.fields_to_persist.append(summary_event)
 
         ### add delete event
 
@@ -347,13 +363,12 @@ class Database(object):
                                             *field["args"],
                                             **field["params"]))
 
-                self.add_table(tables.Table(table_name,
+                rtable = tables.Table(table_name,
                                             *fields,
                                             field_order = list(table["field_order"]),
                                             persisted = True,
                                             **table["params"])
-                                            )
-
+                                            
                 for event_type in table["events"]:
                     action_list = []
                     for class_name, args, kw in table["events"][event_type]:
@@ -361,10 +376,12 @@ class Database(object):
                         action_class = getattr(actions, class_name)
                         action_list.append(action_class(*args, **kw))
                     event = Event(event_type, *action_list)
-                    event._set_parent
+                    event._set_parent(rtable)
+
+                self.add_table(rtable)
 
 
-        self.update_sa(True)
+        self.update_sa()
         self.validate_database()
         connection.close()
 

@@ -167,12 +167,13 @@ class SessionWrapper(object):
         for obj in self.session.new:
             if hasattr(obj, "_from_load"):
                 continue
-            ##  special event to get values from parent table
-            for column, property in obj._table.parent_columns_attributes.iteritems():
-                new_value = self.get_value_from_parent(obj, column)
-                setattr(obj, column, new_value )
+            ##FIXME special event to get values from parent table, should be normal event
+            if not post_flush:
+                for column, property in obj._table.parent_columns_attributes.iteritems():
+                    new_value = self.get_value_from_parent(obj, column)
+                    setattr(obj, column, new_value )
 
-            event_state = EventState(obj, self)
+            event_state = EventState(obj, self, "new")
             for action in obj._table.events["new"]:
                 if post_flush:
                     if action.post_flush:
@@ -181,13 +182,11 @@ class SessionWrapper(object):
                     if not action.post_flush:
                         action(event_state)
 
-                events.insert_action(self, obj)
-
     def update_events(self, post_flush = False):
 
         for obj in self.session.dirty:
 
-            ## special event to update children on change
+            ##FIXME special event to get values from parent table, should be normal event
             if obj._table.primary_key_list:
                 changed = False
                 for column in obj._table.primary_key_list:
@@ -199,7 +198,7 @@ class SessionWrapper(object):
                     for attrib in obj._table.dependant_attributes:
                         self.update_children(obj, attrib, obj._table.primary_key_list)
 
-            event_state = EventState(obj, self)
+            event_state = EventState(obj, self, "change")
             for action in obj._table.events["change"]:
                 if post_flush:
                     if action.post_flush:
@@ -211,7 +210,7 @@ class SessionWrapper(object):
     def delete_events(self, post_flush = False):
 
         for obj in self.session.deleted:
-            event_state = EventState(obj, self)
+            event_state = EventState(obj, self, "delete")
             for action in obj._table.events["delete"]:
                 if post_flush:
                     if action.post_flush:

@@ -16,6 +16,8 @@ import yaml
 import os
 import logging
 import reformed.user_tables
+from reformed.events import Event
+import reformed.actions as actions
 
 sqlhandler = logging.FileHandler("sql.log")
 sqllogger = logging.getLogger('sqlalchemy.engine')
@@ -53,12 +55,16 @@ class test_donkey(object):
               OneToMany("transactions",
                        "transactions", foreign_key_name = "pop"),
               ManyToOne("over_18", "code", foreign_key_name = "over_18_id", backref = "over_18", many_side_not_null = False), ##enumeration look up table
+              
+              Event("new", actions.AddRow("contact_summary")),
 
               entity = True,
               summary_fields = "name,address_line_1,postcode"
               )
 
         table("contact_summary", cls.Donkey,
+              Money("total_amount", default = 0),
+              Integer("transaction_count", default = 0),
 #              SumDecimal("total_amount", "transactions.amount", base_level = "people"),
 #              AddRow("new_row", "people", initial_event = True),
 #              CountRows("transaction_count", "transactions.id", base_level = "people"),
@@ -79,7 +85,17 @@ class test_donkey(object):
         table("transactions", cls.Donkey,
                DateTime("date"),
                Money("amount"),
-               Text("Type", default = u"payment"))
+               Text("Type", default = u"payment"),
+               Event("new,delete,change", 
+                     actions.SumEvent("contact_summary.total_amount",
+                                        "amount")
+                    ),
+               Event("new,delete", 
+                     actions.CountEvent("contact_summary.transaction_count",
+                                        "amount")
+                    )
+             )
+
         table("email", cls.Donkey,
               Email("email"),
               #Counter("email_number", base_level = "people"),
@@ -178,7 +194,6 @@ class test_donkey(object):
         ) 
 
 
-
         cls.Donkey.persist()
         cls.session = cls.Donkey.Session()
 
@@ -271,6 +286,7 @@ class test_donkey(object):
         cls.session.add(donkey_type2)
         cls.session.add(donkey_type3)
         cls.session.commit()
+
         
     @classmethod
     def tearDownClass(cls):
@@ -521,9 +537,13 @@ class test_basic_input(test_donkey):
 
     def test_search_internal(self):
 
-        print self.Donkey.search("people", session = self.session, fields = ["contact_summary.total_amount", "name", "address_line_1"], internal = True, keep_all = False)
+        print self.Donkey.search("people", session = self.session, fields = ["contact_summary.total_amount", "name", "address_line_1"], internal = True, keep_all = False).results[0]
+
+        print self.Donkey.search("people", session = self.session, fields = ["contact_summary.total_amount", "name", "address_line_1"], internal = True, keep_all = False).data
 
         assert self.Donkey.search("people", session = self.session, fields = ["contact_summary.total_amount", "name", "address_line_1"], internal = True, keep_all = False).data ==  [{'__table': 'people', 'address_line_1': u'43 union street', 'contact_summary.total_amount': Decimal('0'), 'id': 1, 'name': u'david'}]
+
+        raise
 
     def test_search_with_convert(self):
 
@@ -659,6 +679,8 @@ class test_basic_input(test_donkey):
         self.session.save(donkey)
         self.session.commit()
 
+        first_donkey = self.session.query(self.Donkey.get_class("donkey"))[1]
+
     def test_hashed_password(self):
 
         payment = self.Donkey.get_instance("payments")
@@ -685,24 +707,3 @@ class test_basic_input(test_donkey):
 
 
 
-
-        
-
-
-        
-        
-
-
-
-
-class test_after_reload(test_basic_input):
-    
-    @classmethod
-    def setUpClass(cls):
-        super(test_after_reload, cls).setUpClass()
-        cls.Donkey.update_sa(reload = True)
-        super(test_after_reload, cls).set_up_inserts()
-        
-    @classmethod
-    def set_up_inserts(cls):
-        pass

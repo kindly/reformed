@@ -195,6 +195,7 @@ class Table(object):
                 for action in self.events[event_type]:
                     self._persist_action(action, event_type, connection)
 
+
             if not self.quiet:
                 print 'creating %s' % self.name
 
@@ -416,6 +417,8 @@ class Table(object):
                 transaction.commit()
             finally:
                 connection.close()
+        else:
+            event._set_parent(self)
 
 
     def rename_field(self, field, new_name):
@@ -1017,6 +1020,29 @@ class Table(object):
 
             self.table_path_list = create_table_path_list(self.paths)
             self.table_path = create_table_path(self.table_path_list, self.name)
+
+
+    def get_edge(self, table_name):
+
+        if ">" in table_name:
+            path = tuple(table_name.split(">")[:-1])
+            return self.paths[path]
+        
+        return self.table_path[table_name]
+
+    def get_path(self, table_name):
+        
+        return self.get_edge(table_name).path
+
+    def get_edge_from_field(self, field_name):
+
+        table = ".".join(field_name.split(".")[:-1])
+        return self.get_edge(table)
+
+    def get_path_from_field(self, field_name):
+
+        return self.get_edge_from_field(field_name).path
+
 
     def _make_sa_order_by_list(self, relation, other_table):
 
