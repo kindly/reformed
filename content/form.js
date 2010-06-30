@@ -922,12 +922,40 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     function size_boxes(){
         var $box;
         var width;
+        // BOX layouts
         var $boxes = $form.find('div.BOX');
         for (var i = 0, n = $boxes.size(); i < n ; i++){
             $box = $boxes.eq(i);
             width = $box.parent().width() - util_size.FORM_BOX_W;
             $box.width(width);
         }
+        // results list resizing
+        $boxes = $form.find('div.RESULT_DATA');
+        for (i = 0, n = $boxes.size(); i < n ; i++){
+            $box = $boxes.eq(i);
+            width = $box.parent().width() - util_size.FORM_BOX_W - 200;
+            $box.width(width);
+        }
+        // record list resizing
+        // for images
+        var $img = $form.find('div.RECORD_IMG');
+        if ($img.size() !== 0){
+            var position = $img.position();
+            var img_top = position.top;
+            var img_bottom = img_top  + $img.outerHeight()
+            var img_width = $img.outerWidth();
+            var $boxes = $img.parent().find('div.f_control_holder');
+            for (var i = 0, n = $boxes.size(); i < n ; i++){
+                $box = $boxes.eq(i);
+                width = $box.parent().width() - img_width;
+                $box.width(width);
+                // check if we have cleared the img float if so quit resizing
+                if ($box.position().top + $box.outerHeight() > img_bottom){
+                    break;
+                }
+            }
+        }
+
     }
 
     var local_row_data;
@@ -1253,6 +1281,19 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                     $builder.push($('<div ' + set_class_list(item) + '>'));
                     builder_depth++;
                     break;
+                case 'listing_start':
+                    $builder.push($('<div ' + set_class_list(item, "RESULT_ITEM") + '>'));
+                    builder_depth++;
+                    var img = '<div class="RESULT_IMG"><img src="/attach?' + item.img + '.s" /></div>';
+                    $builder[builder_depth].append(img);
+                    $builder.push($('<div class="RESULT_DATA" >'));
+                    builder_depth++;
+                    break;
+                case 'listing_end':
+                    if (builder_depth > 0){
+                        $builder[--builder_depth].append($builder.pop());
+                    }
+                    // drop through so outer div is also closed!
                 case 'box_end':
                 case 'area_end':
                     if (builder_depth > 0){
@@ -1271,6 +1312,21 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             var control_function;
             var ro = form_data.params.read_only;
             $FormElements.set_data(local_row_data);
+
+            // results item box
+            if (form_data.params.form_type == 'results'){
+                item = {layout : 'listing_start', img: local_row_data.thumb};
+                add_layout_item(item, $builder, builder_depth);
+            }
+            // FIXME this needs to be something different __thumb?
+            img_value = local_row_data.Image;
+            if (img_value){
+                item = {control : 'image', css: 'img_large', size: 'l'};
+                var img = $FormElements.build(ro, item, img_value);
+                img = $('<div class="RECORD_IMG">').append(img);
+                $builder[builder_depth].append(img);
+            }
+
             for (var i = 0; i < num_fields; i++){
                 item = form_data.fields[i];
                 value = $.Util.get_item_value(item, local_row_data);
@@ -1282,6 +1338,12 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                     form_controls_hash[item.name] = $control;
                 }
             }
+
+            if (form_data.params.form_type == 'results'){
+                item = {layout : 'listing_end'}
+                add_layout_item(item, $builder, builder_depth);
+            }
+
         }
 
         function make_paging(){
@@ -1365,6 +1427,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 }
             }
         }
+
         $FormElements.clear_subforms();
         $form.empty();
         form_controls_hash = {};
@@ -1383,6 +1446,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             paging_bar = make_paging();
             $builder[builder_depth].append(paging_bar);
         }
+        item = {layout : 'area_start'}
+        add_layout_item(item, $builder, builder_depth);
         // main form
         if (!row_data.__array){
             local_row_data = row_data;
@@ -1391,7 +1456,6 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             for (var i = 0, n = row_data.__array.length; i <  n; i++){
                 local_row_data = row_data.__array[i];
                 build_form_items();
-                $control = $('<div class="f_control_holder"><hr/></div>');
                 $builder[builder_depth].append($control);
             }
         }
