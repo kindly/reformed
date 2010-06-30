@@ -195,8 +195,8 @@ class DataGenerate(JobNode):
 
     main = form(
         text("##Data Generator##"),
-        dropdown('table', 'DATA', data_field = 'tables'),
-        intbox('number_records'),
+        dropdown('table', 'DATA', data_field = 'tables', default = 'people'),
+        intbox('number_records', default = 100),
         button('test.DataGenerate:_generate:', label = 'Generate'),
         params =  {"form_type": "action"},
     )
