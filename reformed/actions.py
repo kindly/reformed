@@ -7,6 +7,7 @@ import datetime
 import custom_exceptions
 import logging
 
+
 class PersistBaseClass(object):
 
     def __new__(cls, *args, **kw):
@@ -229,7 +230,34 @@ class Counter(Action):
         session.add_after_flush(self.update_after, (object, result, session))
 
 
+class CopyValue(Action):
 
+
+    def __init__(self, src_field, dest_field, **kw):
+
+        self.dest_field = dest_field
+        self.src_field = src_field
+
+    def run(self, action_state):
+
+        object = action_state.object
+        table = object._table
+        database = table.database
+
+        path = table.get_path_from_field(self.dest_field)
+        dest_field = self.dest_field.split(".")[-1]
+
+        new_obj = object
+
+        for relation in path:
+            new_obj = getattr(new_obj, relation)
+            assert new_obj is not None
+
+        value = getattr(object, self.src_field)
+
+        setattr(new_obj, dest_field, value)
+        action_state.session.save(new_obj)
+ 
 
 class CopyTextAfter(Action):
 
