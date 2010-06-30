@@ -462,7 +462,6 @@ class Dropdown(FormControl):
 
 class CodeGroup(FormControl):
 
-    static = False
 
     def __init__(self, factory, form):
         super(CodeGroup, self).__init__(factory, form)
