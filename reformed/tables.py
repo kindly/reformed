@@ -111,7 +111,7 @@ class Table(object):
         self.summary_fields = kw.get("summary_fields", None)
         self.summary = kw.get("summary", None)
         self.primary_key_list = []
-        self.events = []
+        #self.events = []
         self.initial_events = []
         if self.primary_key:
             self.primary_key_list = self.primary_key.split(",")
@@ -120,6 +120,10 @@ class Table(object):
             self.unique_constraint_list = [column_list.split(",")
                                            for column_list in
                                            self.unique_constraint.split(";")]
+
+        self.events = dict(new = [],
+                           delete = [],
+                           change = [])
 
         for field in args:
             field._set_parent(self)
@@ -177,15 +181,37 @@ class Table(object):
             table["params"] = params
 
             table_fields = PersistentMapping()
-
             table["fields"] = table_fields
+
+            events = PersistentMapping(new = PersistentList(),
+                                       delete = PersistentList(),
+                                       change = PersistentList())
+            table["events"] = events
 
             for field_name, rfield in self.fields.iteritems():
                 self._persist_extra_field(rfield, connection)
 
+            for event_type in self.events:
+                for action in self.events[event_type]:
+                    self._persist_action(action, event_type, connection)
+
+
             if not self.quiet:
                 print 'creating %s' % self.name
 
+    def _persist_action(self, action, event_type, connection):
+
+        root = connection.root()
+        table = root["tables"][self.name]
+        events = table["events"][event_type]
+
+        events.append(
+            PersistentList(
+                [action._class_name,
+                PersistentList(action._args),
+                PersistentMapping(action._kw)]
+            )
+        )
 
     def persist_foreign_key_columns(self, connection):
 
@@ -350,7 +376,7 @@ class Table(object):
         """add a Field object to this Table"""
         if self.persisted == True:
 
-            connection = self.database.db.open()
+            connection = self.database.application.zodb.open()
 
             field.check_table(self)
             try:
@@ -373,6 +399,27 @@ class Table(object):
 
         else:
             self._add_field_no_persist(field)
+
+    def add_event(self, event):
+
+        if self.persisted == True:
+
+            connection = self.database.application.zodb.open()
+            try:
+                event._set_parent(self)
+                for action in event.actions:
+                    self._persist_action(action, event.event_type, connection)
+
+            except Exception, e:
+                transaction.abort()
+                raise
+            else:
+                transaction.commit()
+            finally:
+                connection.close()
+        else:
+            event._set_parent(self)
+
 
     def rename_field(self, field, new_name):
 
@@ -974,6 +1021,29 @@ class Table(object):
             self.table_path_list = create_table_path_list(self.paths)
             self.table_path = create_table_path(self.table_path_list, self.name)
 
+
+    def get_edge(self, table_name):
+
+        if ">" in table_name:
+            path = tuple(table_name.split(">")[:-1])
+            return self.paths[path]
+        
+        return self.table_path[table_name]
+
+    def get_path(self, table_name):
+        
+        return self.get_edge(table_name).path
+
+    def get_edge_from_field(self, field_name):
+
+        table = ".".join(field_name.split(".")[:-1])
+        return self.get_edge(table)
+
+    def get_path_from_field(self, field_name):
+
+        return self.get_edge_from_field(field_name).path
+
+
     def _make_sa_order_by_list(self, relation, other_table):
 
         order_by = []
@@ -1144,6 +1214,7 @@ class Table(object):
         if not self.validated:
             return {}
 
+        print instance
         return self.validation_schema.to_python(validation_dict, instance)
 
 
