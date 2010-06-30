@@ -958,7 +958,7 @@ class Table(object):
             elif column.type == sa.Integer:
                 properties[col_name] = column_property(getattr(self.sa_table.c,col_name),
                                                          extension = ConvertInteger())
-            elif column.type == sa.Unicode:
+            elif column.type == sa.Unicode or isinstance(column.type, sa.Unicode):
                 properties[col_name] = column_property(getattr(self.sa_table.c,col_name),
                                                          extension = ConvertUnicode())
             else:
@@ -1292,7 +1292,7 @@ class ConvertUnicode(AttributeExtension):
             return value
 
         state.dict["_validated"] = False
-
+ 
         if value is None:
             return None
 
