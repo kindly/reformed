@@ -70,13 +70,12 @@ $FormElements = function(){
         var split = value.split("|");
         var link_node = split.shift();
         value = split.join('|');
-  //      var x = (show_label ? '<span class="label">' + item.title + '</span>' : '');
         var x = '';
         if (link_node.substring(0,1) == 'n'){
-            x += '<a href="#"' + set_class_list(item, 'link') + ' onclick="node_load(\'' + link_node + '\');return false">' + (value ? value : '&nbsp;') + '</a>';
+            x += '<a href="#"' + set_class_list(item, 'link') + ' onclick="node_load(\'' + link_node + '\');return false">' + (value ? value : 'untitled') + '</a>';
         }
         if (link_node.substring(0,1) == 'd'){
-            x += '<a href="#"' + set_class_list(item, 'link') + ' onclick ="link_process(this,\'' + link_node + '\');return false;">' + (value ? value : '&nbsp;') + '</a>';
+            x += '<a href="#"' + set_class_list(item, 'link') + ' onclick ="link_process(this,\'' + link_node + '\');return false;">' + (value ? value : 'untitled') + '</a>';
         }
         return x;
     }
@@ -123,6 +122,10 @@ $FormElements = function(){
         value = correct_value(item, value);
         if (item.css){
             class_list += ' ' + item.css;
+        }
+        // if autocomplete is 'DATA' then this uses form data for the items
+        if (autocomplete == 'DATA' && item.data_field){
+            autocomplete = local_row_data[item.data_field];
         }
         $control = $(add_label(item, 'rf_') + '<span class="' + class_list + ' complex"><input id="rf_' + item.name + '" class="DROPDOWN ' + class_list + '" value="' + value + '" /><div class="but_dd_f"/></span>' + form_description(item));
         $control.find('input').autocomplete(autocomplete, {dropdown : true});

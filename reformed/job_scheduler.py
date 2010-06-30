@@ -34,8 +34,8 @@ class JobScheduler(object):
                                             DateTime("job_start_time"),
                                             DateTime("job_started"),
                                             DateTime("job_ended"),
-                                            Text("error", length = 2000),
-                                            Text("message", length = 2000),
+                                            Text("error", length = 5000),
+                                            Text("message", length = 5000),
                                             Integer("percent"),
                                             quiet = self.database.quiet,
                                             table_type = "internal")
@@ -162,7 +162,7 @@ class JobSchedulerThread(threading.Thread):
             job_class = self.database.get_class("_core_job_scheduler")
             job = session.query(job_class).get(job_id)
             message = u"%s" % (result)
-            message = message[:2000] # truncate the message if needed
+            message = message[:5000] # truncate the message if needed
             job.message = message
             job.job_ended = datetime.datetime.now()
             session.save(job)
@@ -178,7 +178,7 @@ class JobSchedulerThread(threading.Thread):
             #FIXME this may not be the correct error trace
             error = u"%s\n %s" % (request, "".join(traceback.format_exception(*result)))
             logger.error(error)
-            error = error[:2000] # truncate error if needed
+            error = error[:5000] # truncate error if needed
             job.message = error # for now output the error as a message
             job.error = error
             job.job_ended = datetime.datetime.now()
@@ -186,10 +186,10 @@ class JobSchedulerThread(threading.Thread):
             session.commit()
             session.close()
 
-        if arg:
-            request = threadpool.makeRequests(func, [((self.database, job_id), arg)], callback, exc_callback)
-        else:
-            request = threadpool.makeRequests(func, [((self.database, job_id), {})], callback, exc_callback)
+        if not arg:
+            arg = {}
+
+        request = threadpool.makeRequests(func, [((self.application, job_id), arg)], callback, exc_callback)
 
         if self.threadpool:
             self.threadpool.putRequest(request[0])

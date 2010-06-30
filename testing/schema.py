@@ -20,19 +20,31 @@ def initialise(application):
     )
 
     entity('table1', database,
-          Text('text'),
-          Integer('int'),
-          Text('longtext', length = 1000),
-          Password('password'),
-          DateTime('DateTime'),
-          Image('Image'),
-          Boolean('Boolean'),
-          Money('Money'),
-          Email('Email'),
-          Date('Date'),
-          LookupId('LookupId', "colour"),
+           Text('text'),
+           Integer('int'),
+           Text('longtext', length = 1000),
+           Password('password'),
+           DateTime('DateTime'),
+           Image('Image'),
+           Boolean('Boolean'),
+           Money('Money'),
+           Email('Email'),
+           Date('Date'),
+           LookupId('LookupId', "colour"),
 
-          title_field = 'text',
+           title_field = 'text',
+    )
+
+    entity('people', database,
+           Text('name', generator = dict(name = 'full_name')),
+           Date('dob', generator = dict(name = 'dob')),
+           Integer('age', generator = dict(params = dict(min = 16, max = 110))),
+           Text('street', generator = dict(name = 'road')),
+           Text('town', generator = dict(name = 'town')),
+           Text('postcode', generator = dict(name = 'postcode')),
+           Text('notes', length = 1000),
+           Boolean('active'),
+           title_field = 'name',
     )
 
     database.persist()

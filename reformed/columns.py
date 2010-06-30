@@ -379,7 +379,6 @@ class Field(object):
 
         obj.cat = kw.get("category", None)
 
-        ## this is popped as we dont want it to appear in field_params
         obj.foreign_key_name = kw.get("foreign_key_name", None)
 
         obj.default = kw.get("default", None)
@@ -426,6 +425,9 @@ class Field(object):
         obj.no_auto_path = kw.get("no_auto_path", False)
 
         obj.data_type = None
+
+        obj.generator = kw.get("generator", None)
+
         return obj
 
     def __eq__(self, other):

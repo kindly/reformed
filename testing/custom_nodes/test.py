@@ -18,7 +18,7 @@
 ##   Copyright (c) 2008-2010 Toby Dacre & David Raznick
 ##
 
-from node import Node, TableNode, AutoForm
+from node import Node, TableNode, AutoForm, JobNode
 from form import form
 from page_item import *
 
@@ -175,40 +175,108 @@ class Node5(AutoForm):
 
     table = "table1"
 
-class DataLoader(Node):
+class People(AutoForm):
+
+    table = "people"
 
 
-    table = '_core_job_scheduler'
-    permissions = ['LoggedIn']
+
+class DataLoader(JobNode):
+
+    job_type = 'loader'
+    job_function = 'data_load_from_file'
+    params = ['file', 'table']
+
+  #  permissions = ['LoggedIn']
+
+
+
+class DataGenerate(JobNode):
+
+    main = form(
+        text("##Data Generator##"),
+        dropdown('table', 'DATA', data_field = 'tables'),
+        intbox('number_records'),
+        button('test.DataGenerate:_generate:', label = 'Generate'),
+        params =  {"form_type": "action"},
+    )
+
+    job_type = 'generate'
+    job_function = 'generate'
+    params = []
+
+    def setup_extra_commands(self):
+        commands = self.__class__.commands
+        commands['select'] = dict(command = 'select')
+        commands['_generate'] = dict(command = 'generate')
+
+    def select(self, node_token):
+        tables = []
+        for table in r.tables:
+            if r[table].table_type == 'user':
+                tables.append(r[table].name)
+
+        data = dict(tables = tables)
+        self['main'].show(node_token, data)
+
+    def generate(self, node_token):
+        table = node_token.data.get('table')
+        try:
+            number = int(node_token.data.get('number_records', 0))
+        except ValueError:
+            number = 0
+        if r[table].table_type == 'user' and number:
+            self.base_params = dict(table = table, number_requested = number)
+            self.load(node_token)
+
+
+class Truncate(Node):
+
+    main = form(
+        text("Truncate table :)"),
+        dropdown('table', 'DATA', data_field = 'tables'),
+        button('test.Truncate:truncate:', label = 'Truncate'),
+        params =  {"form_type": "action"},
+    )
+    completed = form(
+        text("Table {table} has been truncated.  {records} record(s)."),
+        extra_data('table'),
+        extra_data('records'),
+        params =  {"form_type": "action"},
+    )
 
     def call(self, node_token):
+        if node_token.command == 'list':
+            self.list_tables(node_token)
+        elif node_token.command == 'truncate':
+            table_name = node_token.data.get('table')
+            if table_name:
+                self.truncate_table(node_token, table_name)
 
-        if node_token.command == 'load':
-            file = node_token.data.get('file')
-            table = node_token.data.get('table')
-            jobId = application.job_scheduler.add_job("loader", "data_load_from_file", table = table, file = file)
-            node_token.link = "%s:refresh:id=%s" % (self.name, jobId)
-            node_token.action = 'redirect'
-
-        elif node_token.command == 'refresh':
-            jobId = node_token.data.get('id')
-            node_token.out = dict(data = self.get_status(jobId), form = True)
-            node_token.action = 'status'
-
-        elif node_token.command == 'status':
-            jobId = node_token.data.get('id')
-            node_token.out = dict(data = self.get_status(jobId))
-            node_token.action = 'status'
-
-        node_token.title = "job %s" % jobId
+    def truncate_table(self, node_token, table_name):
+        # FIXME this needs a proper method in database.py
+        table = r[table_name]
+        if table.table_type == 'user':
+            records = r.search(table_name).results
+            session = r.Session()
+            count = 0
+            for record in records:
+                session.delete(record)
+                session.commit()
+                count += 1
+                print count
+            session.close()
+            data = dict(table = table_name,
+                        records = count)
+            self['completed'].show(node_token, data)
 
 
-    def get_status(self, jobId):
-        data_out = r.search_single_data(self.table, where = "id=%s" % jobId)
-        out = dict(id = jobId,
-                   start = data_out['job_started'],
-                   message = data_out['message'],
-                   percent = data_out['percent'],
-                   end = data_out['job_ended'])
-        return out
+    def list_tables(self, node_token):
+        tables = []
+        for table in r.tables:
+            if r[table].table_type == 'user':
+                tables.append(r[table].name)
+
+        data = dict(tables = tables)
+        self['main'].show(node_token, data)
 
