@@ -15,7 +15,7 @@ from custom_exceptions import ThreadPoolNotInitialised
 logger = logging.getLogger('reformed.main')
 
 POOL_SIZE = 5
-POLL_INTERVAL = 10
+POLL_INTERVAL = 1
 
 class JobScheduler(object):
 
