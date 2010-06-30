@@ -86,7 +86,7 @@ def process_fileupload(environ, start_response, request_url):
         return fileupload.fileupload_status(environ, start_response)
     else:
         # start upload
-        return fileupload.fileupload(environ, start_response)
+        return fileupload.fileupload(environ, start_response, global_session.application)
 
 
 def process_attachment(environ, start_response):
