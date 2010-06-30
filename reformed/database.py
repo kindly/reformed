@@ -259,21 +259,8 @@ class Database(object):
         table.add_event(event)
 
 
-        #title_event = CopyTextAfter("%s_title" % table.name, table.name, field_name = "title", fields = target_field)
-
-
-        #self.tables["_core_entity"]._add_field_no_persist(title_event)
-
-        #if self.tables["_core_entity"].persisted:
-        #    self.fields_to_persist.append(title_event)
-
-        ##add summary events
-
         if table.summary_fields:
             summary_fields = ",".join(table.summary_fields)
-
-            #summary_event = CopyTextAfterField("%s_summary" % table.name, table.name, field_name = "summary", fields = summary_fields)
-            #self.tables["_core_entity"]._add_field_no_persist(summary_event)
 
             event = Event("new", 
                           actions.CopyTextAfterField("_core_entity.summary", title_field))
@@ -284,16 +271,6 @@ class Database(object):
                       actions.DeleteRow("_core_entity"))
         table.add_event(event)
 
-            #if self.tables["_core_entity"].persisted:
-            #    self.fields_to_persist.append(summary_event)
-
-        ### add delete event
-
-        #delete_event = DeleteRow("delete_%s" % table.name, table.name)
-        #self.tables["_core_entity"]._add_field_no_persist(delete_event)
-
-        #if self.tables["_core_entity"].persisted:
-        #    self.fields_to_persist.append(delete_event)
 
     def _add_table_no_persist(self, table):
 
