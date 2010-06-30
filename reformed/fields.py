@@ -208,8 +208,8 @@ class Numeric(Field):
 class Email(Field):
 
     def __init__(self, name, *args, **kw):
-        self.email = Column(sa.Unicode(300), use_parent_options = True)
-        self.validation = {"email" : validators.Email()}
+        self.email = Column(sa.Unicode(300), use_parent = True)
+        self.validation = {name : validators.Email()}
 
 
 class Date(Field):
