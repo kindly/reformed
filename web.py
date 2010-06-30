@@ -86,7 +86,7 @@ def process_fileupload(environ, start_response, request_url):
         return fileupload.fileupload_status(environ, start_response)
     else:
         # start upload
-        return fileupload.fileupload(environ, start_response)
+        return fileupload.fileupload(environ, start_response, global_session.application)
 
 
 def process_attachment(environ, start_response):
@@ -95,13 +95,19 @@ def process_attachment(environ, start_response):
     reference = environ['QUERY_STRING']
     # FIXME need to check can view this file
     try:
-        reference = int(reference)
+        if '.' in reference:
+            (id, type) = reference.split('.', 1)
+            type = '.%s' % type
+        else:
+            id = reference
+            type = ''
+        reference = int(id)
         r =  global_session.database
         data = r.search('upload', 'id=%s' % reference, fields = ['path', 'filename']).data
     except ValueError:
         data = None
     if data:
-        full_path = fileupload.get_dir(data[0]['path']) + '.thumbnail'
+        full_path = fileupload.get_dir(data[0]['path'], global_session.application) + type
         return get_file(environ, start_response, full_path)
     else:
         start_response('404 Not Found', [])

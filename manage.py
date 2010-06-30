@@ -98,6 +98,51 @@ def purge_application():
 def purge_attachments():
     application.purge_attachments()
 
+
+
+
+def upload_files():
+    import fileupload
+    import os
+
+    # get image data
+    image_directory = '/stuff/reformed_images'
+    image_data_file = 'image_data.txt'
+    items_per_dir = 100
+
+    def search_dir(directory):
+        full_directory = os.path.join(image_directory, directory)
+        dirlist = os.listdir(full_directory)
+        item_count = 0
+        for item in dirlist:
+            item_path = os.path.join(full_directory, item)
+            if os.path.isdir(item_path):
+                search_dir(item)
+            elif os.path.isfile(item_path):
+                if item_count < items_per_dir:
+                    item_count += 1
+                    item_list.append((directory, item_path, item))
+
+    # check database is initialised
+    application.initialise_database()
+
+    item_list = []
+    search_dir('')
+
+    print 'uploading images'
+    count = 0
+    for (category, file_path, file_name) in item_list:
+        file_handle = open(file_path)
+        fileupload.save_file(file_handle, file_name, '', category, application)
+        count += 1
+        if count % 10 == 0:
+            sys.stdout.write('-')
+        else:
+            sys.stdout.write('.')
+        sys.stdout.flush()
+
+    print
+
 def delete():
     application.delete_database()
 
@@ -216,6 +261,9 @@ if __name__ == "__main__":
     parser.add_option("-e", "--extract",
                       action="store_true", dest="extract",
                       help="extract all tables")
+    parser.add_option("-u", "--upload",
+                      action="store_true", dest="upload_files",
+                      help="load all tables")
     parser.add_option("-l", "--load",
                       action="store_true", dest="table_load",
                       help="load all tables")
@@ -298,6 +346,8 @@ if __name__ == "__main__":
         output_sys_info()
     if options.load:
         load_data(options.load_file)
+    if options.upload_files:
+        upload_files()
     if options.table_load:
         load()
     if options.run:

@@ -2,6 +2,8 @@
 
 from reformed.database import table, entity, relation
 from reformed.fields import *
+from reformed.events import Event
+from reformed.actions import *
 
 
 def initialise(application):
@@ -25,7 +27,7 @@ def initialise(application):
            Text('longtext', length = 1000),
            Password('password'),
            DateTime('DateTime'),
-           Image('Image'),
+           Image('Image', generator = dict(params = dict(category = 'donkey'))),
            Boolean('Boolean'),
            Money('Money'),
            Email('Email'),
@@ -39,12 +41,21 @@ def initialise(application):
            Text('name', generator = dict(name = 'full_name')),
            Date('dob', generator = dict(name = 'dob')),
            Integer('age', generator = dict(params = dict(min = 16, max = 110))),
+           Email('email'),
+           Text('sex', generator = dict(name = 'sex')),
+           Image('Image'),
            Text('street', generator = dict(name = 'road')),
            Text('town', generator = dict(name = 'town')),
            Text('postcode', generator = dict(name = 'postcode')),
            Text('notes', length = 1000),
            Boolean('active'),
+           LookupId('LookupIdx', "colour", generator = 'skip', many_side_not_null = False),
+
+           Event('new,change', CopyValue('Image', '_core_entity.thumb')),
+
            title_field = 'name',
+           summary_fields = 'email, notes',
+
     )
 
     database.persist()

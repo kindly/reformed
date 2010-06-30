@@ -12,6 +12,7 @@ def initialise(application):
         Text("table"),
         Text("title"),
         Text("summary"),
+        Integer("thumb"),
         ModifiedByNoRelation("modified_by"),
         table_type = "internal",
         summary = u'The entity table',
@@ -126,6 +127,8 @@ def initialise(application):
 
     entity('upload', database,
         Text("filename", mandatory = True),
+        Text("category"),
+        Text("title"),
         Text("path"),
         Text("mimetype"),
         Integer("size"),
