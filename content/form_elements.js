@@ -1,7 +1,11 @@
 $FormElements = function(){
 
     function add_label(item, prefix){
-        return '<label class="form_label" for="' + prefix + item.name + '">' + item.title + '</label>';
+        if (item.title){
+            return '<label class="form_label" for="' + prefix + item.name + '">' + item.title + '</label>';
+        } else {
+            return '';
+        }
     }
 
     function correct_value(item, value){
