@@ -375,7 +375,7 @@ class test_basic_input(test_donkey):
 
         print get_all_local_data(result, internal = True)
 
-        assert get_all_local_data(result, internal = True) == {'contact_summary.people_id': 1, 'giving_date': None, 'contact_summary.transaction_count': 0, 'people.name': u'david', '__table': 'donkey_sponsership', 'contact_summary.membership': None, 'people.address_line_1': u'43 union street', 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'43 union street es388', 'people.town': None, 'people_id': 1, 'people.postcode': u'es388', 'people.country': None, 'people.address_line_2': None, 'people.over_18_id': None, 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'amount': Decimal('50'), 'donkey_id': 1, 'people.gender_id': None, 'donkey.donkey_type': None, 'donkey.age': 13, 'donkey.name': u'jim'} 
+        assert get_all_local_data(result, internal = True) == {'contact_summary.people_id': 1, 'giving_date': None, 'people.country': None, 'people.over_18_id': None, 'people.address_line_2': None, 'people.name': u'david', '__table': 'donkey_sponsership', 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'people.gender_id': None, 'people.town': None, 'contact_summary.transaction_count': 0, 'amount': Decimal('50'), 'donkey.donkey_type': None, 'donkey.age': 13, 'people_id': 1, 'people.postcode': u'es388', 'donkey.name': u'jim', 'donkey_id': 1, 'people.address_line_1': u'43 union street'} 
 
 
         print get_all_local_data(result, fields = ["donkey_id", "contact_summary.total_amount", "donkey.name"])
@@ -394,7 +394,7 @@ class test_basic_input(test_donkey):
 ##FIXME need these to be corrected
 
         print self.Donkey.tables["relation"].local_tables 
-        assert self.Donkey.tables["relation"].local_tables == {'relation.over_18.code': ('_secondary', 'people', 'over_18'), 'relation.donkey': ('_secondary', 'donkey'), 'relation.user_group': ('_secondary', 'user_group'), 'relation.people': ('_secondary', 'people'), 'relation.user': ('_secondary', 'user'), 'relation.contact_summary': ('_secondary', 'people', 'contact_summary'), 'relation.gender.code': ('_secondary', 'people', 'gender'), 'relation._core_entity': ('_secondary',), 'relation.donkey_pics': ('_secondary', 'donkey', 'donkey_pics')} 
+        assert self.Donkey.tables["relation"].local_tables == {'relation.over_18.code': ('_secondary', 'people', 'over_18'), 'relation.donkey': ('_secondary', 'donkey'), 'relation.user_group': ('_secondary', 'user_group'), 'relation.people': ('_secondary', 'people'), 'relation.upload': ('_secondary', 'upload'), 'relation.user': ('_secondary', 'user'), 'relation.contact_summary': ('_secondary', 'people', 'contact_summary'), 'relation.gender.code': ('_secondary', 'people', 'gender'), 'relation._core_entity': ('_secondary',), 'relation.donkey_pics': ('_secondary', 'donkey', 'donkey_pics')} 
 
         print self.Donkey.tables["relation"].one_to_many_tables
 
@@ -443,7 +443,7 @@ class test_basic_input(test_donkey):
 
 
         print get_all_local_data(a, internal = True)
-        assert get_all_local_data(a, internal = True) == {'contact_summary.people_id': 2, 'giving_date': None, 'contact_summary.transaction_count': 0, 'people.name': u'fred', '__table': 'donkey_sponsership', 'contact_summary.membership': None, 'people.address_line_1': u'poo1010101', 'contact_summary.modified': True, 'contact_summary.email': None, 'contact_summary.address': u'poo1010101 fred', 'people.town': None, 'people_id': 2, 'people.postcode': u'fred', 'people.country': None, 'people.address_line_2': u'poop', 'people.over_18_id': None, 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'amount': Decimal('711110'), 'donkey_id': 12, 'people.gender_id': None, 'donkey.donkey_type': None, 'donkey.age': 12, 'donkey.name': None}
+        assert get_all_local_data(a, internal = True) == {'contact_summary.people_id': 2, 'giving_date': None, 'people.country': None, 'people.over_18_id': None, 'people.address_line_2': u'poop', 'people.name': u'fred', '__table': 'donkey_sponsership', 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'people.gender_id': None, 'people.town': None, 'contact_summary.transaction_count': 0, 'amount': Decimal('711110'), 'donkey.donkey_type': None, 'donkey.age': 12, 'people_id': 2, 'people.postcode': u'fred', 'donkey.name': None, 'donkey_id': 12, 'people.address_line_1': u'poo1010101'}
 
     def test_import_catagory_data(self):
 
@@ -543,7 +543,6 @@ class test_basic_input(test_donkey):
 
         assert self.Donkey.search("people", session = self.session, fields = ["contact_summary.total_amount", "name", "address_line_1"], internal = True, keep_all = False).data ==  [{'__table': 'people', 'address_line_1': u'43 union street', 'contact_summary.total_amount': Decimal('0'), 'id': 1, 'name': u'david'}]
 
-        raise
 
     def test_search_with_convert(self):
 
@@ -614,7 +613,7 @@ class test_basic_input(test_donkey):
 
         print self.Donkey["_core_entity"].dependant_attributes.keys()
 
-        assert set(self.Donkey["_core_entity"].dependant_attributes.keys()) == set(['_membership', 'donkey', 'people', 'relation_primary', 'relation_secondary', 'donkey_relation_secondary', 'user', 'user_group', 'categories', 'donkey_relation_primary'])
+        assert set(self.Donkey["_core_entity"].dependant_attributes.keys()) == set(['_membership', 'donkey', 'people', 'relation_primary', 'upload', 'relation_secondary', 'donkey_relation_secondary', 'user', 'user_group', 'categories', 'donkey_relation_primary'])
 
     def test_dependant_tables(self):
 
@@ -622,7 +621,7 @@ class test_basic_input(test_donkey):
 
         print set(self.Donkey["_core_entity"].dependant_tables)
 
-        assert set(self.Donkey["_core_entity"].dependant_tables) == set(['donkey_relation', 'donkey', 'people', 'entity_categories', 'membership', 'relation', 'user', 'user_group'])
+        assert set(self.Donkey["_core_entity"].dependant_tables) == set(['donkey_relation', 'donkey', 'people', 'upload', 'entity_categories', 'membership', 'relation', 'user', 'user_group'])
 
     def test_parant_col_attributes(self):
 
