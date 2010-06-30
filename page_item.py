@@ -472,8 +472,6 @@ class CodeGroup(FormControl):
         self.code_desc = self.kw.get('code_desc_field', None)
         self.filter = self.kw.get('filter', None)
 
-    def configure(self, form):
-
         table = form.table
         self.rtable = r[table]
         self.code_id = "id"
@@ -495,11 +493,16 @@ class CodeGroup(FormControl):
 
     def custom_control_save(self, node_token, object, data, session):
         # FIXME this is broken
-        return
-        self.configure(self.form)
+
+        import pprint
+        pprint.pprint(data)
+
+        print node_token
+        pprint.pprint(node_token.data)
 
         code_groups = getattr(object, self.relation_attr)
         code_group_data = data.get(self.name, [])
+        print "<<~~~~page_item~~~~  %s" % code_group_data
         yes_codes = set()
         no_codes = set()
 
@@ -525,7 +528,6 @@ class CodeGroup(FormControl):
 
     def custom_control_display(self, node_token, result, data, session):
 
-        self.configure(self.form)
         code_groups = result.get(self.relation_attr)
 
         out = []
@@ -536,7 +538,6 @@ class CodeGroup(FormControl):
 
     def custom_control_delete(self, node_token, object, data, session):
 
-        self.configure(self.form)
         code_groups = getattr(object, self.relation_attr)
         for code in code_groups:
             session.delete(code)
@@ -544,7 +545,6 @@ class CodeGroup(FormControl):
 
     def get_control_params(self, data):
 
-        self.configure(self.form)
         params = dict(control = self.control_type)
 
         fields = ["id", self.code_title]
@@ -826,7 +826,7 @@ def subform(name, **kw):
     return FormItemFactory('subform', SubForm, **kw)
 
 
-def codegroup(code_table, **kw):
-    kw['code_table'] = code_table
+def codegroup(name, **kw):
+    kw['name'] = name
     return FormItemFactory('codegroup', CodeGroup, **kw)
 
