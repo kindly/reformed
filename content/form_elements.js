@@ -325,9 +325,28 @@ $FormElements = function(){
     }
 
     function image(item, value){
+        var size;
+        if (!item.css){
+            item.css = 'img_medium';
+            size = 'm';
+        }
+        if (item.size){
+            size = item.size;
+        }
+
         var $control = $(add_label(item, 'rf_') + '<div' + set_class_list(item, 'HOLDER') + '"><label class="img_upload_label"><input class="img_uploader" type="file" /></label></div>' + form_description(item));
-        var data = {type : 'image', value : value}
+        var data = {type : 'image', value : value, size : size}
         $control.find('input').file_upload(data);
+        return $control
+    }
+
+    function image_ro(item, value){
+        if (item.size){
+            size = '.' + item.size;
+        } else {
+            size = '.m';
+        }
+        var $control = '<div' + set_class_list(item, 'HOLDER') + '"><img src="/attach?' + value + size + '" /></div>';
         return $control
     }
 
@@ -365,7 +384,7 @@ $FormElements = function(){
         'link_list': [link_list, link_list],
         'codegroup': [codegroup, codegroup],
         'file_upload' : [file_upload, file_upload],
-        'image' : [image, image],
+        'image' : [image, image_ro],
         'autocomplete' : [autocomplete, plaintext],
         'subform': [add_subform, add_subform]
     }

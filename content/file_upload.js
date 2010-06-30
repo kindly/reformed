@@ -85,7 +85,7 @@ $.FileUpload = function (input, data){
             } else {
                 if (type == 'image' && return_data.id){
                     data.$info.remove();
-                    $input_parent.css('background', 'url("/attach?' + return_data.id + '") center center no-repeat');
+                    $input_parent.css('background', 'url("/attach?' + return_data.id + size + '") center center no-repeat');
                 } else {
                     data.$info.text('completed');
                 }
@@ -130,6 +130,7 @@ $.FileUpload = function (input, data){
 
 
     var type = 'normal';
+    var size = '.m';
     var value = data.value;
     var $input = $(input);
     var $input_parent = $(input).parent();
@@ -138,9 +139,14 @@ $.FileUpload = function (input, data){
         if (data && data.type){
             type = data.type;
         }
+
+        if (data && data.size){
+            size = '.' + data.size;
+        }
+
         if (type == 'image'){
             if (value){
-                $input_parent.css('background', 'url("/attach?' + value + '") center center no-repeat');
+                $input_parent.css('background', 'url("/attach?' + value + size +'") center center no-repeat');
             } else {
                 var $info = $('<div>click to add</div>');
                 $info.insertBefore($input);
