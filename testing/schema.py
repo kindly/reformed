@@ -2,6 +2,8 @@
 
 from reformed.database import table, entity, relation
 from reformed.fields import *
+from reformed.events import Event
+from reformed.actions import *
 
 
 def initialise(application):
@@ -48,8 +50,12 @@ def initialise(application):
            Text('notes', length = 1000),
            Boolean('active'),
            LookupId('LookupIdx', "colour", generator = 'skip', many_side_not_null = False),
+
+           Event('new,change', CopyValue('Image', '_core_entity.thumb')),
+
            title_field = 'name',
            summary_fields = 'email, notes',
+
     )
 
     database.persist()
