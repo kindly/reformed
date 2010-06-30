@@ -958,6 +958,9 @@ class Table(object):
             elif column.type == sa.Integer:
                 properties[col_name] = column_property(getattr(self.sa_table.c,col_name),
                                                          extension = ConvertInteger())
+            elif column.type == sa.Unicode:
+                properties[col_name] = column_property(getattr(self.sa_table.c,col_name),
+                                                         extension = ConvertUnicode())
             else:
                 properties[col_name] = column_property(getattr(self.sa_table.c,col_name),
                                                          extension = ChangedAttributes())
@@ -1214,7 +1217,6 @@ class Table(object):
         if not self.validated:
             return {}
 
-        print instance
         return self.validation_schema.to_python(validation_dict, instance)
 
 
@@ -1281,6 +1283,23 @@ class VersionChange(AttributeExtension):
             return int(value)
 
         return value
+
+class ConvertUnicode(AttributeExtension):
+
+    def set(self, state, value, oldvalue, initator):
+
+        if value == oldvalue:
+            return value
+
+        state.dict["_validated"] = False
+
+        if value is None:
+            return None
+
+        if isinstance(value, ClauseElement):
+            return value
+
+        return value.decode("utf-8")
 
 
 class ConvertDate(AttributeExtension):
