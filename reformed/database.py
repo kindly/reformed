@@ -260,10 +260,9 @@ class Database(object):
 
 
         if table.summary_fields:
-            summary_fields = ",".join(table.summary_fields)
 
             event = Event("new", 
-                          actions.CopyTextAfterField("_core_entity.summary", title_field))
+                          actions.CopyTextAfterField("_core_entity.summary", table.summary_fields))
 
             table.add_event(event)
 
