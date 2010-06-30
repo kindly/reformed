@@ -287,7 +287,6 @@ class Search(TableNode):
         link('title', data_type = 'link', css = 'form_title'),
         info('summary', data_type = 'info'),
         link_list('edit', data_type = 'link_list'),
-        image('thumb'),
         params = {"form_type": "results", 'read_only' : True}
 
     )
