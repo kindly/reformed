@@ -291,6 +291,11 @@ class CopyTextAfter(Action):
 
         value = u' '.join([val for val in values if val])
 
+        ## Truncate value if too long for field
+        length = new_obj._table.fields[result_field].length
+        if value:
+            value = value[:length]
+
         setattr(new_obj, result_field, value)
         action_state.session.save(new_obj)
 
@@ -318,6 +323,11 @@ class CopyTextAfterField(CopyTextAfter):
         values = [u"%s: %s" % (field, getattr(object, field)) for field in self.field_list]
 
         value = u' -- '.join([val for val in values if val])
+
+        ## Truncate value if too long for field
+        length = new_obj._table.fields[result_field].length
+        if value:
+            value = value[:length]
 
         setattr(new_obj, result_field, value)
         action_state.session.save(new_obj)
