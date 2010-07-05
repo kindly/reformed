@@ -498,11 +498,11 @@ class SingleRecord(object):
             edge = self.flat_file.key_data[key]
             ##FIXME this will fail if the import file specifies a child key that has no parent
             parent_key = self.flat_file.parent_key[key]
-            relation_name = key[-2]
+            relation_name = edge.path[-1]
         else:
             edge = get_key_data(key, self.database, self.table)
             parent_key = get_parent_key(key, self.all_rows)
-            relation_name = key[-2]
+            relation_name = edge.path[-1]
 
         return [edge.node, edge.join, parent_key, relation_name]
 

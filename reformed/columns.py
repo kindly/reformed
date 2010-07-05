@@ -285,6 +285,12 @@ class Relation(BaseSchema):
 
          raise ArgumentError("table %s is not part of this relation" % table_name)
 
+    def _set_name(self, field, name):
+        if self.use_parent:
+            self.name = "_rel_" + field.decendants_name
+        else:
+            self.name = "_rel_" + name
+
     @property
     def foreign_key_table(self):
 
@@ -373,7 +379,7 @@ class Field(object):
 
         obj = object.__new__(cls)
         obj.name = name.encode("ascii")
-        obj.decendants_name = name
+        obj.decendants_name = kw.get("relation_name", name)
         obj.columns = {}
         obj.relations = {}
         obj.indexes = {}

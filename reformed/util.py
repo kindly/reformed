@@ -75,7 +75,10 @@ def last_entity(tables, rtables):
 
 class Edge(object):
 
-    def __init__(self, node, node1 = None, node2 =  None, tables = None, path = None, name_changes = None, relation = None, changed_table_names = None):
+    def __init__(self, node, node1 = None, node2 =  None,
+                 tables = None, path = None, path_no_rel = None,
+                 name_changes = None, relation = None,
+                 changed_table_names = None):
 
         self.node = node
         self.table = node
@@ -83,6 +86,7 @@ class Edge(object):
         self.node2 = node2
         self.tables = tables or []
         self.path = path or []
+        self.path_no_rel = path_no_rel or []
         self.name_changes = name_changes or []
         self.changed_table_names = changed_table_names or []
         self.relation = relation
@@ -111,6 +115,7 @@ def get_next_relation(gr, path_dict, edge):
     node = edge.node
     tables = edge.tables
     current_path = edge.path
+    current_path_no_rel = edge.path_no_rel
     last_edge = (edge.node1, edge.node2)
     name_changes = edge.name_changes
     changed_table_names = edge.changed_table_names
@@ -137,7 +142,6 @@ def get_next_relation(gr, path_dict, edge):
             continue
         if len(tables) > 1 and check_two_entities(tables, node2, rtables):
             continue
-
         
         ### relationships only run from entity table to relation
         if rtables[node2].relationship:
@@ -158,23 +162,28 @@ def get_next_relation(gr, path_dict, edge):
         
         split = None
 
+        relation_name = relation.name
+
         if not rtables[node2].relationship:
             all_relations = old_table.tables_with_relations[(node2, "here")]
             auto_path = [rel for rel in all_relations if not rel.no_auto_path]
             if len(auto_path) > 1:
-                split = relation.name
+                split = relation_name[5:]
 
         new_name_changes = name_changes + [split]
 
+        new_path = current_path + [relation_name] 
+        new_path_no_rel = current_path_no_rel + [relation_name[5:]] 
 
-        new_path = current_path + [relation.name] 
         if len(new_path) > JOINS_DEEP:
             continue
 
 
         new_tables = tables + [node2]
-        edge = Edge(node2, node1, node2, new_tables, new_path, new_name_changes, relation, changed_table_names)
-        path_dict[tuple(new_path)] = edge
+        edge = Edge(node2, node1, node2, new_tables, new_path, new_path_no_rel,
+                    new_name_changes, relation, changed_table_names)
+
+        path_dict[tuple(new_path_no_rel)] = edge
         get_next_relation(gr, path_dict, edge)
 
             #get_next_relation(gr, node2, path_dict, new_tables, new_path, (node1, node2), new_one_ways)
@@ -207,6 +216,7 @@ def get_next_relation(gr, path_dict, edge):
         if not backref:
             continue
         new_path = current_path + [backref.encode("ascii")] 
+        new_path_no_rel = current_path_no_rel + [backref.encode("ascii")] 
 
         ##relationships only defined from entity
         if rtables[node2].relationship:
@@ -217,9 +227,10 @@ def get_next_relation(gr, path_dict, edge):
         if len(new_path) > JOINS_DEEP:
             continue
         new_tables = tables + [node1]
-        edge = Edge(node1, node1, node2, new_tables, new_path, new_name_changes, relation, changed_table_names)
+        edge = Edge(node1, node1, node2, new_tables, new_path,
+                    new_path_no_rel, new_name_changes, relation, changed_table_names)
 
-        path_dict[tuple(new_path)] = edge
+        path_dict[tuple(new_path_no_rel)] = edge
         get_next_relation(gr, path_dict, edge)
 
 def get_collection_of_obj(database, obj, parent_name):
@@ -250,21 +261,22 @@ def get_paths(gr, table):
 
     return path_dict
 
-def get_local_tables(path_dict, one_to_many_tables, local_tables, current_pos):
+def get_local_tables(path_dict, one_to_many_tables, local_tables, edge):
 
-    edge = path_dict[current_pos]  
     new_name = edge.alt_name
     if edge.relation.no_auto_path:
         return
     if edge.join in ("manytoone", "onetoone"):
-        local_tables[new_name] = current_pos
+        local_tables[new_name] = edge
     else:
-        one_to_many_tables[new_name] = current_pos
+        one_to_many_tables[new_name] = edge
         return
 
-    for new_path, info in path_dict.iteritems():
-        if len(current_pos)+1 == len(new_path) and list(new_path)[:len(current_pos)] == list(current_pos):
-            get_local_tables(path_dict, one_to_many_tables, local_tables, new_path)
+    for new_path, new_edge in path_dict.iteritems():
+        if len(edge.path_no_rel)+1 <> len(new_path):
+            continue
+        if list(new_path)[:len(edge.path)] == list(edge.path_no_rel):
+            get_local_tables(path_dict, one_to_many_tables, local_tables, new_edge)
 
 
 def make_local_tables(path_dict):
@@ -272,9 +284,9 @@ def make_local_tables(path_dict):
     local_tables = {}
     one_to_many_tables = {}
     
-    for path, info in path_dict.iteritems():
+    for path, edge in path_dict.iteritems():
         if len(path) == 1:
-            get_local_tables(path_dict, one_to_many_tables, local_tables, path)
+            get_local_tables(path_dict, one_to_many_tables, local_tables, edge)
 
     return [local_tables, one_to_many_tables]
 
@@ -472,11 +484,11 @@ def get_row_with_table(obj, tables, keep_all = True, internal = False):
         data = get_row_data(obj, keep_all = keep_all, internal = internal, table = table.name)
         row_data.update(data)
 
-    for aliased_table_name, path in table.local_tables.iteritems():
-        table_name = table.paths[path].node
+    for aliased_table_name, edge in table.local_tables.iteritems():
+        table_name = edge.node
         if table_name not in tables:
             continue
-        current_obj =  recurse_relationships(database, obj, path)
+        current_obj =  recurse_relationships(database, obj, edge)
 
         if not current_obj:
             continue
@@ -503,8 +515,8 @@ def get_row_with_fields(obj, fields, keep_all = False, internal = False):
         data = get_row_data(obj, fields = fields, keep_all = keep_all, internal = internal, table = table.name)
         row_data.update(data)
 
-    for aliased_table_name, path in table.local_tables.iteritems():
-        table_name = table.paths[path].node
+    for aliased_table_name, edge in table.local_tables.iteritems():
+        table_name = edge.node
 
         if table_name not in table_field_dict:
             continue
@@ -513,7 +525,7 @@ def get_row_with_fields(obj, fields, keep_all = False, internal = False):
             fields = table_field_dict[table_name]
 
         if fields:
-            current_obj = recurse_relationships(database, obj, path)
+            current_obj = recurse_relationships(database, obj, edge)
             if not current_obj:
                 continue
             data = get_row_data(current_obj, fields = fields, keep_all = keep_all, internal = internal, table = table.name)
@@ -521,10 +533,10 @@ def get_row_with_fields(obj, fields, keep_all = False, internal = False):
 
     return row_data
 
-def recurse_relationships(database, obj, path):
+def recurse_relationships(database, obj, edge):
 
     current_obj = obj
-    for relation in path:
+    for relation in edge.path:
         current_obj = getattr(current_obj, relation)
         if not current_obj:
             #current_obj = database.get_instance(table_name)
@@ -554,7 +566,7 @@ def load_local_data(database, data):
             path_key = "root"
         else:
             path_key = []
-            for item in rtable.local_tables[alias]:
+            for item in rtable.local_tables[alias].path_no_rel:
                 path_key.extend([item,0])
             path_key = tuple(path_key)
 

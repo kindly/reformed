@@ -209,17 +209,17 @@ class test_query_from_string(donkey_test.test_donkey):
 
         print search.name_to_alias
         print search.search()
-        print session.query(people_class).outerjoin(["email"]).\
+        print session.query(people_class).outerjoin(["_rel_email"]).\
                    filter(and_(people_class.name < u"popp02", or_(email_class.email == None, not_(email_class.email.like(u"popi%")))))
 
         print search.search().all()
-        print session.query(people_class).outerjoin(["email"]).\
+        print session.query(people_class).outerjoin(["_rel_email"]).\
                    filter(and_(people_class.name < u"popp02", or_(email_class.email == None, not_(email_class.email.like(u"popi%"))))).all()
 
         assert len(search.search()[0:15]) == 15
 
         assert set(search.search().all()).symmetric_difference( 
-               set(session.query(people_class).outerjoin(["email"]).\
+               set(session.query(people_class).outerjoin(["_rel_email"]).\
                    filter(and_(people_class.name < u"popp02", or_(email_class.email == None, not_(email_class.email.like(u"popi%"))))).all())) == set()
 
 
@@ -338,25 +338,38 @@ WHERE donkey_1.name = ? AND donkey_1.id IS NOT NULL AND people_1.name = ? AND pe
 
         result1, result2, result3 = self.Donkey.search("people", session = self.session, limit =3).results
 
+        code_type = self.Donkey.get_instance("code_type")
+        code_type.name = "over_18"
+        code_type.code_type = "over_18"
+        self.session.save(code_type)
+        self.session.commit()
+        code_type = self.Donkey.get_instance("code_type")
+        code_type.name = "gender"
+        code_type.code_type = "gender"
+        self.session.save(code_type)
+        self.session.commit()
+
+
+        result1, result2, result3 = self.Donkey.search("people", session = self.session, limit =3).results
 
         code = self.Donkey.get_instance("code")
         code.code_type = u"over_18"
         code.name = u"over_18"
         result1.over_18 = code
 
-        print code
         self.session.save(code)
 
-        result1.over_18 = code
+        result1._rel_over_18 = code
         self.session.save(result1)
         self.session.commit()
 
         #a = Search(cls.Donkey, "people", cls.session, "over_18.code.type = 'over_18' or gender.code.type = 'gender'")
-        a = Search(self.Donkey, "people", self.session, "over_18.code.type = 'over_1'")
+        a = Search(self.Donkey, "people", self.session, "over_18.code.code_type = 'over_1'")
 
         assert len(a.search().all()) == 0
 
-        a = Search(self.Donkey, "people", self.session, "over_18.code.type = 'over_18'")
+  
+        a = Search(self.Donkey, "people", self.session, "over_18.code.code_type = 'over_18'")
 
         assert len(a.search().all()) == 1
 
@@ -365,11 +378,11 @@ WHERE donkey_1.name = ? AND donkey_1.id IS NOT NULL AND people_1.name = ? AND pe
         code.name = u"gender"
         self.session.save(code)
         
-        result2.gender = code
+        result2._rel_gender = code
         self.session.save(result2)
         self.session.commit()
 
-        a = Search(self.Donkey, "people", self.session, "over_18.code.type = 'over_18' or gender.code.type = gender")
+        a = Search(self.Donkey, "people", self.session, "over_18.code.code_type = 'over_18' or gender.code.code_type = gender")
         print a.search().all()
 
         assert len(a.search().all()) == 2
