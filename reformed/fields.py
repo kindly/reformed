@@ -226,28 +226,33 @@ class ManyToOne(Field):
 
 class LookupId(Field):
 
-    def __init__(self, name, other, *args, **kw):
+    def __init__(self, name, other = None, *args, **kw):
 
         self.data_type = "Integer"
 
-        self.other = other
-        self.filter_field = kw.get("filter_field")
+        if not other:
+            other = name
 
-        ##FIXME use name for actual database column name
-        if self.filter_field:
-            foreign_key_name = "%s_%s_id" % (other, name)
-            backref = name
-        else:
-            foreign_key_name = "%s_id" % other
-            backref = "_" + name
+        self.filter_field = kw.get("filter_field")
+        self.filter_value = kw.get("filter_value", name)
+
+        backref = kw.get("backref", "_?_%s" % name)
+
+        #if self.filter_field:
+        #    foreign_key_name = "%s_%s_id" % (other, name)
+        #    backref = name
+        #else:
+        #    foreign_key_name = "%s_id" % other
+        #    backref = "_" + name
+        self.integer = Column(sa.Integer, use_parent = True)
 
         self.manytoone = Relation("manytoone", other, 
-                                  foreign_key_name = foreign_key_name, 
+                                  foreign_key_name = name, 
                                   backref = backref, use_parent = True)
 
-        self.validation = {foreign_key_name: validators.CheckInField("%s.id" % other,
+        self.validation = {name: validators.CheckInField("%s.id" % other,
                                                    filter_field = self.filter_field,
-                                                   filter_value = name )}
+                                                   filter_value = self.filter_value )}
 
 class LookupList(Field):
 

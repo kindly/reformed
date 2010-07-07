@@ -49,7 +49,7 @@ def initialise(application):
            Text('postcode', generator = dict(name = 'postcode')),
            Text('notes', length = 1000),
            Boolean('active'),
-           LookupId('LookupIdx', "colour", generator = 'skip', many_side_not_null = False),
+           LookupId('colour', many_side_not_null = False),
 
            Event('new,change', CopyValue('Image', '_core_entity.thumb')),
 

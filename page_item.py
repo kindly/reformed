@@ -366,7 +366,7 @@ class Dropdown(FormControl):
                 rfield = rfield.column.defined_relation.parent
 
             if rfield.data_type == "Integer":
-                table = rfield.other
+                table = rfield.relation.other
                 target_field = database[table].title_field
                 filter_field = rfield.filter_field
                 filter_value = rfield.name

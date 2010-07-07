@@ -650,6 +650,14 @@ class Table(object):
         relations = {}
         for field in self.fields.itervalues():
             for name, relation in field.relations.iteritems():
+                ##special rename of backref
+                backref = relation.sa_options.get("backref")
+                if backref:
+                    new_name = backref.replace("?", self.name)
+                    relation.sa_options["backref"] = new_name
+
+
+
                 relations[name] = relation
         self.relations = relations
 
@@ -975,6 +983,9 @@ class Table(object):
                 sa_options["order_by"] = order_by
             if "backref" not in sa_options:
                 sa_options["backref"] = "_%s"% self.name
+            if sa_options["backref"]:
+                new_backref = sa_options["backref"].replace("?", self.name)
+                sa_options["backref"] = new_backref
 
             ##copy as if update_sa is run will try to add backref
             sa_options = sa_options.copy()

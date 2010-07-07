@@ -51,7 +51,7 @@ class BaseSchema(object):
 
     def _set_name(self, field, name):
         if self.use_parent:
-            self.name = field.decendants_name
+            self.name = field.relation_name
         else:
             self.name = name
 
@@ -287,7 +287,7 @@ class Relation(BaseSchema):
 
     def _set_name(self, field, name):
         if self.use_parent:
-            self.name = "_rel_" + field.decendants_name
+            self.name = "_rel_" + field.relation_name
         else:
             self.name = "_rel_" + name
 
@@ -379,7 +379,7 @@ class Field(object):
 
         obj = object.__new__(cls)
         obj.name = name.encode("ascii")
-        obj.decendants_name = kw.get("relation_name", name)
+        obj.relation_name = kw.get("relation_name", name)
         obj.columns = {}
         obj.relations = {}
         obj.indexes = {}
@@ -522,6 +522,11 @@ class Field(object):
     def column(self):
         if len(self.columns) == 1:
             return self.columns.copy().popitem()[1]
+
+    @property
+    def relation(self):
+        if len(self.relations) == 1:
+            return self.relations.copy().popitem()[1]
 
     @property
     def validation_info(self):
