@@ -40,7 +40,7 @@ import logging
 import migrate.changeset
 import datetime
 from search import Search
-from sqlalchemy.orm import column_property
+from sqlalchemy.orm import column_property, backref
 from sqlalchemy.orm.interfaces import AttributeExtension
 from sqlalchemy.sql import func, select, text
 import fshp
@@ -724,9 +724,9 @@ class Table(object):
         dependant_attributes = {}
         for table, relations in self.tables_with_relations.iteritems():
             for relation in relations:
-                if relation.table is self and relation.type <> "manytoone":
+                if relation.table is self and relation.original_type not in ("manytoone", "onetoone"):
                     dependant_attributes[relation.name] = relation
-                elif relation.table is not self and relation.type == "manytoone":
+                elif relation.table is not self and relation.original_type in ("manytoone", "onetoone"):
                     backref = relation.sa_options["backref"]
                     if backref:
                         dependant_attributes[backref] = relation
@@ -738,9 +738,9 @@ class Table(object):
 
         for table, relations in self.tables_with_relations.iteritems():
             for relation in relations:
-                if relation.table is self and relation.type <> "manytoone":
+                if relation.table is self and relation.original_type not in ("manytoone", "onetoone"):
                     dependant_tables.append(table[0])
-                elif relation.table is not self and relation.type == "manytoone":
+                elif relation.table is not self and relation.original_type in ("manytoone", "onetoone"):
                     dependant_tables.append(table[0])
         return dependant_tables
 
@@ -750,9 +750,9 @@ class Table(object):
         parent_attributes = {}
         for table, relations in self.tables_with_relations.iteritems():
             for relation in relations:
-                if relation.table is self and relation.type == "manytoone":
+                if relation.table is self and relation.original_type in ("manytoone", "onetoone"):
                     parent_attributes[relation.name] = relation
-                elif relation.table is not self and relation.type <> "manytoone":
+                elif relation.table is not self and relation.original_type not in ("manytoone", "onetoone"):
                     backref = relation.sa_options["backref"]
                     if backref:
                         parent_attributes[backref] = relation
@@ -765,7 +765,7 @@ class Table(object):
         for column_name, column in self.foriegn_key_columns.iteritems():
             if column.original_column <> "id":
                 relation = column.defined_relation
-                if relation.table is self and relation.type == "manytoone":
+                if relation.table is self and relation.original_type in ("manytoone", "onetoone"):
                     relation_attribute = relation.name
                 else:
                     relation_attribute = relation.sa_options["backref"]
@@ -989,6 +989,12 @@ class Table(object):
 
             ##copy as if update_sa is run will try to add backref
             sa_options = sa_options.copy()
+            if relation.original_type == "onetoone":
+                backref_string = sa_options["backref"]
+                if backref_string:
+                    sa_options["backref"] = backref(backref_string, uselist = False)
+
+
             if sa_options["backref"] is False:
                 sa_options.pop("backref")
 
@@ -1159,9 +1165,9 @@ class Table(object):
                 if not rel.many_side_mandatory:
                     continue
                 table, pos = tab
-                if rel.type in ("onetomany", "onetone") and pos == "here":
+                if rel.original_type in ("onetomany", "onetooneother") and pos == "here":
                     schema_dict[rel.name] = validators.FancyValidator(not_empty = True)
-                if rel.type == "manytoone" and pos == "other":
+                if rel.original_type in ("manytoone", "onetoone")  and pos == "other":
                     backref = rel.sa_options["backref"]
                     if backref:
                         validator = validators.FancyValidator(not_empty = True)

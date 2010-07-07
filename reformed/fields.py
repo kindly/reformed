@@ -224,6 +224,28 @@ class ManyToOne(Field):
         self.other = other
         self.manytoone = Relation("manytoone", other, use_parent = True)
 
+class ForeignKey(Field):
+
+    def __init__(self, name, other, *args, **kw):
+
+        if name.endswith("_id"):
+            relation_name = name[:-3]
+            self.relation_name = relation_name
+        else:
+            relation_name = name
+
+        join = "onetoone" if kw.get("onetoone") else "manytoone"
+
+        backref = kw.get("backref", "_?_%s" % relation_name)
+
+        self.integer = Column(sa.Integer, use_parent = True)
+
+        self.manytoone = Relation(join, other,
+                                  backref = backref, use_parent = True,
+                                  foreign_key_name = name)
+
+
+
 class LookupId(Field):
 
     def __init__(self, name, other = None, *args, **kw):
@@ -282,7 +304,7 @@ class OneToOne(Field):
 
     def __init__(self, name, other, *args, **kw):
         self.other = other
-        self.onetoone = Relation("onetoone", other, use_parent = True)
+        self.onetoone = Relation("onetooneother", other, use_parent = True)
 
 
 class Index(Field):
