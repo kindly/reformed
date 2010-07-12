@@ -287,7 +287,8 @@ class Application(object):
                     node = table.default_node,
                 )
 
-        self.register_info('bookmarks', bookmarks)
+        ##FIXME not sure this needs to be forced
+        self.register_info('bookmarks', bookmarks, force = True)
 
 
 
