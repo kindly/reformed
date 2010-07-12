@@ -739,6 +739,13 @@ def button_box(button_list, **kw):
     kw['buttons'] = button_list
     return FormItemFactory('button_box', ActionItem, **kw)
 
+def result_link(name = None, **kw):
+    kw['name'] = name
+    return FormItemFactory('result_link', FormControl, **kw)
+
+def result_image(name = None, **kw):
+    kw['name'] = name
+    return FormItemFactory('result_image', FormControl, **kw)
 
 def link(name = None, **kw):
     kw['name'] = name

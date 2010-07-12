@@ -110,6 +110,8 @@ class Table(object):
         self.description_field = kw.get("description_field", None)
         self.summary_fields = kw.get("summary_fields", None)
         self.summary = kw.get("summary", None)
+        self.default_node = kw.get("default_node", None)
+
         self.primary_key_list = []
         #self.events = []
         self.initial_events = []

@@ -319,6 +319,10 @@ td input {
     color:green;
 }
 
+#bookmarks{
+    overflow:hidden;
+}
+
 #bookmarks li{
     list-style-type: none;
     color:darkgreen;

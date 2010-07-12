@@ -84,6 +84,26 @@ $FormElements = function(){
         return x;
     }
 
+    function result_link(item, value){
+        var link_node = "n:" + REBASE.application_data.bookmarks[local_row_data.entity].node;
+        link_node += ":edit:__id=" + local_row_data.__id
+
+        var x = '<a href="#"' + set_class_list(item, 'link') + ' onclick="node_load(\'' + link_node + '\');return false">' + (value ? value : 'untitled') + '</a>';
+        return x;
+    }
+
+    function result_image(item, value){
+        var link_node = "n:" + REBASE.application_data.bookmarks[local_row_data.entity].node;
+        link_node += ":edit:__id=" + local_row_data.__id
+        if (item.size){
+            size = '.' + item.size;
+        } else {
+            size = '.m';
+        }
+        var $control = '<div' + set_class_list(item, 'HOLDER') + ' onclick="node_load(\'' + link_node + '\');" ><img src="/attach?' + value + size + '" /></div>';
+        return $control
+    }
+
     function button_box(item, value){
         var html = '';
         var but = {};
@@ -350,7 +370,7 @@ $FormElements = function(){
         } else {
             size = '.m';
         }
-        var $control = '<div' + set_class_list(item, 'HOLDER') + '"><img src="/attach?' + value + size + '" /></div>';
+        var $control = '<div' + set_class_list(item, 'HOLDER') + '><img src="/attach?' + value + size + '" /></div>';
         return $control
     }
 
@@ -380,6 +400,8 @@ $FormElements = function(){
         'button': [button, button],
         'button_link': [button_link, plaintext],
         'button_box': [button_box, button_box],
+        'result_link': [result_link, result_link],
+        'result_image': [result_image, result_image],
         'html': [htmlarea, plaintext],
         'checkbox': [checkbox, plaintext],
         'link': [link, link],

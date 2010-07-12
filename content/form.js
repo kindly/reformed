@@ -1284,7 +1284,9 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 case 'listing_start':
                     $builder.push($('<div ' + set_class_list(item, "RESULT_ITEM") + '>'));
                     builder_depth++;
-                    var img = '<div class="RESULT_IMG"><img src="/attach?' + item.img + '.s" /></div>';
+                    var link_node = "n:" + REBASE.application_data.bookmarks[item.data.entity].node;
+                    link_node += ":edit:__id=" + item.data.__id
+                    var img = '<div class="RESULT_IMG" onclick="node_load(\'' + link_node + '\');" ><img src="/attach?' + item.data.thumb + '.s" /></div>';
                     $builder[builder_depth].append(img);
                     $builder.push($('<div class="RESULT_DATA" >'));
                     builder_depth++;
@@ -1315,7 +1317,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
             // results item box
             if (form_data.params.form_type == 'results'){
-                item = {layout : 'listing_start', img: local_row_data.thumb};
+                item = {layout : 'listing_start', data: local_row_data};
                 add_layout_item(item, $builder, builder_depth);
             }
             // FIXME this needs to be something different __thumb?

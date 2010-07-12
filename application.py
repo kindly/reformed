@@ -91,7 +91,6 @@ class Application(object):
         self.sys_info = {}
         self.sys_info_full = {}
         self.initialise_sys_info()
-        self.get_bookmark_data()
         self.database = None
 
     def delete_database(self):
@@ -194,6 +193,7 @@ class Application(object):
             # add to global session
             global_session.database = self.database
 
+            self.get_bookmark_data()
             self.predefine = predefine.Predefine(self)
 
     def create_database(self):
@@ -279,12 +279,24 @@ class Application(object):
         # maybe get the nodes to register themselves?
 
         bookmarks = {}
-        bookmarks['user'] = dict(title = "Users", node = "user.User")
-        bookmarks['ticket'] = dict(title = "Ticket", node = "bug.Ticket")
-        bookmarks['user_group'] = dict(title = "User Group", node = "user.UserGroup")
-        bookmarks['permission'] = dict(title = "Permission", node = "bug.Permission")
-        bookmarks['permission'] = dict(title = "Permission", node = "bug.Permission")
+
+        for table in self.database.tables.values():
+            if table.default_node:
+                bookmarks[table.name] = dict(
+                    title = table.name, ## add fancy name,
+                    node = table.default_node,
+                )
+
         self.register_info('bookmarks', bookmarks)
+
+
+
+
+        #bookmarks['user'] = dict(title = "Users", node = "user.User")
+        #bookmarks['ticket'] = dict(title = "Ticket", node = "bug.Ticket")
+        #bookmarks['user_group'] = dict(title = "User Group", node = "user.UserGroup")
+        #bookmarks['permission'] = dict(title = "Permission", node = "bug.Permission")
+        #bookmarks['permission'] = dict(title = "Permission", node = "bug.Permission")
 
         #register("bookmarks>_system_info>title", "System Settings")
         #register("bookmarks>_system_info>node", "bug.SysInfo")
