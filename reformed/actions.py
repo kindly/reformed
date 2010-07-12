@@ -45,7 +45,7 @@ class AddRow(Action):
         path = table.get_path(self.related_table)
 
         if len(path) != 1:
-            raise custom_exceptions.InvalidTableReferenceValue(
+            raise custom_exceptions.InvalidTableReference(
                 "table %s not one join away from objects table %s" % 
                 (self.related_table, table.name))
 
@@ -55,7 +55,7 @@ class AddRow(Action):
         session.save(new_obj)
 
 
-class DeleteRow(Action):
+class DeleteRows(Action):
 
     def __init__(self, related_table):
 
@@ -70,15 +70,12 @@ class DeleteRow(Action):
         session = action_state.session
 
         path = table.get_path(self.related_table)
+        new_obj = object
 
-        if len(path) != 1:
-            raise custom_exceptions.InvalidTableReferenceValue(
-                "table %s not one join away from objects table %s"
-                % (self.related_table, table.name))
-
-        to_delete = getattr(object, path[0])
-
-        session.delete(to_delete)
+        for item in path:
+            to_delete = getattr(new_obj, item)
+            new_obj = to_delete
+            session.delete(to_delete)
 
 
 class SumEvent(Action):

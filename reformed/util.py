@@ -45,10 +45,10 @@ def file_length(fname):
     return i + 1
 
 def check_two_entities(tables, node, rtables):
-    if node == "_core_entity":
+    if node == "_core":
         counter = 0
         for table in tables[::-1]:
-            if rtables[table].name == "_core_entity":
+            if rtables[table].name == "_core":
                 return False
             if rtables[table].entity:
                 counter = counter + 1
@@ -60,7 +60,7 @@ def check_two_entities(tables, node, rtables):
         for table in tables[::-1]:
             if rtables[table].entity:
                 counter = counter + 1
-            if rtables[table].name == "_core_entity":
+            if rtables[table].name == "_core":
                 if counter > 0:
                     return True
                 else:
@@ -110,7 +110,7 @@ class Edge(object):
 
         self.table_path = zip(self.changed_table_names, self.path)
             
-def get_next_relation(gr, path_dict, edge):
+def get_next_relation(gr, path_dict, edge, first = False):
 
     node = edge.node
     tables = edge.tables
@@ -136,29 +136,29 @@ def get_next_relation(gr, path_dict, edge):
 
         if relation == last_relation:
             continue
-        if rtables[node1].lookup and not rtables[node2].lookup:
+        if rtables[node1].lookup and not rtables[node2].lookup and not first:
             continue
-        if len(tables) > 1 and rtables[node2].entity and rtables[tables[-1]].name == "_core_entity" and rtables[tables[-2]].entity:
+        if len(tables) > 1 and rtables[node2].entity and rtables[tables[-1]].name == "_core" and rtables[tables[-2]].entity:
             continue
         if len(tables) > 1 and check_two_entities(tables, node2, rtables):
             continue
         
         ### relationships only run from entity table to relation
-        if rtables[node2].relationship:
-            last_ent = last_entity(tables, rtables)
-            if not last_ent and not relation.name.endswith("primary"):
-                continue
-            valid_entities1 = rtables[node2].valid_entities1
-            valid_entities2 = rtables[node2].valid_entities2
-
-            if relation.name.endswith("primary"):
-                if valid_entities1 and last_ent not in valid_entities1:
-                    continue
-            if not relation.name.endswith("primary"):
-                if valid_entities2 and last_ent not in valid_entities2:
-                    continue
-                if last_ent in valid_entities1 or not valid_entities1:
-                    continue
+        #if rtables[node2].relationship:
+        #    last_ent = last_entity(tables, rtables)
+        #    if not last_ent and not relation.name.endswith("primary"):
+        #        continue
+        #    valid_entities1 = rtables[node2].valid_entities1
+        #    valid_entities2 = rtables[node2].valid_entities2
+#
+#            if relation.name.endswith("primary"):
+#                if valid_entities1 and last_ent not in valid_entities1:
+#                    continue
+#            if not relation.name.endswith("primary"):
+#                if valid_entities2 and last_ent not in valid_entities2:
+#                    continue
+#                if last_ent in valid_entities1 or not valid_entities1:
+#                    continue
         
         split = None
 
@@ -197,9 +197,9 @@ def get_next_relation(gr, path_dict, edge):
 
         if relation == last_relation:
             continue
-        if rtables[node2].lookup and not rtables[node1].lookup:
+        if rtables[node2].lookup and not rtables[node1].lookup and not first:
             continue
-        if len(tables) > 1 and rtables[node1].entity and rtables[tables[-1]].name == "_core_entity" and rtables[tables[-2]].entity:
+        if len(tables) > 1 and rtables[node1].entity and rtables[tables[-1]].name == "_core" and rtables[tables[-2]].entity:
             continue
         if len(tables) > 1 and check_two_entities(tables, node1, rtables):
             continue
@@ -209,7 +209,7 @@ def get_next_relation(gr, path_dict, edge):
         all_relations = old_table.tables_with_relations[(node1, "other")]
         auto_path = [rel for rel in all_relations if not rel.no_auto_path]
         if len(auto_path) > 1:
-            split = relation.name
+            split = relation.name[5:]
 
 
         backref = relation.sa_options.get("backref", "_%s" % node1)
@@ -219,8 +219,8 @@ def get_next_relation(gr, path_dict, edge):
         new_path_no_rel = current_path_no_rel + [backref.encode("ascii")] 
 
         ##relationships only defined from entity
-        if rtables[node2].relationship:
-            split = node2
+        #if rtables[node2].relationship:
+        #    split = node2
 
         new_name_changes = name_changes + [split]
 
@@ -256,7 +256,7 @@ def get_paths(gr, table):
 
     edge = Edge(table, tables = [table])
 
-    get_next_relation(gr, path_dict, edge)
+    get_next_relation(gr, path_dict, edge, first = True)
 
 
     return path_dict
@@ -338,7 +338,8 @@ def get_fields_from_obj(obj):
 
     return obj._table.columns.keys() + ["id"]
 
-INTERNAL_FIELDS = ("_modified_by", "_modified_date", "id", "_core_entity_id", "_version")
+INTERNAL_FIELDS = ("_modified_by", "_modified_date", "id",
+                   "_core_id", "_core_entity_id", "_version")
 
 def convert_value(value):
 
@@ -354,11 +355,16 @@ def convert_value(value):
         value = str(value)
     return value
 
-def get_row_data(obj, fields = None, keep_all = False, internal = False, basic = False, table = None):
+def get_row_data(obj, fields = None, keep_all = False,
+                 internal = False, basic = False,
+                 table = None, alias_name = None):
     
     row_data = {}
 
     obj_table = obj._table.name
+
+    if not alias_name:
+        alias_name = obj_table
 
     if not table:
         table = obj_table
@@ -375,7 +381,7 @@ def get_row_data(obj, fields = None, keep_all = False, internal = False, basic =
         if obj_table == table:
             field_name = field
         else:
-            field_name = '%s.%s' % (obj_table, field)
+            field_name = '%s.%s' % (alias_name, field)
 
         value = getattr(obj, field)
 
@@ -391,7 +397,7 @@ def get_row_data(obj, fields = None, keep_all = False, internal = False, basic =
         if obj_table == table:
             id_name = "id"
         else:
-            id_name = "%s.id" % obj_table
+            id_name = "%s.id" % alias_name
         row_data[id_name] = obj.id
 
     return row_data
@@ -450,6 +456,7 @@ def get_all_local_data(obj, **kw):
 
     table = obj._table
 
+
     if fields:
         row = get_row_with_fields(obj, fields, internal = internal, keep_all = keep_all)
     elif tables:
@@ -485,15 +492,18 @@ def get_row_with_table(obj, tables, keep_all = True, internal = False):
         row_data.update(data)
 
     for aliased_table_name, edge in table.local_tables.iteritems():
-        table_name = edge.node
-        if table_name not in tables:
+        #table_name = edge.node
+        if aliased_table_name not in tables:
             continue
+
         current_obj =  recurse_relationships(database, obj, edge)
 
         if not current_obj:
             continue
 
-        data = get_row_data(current_obj, keep_all = keep_all, internal = internal, table = table.name)
+        data = get_row_data(current_obj, keep_all = keep_all, internal = internal,
+                            table = table.name, alias_name = aliased_table_name)
+
         row_data.update(data)
 
     return row_data
@@ -518,7 +528,7 @@ def get_row_with_fields(obj, fields, keep_all = False, internal = False):
     for aliased_table_name, edge in table.local_tables.iteritems():
         table_name = edge.node
 
-        if table_name not in table_field_dict:
+        if table_name not in table_field_dict or table_name == table.name:
             continue
 
         if table_name in table_field_dict:

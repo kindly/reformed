@@ -7,6 +7,15 @@ def initialise(application):
 
     database = application.database
 
+    table("_core", database,
+        Text("type"),
+        ForeignKey("primary_entity_id", "_core_entity", mandatory = True),
+        ForeignKey("secondary_entity_id", "_core_entity", ),
+        modified_by = False,
+        modified_date = False
+         )
+
+
 
     table("_core_entity", database,
         Text("table"),
@@ -16,6 +25,7 @@ def initialise(application):
         ModifiedByNoRelation("modified_by"),
         table_type = "internal",
         summary = u'The entity table',
+        lookup = True,  
         modified_by = False
     )
 

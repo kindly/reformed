@@ -78,7 +78,7 @@ class test_validation(test_donkey):
 
     def test_zzzz_overlapping_date_validation(self):
 
-        entity = self.session.query(self.Donkey.aliases["_core_entity"]).first()
+        entity = self.session.query(self.Donkey["_core_entity"]).first()
         category = self.session.query(self.Donkey.aliases["sub_sub_category"]).first()
 
         cat1 = self.Donkey.get_instance("entity_categories")

@@ -34,6 +34,7 @@ import warnings
 from util import get_table_from_instance
 import os
 from events import EventState
+from reformed.tables import Table
 
 root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 log_file = os.path.join(root, "session.log")
@@ -54,6 +55,19 @@ class SessionWrapper(object):
 
     def __getattr__(self, item):
         return getattr(self.session, item)
+
+    def query(self, *args, **kw):
+
+        new_args = []
+        for arg in args:
+            if isinstance(arg, Table):
+                new_args.append(arg.sa_class)
+            else:
+                new_args.append(arg)
+
+        return self.session.query(*new_args, **kw)
+
+
 
     def close(self):
         self.session.close()
@@ -261,10 +275,14 @@ class SessionWrapper(object):
                 continue
             table = get_table_from_instance(obj, self.database)
             if table.entity == True:
+                core = self.database.get_instance("_core")
+                core.type = unicode(table.name)
+                obj._rel__core = core
                 entity = self.database.get_instance("_core_entity")
                 entity.table = unicode(table.name)
-                obj._entity = entity
+                core._rel_primary_entity = entity
                 self.add(obj)
+                self.add(core)
                 self.add(entity)
 
 class SessionClass(object):

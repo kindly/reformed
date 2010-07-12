@@ -51,10 +51,11 @@ def initialise(application):
            Boolean('active'),
            LookupId('colour', many_side_not_null = False),
 
-           Event('new,change', CopyValue('Image', '_core_entity.thumb')),
+           Event('new,change', CopyValue('Image', 'primary_entity._core_entity.thumb')),
 
            title_field = 'name',
            summary_fields = 'email, notes',
+           default_node = 'test.People',
 
     )
 

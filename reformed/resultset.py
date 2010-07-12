@@ -70,6 +70,7 @@ class ResultSet(object):
         self._data = []
         for res in results:
             if self.select_path_list:
+                ##FIXME need to get out all data somehow
                 obj = res[0]
             else:
                 obj = res

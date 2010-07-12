@@ -106,7 +106,7 @@ def upload_files():
     import os
 
     # get image data
-    image_directory = '/stuff/reformed_images'
+    image_directory = '/home/kindly/stuff/reformed_images'
     image_data_file = 'image_data.txt'
     items_per_dir = 100
 

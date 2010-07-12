@@ -303,7 +303,7 @@ class Form(object):
             where = 'id=?'
         else:
             id = node_token.data.get('__id')
-            where = '_core_entity_id=?'
+            where = '_core_id=?'
 
         try:
             session = r.Session()
@@ -378,7 +378,7 @@ class Form(object):
             filter = {'id' : id}
         else:
             id = node.data.get('__id')
-            filter = {'_core_entity_id' : id}
+            filter = {'_core_id' : id}
 
         table = self.table
 

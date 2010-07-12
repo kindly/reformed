@@ -160,7 +160,6 @@ class test_query_from_string(donkey_test.test_donkey):
     def test_single_query(self):
 
         search = Search(self.Donkey, "people", self.session)
-        t = self.Donkey.t
 
         import pprint
         print self.Donkey.tables["people"]
@@ -170,7 +169,7 @@ class test_query_from_string(donkey_test.test_donkey):
         people_class = self.Donkey.get_class("people")
         email_class = self.Donkey.get_class("email")
 
-        base_query = session.query(t.people.id)
+        base_query = session.query(self.Donkey.get_class("people").id)
 
         assert set(QueryFromString(search, 'name < "popp02"').add_conditions(base_query).all()).symmetric_difference(
                set(session.query(people_class.id).filter(people_class.name < u"popp02").all())) == set()
@@ -200,7 +199,6 @@ class test_query_from_string(donkey_test.test_donkey):
     def test_zzzz_search_with_single_query(self):
 
         search = Search(self.Donkey, "people", self.session)
-        t = self.Donkey.t
         session = self.session
         search.add_query('name < popp02 and not email.email like "popi%"')
 
@@ -227,7 +225,6 @@ class test_query_from_string(donkey_test.test_donkey):
     def test_search_with_union(self):
 
         search = Search(self.Donkey, u"people", self.session)
-        t = self.Donkey.t
         session = self.session
 
         search.add_query('name < popp005 and email.email like "popi%"')
@@ -245,7 +242,6 @@ class test_query_from_string(donkey_test.test_donkey):
     def test_search_with_joined_exclude(self):
 
         search = Search(self.Donkey, "people", self.session)
-        t = self.Donkey.t
 
         search.add_query('name < popp007 and name <> david' )
 
@@ -279,7 +275,6 @@ class test_query_from_string(donkey_test.test_donkey):
     def test_z_search_with_except_exclude(self):
 
         search = Search(self.Donkey, "people", self.session)
-        t = self.Donkey.t
 
         search.add_query('name < popp007 and name <>  david' )
 
@@ -312,7 +307,6 @@ class test_query_from_string(donkey_test.test_donkey):
     def test_zz_search_with_limit(self):
 
         search = Search(self.Donkey, "people", self.session)
-        t = self.Donkey.t
 
         search.add_query('email.email like "popi%"')
         search.add_query('people.name = "david"', exclude = "true")

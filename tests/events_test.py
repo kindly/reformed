@@ -55,7 +55,7 @@ class test_events(test_donkey):
 
         transaction = self.Donkey.get_instance("transactions")
 
-        first = self.session.query(self.Donkey.aliases["people"]).first()
+        first = self.session.query(self.Donkey["people"]).first()
 
         transaction.amount = 10
         transaction._people = first
@@ -63,10 +63,10 @@ class test_events(test_donkey):
         self.session.save(first)
         self.session.commit()
 
-        assert first.contact_summary.total_amount == 10
+        assert first._rel_summary.total_amount == 10
        # assert first.contact_summary.transaction_count == 1
 
-        first = self.session.query(self.Donkey.aliases["people"]).first()
+        first = self.session.query(self.Donkey["people"]).first()
 
         transaction2 = self.Donkey.get_instance("transactions")
         transaction2.amount = 10
@@ -75,8 +75,8 @@ class test_events(test_donkey):
         self.session.save(first)
         self.session.commit()
 
-        assert first.contact_summary.total_amount == 20 
-        assert first.contact_summary.transaction_count == 2
+        assert first._rel_summary.total_amount == 20 
+        assert first._rel_summary.transaction_count == 2
 
         transaction3 = self.Donkey.get_instance("transactions")
         transaction3.amount = 20
@@ -85,27 +85,27 @@ class test_events(test_donkey):
         self.session.save(first)
         self.session.commit()
 
-        assert first.contact_summary.total_amount == 40 
-        assert first.contact_summary.transaction_count == 3
+        assert first._rel_summary.total_amount == 40 
+        assert first._rel_summary.transaction_count == 3
 
         self.session.delete(transaction2)
         self.session.commit()
-        print first.contact_summary.total_amount
-        assert first.contact_summary.total_amount == 30
-        assert first.contact_summary.transaction_count == 2
+        print first._rel_summary.total_amount
+        assert first._rel_summary.total_amount == 30
+        assert first._rel_summary.transaction_count == 2
 
         transaction.amount  = 15
         self.session.save(transaction)
         self.session.commit()
-        assert first.contact_summary.total_amount == 35
-        assert first.contact_summary.transaction_count == 2
+        assert first._rel_summary.total_amount == 35
+        assert first._rel_summary.transaction_count == 2
 
-        first.contact_summary.total_amount = 0
+        first._rel_summary.total_amount = 0
 
-        self.session.save(first.contact_summary)
+        self.session.save(first._rel_summary)
         self.session.commit()
 
-        assert first.contact_summary.total_amount == 0
+        assert first._rel_summary.total_amount == 0
 
 
         new_person = self.Donkey.get_instance("people")
@@ -124,7 +124,7 @@ class test_events(test_donkey):
         self.session.save(new_person)
         self.session.commit()
 
-        assert new_person.contact_summary.total_amount == 20
+        assert new_person._rel_summary.total_amount == 20
 
         #first.contact_summary.total_amount = 0
         #new_person.contact_summary.total_amount = 0
