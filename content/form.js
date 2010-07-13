@@ -1453,10 +1453,10 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             local_row_data = row_data;
             build_form_items();
         } else {
+            // continuous forms
             for (var i = 0, n = row_data.__array.length; i <  n; i++){
                 local_row_data = row_data.__array[i];
                 build_form_items();
-                $builder[builder_depth].append($control);
             }
         }
         // form buttons
