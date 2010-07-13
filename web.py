@@ -195,6 +195,9 @@ class WebApplication(object):
 
     def static(self, environ, start_response, path):
         """Serve static content"""
+        if path == '/':
+            path = '/reformed.html'
+        print path
         # FIXME security limit path directory traversal etc
         root = reformed.util.get_dir()
         if path.startswith('/local/'):
