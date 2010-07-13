@@ -117,7 +117,7 @@ for i in range(num_rows):
     obj = r.reformed.get_instance(table)
     for j in range(len(fields)):
         setattr(obj, fields[j][0], data[i][j])
-        setattr(obj, "_core_entity_id", 1)
+        setattr(obj, "_core_id", 1)
     session.session.add(obj)
     #counter = counter + 1
     if counter == 250:

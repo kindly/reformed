@@ -31,7 +31,7 @@ import resultset
 import tables
 from collections import defaultdict
 from util import split_table_fields
-from fields import ManyToOne, OneToOne, OneToMany, Integer, CopyTextAfter, CopyTextAfterField, DeleteRow
+from fields import ManyToOne, ForeignKey, OneToOne, OneToMany, Integer, CopyTextAfter, CopyTextAfterField, DeleteRow
 import fields as field_types
 import sessionwrapper
 import validate_database
@@ -199,15 +199,6 @@ class Database(object):
             self.drop_table(self.tables["_log_" + table_to_drop.name])
 
 
-    @property
-    def t(self):
-        class Tables(object):
-            pass
-        tables = Tables()
-        for name, table in self.aliases.iteritems():
-            setattr(tables, name, table)
-        return tables
-
     def add_relation_table(self, table):
         if "_core_entity" not in self.tables:
             raise custom_exceptions.NoTableAddError("table %s cannot be added as there is"
@@ -231,7 +222,7 @@ class Database(object):
 
 
     def add_entity(self, table):
-        if "_core_entity" not in self.tables:
+        if "_core" not in self.tables:
             raise custom_exceptions.NoTableAddError("table %s cannot be added as there is"
                                                     "no entity table in the database"
                                                     % table.name)
@@ -240,11 +231,9 @@ class Database(object):
         self.add_table(table)
 
         #add relation
-        relation = OneToOne(table.name, table.name, backref = "_entity")
-        self.tables["_core_entity"]._add_field_no_persist(relation)
+        relation = ForeignKey("_core_id", "_core", backref = table.name)
+        table._add_field_no_persist(relation)
 
-        if self.tables["_core_entity"].persisted:
-            self.fields_to_persist.append(relation)
 
         ##add title events
 
@@ -254,46 +243,23 @@ class Database(object):
             title_field = "name"
 
         event = Event("new", 
-                      actions.CopyTextAfter("_core_entity.title", title_field))
+                      actions.CopyTextAfter("primary_entity._core_entity.title", title_field))
 
         table.add_event(event)
 
 
-        #title_event = CopyTextAfter("%s_title" % table.name, table.name, field_name = "title", fields = target_field)
-
-
-        #self.tables["_core_entity"]._add_field_no_persist(title_event)
-
-        #if self.tables["_core_entity"].persisted:
-        #    self.fields_to_persist.append(title_event)
-
-        ##add summary events
-
         if table.summary_fields:
-            summary_fields = ",".join(table.summary_fields)
-
-            #summary_event = CopyTextAfterField("%s_summary" % table.name, table.name, field_name = "summary", fields = summary_fields)
-            #self.tables["_core_entity"]._add_field_no_persist(summary_event)
 
             event = Event("new", 
-                          actions.CopyTextAfterField("_core_entity.summary", title_field))
+                          actions.CopyTextAfterField("primary_entity._core_entity.summary", table.summary_fields))
 
             table.add_event(event)
 
         event = Event("delete", 
-                      actions.DeleteRow("_core_entity"))
+                      actions.DeleteRows("primary_entity._core_entity"))
+
         table.add_event(event)
 
-            #if self.tables["_core_entity"].persisted:
-            #    self.fields_to_persist.append(summary_event)
-
-        ### add delete event
-
-        #delete_event = DeleteRow("delete_%s" % table.name, table.name)
-        #self.tables["_core_entity"]._add_field_no_persist(delete_event)
-
-        #if self.tables["_core_entity"].persisted:
-        #    self.fields_to_persist.append(delete_event)
 
     def _add_table_no_persist(self, table):
 
@@ -434,7 +400,6 @@ class Database(object):
             for table in self.tables.itervalues():
                 for column in table.columns.iterkeys():
                     getattr(table.sa_class, column).impl.active_history = True
-            self.make_table_aliases()
             for table in self.tables.itervalues():
                 for field in table.fields.itervalues():
                     if hasattr(field, "event"):
@@ -629,30 +594,6 @@ class Database(object):
             gr.add_edge(rel.table.name, rel.other, None, {"relation" : rel})
 
         self.graph = gr
-
-    def make_table_aliases(self, root_table = None):
-
-        if "_core_entity" in self.tables and not root_table:
-            root_table = "_core_entity"
-        aliases = {}
-
-        if root_table:
-            unique_aliases = set()
-            unique_aliases.update([root_table])
-            for item, value in self.tables[root_table].table_path.iteritems():
-                unique_aliases.add(item)
-
-            for item in unique_aliases:
-                if len(item.split(".")) == 1:
-                    aliases[item] = self.get_class(item)
-                else:
-                    aliases[item] = sa.orm.aliased(self.get_class(item.split(".")[-1]))
-        else:
-            for key, value in self.tables.iteritems():
-                aliases[key] = value.sa_class
-
-        self.aliases = aliases
-
 
 
 def table(name, database, *args, **kw):

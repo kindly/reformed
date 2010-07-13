@@ -224,30 +224,57 @@ class ManyToOne(Field):
         self.other = other
         self.manytoone = Relation("manytoone", other, use_parent = True)
 
-class LookupId(Field):
+class ForeignKey(Field):
 
     def __init__(self, name, other, *args, **kw):
 
+        if name.endswith("_id"):
+            relation_name = name[:-3]
+            self.relation_name = relation_name
+        else:
+            relation_name = name
+
+        join = "onetoone" if kw.get("onetoone") else "manytoone"
+
+        backref = kw.get("backref", "_?_%s" % relation_name)
+
+        self.integer = Column(sa.Integer, use_parent = True)
+
+        self.manytoone = Relation(join, other,
+                                  backref = backref, use_parent = True,
+                                  foreign_key_name = name)
+
+
+
+class LookupId(Field):
+
+    def __init__(self, name, other = None, *args, **kw):
+
         self.data_type = "Integer"
 
-        self.other = other
-        self.filter_field = kw.get("filter_field")
+        if not other:
+            other = name
 
-        ##FIXME use name for actual database column name
-        if self.filter_field:
-            foreign_key_name = "%s_%s_id" % (other, name)
-            backref = name
-        else:
-            foreign_key_name = "%s_id" % other
-            backref = "_" + name
+        self.filter_field = kw.get("filter_field")
+        self.filter_value = kw.get("filter_value", name)
+
+        backref = kw.get("backref", "_?_%s" % name)
+
+        #if self.filter_field:
+        #    foreign_key_name = "%s_%s_id" % (other, name)
+        #    backref = name
+        #else:
+        #    foreign_key_name = "%s_id" % other
+        #    backref = "_" + name
+        self.integer = Column(sa.Integer, use_parent = True)
 
         self.manytoone = Relation("manytoone", other, 
-                                  foreign_key_name = foreign_key_name, 
+                                  foreign_key_name = name, 
                                   backref = backref, use_parent = True)
 
-        self.validation = {foreign_key_name: validators.CheckInField("%s.id" % other,
+        self.validation = {name: validators.CheckInField("%s.id" % other,
                                                    filter_field = self.filter_field,
-                                                   filter_value = name )}
+                                                   filter_value = self.filter_value )}
 
 class LookupList(Field):
 
@@ -277,7 +304,7 @@ class OneToOne(Field):
 
     def __init__(self, name, other, *args, **kw):
         self.other = other
-        self.onetoone = Relation("onetoone", other, use_parent = True)
+        self.onetoone = Relation("onetooneother", other, use_parent = True)
 
 
 class Index(Field):

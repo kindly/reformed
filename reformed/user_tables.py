@@ -7,6 +7,15 @@ def initialise(application):
 
     database = application.database
 
+    table("_core", database,
+        Text("type"),
+        ForeignKey("primary_entity_id", "_core_entity", mandatory = True),
+        ForeignKey("secondary_entity_id", "_core_entity", ),
+        modified_by = False,
+        modified_date = False
+         )
+
+
 
     table("_core_entity", database,
         Text("table"),
@@ -16,6 +25,7 @@ def initialise(application):
         ModifiedByNoRelation("modified_by"),
         table_type = "internal",
         summary = u'The entity table',
+        lookup = True,  
         modified_by = False
     )
 
@@ -57,8 +67,8 @@ def initialise(application):
 
     table("user_group_user",database,
 
-        LookupId("user", "user"),
-        LookupId("user_group", "user_group"),
+        LookupId("user_id", "user"),
+        LookupId("user_group_id", "user_group"),
 
         table_type = "system"
     )
@@ -66,8 +76,8 @@ def initialise(application):
     table("user_group_permission",database,
 
         ##TODO Sort out backref problems
-        LookupId("user_group_name", "user_group"),
-        LookupId("permission_name", "permission"),
+        LookupId("user_group_id", "user_group"),
+        LookupId("permission_id", "permission"),
         table_type = "system"
     )
 

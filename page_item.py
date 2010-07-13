@@ -366,7 +366,7 @@ class Dropdown(FormControl):
                 rfield = rfield.column.defined_relation.parent
 
             if rfield.data_type == "Integer":
-                table = rfield.other
+                table = rfield.relation.other
                 target_field = database[table].title_field
                 filter_field = rfield.filter_field
                 filter_value = rfield.name
@@ -462,7 +462,6 @@ class Dropdown(FormControl):
 
 class CodeGroup(FormControl):
 
-    static = False
 
     def __init__(self, factory, form):
         super(CodeGroup, self).__init__(factory, form)
@@ -471,8 +470,6 @@ class CodeGroup(FormControl):
         self.code_title = self.kw.get('code_title_field', None)
         self.code_desc = self.kw.get('code_desc_field', None)
         self.filter = self.kw.get('filter', None)
-
-    def configure(self, form):
 
         table = form.table
         self.rtable = r[table]
@@ -495,8 +492,6 @@ class CodeGroup(FormControl):
 
     def custom_control_save(self, node_token, object, data, session):
         # FIXME this is broken
-        return
-        self.configure(self.form)
 
         code_groups = getattr(object, self.relation_attr)
         code_group_data = data.get(self.name, [])
@@ -525,7 +520,6 @@ class CodeGroup(FormControl):
 
     def custom_control_display(self, node_token, result, data, session):
 
-        self.configure(self.form)
         code_groups = result.get(self.relation_attr)
 
         out = []
@@ -536,7 +530,6 @@ class CodeGroup(FormControl):
 
     def custom_control_delete(self, node_token, object, data, session):
 
-        self.configure(self.form)
         code_groups = getattr(object, self.relation_attr)
         for code in code_groups:
             session.delete(code)
@@ -544,7 +537,6 @@ class CodeGroup(FormControl):
 
     def get_control_params(self, data):
 
-        self.configure(self.form)
         params = dict(control = self.control_type)
 
         fields = ["id", self.code_title]
@@ -747,6 +739,13 @@ def button_box(button_list, **kw):
     kw['buttons'] = button_list
     return FormItemFactory('button_box', ActionItem, **kw)
 
+def result_link(name = None, **kw):
+    kw['name'] = name
+    return FormItemFactory('result_link', FormControl, **kw)
+
+def result_image(name = None, **kw):
+    kw['name'] = name
+    return FormItemFactory('result_image', FormControl, **kw)
 
 def link(name = None, **kw):
     kw['name'] = name
@@ -826,7 +825,7 @@ def subform(name, **kw):
     return FormItemFactory('subform', SubForm, **kw)
 
 
-def codegroup(code_table, **kw):
-    kw['code_table'] = code_table
+def codegroup(name, **kw):
+    kw['name'] = name
     return FormItemFactory('codegroup', CodeGroup, **kw)
 

@@ -40,6 +40,8 @@ class BaseSchema(object):
     :param use_parent_options:  if True will use its parents parameters only.
     """
 
+    sa_allowed_options = []
+
     def __init__(self, rtype, *args, **kw):
 
         self.type = rtype
@@ -51,14 +53,17 @@ class BaseSchema(object):
 
     def _set_name(self, field, name):
         if self.use_parent:
-            self.name = field.decendants_name
+            self.name = field.name
         else:
             self.name = name
 
     def _set_sa_options(self, field):
 
         if self.use_parent or self.use_parent_options:
-            self.sa_options.update(field.sa_options)
+            for key, value in field.sa_options.iteritems():
+                if key in self.sa_allowed_options:
+                    self.sa_options[key] = value
+
 
 
     def __repr__(self):
@@ -81,6 +86,8 @@ class Column(BaseSchema):
     :param mandatory: boolean saying if the column will be not nullable and not empty string
     :param nullable: boolean saying if column in nullable
     """
+
+    sa_allowed_options = ["default", "nullable", "on_update"]
 
     def __init__(self, type, *args, **kw):
 
@@ -207,13 +214,22 @@ class Relation(BaseSchema):
         defined on "b".
     """
 
+    sa_allowed_options = ["uselist", "lazy", "cascade", "backref"]
+
     def __init__(self, type, other, *args, **kw):
 
         super(Relation, self).__init__(type , *args, **kw)
         self.other = other
         self.order_by = kw.pop("order_by", None)
+        self.original_type = type
+        assert self.type in ("onetoone", "onetooneother",
+                             "manytoone", "onetomany")
+        if self.type == "onetooneother":
+            self.type = "onetoone"
+        
         if self.type == "onetoone":
             self.sa_options["uselist"] = False
+
         eager = kw.pop("eager", None)
         if eager:
             self.sa_options["lazy"] = not eager
@@ -285,10 +301,16 @@ class Relation(BaseSchema):
 
          raise ArgumentError("table %s is not part of this relation" % table_name)
 
+    def _set_name(self, field, name):
+        if self.use_parent:
+            self.name = "_rel_" + field.relation_name
+        else:
+            self.name = "_rel_" + name
+
     @property
     def foreign_key_table(self):
 
-        if self.type == "manytoone":
+        if self.original_type in ("manytoone", "onetoone"):
             return self.table.name
         else:
             return self.other
@@ -296,7 +318,7 @@ class Relation(BaseSchema):
     @property
     def primary_key_table(self):
 
-        if self.type == "manytoone":
+        if self.original_type in ("manytoone", "onetoone"):
             return self.other
         else:
             return self.table.name
@@ -337,12 +359,12 @@ class Relation(BaseSchema):
     def this_table_join_keys(self):
         keys_this_table = []
         keys_other_table = []
-        if self.type in ("manytoone"):
+        if self.original_type in ("manytoone", "onetoone"):
             for name, column in self.table.foriegn_key_columns.iteritems():
                 if column.defined_relation == self and column.original_column == "id":
                     keys_this_table.append(name)
                     keys_other_table.append(column.original_column)
-        if self.type in ("onetoone", "onetomany"):
+        if self.original_type in ("onetooneother", "onetomany"):
             for name, column in self.other_table.foriegn_key_columns.iteritems():
                 if column.defined_relation == self and column.original_column == "id":
                     keys_this_table.append(column.original_column)
@@ -373,7 +395,7 @@ class Field(object):
 
         obj = object.__new__(cls)
         obj.name = name.encode("ascii")
-        obj.decendants_name = name
+        obj.relation_name = kw.get("relation_name", name)
         obj.columns = {}
         obj.relations = {}
         obj.indexes = {}
@@ -516,6 +538,11 @@ class Field(object):
     def column(self):
         if len(self.columns) == 1:
             return self.columns.copy().popitem()[1]
+
+    @property
+    def relation(self):
+        if len(self.relations) == 1:
+            return self.relations.copy().popitem()[1]
 
     @property
     def validation_info(self):

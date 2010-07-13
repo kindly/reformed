@@ -47,7 +47,7 @@ def initialise(application):
     )
 
     table("comment", database, ## notes for each user
-          ManyToOne("entity", "_core_entity"),
+          ManyToOne("entity", "_core"),
           Created("created_date"),
           CreatedBy("created_by"),
           Text("note", length = 4000),

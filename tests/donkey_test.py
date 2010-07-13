@@ -51,7 +51,7 @@ class test_donkey(object):
               OneToMany("donkey_sponsership",
                         "donkey_sponsership"),
               OneToOne("contact_summary",
-                       "contact_summary" ),
+                       "contact_summary", relation_name = "summary" ),
               OneToMany("transactions",
                        "transactions", foreign_key_name = "pop"),
               ManyToOne("over_18", "code", foreign_key_name = "over_18_id", backref = "over_18", many_side_not_null = False), ##enumeration look up table
@@ -126,7 +126,7 @@ class test_donkey(object):
         table("donkey_sponsership", cls.Donkey,
               Money("amount"),
               DateTime("giving_date"),
-              entity_relationship = True
+              #entity_relationship = True
              )
         table("payments", cls.Donkey,
               DateTime("giving_date"),
@@ -137,19 +137,19 @@ class test_donkey(object):
         table("membership", cls.Donkey,
                DateTime("start_date", mandatory = True),
                DateTime("end_date" ),
-               ManyToOne("_core_entity", "_core_entity"),
-               CheckNoTwoNulls("val_duplicate_membership", parent_table = "_core_entity", field = "end_date"),  
+               ManyToOne("_core", "_core"),
+               CheckNoTwoNulls("val_duplicate_membership", parent_table = "_core", field = "end_date"),  
               )
 
-        cls.Donkey.add_relation_table(Table("relation",
-                             Text("relation_type")
-                                          )
-                                     )
+#        cls.Donkey.add_relation_table(Table("relation",
+#                             Text("relation_type")
+#                                          )
+#                                     )
 
-        cls.Donkey.add_relation_table(Table("donkey_relation",
-                                     valid_entities1 = "people",
-                                     valid_entities2 = "donkey")
-                                     )
+#        cls.Donkey.add_relation_table(Table("donkey_relation",
+#                                     valid_entities1 = "people",
+#                                     valid_entities2 = "donkey")
+#                                     )
 
         cls.Donkey.add_table(Table("category",
                              Text("category_name"),
@@ -179,9 +179,9 @@ class test_donkey(object):
                              DateTime("start_date"),
                              DateTime("end_date"),
                              #Counter("category_number", base_level = "_core_entity"),
-                             ManyToOne("entity", "_core_entity",
+                             ManyToOne("entity", "_core",
                                        backref = "categories"),
-                             CheckOverLappingDates("check_dates", parent_table = "_core_entity"))
+                             CheckOverLappingDates("check_dates", parent_table = "_core"))
                             )
 
         table("code", cls.Donkey,
@@ -314,7 +314,7 @@ class test_basic_input(test_donkey):
     def test_ordered_fields(self):
 
         print [a.name for a in self.Donkey["people"].ordered_fields]
-        assert [a.name for a in self.Donkey["people"].ordered_fields] == ['name', 'gender_id', 'supporter_address', 'over_18_id', '_version', '_modified_date', '_modified_by', '_core_entity_id']
+        assert [a.name for a in self.Donkey["people"].ordered_fields] == ['name', 'gender_id', 'supporter_address', 'over_18_id', '_version', '_modified_date', '_modified_by', '_core_id']
 
         print [a.name for a in self.Donkey["people"].ordered_user_fields]
 
@@ -341,14 +341,17 @@ class test_basic_input(test_donkey):
     def test_table_paths(self):
         import pprint
 
-        pprint.pprint(self.Donkey.tables["people"].table_path)
+        pprint.pprint(self.Donkey.tables["people"].paths)
 
         assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey")].node == "donkey"
+        
         assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey")].join == "manytoone"
         assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey", "donkey_pics",)].node == "donkey_pics"
         assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey", "donkey_pics",)].join == "onetoone"
         assert self.Donkey.tables["donkey"].paths[("donkey_sponsership", "_people", "email")].node == "email"
         assert self.Donkey.tables["donkey"].paths[("donkey_sponsership", "_people", "email")].join == "onetomany"
+
+        assert self.Donkey.tables["donkey"].paths[("donkey_sponsership",)].path == ["_rel_donkey_sponsership"]
 
     def test_z_make_table_paths(self):
 
@@ -381,24 +384,6 @@ class test_basic_input(test_donkey):
         print get_all_local_data(result, fields = ["donkey_id", "contact_summary.total_amount", "donkey.name"])
         assert get_all_local_data(result, fields = ["donkey_id", "contact_summary.total_amount", "donkey.name"]) == {'contact_summary.total_amount': '0', '__table': 'donkey_sponsership', 'donkey.name': u'jim', 'donkey_id': 1, 'id': 1} 
 
-        
-    def test_local_tables(self):
-
-        print make_local_tables(self.Donkey.tables["people"].paths)
-
-        assert make_local_tables(self.Donkey.tables["people"].paths) == [{'_core_entity': ('_entity',), 'contact_summary': ('contact_summary',), 'over_18.code': ('over_18',), 'gender.code': ('gender',)}, {'donkey_relation': ('_entity', 'donkey_relation_primary'), 'transactions': ('transactions',), 'email': ('email',), 'entity_categories': ('_entity', 'categories'), 'membership': ('_entity', '_membership'), 'relation': ('_entity', 'relation_primary'), 'donkey_sponsership': ('donkey_sponsership',)}] 
-
-        print make_local_tables(self.Donkey.tables["donkey"].paths)
-        assert make_local_tables(self.Donkey.tables["donkey"].paths) == [{'_core_entity': ('_entity',), 'donkey_pics': ('donkey_pics',)}, {'donkey_relation': ('_entity', 'donkey_relation_secondary'), 'entity_categories': ('_entity', 'categories'), 'membership': ('_entity', '_membership'), 'relation': ('_entity', 'relation_primary'), 'donkey_sponsership': ('donkey_sponsership',)}] 
-        
-##FIXME need these to be corrected
-
-        print self.Donkey.tables["relation"].local_tables 
-        assert self.Donkey.tables["relation"].local_tables == {'relation.over_18.code': ('_secondary', 'people', 'over_18'), 'relation.donkey': ('_secondary', 'donkey'), 'relation.user_group': ('_secondary', 'user_group'), 'relation.people': ('_secondary', 'people'), 'relation.upload': ('_secondary', 'upload'), 'relation.user': ('_secondary', 'user'), 'relation.contact_summary': ('_secondary', 'people', 'contact_summary'), 'relation.gender.code': ('_secondary', 'people', 'gender'), 'relation._core_entity': ('_secondary',), 'relation.donkey_pics': ('_secondary', 'donkey', 'donkey_pics')} 
-
-        print self.Donkey.tables["relation"].one_to_many_tables
-
-        assert self.Donkey.tables["relation"].one_to_many_tables == {'relation.relation': ('_secondary', 'relation_primary'), 'relation.membership': ('_secondary', '_membership'), 'relation.donkey_sponsership': ('_secondary', 'donkey', 'donkey_sponsership'), 'relation.email': ('_secondary', 'people', 'email'), 'relation.entity_categories': ('_secondary', 'categories'), 'relation.user_group_user': ('_secondary', 'user_group', '_user_group'), 'relation.transactions': ('_secondary', 'people', 'transactions'), 'relation.user_group_permission': ('_secondary', 'user_group', '_user_group_name')}
         
     def test_zz_add_local(self):
 
@@ -439,7 +424,7 @@ class test_basic_input(test_donkey):
                                       "people.address_line_1" : u"poo1010101",
                                       "people.address_line_2" : u"poop"})
 
-        a = self.session.query(self.Donkey.aliases["donkey_sponsership"]).filter_by(amount = 711110).one()
+        a = self.session.query(self.Donkey.get_class("donkey_sponsership")).filter_by(amount = 711110).one()
 
 
         print get_all_local_data(a, internal = True)
@@ -457,7 +442,7 @@ class test_basic_input(test_donkey):
                                       "sub_sub_category.sub_sub_category_description": u"this is abc"}
                        )
 
-        results = self.session.query(self.Donkey.aliases["sub_sub_category"]).all()
+        results = self.session.query(self.Donkey.get_class("sub_sub_category")).all()
 
         print [get_all_local_data(a) for a in results]
 
@@ -472,7 +457,7 @@ class test_basic_input(test_donkey):
                                       "sub_sub_category.sub_sub_category_description": u"this is acc"}
                        )
 
-        results = self.session.query(self.Donkey.aliases["sub_sub_category"]).all()
+        results = self.session.query(self.Donkey.get_class("sub_sub_category")).all()
 
         print [get_all_local_data(a) for a in results]
 
@@ -498,7 +483,7 @@ class test_basic_input(test_donkey):
                                       "sub_sub_category.sub_sub_category_description": u"this is acc"}
                        )
 
-        results = self.session.query(self.Donkey.aliases["sub_sub_category"]).all()
+        results = self.session.query(self.Donkey.get_class("sub_sub_category")).all()
 
         print [get_all_local_data(a) for a in results][2]
 
@@ -567,17 +552,17 @@ class test_basic_input(test_donkey):
 
     def test_default(self):
 
-        a = self.session.query(self.Donkey.aliases["people"]).first()
+        a = self.session.query(self.Donkey.get_class("people")).first()
 
         b = self.Donkey.get_instance("transactions")
         b.amount = 0
         b.Type = None
-        a.transactions.append(b)
+        a._rel_transactions.append(b)
 
         email = self.Donkey.get_instance("email")
         email.email = "poop@poop.com"
 
-        a.email.append(email)
+        a._rel_email.append(email)
 
         self.session.add(a)
         self.session.add(b)
@@ -609,19 +594,20 @@ class test_basic_input(test_donkey):
     def test_dependant_attributes(self):
 
 
-        assert set(self.Donkey["people"].dependant_attributes.keys()) == set(['contact_summary', 'transactions', 'donkey_sponsership', 'email'])
+        print self.Donkey["people"].dependant_attributes.keys()
+        assert set(self.Donkey["people"].dependant_attributes.keys()) == set(['_rel_email', '_rel_summary', '_rel_donkey_sponsership', '_rel_transactions'])
 
-        print self.Donkey["_core_entity"].dependant_attributes.keys()
+        print self.Donkey["_core"].dependant_attributes.keys()
 
-        assert set(self.Donkey["_core_entity"].dependant_attributes.keys()) == set(['_membership', 'donkey', 'people', 'relation_primary', 'upload', 'relation_secondary', 'donkey_relation_secondary', 'user', 'user_group', 'categories', 'donkey_relation_primary'])
+        assert set(self.Donkey["_core"].dependant_attributes.keys()) == set(['_membership', 'donkey', 'people', 'upload', 'user', 'user_group', 'categories'])
 
     def test_dependant_tables(self):
 
         assert set(self.Donkey["people"].dependant_tables) == set(['contact_summary', 'transactions', 'donkey_sponsership', 'email'])
 
-        print set(self.Donkey["_core_entity"].dependant_tables)
+        print set(self.Donkey["_core"].dependant_tables)
 
-        assert set(self.Donkey["_core_entity"].dependant_tables) == set(['donkey_relation', 'donkey', 'people', 'upload', 'entity_categories', 'membership', 'relation', 'user', 'user_group'])
+        assert set(self.Donkey["_core"].dependant_tables) == set(['donkey', 'people', 'upload', 'entity_categories', 'membership', 'user', 'user_group'])
 
     def test_parant_col_attributes(self):
 
@@ -636,11 +622,11 @@ class test_basic_input(test_donkey):
 
         sub_cat = self.Donkey.get_instance("sub_category")
         sub_cat.sub_category_name = u"and this"
-        cat.sub_category.append(sub_cat)
+        cat._rel_sub_category.append(sub_cat)
 
         sub_sub_cat  = self.Donkey.get_instance("sub_sub_category")      
         sub_sub_cat.sub_sub_category_name = u"wee"
-        sub_cat.sub_sub_category.append(sub_sub_cat)
+        sub_cat._rel_sub_sub_category.append(sub_sub_cat)
 
         self.session.save(cat)
         self.session.save(sub_cat)
@@ -695,6 +681,19 @@ class test_basic_input(test_donkey):
         payment.password = "fhdsfhaoifeio9"
 
         assert payment.password == "fhdsfhaoifeio9"
+
+    def test_local_tables(self):
+
+        import pprint
+        #pprint.pprint(self.Donkey["people"].local_tables)
+        #print self.Donkey["people"].local_tables.keys()
+
+        assert set(self.Donkey["people"].local_tables.keys()) == \
+                set(['over_18.code', '_core', 'gender.code', 
+                     'contact_summary', 'primary_entity._core_entity',
+                     'secondary_entity._core_entity'])
+
+
 
 
     def test_no_auto_path(self):

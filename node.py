@@ -23,7 +23,7 @@ import reformed.util as util
 from reformed import custom_exceptions
 import datetime
 from global_session import global_session
-from page_item import link, link_list, info, input, textarea
+from page_item import result_image, info, input, textarea, result_link
 from form import form, FormFactory
 import logging
 r = global_session.database
@@ -225,9 +225,11 @@ class TableNode(Node):
 
 
     listing = form(
-        link('title', data_type = 'link', css = 'form_title'),
+        #link('title', data_type = 'link', css = 'form_title'),
+        result_link('title'),
+        #result_image('thumb'),
         info('summary', data_type = 'info'),
-        link_list('edit', data_type = 'link_list'),
+  #      link_list('edit', data_type = 'link_list'),
 
         params = {"form_type": "results"}
     )

@@ -28,8 +28,8 @@ class Ticket(TableNode):
         input('accepted'),
         input('complete_by'),
         layout('column_next'),
-        input('code_severity_id', default = 'low severity', label = "severity:"),
-        input('code_priority_id', default = 'low priority', label = "priority:"),
+        input('severity', default = 'low severity', label = "severity:"),
+        input('priority', default = 'low priority', label = "priority:"),
         layout('column_end'),
         layout('hr'),
         wmd('summary', css = 'large'),
@@ -78,8 +78,8 @@ class ListTicket(TableNode):
 
         extra_data(["created_date", "_created_by>user.name"]),
 
-        parent_id = "_core_entity_id",
-        child_id = "_core_entity_id",
+        parent_id = "_core_id",
+        child_id = "_core_id",
         table = "comment",
         params = {"form_type": "continuous"},
         read_only = True
@@ -90,8 +90,8 @@ class ListTicket(TableNode):
         wmd('note', label = "", css = "large"),
         button('bug.ListTicket:_save:', label = 'add comment'),
 
-        parent_id = "_core_entity_id",
-        child_id = "_core_entity_id",
+        parent_id = "_core_id",
+        child_id = "_core_id",
         table = "comment",
         params ={"form_type": "action"}
     )
@@ -101,7 +101,7 @@ class ListTicket(TableNode):
     def save(self, node_token):
         self["comment"].save(node_token, as_subform = True)
         node_token.action = "redirect"
-        node_token.link = "bug.ListTicket:view:__id=%s" % node_token.data.get("_core_entity_id")
+        node_token.link = "bug.ListTicket:view:__id=%s" % node_token.data.get("_core_id")
         # FIXME this is stupid
         node_token.next_node = None
 

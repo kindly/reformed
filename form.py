@@ -303,7 +303,7 @@ class Form(object):
             where = 'id=?'
         else:
             id = node_token.data.get('__id')
-            where = '_core_entity_id=?'
+            where = '_core_id=?'
 
         try:
             session = r.Session()
@@ -378,7 +378,7 @@ class Form(object):
             filter = {'id' : id}
         else:
             id = node.data.get('__id')
-            filter = {'_core_entity_id' : id}
+            filter = {'_core_id' : id}
 
         table = self.table
 
@@ -424,29 +424,52 @@ class Form(object):
         table = self.table or node.table
 
         ##FIXME do we need these separated?
+
+        session = r.Session()
+
         if r[table].entity:
-            results = r.search('_core_entity',
-                               where = "table = %s" % table,
+            results = r.search('_core',
+                               where = "type = %s" % table,
+                               extra_inner = ["primary_entity._core_entity"],
                                limit = limit,
+                               session = session,
                                offset = offset,
                                count = True)
         else:
             results = r.search(table,
                                limit = limit,
                                offset = offset,
+                               session = session,
                                count = True)
 
-        data = results.data
+        results.collect()
+
+        session.close()
+
+        out = []
         # build the links
         if r[table].entity:
-            for row in data:
-                row['title'] = node.build_node(row['title'], 'edit', '__id=%s' % row['id'])
-                row['edit'] = [node.build_node('Edit', 'edit', '__id=%s' % row['id']),
-                               node.build_node('Delete', '_delete', '__id=%s' % row['id']),
-                              ]
-                # the id is actually the _core_entity id so let's rename it to __id
-                row['__id'] = row['id']
-                del row['id']
+            for num, row_data in enumerate(results.results):
+                row = {}
+                results.current_row = num
+                row['title'] = results.get('primary_entity._core_entity.title')
+                row['entity'] = results.get('type')
+                row['__id'] = results.get('id')
+                row['thumb'] = results.get('primary_entity._core_entity.thumb')
+                row['summary'] = results.get('primary_entity._core_entity.summary')
+                row['actions'] = None
+                out.append(row)
+                #row['title'] = node.build_node(row['primary_entity._core_entity.title'], 'edit', '__id=%s' % row['id'])
+                #row['edit'] = [node.build_node('Edit', 'edit', '__id=%s' % row['id']),
+                #               node.build_node('Delete', '_delete', '__id=%s' % row['id']),
+                #              ]
+                ## the id is actually the _core_entity id so let's rename it to __id
+                ### FIXME duplicate data, make search
+                #row['summary'] = row['primary_entity._core_entity.summary']
+                #row['thumb'] = row['primary_entity._core_entity.thumb']
+
+                #row['__id'] = row['id']
+                #del row['id']
         else:
             for row in data:
                 if self.title_field and row.has_key(self.title_field):
@@ -457,7 +480,7 @@ class Form(object):
                 row['edit'] = [node.build_node('Edit', 'edit', 'id=%s' % row['id']),
                                node.build_node('Delete', '_delete', 'id=%s' % row['id']),
                               ]
-        data = {'__array' : data}
+        data = {'__array' : out}
 
         encoded_data = urllib.urlencode(node.extra_data)
 

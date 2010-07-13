@@ -39,8 +39,8 @@ class User(TableNode):
         textarea('notes', css = "large"),
         layout('spacer'),
         layout('box_start'),
-        codegroup('user_group', code_desc_field = 'description', label = 'User Groups', filter = 'access_level = 0'),
-        codegroup('user_group', code_desc_field = 'description', label = 'Restricted User Groups', filter = 'access_level > 0', permissions = ['SysAdmin']),
+        codegroup('user_groups', code_table = 'user_group', code_desc_field = 'description', label = 'User Groups', filter = 'access_level = 0'),
+        codegroup('restricted_user_group', code_table = 'user_group', code_desc_field = 'description', label = 'Restricted User Groups', filter = 'access_level > 0', permissions = ['SysAdmin']),
         layout('box_end'),
         layout('spacer'),
 
@@ -62,8 +62,8 @@ class User(TableNode):
         textarea('notes', css = "large"),
         layout('spacer'),
         layout('box_start'),
-        codegroup('user_group', code_desc_field = 'description', label = 'User Groups', filter = 'access_level = 0'),
-        codegroup('user_group', code_desc_field = 'description', label = 'Restricted User Groups', filter = 'access_level > 0', permissions = ['SysAdmin']),
+        codegroup('user_groups', code_table = 'user_group', code_desc_field = 'description', label = 'User Groups', filter = 'access_level = 0'),
+        codegroup('restricted_user_group', code_table = 'user_group', code_desc_field = 'description', label = 'Restricted User Groups', filter = 'access_level > 0', permissions = ['SysAdmin']),
         layout('box_end'),
         layout('spacer'),
 
@@ -284,8 +284,8 @@ class UserGroup(TableNode):
         textarea('notes', css = "large", description = 'A longer more detailed description'),
         layout("spacer"),
         layout("box_start"),
-        codegroup('permission', code_desc_field = 'description', label = 'General Permissions', filter = 'access_level = 0'),
-        codegroup('permission', code_desc_field = 'description', label = 'Admin Permissions', filter = 'access_level > 0', permissions = ['SysAdmin']),
+        codegroup("p1", code_table = 'permission', code_desc_field = 'description', label = 'General Permissions', filter = 'access_level = 0'),
+        codegroup("p2", code_table = 'permission', code_desc_field = 'description', label = 'Admin Permissions', filter = 'access_level > 0', permissions = ['SysAdmin']),
         layout("box_end"),
         layout("spacer"),
 

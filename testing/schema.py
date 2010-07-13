@@ -49,12 +49,13 @@ def initialise(application):
            Text('postcode', generator = dict(name = 'postcode')),
            Text('notes', length = 1000),
            Boolean('active'),
-           LookupId('LookupIdx', "colour", generator = 'skip', many_side_not_null = False),
+           LookupId('colour', many_side_not_null = False),
 
-           Event('new,change', CopyValue('Image', '_core_entity.thumb')),
+           Event('new,change', CopyValue('Image', 'primary_entity._core_entity.thumb')),
 
            title_field = 'name',
            summary_fields = 'email, notes',
+           default_node = 'test.People',
 
     )
 
