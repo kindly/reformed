@@ -29,6 +29,13 @@ $(document).ready(init);
 function init(){
 
     $.address.change(page_load);
+    // if no node info is available go to the login node
+    // FIXME this needs fixing with a default node
+    // also if you are auto logged in etc
+    var url = $.address.value();
+    if (url == '/'){
+        node_load('n:user.User:login:');
+    }
 }
 
 
