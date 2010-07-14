@@ -1146,7 +1146,6 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         switch (item.control){
             case 'image':
             case 'file_upload':
-                console_log($item);
                 return $item.find("input:first").data('value');
                 break;
             case 'wmd':
@@ -1295,9 +1294,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 case 'listing_start':
                     $builder.push($('<div ' + set_class_list(item, "RESULT_ITEM") + '>'));
                     builder_depth++;
-                    var link_node = "n:" + REBASE.application_data.bookmarks[item.data.entity].node;
-                    link_node += ":edit:__id=" + item.data.__id
-                    var img = '<div class="RESULT_IMG" onclick="node_load(\'' + link_node + '\');" ><img src="/attach?' + item.data.thumb + '.s" /></div>';
+                    var link_node = $.Util.build_node_link(local_row_data);
+                    var img = '<div class="RESULT_IMG" onclick="' + link_node + '" ><img src="/attach?' + local_row_data.thumb + '.s" /></div>';
                     $builder[builder_depth].append(img);
                     $builder.push($('<div class="RESULT_DATA" >'));
                     builder_depth++;
@@ -1328,16 +1326,17 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
             // results item box
             if (form_data.params.form_type == 'results'){
-                item = {layout : 'listing_start', data: local_row_data};
+                item = {layout : 'listing_start'};
                 add_layout_item(item, $builder, builder_depth);
             }
             // FIXME this needs to be something different __thumb?
-            img_value = local_row_data.Image;
-            if (img_value){
+            if (form_data.thumb){
+                img_value = local_row_data[form_data.thumb.name];
                 item = {control : 'image', css: 'img_large', size: 'l'};
-                var img = $FormElements.build(ro, item, img_value);
-                img = $('<div class="RECORD_IMG">').append(img);
-                $builder[builder_depth].append(img);
+                var $thumb = $FormElements.build(ro, item, img_value);
+                $thumb = $('<div class="RECORD_IMG">').append($thumb);
+                $builder[builder_depth].append($thumb);
+                form_controls_hash[form_data.thumb.name] = $thumb;
             }
 
             for (var i = 0; i < num_fields; i++){
@@ -1347,8 +1346,10 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                     add_layout_item(item, $builder, builder_depth);
                 } else {
                     $control = $FormElements.build(ro, item, value);
-                    $builder[builder_depth].append($control);
-                    form_controls_hash[item.name] = $control;
+                    if ($control){
+                        $builder[builder_depth].append($control);
+                        form_controls_hash[item.name] = $control;
+                    }
                 }
             }
 

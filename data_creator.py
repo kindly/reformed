@@ -108,6 +108,7 @@ class DataGenerator(object):
             Boolean = self.make_bool,
             TableLookup = self.make_table_lookup,
             Image = self.make_image,
+            Thumb = self.make_image,
             # named generators
             full_name = self.make_name,
             postcode = self.make_postcode,

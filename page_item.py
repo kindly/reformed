@@ -576,6 +576,7 @@ class FormItemFactory(object):
 
                             Password = [Password, 'password'],
                             Image = [FormControl, 'image'],
+                            Thumb = [FormControl, 'thumb'],
                             #FIXME
                             Money = [FormControl, 'textbox'],
 
@@ -770,6 +771,11 @@ def file_upload(name, **kw):
 def image(name, **kw):
     kw['name'] = name
     return FormItemFactory('image', FormControl, **kw)
+
+
+def thumb(name, **kw):
+    kw['name'] = name
+    return FormItemFactory('thumb', FormControl, **kw)
 
 
 
