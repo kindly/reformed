@@ -339,10 +339,14 @@ class AutoForm(TableNode):
             if field.category <> "field":
                 continue
 
+            extra_info = {}
+            if field.description:
+                extra_info['description'] = field.description
+
             if field.type == "Text" and field.length > 500:
-                fields.append(textarea(field.name, css = "large"))
+                fields.append(textarea(field.name, css = "large", **extra_info))
             else:
-                fields.append(input(field.name))
+                fields.append(input(field.name, **extra_info))
 
         main = form(*fields, table = self.table, params = self.form_params)
         self._forms["main"] = main("main", self)
