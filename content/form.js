@@ -1004,13 +1004,24 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         remove_all_errors();
         var index;
         var $item;
+        var $desc;
+        var error;
         for (var field in errors){
             index = form_data.items[field].index;
+            // FIXME don't like this double assignment
             $item = $control = form_controls_hash[field];
+            // add error class to the containing div
+            $item.addClass('f_error_control');
+
+            $item = $item.find('div.f_sub');
             // add the error span
-            $item.append('<span class="f_error">ERROR: ' + errors[field] + '</span>');
-            // add error class
-            $item.addClass('f_error');
+            $desc = $item.find('div.f_description');
+            error = '<div class="f_error">' + errors[field] + '</div>';
+            if ($desc.length){
+                $desc.after(error);
+            } else {
+                $item.prepend(error);
+            }
         }
     }
 
