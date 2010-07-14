@@ -264,6 +264,11 @@ REBASE.bookmark = function (){
 
     function bookmark_add(bookmark){
         // create the bookmark view link
+
+        // stop null bookmarks
+        if (!bookmark.title){
+            bookmark.title = 'untitled';
+        }
         var table_data = REBASE.application_data.bookmarks[bookmark.entity_table];
         if (table_data){
             bookmark.bookmark = 'n:' + table_data.node + ':edit:id=' + bookmark.entity_id;
