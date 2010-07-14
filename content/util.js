@@ -204,6 +204,25 @@ $.Util.make_normal = function($item, field){
     return cleaned.value;
 };
 
+
+$.Util.build_node_link = function (data){
+    // build a node link based on the item info
+    // used in result listings
+
+    if (!data.entity){
+        return '';
+    }
+    var node = REBASE.application_data.bookmarks[data.entity];
+    if (node !== undefined){
+        node = node.node;
+    } else {
+        return '';
+    }
+    var link_node = "node_load('n:" + node + ":edit:__id=" + data.__id + "');";
+    return link_node;
+};
+
+
 $.Util.set_class_list = function (item, extra_class){
     if (!item.css && !extra_class){
         return '';
