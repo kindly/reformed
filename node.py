@@ -173,8 +173,7 @@ class Node(object):
 
         else:
             # anonymous user
-            result = {"__table": "bookmarks",
-                      "entity_id": node_token.bookmark["entity_id"],
+            result = {"entity_id": node_token.bookmark["entity_id"],
                       "title": node_token.title,
                       "entity_table": node_token.bookmark["table_name"],
                       "accessed_date": util.convert_value(datetime.datetime.now())}
