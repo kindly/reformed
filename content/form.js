@@ -1145,6 +1145,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
         switch (item.control){
             case 'image':
+            case 'thumb':
             case 'file_upload':
                 return $item.find("input:first").data('value');
                 break;
