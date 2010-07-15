@@ -1070,10 +1070,22 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     }
 
     function get_form_data(){
-        // get our data to save
+        /* get our data to save.
+         * we want to return any relevant sent data _version etc
+         * but not unneeded info around buttons or messages
+         * if the data has been updated this also needs to be reflected
+         * additionally extra parameter data may also be present that needs returning
+         *
+         * we also make a copy of the row data for the fields that we have the
+         * potential to update.
+         */
         var save_data = {};
+
         for (var item in row_data){
-            save_data[item] = row_data[item];
+            // skip unwanted data that we have been sent.
+            if (item != '__buttons' && item != '__message'){
+                save_data[item] = row_data[item];
+            }
         }
         var copy_of_row_info = {};
         var row_info = get_row_info();
