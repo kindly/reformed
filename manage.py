@@ -105,6 +105,8 @@ def upload_files():
     import fileupload
     import os
 
+    print 'uploading images'
+
     # get image data
     image_directory = '/home/kindly/stuff/reformed_images'
     image_data_file = 'image_data.txt'
@@ -123,24 +125,26 @@ def upload_files():
                     item_count += 1
                     item_list.append((directory, item_path, item))
 
+
     # check database is initialised
     application.initialise_database()
 
     item_list = []
     search_dir('')
 
-    print 'uploading images'
+    total = len(item_list)
+    out = ''
+
     count = 0
     for (category, file_path, file_name) in item_list:
         file_handle = open(file_path)
         fileupload.save_file(file_handle, file_name, '', category, application)
+        # status info
         count += 1
-        if count % 10 == 0:
-            sys.stdout.write('-')
-        else:
-            sys.stdout.write('.')
+        sys.stdout.write(chr(8) * len(out))
+        out = '%s%%' % (100 * count/total)
+        sys.stdout.write(out)
         sys.stdout.flush()
-
     print
 
 def delete():
