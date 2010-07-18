@@ -22,6 +22,7 @@
 import os
 import sys
 import shutil
+from ConfigParser import RawConfigParser, NoOptionError, NoSectionError
 from optparse import OptionParser
 
 from reformed.export import json_dump_all_from_table
@@ -31,7 +32,10 @@ import application as app
 application = None
 dir = None
 
-
+DEFAULT_OPTIONS = {"host": "127.0.0.1",
+                   "port": "8000",
+                   "ssl_cert" : "host",
+                   "logging_tables" : False}
 
 def create():
     application.create_database()
@@ -101,13 +105,13 @@ def purge_attachments():
 
 
 
-def upload_files():
+def upload_files(options):
     import fileupload
     import os
 
     # get image data
-    image_directory = '/home/kindly/stuff/reformed_images'
-    image_data_file = 'image_data.txt'
+    image_directory = options.image_directory
+    image_data_file = options.image_data_file
     items_per_dir = 100
 
     def search_dir(directory):
@@ -246,6 +250,28 @@ def run(host, port, ssl, ssl_cert, no_job_scheduler):
         except KeyboardInterrupt:
             server.stop()
 
+def set_config_value(config, options, option,
+                     type = "string", section = 'main'):
+
+    if hasattr(options, option) and getattr(options, option):
+        return
+    
+    if type == "bool":
+        getter = config.getboolean
+    if type == "int":
+        getter = config.getint
+    if type == "float":
+        getter = config.getfloat
+    else:
+        getter = config.get
+
+    try:
+        value = getter(section, option)
+    except (NoOptionError, NoSectionError):
+        value = DEFAULT_OPTIONS.get(option)
+        
+    setattr(options, option, value)
+
 if __name__ == "__main__":
     usage = "usage: %prog [options] package"
 
@@ -296,16 +322,16 @@ if __name__ == "__main__":
     parser.add_option("--reloader", dest = "reloader", action="store_true",
                       help="INTERNAL, used for reload")
     parser.add_option("--host", dest = "host", action="store",
-                      default = "127.0.0.1",
+                      default = False,
                       help="web server host")
     parser.add_option("--port", dest = "port", action="store",
-                      default = "8000",
+                      default = False,
                       help="web server port")
     parser.add_option("-s", "--ssl",
                       action="store_true", dest="ssl",
                       help="serve using ssl")
     parser.add_option("--ssl_cert", dest = "ssl_cert", action="store",
-                      default = 'host',
+                      default = False,
                       help="web server ssl certificate/private key prefix")
     parser.add_option("--sysinfo", dest = "sysinfo", action="store_true",
                       help="output system information")
@@ -318,6 +344,28 @@ if __name__ == "__main__":
         dir = args[0]
     else:
         dir = "sample"
+
+    # update options with config file
+
+    root_folder = os.path.dirname(os.path.abspath(__file__))
+    application_folder = os.path.join(root_folder, dir)
+    config_file = os.path.join(application_folder, "app.cfg")
+
+    config = RawConfigParser()
+
+    try:
+        config.read(config_file)
+    except:
+        raise
+
+    set_config_value(config, options, "port")
+    set_config_value(config, options, "host")
+    set_config_value(config, options, "ssl_cert")
+    set_config_value(config, options, "ssl", type = "bool")
+    set_config_value(config, options, "logging_tables", type = "bool")
+    set_config_value(config, options, "connection_string")
+    set_config_value(config, options, "image_directory")
+    set_config_value(config, options, "image_data_file")
 
     # make application
     application = app.Application(dir, options)
@@ -347,7 +395,7 @@ if __name__ == "__main__":
     if options.load:
         load_data(options.load_file)
     if options.upload_files:
-        upload_files()
+        upload_files(options)
     if options.table_load:
         load()
     if options.run:
