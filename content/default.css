@@ -19,7 +19,6 @@ p {
 
 .label {
 	color:darkblue;
-	padding:0 15px;
 	width:100px;
     float:left;
 }
@@ -310,6 +309,11 @@ input {
 	color:#333;
 }
 
+div.f_error_control input {
+	border:1px solid #933;
+	color:#333;
+}
+
 td input {
     width:100%;
     float:left;
@@ -512,7 +516,6 @@ label.form_label, span.form_label{
     vertical-align:top;
     width:120px;
     float:left;
-    padding-left:10px;
 }
 
 textarea {
@@ -538,7 +541,9 @@ textarea.large, input.large, div.large {
 }
 
 .f_error {
-    background-color:#C33;
+    margin-left:123px;
+    clear:both;
+    color:#933;
 }
 
 div.f_form.dirty{
@@ -594,6 +599,11 @@ div.f_control_holder {
     float:left;
     clear:left;
     width:100%;
+    margin-bottom:5px;
+}
+
+div.f_control_holder > div.f_sub {
+    padding-left:10px;
 }
 
 div.COLUMN {

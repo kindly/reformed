@@ -165,7 +165,6 @@ class Node(object):
                 result = {"__table": "bookmarks",
                           "entity_id": node_token.bookmark["entity_id"],
                           "user_id": user_id,
-                          "bookmark": node_token.bookmark["bookmark_string"],
                           "title": node_token.title,
                           "entity_table": node_token.bookmark["table_name"],
                           "accessed_date": util.convert_value(datetime.datetime.now())}
@@ -176,7 +175,6 @@ class Node(object):
             # anonymous user
             result = {"__table": "bookmarks",
                       "entity_id": node_token.bookmark["entity_id"],
-                      "bookmark": node_token.bookmark["bookmark_string"],
                       "title": node_token.title,
                       "entity_table": node_token.bookmark["table_name"],
                       "accessed_date": util.convert_value(datetime.datetime.now())}
@@ -339,10 +337,14 @@ class AutoForm(TableNode):
             if field.category <> "field":
                 continue
 
+            extra_info = {}
+            if field.description:
+                extra_info['description'] = field.description
+
             if field.type == "Text" and field.length > 500:
-                fields.append(textarea(field.name, css = "large"))
+                fields.append(textarea(field.name, css = "large", **extra_info))
             else:
-                fields.append(input(field.name))
+                fields.append(input(field.name, **extra_info))
 
         main = form(*fields, table = self.table, params = self.form_params)
         self._forms["main"] = main("main", self)

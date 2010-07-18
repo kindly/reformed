@@ -450,8 +450,8 @@ class Form(object):
         # build the links
         if r[table].entity:
             for num, row_data in enumerate(results.results):
-                row = {}
                 results.current_row = num
+                row = {}
                 row['title'] = results.get('primary_entity._core_entity.title')
                 row['entity'] = results.get('type')
                 row['__id'] = results.get('id')
@@ -459,27 +459,25 @@ class Form(object):
                 row['summary'] = results.get('primary_entity._core_entity.summary')
                 row['actions'] = None
                 out.append(row)
-                #row['title'] = node.build_node(row['primary_entity._core_entity.title'], 'edit', '__id=%s' % row['id'])
-                #row['edit'] = [node.build_node('Edit', 'edit', '__id=%s' % row['id']),
-                #               node.build_node('Delete', '_delete', '__id=%s' % row['id']),
-                #              ]
-                ## the id is actually the _core_entity id so let's rename it to __id
-                ### FIXME duplicate data, make search
-                #row['summary'] = row['primary_entity._core_entity.summary']
-                #row['thumb'] = row['primary_entity._core_entity.thumb']
-
-                #row['__id'] = row['id']
-                #del row['id']
         else:
-            for row in data:
-                if self.title_field and row.has_key(self.title_field):
-                    row['title'] = node.build_node(row[self.title_field], 'edit', 'id=%s' % row['id'])
+            for num, row_data in enumerate(results.results):
+                results.current_row = num
+                row = {}
+                if self.title_field:
+                    row['title'] = results.get(self.title_field)
                 else:
-                    row['title'] = node.build_node('%s: %s' % (self.table, row['id']), 'edit', 'id=%s' % row['id'])
-
-                row['edit'] = [node.build_node('Edit', 'edit', 'id=%s' % row['id']),
-                               node.build_node('Delete', '_delete', 'id=%s' % row['id']),
-                              ]
+                    row['title'] = '%s: %s' % (self.table, results.get('id'))
+                row['__id'] = results.get('id')
+                row['entity'] = None
+                out.append(row)
+##                if self.title_field and row.has_key(self.title_field):
+##                    row['title'] = node.build_node(row[self.title_field], 'edit', 'id=%s' % row['id'])
+##                else:
+##                    row['title'] = node.build_node('%s: %s' % (self.table, row['id']), 'edit', 'id=%s' % row['id'])
+##
+##                row['edit'] = [node.build_node('Edit', 'edit', 'id=%s' % row['id']),
+##                               node.build_node('Delete', '_delete', 'id=%s' % row['id']),
+##                              ]
         data = {'__array' : out}
 
         encoded_data = urllib.urlencode(node.extra_data)

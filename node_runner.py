@@ -306,7 +306,7 @@ class NodeRunner(object):
         r = global_session.database
         bookmarks = r.search("bookmarks",
                                       "user_id = ?",
-                                      fields = ['title', 'bookmark', 'entity_table', 'entity_id', 'accessed_date'],
+                                      fields = ['title', 'entity_table', 'entity_id', 'accessed_date'],
                                       values = [user_id],
                                       order_by = "accessed_date",
                                       keep_all = False,

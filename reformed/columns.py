@@ -455,6 +455,7 @@ class Field(object):
 
         obj.data_type = None
 
+        obj.description = kw.get("description", None)
         obj.generator = kw.get("generator", None)
 
         return obj

@@ -27,23 +27,25 @@ def initialise(application):
            Text('longtext', length = 1000),
            Password('password'),
            DateTime('DateTime'),
-           Image('Image', generator = dict(params = dict(category = 'donkey'))),
+           Thumb('image', generator = dict(params = dict(category = 'donkey'))),
            Boolean('Boolean'),
            Money('Money'),
            Email('Email'),
            Date('Date'),
            LookupId('LookupId', "colour"),
 
+           Event('new,change', CopyValue('image', 'primary_entity._core_entity.thumb')),
            title_field = 'text',
+           default_node = 'test.Node5',
     )
 
     entity('people', database,
            Text('name', generator = dict(name = 'full_name')),
            Date('dob', generator = dict(name = 'dob')),
            Integer('age', generator = dict(params = dict(min = 16, max = 110))),
-           Email('email'),
+           Email('email', description = 'email address or something'),
            Text('sex', generator = dict(name = 'sex')),
-           Image('Image'),
+           Thumb('image'),
            Text('street', generator = dict(name = 'road')),
            Text('town', generator = dict(name = 'town')),
            Text('postcode', generator = dict(name = 'postcode')),
@@ -51,7 +53,7 @@ def initialise(application):
            Boolean('active'),
            LookupId('colour', many_side_not_null = False),
 
-           Event('new,change', CopyValue('Image', 'primary_entity._core_entity.thumb')),
+           Event('new,change', CopyValue('image', 'primary_entity._core_entity.thumb')),
 
            title_field = 'name',
            summary_fields = 'email, notes',

@@ -140,6 +140,10 @@ class Image(Field):
     def __init__(self, name, *args, **kw):
         self.text = Column(sa.Integer, use_parent = True)
 
+class Thumb(Field):
+
+    def __init__(self, name, *args, **kw):
+        self.text = Column(sa.Integer, use_parent = True)
 
 class Address(Field):
 

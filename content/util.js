@@ -204,6 +204,25 @@ $.Util.make_normal = function($item, field){
     return cleaned.value;
 };
 
+
+$.Util.build_node_link = function (data){
+    // build a node link based on the item info
+    // used in result listings
+
+    if (!data.entity){
+        return '';
+    }
+    var node = REBASE.application_data.bookmarks[data.entity];
+    if (node !== undefined){
+        node = node.node;
+    } else {
+        return '';
+    }
+    var link_node = "node_load('n:" + node + ":edit:__id=" + data.__id + "');";
+    return link_node;
+};
+
+
 $.Util.set_class_list = function (item, extra_class){
     if (!item.css && !extra_class){
         return '';
@@ -622,6 +641,12 @@ $.Util.HTML_Encode_Clear = function (arg) {
 };
 
 $.Util.FormDataNormalize = function (form_data, node) {
+    /* generally clean up the form data to
+     * make things easier for us later on.
+     * creates .items hash for quick reverse lookups etc.
+     */
+
+
     form_data.node = node;
     // make hash of the fields
     form_data.items = {};
@@ -636,6 +661,11 @@ $.Util.FormDataNormalize = function (form_data, node) {
         }
         if (field.control == 'subform'){
             field.form = $.Util.FormDataNormalize(field.form, node);
+        }
+        // get out the thumb field if one exists
+        // makes life easier later on
+        if (field.control == 'thumb'){
+            form_data.thumb = field;
         }
     }
     return form_data;
