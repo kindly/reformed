@@ -266,7 +266,7 @@ if __name__ == "__main__":
                       help="extract all tables")
     parser.add_option("-u", "--upload",
                       action="store_true", dest="upload_files",
-                      help="load all tables")
+                      help="upload images to database")
     parser.add_option("-n",
                       action="store", dest="num_upload_files", default = 100,
                       type = 'int', help="number of images to upload per directory")
