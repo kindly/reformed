@@ -284,6 +284,24 @@ class SessionWrapper(object):
                 self.add(obj)
                 self.add(core)
                 self.add(entity)
+            elif table.relation == True:
+                core = self.database.get_instance("_core")
+                core.type = unicode(table.name)
+                obj._rel__core = core
+                table = obj._table
+                primary_id = obj._primary 
+                secondary_id = obj._secondary
+                primary_obj = self.query(self.database["_core_entity"].sa_class).get(primary_id)
+                secondary_obj = self.query(self.database["_core_entity"].sa_class).get(secondary_id)
+                assert(primary_obj.table) in table.primary_entities
+                assert(secondary_obj.table) in table.secondary_entities
+                core._rel_primary_entity = primary_obj
+                core._rel_secondary_entity = secondary_obj
+                self.add(primary_obj)
+                self.add(secondary_obj)
+                self.add(core)
+                self.add(obj)
+
 
 class SessionClass(object):
 
