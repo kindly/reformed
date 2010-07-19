@@ -47,8 +47,9 @@ class Application(object):
         self.application_folder = os.path.join(self.root_folder, directory)
         # check that we have the application directory
         self.check_filesystem()
-        self.connection_string = 'sqlite:///%s/%s.sqlite' % (self.application_folder, directory)
-        #self.connection_string = 'postgres://kindly:ytrewq@localhost:5432/bug'
+
+        self.connection_string = runtime_options.connection_string or\
+                'sqlite:///%s/%s.sqlite' % (self.application_folder, directory)
 
         sys.path.append(self.application_folder)
         self.database = None
@@ -69,8 +70,7 @@ class Application(object):
         else:
             self.quiet = False
 
-        ##FIXME need proper options
-        logging_tables = False if runtime_options else True
+        self.logging_tables = runtime_options.logging_tables
 
         # zodb data store
         self.zodb = None
@@ -78,8 +78,6 @@ class Application(object):
         # system info
         self.sys_info = {}  # used for quick access to the system variables
         self.sys_info_full = {} # store of the full system info
-
-        self.logging_tables = False
 
         # system wide settings
         global_session.application = self
@@ -266,7 +264,7 @@ class Application(object):
             handler.setLevel(logging.ERROR)
         else:
             handler.setLevel(logging.DEBUG)
-            
+
         logger = logging.getLogger(logger_name)
         logger.setLevel(logging.DEBUG)
 

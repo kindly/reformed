@@ -156,7 +156,6 @@ def initialise(application):
 
 
     # permission
-    application.predefine.permission("SysAdmin", u'System Administrators', u'Administer the system.', 2)
 
     # add admin user
     # this is a special case as no other users should be auto created
@@ -169,6 +168,7 @@ def initialise(application):
     application.predefine.add_data("user", "login_name", u"admin", data)
 
     # sys admin user_group
+    application.predefine.permission("SysAdmin", u'System Administrators', u'Administer the system.', 2)
     application.predefine.user_group(u'SysAdmins', u'System Administrators', u'Full system access', permissions = ['SysAdmin'], access_level = 2)
 
     # this is a special case too

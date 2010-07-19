@@ -31,7 +31,15 @@ class test_donkey(object):
         if not hasattr(cls, "engine"):
             cls.engine = 'sqlite:///:memory:'
 
-        cls.application = application.Application("test_donkey")
+        class Options(object):
+            pass
+
+        options = Options()
+        options.connection_string = False
+        options.logging_tables = True
+        options.quiet = False
+
+        cls.application = application.Application("test_donkey", options)
         cls.application.logging_tables = True
 
         cls.application.delete_database()
