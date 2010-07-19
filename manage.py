@@ -109,8 +109,7 @@ def upload_files():
 
     # get image data
     image_directory = '/home/kindly/stuff/reformed_images'
-    image_data_file = 'image_data.txt'
-    items_per_dir = 100
+    items_per_dir = options.num_upload_files
 
     def search_dir(directory):
         full_directory = os.path.join(image_directory, directory)
@@ -268,6 +267,9 @@ if __name__ == "__main__":
     parser.add_option("-u", "--upload",
                       action="store_true", dest="upload_files",
                       help="load all tables")
+    parser.add_option("-n",
+                      action="store", dest="num_upload_files", default = 100,
+                      type = 'int', help="number of images to upload per directory")
     parser.add_option("-l", "--load",
                       action="store_true", dest="table_load",
                       help="load all tables")
