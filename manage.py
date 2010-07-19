@@ -255,7 +255,7 @@ def set_config_value(config, options, option,
 
     if hasattr(options, option) and getattr(options, option):
         return
-    
+
     if type == "bool":
         getter = config.getboolean
     if type == "int":
@@ -269,7 +269,7 @@ def set_config_value(config, options, option,
         value = getter(section, option)
     except (NoOptionError, NoSectionError):
         value = DEFAULT_OPTIONS.get(option)
-        
+
     setattr(options, option, value)
 
 if __name__ == "__main__":
