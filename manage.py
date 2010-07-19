@@ -113,7 +113,6 @@ def upload_files(options):
 
     # get image data
     image_directory = options.image_directory
-    image_data_file = options.image_data_file
 
     items_per_dir = options.num_upload_files
 
@@ -373,7 +372,6 @@ if __name__ == "__main__":
     set_config_value(config, options, "logging_tables", type = "bool")
     set_config_value(config, options, "connection_string")
     set_config_value(config, options, "image_directory")
-    set_config_value(config, options, "image_data_file")
 
     # make application
     application = app.Application(dir, options)
