@@ -50,30 +50,35 @@ class Node(object):
         # FIXME can this die?
         self.name = node_name
 
-        # TD prepare the forms.  ? does this need doing for all the forms
-        # or can we take a more lazy approach?
+        # dict of any static forms that have been created
         self._forms = {}
+        # dict of forms this node contains (built on first run)
+        self._available_forms = {}
+
+
         self.volatile = False # set to True if forms are volatile
 
         self.extra_data = {}
 
-        # initiate forms
-        for form_name in dir(self):
-            if isinstance(getattr(self, form_name), FormFactory):
-                formwrapper = getattr(self, form_name)
-                # this is where we get the form initialised
-                form = formwrapper(form_name, self)
-                if form.volatile:
-                    self.volatile = True
-
-                self._forms[form_name] = form
-
         # do any command setup
         if self.__class__.first_run:
+            # initiate any forms
+            self.initiate_forms()
+
             self.__class__.first_run = False
             self.setup_commands()
             # TD do we need this?
             self.setup_extra_commands()
+
+    def initiate_forms(self):
+        # find all the form in this node
+        # add them to _available_forms so they can
+        # easily be generated when needed
+        for form_name in dir(self):
+            if isinstance(getattr(self, form_name), FormFactory):
+                formwrapper = getattr(self, form_name)
+                self._available_forms[form_name] = formwrapper
+
 
     def setup_commands(self):
         pass
@@ -81,8 +86,24 @@ class Node(object):
     def setup_extra_commands(self):
         pass
 
-    def __getitem__(self, value):
-        return self._forms[value]
+    def __getitem__(self, form_name):
+        """See if we have a form of this name and if so return it"""
+
+        # return form if it is cached
+        if form_name in self._forms:
+            return self._forms[form_name]
+
+        # not cached do we know this form if so build it
+        if form_name in self._available_forms:
+            form = self._available_forms[form_name](form_name, self)
+            if not form.volatile:
+                # cache form
+                self._forms[form_name] = form
+            return form
+
+        raise Exception('Form with name `%s` does not exist in this node.' % form_name)
+
+
 
     def call(self, node_token):
         """called when the node is used.  Checks to see if there
@@ -213,6 +234,7 @@ class Node(object):
 class TableNode(Node):
 
     """Node for table level elements"""
+
     table = None
     core_table = True
     extra_fields = []
@@ -220,18 +242,12 @@ class TableNode(Node):
     list_title = 'item %s'
     title_field = 'name'
 
-
     listing = form(
-        #link('title', data_type = 'link', css = 'form_title'),
         result_link('title'),
-        #result_image('thumb'),
         info('summary', data_type = 'info'),
-  #      link_list('edit', data_type = 'link_list'),
 
         params = {"form_type": "results"}
     )
-
-
 
 
     def setup_commands(self):
@@ -259,7 +275,7 @@ class TableNode(Node):
         self["main"].delete(node_token, node_token)
 
     def list(self, node_token, limit=20):
-        self["main"].list(node_token, limit)
+        self["listing"].list(node_token, limit)
 
 
 class JobNode(Node):
@@ -345,8 +361,9 @@ class AutoForm(TableNode):
             else:
                 fields.append(input(field.name, **extra_info))
 
-        main = form(*fields, table = self.table, params = self.form_params)
-        self._forms["main"] = main("main", self)
+        main = form(*fields, table = self.table, params = self.form_params, volatile = True)
+        # add this to the available forms
+        self._available_forms['main'] = main
 
 
 
