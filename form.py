@@ -380,12 +380,12 @@ class Form(object):
     def delete(self, node_token):
         # TD not reviewed
         ##FIXME does not work and has not been tested
-        node = node_token  # FIXME
-        id = node.data.get('id')
+
+        id = node_token.data.get('id')
         if id:
             filter = {'id' : id}
         else:
-            id = node.data.get('__id')
+            id = node_token.data.get('__id')
             filter = {'_core_id' : id}
 
         table = self.table
@@ -396,27 +396,27 @@ class Form(object):
             data = session.query(obj).filter_by(**filter).one()
 
             for form_item in self.form_items:
-                form_item.delete(self, node, data, data, session)
+                form_item.delete(self, node_token, data, data, session)
 
             session.delete(data)
             session.commit()
             # FIXME this needs to be handled more nicely and needs to be completely fixed
             if self.form_params['form_type'] != 'grid' and self.table == table:
-                node.next_data = {'command': 'list', 'data' : self.extra_data}
-                node.next_node = self.name
+                node_token.next_data = {'command': 'list', 'data' : self.extra_data}
+                node_token.next_node = self.name
             else:
-                node.out = {'deleted': [self.data]}
-                node.action = 'delete'
+                node_token.out = {'deleted': [self.data]}
+                node_token.action = 'delete'
         except sqlalchemy.orm.exc.NoResultFound:
             error = 'Record not found.'
-            node.out = error
-            node.action = 'general_error'
+            node_token.out = error
+            node_token.action = 'general_error'
         except sqlalchemy.exc.IntegrityError, e:
             print e
 
             error = 'The record cannot be deleted,\nIt is referenced by another record.'
-            node.out = error
-            node.action = 'general_error'
+            node_token.out = error
+            node_token.action = 'general_error'
             session.rollback()
         session.close()
 
@@ -478,14 +478,7 @@ class Form(object):
                 row['__id'] = results.get('id')
                 row['entity'] = None
                 out.append(row)
-##                if self.title_field and row.has_key(self.title_field):
-##                    row['title'] = node.build_node(row[self.title_field], 'edit', 'id=%s' % row['id'])
-##                else:
-##                    row['title'] = node.build_node('%s: %s' % (self.table, row['id']), 'edit', 'id=%s' % row['id'])
-##
-##                row['edit'] = [node.build_node('Edit', 'edit', 'id=%s' % row['id']),
-##                               node.build_node('Delete', '_delete', 'id=%s' % row['id']),
-##                              ]
+
         data = {'__array' : out}
 
         encoded_data = urllib.urlencode(node.extra_data)
