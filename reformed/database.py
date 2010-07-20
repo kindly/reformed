@@ -242,7 +242,7 @@ class Database(object):
         else:
             title_field = "name"
 
-        event = Event("new", 
+        event = Event("new, change",
                       actions.CopyTextAfter("primary_entity._core_entity.title", title_field))
 
         table.add_event(event)
@@ -250,7 +250,7 @@ class Database(object):
 
         if table.summary_fields:
 
-            event = Event("new", 
+            event = Event("new, change",
                           actions.CopyTextAfterField("primary_entity._core_entity.summary", table.summary_fields))
 
             table.add_event(event)
