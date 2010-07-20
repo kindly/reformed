@@ -164,11 +164,10 @@ def get_next_relation(gr, path_dict, edge, first = False):
 
         relation_name = relation.name
 
-        if not rtables[node2].relationship:
-            all_relations = old_table.tables_with_relations[(node2, "here")]
-            auto_path = [rel for rel in all_relations if not rel.no_auto_path]
-            if len(auto_path) > 1:
-                split = relation_name[5:]
+        all_relations = old_table.tables_with_relations[(node2, "here")]
+        auto_path = [rel for rel in all_relations if not rel.no_auto_path]
+        if len(auto_path) > 1:
+            split = relation_name[5:]
 
         new_name_changes = name_changes + [split]
 

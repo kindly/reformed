@@ -83,18 +83,16 @@ class Table(object):
 
         # table types
         self.entity = kw.get("entity", False)
-        self.relationship = kw.get("relationship", False)
+        self.relation = kw.get("relation", False)
         self.lookup = kw.get("lookup", False)
 
-        valid_entities = kw.get("valid_entities", "").strip().split(",")
-        self.valid_entities = [] if valid_entities == [""] else valid_entities
+        primary_entities = kw.get("primary_entities")
+        if primary_entities :
+            self.primary_entities = primary_entities.strip().split(",")
 
-        valid_entities1 = kw.get("valid_entities1", "").strip().split(",")
-        self.valid_entities1 = [] if valid_entities1 == [""] else valid_entities1
-
-        valid_entities2 = kw.get("valid_entities2", "").strip().split(",")
-        self.valid_entities2 = [] if valid_entities2 == [""] else valid_entities2
-
+        secondary_entities = kw.get("secondary_entities")
+        if secondary_entities:
+            self.secondary_entities = secondary_entities.strip().split(",")
 
         self.logged = kw.get("logged", True)
         self.validated = kw.get("validated", True)

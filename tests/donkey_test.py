@@ -149,10 +149,11 @@ class test_donkey(object):
                CheckNoTwoNulls("val_duplicate_membership", parent_table = "_core", field = "end_date"),  
               )
 
-#        cls.Donkey.add_relation_table(Table("relation",
-#                             Text("relation_type")
-#                                          )
-#                                     )
+        relation("donkey_people", cls.Donkey,
+                 primary_entities = "people",
+                 secondary_entities = "donkey"
+                )
+
 
 #        cls.Donkey.add_relation_table(Table("donkey_relation",
 #                                     valid_entities1 = "people",
@@ -607,7 +608,7 @@ class test_basic_input(test_donkey):
 
         print self.Donkey["_core"].dependant_attributes.keys()
 
-        assert set(self.Donkey["_core"].dependant_attributes.keys()) == set(['_membership', 'donkey', 'people', 'upload', 'user', 'user_group', 'categories'])
+        assert set(self.Donkey["_core"].dependant_attributes.keys()) == set(['_membership', 'donkey', 'people', 'donkey_people', 'upload', 'user', 'user_group', 'categories'])
 
     def test_dependant_tables(self):
 
@@ -615,7 +616,7 @@ class test_basic_input(test_donkey):
 
         print set(self.Donkey["_core"].dependant_tables)
 
-        assert set(self.Donkey["_core"].dependant_tables) == set(['donkey', 'people', 'upload', 'entity_categories', 'membership', 'user', 'user_group'])
+        assert set(self.Donkey["_core"].dependant_tables) == set(['donkey', 'people', 'donkey_people', 'upload', 'entity_categories', 'membership', 'user', 'user_group'])
 
     def test_parant_col_attributes(self):
 
@@ -673,6 +674,24 @@ class test_basic_input(test_donkey):
         self.session.commit()
 
         first_donkey = self.session.query(self.Donkey.get_class("donkey"))[1]
+
+    def test_relation_table(self):
+        person = self.session.query(self.Donkey.get_class("people")).first()
+        donkey = self.session.query(self.Donkey.get_class("donkey")).first()
+
+
+        donkey_people = self.Donkey.get_instance("donkey_people")
+        donkey_people._primary = person._rel__core.primary_entity_id
+        donkey_people._secondary = donkey._rel__core.primary_entity_id
+
+        self.session.save(donkey_people)
+        self.session.commit()
+
+        assert donkey_people._rel__core.primary_entity_id == person._rel__core.primary_entity_id
+
+        assert donkey_people._rel__core.secondary_entity_id == donkey._rel__core.primary_entity_id
+
+
 
     def test_hashed_password(self):
 

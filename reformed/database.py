@@ -200,25 +200,26 @@ class Database(object):
 
 
     def add_relation_table(self, table):
-        if "_core_entity" not in self.tables:
+        if "_core" not in self.tables:
             raise custom_exceptions.NoTableAddError("table %s cannot be added as there is"
                                                     "no entity table in the database"
                                                     % table.name)
 
-        table.relationship = True
-        table.kw["relationship"] = True
+        assert table.primary_entities
+        assert table.secondary_entities
+
+        table.relation = True
+        table.kw["relation"] = True
 
         self.add_table(table)
 
-        primary = OneToMany("%s_primary" % table.name, table.name, backref = "_primary")
-        secondary = OneToMany("%s_secondary" % table.name, table.name, backref = "_secondary")
+        relation = ForeignKey("_core_id", "_core", backref = table.name)
+        table._add_field_no_persist(relation)
 
-        self.tables["_core_entity"]._add_field_no_persist(primary)
-        self.tables["_core_entity"]._add_field_no_persist(secondary)
+        event = Event("delete", 
+                      actions.DeleteRows("_core"))
 
-        if self.tables["_core_entity"].persisted:
-            self.fields_to_persist.append(primary)
-            self.fields_to_persist.append(secondary)
+        table.add_event(event)
 
 
     def add_entity(self, table):
