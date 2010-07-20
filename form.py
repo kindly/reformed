@@ -29,15 +29,15 @@ from page_item import input, FormItemFactory
 
 class Form(object):
 
-    def __init__(self, name, node, *args, **kw):
+    def __init__(self, name, node, version, *form_items, **kw):
 
-        self.provided_form_items = args
+        self._form_items = form_items
 
-        # TD why have a name?
         self.name = name
 
         self.node = node
         self.node_name = node.name
+        self.version = version + 1
 
         # provided keywords
         # TD document `table`
@@ -62,7 +62,12 @@ class Form(object):
         self.form_items = []
         self.form_item_name_list = []
 
-        self.volatile = False # Set to True if any form items are declared non thread safe
+        # Set to True if any form items are declared non thread safe
+        # forms can be specifically made volatile by adding it as a keyword
+        # useful for auto forms etc
+        self.volatile = kw.get('volatile', False)
+        if self.volatile:
+             self.version = 0
 
         ## get title field from table if needed
         if not self.title_field and self.table:
@@ -70,17 +75,21 @@ class Form(object):
 
         self.initiate_form_items()
 
+    def __repr__(self):
+        return '<Form `%s` in node `%s`>' % (self.name, self.node.name)
+
     def initiate_form_items(self):
         """set up the form_items supplied to the form"""
 
         ## not in init as fields want to know what table the forms is in
-        for form_item in self.provided_form_items:
+        for form_item in self._form_items:
             if isinstance(form_item, FormItemFactory):
                 # here is where we call our form_items
                 form_item_instance = form_item(self)
                 # check if form item declared non thread safe
                 if not form_item_instance.static:
                     self.volatile = True
+                    self.version = 0
                 self.form_items.append(form_item_instance)
                 if form_item_instance.name:
                     self.form_item_name_list.append(form_item_instance.name)
@@ -165,7 +174,6 @@ class Form(object):
         node_token.action = 'form'
 
     def save_row(self, node_token, data, session, as_subform, parent_obj = None, relation_attr = None):
-
         """Saves an individual database row.  Subforms are saved last and
         the subforms call this method in their own form instance. 
         relation_attr is the attribute on the newly created object that should
@@ -313,7 +321,7 @@ class Form(object):
             table = self.table
 
             tables = util.split_table_fields(self.form_item_name_list, table).keys()
-            print 'VIEW', table, where
+
             result = r.search_single(table, where, 
                                           session = session, tables = tables,
                                           values = [id])
@@ -511,22 +519,41 @@ class Form(object):
         if not data:
             data = {}
 
-        out = {
-            "form": {
-                "fields":self.create_form_item_output(node_token, data)
-            },
-            "type": "form",
-            "data": data
-        }
-        # add copy of params if there are some
-        # copy is used as it may get modified
-        if self.params:
-            out['form']['params'] = self.params.copy()
-        if read_only:
-            if not out['form']['params']:
-                out['form']['params'] = {}
-            out['form']['params']['read_only'] = True
+        cached_version = 0
+        if node_token.form_cache:
+            try:
+                cached_version = node_token.form_cache[self.name]
+            except KeyError:
+                pass
 
+        if cached_version and cached_version == self.version:
+            print '~~~~~ Cached Form'
+            form = {
+                "cache_form" : self.name,
+                "cache_node" : self.node.name
+            }
+        else:
+            form = {
+                "fields" : self.create_form_item_output(node_token, data),
+                "version" : self.version,
+                "name" : self.name
+            }
+            # add copy of params if there are some
+            # copy is used as it may get modified
+            if self.params:
+                form['params'] = self.params.copy()
+            # FIXME read_only should really move into the data?
+            if read_only:
+                if not form['params']:
+                    form['params'] = {}
+                form['params']['read_only'] = True
+
+
+        out = {
+            "form" : form,
+            "type" : "form",
+            "data" : data
+        }
         return out
 
     def create_form_item_output(self, node_token, data):
@@ -547,15 +574,19 @@ class FormFactory(object):
         self.form_items = form_items
         self.kw = kw
         self.instance = None
+        self.version = 0
 
     def __call__(self, name, node):
 
-        if  not self.instance:
-            print 'create form %s' % name
-            instance = Form(name, node, *self.form_items, **self.kw)
+        if not self.instance:
+            print 'create form %s in node %s' % (name, node.name)
+            instance = Form(name, node, self.version, *self.form_items, **self.kw)
             if instance.volatile:
+                self.version = 0
                 return instance
             else:
+                # we have a new stable form update it's version
+                self.version = instance.version
                 self.instance = instance
         else:
             print 'reuse form %s' % name
