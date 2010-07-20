@@ -227,10 +227,7 @@ class Database(object):
             raise custom_exceptions.NoTableAddError("table %s cannot be added as there is"
                                                     "no _core table in the database"
                                                     % table.name)
-        if "_core_entity" not in self.tables:
-            raise custom_exceptions.NoTableAddError("table %s cannot be added as there is"
-                                                    "no _core_entity table in the database"
-                                                    % table.name)
+
         table.entity = True
         table.kw["entity"] = True
         self.add_table(table)
