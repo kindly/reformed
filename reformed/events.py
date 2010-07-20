@@ -13,7 +13,7 @@ class Event(object):
 
     def __init__(self, event_cause, *actions):
 
-        self.event_causes = event_cause.split(",")
+        self.event_causes = event_cause.replace(' ', '').split(",")
         self.actions = actions
 
     def _set_parent(self, table):
