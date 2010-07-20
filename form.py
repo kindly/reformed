@@ -420,7 +420,7 @@ class Form(object):
             session.rollback()
         session.close()
 
-    def list(self, node_token, limit=20):
+    def list(self, node_token, limit=20, **kw):
         # TD not reviewed
 
         node = node_token.node
@@ -435,7 +435,18 @@ class Form(object):
 
         session = r.Session()
 
-        if r[table].entity:
+        if not table:
+            where = kw.pop('where')
+            values = kw.pop('values')
+            results = r.search('_core_entity',
+                               where = where,
+                               values = values,
+                               limit = limit,
+                               session = session,
+                               offset = offset,
+                               count = True)
+
+        elif r[table].entity:
             results = r.search('_core',
                                where = "type = %s" % table,
                                extra_inner = ["primary_entity._core_entity"],
@@ -456,7 +467,20 @@ class Form(object):
 
         out = []
         # build the links
-        if r[table].entity:
+        if not table:
+            for num, row_data in enumerate(results.results):
+                results.current_row = num
+                row = {}
+                print results
+                row['title'] = results.get('title')
+                row['entity'] = results.get('table')
+                row['__id'] = results.get('id')
+                row['thumb'] = results.get('thumb')
+                row['summary'] = results.get('summary')
+                row['actions'] = None
+                out.append(row)
+
+        elif r[table].entity:
             for num, row_data in enumerate(results.results):
                 results.current_row = num
                 row = {}
