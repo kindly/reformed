@@ -51,6 +51,9 @@ REBASE.layout_manager = function (){
     var $actions;
     var first_run = true;
     var $body = $('<div id="layout_holder">');
+    var BUTTONS_PER_COLUMN = 3;
+    var ACTION_BUTTON_SPACING = 5;
+    var ACTION_BUTTON_WIDTH = 200;
 
     var info = {
         margin_left : 10,
@@ -102,9 +105,6 @@ REBASE.layout_manager = function (){
     function create_actions(){
 
         var $button_holder;
-        var BUTTONS_PER_COLUMN = 3;
-        var ACTION_BUTTON_SPACING = 5;
-        var ACTION_BUTTON_WIDTH = 200;
 
         var action_list = $.Buttons.action_list;
 
@@ -230,7 +230,10 @@ REBASE.layout_manager = function (){
             $body.empty();
             if (arg == "main"){
                 info.left_width = 200;
-                info.top_height = 100;
+                // FIXME THis is a botch as the 30 is just a guess at the search bar size
+                // also this needs to refresh on font resizes etc
+                var button_top = BUTTONS_PER_COLUMN * (util_size.ACTION_BUTTON_H + ACTION_BUTTON_SPACING) + ACTION_BUTTON_SPACING + 30;
+                info.top_height = button_top;
                 create_logo();
                 create_main();
                 create_side();
