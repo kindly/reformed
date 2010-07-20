@@ -147,7 +147,13 @@ function get_node(node_name, node_command, node_data, change_state){
     }
     var info = {node: node_name,
                 lastnode: '',  //fixme
-                command: node_command };
+                command: node_command};
+
+    var cache_info = $.Util.FormDataCacheInfo[node_name];
+    if (cache_info !== undefined){
+        info['form_cache'] = cache_info;
+    }
+
 
     if (node_data){
         info.data = node_data;
@@ -268,7 +274,6 @@ var status_timer;
 function job_processor_status(data, node, root){
     // display the message form if it exists
     if (data.form){
-     //   data.form = $.Util.FormDataNormalize(data.form);
         $('#' + root).status_form();
     }
     // show info on form
@@ -397,7 +402,7 @@ function process_node(packet, job){
             break;
          case 'form':
              var form = packet.data.data.form;
-             form = $.Util.FormDataNormalize(form, packet.data.node);
+             form = $.Util.FormDataProcess(form, packet.data.node);
              data = packet.data.data.data;
              var paging = packet.data.data.paging;
              var form_type = form.params.form_type;
