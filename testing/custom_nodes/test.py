@@ -284,51 +284,16 @@ class Search(TableNode):
 
 
     listing = form(
-        link('title', data_type = 'link', css = 'form_title'),
+        result_link('title', data_type = 'link', css = 'form_title'),
         info('summary', data_type = 'info'),
-        link_list('edit', data_type = 'link_list'),
         params = {"form_type": "results", 'read_only' : True}
 
     )
 
 
     def call(self, node_token, limit = 20):
+        where = "_core_entity.title like ?"
         query = node_token.data.get('q', '')
         limit = node_token.get_data_int('l', limit)
-        offset = node_token.get_data_int('o')
-
-        where = "_core_entity.title like ?"
-        results = r.search( '_core_entity',
-                            where,
-                            limit = limit,
-                            offset = offset,
-                            values = ['%%%s%%' % query],
-                            fields=['table', 'title', 'summary', 'thumb'],
-                            count = True,
-                           )
-        data = results.data
-
-        for row in data:
-            # FIXME want nicer way of getting the table name
-            table_name = r[row['table']].name
-            table_name = table_name[0].upper() + table_name[1:]
-            row['title'] = 'n:test.%s:view:__id=%s|%s: %s' % (table_name,
-                                                               row['id'],
-                                                               table_name,
-                                                               row['title'])
-
-            row['edit'] = ['n:test.%s:edit:__id=%s|Edit' % (table_name,
-                                                               row['id']),
-                           'n:test.%s:view:__id=%s|View' % (table_name,
-                                                           row['id'])                                                  ]
-
-        out = self["listing"].create_form_data(node_token, dict(__array = data))
-        # add the paging info
-        out['paging'] = {'row_count' : results.row_count,
-                         'limit' : limit,
-                         'offset' : offset,
-                         'base_link' : 'n:%s::q=%s' % (self.name, query)}
-
-        node_token.out = out
-        node_token.action = 'form'
-        node_token.title = 'search for "%s"' % query
+        values = ['%%%s%%' % query]
+        self['listing'].list(node_token, limit, where = where, values = values)
