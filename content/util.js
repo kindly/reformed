@@ -640,6 +640,43 @@ $.Util.HTML_Encode_Clear = function (arg) {
     return arg.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 };
 
+$.Util.FormDataCache = {};
+
+$.Util.FormDataCacheInfo = {};
+
+$.Util.FormDataProcess = function (form_data, node) {
+    /* If we have a suitable version in the form cache
+     * then just return that else normalise the form.
+     */
+    var cache_name;
+
+    if (form_data.cache_form !== undefined){
+        cache_name = form_data.cache_node + '|' + form_data.cache_form;
+        return $.Util.FormDataCache[cache_name];
+    }
+
+    form_data = $.Util.FormDataNormalize(form_data, node)
+
+    // form caching
+    cache_name = node + '|' + form_data.name;
+
+    if (form_data.version){
+        // remove from cache if it exists
+        if ($.Util.FormDataCacheInfo[node] !== undefined){
+            delete $.Util.FormDataCacheInfo[node][form_data.name];
+        }
+    } else {
+        // store form in cache
+        $.Util.FormDataCache[cache_name] = form_data;
+        if (!$.Util.FormDataCacheInfo[node]){
+            $.Util.FormDataCacheInfo[node] = {};
+        }
+        $.Util.FormDataCacheInfo[node][form_data.name] = form_data.version;
+    }
+
+    return form_data;
+};
+
 $.Util.FormDataNormalize = function (form_data, node) {
     /* generally clean up the form data to
      * make things easier for us later on.
