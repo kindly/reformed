@@ -46,6 +46,8 @@ class NodeToken(object):
         if type(self.data).__name__ != 'dict':
             self.data = {}
 
+        self.form_cache = data.pop('form_cache', None)
+
         self.request_application_data = data.pop('request_application_data', False)
         self.output = None
         # output stuff
@@ -271,6 +273,8 @@ class NodeRunner(object):
             next_node = node_token.next_node
             node_token.next_node = None
             node_token.next_data = None
+            # clear the form cache so we don't get confussed
+            self.form_cache = None
             print node_token.next_node, node_token, node_name
             return self.run(next_node, node_token, node_name)
         else:
