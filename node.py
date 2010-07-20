@@ -70,6 +70,9 @@ class Node(object):
             # TD do we need this?
             self.setup_extra_commands()
 
+    def __repr__(self):
+        return '<Node `%s`>' % node.name
+
     def initiate_forms(self):
         # find all the form in this node
         # add them to _available_forms so they can
