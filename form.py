@@ -67,7 +67,7 @@ class Form(object):
         # useful for auto forms etc
         self.volatile = kw.get('volatile', False)
         if self.volatile:
-             self.version = 0
+            self.version = 0
 
         ## get title field from table if needed
         if not self.title_field and self.table:
@@ -471,7 +471,6 @@ class Form(object):
             for num, row_data in enumerate(results.results):
                 results.current_row = num
                 row = {}
-                print results
                 row['title'] = results.get('title')
                 row['entity'] = results.get('table')
                 row['__id'] = results.get('id')

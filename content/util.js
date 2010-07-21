@@ -659,8 +659,7 @@ $.Util.FormDataProcess = function (form_data, node) {
 
     // form caching
     cache_name = node + '|' + form_data.name;
-
-    if (form_data.version){
+    if (!form_data.version){
         // remove from cache if it exists
         if ($.Util.FormDataCacheInfo[node] !== undefined){
             delete $.Util.FormDataCacheInfo[node][form_data.name];
