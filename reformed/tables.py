@@ -85,6 +85,7 @@ class Table(object):
         self.entity = kw.get("entity", False)
         self.relation = kw.get("relation", False)
         self.lookup = kw.get("lookup", False)
+        self.table_class = kw.get("table_class")
 
         primary_entities = kw.get("primary_entities")
         if primary_entities :
