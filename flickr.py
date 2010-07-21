@@ -64,9 +64,6 @@ def flicker_grab_pics(xml_data, image_count, tag):
     if not os.path.exists(image_directory):
         os.makedirs(image_directory)
 
-    data_file_path = os.path.join(image_directory, image_data_file)
-
-    data_file = open(data_file_path, 'a')
     count = 0
 
     for photo in photos:
@@ -91,19 +88,11 @@ def flicker_grab_pics(xml_data, image_count, tag):
 
         # write data file info
         print title
-        try:
-            data_file.write(u'%s.jpg|%s|%s\n' % (id, tag, title))
-        except UnicodeEncodeError:
-            # title had unicode issues
-            data_file.write(u'%s.jpg|%s|unicode_error\n' % (id, tag))
 
         count += 1
         print '%s %s' % (count, title)
         if count > image_count:
             break
-
-    # close data file
-    data_file.close()
 
 
 def get_images(image_count, category = 'general', group = None, search = None):
@@ -133,6 +122,6 @@ def clear_image_dir():
 
 #clear_image_dir()
 #get_images(10)
-get_images(100, category = 'men', group = 'man portrait')
+get_images(200, group = 'Portrait Classics')
 #get_images(100, category = 'women', group = 'Female Face ~CloseUps')
 
