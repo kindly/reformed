@@ -496,7 +496,8 @@ class Database(object):
             tables = None
         if tables:
             join_tables.extend(tables)
-            join_tables.remove(table_name)
+            if table_name in tables:
+                join_tables.remove(table_name)
 
         if "order_by" not in kw:
             kw["order_by"] = "id"
