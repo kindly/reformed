@@ -24,6 +24,7 @@ import sys
 import shutil
 from ConfigParser import RawConfigParser, NoOptionError, NoSectionError
 from optparse import OptionParser
+import random
 
 from reformed.export import json_dump_all_from_table
 from reformed.data_loader import load_json_from_file
@@ -119,15 +120,17 @@ def upload_files(options):
     def search_dir(directory):
         full_directory = os.path.join(image_directory, directory)
         dirlist = os.listdir(full_directory)
+        random.shuffle(dirlist)
         item_count = 0
         for item in dirlist:
             item_path = os.path.join(full_directory, item)
             if os.path.isdir(item_path):
                 search_dir(item)
             elif os.path.isfile(item_path):
-                if item_count < items_per_dir:
-                    item_count += 1
-                    item_list.append((directory, item_path, item))
+                if item_count >= items_per_dir:
+                    break
+                item_count += 1
+                item_list.append((directory, item_path, item))
 
 
     # check database is initialised
