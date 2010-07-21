@@ -293,6 +293,7 @@ class SessionWrapper(object):
                 secondary_id = obj._secondary
                 primary_obj = self.query(self.database["_core_entity"].sa_class).get(primary_id)
                 secondary_obj = self.query(self.database["_core_entity"].sa_class).get(secondary_id)
+                ##FIXME make a better error, a validation rule?
                 assert(primary_obj.table) in table.primary_entities
                 assert(secondary_obj.table) in table.secondary_entities
                 core._rel_primary_entity = primary_obj

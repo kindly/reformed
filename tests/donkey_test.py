@@ -374,7 +374,7 @@ class test_basic_input(test_donkey):
 
         results = self.session.query(self.Donkey.tables["donkey"].sa_class)[:2]
         print create_data_dict(results) 
-        assert create_data_dict(results) == {1: {'donkey_type': None, 'age': 13, 'name': u'jim'}, 2: {'donkey_type': None, 'age': 131, 'name': u'jim1'}}
+        assert create_data_dict(results) == {1: {'donkey_type': None, 'age': 13what to write on a sympathy card, 'name': u'jim'}, 2: {'donkey_type': None, 'age': 131, 'name': u'jim1'}}
 
         results2 = self.session.query(self.Donkey.tables["donkey"].sa_class).first()
         print create_data_dict(results2) 
@@ -678,6 +678,7 @@ class test_basic_input(test_donkey):
     def test_relation_table(self):
         person = self.session.query(self.Donkey.get_class("people")).first()
         donkey = self.session.query(self.Donkey.get_class("donkey")).first()
+        user = self.session.query(self.Donkey.get_class("user")).first()
 
 
         donkey_people = self.Donkey.get_instance("donkey_people")
@@ -690,6 +691,17 @@ class test_basic_input(test_donkey):
         assert donkey_people._rel__core.primary_entity_id == person._rel__core.primary_entity_id
 
         assert donkey_people._rel__core.secondary_entity_id == donkey._rel__core.primary_entity_id
+
+        donkey_people = self.Donkey.get_instance("donkey_people")
+        donkey_people._primary = user._rel__core.primary_entity_id
+        donkey_people._secondary = user._rel__core.primary_entity_id
+
+        self.session.save(donkey_people)
+
+        assert_raises(AssertionError, self.session.commit)
+        
+        self.session.rollback()
+
 
 
 
