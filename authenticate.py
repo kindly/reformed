@@ -99,7 +99,7 @@ def check_login(login_name, password):
                     else:
                         # no login permissions for this user
                         message = '# Login failed\n\nThis account does not have permission to log in to the system.'
-                    log.info('Login Fail for `%s` does not have permission' % login_name)
+                        log.info('Login Fail for `%s` does not have permission' % login_name)
         except SingleResultError:
             # no such user
             message = fail_message
