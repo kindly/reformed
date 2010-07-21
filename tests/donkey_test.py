@@ -202,6 +202,18 @@ class test_donkey(object):
            lookup = True
         ) 
 
+        table('communication', cls.Donkey,
+              ForeignKey('_core_id', '_core'),
+              Text('communication_type'),
+        )
+
+        table('telephone', cls.Donkey,
+              ForeignKey('communication_id', 'communication'),
+              Text('number'),
+              Event('new', actions.AddCommunication())
+        )
+
+
 
         cls.Donkey.persist()
         cls.session = cls.Donkey.Session()
@@ -374,7 +386,7 @@ class test_basic_input(test_donkey):
 
         results = self.session.query(self.Donkey.tables["donkey"].sa_class)[:2]
         print create_data_dict(results) 
-        assert create_data_dict(results) == {1: {'donkey_type': None, 'age': 13what to write on a sympathy card, 'name': u'jim'}, 2: {'donkey_type': None, 'age': 131, 'name': u'jim1'}}
+        assert create_data_dict(results) == {1: {'donkey_type': None, 'age': 13, 'name': u'jim'}, 2: {'donkey_type': None, 'age': 131, 'name': u'jim1'}}
 
         results2 = self.session.query(self.Donkey.tables["donkey"].sa_class).first()
         print create_data_dict(results2) 
@@ -387,7 +399,7 @@ class test_basic_input(test_donkey):
 
         print get_all_local_data(result, internal = True)
 
-        assert get_all_local_data(result, internal = True) == {'contact_summary.people_id': 1, 'giving_date': None, 'people.country': None, 'people.over_18_id': None, 'people.address_line_2': None, 'people.name': u'david', '__table': 'donkey_sponsership', 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'people.gender_id': None, 'people.town': None, 'contact_summary.transaction_count': 0, 'amount': Decimal('50'), 'donkey.donkey_type': None, 'donkey.age': 13, 'people_id': 1, 'people.postcode': u'es388', 'donkey.name': u'jim', 'donkey_id': 1, 'people.address_line_1': u'43 union street'} 
+        assert get_all_local_data(result, internal = True) == {'contact_summary.people_id': 1, 'giving_date': None, 'contact_summary.transaction_count': 0, 'people.name': u'david', '__table': 'donkey_sponsership', 'primary_entity._core_entity.summary': u'name: david -- address_line_1: 43 union street -- postcode: es388', 'people.address_line_1': u'43 union street', 'people.town': None, 'people_id': 1, 'people.postcode': u'es388', 'people.country': None, 'people.address_line_2': None, 'people.over_18_id': None, 'people.address_line_3': None, 'primary_entity._core_entity.title': u'david', 'contact_summary.total_amount': Decimal('0'), 'amount': Decimal('50'), 'donkey_id': 1, 'people.gender_id': None, 'donkey.donkey_type': None, 'primary_entity._core_entity.table': u'people', 'donkey.age': 13, 'primary_entity._core_entity.thumb': None, 'donkey.name': u'jim'} 
 
 
         print get_all_local_data(result, fields = ["donkey_id", "contact_summary.total_amount", "donkey.name"])
@@ -437,7 +449,7 @@ class test_basic_input(test_donkey):
 
 
         print get_all_local_data(a, internal = True)
-        assert get_all_local_data(a, internal = True) == {'contact_summary.people_id': 2, 'giving_date': None, 'people.country': None, 'people.over_18_id': None, 'people.address_line_2': u'poop', 'people.name': u'fred', '__table': 'donkey_sponsership', 'people.address_line_3': None, 'contact_summary.total_amount': Decimal('0'), 'people.gender_id': None, 'people.town': None, 'contact_summary.transaction_count': 0, 'amount': Decimal('711110'), 'donkey.donkey_type': None, 'donkey.age': 12, 'people_id': 2, 'people.postcode': u'fred', 'donkey.name': None, 'donkey_id': 12, 'people.address_line_1': u'poo1010101'}
+        assert get_all_local_data(a, internal = True) == {'contact_summary.people_id': 2, 'giving_date': None, 'contact_summary.transaction_count': 0, 'people.name': u'fred', '__table': 'donkey_sponsership', 'primary_entity._core_entity.summary': u'name: fred -- address_line_1: poo1010101 -- postcode: fred', 'people.address_line_1': u'poo1010101', 'people.town': None, 'people_id': 2, 'people.postcode': u'fred', 'people.country': None, 'people.address_line_2': u'poop', 'people.over_18_id': None, 'people.address_line_3': None, 'primary_entity._core_entity.title': u'fred', 'contact_summary.total_amount': Decimal('0'), 'amount': Decimal('711110'), 'donkey_id': 12, 'people.gender_id': None, 'donkey.donkey_type': None, 'primary_entity._core_entity.table': u'people', 'donkey.age': 12, 'primary_entity._core_entity.thumb': None, 'donkey.name': None}
 
     def test_import_catagory_data(self):
 
@@ -608,7 +620,7 @@ class test_basic_input(test_donkey):
 
         print self.Donkey["_core"].dependant_attributes.keys()
 
-        assert set(self.Donkey["_core"].dependant_attributes.keys()) == set(['_membership', 'donkey', 'people', 'donkey_people', 'upload', 'user', 'user_group', 'categories'])
+        assert set(self.Donkey["_core"].dependant_attributes.keys()) == set(['_membership', 'donkey', 'people', 'donkey_people', 'upload', '_communication__core', 'user', 'user_group', 'categories'])
 
     def test_dependant_tables(self):
 
@@ -616,7 +628,7 @@ class test_basic_input(test_donkey):
 
         print set(self.Donkey["_core"].dependant_tables)
 
-        assert set(self.Donkey["_core"].dependant_tables) == set(['donkey', 'people', 'donkey_people', 'upload', 'entity_categories', 'membership', 'user', 'user_group'])
+        assert set(self.Donkey["_core"].dependant_tables) == set(['donkey', 'people', 'communication', 'donkey_people', 'upload', 'entity_categories', 'membership', 'user', 'user_group'])
 
     def test_parant_col_attributes(self):
 
@@ -701,6 +713,22 @@ class test_basic_input(test_donkey):
         assert_raises(AssertionError, self.session.commit)
         
         self.session.rollback()
+    
+    def test_communication_table(self):
+
+        person = self.session.query(self.Donkey.get_class("people")).first()
+
+        telephone = self.Donkey.get_instance("telephone")
+        
+        core_id = person._core_id
+
+        telephone._core_id = core_id
+        telephone.number = '121321434334'
+
+        self.session.save(telephone)
+
+        self.session.commit()
+
 
 
 

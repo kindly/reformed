@@ -188,6 +188,34 @@ class MaxDate(Action):
                )
         session.save(result)
 
+class AddCommunication(Action):
+
+    def run(self, action_state):
+
+        object = action_state.object
+        table = object._table
+        database = table.database
+        session = action_state.session
+        event_type = action_state.event_type
+
+        if object._rel_communication:
+            return
+
+        if not object._core_id:
+            raise ValueError("communication has not got a core_id")
+
+        communication = database.get_instance("communication")
+        communication.communication_type = table.name
+
+        object._rel_communication = communication
+
+        core = session.query(database["_core"]).get(object._core_id)
+        communication._rel__core = core
+
+        session.add(communication)
+        session.add(object)
+        session.add(core)
+
 
 class Counter(Action):
 

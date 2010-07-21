@@ -61,6 +61,20 @@ def initialise(application):
 
     )
 
+    table('communication', database,
+          ForeignKey('_core_id', '_core'),
+          Text('communication_type'),
+    )
+
+    table('telephone', database,
+          ForeignKey('communication_id', 'communication'),
+          Text('number'),
+          Event('new', AddCommunication())
+    )
+
+
+
+
     database.persist()
 
 
