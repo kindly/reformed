@@ -36,7 +36,7 @@ def initialise(application):
         Boolean("active", default = True, mandatory = True),
         Boolean("locked", default = False),
         Text("login_name", mandatory = True),
-        Text("auto_loggin", length = 100),
+        Text("auto_login", length = 100),
         Password("password"),
         Email("email"),
         DateTime("last_logged_in"),
@@ -163,7 +163,7 @@ def initialise(application):
                 created_by = 1,
                 _modified_by = 1,
                 active = True,
-                auto_loggin = authenticate.create_auto_loggin_id(),
+                auto_login = authenticate.create_auto_login_id(),
                 password = u"admin")
     application.predefine.add_data("user", "login_name", u"admin", data)
 

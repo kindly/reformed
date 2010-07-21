@@ -40,15 +40,15 @@ import lookup
 log = logging.getLogger('rebase.web')
 
 def session(environ):
-    authenticate.create_auto_loggin_id()
+    authenticate.create_auto_login_id()
     global_session.session = environ['beaker.session']
     # if this is a new session set up the defaults
     if global_session.session.get('user_id') == None:
-        # auto loggin
+        # auto login
         request = webob.Request(environ)
         auto_cookie = request.cookies.get('auto')
         if auto_cookie:
-            if authenticate.auto_loggin(auto_cookie):
+            if authenticate.auto_login(auto_cookie):
                 return
         # normal session start
         authenticate.clear_user_session()
@@ -147,8 +147,8 @@ def process_node(environ, start_response):
 
     response = webob.Response(environ)
     response.content_type = 'text/plain'
-    if node_interface.auto_loggin_cookie:
-        cookie = node_interface.auto_loggin_cookie
+    if node_interface.auto_login_cookie:
+        cookie = node_interface.auto_login_cookie
         if cookie == 'CLEAR':
             response.delete_cookie('auto')
 

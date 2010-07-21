@@ -61,7 +61,7 @@ class NodeToken(object):
         self.next_node = None
         self.next_data = None
         self.next_data_out = None
-        self.auto_loggin_cookie = None
+        self.auto_login_cookie = None
 
     def get_data_int(self, key, default = 0):
         """ Get integer value out of self.data[key] or default """
@@ -207,7 +207,7 @@ class NodeRunner(object):
         self.node_manager = node_manager
         self.command_queue = []
         self.output = [] # this will be returned
-        self.auto_loggin_cookie = None
+        self.auto_login_cookie = None
         
     def add_command(self, data):
         self.command_queue.append(data)
@@ -226,9 +226,9 @@ class NodeRunner(object):
         self.run(node, node_token)
         self.output.append({'type' : 'node',
                               'data' : node_token.output})
-        # auto loggin cookie info
-        if node_token.auto_loggin_cookie:
-            self.auto_loggin_cookie = node_token.auto_loggin_cookie
+        # auto login cookie info
+        if node_token.auto_login_cookie:
+            self.auto_login_cookie = node_token.auto_login_cookie
 
 
     def run(self, node_name, node_token, last_node = None):

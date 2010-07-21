@@ -246,13 +246,13 @@ class User(TableNode):
 
         user_name = data.get('name')
         user_id = data.get('id')
-        auto_loggin = data.get('auto_loggin')
+        auto_login = data.get('auto_login')
 
         node_token.user = dict(name = user_name, id = user_id)
 
-        # auto loggin cookie
-        if node_token.data.get('remember_me') and auto_loggin:
-            node_token.auto_loggin_cookie = '%s:%s' % (user_id, auto_loggin)
+        # auto login cookie
+        if node_token.data.get('remember_me') and auto_login:
+            node_token.auto_login_cookie = '%s:%s' % (user_id, auto_login)
 
         node_token.action = 'html'
         data = "<p>Hello %s you are now logged in, what fun!</p>" % data['name']
@@ -269,8 +269,8 @@ class User(TableNode):
         # clear bookmarks
         node_token.bookmark = 'CLEAR'
 
-        # auto loggin cookie
-        node_token.auto_loggin_cookie = 'CLEAR'
+        # auto login cookie
+        node_token.auto_login_cookie = 'CLEAR'
 
 
 class UserGroup(TableNode):

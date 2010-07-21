@@ -30,7 +30,7 @@ from global_session import global_session
 
 log = logging.getLogger('rebase.authentication')
 
-def loggin(data, auto = False):
+def login(data, auto = False):
     """Set user http session details
     data: sa user object"""
 
@@ -94,7 +94,7 @@ def check_login(login_name, password):
                     result = r.search('permission', where, values = [data_out.get('id'), 'LogIn', 'SysAdmin']).data
                     if result:
                         # login successful
-                        loggin(data_out)
+                        login(data_out)
                         data = data_out
                     else:
                         # no login permissions for this user
@@ -107,7 +107,7 @@ def check_login(login_name, password):
 
     return (message, data)
 
-def auto_loggin(auto_cookie):
+def auto_login(auto_cookie):
     """attempt an auto login using the info in the auto_cookie string
     format <user_id>:<token>
     returns True if successful"""
@@ -117,13 +117,13 @@ def auto_loggin(auto_cookie):
     except ValueError:
         return False
     r = global_session.database
-    where = "id = ? and auto_loggin = ?"
+    where = "id = ? and auto_login = ?"
     try:
         data = r.search_single_data('user', where, values = [user_id, token])
     except SingleResultError:
         # not allowed
         return False
-    loggin(data, auto = True)
+    login(data, auto = True)
 
     return True
 
@@ -146,8 +146,8 @@ def check_permission(permissions):
     # action not allowed
     return False
 
-def create_auto_loggin_id():
-    """generate hard to guess random string for auto loggin"""
+def create_auto_login_id():
+    """generate hard to guess random string for auto log in"""
 
     random_string = ''
     for i in range(1024):
