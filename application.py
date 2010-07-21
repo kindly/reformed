@@ -102,7 +102,7 @@ class Application(object):
             zodb_path = os.path.join(self.application_folder, zodb_file)
             # FIXME this should just delete the file and catch the not exist case
             if os.path.exists(zodb_path):
-                os.remove(zodb_file)
+                os.remove(zodb_path)
 
         # delete main database tables
         engine = create_engine(self.connection_string)
