@@ -2,6 +2,7 @@ import random
 import re
 import datetime
 from sqlalchemy.exceptions import ProgrammingError
+import sqlalchemy as sa
 from formencode import Invalid
 
 
@@ -116,6 +117,8 @@ class DataGenerator(object):
             road = self.make_road,
             dob = self.make_dob,
             sex = self.get_sex,
+            phone = self.make_phone,
+            core = self.make_core,
         )
 
         # text data_types
@@ -182,6 +185,29 @@ class DataGenerator(object):
             return 'Male'
         else:
             return 'Female'
+
+    def make_phone(self):
+
+        def number():
+            number = self.make_char(min = 5, max = 8, chars= u'0123456789')
+            if self.random % 11:
+                mid = int(len(number)/2)
+                number = u'%s %s' % (number[:mid], number[mid:])
+            return number
+
+        def code():
+            return self.make_char(min = 1, max = 4, chars= u'0123456789')
+
+
+        phone = u''
+        if self.random % 5:
+            # area code
+            if self.random % 2:
+                phone = u'0%s ' % code()
+            else:
+                phone = u'(%s) ' % code()
+
+        return u'%s%s' % (phone, number())
 
     def make_town(self):
         """ return town use postcode if we know one """
@@ -340,6 +366,15 @@ class DataGenerator(object):
             out += chr(random.randint(32, 127))
         return out
 
+    def make_core(self, type = 'people'):
+        session = self.application.database.Session()
+        obj = self.application.database.get_class('_core')
+        result = session.query(obj.id).filter(obj.type == type).order_by(sa.func.random()).limit(1).first()
+        id = result.id
+        session.close()
+        return id
+
+
 
     def make_table_lookup(self, table, field):
         name = '%s~%s' % (table, field)
@@ -415,6 +450,13 @@ class DataGenerator(object):
         # clear the fields list
         self.fields = []
         table = self.application.database[table_name]
+        if table.table_class:
+            if table.table_class == 'communication':
+                gen_info = dict(name = '_core_id', generator = 'core')
+                gen_info['nullable'] = False
+                gen_info['dirtyable'] = False
+                self.fields.append(gen_info)
+
         for field in table.ordered_fields:
             if field.category <> "field":
                 continue
@@ -441,7 +483,7 @@ class DataGenerator(object):
             # check if this is a relationship based field
             try:
                 relation_table = field.column.defined_relation.primary_key_table
-                relation_column = field.column.original_column
+                relation_column = field.column.original_clookupolumn
                 gen_info['generator'] = 'TableLookup'
                 gen_info['params'] = dict(table =  relation_table,
                                           field = relation_column)
