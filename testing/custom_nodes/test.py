@@ -175,11 +175,41 @@ class Node5(AutoForm):
 
     table = "table1"
 
-class People(AutoForm):
+##class People(AutoForm):
+##
+##    table = "people"
 
-    table = "people"
+class People(TableNode):
+
+    main = form(
+        input('name'),
+        input('dob'),
+        input('age'),
+        input('email'),
+        input('sex'),
+        input('street'),
+        input('town'),
+        input('postcode'),
+        input('notes'),
+        input('active'),
+        input('colour'),
+        thumb('image'),
+        subform('phone'),
+        table = "people",
+        params =  {"form_type": "normal"},
+        title_field = 'name',
+    )
 
 
+
+    phone = form(
+        input('telephone.number', label = 'number'),
+        table = "communication",
+        child_id = '_core_id',
+        parent_id = '_core_id',
+        read_only = True,
+        params = {"form_type": "continuous"},
+    )
 
 class DataLoader(JobNode):
 
