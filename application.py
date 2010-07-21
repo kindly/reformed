@@ -98,16 +98,10 @@ class Application(object):
 
         # check for zodb files
         zodb_file_names = ["zodb.fs", "zodb.fs.lock", "zodb.fs.index", "zodb.fs.tmp"]
-        zodb_files = []
         for zodb_file in zodb_file_names:
             zodb_path = os.path.join(self.application_folder, zodb_file)
+            # FIXME this should just delete the file and catch the not exist case
             if os.path.exists(zodb_path):
-                zodb_files.append(zodb_path)
-
-        # delete the zodb
-        if zodb_files:
-            print 'deleting zodb'
-            for zodb_file in zodb_files:
                 os.remove(zodb_file)
 
         # delete main database tables
