@@ -18,7 +18,7 @@
 ##   Copyright (c) 2008-2010 Toby Dacre & David Raznick
 ##
 
-from node import Node, TableNode, AutoForm, JobNode
+from node import Node, TableNode, AutoForm, JobNode, AutoFormPlus
 from form import form
 from page_item import *
 
@@ -297,3 +297,8 @@ class Search(TableNode):
         limit = node_token.get_data_int('l', limit)
         values = ['%%%s%%' % query]
         self['listing'].list(node_token, limit, where = where, values = values)
+
+
+
+class Auto(AutoFormPlus):
+    pass

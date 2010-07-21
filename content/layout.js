@@ -277,7 +277,7 @@ REBASE.bookmark = function (){
             bookmark.bookmark = 'n:' + table_data.node + ':edit:id=' + bookmark.entity_id;
         } else {
             console_log('missing bookmark data for type ' + bookmark.entity_table);
-            bookmark.bookmark = '';
+            bookmark.bookmark = 'n:test.Auto:edit:id=' + bookmark.entity_id + '&table=' + bookmark.entity_table;
         }
 
         // remove the item if already in the list

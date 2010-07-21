@@ -86,6 +86,8 @@ class Form(object):
             if isinstance(form_item, FormItemFactory):
                 # here is where we call our form_items
                 form_item_instance = form_item(self)
+                if not form_item_instance:
+                    continue
                 # check if form item declared non thread safe
                 if not form_item_instance.static:
                     self.volatile = True

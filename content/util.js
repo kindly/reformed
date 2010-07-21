@@ -208,6 +208,7 @@ $.Util.make_normal = function($item, field){
 $.Util.build_node_link = function (data){
     // build a node link based on the item info
     // used in result listings
+    var link_node
 
     if (!data.entity){
         return '';
@@ -215,10 +216,10 @@ $.Util.build_node_link = function (data){
     var node = REBASE.application_data.bookmarks[data.entity];
     if (node !== undefined){
         node = node.node;
+        link_node = "node_load('n:" + node + ":edit:__id=" + data.__id + "');";
     } else {
-        return '';
+        link_node = "node_load('n:test.Auto:edit:__id=" + data.__id + "&table=" + data.entity + "');";
     }
-    var link_node = "node_load('n:" + node + ":edit:__id=" + data.__id + "');";
     return link_node;
 };
 

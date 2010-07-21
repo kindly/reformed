@@ -370,5 +370,36 @@ class AutoForm(TableNode):
         self._available_forms['main'] = main
 
 
+class AutoFormPlus(TableNode):
 
+    def initialise(self, node_token):
+        table = node_token.data.get('table', '')
+
+        print repr(table)
+        table = table.encode('ascii')
+        print repr(table)
+        rtable = r[table]
+
+        self.extra_data = {'table':table}
+
+        title_field = rtable.title_field
+
+        fields = []
+
+        for field in rtable.ordered_fields:
+            if field.category <> "field":
+                continue
+
+            extra_info = {}
+            if field.description:
+                extra_info['description'] = field.description
+
+            if field.type == "Text" and field.length > 500:
+                fields.append(textarea(field.name, css = "large", **extra_info))
+            else:
+                fields.append(input(field.name, **extra_info))
+
+        main = form(*fields, table = table, params = self.form_params, volatile = True)
+        # add this to the available forms
+        self._available_forms['main'] = main
 

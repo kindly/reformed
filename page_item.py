@@ -579,6 +579,7 @@ class FormItemFactory(object):
                             Thumb = [FormControl, 'thumb'],
                             #FIXME
                             Money = [FormControl, 'textbox'],
+                            CreatedBy = None,
 
                             LookupTextValidated = [Dropdown, 'dropdown'],
                             LookupId = [Dropdown, 'dropdown_code'])
@@ -620,6 +621,8 @@ class FormItemFactory(object):
         # see if we have a form item class or if not create one
         if not self.form_item_class:
             self.set_default_page_item_class(form)
+            if not self.form_item_class:
+                return None
         if self.volatile:
             # return a new instance of the FormItem
             print 'creating volatile form item %s (%s)' % (self.name, self.form_item_class)
@@ -667,8 +670,13 @@ class FormItemFactory(object):
 
         try:
             data = self.default_controls[field_type]
-            self.form_item_class = data[0]
-            self.control_type = data[1]
+            if data:
+                self.form_item_class = data[0]
+                self.control_type = data[1]
+            else:
+                self.form_item_class = None
+                self.control_type = None
+
         except KeyError:
             # unknown form item
             print 'UNKNOWN form_item', field_type, self.name
