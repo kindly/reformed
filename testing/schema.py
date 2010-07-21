@@ -68,8 +68,9 @@ def initialise(application):
 
     table('telephone', database,
           ForeignKey('communication_id', 'communication'),
-          Text('number'),
-          Event('new', AddCommunication())
+          Text('number', generator = dict(name = 'phone')),
+          Event('new', AddCommunication()),
+          table_class = 'communication',
     )
 
 
