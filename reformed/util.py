@@ -143,23 +143,6 @@ def get_next_relation(gr, path_dict, edge, first = False):
         if len(tables) > 1 and check_two_entities(tables, node2, rtables):
             continue
         
-        ### relationships only run from entity table to relation
-        #if rtables[node2].relationship:
-        #    last_ent = last_entity(tables, rtables)
-        #    if not last_ent and not relation.name.endswith("primary"):
-        #        continue
-        #    valid_entities1 = rtables[node2].valid_entities1
-        #    valid_entities2 = rtables[node2].valid_entities2
-#
-#            if relation.name.endswith("primary"):
-#                if valid_entities1 and last_ent not in valid_entities1:
-#                    continue
-#            if not relation.name.endswith("primary"):
-#                if valid_entities2 and last_ent not in valid_entities2:
-#                    continue
-#                if last_ent in valid_entities1 or not valid_entities1:
-#                    continue
-        
         split = None
 
         relation_name = relation.name
@@ -185,7 +168,6 @@ def get_next_relation(gr, path_dict, edge, first = False):
         path_dict[tuple(new_path_no_rel)] = edge
         get_next_relation(gr, path_dict, edge)
 
-            #get_next_relation(gr, node2, path_dict, new_tables, new_path, (node1, node2), new_one_ways)
         
     for edge in gr.in_edges(node, data = True):
         node1, node2, relation = edge
@@ -216,10 +198,6 @@ def get_next_relation(gr, path_dict, edge, first = False):
             continue
         new_path = current_path + [backref.encode("ascii")] 
         new_path_no_rel = current_path_no_rel + [backref.encode("ascii")] 
-
-        ##relationships only defined from entity
-        #if rtables[node2].relationship:
-        #    split = node2
 
         new_name_changes = name_changes + [split]
 

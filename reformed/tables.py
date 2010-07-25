@@ -39,7 +39,6 @@ from util import get_paths, make_local_tables, create_table_path_list, create_ta
 import logging
 import migrate.changeset
 import datetime
-from search import Search
 from sqlalchemy.orm import column_property, backref
 from sqlalchemy.orm.interfaces import AttributeExtension
 from sqlalchemy.sql import func, select, text
@@ -64,9 +63,6 @@ class Table(object):
         logged: Boolean stating if the table should be logged
         modified_by: Boolean stating if the table should have a last
                        modified by
-        index:  a semicolon (;) delimited list of the columns to be indexed
-        unique_constraint : a semicolon delimeited list of colums with a
-                           unique constraint
         *args :  All the Field objects this table has.
         """
         self.name = name
@@ -102,7 +98,6 @@ class Table(object):
         self.modified_by = kw.get("modified_by", True)
         self.version = kw.get("version", True)
 
-        self.unique_constraint = kw.get("unique_constraint", None)
         self.table_type = kw.get("table_type", "user")
         self.entity_relationship = kw.get("entity_relationship", False)
         self.title_field = kw.get("title_field", None)
@@ -116,11 +111,6 @@ class Table(object):
         self.initial_events = []
         if self.primary_key:
             self.primary_key_list = self.primary_key.split(",")
-        self.unique_constraint_list  = []
-        if self.unique_constraint:
-            self.unique_constraint_list = [column_list.split(",")
-                                           for column_list in
-                                           self.unique_constraint.split(";")]
 
         self.events = dict(new = [],
                            delete = [],
@@ -163,42 +153,41 @@ class Table(object):
         and its collection of fields into private database tables so that in future they
         no longer need to be explicitely defined"""
 
-        if connection:
-            root = connection.root()
-            tables = root["tables"]
-            table_count = root["table_count"] + 1
-            root["table_count"] = table_count
+        root = connection.root()
+        tables = root["tables"]
+        table_count = root["table_count"] + 1
+        root["table_count"] = table_count
 
-            table = PersistentMapping()
+        table = PersistentMapping()
 
-            tables[self.name] = table
-            table["field_count"] = 0
+        tables[self.name] = table
+        table["field_count"] = 0
 
-            params = PersistentMapping(**self.kw)
+        params = PersistentMapping(**self.kw)
 
-            params["table_id"] = table_count
-            params["summary"] = self.summary
+        params["table_id"] = table_count
+        params["summary"] = self.summary
 
-            table["params"] = params
+        table["params"] = params
 
-            table_fields = PersistentMapping()
-            table["fields"] = table_fields
+        table_fields = PersistentMapping()
+        table["fields"] = table_fields
 
-            events = PersistentMapping(new = PersistentList(),
-                                       delete = PersistentList(),
-                                       change = PersistentList())
-            table["events"] = events
+        events = PersistentMapping(new = PersistentList(),
+                                   delete = PersistentList(),
+                                   change = PersistentList())
+        table["events"] = events
 
-            for field_name, rfield in self.fields.iteritems():
-                self._persist_extra_field(rfield, connection)
+        for field_name, rfield in self.fields.iteritems():
+            self._persist_extra_field(rfield, connection)
 
-            for event_type in self.events:
-                for action in self.events[event_type]:
-                    self._persist_action(action, event_type, connection)
+        for event_type in self.events:
+            for action in self.events[event_type]:
+                self._persist_action(action, event_type, connection)
 
 
-            if not self.quiet:
-                print 'creating %s' % self.name
+        if not self.quiet:
+            print 'creating %s' % self.name
 
     def _persist_action(self, action, event_type, connection):
 
@@ -543,29 +532,27 @@ class Table(object):
 
     def _persist_extra_field(self, field, connection):
 
-        if connection:
+        root = connection.root()
+        table = root["tables"][self.name]
+        table_fields = table["fields"]
+        rfield = field
 
-            root = connection.root()
-            table = root["tables"][self.name]
-            table_fields = table["fields"]
-            rfield = field
+        field = PersistentMapping()
+        table_fields[rfield.name] = field
+        field_count = table["field_count"] + 1
+        table["field_count"] = field_count
 
-            field = PersistentMapping()
-            table_fields[rfield.name] = field
-            field_count = table["field_count"] + 1
-            table["field_count"] = field_count
+        field["type"] = rfield.__class__.__name__
 
-            field["type"] = rfield.__class__.__name__
+        params = PersistentMapping(**rfield.kw)
+        params["foreign_key_name"] = rfield.foreign_key_name
+        params["field_id"] = field_count
 
-            params = PersistentMapping(**rfield.kw)
-            params["foreign_key_name"] = rfield.foreign_key_name
-            params["field_id"] = field_count
+        field["params"] = params
+        field["args"] = PersistentList(rfield.args)
 
-            field["params"] = params
-            field["args"] = PersistentList(rfield.args)
-
-            if self.persisted:
-                table["field_order"].append(rfield.name)
+        if self.persisted:
+            table["field_order"].append(rfield.name)
 
     @property
     def ordered_fields(self):
@@ -1236,46 +1223,6 @@ class Table(object):
             return {}
 
         return self.validation_schema.to_python(validation_dict, instance)
-
-
-    def logged_instance(self, instance):
-        """this creates a copy of an instace of sa_class"""
-
-        ##not used as sessionwrapper now does this
-        logged_instance = self.database.tables["_log_" + self.name].sa_class()
-        for name in self.columns.iterkeys():
-            setattr(logged_instance, name, getattr(instance, name))
-        setattr(logged_instance, self.name + "_logged", instance)
-        return logged_instance
-
-    def update_all_initial_events(self):
-
-        session = self.database.Session()
-        for field in self.fields.itervalues():
-            try:
-                event = field.event
-            except AttributeError:
-                continue
-            if event.initial_event:
-                try:
-                    event.update_all(session)
-                except AttributeError:
-                    continue
-        session.commit()
-        session.close()
-
-    def update_all_events(self):
-
-        session = self.database.Session()
-        for field in self.fields.itervalues():
-            try:
-                event = field.event
-            except AttributeError:
-                continue
-            if not event.initial_event:
-                event.update_all(session)
-        session.commit()
-        session.close()
 
 
 

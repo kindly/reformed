@@ -31,15 +31,12 @@ import resultset
 import tables
 from collections import defaultdict
 from util import split_table_fields
-from fields import ManyToOne, ForeignKey, OneToOne, OneToMany, Integer, CopyTextAfter, CopyTextAfterField, DeleteRow
+from fields import ForeignKey, Integer 
 import fields as field_types
 import sessionwrapper
 import validate_database
 import logging
 import networkx as nx
-import threading
-import os
-import application
 from zodb_lock import store_zodb
 from ZODB.PersistentMapping import PersistentMapping
 import transaction

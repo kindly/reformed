@@ -289,8 +289,6 @@ class test_donkey(object):
         cls.david2 = cls.Donkey.tables["people"].sa_class()
         cls.david2.name = u"david"
         cls.david2.address_line_1 = u""
-        cls.david_logged = get_table_from_instance(cls.david, cls.Donkey).logged_instance(cls.david)
-        cls.session.add(cls.david_logged)
         cls.session.commit()
 
         donkey_type1 = cls.Donkey.get_instance("donkey_types")
@@ -351,12 +349,6 @@ class test_basic_input(test_donkey):
         self.david.address_line_1 = u"43 union street"
         self.david.postcode = u"es388"
         assert_raises(formencode.Invalid, self.session.add, self.david)
-
-    def test_logged_attribute(self):
-
-        assert self.david_logged.name == u"david"
-        assert self.david_logged.address_line_1 == u"43 union street"
-        assert self.david_logged.postcode == u"es388"
 
 
     def test_table_paths(self):

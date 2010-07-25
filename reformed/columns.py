@@ -299,7 +299,6 @@ class Relation(BaseSchema):
          if self.other == table_name:
              return util.swap_relations(self.type)
 
-         raise ArgumentError("table %s is not part of this relation" % table_name)
 
     def _set_name(self, field, name):
         if self.use_parent:
@@ -342,9 +341,6 @@ class Relation(BaseSchema):
          if self.other == table_name:
              return self.this_table_join_keys[::-1]
 
-         raise ArgumentError("table %s is not part of this relation" % table_name)
-
-
 
     @property
     def other_table(self):
@@ -371,7 +367,6 @@ class Relation(BaseSchema):
                     keys_other_table.append(name)
 
         return [keys_this_table, keys_other_table]
-
 
 
 
@@ -500,13 +495,6 @@ class Field(object):
                 difference[name] = [other.kw[name], value]
 
         return new, removed, difference
-
-    def get_field_row_from_table(self, session):
-
-        sa_class = self.table.database["__field"].sa_class
-        query = session.query(sa_class)
-        result = query.filter(sa_class.id == self.field_id).one()
-        return result
 
     @property
     def category(self):
