@@ -39,6 +39,8 @@ import logging
 import networkx as nx
 import threading
 import os
+import application
+from zodb_lock import store_zodb
 from ZODB.PersistentMapping import PersistentMapping
 import transaction
 from events import Event
@@ -62,7 +64,7 @@ class Database(object):
 
 
         self.zodb = self.application.zodb
-        self.application_dir = self.application.application_folder
+        self.application_folder = self.application.application_folder
 
         self.metadata.bind = self.engine
         self.Session = sessionwrapper.SessionClass(self._Session, self)
@@ -76,21 +78,21 @@ class Database(object):
 
         self.tables = {}
 
-        connection = self.zodb.open()
+        self.zodb_tables_init(application = self.application)
+
+        self.load_from_persist()
+
+        self.status = "active"
+
+    @store_zodb
+    def zodb_tables_init(self, zodb):
+        connection = zodb.open()
         root = connection.root()
         if "tables" not in root:
             root["tables"] = PersistentMapping()
             root["table_count"] = 0
             transaction.commit()
         connection.close()
-
-
-        self.load_from_persist()
-
-
-        self.status = "active"
-
-
 
     def __getitem__(self, item):
         if isinstance(item, int):
@@ -267,11 +269,17 @@ class Database(object):
 
         table._set_parent(self)
 
+
     def persist(self):
+        self._persist(application = self.application)
+        self.load_from_persist(True)
+
+    @store_zodb
+    def _persist(self, zodb):
 
         self.status = "updating"
 
-        connection = self.zodb.open()
+        connection = zodb.open()
         try:
 
             ## add logging tables
@@ -307,7 +315,6 @@ class Database(object):
         finally:
             connection.close()
 
-        self.load_from_persist(True)
 
         self.fields_to_persist = []
         self.persisted = True
@@ -317,7 +324,7 @@ class Database(object):
 
     def load_from_persist(self, restart = False):
 
-        connection = self.zodb.open()
+        connection = self.application.zodb.open()
 
         if connection:
             self.tables = {}

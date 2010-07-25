@@ -35,8 +35,10 @@ import reformed.job_scheduler as job_scheduler
 import predefine
 import logging
 import node_runner
+from zodb_lock import store_zodb
 
 log = logging.getLogger('rebase.application')
+
 
 class Application(object):
 
@@ -85,10 +87,10 @@ class Application(object):
 
     def refresh_database(self):
         """remake any data needed"""
-        self.get_zodb()
+        #self.get_zodb()
         self.sys_info = {}
         self.sys_info_full = {}
-        self.initialise_sys_info()
+        self.initialise_sys_info(application = self)
         self.database = None
 
     def delete_database(self):
@@ -118,7 +120,7 @@ class Application(object):
         self.release_all()
 
     def purge_attachments(self):
-        self.initialise_sys_info()
+        self.initialise_sys_info(application = self)
         try:
             file_directory = self.sys_info['file_uploads>root_directory']
         except:
@@ -142,19 +144,20 @@ class Application(object):
         self.database = None
         self.node_manager = None
 
-    def get_zodb(self):
+    def get_zodb(self, refresh = False):
         """open the zodb if it has not yet been"""
         # zodb data store
-        if not self.zodb:
+        if not self.zodb or refresh:
             zodb_store = os.path.join(self.application_folder, 'zodb.fs')
-            storage = FileStorage.FileStorage(zodb_store)
+            storage = FileStorage.FileStorage(zodb_store, read_only = True)
             self.zodb = DB(storage)
 
-    def initialise_sys_info(self):
+    @store_zodb
+    def initialise_sys_info(self, zodb):
         """create sys_info in zodb if not there
         or pull all sys_info data out of the store"""
-        self.get_zodb()
-        connection = self.zodb.open()
+        #self.get_zodb()
+        connection = zodb.open()
         root = connection.root()
         if "sys_info" not in root:
             root["sys_info"] = PersistentMapping()
@@ -175,7 +178,7 @@ class Application(object):
     def initialise_database(self):
         if not self.database:
             print 'initializing database'
-            self.get_zodb()
+            #self.get_zodb()
             self.refresh_database()
             self.metadata = MetaData()
             self.engine = create_engine(self.connection_string)
@@ -187,6 +190,7 @@ class Application(object):
 
             self.get_bookmark_data()
             self.predefine = predefine.Predefine(self)
+
 
     def create_database(self):
         self.initialise_database()
@@ -294,14 +298,15 @@ class Application(object):
         #register("bookmarks>_system_info>title", "System Settings")
         #register("bookmarks>_system_info>node", "bug.SysInfo")
 
+    def register_info(self, *args, **kw):
+        self._register_info(*args, application = self, **kw)
 
-
-
-
-    def register_info(self, key, value, description = '', force = False):
+    @store_zodb
+    def _register_info(self, zodb, key, value,
+                      description = '', force = False):
         """register system info adds the info if it is not already there"""
 
-        connection = self.zodb.open()
+        connection = zodb.open()
         root = connection.root()
 
         if force or key not in root["sys_info"]:
@@ -330,7 +335,6 @@ class Application(object):
         for key, value in sys_info_db.iteritems():
             self.sys_info_full[key] = value
             self.sys_info[key] = value['value']
-
 
 
 class ManagerThread(threading.Thread):

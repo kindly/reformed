@@ -26,6 +26,7 @@ import os.path
 import inspect
 from ZODB.PersistentMapping import PersistentMapping
 import transaction
+from zodb_lock import store_zodb
 
 log = logging.getLogger('rebase.node')
 
@@ -100,7 +101,7 @@ class NodeManager(object):
         self.node_instances = {}
         self.modules = {}
         self.processed_nodes = {}
-        self.get_nodes()
+        self.get_nodes(application = application)
 
 
     def get_node_instance(self, node_name):
@@ -116,9 +117,10 @@ class NodeManager(object):
                 self.node_instances[node_name] = instance
         return instance
 
-    def get_nodes(self):
+    @store_zodb
+    def get_nodes(self, zodb):
         # get details of previously known nodes
-        connection = self.application.zodb.open()
+        connection = zodb.open()
         root = connection.root()
         if "nodes" not in root:
             root["nodes"] = PersistentMapping()
@@ -127,7 +129,6 @@ class NodeManager(object):
             # get cached info
             for key, value in root["nodes"].iteritems():
                 self.processed_nodes[key] = value
-
         self.import_nodes()
 
     def import_node(self, name):
@@ -193,11 +194,16 @@ class NodeManager(object):
                     log.info('initialising')
                     module.initialise()
                 # store node processed in zodb
-                connection = self.application.zodb.open()
-                zodb_root = connection.root()
-                zodb_root["nodes"][root] = True
-                transaction.commit()
-                connection.close()
+                self.store_node(root, application = self.application)
+
+    @store_zodb
+    def store_node(self, zodb, root):
+        connection = zodb.open()
+        zodb_root = connection.root()
+        zodb_root["nodes"][root] = True
+        transaction.commit()
+        connection.close()
+
 
 
 
