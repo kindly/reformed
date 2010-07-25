@@ -374,16 +374,6 @@ class Database(object):
                 raise custom_exceptions.RelationError,\
                         "table %s does not exits" % relation.other
 
-    def check_related_order_by(self):
-        for relation in self.relations:
-            if relation.order_by_list:
-                for col in relation.order_by_list:
-                    if col[0] != 'id' \
-                       and col[0] not in self.tables[relation.other].columns.iterkeys():
-                        raise custom_exceptions.RelationError,\
-                              "ordered column %s does not exits in %s" \
-                                % (col[0], relation.other)
-
 
     def update_sa(self, reload = False):
         if reload == True and self.status <> "terminated":
@@ -393,7 +383,6 @@ class Database(object):
             self.clear_sa()
 
         self.checkrelations()
-        self.check_related_order_by()
         self.make_graph()
         try:
             for table in self.tables.itervalues():
@@ -587,6 +576,7 @@ class Database(object):
 
         return validate_database.validate_database(self)
 
+
     def make_graph(self):
 
         if self.graph is not None and len(self.graph.nodes()) == len(self.tables):
@@ -602,6 +592,16 @@ class Database(object):
 
         self.graph = gr
 
+    def set_option(self, item, key, value):
+
+        if item.count("."):
+            table_name, field_name = item.split(".")
+            table = self[table_name]
+            field = self[table_name].fields[field_name]
+            field.set_kw(key, value, application = self.application)
+        else:
+            table = self[item]
+            table.set_kw(key, value, application = self.application)
 
 def table(name, database, *args, **kw):
     """helper to add table to database args and keywords same as Table definition"""

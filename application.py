@@ -151,6 +151,11 @@ class Application(object):
             zodb_store = os.path.join(self.application_folder, 'zodb.fs')
             storage = FileStorage.FileStorage(zodb_store, read_only = True)
             self.zodb = DB(storage)
+            try:
+                self.database.zodb = self.zodb
+            except AttributeError:
+                pass
+
 
     @store_zodb
     def initialise_sys_info(self, zodb):

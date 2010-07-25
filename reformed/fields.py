@@ -58,6 +58,8 @@ class Password(Field):
 
 class LookupTextValidated(Field):
 
+    extra_kw = ["filter_field", "filter_value"]
+
     def __init__(self, name, target, *args, **kw):
         self.data_type = "Text"
         self.text = Column(sa.Unicode(100),  use_parent = True)
@@ -162,6 +164,8 @@ class Address(Field):
 
 class RequireIfMissing(Field):
 
+    extra_kw = ["field", "missing"]
+
     def __init__(self, name, *args, **kw):
 
         field = kw.get("field")
@@ -172,6 +176,8 @@ class RequireIfMissing(Field):
 
 class CheckOverLappingDates(Field):
 
+    extra_kw = ["parent_table"]
+
     def __init__(self, name, *args, **kw):
 
         parent_table = kw.get("parent_table")
@@ -179,6 +185,8 @@ class CheckOverLappingDates(Field):
 
 
 class CheckNoTwoNulls(Field):
+
+    extra_kw = ["parent_table", "field"]
 
     def __init__(self, name, *args, **kw):
 
@@ -230,6 +238,8 @@ class ManyToOne(Field):
 
 class ForeignKey(Field):
 
+    extra_kw = ["onetoone"]
+
     def __init__(self, name, other, *args, **kw):
 
         if name.endswith("_id"):
@@ -251,6 +261,9 @@ class ForeignKey(Field):
 
 
 class LookupId(Field):
+
+    extra_kw = ["filter_field", "filter_field",
+                "filter_value","backref"]
 
     def __init__(self, name, other = None, *args, **kw):
 
@@ -275,6 +288,8 @@ class LookupId(Field):
                                                    filter_value = self.filter_value )}
 
 class LookupList(Field):
+
+    extra_kw = ["lookup_list"]
 
     def __init__(self, name, lookup, *args, **kw):
 

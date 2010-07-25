@@ -26,6 +26,8 @@
 import sqlalchemy as sa
 import util
 import custom_exceptions
+from zodb_lock import store_zodb
+import transaction
 
 class BaseSchema(object):
     """Base class of everthing that turn into a database field or
@@ -193,13 +195,6 @@ class Relation(BaseSchema):
 
     :param cascade: Default cascade options see sqlalchemy docs for details
 
-    :param order_by: defines the default ordering of the the related table.
-        Input is a string with column names of the other table and ordering
-        seperated by comma.
-        Default ordering is asc
-        i.e "email desc, email_type" This will order by email descending then
-        email_type ascending.
-
     :param backref: Name the attribute that will occur on the instance of the
         other tables sqlalchemy objects. By default this will be _thistable
         where this table is the name of the table where this relation is
@@ -220,7 +215,6 @@ class Relation(BaseSchema):
 
         super(Relation, self).__init__(type , *args, **kw)
         self.other = other
-        self.order_by = kw.pop("order_by", None)
         self.original_type = type
         assert self.type in ("onetoone", "onetooneother",
                              "manytoone", "onetomany")
@@ -251,26 +245,12 @@ class Relation(BaseSchema):
         self.no_auto_path = kw.get("no_auto_path", False)
         self.parent = None
 
-    @property
-    def order_by_list(self):
-        if self.order_by:
-            columns_split = self.order_by.split(",")
-            order_by = [a.split() for a in columns_split]
-            for col in order_by:
-                if len(col) == 1:
-                    col.append("")
-            return order_by
-        else:
-            return []
-
     def _set_parent(self, parent, name):
         """adds this relation to a field object"""
         self._set_name(parent, name)
         self._set_sa_options(parent)
 
         if self.use_parent:
-            if parent.order_by:
-                self.order_by = parent.order_by
             if parent.many_side_not_null is False:
                 self.many_side_not_null = parent.many_side_not_null
             if parent.many_side_mandatory is True:
@@ -386,7 +366,25 @@ class Field(object):
     or use_parent_option flag is set for that column or relation.
     """
 
+    extra_kw = []
+
+    modifiable_kw = ["eager", "cascade", "backref", "one_way",
+                     "no_auto_path", "description", "generator",
+                     "cat", "relation_name", "validation"]
+
+    restricted_kw = ["field_id", "foreign_key_name", "default",
+                     "onupdate", "nullable", "mandatory",
+                     "length", "many_side_not_null","many_side_mandatory",
+                     "many_side_default", "many_side_onupdate"]
+
+
     def __new__(cls, name, *args, **kw):
+
+        cls.all_kw = set(cls.modifiable_kw + cls.restricted_kw 
+                         + cls.extra_kw)
+        cls.all_updatable_kw = set(cls.modifiable_kw + cls.extra_kw)
+
+        assert set(kw.keys()) - cls.all_kw == set()
 
         obj = object.__new__(cls)
         obj.name = name.encode("ascii")
@@ -401,7 +399,7 @@ class Field(object):
         obj.kw = kw
         obj.field_id = kw.get("field_id", None)
 
-        obj.cat = kw.get("category", None)
+        obj.cat = kw.get("cat", None)
 
         obj.foreign_key_name = kw.get("foreign_key_name", None)
 
@@ -475,6 +473,28 @@ class Field(object):
             value._set_parent(self, name)
         else:
             object.__setattr__(self, name, value)
+
+    @store_zodb
+    def set_kw(self, zodb, key, value):
+
+        if key not in self.all_updatable_kw:
+            raise ValueError("%s not allowed to be added or modified" % key)
+
+        connection = zodb.open()
+
+        root = connection.root()
+        field_params = root["tables"][self.table.name]["fields"][self.name]["params"]
+        try:
+            field_params[key] = value 
+            setattr(self, key, value)
+        except Exception, e:
+            transaction.abort()
+            zodb.close()
+            raise
+        else:
+            transaction.commit()
+        finally:
+            connection.close()
 
     def diff(self, other):
 

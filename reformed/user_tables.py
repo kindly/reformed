@@ -46,7 +46,7 @@ def initialise(application):
         Created("created_date"),
         CreatedBy("created_by"),
 
-        Index("login_name_index", "login_name", unique = True),
+        UniqueIndex("login_name_index", "login_name"),
 
         title_field = 'name',
         table_type = "system",

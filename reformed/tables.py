@@ -43,6 +43,7 @@ from sqlalchemy.orm import column_property, backref
 from sqlalchemy.orm.interfaces import AttributeExtension
 from sqlalchemy.sql import func, select, text
 import fshp
+from zodb_lock import store_zodb
 
 from ZODB.PersistentMapping import PersistentMapping
 from ZODB.PersistentList import PersistentList
@@ -53,6 +54,16 @@ log = logging.getLogger('rebase.application.database')
 class Table(object):
     """ this holds metadata relating to a database table.  It also
     contains methods to create a sqlalchemy Table,Mapper and Class."""
+
+    modifiable_kw = ["quiet", "lookup", "table_class", "primary_entities",
+                    "secondary_entities", "logged", "validated",
+                    "table_type", "title_field", "description_field",
+                     "summary_fields", "summary", "default_node"]
+
+    restricted_kw = ["table_id", "field_order", "persisted",
+                     "primary_key", "entity", "relation",
+                     "modified_by", "modified_date", "version"]
+
 
 
     def __init__(self, name, *args , **kw):
@@ -65,6 +76,11 @@ class Table(object):
                        modified by
         *args :  All the Field objects this table has.
         """
+
+        self.all_kw = set(self.modifiable_kw + self.restricted_kw)
+        self.all_updatable_kw = set(self.modifiable_kw)
+        assert set(kw.keys()) - self.all_kw == set() 
+
         self.name = name
         self.kw = kw
         self.table_id = kw.get("table_id", None)
@@ -99,7 +115,7 @@ class Table(object):
         self.version = kw.get("version", True)
 
         self.table_type = kw.get("table_type", "user")
-        self.entity_relationship = kw.get("entity_relationship", False)
+
         self.title_field = kw.get("title_field", None)
         self.description_field = kw.get("description_field", None)
         self.summary_fields = kw.get("summary_fields", None)
@@ -140,6 +156,29 @@ class Table(object):
 
     def __repr__(self):
         return "%s - %s" % (self.name, self.columns.keys())
+
+    @store_zodb
+    def set_kw(self, zodb, key, value):
+
+        if key not in self.all_updatable_kw:
+            raise ValueError("%s not allowed to be added or modified" % key)
+
+        connection = zodb.open()
+
+        root = connection.root()
+        table_params = root["tables"][self.name]["params"]
+        try:
+            table_params[key] = value 
+            setattr(self, key, value)
+        except Exception, e:
+            transaction.abort()
+            zodb.close()
+            raise
+        else:
+            transaction.commit()
+        finally:
+            connection.close()
+
 
     def set_field_order(self, connection):
 
@@ -212,7 +251,6 @@ class Table(object):
                 relation = column.defined_relation
                 field = relation.parent
                 new_field = Integer(name, mandatory = relation.many_side_not_null,
-                                    cat = "internal",
                                     default = relation.many_side_default,
                                     onupdate = relation.many_side_onupdate)
 
@@ -966,9 +1004,6 @@ class Table(object):
             other_rtable = self.database.tables[relation.other]
             other_table = other_rtable.sa_table
             other_class = self.database.tables[relation.other].sa_class
-            order_by = self._make_sa_order_by_list(relation, other_table)
-            if order_by:
-                sa_options["order_by"] = order_by
             if "backref" not in sa_options:
                 sa_options["backref"] = "_%s"% self.name
             if sa_options["backref"]:
@@ -1051,17 +1086,6 @@ class Table(object):
 
         return self.get_edge_from_field(field_name).path
 
-
-    def _make_sa_order_by_list(self, relation, other_table):
-
-        order_by = []
-        if relation.order_by_list:
-            for col in relation.order_by_list:
-                if col[1] == 'desc':
-                    order_by.append(getattr(other_table.c, col[0]).desc())
-                else:
-                    order_by.append(getattr(other_table.c, col[0]))
-        return order_by
 
     def validation_from_field_types(self, column):
         formencode_all = All()

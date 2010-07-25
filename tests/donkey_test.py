@@ -53,7 +53,6 @@ class test_donkey(object):
               ManyToOne("gender", "code", foreign_key_name = "gender_id", backref = "gender", many_side_not_null = False), ##enumeration look up table
               Address("supporter_address"),
               OneToMany("email","email", 
-                        order_by = "email",
                         eager = True, 
                         cascade = "all, delete-orphan"),
               OneToMany("donkey_sponsership",
@@ -721,7 +720,26 @@ class test_basic_input(test_donkey):
 
         self.session.commit()
 
+    
+    def test_set_option(self):
 
+        self.Donkey.set_option("people", "default_node", "people.people")
+
+        print self.Donkey["people"].default_node
+        assert self.Donkey["people"].default_node == "people.people"
+
+        self.Donkey.set_option("people.over_18_id", "cat", "internal")
+
+        assert self.Donkey["people"].fields["over_18_id"].category == "internal"
+
+
+        connection = self.Donkey.zodb.open()
+        root = connection.root()
+
+        people = root["tables"]["people"]
+
+        assert people["params"]["default_node"] == "people.people"
+        assert people["fields"]["over_18_id"]["params"]["cat"] == "internal"
 
 
 
