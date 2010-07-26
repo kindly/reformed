@@ -16,6 +16,7 @@ import yaml
 import os
 import logging
 import reformed.user_tables
+from reformed.resultset import ResultSet
 from reformed.events import Event
 import reformed.actions as actions
 
@@ -560,6 +561,22 @@ class test_basic_input(test_donkey):
         assert_raises(custom_exceptions.SingleResultError, self.Donkey.search_single, "donkey")
         assert_raises(custom_exceptions.SingleResultError, self.Donkey.search_single, "membership")
 
+    def test_result_setiter(self):
+
+        resultset = self.Donkey.search("donkey", session = self.session)
+        #resultset = ResultSet(search)
+        #resultset.collect()
+        print len(resultset.results)
+
+        for num, _ in enumerate(resultset):
+            continue
+
+        assert num + 1 == len(resultset.results)
+
+    def test_result_get(self):
+
+        resultset = self.Donkey.search("donkey", session = self.session, order_by = "id")
+        assert resultset.get("id") == 1
 
 
     def test_default(self):

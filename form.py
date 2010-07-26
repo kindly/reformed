@@ -438,8 +438,8 @@ class Form(object):
         session = r.Session()
 
         if not table:
-            where = kw.pop('where')
-            values = kw.pop('values')
+            where = kw.pop('where', "id>0")
+            values = kw.pop('values', None)
             results = r.search('_core_entity',
                                where = where,
                                values = values,
@@ -470,37 +470,34 @@ class Form(object):
         out = []
         # build the links
         if not table:
-            for num, row_data in enumerate(results.results):
-                results.current_row = num
+            for result in results:
                 row = {}
-                row['title'] = results.get('title')
-                row['entity'] = results.get('table')
-                row['__id'] = results.get('id')
-                row['thumb'] = results.get('thumb')
-                row['summary'] = results.get('summary')
+                row['title'] = result.get('title')
+                row['entity'] = result.get('table')
+                row['__id'] = result.get('id')
+                row['thumb'] = result.get('thumb')
+                row['summary'] = result.get('summary')
                 row['actions'] = None
                 out.append(row)
 
         elif r[table].entity:
-            for num, row_data in enumerate(results.results):
-                results.current_row = num
+            for result in results:
                 row = {}
-                row['title'] = results.get('primary_entity._core_entity.title')
-                row['entity'] = results.get('type')
-                row['__id'] = results.get('id')
-                row['thumb'] = results.get('primary_entity._core_entity.thumb')
-                row['summary'] = results.get('primary_entity._core_entity.summary')
+                row['title'] = result.get('primary_entity._core_entity.title')
+                row['entity'] = result.get('type')
+                row['__id'] = result.get('id')
+                row['thumb'] = result.get('primary_entity._core_entity.thumb')
+                row['summary'] = result.get('primary_entity._core_entity.summary')
                 row['actions'] = None
                 out.append(row)
         else:
-            for num, row_data in enumerate(results.results):
-                results.current_row = num
+            for result in results:
                 row = {}
                 if self.title_field:
-                    row['title'] = results.get(self.title_field)
+                    row['title'] = result.get(self.title_field)
                 else:
-                    row['title'] = '%s: %s' % (self.table, results.get('id'))
-                row['__id'] = results.get('id')
+                    row['title'] = '%s: %s' % (self.table, result.get('id'))
+                row['__id'] = result.get('id')
                 row['entity'] = None
                 out.append(row)
 

@@ -52,6 +52,8 @@ class ResultSet(object):
         self._data = None
 
         self.current_row = 0
+        self.result_row = None
+        self.current_result = None
 
     @property
     def data(self):
@@ -69,8 +71,9 @@ class ResultSet(object):
 
         self._data = []
         for res in results:
-            if self.select_path_list:
+            if self.search.select_path_list:
                 ##FIXME need to get out all data somehow
+                print self.search.select_path_list
                 obj = res[0]
             else:
                 obj = res
@@ -91,44 +94,76 @@ class ResultSet(object):
 
         self.query = self.search.search()
 
-        distict_select_paths = set()
-        for table in self.search.all_extra:
-            distict_select_paths.add(self.search.name_to_path[table])
-
-        self.select_path_list = list(distict_select_paths)
-
-        for key in self.select_path_list:
+        for key in self.search.select_path_list:
             self.query = self.query.add_entity(self.search.aliases[key])
 
         if self.limit:
             self.results = self.query[self.offset: self.offset + self.limit]
         else:
             self.results = self.query.all()
+        self.results_length = len(self.results)
 
         if self.count:
             self.row_count = self.query.count()
 
     def get(self, name):
 
-        if name.count(">"):
-            table, field = name.split(".")
+        if self.current_row == self.result_row:
+            result = self.current_result
         else:
-            name_list = name.split(".") 
-            field = name_list[-1]
-            if len(name_list) > 1:
-                table = ".".join(name_list[:-1])
-            else:
-                table = self.search.table
+            self.result_row = self.current_row
+            self.current_result = Result(self.search,
+                                         self.results[self.current_row])
+            result = self.current_result
 
-        if self.select_path_list:
+        return result.get(name)
+
+
+    def __iter__(self):
+
+        self.current_row = -1
+        return self
+
+    def next(self):
+
+        if self.current_row + 1 >= self.results_length:
+            raise StopIteration
+
+        self.current_row = self.current_row + 1
+        return Result(self.search, self.results[self.current_row])
+
+class Result(object):
+
+    def __init__(self, search, row = None):
+
+        self.search = search
+        self.data = None
+
+        if row:
+            self.data = row
+            self.new = False
+        else:
+            self.new = True
+
+    def get(self, name):
+
+        node = self.search.rtable.get_edge_from_field(name)
+        if node:
+            table = node.table
+        else:
+            table = self.search.table
+
+        field = name.split(".")[-1]
+
+        if self.search.select_path_list:
             if table == self.search.table:
-                obj = self.results[self.current_row][0]
+                obj = self.data[0]
             else:
                 path = self.search.name_to_path[table]
-                index = self.select_path_list.index(path) + 1
-                obj = self.results[self.current_row][index]
+                index = self.search.select_path_list.index(path) + 1
+                obj = self.data[index]
         else:
-            obj = self.results[self.current_row]
+            obj = self.data
 
         """ when a left join in not there none is returned"""
         if obj is None:

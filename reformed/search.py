@@ -214,42 +214,44 @@ class Search(object):
 
         self.queries.append([query, exclude])
 
-    def search(self, exclude_mode = None):
+    def search_no_queries(self):
+        ##TODO make this a query so extra join contitions work
+        self.sa_query = self.search_base
+        join_tree = self.make_join_tree()
+        self.recurse_join_tree(join_tree)
+        if self.order_by:
+            clauses = self.order_by_clauses()
+            self.sa_query = self.sa_query.order_by(*clauses)
+        return self.sa_query
 
-        if len(self.queries) == 0:
-            ##TODO make this a query so extra join contitions work
-            self.sa_query = self.search_base
-            join_tree = self.make_join_tree()
-            self.recurse_join_tree(join_tree)
-            if self.order_by:
-                clauses = self.order_by_clauses()
-                self.sa_query = self.sa_query.order_by(*clauses)
-            return self.sa_query
+    def search_one_query(self):
 
         first_query = self.queries[0][0]
 
-        if len(self.queries) == 1:
-            ## if query contains a onetomany make the whole query a distinct
-            first_query.make_sa_query(self.search_base)
-            join_tree = first_query.make_join_tree()
-            join_tree = self.make_join_tree(join_tree)
+        ## if query contains a onetomany make the whole query a distinct
+        first_query.make_sa_query(self.search_base)
+        join_tree = first_query.make_join_tree()
+        join_tree = self.make_join_tree(join_tree)
 
-            first_query.recurse_join_tree(join_tree)
-            first_query.add_where()
+        first_query.recurse_join_tree(join_tree)
+        first_query.add_where()
 
-            query = first_query.sa_query
+        query = first_query.sa_query
 
-            for table in first_query.inner_joins.union(first_query.outer_joins):
-                if table != self.table and table not in self.rtable.local_tables:
-                    if self.distinct_many:
-                        query = query.distinct()
+        for table in first_query.inner_joins.union(first_query.outer_joins):
+            if table != self.table and table not in self.rtable.local_tables:
+                if self.distinct_many:
+                    query = query.distinct()
 
-            if self.order_by:
-                clauses = self.order_by_clauses()
-                query = query.order_by(*clauses)
+        if self.order_by:
+            clauses = self.order_by_clauses()
+            query = query.order_by(*clauses)
 
-            return query
+        return query
 
+    def search_many_queries(self, exclude_mode):
+
+        first_query = self.queries[0][0]
         query_base = self.session.query(self.database.get_class(self.table).id)
 
         sa_queries = []
@@ -306,6 +308,26 @@ class Search(object):
 
         return query
 
+    def search(self, exclude_mode = None):
+
+        if len(self.queries) == 0:
+            query = self.search_no_queries()
+        elif len(self.queries) == 1:
+            query = self.search_one_query()
+        else:
+            query = self.search_many_queries(exclude_mode)
+
+        self.set_select_paths()
+
+        return query
+
+    def set_select_paths(self):
+
+        distict_select_paths = set()
+        for table in self.all_extra:
+            distict_select_paths.add(self.name_to_path[table])
+
+        self.select_path_list = list(distict_select_paths)
             
     def exclude(self, query, current_excepts, exclude_mode):
 

@@ -1079,8 +1079,9 @@ class Table(object):
 
     def get_edge_from_field(self, field_name):
 
-        table = ".".join(field_name.split(".")[:-1])
-        return self.get_edge(table)
+        if field_name.count("."):
+            table = ".".join(field_name.split(".")[:-1])
+            return self.get_edge(table)
 
     def get_path_from_field(self, field_name):
 
