@@ -35,7 +35,9 @@ import reformed.job_scheduler as job_scheduler
 import predefine
 import logging
 import node_runner
-from zodb_lock import store_zodb
+import os
+from ZODB import FileStorage, DB
+from zc.lockfile import LockError
 
 log = logging.getLogger('rebase.application')
 
@@ -90,7 +92,7 @@ class Application(object):
         #self.get_zodb()
         self.sys_info = {}
         self.sys_info_full = {}
-        self.initialise_sys_info(application = self)
+        self.initialise_sys_info()
         self.database = None
 
     def delete_database(self):
@@ -120,7 +122,7 @@ class Application(object):
         self.release_all()
 
     def purge_attachments(self):
-        self.initialise_sys_info(application = self)
+        self.initialise_sys_info()
         try:
             file_directory = self.sys_info['file_uploads>root_directory']
         except:
@@ -156,12 +158,12 @@ class Application(object):
             except AttributeError:
                 pass
 
-
-    @store_zodb
-    def initialise_sys_info(self, zodb):
+    def initialise_sys_info(self):
         """create sys_info in zodb if not there
         or pull all sys_info data out of the store"""
         #self.get_zodb()
+        zodb = self.aquire_zodb()
+
         connection = zodb.open()
         root = connection.root()
         if "sys_info" not in root:
@@ -169,7 +171,10 @@ class Application(object):
             transaction.commit()
         else:
             self.cache_sys_info(root["sys_info"])
+
         connection.close()
+        zodb.close()
+        self.get_zodb(True)
 
 
     def start_job_scheduler(self):
@@ -303,14 +308,12 @@ class Application(object):
         #register("bookmarks>_system_info>title", "System Settings")
         #register("bookmarks>_system_info>node", "bug.SysInfo")
 
-    def register_info(self, *args, **kw):
-        self._register_info(*args, application = self, **kw)
 
-    @store_zodb
-    def _register_info(self, zodb, key, value,
+    def register_info(self, key, value,
                       description = '', force = False):
         """register system info adds the info if it is not already there"""
 
+        zodb = self.aquire_zodb()
         connection = zodb.open()
         root = connection.root()
 
@@ -332,14 +335,32 @@ class Application(object):
 
         connection.close()
 
+        zodb.close()
+        self.get_zodb(True)
         return value
-
 
     def cache_sys_info(self, sys_info_db):
         """get system info out of the database"""
         for key, value in sys_info_db.iteritems():
             self.sys_info_full[key] = value
             self.sys_info[key] = value['value']
+
+    def aquire_zodb(self):
+
+        zodb_location = os.path.join(self.application_folder, 'zodb.fs')
+        counter = 0
+        while 1:
+            if counter % 10 == 1:
+                print "zodb lock at %s tries" % counter
+            try:
+                storage = FileStorage.FileStorage(zodb_location)
+                break
+            except LockError:
+                continue
+
+        zodb = DB(storage)
+
+        return zodb
 
 
 class ManagerThread(threading.Thread):

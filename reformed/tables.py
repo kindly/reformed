@@ -43,7 +43,6 @@ from sqlalchemy.orm import column_property, backref
 from sqlalchemy.orm.interfaces import AttributeExtension
 from sqlalchemy.sql import func, select, text
 import fshp
-from zodb_lock import store_zodb
 
 from ZODB.PersistentMapping import PersistentMapping
 from ZODB.PersistentList import PersistentList
@@ -171,9 +170,9 @@ class Table(object):
     def __repr__(self):
         return "%s - %s" % (self.name, self.columns.keys())
 
-    @store_zodb
-    def set_kw(self, zodb, key, value):
+    def set_kw(self, key, value):
 
+        zodb = self.database.application.aquire_zodb()
         if key not in self.all_updatable_kw:
             raise ValueError("%s not allowed to be added or modified" % key)
 
@@ -192,6 +191,9 @@ class Table(object):
             transaction.commit()
         finally:
             connection.close()
+
+        zodb.close()
+        self.database.application.get_zodb(True)
 
 
     def set_field_order(self, connection):

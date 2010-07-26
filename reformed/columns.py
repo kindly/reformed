@@ -26,7 +26,6 @@
 import sqlalchemy as sa
 import util
 import custom_exceptions
-from zodb_lock import store_zodb
 import transaction
 
 class BaseSchema(object):
@@ -474,8 +473,10 @@ class Field(object):
         else:
             object.__setattr__(self, name, value)
 
-    @store_zodb
-    def set_kw(self, zodb, key, value):
+    def set_kw(self, key, value):
+
+        application = self.table.database.application 
+        zodb = application.aquire_zodb()
 
         if key not in self.all_updatable_kw:
             raise ValueError("%s not allowed to be added or modified" % key)
@@ -495,6 +496,10 @@ class Field(object):
             transaction.commit()
         finally:
             connection.close()
+
+        zodb.close()
+        application.get_zodb(True)
+
 
     def diff(self, other):
 

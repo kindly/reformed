@@ -37,7 +37,6 @@ import sessionwrapper
 import validate_database
 import logging
 import networkx as nx
-from zodb_lock import store_zodb
 from ZODB.PersistentMapping import PersistentMapping
 import transaction
 from events import Event
@@ -75,14 +74,15 @@ class Database(object):
 
         self.tables = {}
 
-        self.zodb_tables_init(application = self.application)
+        self.zodb_tables_init()
 
         self.load_from_persist()
 
         self.status = "active"
 
-    @store_zodb
-    def zodb_tables_init(self, zodb):
+    def zodb_tables_init(self):
+        zodb = self.application.aquire_zodb()
+
         connection = zodb.open()
         root = connection.root()
         if "tables" not in root:
@@ -90,6 +90,9 @@ class Database(object):
             root["table_count"] = 0
             transaction.commit()
         connection.close()
+
+        zodb.close()
+        self.application.get_zodb(True)
 
     def __getitem__(self, item):
         if isinstance(item, int):
@@ -287,13 +290,9 @@ class Database(object):
 
 
     def persist(self):
-        self._persist(application = self.application)
-        self.load_from_persist(True)
-
-    @store_zodb
-    def _persist(self, zodb):
 
         self.status = "updating"
+        zodb = self.application.aquire_zodb()
 
         connection = zodb.open()
         try:
@@ -336,6 +335,11 @@ class Database(object):
         self.persisted = True
 
         self.status = "updating"
+
+        zodb.close()
+        self.application.get_zodb(True)
+
+        self.load_from_persist(True)
 
 
     def load_from_persist(self, restart = False):
@@ -629,10 +633,10 @@ class Database(object):
             table_name, field_name = item.split(".")
             table = self[table_name]
             field = self[table_name].fields[field_name]
-            field.set_kw(key, value, application = self.application)
+            field.set_kw(key, value)
         else:
             table = self[item]
-            table.set_kw(key, value, application = self.application)
+            table.set_kw(key, value)
 
 def table(name, database, *args, **kw):
     """helper to add table to database args and keywords same as Table definition"""

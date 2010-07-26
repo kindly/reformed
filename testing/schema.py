@@ -58,6 +58,7 @@ def initialise(application):
            title_field = 'name',
            summary_fields = 'email, notes',
            default_node = 'test.People',
+           valid_info_tables = "communication"
 
     )
 
