@@ -65,6 +65,7 @@ class test_donkey(object):
               ManyToOne("over_18", "code", foreign_key_name = "over_18_id", backref = "over_18", many_side_not_null = False), ##enumeration look up table
               
               Event("new", actions.AddRow("contact_summary")),
+              valid_info_tables  = 'membership',
 
               entity = True,
               summary_fields = "name,address_line_1,postcode"
@@ -146,7 +147,6 @@ class test_donkey(object):
                DateTime("start_date"),#, mandatory = True),
                DateTime("end_date" ),
                CheckNoTwoNulls("val_duplicate_membership", parent_table = "_core", field = "end_date"),  
-               valid_core_types  = 'people'
               )
 
         relation("donkey_people", cls.Donkey,

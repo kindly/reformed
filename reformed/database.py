@@ -226,8 +226,6 @@ class Database(object):
                                                     "no _core table in the database"
                                                     % table.name)
 
-        assert table.valid_core_types
-
         table.info_table = True
         table.kw["info_table"] = True
 
@@ -421,6 +419,15 @@ class Database(object):
                     if hasattr(field, "event"):
                         field.event.add_event(self)
                 table.make_schema_dict()
+            ## put valid_info tables into info_table
+            for table in self.tables.itervalues():
+                if table.relation or table.entity:
+                    for valid_info_table in table.valid_info_tables:
+                        info_table = self.tables[valid_info_table]
+                        assert info_table.info_table
+                        info_table.valid_core_types.append(table.name)
+
+
         except (custom_exceptions.NoDatabaseError,\
                 custom_exceptions.RelationError):
             pass
@@ -442,6 +449,9 @@ class Database(object):
                                 delete = [],
                                 change = [])
             table.schema_dict = None
+            table.valid_info_tables = []
+            table.valid_core_types = []
+
         self.graph = None
 
 

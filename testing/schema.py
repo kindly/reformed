@@ -1,6 +1,6 @@
 ## This is a blank schema template
 
-from reformed.database import table, entity, relation
+from reformed.database import table, entity, relation, info_table
 from reformed.fields import *
 from reformed.events import Event
 from reformed.actions import *
@@ -61,8 +61,7 @@ def initialise(application):
 
     )
 
-    table('communication', database,
-          ForeignKey('_core_id', '_core'),
+    info_table('communication', database,
           Text('communication_type'),
     )
 

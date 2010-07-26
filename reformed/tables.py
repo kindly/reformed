@@ -59,7 +59,7 @@ class Table(object):
                     "secondary_entities", "logged", "validated",
                     "table_type", "title_field", "description_field",
                      "summary_fields", "summary", "default_node",
-                    "valid_core_types"]
+                    "valid_info_tables"]
 
     restricted_kw = ["table_id", "field_order", "persisted",
                      "primary_key", "entity", "relation", "info_table",
@@ -101,6 +101,7 @@ class Table(object):
         self.info_table = kw.get("info_table", False)
         self.table_class = kw.get("table_class")
 
+        ## for relaion tables
         primary_entities = kw.get("primary_entities")
         if primary_entities :
             self.primary_entities = primary_entities.strip().split(",")
@@ -109,9 +110,16 @@ class Table(object):
         if secondary_entities:
             self.secondary_entities = secondary_entities.strip().split(",")
 
-        valid_core_types = kw.get("valid_core_types")
-        if valid_core_types:
-            self.valid_core_types = valid_core_types.strip().split(",")
+
+        ## for entity or relation tables
+        valid_info_tables = kw.get("valid_info_tables")
+        if valid_info_tables:
+            self.valid_info_tables = valid_info_tables.strip().split(",")
+        else:
+            self.valid_info_tables = []
+
+        ## for info tables to be populated 
+        self.valid_core_types = []
 
         self.logged = kw.get("logged", True)
         self.validated = kw.get("validated", True)
