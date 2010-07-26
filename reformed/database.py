@@ -220,6 +220,27 @@ class Database(object):
 
         table.add_event(event)
 
+    def add_info_table(self, table):
+        if "_core" not in self.tables:
+            raise custom_exceptions.NoTableAddError("table %s cannot be added as there is"
+                                                    "no _core table in the database"
+                                                    % table.name)
+
+        assert table.valid_core_types
+
+        table.info_table = True
+        table.kw["info_table"] = True
+
+        self.add_table(table)
+
+        relation = ForeignKey("_core_id", "_core", backref = table.name)
+        table._add_field_no_persist(relation)
+
+        event = Event("delete",
+                      actions.DeleteRows("_core"))
+
+        table.add_event(event)
+
 
     def add_entity(self, table):
         if "_core" not in self.tables:
@@ -624,3 +645,9 @@ def relation(name, database, *args, **kw):
         return
     database.add_relation_table(tables.Table(name, *args, quiet = database.quiet, **kw))
 
+def info_table(name, database, *args, **kw):
+    """helper to add entity to database args and keywords same as Table definition"""
+    if name in database.tables:
+        print '<%s> exists will not create' % name
+        return
+    database.add_info_table(tables.Table(name, *args, quiet = database.quiet, **kw))

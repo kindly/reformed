@@ -58,10 +58,11 @@ class Table(object):
     modifiable_kw = ["quiet", "lookup", "table_class", "primary_entities",
                     "secondary_entities", "logged", "validated",
                     "table_type", "title_field", "description_field",
-                     "summary_fields", "summary", "default_node"]
+                     "summary_fields", "summary", "default_node",
+                    "valid_core_types"]
 
     restricted_kw = ["table_id", "field_order", "persisted",
-                     "primary_key", "entity", "relation",
+                     "primary_key", "entity", "relation", "info_table",
                      "modified_by", "modified_date", "version"]
 
 
@@ -97,6 +98,7 @@ class Table(object):
         self.entity = kw.get("entity", False)
         self.relation = kw.get("relation", False)
         self.lookup = kw.get("lookup", False)
+        self.info_table = kw.get("info_table", False)
         self.table_class = kw.get("table_class")
 
         primary_entities = kw.get("primary_entities")
@@ -106,6 +108,10 @@ class Table(object):
         secondary_entities = kw.get("secondary_entities")
         if secondary_entities:
             self.secondary_entities = secondary_entities.strip().split(",")
+
+        valid_core_types = kw.get("valid_core_types")
+        if valid_core_types:
+            self.valid_core_types = valid_core_types.strip().split(",")
 
         self.logged = kw.get("logged", True)
         self.validated = kw.get("validated", True)

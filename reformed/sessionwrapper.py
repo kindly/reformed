@@ -103,7 +103,7 @@ class SessionWrapper(object):
     def _flush(self):
 
         if self.has_entity:
-            self.add_entity_instance()
+            self.add_extra_instance()
         self.check_all_validated()
 
         self.add_events()
@@ -268,7 +268,7 @@ class SessionWrapper(object):
                 #setattr(logged_instance, table.name + "_logged", obj)
                 self.add(logged_instance)
 
-    def add_entity_instance(self):
+    def add_extra_instance(self):
 
         for obj in self.session.new:
             if hasattr(obj, "_from_load"):
@@ -291,8 +291,9 @@ class SessionWrapper(object):
                 table = obj._table
                 primary_id = obj._primary 
                 secondary_id = obj._secondary
-                primary_obj = self.query(self.database["_core_entity"].sa_class).get(primary_id)
-                secondary_obj = self.query(self.database["_core_entity"].sa_class).get(secondary_id)
+                core_entity_cls = self.database["_core_entity"].sa_class
+                primary_obj = self.query(core_entity_cls).get(primary_id)
+                secondary_obj = self.query(core_entity_cls).get(secondary_id)
                 ##FIXME make a better error, a validation rule?
                 assert(primary_obj.table) in table.primary_entities
                 assert(secondary_obj.table) in table.secondary_entities
@@ -302,6 +303,15 @@ class SessionWrapper(object):
                 self.add(secondary_obj)
                 self.add(core)
                 self.add(obj)
+            elif table.info_table == True:
+                if not obj._rel__core:
+                    core_id = obj._core_id
+                    core_cls = self.database["_core"].sa_class
+                    core = self.query(core_cls).get(core_id)
+                    assert(core.type) in table.valid_core_types
+                    obj._rel__core = core
+                    self.add(core)
+                    self.add(obj)
 
 
 class SessionClass(object):

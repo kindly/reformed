@@ -54,19 +54,22 @@ class CheckNoTwoNulls(FormValidator):
 
         table = obj._table
 
-        relation_path = table.local_tables[self.many_to_one_table]
+        edge = table.local_tables[self.many_to_one_table]
 
         parent_obj = obj
-        for relation in relation_path:
+        for relation in edge.path:
             parent_obj = getattr(parent_obj, relation)
+            if not parent_obj:
+                return
+
 
         parent_obj_table = parent_obj._table
         ## should get alias name not table name
-        relation_back_path = parent_obj_table.one_to_many_tables[table.name]
+        back_edge = parent_obj_table.one_to_many_tables[table.name]
 
         collection = parent_obj
 
-        for relation in relation_back_path:
+        for relation in back_edge.path:
             collection = getattr(collection, relation)
 
         if not collection:

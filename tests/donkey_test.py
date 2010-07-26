@@ -142,11 +142,11 @@ class test_donkey(object):
               Money("amount"),
               Text("source")
              )
-        table("membership", cls.Donkey,
-               DateTime("start_date", mandatory = True),
+        info_table("membership", cls.Donkey,
+               DateTime("start_date"),#, mandatory = True),
                DateTime("end_date" ),
-               ManyToOne("_core", "_core"),
                CheckNoTwoNulls("val_duplicate_membership", parent_table = "_core", field = "end_date"),  
+               valid_core_types  = 'people'
               )
 
         relation("donkey_people", cls.Donkey,
@@ -561,7 +561,28 @@ class test_basic_input(test_donkey):
         assert_raises(custom_exceptions.SingleResultError, self.Donkey.search_single, "donkey")
         assert_raises(custom_exceptions.SingleResultError, self.Donkey.search_single, "membership")
 
-    def test_result_setiter(self):
+    def test_z_info_table(self):
+
+        resultset = self.Donkey.search("people", session = self.session, order_by = "id")
+        membership = self.Donkey.get_instance("membership")
+        core_id = resultset.get("_core_id")
+        membership._core_id = core_id
+        self.session.save(membership)
+        self.session.commit()
+        assert membership._core_id == core_id
+
+
+        resultset = self.Donkey.search("donkey", session = self.session, order_by = "id")
+        membership = self.Donkey.get_instance("membership")
+        core_id = resultset.get("_core_id")
+        membership._core_id = core_id
+        self.session.save(membership)
+        assert_raises(AssertionError, self.session.commit)
+
+        self.session.rollback()
+
+
+    def test_resultset_iter(self):
 
         resultset = self.Donkey.search("donkey", session = self.session)
         #resultset = ResultSet(search)
@@ -628,7 +649,7 @@ class test_basic_input(test_donkey):
 
         print self.Donkey["_core"].dependant_attributes.keys()
 
-        assert set(self.Donkey["_core"].dependant_attributes.keys()) == set(['_membership', 'donkey', 'people', 'donkey_people', 'upload', '_communication__core', 'user', 'user_group', 'categories'])
+        assert set(self.Donkey["_core"].dependant_attributes.keys()) == set(['membership', 'donkey', 'people', 'donkey_people', 'upload', '_communication__core', 'user', 'user_group', 'categories'])
 
     def test_dependant_tables(self):
 
