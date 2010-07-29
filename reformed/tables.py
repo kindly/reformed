@@ -113,7 +113,7 @@ class Table(object):
         ## for entity or relation tables
         valid_info_tables = kw.get("valid_info_tables")
         if valid_info_tables:
-            self.valid_info_tables = valid_info_tables.strip().split(",")
+            self.valid_info_tables = valid_info_tables.split()
         else:
             self.valid_info_tables = []
 

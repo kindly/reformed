@@ -21,7 +21,7 @@ def initialise(application):
           title_field = 'name',
     )
 
-    entity('table1', database,
+    entity('donkey', database,
            Text('text'),
            Integer('int'),
            Text('longtext', length = 1000),
@@ -58,8 +58,7 @@ def initialise(application):
            title_field = 'name',
            summary_fields = 'email, notes',
            default_node = 'test.People',
-           valid_info_tables = "communication"
-
+           valid_info_tables = "communication membership"
     )
 
     info_table('communication', database,
@@ -73,11 +72,20 @@ def initialise(application):
           table_class = 'communication',
     )
 
+    info_table('membership', database,
+          Text('membership_type'),
+          Money('amount'),
+          DateTime('start_date'),
+          DateTime('end_date'),
+    )
 
-
+    relation('sponsership', database,
+          Money('amount'),
+          DateTime('start_date'),
+          DateTime('end_date'),
+          primary_entities = 'people',
+          secondary_entities = 'donkey',
+          valid_info_tables = 'membership'
+    )
 
     database.persist()
-
-
-
-
