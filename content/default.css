@@ -1,6 +1,5 @@
 div {
 	border:0; /* 1px solid #000; */
-	background-color:#EEE;
 }
 body {
 	height:100%;
@@ -33,6 +32,27 @@ div {
 .progressbar {
     width:200px;
     float:left;
+}
+
+#main {
+    border:5px solid #EEEEEE;
+}
+
+#actions {
+    border:5px solid #EEEEEE;
+}
+
+#side {
+    border:5px solid #EEEEEE;
+}
+
+#logo {
+    border:5px solid #EEEEEE;
+}
+
+#logo_image {
+    height:95px;
+    width:95px;
 }
 	
 	
@@ -305,7 +325,7 @@ div.form_body > div > input.error {
     width:100%;
 }
 input {
-	border:1px solid #DDD;
+	border:1px solid #BBB;
 	color:#333;
 }
 
@@ -512,14 +532,14 @@ td, body, input, select, textarea, th {
 }
 
 label.form_label, span.form_label{
-    font-weight:bold;
     vertical-align:top;
     width:120px;
+    padding-top:0.2em;
     float:left;
 }
 
 textarea {
-    border:1px solid #DDDDDD;
+    border:1px solid #9999BB;
     width:200px;
 }
 
@@ -599,11 +619,11 @@ div.f_control_holder {
     float:left;
     clear:left;
     width:100%;
-    margin-bottom:5px;
 }
 
 div.f_control_holder > div.f_sub {
-    padding-left:10px;
+    padding-left:0.4em;
+    border-top:1px solid #DDDDDD
 }
 
 div.COLUMN {
@@ -673,6 +693,8 @@ div.f_description{
 
 div.f_control_holder input{
     float:left;
+    padding-left:0.2em;
+    border-color:#9999BB;
 }
 
 div.f_codegroup_holder div.f_description{
@@ -684,7 +706,6 @@ div.f_message {
     background-color:#CCF;
     color:#339;
     padding:10px;
-    margin-bottom:10px;
 }
 
 div.f_message_error {

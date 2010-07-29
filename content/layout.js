@@ -175,7 +175,7 @@ REBASE.layout_manager = function (){
     }
 
     function create_side(){
-        $side = $('<div></div>');
+        $side = $('<div id="side"></div>');
 
         var html = [];
         // FIXME this wants to be ripped out asap
@@ -206,9 +206,9 @@ REBASE.layout_manager = function (){
     }
 
     function create_logo(){
-        $logo = $('<div><img src="logo.png" /></div>');
+        $logo = $('<div id="logo"><img id="logo_image" src="logo.png" /></div>');
         // fixme get height/width correct etc
-        $logo.find('img').css({width : 95, height : 95});
+        // $logo.find('img').css({width : 95, height : 95});
         $logo.css({overflow : 'hidden'});
         position_logo();
         $body.append($logo);
