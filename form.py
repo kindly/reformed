@@ -123,7 +123,6 @@ class Form(object):
         # get_subform_data()?
 
         node = self.node
-        session = r.Session()
         data_out = {}
         table = self.table
         tables = util.split_table_fields(self.form_item_name_list, table).keys()
@@ -348,6 +347,7 @@ class Form(object):
             # no result found so return error to front end
             node_token.action = 'general_error'
             node_token.out = 'No record found for give id'
+            session.close()
             return
 
         if self.title_field:
@@ -378,6 +378,8 @@ class Form(object):
             bookmark_string = node.build_node('', 'view', 'id=%s' %  id),
             entity_id = id
         )
+
+        session.close()
 
     def delete(self, node_token):
         # TD not reviewed
