@@ -52,7 +52,9 @@ REBASE.layout_manager = function (){
     var first_run = true;
     var $body = $('<div id="layout_holder">');
     var BUTTONS_PER_COLUMN = 3;
-    var ACTION_BUTTON_SPACING = 5;
+    var ACTION_BUTTON_SPACING = 7;
+    var ACTION_BUTTON_SPACING_H = 6;
+    var ACTION_BUTTON_SPACING_V = 16;
     var ACTION_BUTTON_WIDTH = 200;
 
     var info = {
@@ -119,8 +121,8 @@ REBASE.layout_manager = function (){
             $link.append($img).append($command).append($shortcut);
             $button.append($link);
 
-            var button_top = (button_number % BUTTONS_PER_COLUMN) * (util_size.ACTION_BUTTON_H + ACTION_BUTTON_SPACING) + ACTION_BUTTON_SPACING;
-            var button_left = (ACTION_BUTTON_SPACING + ACTION_BUTTON_WIDTH) * Math.floor(button_number / BUTTONS_PER_COLUMN);
+            var button_top = (button_number % BUTTONS_PER_COLUMN) * (util_size.ACTION_BUTTON_H + ACTION_BUTTON_SPACING_H) + ACTION_BUTTON_SPACING_H;
+            var button_left = (ACTION_BUTTON_SPACING_V + ACTION_BUTTON_WIDTH) * Math.floor(button_number / BUTTONS_PER_COLUMN);
             var button_image_size = 12;
 
             position_absolute($button, button_top, button_left, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
@@ -133,7 +135,7 @@ REBASE.layout_manager = function (){
         }
 
         function user_bar(){
-            var $user_bar = $('<div style="position:relative;background-color:#f0f;"></div>');
+            var $user_bar = $('<div id="user_bar"></div>');
             // search box
             var html = [];
             html.push('<form action="" onclick="$.Util.Event_Delegator(\'clear\');" onsubmit="return search_box();" style="display:inline">');
@@ -169,7 +171,7 @@ REBASE.layout_manager = function (){
 
         add_actions();
         var $user_bar = user_bar();
-        position_absolute($user_bar, (ACTION_BUTTON_SPACING + util_size.ACTION_BUTTON_H) * BUTTONS_PER_COLUMN + ACTION_BUTTON_SPACING, 0, null, info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + util_size.SCROLLBAR_WIDTH));
+        position_absolute($user_bar, (ACTION_BUTTON_SPACING_H + util_size.ACTION_BUTTON_H) * BUTTONS_PER_COLUMN + ACTION_BUTTON_SPACING_H*2, 0, null, info.page_width - (info.left_width + info.spacing + info.margin_left + info.margin_right + util_size.SCROLLBAR_WIDTH));
         $actions.append($user_bar);
         $body.append($actions);
     }
@@ -232,7 +234,7 @@ REBASE.layout_manager = function (){
                 info.left_width = 200;
                 // FIXME THis is a botch as the 30 is just a guess at the search bar size
                 // also this needs to refresh on font resizes etc
-                var button_top = BUTTONS_PER_COLUMN * (util_size.ACTION_BUTTON_H + ACTION_BUTTON_SPACING) + ACTION_BUTTON_SPACING + 30;
+                var button_top = BUTTONS_PER_COLUMN * (util_size.ACTION_BUTTON_H + ACTION_BUTTON_SPACING_H) + ACTION_BUTTON_SPACING_H + 30;
                 info.top_height = button_top;
                 create_logo();
                 create_main();

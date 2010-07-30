@@ -1,5 +1,6 @@
 div {
 	border:0; /* 1px solid #000; */
+    background-color:#FaFafa
 }
 body {
 	height:100%;
@@ -51,8 +52,13 @@ div {
 }
 
 #logo_image {
-    height:95px;
-    width:95px;
+    padding-top:10px;
+    padding-left:5px;
+}
+
+
+#user_bar {
+    background-color:#ccccFF;
 }
 	
 	
@@ -235,14 +241,16 @@ tr.inactive input{
 }
 
 .action{
-	border: 1px solid #999;
 	margin: 0 3px 2px 3px;
 	padding:0px;
 }
 .action > a {
-	padding: 1px;
-	background-color:#9A9;
+	padding-top: 3px;
+	padding-bottom: 2px;
+    color:black;
 	text-decoration:none;
+    border:1px solid #6666FF;
+    background-color:#9999EE;
 }
 .action > a:hover {
 	background-color:#f9F;
@@ -532,6 +540,7 @@ td, body, input, select, textarea, th {
 }
 
 label.form_label, span.form_label{
+    padding-left:0.4em;
     vertical-align:top;
     width:120px;
     padding-top:0.2em;
@@ -622,7 +631,6 @@ div.f_control_holder {
 }
 
 div.f_control_holder > div.f_sub {
-    padding-left:0.4em;
     border-top:1px solid #DDDDDD
 }
 
@@ -702,10 +710,12 @@ div.f_codegroup_holder div.f_description{
 }
 
 div.f_message {
-    border: 1px solid blue;
-    background-color:#CCF;
-    color:#339;
-    padding:10px;
+    border: 1px solid green;
+    background-color:#55BB55;
+    font-size:1.1em;
+    padding:0.2em;
+    margin-left:0em;
+    margin-bottom:0.3em;
 }
 
 div.f_message_error {
