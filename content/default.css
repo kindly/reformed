@@ -18,7 +18,7 @@ p {
 }
 
 .label {
-	color:darkblue;
+	color:#333366;
 	width:100px;
     float:left;
 }
@@ -36,19 +36,19 @@ div {
 }
 
 #main {
-    border:5px solid #EEEEEE;
+    border:5px solid #E1E1E1;
 }
 
 #actions {
-    border:5px solid #EEEEEE;
+    border:5px solid #E1E1E1;
 }
 
 #side {
-    border:5px solid #EEEEEE;
+    border:5px solid #E1E1E1;
 }
 
 #logo {
-    border:5px solid #EEEEEE;
+    border:5px solid #E1E1E1;
 }
 
 #logo_image {
@@ -58,7 +58,7 @@ div {
 
 
 #user_bar {
-    background-color:#ccccFF;
+    background-color:#999999;
 }
 	
 	
@@ -245,15 +245,18 @@ tr.inactive input{
 	padding:0px;
 }
 .action > a {
-	padding-top: 3px;
-	padding-bottom: 2px;
+	padding-top: 4px;
+	padding-bottom: 3px; 
     color:black;
+    background-color:#CCCCCC;
 	text-decoration:none;
-    border:1px solid #6666FF;
-    background-color:#9999EE;
+    border:1px solid #888888;
+/*    background-image:url('grad.png')*/
+/*    background-color:#9999EE;*/
 }
 .action > a:hover {
-	background-color:#f9F;
+	background-color:#DDDD77;
+    color:#55a;
 }
 .action > a.record {
 	background-color:#99A;
@@ -333,7 +336,7 @@ div.form_body > div > input.error {
     width:100%;
 }
 input {
-	border:1px solid #BBB;
+	border:1px solid #B7A7D0;
 	color:#333;
 }
 
@@ -348,7 +351,7 @@ td input {
 }
 
 .link_list a{
-    color:green;
+    color:#336633;
 }
 
 #bookmarks{
@@ -357,7 +360,7 @@ td input {
 
 #bookmarks li{
     list-style-type: none;
-    color:darkgreen;
+    color:#336633;
 }
 #bookmarks ol{
     padding-left:3px;
@@ -587,13 +590,13 @@ span.f_cell.dirty {
     font-weight:bold;
 }
 .f_form_continuous{
-    border-bottom: 1px solid green;
+    border-bottom: 1px solid #336633;
     margin-bottom:5px;
     padding-bottom:5px;
 }
 
 .link {
-    color:green;
+    color:#336633;
     font-size:0.8em;
 }
 
@@ -616,7 +619,7 @@ div.CHECKBOX.false input {
 }
 
 div.CHECKBOX.true input {
-    background-color:green;
+    background-color:#336633;
 }
 
 div.CHECKBOX.null input {
@@ -670,7 +673,7 @@ div.COLUMN_5 {
 /* Box style */
 
 div.BOX {
-    border: 1px solid green;
+    border: 1px solid #336633;
     padding:5px;
     margin:10px;
 }
@@ -689,11 +692,11 @@ div.f_spacer{
 }
 
 div.f_text{
-    color:green;
+    color:#336633;
 }
 
 div.f_description{
-    color:green;
+    color:336633;
     font-size:0.8em;
     margin-left:123px;
     clear:both;
@@ -702,7 +705,7 @@ div.f_description{
 div.f_control_holder input{
     float:left;
     padding-left:0.2em;
-    border-color:#9999BB;
+    border-color:#999999;
 }
 
 div.f_codegroup_holder div.f_description{
@@ -710,10 +713,13 @@ div.f_codegroup_holder div.f_description{
 }
 
 div.f_message {
-    border: 1px solid green;
-    background-color:#55BB55;
+    color:#F6F6F6;
+    border: 1px solid #333333;
+    background-color:#666666;
+    /*color:#DDDD00;
+    background-color:#248A00; */
     font-size:1.1em;
-    padding:0.2em;
+    padding:0.4em;
     margin-left:0em;
     margin-bottom:0.3em;
 }
@@ -732,8 +738,8 @@ div.f_message_title {
 #ajax_info {
     margin-left:25px;
     background-color:yellow;
-    color:blue;
-    border:1px solid blue;
+    color:#333366;
+    border:1px solid #333366;
     padding:1px;
     display:none;
 }
@@ -745,7 +751,7 @@ div.f_message_title {
 /* experiments */
 div.record_info, .record_info {
     font-size:0.7em;
-    color:green;
+    color:#336633;
     border:0;
 }
 
