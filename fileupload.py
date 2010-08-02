@@ -245,7 +245,7 @@ def save_file(file_handle, file_name, title, category, application, status = Non
 
 
 def get_dir(path, application):
-    root = global_session.database.application_dir
+    root = global_session.database.application_folder
     return os.path.join(root, application.sys_info['file_uploads>root_directory'], path)
 
 
