@@ -200,6 +200,8 @@ class People(TableNode):
         title_field = 'name',
     )
 
+    table = "people"
+
 
 
     phone = form(

@@ -73,7 +73,6 @@ class ResultSet(object):
         for res in results:
             if self.search.select_path_list:
                 ##FIXME need to get out all data somehow
-                print self.search.select_path_list
                 obj = res[0]
             else:
                 obj = res
@@ -159,8 +158,8 @@ class Result(object):
             if table == self.search.table:
                 obj = self.data[0]
             else:
-                path = self.search.name_to_path[table]
-                index = self.search.select_path_list.index(path) + 1
+                node_path = tuple(node.path)
+                index = self.search.select_path_list.index(node_path) + 1
                 obj = self.data[index]
         else:
             obj = self.data
