@@ -634,7 +634,8 @@ div.f_control_holder {
 }
 
 div.f_control_holder > div.f_sub {
-    border-top:1px solid #DDDDDD
+    padding-bottom:2px;
+    padding-top:2px;
 }
 
 div.COLUMN {
