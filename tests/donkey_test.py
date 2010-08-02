@@ -395,7 +395,7 @@ class test_basic_input(test_donkey):
 
 
         print get_all_local_data(result, fields = ["donkey_id", "contact_summary.total_amount", "donkey.name"])
-        assert get_all_local_data(result, fields = ["donkey_id", "contact_summary.total_amount", "donkey.name"]) == {'contact_summary.total_amount': '0', '__table': 'donkey_sponsership', 'donkey.name': u'jim', 'donkey_id': 1, 'id': 1} 
+        assert get_all_local_data(result, fields = ["donkey_id", "contact_summary.total_amount", "donkey.name"]) == {'contact_summary.total_amount': '0.00', '__table': 'donkey_sponsership', 'donkey.name': u'jim', 'donkey_id': 1, 'id': 1} 
 
         
     def test_zz_add_local(self):
@@ -545,10 +545,10 @@ class test_basic_input(test_donkey):
     def test_search_with_convert(self):
 
         print self.Donkey.search("people", session = self.session, fields = ["contact_summary.total_amount", "name", "address_line_1"], keep_all = False) 
-        assert self.Donkey.search("people", session = self.session, fields = ["contact_summary.total_amount", "name", "address_line_1"], keep_all = False).data == [{'__table': 'people', 'address_line_1': u'43 union street', 'contact_summary.total_amount': '0', 'id': 1, 'name': u'david'}]
+        assert self.Donkey.search("people", session = self.session, fields = ["contact_summary.total_amount", "name", "address_line_1"], keep_all = False).data == [{'__table': 'people', 'address_line_1': u'43 union street', 'contact_summary.total_amount': '0.00', 'id': 1, 'name': u'david'}]
 
         print self.Donkey.search("people", session = self.session, fields = ["contact_summary.total_amount", "name", "address_line_1"], count = True, keep_all = False) 
-        assert self.Donkey.search("people", session = self.session, fields = ["contact_summary.total_amount", "name", "address_line_1"], count = True, keep_all = False).data == [{'__table': 'people', 'address_line_1': u'43 union street', 'contact_summary.total_amount': '0', 'id': 1, 'name': u'david'}]
+        assert self.Donkey.search("people", session = self.session, fields = ["contact_summary.total_amount", "name", "address_line_1"], count = True, keep_all = False).data == [{'__table': 'people', 'address_line_1': u'43 union street', 'contact_summary.total_amount': '0.00', 'id': 1, 'name': u'david'}]
 
         assert self.Donkey.search("donkey",  count = True).row_count == 11
 

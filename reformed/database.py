@@ -584,6 +584,8 @@ class Database(object):
                 length = column.type.length
                 field =getattr(field_types, column.type.__class__.__name__)\
                               (column.name, length = length)
+            elif hasattr(column.type, "precision"):
+                field =getattr(field_types, column.type.__class__.__name__)(column.name)
             else:
                 field =getattr(field_types, column.type.__name__)(column.name)
 

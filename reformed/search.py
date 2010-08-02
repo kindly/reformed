@@ -295,7 +295,9 @@ class Search(object):
 
         main_subquery = main_subquery.subquery()
 
-        query = self.search_base.join((main_subquery, main_subquery.c.id == self.database.get_class(self.table).id))
+        ##hack to make sqlalchemy find correct column name
+        query = self.search_base.join((main_subquery, main_subquery.c[main_subquery.c.keys()[0]] == self.database.get_class(self.table).id))
+
         ### if first query has a one to many distict the query
         for table in first_query.inner_joins.union(first_query.outer_joins):
             if table != self.table and table not in self.rtable.local_tables:

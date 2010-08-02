@@ -91,6 +91,7 @@ class SessionWrapper(object):
 
     def add(self, obj):
         """save or update and validate a sqlalchemy object"""
+        print dir(obj)
         obj._table.validate(obj, self.session)
         obj._validated = True
         self.session.add(obj)
@@ -204,7 +205,7 @@ class SessionWrapper(object):
             if obj._table.primary_key_list:
                 changed = False
                 for column in obj._table.primary_key_list:
-                    a, b, c = attributes.get_history(attributes.instance_state(obj), column,
+                    a, b, c = attributes.get_history(obj, column,
                                                   passive = False)
                     if c:
                         changed = True
@@ -255,7 +256,7 @@ class SessionWrapper(object):
             logged_instance = self.database.get_instance("_log_%s"%table.name)
             changed = False
             for column in table.columns.keys():
-                a, b, c = attributes.get_history(attributes.instance_state(obj), column,
+                a, b, c = attributes.get_history(obj, column,
                                               passive = False)
                 #logger.info (repr(a)+repr(b)+repr(c))
                 if c:
