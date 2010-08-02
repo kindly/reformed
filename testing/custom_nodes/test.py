@@ -194,7 +194,7 @@ class People(TableNode):
         input('active'),
         input('colour'),
         thumb('image'),
-#        subform('phone'),
+        subform('phone'),
         table = "people",
         params =  {"form_type": "normal"},
         title_field = 'name',
@@ -202,14 +202,14 @@ class People(TableNode):
 
 
 
-#    phone = form(
-#        input('telephone.number', label = 'number'),
-#        table = "communication",
-#        child_id = '_core_id',
-#        parent_id = '_core_id',
-#        read_only = True,
-#        params = {"form_type": "continuous"},
-#    )
+    phone = form(
+        input('telephone.number', label = 'number'),
+        table = "communication",
+        child_id = '_core_id',
+        parent_id = '_core_id',
+        read_only = True,
+        params = {"form_type": "continuous"},
+    )
 
 class DataLoader(JobNode):
 
