@@ -50,6 +50,8 @@ $.fn.extend({
 $.Checkbox = function(input, item, value){
 
     var $checkbox = $(input);
+    var $img = $checkbox.find('img');
+
     // default to being a 2 state control
     // unless explicit validation rule
     var is_2_state = !(item.validation && item.validation[0].not_empty == false);
@@ -58,11 +60,13 @@ $.Checkbox = function(input, item, value){
         switch (value){
             case false:
                 value = true;
+                $img.hide();
                 $checkbox.removeClass('false');
                 $checkbox.addClass('true');
                 break;
             case true:
                 value = false;
+                $img.show();
                 $checkbox.removeClass('true');
                 $checkbox.addClass('false');
                 break;
@@ -78,11 +82,13 @@ $.Checkbox = function(input, item, value){
                 break;
             case null:
                 value = true;
+                $img.show();
                 $checkbox.removeClass('null');
                 $checkbox.addClass('true');
                 break;
             case true:
                 value = false;
+                $img.hide();
                 $checkbox.removeClass('true');
                 $checkbox.addClass('false');
                 break;
@@ -103,12 +109,15 @@ $.Checkbox = function(input, item, value){
         switch (value){
             case null:
                 $checkbox.addClass('null');
+                $img.hide();
                 break;
             case true:
                 $checkbox.addClass('true');
+                $img.show();
                 break;
             case false:
                 $checkbox.addClass('false');
+                $img.hide();
                 break;
         }
     }
@@ -127,6 +136,7 @@ $.Checkbox = function(input, item, value){
     }
     set_state();
     $checkbox.data('value', value);
+    var $checkbox_wrapper = $checkbox.find("div")
     // FIXME need to unbind this
     $checkbox.mousedown(mousedown);
     $checkbox.keydown(keydown);
@@ -1237,8 +1247,9 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         var $item = $(e.target);
         var fn_finalise;
         var $field;
+        var $img
         // if this control is complex eg. dropdown.
-        if ($item[0].nodeName == 'DIV'){
+        if ($item[0].nodeName == 'DIV' || $item[0].nodeName == 'IMG'){
             if ($item.hasClass('data')){
                 $item = $item.parent();
             } else if ($item.hasClass('but_dd_f')){
@@ -1246,8 +1257,13 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 $item.focus();
                 $item.trigger('dropdown');
                 actioned = true;
+            } else if ($item.hasClass('but_dd_img_f')){
+                $item = $item.parent().parent().find('input');
+                $item.focus();
+                $item.trigger('dropdown');
+                actioned = true;
             }
-            $field = $(item).parent().parent('div');
+           // $field = $(item).parent().parent('div');
         }
 
         return !actioned;
