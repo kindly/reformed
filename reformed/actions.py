@@ -52,7 +52,7 @@ class AddRow(Action):
         new_obj = database[self.related_table].sa_class()
 
         setattr(object, path[0], new_obj)
-        session.save(new_obj)
+        session.add_no_validate(new_obj)
 
 
 class DeleteRows(Action):
@@ -127,7 +127,7 @@ class SumEvent(Action):
         setattr(new_obj, result_field,
                 new_table.sa_table.c[result_field] + diff)
 
-        action_state.session.save(new_obj)
+        action_state.session.add_no_validate(new_obj)
 
 
 
@@ -167,7 +167,7 @@ class CountEvent(Action):
         setattr(new_obj, result_field,
                 new_table.sa_table.c[result_field] + diff)
 
-        action_state.session.save(new_obj)
+        action_state.session.add_no_validate(new_obj)
 
 class MaxDate(Action):
 
@@ -186,7 +186,7 @@ class MaxDate(Action):
                 select([func.max(func.coalesce(end_date_field, self.default_end))],
                        and_(*join))
                )
-        session.save(result)
+        session.add_no_validate(result)
 
 class AddCommunication(Action):
 
@@ -240,7 +240,7 @@ class Counter(Action):
                        and_(*key_values)).alias()])
                )
 
-        session.save(object)
+        session.add_no_validate(object)
 
     def add(self, result, base_table_obj, object, session):
 
@@ -281,7 +281,7 @@ class CopyValue(Action):
         value = getattr(object, self.src_field)
 
         setattr(new_obj, dest_field, value)
-        action_state.session.save(new_obj)
+        action_state.session.add_no_validate(new_obj)
  
 
 class CopyTextAfter(Action):
@@ -322,7 +322,7 @@ class CopyTextAfter(Action):
             value = value[:length]
 
         setattr(new_obj, result_field, value)
-        action_state.session.save(new_obj)
+        action_state.session.add_no_validate(new_obj)
 
 class CopyTextAfterField(CopyTextAfter):
 
@@ -355,5 +355,5 @@ class CopyTextAfterField(CopyTextAfter):
             value = value[:length]
 
         setattr(new_obj, result_field, value)
-        action_state.session.save(new_obj)
+        action_state.session.add_no_validate(new_obj)
 

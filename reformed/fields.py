@@ -209,13 +209,13 @@ class Boolean(Field):
 class Money(Field):
 
     def __init__(self, name, *args, **kw):
-        self.money = Column(sa.Numeric, use_parent = True)
+        self.money = Column(sa.Numeric(8,2), use_parent = True)
 
 
 class Numeric(Field):
 
     def __init__(self, name, *args, **kw):
-        self.money = Column(sa.Numeric, use_parent = True)
+        self.money = Column(sa.Numeric(8,2), use_parent = True)
 
 class Email(Field):
 

@@ -53,7 +53,7 @@ REBASE.layout_manager = function (){
     var $body = $('<div id="layout_holder">');
     var BUTTONS_PER_COLUMN = 3;
     var ACTION_BUTTON_SPACING = 7;
-    var ACTION_BUTTON_SPACING_H = 6;
+    var ACTION_BUTTON_SPACING_H = 3;
     var ACTION_BUTTON_SPACING_V = 16;
     var ACTION_BUTTON_WIDTH = 200;
 
@@ -125,11 +125,11 @@ REBASE.layout_manager = function (){
             var button_left = (ACTION_BUTTON_SPACING_V + ACTION_BUTTON_WIDTH) * Math.floor(button_number / BUTTONS_PER_COLUMN);
             var button_image_size = 12;
 
-            position_absolute($button, button_top, button_left, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
-            position_absolute($link, 0, 0, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
-            position_absolute($img, 0, 0, button_image_size, button_image_size);
-            position_absolute($command, 0, button_image_size, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH - (2 * button_image_size));
-            position_absolute($shortcut, 0, ACTION_BUTTON_WIDTH - button_image_size, util_size.ACTION_BUTTON_H, button_image_size);
+            //position_absolute($button, button_top, button_left, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
+            //position_absolute($link, 0, 0, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH);
+            //position_absolute($img, 0, 0, button_image_size, button_image_size);
+            //position_absolute($command, 0, button_image_size, util_size.ACTION_BUTTON_H, ACTION_BUTTON_WIDTH - (2 * button_image_size));
+            //position_absolute($shortcut, 0, ACTION_BUTTON_WIDTH - button_image_size, util_size.ACTION_BUTTON_H, button_image_size);
 
             $button_holder.append($button);
         }
@@ -165,7 +165,7 @@ REBASE.layout_manager = function (){
         $actions = $('<div id="actions"></div>');
         position_actions();
     
-        $button_holder = $('<div style="position:relative"></div>');
+        $button_holder = $('<div class="button_holder" style="position:relative"></div>');
         $actions.append($button_holder);
 
 

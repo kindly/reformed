@@ -43,26 +43,26 @@ $FormElements = function(){
 
     function input_box(item, value){
         value = correct_value(item, value);
-        var $control = $(add_label(item, 'rf_') + '<input id="rf_' + item.name + '"' + set_class_list(item) + ' value="' +  HTML_Encode_Clear(value) + '"/>');
+        var $control = $(add_label(item, 'rf_') + '<input id="rf_' + item.name + '"' + set_class_list(item, 'inputbox') + ' value="' +  HTML_Encode_Clear(value) + '"/>');
         return $control;
     }
 
     function textbox(item, value){
         value = correct_value(item, value);
-        var $control = $(add_label(item, 'rf_') + '<input id="rf_' + item.name + '"' + set_class_list(item) + ' value="' +  HTML_Encode_Clear(value) + '"/>');
+        var $control = $(add_label(item, 'rf_') + '<input id="rf_' + item.name + '"' + set_class_list(item, 'inputbox') + ' value="' +  HTML_Encode_Clear(value) + '"/>');
         return $control;
     }
 
     function datebox(item, value){
         value = correct_value(item, value); // FIXME should this be a more specific fix_date() call
-        var $control = $(add_label(item, 'rf_') + '<input id="rf_' + item.name + '"' + set_class_list(item) + ' value="' +  HTML_Encode_Clear(value) + '" />');
+        var $control = $(add_label(item, 'rf_') + '<input id="rf_' + item.name + '"' + set_class_list(item, 'inputbox') + ' value="' +  HTML_Encode_Clear(value) + '" />');
         // FIXME will fail if no label
         $control.eq(1).bind('keydown', $.Util.datebox_key);
         return $control;
     }
 
     function intbox(item, value){
-        var $control = $(add_label(item, 'rf_') + '<input id="rf_' + item.name + '"' + set_class_list(item) + ' value="' +  HTML_Encode_Clear(value) + '" />');
+        var $control = $(add_label(item, 'rf_') + '<input id="rf_' + item.name + '"' + set_class_list(item, 'inputbox') + ' value="' +  HTML_Encode_Clear(value) + '" />');
         // FIXME will fail if no label
         $control.eq(1).bind('keydown', $.Util.intbox_key);
         $control.eq(1).bind('change', $.Util.intbox_change);
@@ -149,7 +149,7 @@ $FormElements = function(){
         if (autocomplete == 'DATA' && item.data_field){
             autocomplete = local_row_data[item.data_field];
         }
-        $control = $(add_label(item, 'rf_') + '<span class="' + class_list + ' complex"><input id="rf_' + item.name + '" class="DROPDOWN ' + class_list + '" value="' + value + '" /><div class="but_dd_f"/></span>');
+        $control = $(add_label(item, 'rf_') + '<div class="' + class_list + ' complex"><input id="rf_' + item.name + '" class="dropdown_input" value="' + value + '" /><div class="but_dd_f"><img class="but_dd_img_f" src="/bullet_arrow_down2.png" /></div></div>');
         $control.find('input').autocomplete(autocomplete, {dropdown : true});
         return $control;
     }
@@ -249,10 +249,10 @@ $FormElements = function(){
             class_list += ' ' + item.css;
         }
         if (item.reverse){
-            $control = $('<div class="CHECKBOX ' + class_list + '"><input type="button" style="width:20px;" />&nbsp;</div>' + add_label(item, 'rf_'));
+            $control = $('<div class="CHECKBOX ' + class_list + '"><input type="button"/>&nbsp;</div>' + add_label(item, 'rf_'));
             $control.eq(0).filter('div').checkbox(item, value);
         } else {
-            $control = $(add_label(item, 'rf_') + '<div class="CHECKBOX ' + class_list + '"><input type="button" style="width:20px;" />&nbsp;</div>');
+            $control = $(add_label(item, 'rf_') + '<div class="CHECKBOX ' + class_list + '"><input type="button" /><img src="/tick.png" />&nbsp;</div>');
             $control.eq(1).filter('div').checkbox(item, value);
         }
         return $control;

@@ -241,16 +241,21 @@ tr.inactive input{
 }
 
 .action{
-	margin: 0 3px 2px 3px;
-	padding:0px;
+    margin-bottom:2px;
+    margin-left:2px;
+    margin-top:2px;
+    padding:0px;
+    width:14em;
+    float:left;
 }
 .action > a {
-	padding-top: 4px;
-	padding-bottom: 3px; 
     color:black;
-    background-color:#CCCCCC;
+    background-color:#DDDDDD;
 	text-decoration:none;
     border:1px solid #888888;
+    width:13em;
+    display:inline-block;
+    text-align:center;
 /*    background-image:url('grad.png')*/
 /*    background-color:#9999EE;*/
 }
@@ -266,6 +271,8 @@ tr.inactive input{
 }
 .action > a > img{
 	border:0;
+    float:left;
+    width:0.8em;
 }
 .action_hidden {
 	display: none;
@@ -274,13 +281,14 @@ tr.inactive input{
 .shortcut{
 	text-align:center;
 	margin:0px;
+    font-size:0.8em;
+    padding-right:0.1em;
+    float:right;
 	font-style:italic;
 }
 
 .command{
 	text-align: center;
-	xbackground-color:#FFF;
-	margin:2px;
 }
 .action > a > span.command:hover {
 	text-decoration:underline;
@@ -494,19 +502,31 @@ white-space:nowrap;
 
 div.but_dd_f {
 /*background-color:red;*/
-background-color:transparent;
-background-image:url('bullet_arrow_down.png');
-background-repeat:no-repeat;
-height:1em;
+height:1.2em;
 float:left;
 position:relative;
-width:20px;
-background-color:#00B;
+width:1.2em;
+border:1px solid #888888;
+padding:1px;
+right:4px;
 }
 
 .dropdown_f{
 float:left;
 }
+
+.arrow_down{
+}
+
+.but_dd_img_f{
+height:1.2em;
+width:1.2em;
+}
+
+.DROPDOWN{
+}
+
+
 
 div.but_dd {
 /*background-color:red;*/
@@ -611,7 +631,8 @@ div.f_form > div{
 
 div.CHECKBOX {
     float:left;
-    margin-right:5px;
+    width:1.4em;
+    height:1.4em;
 }
 
 div.CHECKBOX.false input {
@@ -619,7 +640,7 @@ div.CHECKBOX.false input {
 }
 
 div.CHECKBOX.true input {
-    background-color:#336633;
+    background-color:white;
 }
 
 div.CHECKBOX.null input {
@@ -703,11 +724,41 @@ div.f_description{
     clear:both;
 }
 
-div.f_control_holder input{
+div.f_control_holder .inputbox{
     float:left;
     padding-left:0.2em;
     border-color:#999999;
+    width:14em;
+    height:1.2em;
 }
+
+div.f_control_holder .dropdown_input{
+    float:left;
+    padding-left:0.2em;
+    padding-right:0.3em;
+    border-color:#999999;
+    width:12.5em;
+    height:1.2em;
+}
+
+div.CHECKBOX input{
+    float:left;
+    border:1px solid #999999;
+    width:1em;
+    height:1em;
+    font-size:1.4em;
+}
+
+div.CHECKBOX img{
+    float:left;
+    width:1.4em;
+    height:1.4em;
+    position:relative;
+    top:-1.4em;
+    padding-right:2px;
+}
+
+
 
 div.f_codegroup_holder div.f_description{
     margin-left:0;

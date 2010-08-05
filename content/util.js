@@ -611,7 +611,7 @@ $.Util.selectStyleSheet = function (type, value){
                 }
 
     if (type == 'size' && sizes[value]){
-        var new_style = "td, body, input, select, textarea, th {font-size:" + sizes[value] + "em;}";
+        var new_style = "td, body, input, select, div.but_dd_f, div.CHECKBOX, label.form_label, textarea, th {font-size:" + sizes[value] + "em;}";
         new_style += "td input{font-size:1em;}";
         $('#style_size').text(new_style);
     }
