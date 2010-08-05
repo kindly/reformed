@@ -282,13 +282,13 @@ tr.inactive input{
 	text-align:center;
 	margin:0px;
     font-size:0.8em;
-    padding-right:0.1em;
-    float:right;
 	font-style:italic;
 }
 
 .command{
 	text-align: center;
+    display:inline-block;
+    width:11.5em;
 }
 .action > a > span.command:hover {
 	text-decoration:underline;
