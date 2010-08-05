@@ -241,16 +241,21 @@ tr.inactive input{
 }
 
 .action{
-	margin: 0 3px 2px 3px;
-	padding:0px;
+    margin-bottom:2px;
+    margin-left:2px;
+    margin-top:2px;
+    padding:0px;
+    width:14em;
+    float:left;
 }
 .action > a {
-	padding-top: 4px;
-	padding-bottom: 3px; 
     color:black;
-    background-color:#CCCCCC;
+    background-color:#DDDDDD;
 	text-decoration:none;
     border:1px solid #888888;
+    width:13em;
+    display:inline-block;
+    text-align:center;
 /*    background-image:url('grad.png')*/
 /*    background-color:#9999EE;*/
 }
@@ -266,6 +271,8 @@ tr.inactive input{
 }
 .action > a > img{
 	border:0;
+    float:left;
+    width:0.8em;
 }
 .action_hidden {
 	display: none;
@@ -274,13 +281,14 @@ tr.inactive input{
 .shortcut{
 	text-align:center;
 	margin:0px;
+    font-size:0.8em;
+    padding-right:0.1em;
+    float:right;
 	font-style:italic;
 }
 
 .command{
 	text-align: center;
-	xbackground-color:#FFF;
-	margin:2px;
 }
 .action > a > span.command:hover {
 	text-decoration:underline;
