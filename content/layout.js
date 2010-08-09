@@ -63,7 +63,7 @@ REBASE.layout_manager = function (){
         margin_top : 10,
         left_width : 200,
         top_height : 100,
-        spacing : 10,
+        spacing : 0,
         page_width : undefined
     };
 

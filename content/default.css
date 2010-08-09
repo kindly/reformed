@@ -1,6 +1,7 @@
 div {
 	border:0; /* 1px solid #000; */
-    background-color:#FaFafa
+    background-color:transparent;
+
 }
 body {
 	height:100%;
@@ -36,19 +37,24 @@ div {
 }
 
 #main {
-    border:5px solid #E1E1E1;
+    background-color:white;
+    border-left:1px solid #BBBBBB;
+    outline:0 0 5px 0 solid #999999;
 }
 
 #actions {
-    border:5px solid #E1E1E1;
+    background-image:url('gradall.png');
+    -moz-background-size:100% 100%;
 }
 
 #side {
-    border:5px solid #E1E1E1;
+    background-image:url('gradallrev.png');
+    -moz-background-size:100% 100%;
 }
 
 #logo {
-    border:5px solid #E1E1E1;
+    background-image:url('gradall.png');
+    -moz-background-size:100% 100%;
 }
 
 #logo_image {
@@ -58,8 +64,9 @@ div {
 
 
 #user_bar {
-    background-color:#999999;
+    background-color:transparent
 }
+
 	
 	
 /* FORMS */
@@ -245,24 +252,31 @@ tr.inactive input{
     margin-left:2px;
     margin-top:2px;
     padding:0px;
-    width:14em;
     float:left;
 }
 .action > a {
+    border-color:#BBBBBB #999999 #999999 #BBBBBB;
+    border-style:solid;
+    border-width:1px 1px 1px 1px;
     color:black;
-    background-color:#DDDDDD;
 	text-decoration:none;
-    border:1px solid #888888;
+    padding-top:0.1em;
+    padding-bottom:0.1em;
     width:13em;
     display:inline-block;
     text-align:center;
-/*    background-image:url('grad.png')*/
+    background-image:url('grad.png');
+    -moz-background-size:100% 100%;
 /*    background-color:#9999EE;*/
 }
+
 .action > a:hover {
-	background-color:#DDDD77;
-    color:#55a;
+    position:relative;
+    left:1px;
+    top:1px;
+	text-decoration:none;
 }
+
 .action > a.record {
 	background-color:#99A;
 }
@@ -282,13 +296,13 @@ tr.inactive input{
 	text-align:center;
 	margin:0px;
     font-size:0.8em;
-    padding-right:0.1em;
-    float:right;
 	font-style:italic;
 }
 
 .command{
 	text-align: center;
+    display:inline-block;
+    width:11.5em;
 }
 .action > a > span.command:hover {
 	text-decoration:underline;
@@ -359,7 +373,7 @@ td input {
 }
 
 .link_list a{
-    color:#336633;
+    color:#515151;
 }
 
 #bookmarks{
@@ -368,7 +382,7 @@ td input {
 
 #bookmarks li{
     list-style-type: none;
-    color:#336633;
+    color:#515151;
 }
 #bookmarks ol{
     padding-left:3px;
@@ -377,7 +391,7 @@ td input {
 
 
 .null {
-    color:#CCC;
+    color:#BBBBBB;
 }
 
 
@@ -424,7 +438,7 @@ td {
 
 td input {
     margin : 0;
-    border-color:#999;
+    border-color:#999999;
 }
 
 .scroller {
@@ -453,13 +467,13 @@ td input {
 }
 .scroller-title {
     background-color:#339;
-    color:#CCC;
+    color:#BBBBBB;
     text-align:center;
     font-weight:bold;
 }
 .scroller-foot {
     background-color:#339;
-    color:#CCC;
+    color:#BBBBBB;
     overflow:hidden;
     position:absolute;
 }
@@ -468,7 +482,7 @@ td input {
     display:none;
 }
 .scroller-foot a {
-    color:#CCC;
+    color:#BBBBBB;
 }
 
 .scroller-resizer {
@@ -501,14 +515,19 @@ white-space:nowrap;
 
 
 div.but_dd_f {
-/*background-color:red;*/
+background-color:#F5F5F5;
 height:1.2em;
 float:left;
 position:relative;
 width:1.2em;
-border:1px solid #888888;
+border:1px solid #999999;
 padding:1px;
 right:4px;
+}
+
+div.but_dd_f:hover {
+/*background-color:red;*/
+
 }
 
 .dropdown_f{
@@ -522,6 +541,13 @@ float:left;
 height:1.2em;
 width:1.2em;
 }
+
+.but_dd_img_f:hover {
+position:relative;
+left:1px;
+top:1px;
+}
+
 
 .DROPDOWN{
 }
@@ -563,15 +589,18 @@ td, body, input, select, textarea, th {
 }
 
 label.form_label, span.form_label{
+
     padding-left:0.4em;
     vertical-align:top;
     width:120px;
-    padding-top:0.2em;
+    height:1.2em;
+    padding-top:4px;
+    padding-bottom:2px;
     float:left;
 }
 
 textarea {
-    border:1px solid #9999BB;
+    border:1px solid #999999;
     width:200px;
 }
 
@@ -610,13 +639,13 @@ span.f_cell.dirty {
     font-weight:bold;
 }
 .f_form_continuous{
-    border-bottom: 1px solid #336633;
+    border-bottom: 1px solid #515151;
     margin-bottom:5px;
     padding-bottom:5px;
 }
 
 .link {
-    color:#336633;
+    color:#515151;
     font-size:0.8em;
 }
 
@@ -647,16 +676,16 @@ div.CHECKBOX.null input {
     background-color:grey;
 }
 
+
 div.f_control_holder {
     position:relative;
+    background-color:transparent;
     float:left;
     clear:left;
     width:100%;
 }
 
 div.f_control_holder > div.f_sub {
-    padding-bottom:2px;
-    padding-top:2px;
 }
 
 div.COLUMN {
@@ -695,7 +724,7 @@ div.COLUMN_5 {
 /* Box style */
 
 div.BOX {
-    border: 1px solid #336633;
+    border: 1px solid #515151;
     padding:5px;
     margin:10px;
 }
@@ -714,11 +743,11 @@ div.f_spacer{
 }
 
 div.f_text{
-    color:#336633;
+    color:#515151;
 }
 
 div.f_description{
-    color:336633;
+    color:515151;
     font-size:0.8em;
     margin-left:123px;
     clear:both;
@@ -749,6 +778,7 @@ div.CHECKBOX input{
     font-size:1.4em;
 }
 
+
 div.CHECKBOX img{
     float:left;
     width:1.4em;
@@ -759,15 +789,14 @@ div.CHECKBOX img{
 }
 
 
-
 div.f_codegroup_holder div.f_description{
     margin-left:0;
 }
 
 div.f_message {
     color:#F6F6F6;
-    border: 1px solid #333333;
-    background-color:#666666;
+    border: 1px solid #999999;
+    background-color:#515151;
     /*color:#DDDD00;
     background-color:#248A00; */
     font-size:1.1em;
@@ -803,7 +832,7 @@ div.f_message_title {
 /* experiments */
 div.record_info, .record_info {
     font-size:0.7em;
-    color:#336633;
+    color:#515151;
     border:0;
 }
 
@@ -848,6 +877,7 @@ div.record_info > div {
     opacity: 0;
     -moz-opacity: 0;
     filter:progid:DXImageTransform.Microsoft.Alpha(opacity=0);
+    filter: alpha(opacity=0);	
 }
 
 
@@ -874,7 +904,7 @@ div.record_info > div {
 .RESULT_IMG {
     float:left;
     padding:1px;
-    border:1px solid #CCC;
+    border:1px solid #BBBBBB;
     margin:5px;
     height:75px;
     width:75px;
@@ -896,7 +926,7 @@ div.record_info > div {
     position:relative;
     width:300px;
     height:300px;
-    border: 2px solid #999;
+    border: 2px solid #999999;
     padding:3px;
     text-align:center;
     display: table-cell;
