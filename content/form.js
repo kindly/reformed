@@ -60,13 +60,13 @@ $.Checkbox = function(input, item, value){
         switch (value){
             case false:
                 value = true;
-                $img.hide();
+                $img.show();
                 $checkbox.removeClass('false');
                 $checkbox.addClass('true');
                 break;
             case true:
                 value = false;
-                $img.show();
+                $img.hide();
                 $checkbox.removeClass('true');
                 $checkbox.addClass('false');
                 break;
