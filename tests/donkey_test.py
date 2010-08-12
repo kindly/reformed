@@ -95,11 +95,11 @@ class test_donkey(object):
                DateTime("date"),
                Money("amount"),
                Text("Type", default = u"payment"),
-               Event("new,delete,change", 
+               Event("new delete change", 
                      actions.SumEvent("contact_summary.total_amount",
                                         "amount")
                     ),
-               Event("new,delete", 
+               Event("new delete", 
                      actions.CountEvent("contact_summary.transaction_count",
                                         "amount")
                     )
@@ -202,16 +202,36 @@ class test_donkey(object):
            lookup = True
         ) 
 
+        info_table('summary_info', cls.Donkey,
+                   Text('table_name'),
+                   Text('name'),
+                   Text('display_name'),
+                   Integer('original_id'),
+                   Text('value', length = 1000))
+
         table('communication', cls.Donkey,
               ForeignKey('_core_id', '_core'),
+              DateTime('defaulted_date'),
+              Boolean('active', default = True),
               Text('communication_type'),
         )
 
         table('telephone', cls.Donkey,
               ForeignKey('communication_id', 'communication'),
               Text('number'),
-              Event('new', actions.AddCommunication())
+              Event('new delete', actions.AddCommunication()),
+              Event('new change delete',
+                    actions.UpdateCommunicationInfo(['number'], 
+                                            'telephone')
+                   ),
         )
+
+        info_table('summary_info', cls.Donkey,
+               Text('table_name'),
+               Text('name'),
+               Text('display_name'),
+               Integer('original_id'),
+               Text('value', length = 1000))
 
 
 
@@ -649,7 +669,7 @@ class test_basic_input(test_donkey):
 
         print self.Donkey["_core"].dependant_attributes.keys()
 
-        assert set(self.Donkey["_core"].dependant_attributes.keys()) == set(['membership', 'donkey', 'people', 'donkey_people', 'upload', '_communication__core', 'user', 'user_group', 'categories'])
+        assert set(self.Donkey["_core"].dependant_attributes.keys()) == set(['donkey', 'people', 'donkey_people', 'upload', 'membership', 'user', 'user_group', '_communication__core', 'summary_info', 'categories'])
 
     def test_dependant_tables(self):
 
@@ -657,7 +677,7 @@ class test_basic_input(test_donkey):
 
         print set(self.Donkey["_core"].dependant_tables)
 
-        assert set(self.Donkey["_core"].dependant_tables) == set(['donkey', 'people', 'communication', 'donkey_people', 'upload', 'entity_categories', 'membership', 'user', 'user_group'])
+        assert set(self.Donkey["_core"].dependant_tables) == set(['donkey', 'people', 'communication', 'donkey_people', 'upload', 'entity_categories', 'membership', 'user', 'user_group', 'summary_info'])
 
     def test_parant_col_attributes(self):
 
@@ -753,10 +773,39 @@ class test_basic_input(test_donkey):
 
         telephone._core_id = core_id
         telephone.number = '121321434334'
+        telephone.defaulted = True
 
         self.session.save(telephone)
-
         self.session.commit()
+
+        assert person._rel__core.summary_info[0].value == '121321434334'
+
+        telephone2 = self.Donkey.get_instance("telephone")
+
+        telephone2._core_id = core_id
+        telephone2.number = '99999999999999'
+        telephone2.defaulted = True
+
+        self.session.save(telephone2)
+        self.session.commit()
+
+        assert person._rel__core.summary_info[0].value == '99999999999999'
+
+        telephone2.number = '111'
+        self.session.save(telephone2)
+        self.session.commit()
+
+        assert person._rel__core.summary_info[0].value == '111'
+
+        self.session.delete(telephone2)
+        self.session.commit()
+        
+        assert person._rel__core.summary_info[0].value == '121321434334'
+
+        self.session.delete(telephone)
+        self.session.commit()
+
+        assert not person._rel__core.summary_info 
 
     
     def test_set_option(self):

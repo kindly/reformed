@@ -38,6 +38,7 @@ class ResultSet(object):
         self.internal = kw.get("internal", False)
         self.count = kw.get("count", False)
         self.keep_all = kw.get("keep_all", True)
+        self.first = kw.get("first", False)
 
         self.database = search.database
 
@@ -98,6 +99,8 @@ class ResultSet(object):
 
         if self.limit:
             self.results = self.query[self.offset: self.offset + self.limit]
+        elif self.first:
+            self.results = [self.query.first()]
         else:
             self.results = self.query.all()
         self.results_length = len(self.results)
