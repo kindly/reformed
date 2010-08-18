@@ -1,3 +1,22 @@
+@font-face {
+	font-family: 'liberation';
+	src: url('LiberationSans-Regular-webfont.eot');
+	src: local('☺'), url('LiberationSans-Regular-webfont.woff') format('woff'), url('LiberationSans-Regular-webfont.ttf') format('truetype'), url('LiberationSans-Regular-webfont.svg#webfontUmY57Dll') format('svg');
+	font-weight: normal;
+	font-style: normal;
+}
+
+
+@font-face {
+	font-family: 'liberation';
+	src: url('LiberationSans-Bold-webfont.eot');
+	src: local('☺'), url('LiberationSans-Bold-webfont.woff') format('woff'), url('LiberationSans-Bold-webfont.ttf') format('truetype'), url('LiberationSans-Bold-webfont.svg#webfontiVyxKrz4') format('svg');
+	font-weight: bold;
+	font-style: normal;
+}
+
+
+
 div {
 	border:0; /* 1px solid #000; */
     background-color:transparent;
@@ -39,22 +58,24 @@ div {
 #main {
     background-color:white;
     border-left:1px solid #BBBBBB;
-    outline:0 0 5px 0 solid #999999;
 }
 
 #actions {
     background-image:url('gradall.png');
     -moz-background-size:100% 100%;
+    -webkit-background-size:100% 100%;
 }
 
 #side {
     background-image:url('gradallrev.png');
     -moz-background-size:100% 100%;
+    -webkit-background-size:100% 100%;
 }
 
 #logo {
     background-image:url('gradall.png');
     -moz-background-size:100% 100%;
+    -webkit-background-size:100% 100%;
 }
 
 #logo_image {
@@ -267,6 +288,7 @@ tr.inactive input{
     text-align:center;
     background-image:url('grad.png');
     -moz-background-size:100% 100%;
+    -webkit-background-size:100% 100%;
 /*    background-color:#9999EE;*/
 }
 
@@ -359,12 +381,10 @@ div.form_body > div > input.error {
 }
 input {
 	border:1px solid #B7A7D0;
-	color:#333;
 }
 
 div.f_error_control input {
 	border:1px solid #933;
-	color:#333;
 }
 
 td input {
@@ -585,7 +605,8 @@ td.complex.t_edited_cell div.data {
 }
 
 td, body, input, select, textarea, th {
-    font-family: arial, helvetica, sans;
+    font-family: liberation, arial, helvetica, sans;
+
 }
 
 label.form_label, span.form_label{
@@ -943,3 +964,7 @@ div.record_info > div {
 .RECORD_IMG > div > img{
     display: block;
 }
+
+
+
+

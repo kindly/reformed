@@ -7,6 +7,7 @@ import datetime
 import custom_exceptions
 import logging
 
+logger = logging.getLogger('rebase.actions')
 
 class PersistBaseClass(object):
 
@@ -25,7 +26,9 @@ class Action(PersistBaseClass):
     post_flush = False
 
     def __call__(self, action_state):
-
+        
+        logger.info(self.__class__.__name__)
+        logger.info(action_state.__dict__)
         self.run(action_state)
             
 class AddRow(Action):
@@ -198,19 +201,23 @@ class AddCommunication(Action):
         session = action_state.session
         event_type = action_state.event_type
 
-        if object._rel_communication:
-            return
+        communication = object._rel_communication
 
         if not object._core_id:
             raise ValueError("communication has not got a core_id")
 
-        communication = database.get_instance("communication")
-        communication.communication_type = table.name
+        if not communication:
+            communication = database.get_instance("communication")
+            communication.communication_type = table.name
+            object._rel_communication = communication
+            core = session.query(database["_core"]).get(object._core_id)
+            communication._rel__core = core
+        elif event_type == 'delete':
+            session.delete(communication)
+            return
 
-        object._rel_communication = communication
-
-        core = session.query(database["_core"]).get(object._core_id)
-        communication._rel__core = core
+        if hasattr(object, "defaulted") and object.defaulted:
+            communication.defaulted_date = datetime.datetime.now()
 
         session.add(communication)
         session.add(object)
@@ -357,3 +364,91 @@ class CopyTextAfterField(CopyTextAfter):
         setattr(new_obj, result_field, value)
         action_state.session.add_no_validate(new_obj)
 
+
+class UpdateCommunicationInfo(Action):
+
+    post_flush = True
+
+    def __init__(self, fields, display_name = None,
+                 name = None, separator = '\n'):
+
+        self.fields = fields
+        self.display_name = display_name
+        self.seperator = separator
+        self.name = name
+
+    def make_text(self, object):
+
+        values = []
+
+        for field in self.fields:
+            value = getattr(object, field)
+            if value:
+                values.append(value)
+
+        return self.seperator.join(values)
+
+    def set_names(self, table):
+
+        if not self.display_name:
+            self.display_name = table.name
+        if not self.name:
+            if len(self.fields) == 1:
+                self.name = self.fields[0]
+            else:
+                self.name = table.name
+
+    def run(self, action_state):
+
+        object = action_state.object
+        table = object._table
+        database = table.database
+        session = action_state.session
+        event_type = action_state.event_type
+
+        self.set_names(table)
+
+        communication = object._rel_communication
+        core = communication._rel__core
+        core_id = core.id
+
+        result = database.search(
+            table.name,
+            "communication._core_id = ? and communication.defaulted_date is ?"
+            " and communication.active = ?",
+            session = session,
+            values = [core_id, 'not null', 'true'],
+            order_by = 'communication.defaulted_date desc',
+            first = True
+        )
+
+        default_obj = result.results[0]
+
+        try:
+            result = database.search_single(
+                "summary_info",
+                "_core_id = ? and table_name = ? and name = ?",
+                session = session,
+                values = [core_id, table.name, self.name]
+            )
+            info_obj = result.results[0]
+        except custom_exceptions.SingleResultError:
+            info_obj = None
+
+        if not info_obj:
+            if not default_obj:
+                return
+            info_obj = database.get_instance("summary_info")
+            info_obj.table_name = table.name
+            info_obj.name = self.name
+            info_obj.display_name = self.display_name
+            info_obj._rel__core = core
+        elif not default_obj:
+            session.delete(info_obj)
+            return
+
+        text = self.make_text(default_obj)
+        info_obj.original_id = default_obj.id
+        info_obj.value = text
+        session.save(info_obj)
+        session.save(core)

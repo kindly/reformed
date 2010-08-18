@@ -20,6 +20,7 @@
 
 from reformed.database import table, entity, relation
 from reformed.fields import *
+import predefine
 
 
 def initialise(application):
