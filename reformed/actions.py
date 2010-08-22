@@ -203,9 +203,6 @@ class AddCommunication(Action):
 
         communication = object._rel_communication
 
-        if not object._core_id:
-            raise ValueError("communication has not got a core_id")
-
         if not communication:
             communication = database.get_instance("communication")
             communication.communication_type = table.name
@@ -370,12 +367,13 @@ class UpdateCommunicationInfo(Action):
     post_flush = True
 
     def __init__(self, fields, display_name = None,
-                 name = None, separator = '\n'):
+                 name = None, separator = '\n', only_latest = False):
 
         self.fields = fields
         self.display_name = display_name
         self.seperator = separator
         self.name = name
+        self.only_latest = only_latest
 
     def make_text(self, object):
 
@@ -443,6 +441,12 @@ class UpdateCommunicationInfo(Action):
             info_obj.name = self.name
             info_obj.display_name = self.display_name
             info_obj._rel__core = core
+        ##TODO  check this works.  It makes sure that if the current object is
+        ## then there will be no default.
+        elif (self.only_latest and info_obj.original_id == object.id):
+            if not default_obj or default_obj.id <> object.id:
+                session.delete(info_obj)
+
         elif not default_obj:
             session.delete(info_obj)
             return
@@ -452,3 +456,69 @@ class UpdateCommunicationInfo(Action):
         info_obj.value = text
         session.save(info_obj)
         session.save(core)
+
+
+class UpdateSearch(Action):
+
+    post_flush = True
+
+    def __init__(self, fields, name = None):
+
+        self.fields = fields
+        self.name = name
+
+    def make_text(self, object):
+
+        values = []
+
+        for field in self.fields:
+            value = getattr(object, field)
+            if value:
+                values.append(value)
+
+        return " ".join(values)
+
+    def set_names(self, table):
+
+        if not self.name:
+            if len(self.fields) == 1:
+                self.name = self.fields[0]
+            else:
+                self.name = table.name
+
+    def run(self, action_state):
+
+        object = action_state.object
+        table = object._table
+        database = table.database
+        session = action_state.session
+        event_type = action_state.event_type
+
+        self.set_names(table)
+
+        try:
+            result = database.search_single(
+                "search_info",
+                "_core_id = ? and table_name = ? and name = ?"
+                " and original_id = ?",
+                session = session,
+                values = [object._core_id, table.name, self.name, object.id]
+            )
+            search_obj = result.results[0]
+        except custom_exceptions.SingleResultError:
+            search_obj = None
+
+        if not search_obj:
+            search_obj = database.get_instance("search_info")
+            search_obj.table_name = table.name
+            search_obj.name = self.name
+            search_obj._core_id = object._core_id
+        else:
+            if event_type == 'delete':
+                session.delete(search_obj)
+                return
+
+        text = self.make_text(object)
+        search_obj.original_id = object.id
+        search_obj.value = text
+        session.save(search_obj)
