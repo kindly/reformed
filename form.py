@@ -24,6 +24,7 @@ import formencode
 import sqlalchemy
 import reformed.util as util
 import reformed.custom_exceptions as custom_exceptions
+from reformed.saveset import SaveItem, SaveNew
 import urllib
 from page_item import input, FormItemFactory
 
@@ -174,7 +175,7 @@ class Form(object):
         node_token.out = self.create_form_data(node_token, data_out)
         node_token.action = 'form'
 
-    def save_row(self, node_token, data, session, as_subform, parent_obj = None, relation_attr = None):
+    def save_row(self, node_token, data, session = None, as_subform = False, parent_obj = None, relation_attr = None):
         """Saves an individual database row.  Subforms are saved last and
         the subforms call this method in their own form instance. 
         relation_attr is the attribute on the newly created object that should
@@ -192,23 +193,23 @@ class Form(object):
                 result = r.search_single(self.table, "id = ?",
                                       values = [id],
                                       session = session)
-                obj = result.results[0]
-                obj._new = False
+                save_set = SaveItem(result.results[0], session)
+                save_set.new = False
             except custom_exceptions.SingleResultError:
                 form.errors[root] = 'record not found'
                 raise
 
             version = data["_version"]
-            setattr(obj, "_version", version)
-
+            save_set.set_value("_version", version)
         else:
             # new record (create blank one)
-            obj = r.get_instance(self.table)
-            obj._new = True
+            save_set = SaveNew(r, self.table, session)
+            session = save_set.session
+            save_set.new = True
             # subform data will have a parent_obj
             # which we need to link
             if parent_obj:
-                setattr(obj, relation_attr, parent_obj)
+                setattr(save_set.obj, relation_attr, parent_obj)
 
         ## prepare save data for normal fields
 
@@ -217,19 +218,19 @@ class Form(object):
         for form_item in self.form_items:
       #      if form_item.page_item_type not in ["subform", "layout"]:
       #     we may need this if we decide to save subforms with main form
-            form_item.save_page_item(node_token, obj, data, session)
+            form_item.save_page_item(node_token, save_set, data, session)
 
         if as_subform:
             child_id = self.child_id
-            setattr(obj, child_id, data[child_id])
+            setattr(save_set.obj, child_id, data[child_id])
 
-        try:
-            session.save_or_update(obj)
-        except formencode.Invalid, e:
-            print "failed to save\n%s" % e.msg
-            errors = {}
-            for key, value in e.error_dict.items():
-                errors[key] = value.msg
+        errors = save_set.save()
+
+        if errors:
+            print "failed to save" 
+            if not hasattr(node_token, "errors"):
+                node_token.errors = {}
+            
             node_token.errors[root] = errors
 
 # FIXME subform 
@@ -238,7 +239,7 @@ class Form(object):
 ###                continue
 ###            form_item.save(self, self.node, obj, data, session)
 
-        return obj
+        return save_set
 
     def save(self, node_token, as_subform = False):
         """Save this form. Its job is to set up the node belongs to 
@@ -256,9 +257,7 @@ class Form(object):
         data = node_token.data
 
         try:
-            obj = self.save_row(node_token, data, session, as_subform)
-            if not node_token.errors:
-                session.commit()
+            save_set = self.save_row(node_token, data, session)
         except Exception, e:
             session.rollback()
             session.close()
@@ -273,7 +272,8 @@ class Form(object):
             node_token.out['saved'] = node_token.saved
 
 
-        if obj._new:
+        if save_set.new:
+            obj = save_set.obj
             if self.title_field:
                 title = getattr(obj, self.title_field)
             else:
