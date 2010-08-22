@@ -18,7 +18,7 @@
 ##   Copyright (c) 2008-2009 Toby Dacre & David Raznick
 ##
 
-from reformed.database import table, entity, relation
+from reformed.database import table, entity, relation, info_table
 from reformed.fields import *
 import predefine
 
@@ -44,16 +44,15 @@ def initialise(application):
            CreatedBy("created_by"),
 
            title_field = "title",
-           summary_fields = "summary"
+           summary_fields = "summary",
+           valid_info_tables = "comment role",
     )
 
-    table("comment", database, ## notes for each user
-          ManyToOne("entity", "_core"),
+    info_table("comment", database, ## notes for each user
           Created("created_date"),
           CreatedBy("created_by"),
           Text("note", length = 4000),
 
-          valid_entities = "ticket"
     )
 
     relation("involvement", database,
@@ -61,16 +60,15 @@ def initialise(application):
           Created("created_date"),
           CreatedBy("created_by"),
 
-          valid_entities1 = "ticket",
-          valid_entities2 = "user,usergroup",
+          primary_entities = "ticket",
+          secondary_entities = "user usergroup",
           table_type = "system",
     )
 
 
-    table("role", database, ## notes for each user
+    info_table("role", database, ## notes for each user
           Text("name", mandatory = True),
           Text("desctiption", length = 2000),
-          valid_entities = "ticket",
           table_type = "system",
     )
 
