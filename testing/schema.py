@@ -51,7 +51,7 @@ def initialise(application):
            Text('postcode', generator = dict(name = 'postcode')),
            Text('notes', length = 1000),
            Boolean('active'),
-           LookupId('colour', many_side_not_null = False),
+           LookupId('colour', many_side_not_null = False, generator = dict(name = 'lookup', params = dict(table = 'colour' , field = 'id'))),
 
            Event('new change', CopyValue('image', 'primary_entity._core_entity.thumb')),
 

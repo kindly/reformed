@@ -119,6 +119,7 @@ class DataGenerator(object):
             sex = self.get_sex,
             phone = self.make_phone,
             core = self.make_core,
+            lookup = self.make_lookup,
         )
 
         # text data_types
@@ -361,7 +362,6 @@ class DataGenerator(object):
 
     def make_random_chars(self, min = 0, max = 50):
         out = u''
-        print min, max
         for i in xrange(random.randint(min, max)):
             out += chr(random.randint(32, 127))
         return out
@@ -535,7 +535,7 @@ class DataGenerator(object):
             # set the value
             if value is not None:
                 setattr(obj, field['name'], value)
-                print field['name'], value
+                #print field['name'], value
 
 class Generator(object):
 
@@ -585,10 +585,11 @@ class Generator(object):
 
                 try:
                     session.save(obj)
-                except Invalid:
+                except Invalid, e:
                     # cannot save due to validation error
                     # skip this attempt
                     batch_size -= 1
+                    print 'RECORD fail', e
 
             session.commit()
             number_generated += batch_size
