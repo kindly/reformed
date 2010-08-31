@@ -287,9 +287,11 @@ class SessionWrapper(object):
                 continue
             table = get_table_from_instance(obj, self.database)
             if table.entity == True:
-                core = self.database.get_instance("_core")
+                core = obj._rel__core
+                if not core:
+                    core = self.database.get_instance("_core")
+                    obj._rel__core = core
                 core.type = unicode(table.name)
-                obj._rel__core = core
                 entity = self.database.get_instance("_core_entity")
                 entity.table = unicode(table.name)
                 core._rel_primary_entity = entity
@@ -297,9 +299,11 @@ class SessionWrapper(object):
                 self.add(core)
                 self.add(entity)
             elif table.relation == True:
-                core = self.database.get_instance("_core")
+                core = obj._rel__core
+                if not core:
+                    core = self.database.get_instance("_core")
+                    obj._rel__core = core
                 core.type = unicode(table.name)
-                obj._rel__core = core
                 table = obj._table
                 primary_id = obj._primary 
                 secondary_id = obj._secondary

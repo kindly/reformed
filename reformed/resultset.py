@@ -136,16 +136,13 @@ class ResultSet(object):
 
 class Result(object):
 
-    def __init__(self, search, row = None):
+    def __init__(self, search, data):
 
         self.search = search
         self.data = None
 
-        if row:
-            self.data = row
-            self.new = False
-        else:
-            self.new = True
+        self.data = data 
+        self.select_path_list = self.search.select_path_list 
 
     def get(self, name):
 
@@ -157,12 +154,12 @@ class Result(object):
 
         field = name.split(".")[-1]
 
-        if self.search.select_path_list:
+        if self.select_path_list:
             if table == self.search.table:
                 obj = self.data[0]
             else:
                 node_path = tuple(node.path)
-                index = self.search.select_path_list.index(node_path) + 1
+                index = self.select_path_list.index(node_path) + 1
                 obj = self.data[index]
         else:
             obj = self.data

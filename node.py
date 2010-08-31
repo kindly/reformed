@@ -50,12 +50,6 @@ class Node(object):
         # FIXME can this die?
         self.name = node_name
 
-        # dict of any static forms that have been created
-        self._forms = {}
-        # dict of forms this node contains (built on first run)
-        self._available_forms = {}
-
-
         self.volatile = False # set to True if forms are volatile
 
         self.extra_data = {}
@@ -63,6 +57,8 @@ class Node(object):
         # do any command setup
         if self.__class__.first_run:
             # initiate any forms
+            self.__class__._forms = {}
+            self.__class__._available_forms = {}
             self.initiate_forms()
 
             self.__class__.first_run = False
@@ -71,7 +67,7 @@ class Node(object):
             self.setup_extra_commands()
 
     def __repr__(self):
-        return '<Node `%s`>' % node.name
+        return '<Node `%s`>' % self.name
 
     def initiate_forms(self):
         # find all the form in this node

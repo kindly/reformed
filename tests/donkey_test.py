@@ -224,6 +224,8 @@ class test_donkey(object):
                     actions.UpdateCommunicationInfo(['number'], 
                                             'telephone')
                    ),
+              Event('new change delete',
+                    actions.UpdateSearch(['number'])),
         )
 
         info_table('summary_info', cls.Donkey,
@@ -233,6 +235,12 @@ class test_donkey(object):
                Integer('original_id'),
                Text('value', length = 1000))
 
+        info_table('search_info', cls.Donkey,
+                   Text('table_name'),
+                   Text('name'),
+                   Integer('original_id'),
+                   Text('value', length = 1000),
+                  )
 
 
         cls.Donkey.persist()
@@ -669,7 +677,7 @@ class test_basic_input(test_donkey):
 
         print self.Donkey["_core"].dependant_attributes.keys()
 
-        assert set(self.Donkey["_core"].dependant_attributes.keys()) == set(['donkey', 'people', 'donkey_people', 'upload', 'membership', 'user', 'user_group', '_communication__core', 'summary_info', 'categories'])
+        assert set(self.Donkey["_core"].dependant_attributes.keys()) == set(['donkey', 'people', 'donkey_people', 'upload', 'search_info', 'membership', 'user', 'user_group', '_communication__core', 'summary_info', 'categories'])
 
     def test_dependant_tables(self):
 
@@ -677,7 +685,7 @@ class test_basic_input(test_donkey):
 
         print set(self.Donkey["_core"].dependant_tables)
 
-        assert set(self.Donkey["_core"].dependant_tables) == set(['donkey', 'people', 'communication', 'donkey_people', 'upload', 'entity_categories', 'membership', 'user', 'user_group', 'summary_info'])
+        assert set(self.Donkey["_core"].dependant_tables) == set(['donkey', 'people', 'communication', 'donkey_people', 'upload', 'search_info', 'entity_categories', 'membership', 'user', 'user_group', 'summary_info'])
 
     def test_parant_col_attributes(self):
 

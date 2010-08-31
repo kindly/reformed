@@ -9,7 +9,7 @@ def initialise(application):
 
     table("_core", database,
         Text("type"),
-        ForeignKey("primary_entity_id", "_core_entity", mandatory = True),
+        ForeignKey("primary_entity_id", "_core_entity", ),
         ForeignKey("secondary_entity_id", "_core_entity", ),
         modified_by = False,
         modified_date = False

@@ -70,13 +70,13 @@ class FormItem(object):
         self.params.update(params)
 
 
-    def save_page_item(self, node_token, object, data, session):
+    def save_page_item(self, node_token, save_set, data, session):
         # TD doc string
 
         # check we are allowed to save this item
         # TD what about invisibles?
         if authenticate.check_permission(self.permissions):
-            self.custom_control_save(node_token, object, data, session)
+            self.custom_control_save(node_token, save_set, data, session)
 
 
     def display_page_item(self, node_token, result, data, session):
@@ -101,7 +101,7 @@ class FormItem(object):
             return self.custom_page_item_structure(node_token, data)
 
 
-    def custom_control_save(self, node_token, object, data, session):
+    def custom_control_save(self, node_token, save_set, data, session):
         """save the data to the database object.
         override for custom behaviour"""
         pass
@@ -176,12 +176,12 @@ class FormControl(FormItem):
             pass
 
 
-    def custom_control_save(self, node_token, object, data, session):
+    def custom_control_save(self, node_token, save_set, data, session):
         """save the data to the database object.
         override for custom behaviour"""
-        if self.name in object._table.fields:
-            value = data.get(self.name)
-            setattr(object, self.name, value)
+
+        value = data.get(self.name)
+        save_set.set_value(self.name, value) 
 
 
 class Password(FormControl):
@@ -191,12 +191,11 @@ class Password(FormControl):
     def custom_control_display(self, node_token, result, data, session):
         pass
 
-    def custom_control_save(self, node_token, object, data, session):
-        if self.name in object._table.fields:
-            value = data.get(self.name)
-            if value:
-                setattr(object, self.name, value)
+    def custom_control_save(self, node_token, save_set, data, session):
 
+        value = data.get(self.name)
+        if value:
+            save_set.set_value(self.name, value) 
 
 
 class ActionItem(FormControl):
@@ -244,7 +243,7 @@ class SubForm(FormItem):
         subform = self.form.node[self.name]
         data[self.name] = subform.load_subform(node_token, result, data, session)
 
-    def custom_control_save(self, node_token, object, data, session):
+    def custom_control_save(self, node_token, save_item, data, session):
 
         subform = self.form.node[self.name]
 
@@ -490,10 +489,10 @@ class CodeGroup(FormControl):
 
         self.join_key = self.relation.join_keys_from_table(self.flag_table)[0][0]
 
-    def custom_control_save(self, node_token, object, data, session):
+    def custom_control_save(self, node_token, save_set, data, session):
         # FIXME this is broken
 
-        code_groups = getattr(object, self.relation_attr)
+        code_groups = getattr(save_set.object, self.relation_attr)
         code_group_data = data.get(self.name, [])
         yes_codes = set()
         no_codes = set()
