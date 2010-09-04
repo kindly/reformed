@@ -74,6 +74,9 @@ class Database(object):
 
         self.tables = {}
 
+        self.search_actions = {}
+        self.search_names = {}
+
         self.zodb_tables_init()
 
         self.load_from_persist()
@@ -88,6 +91,7 @@ class Database(object):
         if "tables" not in root:
             root["tables"] = PersistentMapping()
             root["table_count"] = 0
+            root["event_count"] = 0
             transaction.commit()
         connection.close()
 
@@ -430,6 +434,7 @@ class Database(object):
                         info_table = self.tables[valid_info_table]
                         assert info_table.info_table
                         info_table.valid_core_types.append(table.name)
+            self.collect_search_actions()
 
 
         except (custom_exceptions.NoDatabaseError,\
@@ -457,6 +462,8 @@ class Database(object):
             table.valid_core_types = []
 
         self.graph = None
+        self.search_actions = {}
+        self.search_names = {}
 
 
     def tables_with_relations(self, table):
@@ -612,6 +619,17 @@ class Database(object):
     def validate_database(self):
 
         return validate_database.validate_database(self)
+
+    def collect_search_actions(self):
+
+        for table in self.tables.itervalues():
+            for action in table.events["new"]:
+                if isinstance(action, actions.UpdateSearch):
+                    self.search_actions[action.event_id] = (table.name, action)
+                    ## FIXME there can be duplicate names so they will overwrite 
+                    action.set_names(table.name)
+                    self.search_names[action.name] = action.event_id
+
 
 
     def make_graph(self):

@@ -25,6 +25,13 @@ class Action(PersistBaseClass):
 
     post_flush = False
 
+    def __new__(cls, *arg, **kw):
+        obj = PersistBaseClass.__new__(cls, *arg, **kw)
+        obj.event_id = None
+        if "event_id" in kw:
+            obj.event_id = kw.pop("event_id")
+        return obj
+
     def __call__(self, action_state):
         
         logger.info(self.__class__.__name__)
@@ -33,7 +40,7 @@ class Action(PersistBaseClass):
             
 class AddRow(Action):
 
-    def __init__(self, related_table, pre_flush = True):
+    def __init__(self, related_table, pre_flush = True, **kw):
 
         self.related_table = related_table
         self.pre_flush = pre_flush
@@ -60,7 +67,7 @@ class AddRow(Action):
 
 class DeleteRows(Action):
 
-    def __init__(self, related_table):
+    def __init__(self, related_table, **kw):
 
         self.related_table = related_table
 
@@ -83,7 +90,7 @@ class DeleteRows(Action):
 
 class SumEvent(Action):
 
-    def __init__(self, result_field, number_field):
+    def __init__(self, result_field, number_field, **kw):
 
         self.result_field = result_field
         self.number_field = number_field
@@ -136,7 +143,7 @@ class SumEvent(Action):
 
 class CountEvent(Action):
 
-    def __init__(self, result_field, number_field):
+    def __init__(self, result_field, number_field, **kw):
 
         self.result_field = result_field
         self.number_field = number_field
@@ -366,14 +373,13 @@ class UpdateCommunicationInfo(Action):
 
     post_flush = True
 
-    def __init__(self, fields, display_name = None,
-                 name = None, separator = '\n', only_latest = False):
+    def __init__(self, fields, display_name = None, **kw):
 
         self.fields = fields
         self.display_name = display_name
-        self.seperator = separator
-        self.name = name
-        self.only_latest = only_latest
+        self.seperator = kw.get("seperator", "\n")
+        self.name = kw.get("name")
+        self.only_latest = kw.get("only_latest", False)
 
     def make_text(self, object):
 
@@ -462,10 +468,37 @@ class UpdateSearch(Action):
 
     post_flush = True
 
-    def __init__(self, fields, name = None):
+    def __init__(self, fields, index_type = "text",
+                 type = None, name = None, **kw):
 
         self.fields = fields
         self.name = name
+        self.type = type or index_type
+
+        self.cleaner = getattr(self, self.type)
+
+        self.index_type = index_type
+        self.weight = kw.get("weight", None)
+        self.stem = kw.get("stem", False)
+
+    def text(self, txt):
+        return unicode(txt)
+
+    def datetime(self, date):
+        return date.date().isoformat()
+
+    def only_numbers(self, txt):
+        chars = []
+        for char in txt:
+            try:
+                int(char)
+                chars.append(char)
+            except ValueError:
+                continue
+        return "".join(chars)
+
+    def upper_no_space(self, txt):
+        return txt.upper().replace(" ", "")
 
     def make_text(self, object):
 
@@ -474,7 +507,7 @@ class UpdateSearch(Action):
         for field in self.fields:
             value = getattr(object, field)
             if value:
-                values.append(value)
+                values.append(self.cleaner(value))
 
         return " ".join(values)
 
@@ -499,10 +532,10 @@ class UpdateSearch(Action):
         try:
             result = database.search_single(
                 "search_info",
-                "_core_id = ? and table_name = ? and name = ?"
+                "_core_id = ? and table = ? and field = ?"
                 " and original_id = ?",
                 session = session,
-                values = [object._core_id, table.name, self.name, object.id]
+                values = [object._core_id, table.table_id, self.event_id, object.id]
             )
             search_obj = result.results[0]
         except custom_exceptions.SingleResultError:
@@ -510,8 +543,8 @@ class UpdateSearch(Action):
 
         if not search_obj:
             search_obj = database.get_instance("search_info")
-            search_obj.table_name = table.name
-            search_obj.name = self.name
+            search_obj.table = table.table_id
+            search_obj.field = self.event_id
             search_obj._core_id = object._core_id
         else:
             if event_type == 'delete':
@@ -519,6 +552,13 @@ class UpdateSearch(Action):
                 return
 
         text = self.make_text(object)
+        if not text and event_type == 'new':
+            return
+
+        search_pending = database.get_instance("search_pending")
+        search_pending._core_id = object._core_id
+        session.save(search_pending)
+
         search_obj.original_id = object.id
         search_obj.value = text
         session.save(search_obj)

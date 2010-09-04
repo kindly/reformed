@@ -65,6 +65,9 @@ class test_donkey(object):
               ManyToOne("over_18", "code", foreign_key_name = "over_18_id", backref = "over_18", many_side_not_null = False), ##enumeration look up table
               
               Event("new", actions.AddRow("contact_summary")),
+              Event('new change delete',
+                    actions.UpdateSearch(['name'])),
+
               valid_info_tables  = 'membership',
 
               entity = True,
@@ -221,25 +224,29 @@ class test_donkey(object):
               Text('number'),
               Event('new delete', actions.AddCommunication()),
               Event('new change delete',
-                    actions.UpdateCommunicationInfo(['number'], 
-                                            'telephone')
+                    actions.UpdateCommunicationInfo(['number'])
                    ),
               Event('new change delete',
-                    actions.UpdateSearch(['number'])),
+                    actions.UpdateSearch(['number'], type = "only_numbers")),
         )
 
-        info_table('summary_info', cls.Donkey,
-               Text('table_name'),
-               Text('name'),
-               Text('display_name'),
-               Integer('original_id'),
-               Text('value', length = 1000))
-
-        info_table('search_info', cls.Donkey,
-                   Text('table_name'),
-                   Text('name'),
+        table('search_info', cls.Donkey,
+                   Integer('_core_id'),
+                   Integer('table'),
+                   Integer('field'),
                    Integer('original_id'),
                    Text('value', length = 1000),
+                   modified_date = False,
+                   modified_by = False,
+                   version = False,
+                  )
+
+        table('search_pending', cls.Donkey,
+                   Integer('_core_id'),
+                   Created('created'),
+                   modified_date = False,
+                   modified_by = False,
+                   version = False,
                   )
 
 
@@ -677,7 +684,7 @@ class test_basic_input(test_donkey):
 
         print self.Donkey["_core"].dependant_attributes.keys()
 
-        assert set(self.Donkey["_core"].dependant_attributes.keys()) == set(['donkey', 'people', 'donkey_people', 'upload', 'search_info', 'membership', 'user', 'user_group', '_communication__core', 'summary_info', 'categories'])
+        assert set(self.Donkey["_core"].dependant_attributes.keys()) == set(['donkey', 'people', 'donkey_people', 'upload', 'membership', 'user', 'user_group', '_communication__core', 'summary_info', 'categories'])
 
     def test_dependant_tables(self):
 
@@ -685,7 +692,7 @@ class test_basic_input(test_donkey):
 
         print set(self.Donkey["_core"].dependant_tables)
 
-        assert set(self.Donkey["_core"].dependant_tables) == set(['donkey', 'people', 'communication', 'donkey_people', 'upload', 'search_info', 'entity_categories', 'membership', 'user', 'user_group', 'summary_info'])
+        assert set(self.Donkey["_core"].dependant_tables) == set(['donkey', 'people', 'communication', 'donkey_people', 'upload', 'entity_categories', 'membership', 'user', 'user_group', 'summary_info'])
 
     def test_parant_col_attributes(self):
 
@@ -874,6 +881,13 @@ class test_basic_input(test_donkey):
         pprint.pprint(self.Donkey["people"].table_path)
 
         aa = get_paths(self.Donkey.graph, "people")
+
+
+    def test_search_objects(self):
+
+
+        assert len(self.Donkey.search_actions) == 2
+
 
 
 

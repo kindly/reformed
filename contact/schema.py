@@ -14,20 +14,32 @@ def initialise(application):
 
     database = application.database
 
+    table('search_info', database,
+               Integer('_core_id'),
+               Integer('table'),
+               Integer('field'),
+               Integer('original_id'),
+               Text('value', length = 1000),
+               modified_date = False,
+               modified_by = False,
+               version = False,
+              )
+
+
+    table('search_pending', database,
+               Integer('_core_id'),
+               Created('created'),
+               modified_date = False,
+               modified_by = False,
+               version = False,
+              )
+
     info_table('summary_info', database,
                Text('table_name'),
                Text('name'),
                Text('display_name'),
                Integer('original_id'),
-               Text('value', length = 1000)
-              )
-
-    info_table('search_info', database,
-               Text('table_name'),
-               Text('name'),
-               Integer('original_id'),
-               Text('value', length = 1000),
-              )
+               Text('value', length = 1000))
 
     info_table('note', database,
                Text('note', length = 1000),
@@ -45,6 +57,12 @@ def initialise(application):
            CreatedBy('created_by'),
            Thumb('image'),
            Event('new change', CopyValue('image', 'primary_entity._core_entity.thumb')),
+           Event('new change delete',
+                UpdateSearch(['name'])
+                ),
+           Event('new change delete',
+                UpdateSearch(['dob'], "datetime")
+                ),
            title_field = 'name',
            default_node = 'new_person.People',
            valid_info_tables = "communication summary_info note"
@@ -73,17 +91,17 @@ def initialise(application):
           Text('number', generator = dict(name = 'phone')),
           Event('new', AddCommunication()),
           Event('new change delete',
-                UpdateCommunicationInfo(['number'], 
-                                        'telephone')),
+                UpdateCommunicationInfo(['number'])),
           Event('new change delete',
-                UpdateSearch(['number'])),
+                UpdateSearch(['number'], 
+                              type = 'only_numbers')),
           table_class = 'communication',
     )
 
     table('email', database,
           Integer("_core_id", mandatory = True),
           ForeignKey('communication_id', 'communication'),
-          Email('email'),
+          Email('email', mandatory = True),
           Event('new', AddCommunication()),
           Event('new change delete',
                 UpdateCommunicationInfo(['email'])),

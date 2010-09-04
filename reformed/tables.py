@@ -136,8 +136,7 @@ class Table(object):
         self.default_node = kw.get("default_node", None)
 
         self.primary_key_list = []
-        #self.events = []
-        self.initial_events = []
+
         if self.primary_key:
             self.primary_key_list = self.primary_key.split(",")
 
@@ -249,6 +248,11 @@ class Table(object):
         root = connection.root()
         table = root["tables"][self.name]
         events = table["events"][event_type]
+        if not action.event_id:
+            event_count = root["event_count"] + 1
+            root["event_count"] = event_count
+            action._kw["event_id"] = event_count
+            action.event_id = event_count
 
         events.append(
             PersistentList(
@@ -1062,10 +1066,13 @@ class Table(object):
             properties[relation.name] = sa.orm.relation(other_class,
                                                     **sa_options)
 
+        mapper_kw = dict(properties = properties)
+        if self.version:
+            mapper_kw["version_id_col"] = self.sa_table.c._version
+
         self.mapper = mapper(self.sa_class,
                              self.sa_table,
-                             properties = properties,
-                             version_id_col = self.sa_table.c._version)
+                             **mapper_kw)
 
     def make_paths(self):
 
