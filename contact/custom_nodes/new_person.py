@@ -43,7 +43,7 @@ class MakeContact(Node):
         input('name', label = 'Name'),
         input('email.email', label = 'Email'),
         input('note.note', label = 'Note'),
-        button_box([['save', 'new_person.SaveContact:_save:'],
+        button_box([['save', 'new_person.SaveContact:_:'],
                     ['cancel', 'BACK'],]
                    ),
         params =  {"form_type": "normal"},
@@ -58,7 +58,6 @@ class MakeContact(Node):
         node_token.out["data"]["__message"] = "Enter details"
 
 class SaveContact(MakeContact):
-
 
     def call(self, node_token):
         self["main"].save(node_token, node_token.data)

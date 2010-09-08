@@ -22,6 +22,7 @@ import shutil
 import threading
 import os
 import time
+import glob
 import os.path
 import sys
 from sqlalchemy import MetaData, create_engine
@@ -35,6 +36,9 @@ import reformed.job_scheduler as job_scheduler
 import predefine
 import logging
 import node_runner
+import full_text_index
+import whoosh
+from whoosh.index import create_in, open_dir
 import os
 from ZODB import FileStorage, DB
 from zc.lockfile import LockError
@@ -79,6 +83,9 @@ class Application(object):
         # zodb data store
         self.zodb = None
 
+        # full text search schema
+        self.schema = None
+
         # system info
         self.sys_info = {}  # used for quick access to the system variables
         self.sys_info_full = {} # store of the full system info
@@ -107,6 +114,10 @@ class Application(object):
             # FIXME this should just delete the file and catch the not exist case
             if os.path.exists(zodb_path):
                 os.remove(zodb_path)
+        # delete index
+        all_index_files = glob.glob(os.path.join(self.application_folder, "index") + "/*.*")
+        for path in all_index_files:
+            os.remove(path)
 
         # delete main database tables
         engine = create_engine(self.connection_string)
@@ -362,6 +373,28 @@ class Application(object):
         zodb = DB(storage)
 
         return zodb
+
+    def make_index_schema(self):
+
+        if not self.schema:
+            self.schema = full_text_index.make_schema(self)
+
+    def initialise_index(self):
+        
+        self.initialise_database()
+        self.make_index_schema()
+        index_location = os.path.join(self.application_folder, 'index')
+
+        all_files = glob.glob(index_location + "/*.*")
+        
+        if not all_files:
+            self.text_index = create_in(index_location, self.schema)
+        else:
+            self.text_index = open_dir(index_location)
+
+        full_text_index.index_database(self)
+
+
 
 
 class ManagerThread(threading.Thread):

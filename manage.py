@@ -167,6 +167,8 @@ def undump():
     print 'undumping data'
     load_json_from_file('data/users.json', application.database, 'user')
 
+def index_database():
+    application.initialise_index()
 
 def output_sys_info():
 
@@ -337,6 +339,9 @@ if __name__ == "__main__":
     parser.add_option("--port", dest = "port", action="store",
                       default = False,
                       help="web server port")
+    parser.add_option("-i", "--index",
+                      action="store_true", dest="index",
+                      help="index the database based on search info table")
     parser.add_option("-s", "--ssl",
                       action="store_true", dest="ssl",
                       help="serve using ssl")
@@ -395,6 +400,8 @@ if __name__ == "__main__":
         application.initialise_database()
         database = application.database
         code.interact(local=locals())
+    if options.index:
+        index_database()
     if options.generate:
         generate_data()
     if options.create:

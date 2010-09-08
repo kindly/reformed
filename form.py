@@ -222,7 +222,8 @@ class Form(object):
 
         if as_subform:
             child_id = self.child_id
-            setattr(save_set.obj, child_id, data[child_id])
+            save_set.set_value(child_id, data[child_id])
+            #setattr(save_set.obj, child_id, data[child_id])
 
         errors = save_set.save()
 
@@ -257,7 +258,7 @@ class Form(object):
         data = node_token.data
 
         try:
-            save_set = self.save_row(node_token, data, session)
+            save_set = self.save_row(node_token, data, session, as_subform = as_subform)
         except Exception, e:
             session.rollback()
             session.close()
