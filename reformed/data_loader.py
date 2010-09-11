@@ -12,6 +12,7 @@ import Queue
 import sqlalchemy as sa
 from multiprocessing import Pool
 import multiprocessing
+import saveset
 
 logger = logging.getLogger('reformed.main')
 reformed_database = None
@@ -750,4 +751,57 @@ class SingleRecord(object):
                     self.process_dict(names + [n], v)
                 else:
                     self.process_dict(names + [0, n], v)
-            
+
+class SingleSaveSet(object):
+
+    def __init__(self, database, data, session = None):
+
+        if not session:
+            self.session = database.Session()
+        else:
+            self.session = session
+
+        self.session = database.Session()
+
+        self.database = database
+        self.table = data.pop("__table")
+        self.rtable = database[self.table]
+        self.save_set = saveset.SaveNew(database, self.table, self.session)
+
+        self.save_set.save_values = data
+
+    def save(self, finish = True):
+
+        errors = self.save_set.save(finish)
+        if finish:
+            self.session.close()
+        return errors
+
+class MultipleSaveSet(object):
+
+    def __init__(self, database, data, session = None):
+
+        if not session:
+            self.session = database.Session()
+        else:
+            self.session = session
+
+        self.session = database.Session()
+
+        self.database = database
+
+
+
+        self.table = data.pop("__table")
+        self.rtable = database[self.table]
+        self.save_set = saveset.SaveNew(database, self.table, self.session)
+
+        self.save_set.save_values = data
+
+
+
+
+
+
+
+

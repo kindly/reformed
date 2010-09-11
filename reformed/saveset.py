@@ -26,7 +26,7 @@ import custom_exceptions
 
 class SaveNew(object):
 
-    def __init__(self, database, table, session = None, defer_core_save = False):
+    def __init__(self, database, table, session = None):
 
         if not session:
             self.session = database.Session()
@@ -89,9 +89,12 @@ class SaveNew(object):
             raise
         return result.results[0]
 
-    def create_main_saveitem(self):
+    def set_main_obj(self):
 
-        if self.rtable.relation or self.rtable.entity:
+        if self.obj:
+            return
+
+        if self.rtable.relation or self.rtable.entity or not self.obj:
             core_id_field = self.path_to_defined_name.get(((), "_core_id"))
             if core_id_field:
                 self.core_id = self.save_values[core_id_field]
@@ -111,7 +114,10 @@ class SaveNew(object):
                 obj = self.database.get_instance(self.table)
 
         self.obj = obj
-        self.save_items[()] = SaveItem(obj, self.session)
+
+    def create_main_saveitem(self):
+
+        self.save_items[()] = SaveItem(self.obj, self.session)
 
     def update_core_id(self):
 
@@ -149,12 +155,15 @@ class SaveNew(object):
         for (path, field_name), value in self.path_to_value.iteritems():
             self.save_items[path].set_value(field_name, value)
 
-    def prepare(self):
+    def prepare(self, obj = None):
+
+        self.obj = obj
 
         self.process_values()
+        self.set_main_obj()
         self.create_main_saveitem()
 
-    def save(self):
+    def save(self, finish = True):
 
         if not self.paths:
             self.prepare()
@@ -168,10 +177,11 @@ class SaveNew(object):
                 field = self.path_to_defined_name[(path, key)]
                 all_errors[field] = value
 
-        if all_errors:
-            self.session.rollback()
-        else:
-            self.session.commit()
+        if finish:
+            if all_errors:
+                self.session.rollback()
+            else:
+                self.session.commit()
 
         return all_errors
             

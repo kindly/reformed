@@ -60,7 +60,7 @@ class MakeContact(Node):
 class SaveContact(MakeContact):
 
     def call(self, node_token):
-        self["main"].save(node_token, node_token.data)
+        self["main"].save_row(node_token, node_token.data)
         node_token.action = 'redirect'
         node_token.link = 'BACK'
 
