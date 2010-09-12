@@ -1508,7 +1508,7 @@ $.StatusForm = function(input){
             message = String(message).replace(/\n/g, '<br/>');
         }
         $('#status_job_id').text(data.id);
-        $('#status_job_started').text(data.start);
+        $('#status_job_started').text($.Util.format_data(data.start, 'd'));
         $('#status_job_message').html(message);
         if (data.percent === null){
             data.percent = 0;
