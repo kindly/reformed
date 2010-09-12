@@ -676,6 +676,29 @@ $.Util.FormDataCache = {};
 
 $.Util.FormDataCacheInfo = {};
 
+$.Util.FormData = {};
+$.Util.FormDataLastNode = undefined;
+
+$.Util.FormDataProcessAll = function (forms_data, node) {
+ //   if (node != $.Util.FormDataLastNode){
+  //      $.Util.FormDataLastNode = node;
+        $.Util.FormData = {};
+ //   }
+    var form_data;
+    for (var form in forms_data){
+        //console_log(form);
+        form_data = {};
+        form_data.data = forms_data[form].data
+        form_data.paging = forms_data[form].paging
+        form_data.form = $.Util.FormDataProcess(forms_data[form].form, node)
+        $.Util.FormData[form] = form_data;
+    }
+        //console_log($.Util.FormData);
+    return $.Util.FormData;
+}
+
+
+
 $.Util.FormDataProcess = function (form_data, node) {
     /* If we have a suitable version in the form cache
      * then just return that else normalise the form.
