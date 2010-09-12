@@ -965,6 +965,39 @@ div.record_info > div {
     display: block;
 }
 
+.INPUT_FORM{
+    float:left;
+    clear: both;
+    width: 100%;
+}
 
 
+.LAYOUT_COL_LEFT{
+    float:left;
+    position:relative;
+    width: 60%;
+    overflow: hidden;
+}
+
+.LAYOUT_COL_LEFT .STYLE{
+    position: relative;
+    border: 1px solid red;
+}
+.LAYOUT_COL_RIGHT{
+    float:left;
+    width: 40%;
+}
+
+.LAYOUT_COL_FULL{
+    float:left;
+    clear: both;
+    width: 100%;
+
+}
+
+.FORM_HOLDER{
+    float:left;
+    position:relative;
+    width:100%;
+}
 
