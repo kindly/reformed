@@ -169,7 +169,7 @@ class Form(object):
 
 
 
-    def save_row(self, node_token, session = None, as_subform = False, parent_obj = None, relation_attr = None):
+    def save_row(self, node_token, session = None):
         """Saves an individual database row.  Subforms are saved last and
         the subforms call this method in their own form instance.
         relation_attr is the attribute on the newly created object that should
@@ -182,8 +182,8 @@ class Form(object):
         id = data.get('id')
         root = data.get('__root')
 
-        # existing record
         if id:
+            # existing record
             try:
                 result = r.search_single(self.table, "id = ?",
                                       values = [id],
@@ -201,26 +201,15 @@ class Form(object):
             save_set = SaveNew(r, self.table, session)
             session = save_set.session
             save_set.new = True
-            # subform data will have a parent_obj
-            # which we need to link
-            if parent_obj:
-                setattr(save_set.obj, relation_attr, parent_obj)
 
         ## prepare save data for normal fields
 
         # TD we loop through the form items and try to save them
-
         for form_item in self.form_items:
-      #      if form_item.page_item_type not in ["subform", "layout"]:
-      #     we may need this if we decide to save subforms with main form
             form_item.save_page_item(node_token, save_set, data, session)
 
-        if as_subform:
-            child_id = self.child_id
-            save_set.set_value(child_id, data[child_id])
-            #setattr(save_set.obj, child_id, data[child_id])
-
         errors = save_set.save()
+
         # FIXME get errors working again :)
 ####        errors = {}
 ####        try:
