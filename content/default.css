@@ -943,7 +943,7 @@ div.record_info > div {
 }
 
 .RECORD_IMG {
-    float:right;
+    float:left;
     position:relative;
     width:300px;
     height:300px;
