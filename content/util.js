@@ -259,9 +259,15 @@ $.Util.format_data = function (data, format){
             // general date
         case 'df':
             // date full
+            if (!data){
+                return ''
+            }
             return Date.ISO(data).toLocaleString();
         case 'ds':
             // short date
+            if (!data){
+                return ''
+            }
             return Date.ISO(data).toLocaleDateString();
         default:
             // unknown

@@ -1063,7 +1063,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         var errors = validate_form_data(data);
         if ($.Util.is_empty(errors)){
             //FIXME Toby {id}  if (fields){
-            return data;
+            return {form:form_data.name, data : data};
         } else {
             save_errors(errors)
             return false;
