@@ -25,8 +25,8 @@ class NewPerson(Node):
     )
 
     def call(self, node_token):
-        self['main'].show(node_token)
-        node_token.out["data"]["__message"] = "Add new person."
+        data = dict(__message = "Add new person.")
+        self['main'].show(node_token, data)
 
 class EvaluateDuplicate(Node):
 
@@ -54,13 +54,13 @@ class MakeContact(Node):
     table = "people"
 
     def call(self, node_token):
-        self["main"].show(node_token)
-        node_token.out["data"]["__message"] = "Enter details"
+        data = dict(__message = "Enter details")
+        self["main"].show(node_token, data)
 
 class SaveContact(MakeContact):
 
     def call(self, node_token):
-        self["main"].save(node_token, node_token.data)
+        self["main"].save(node_token)
         node_token.action = 'redirect'
         node_token.link = 'BACK'
 
