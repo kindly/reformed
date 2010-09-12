@@ -36,22 +36,83 @@ class NodeToken(object):
 
     """This holds state information for the current transaction"""
 
+
+    class FormToken(object):
+
+        """Helper class to hold data for each form and add some functionality"""
+
+        def __init__(self, data, simple = True):
+            """simple: True if shared data for all forms,
+            False if separate data for each form"""
+            if simple:
+                self.data = data
+                self.form = None
+            else:
+                self.data = data['data']
+                self.form = data['form']
+
+        def get(self, name, default = None):
+            """get method"""
+            return self.data.get(name, default)
+
+        def get_data_int(self, key, default = 0):
+            """ Get integer value out of self.data[key] or default """
+            try:
+                value = int(self.data.get(key, default))
+            except ValueError:
+                value = default
+            return value
+
+
     def __init__(self, data):
 
         self.last_node = None
         self.first_call = False
+        # The command type will be set to 'layout' or 'node' in process_data()
+        self.command_type = None
+
         self.command = data.pop('command', None)
-
         self.data = data.pop('data', None)
-        if type(self.data).__name__ != 'dict':
-            self.data = {}
 
+        # self.node will be set each time a new node is called with this token
+        # it is currently set in NodeRunner.run()
+        self.node = None
+        self.node_name = None
+
+
+        # when data is sent in multiple form mode (this should be the default)
+        # we want to split it for each form to make processing easier.
+        self.data_split = {}
+        self.process_data()
+
+
+        # form cache is used to cache forms when possible
+        # it is a hash of the name and client version of all client
+        # side cached forms.
         self.form_cache = data.pop('form_cache', None)
 
+        # the browser can request application data via this method
+        # this is usually requested at start-up
         self.request_application_data = data.pop('request_application_data', False)
+
         self.output = None
         # output stuff
-        self.out = []
+        self.out = {}
+
+        # the layout_type sets the section layout
+        # the form_layout will be an array
+        # that has the grouping and ordering of the forms
+        # for each section
+        # eg. [ ['form1', 'form2'], ['form3'] ]
+        self.layout_type = None
+        # the form_layout sets the layout
+        # eg. 'entity', 'listing'
+        self.form_layout = None
+        # this is the list of forms provided to the frontend
+        # it may be redundant
+        self.layout_forms = []
+
+        # title sets the title of the page
         self.title = None
         self.link = None
 
@@ -63,13 +124,58 @@ class NodeToken(object):
         self.next_data_out = None
         self.auto_login_cookie = None
 
+    def __getitem__(self, form_name):
+        """A shortcut method to get the sent data associated with the named form.
+        If it is a 'layout' level command then there will be individual data for each form,
+        else there is common data for a 'node' level command"""
+        if self.command_type == 'layout':
+            try:
+                return self.data_split[form_name]
+            except:
+                raise Exception('Node Token tried to access none existant sent data for form `%s`' % form_name)
+        elif self.command_type == 'node':
+            return self.data_split
+
+    def process_data(self):
+        """Process the data to make it easier to work with and
+        determine if we are running a 'node' or 'layout' level command."""
+        # If the data is a list (multiple forms)
+        # then we need to split it into parts
+        # as it is a 'layout' level command
+        # If not then it is a 'node' level command
+        # and we want only have a single source of data
+        if type(self.data).__name__ == 'list':
+            self.command_type = 'layout'
+            self.split_data()
+        else:
+            self.command_type = 'node'
+            self.data_split = self.FormToken(self.data)
+
+    def split_data(self):
+        """We get an array of data for each form,
+        split this out into a hash to make it easier to access"""
+        for row in self.data:
+            self.data_split[row['form']] = self.FormToken(row, simple = False)
+
     def get_data_int(self, key, default = 0):
         """ Get integer value out of self.data[key] or default """
+        # FIXME I don't like this here but we'll see TD
         try:
             value = int(self.data.get(key, default))
         except ValueError:
             value = default
         return value
+
+    def output_form_data(self, form_name, output):
+        """Helper function to add form data to the node token for a form"""
+
+        # paranoia check TODO should this be an assertion?
+        if form_name in self.layout_forms:
+            raise Exception("Attempt to overwrite form data in node token")
+
+        self.layout_forms.append(form_name)
+        self.out[form_name] = output
+
 
     def set_form_message(self, message):
         """Sets the button info to be displayed by a form."""
@@ -82,6 +188,19 @@ class NodeToken(object):
 
         self.out['data']['__buttons'] = button_list
 
+    def get_layout(self):
+        """ Returns the layout hash to be sent to the front end. """
+
+        if not self.layout_type and self.layout_forms and self.command_type == 'node':
+            # No layout has been specified but one is needed
+            # because this was a 'node' level command.
+            self.layout_type = 'listing'
+            self.form_layout = [self.layout_forms]
+
+        layout = dict(layout_type = self.layout_type,
+                      form_layout = self.form_layout,
+                      layout_forms = self.layout_forms)
+        return layout
 
 
         
@@ -259,8 +378,9 @@ class NodeRunner(object):
         # this should really get an existing node
         # node_class = self.node_manager[node_name]
         node = self.node_manager.get_node_instance(node_name)
-
+        # pass the current node to the node token
         node_token.node = node
+        node_token.node_name = node.name
 
         # the user cannot perform this action
         if not node.check_permissions():
@@ -293,12 +413,15 @@ class NodeRunner(object):
         else:
             refresh_frontend = False
 
+
+
         info = {'action': node_token.action,
                 'node': node_name,
                 'title' : node_token.title,
                 'link' : node_token.link,
                 'user' : node_token.user,
                 'bookmark' : node_token.bookmark,
+                'layout' : node_token.get_layout(),
                 'data' : node_token.out}
 
         user_id = global_session.session['user_id']
