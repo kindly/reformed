@@ -102,6 +102,15 @@ class Node(object):
 
         raise Exception('Form with name `%s` does not exist in this node.' % form_name)
 
+    def get_form_name_list(self):
+        """returns the names of all the forms available to the node"""
+        return self._available_forms.keys()
+
+    def get_form_name_list_form_layout(self):
+        form_names = []
+        for section in self.form_layout:
+            form_names.extend(section)
+        return form_names
 
 
     def call(self, node_token):
@@ -245,18 +254,21 @@ class TableNode(Node):
         result_link('title'),
         info('summary', data_type = 'info'),
 
-        params = {"form_type": "results"}
+        params = {"form_type": "results"},
+        volatile = True,
     )
 
 
     def setup_commands(self):
-        commands = self.__class__.commands
+        commands = {}
         commands['view'] = dict(command = 'view')
         commands['list'] = dict(command = 'list')
         commands['edit'] = dict(command = 'edit')
         commands['_save'] = dict(command = 'save')
         commands['delete'] = dict(command = 'delete')
         commands['new'] = dict(command = 'new')
+        self.__class__.commands = commands
+
 
     def save(self, node_token):
         self["main"].save(node_token)
@@ -267,6 +279,10 @@ class TableNode(Node):
     def edit(self, node_token):
         self["main"].view(node_token, read_only = False)
 
+        node_token.layout_type = 'listing'
+        node_token.form_layout = [['main']]
+
+
     def view(self, node_token, read_only=True):
         self["main"].view(node_token, read_only)
 
@@ -276,6 +292,9 @@ class TableNode(Node):
     def list(self, node_token, limit=20):
         self["listing"].list(node_token, limit)
 
+        # add the layout information
+        node_token.layout_type = 'listing'
+        node_token.form_layout = [['listing']]
 
 class JobNode(Node):
 
@@ -364,6 +383,9 @@ class AutoForm(TableNode):
         main = form(*fields, table = self.table, params = self.form_params)
         # add this to the available forms
         self._available_forms['main'] = main
+        # setup layout
+        self.form_layout = [['main']]
+        self.layout_type = 'listing'
 
 
 class AutoFormPlus(TableNode):
@@ -398,4 +420,6 @@ class AutoFormPlus(TableNode):
         main = form(*fields, table = table, params = self.form_params, volatile = True)
         # add this to the available forms
         self._available_forms['main'] = main
-
+        # setup layout
+        self.form_layout = [['main']]
+        self.layout_type = 'listing'
