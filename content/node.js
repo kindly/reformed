@@ -423,19 +423,8 @@ function process_node(packet, job){
             $('#' + root).html(page_build(packet.data.data));
             break;
          case 'form':
-             var form = packet.data.data.form;
-             form = $.Util.FormDataProcess(form, packet.data.node);
-             data = packet.data.data.data;
-             var paging = packet.data.data.paging;
-             var form_type = form.params.form_type;
-             if (form_type == 'grid'){
-                $('#' + root).grid(form, data, paging);
-             } else if (form_type == 'action' || form_type == 'results'){
-                $('#' + root).input_form(form, data, paging);
-             } else {
-                $('#' + root).input_form(form, data, paging);
-             //   $('#' + root).form(form, data, paging);
-             }
+             var forms = $.Util.FormDataProcessAll(packet.data.data, packet.data.node);
+             $Layout.update_layout(forms, packet.data.layout)
              break;
          case 'save_error':
             data = packet.data.data;
