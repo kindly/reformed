@@ -377,19 +377,14 @@ class Form(object):
 
     def view_multiple(self, node_token, read_only=True, where = None, limit=5, set_title = True, **kw):
         # TD not reviewed
-        try:
-            data = node_token[self.name]
-            query = data.get('q', '')
-            limit = data.get_data_int('l', limit)
-            offset = data.get_data_int('o')
-            id_data = data
-        except: # FIXME need a proper exception
-            query = ''
-            offset = 0
-            data = None
-            id_data = node_token.data
 
+        data = node_token[self.name]
+        query = data.get('q', '')
+        limit = data.get_data_int('l', limit)
+        offset = data.get_data_int('o')
+        id_data = data
         node = node_token.node
+
         print "id_data", id_data
         id = id_data.get('id')
         if where:
