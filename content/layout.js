@@ -269,7 +269,9 @@ REBASE.bookmark = function (){
 
     function bookmark_add(bookmark){
         // create the bookmark view link
-
+        if (bookmark.entity_id === null){
+            alert('null bookmark');
+        }
         // stop null bookmarks
         if (!bookmark.title){
             bookmark.title = 'untitled';
@@ -324,7 +326,7 @@ REBASE.bookmark = function (){
             html += '<li class ="bookmark-category-title-' + category + '">';
             html += category;
             html += '</li>';
-            html += '<ol class ="bookmark-category-list-' + category + '">';
+            html += '<ol class ="bookmark-items bookmark-category-list-' + category + '">';
             html += category_items[category].join('\n');
             html += '</ol>';
         }
