@@ -269,16 +269,19 @@ class Form(object):
 
             node_token.next_data_out = data_out
 
-            node_token.data["id"] = obj.id
+            # FIXME disabled as currently broken
+            # need to decide on how to handle node redirects better
+            #node_token.data["id"] = obj.id
 
             if self.save_redirect:
                 node_token.action = 'redirect'
                 node_token.link = self.save_redirect + ":id=" + str(obj.id)
                 return
 
-            node_token.next_node = self.save_next_node or node_token.node_name
-            node_token.next_data = dict(data = node_token.data,
-                                  command = self.save_next_command or 'new')
+            node_token.next_node = self.save_next_node
+            # FIXME as above node data forwarding
+            #node_token.next_data = dict(data = node_token.data,
+            #                      command = self.save_next_command or 'new')
 
         else:
             node_token.action = 'redirect'
