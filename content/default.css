@@ -380,8 +380,9 @@ td input {
     overflow:hidden;
 }
 
-#bookmarks li{
-    list-style-type: none;
+#bookmarks ol.bookmark-items li{
+    list-style-type: disc;
+    list-style-position: inside;
     color:#515151;
 }
 #bookmarks ol{
@@ -918,6 +919,7 @@ div.record_info > div {
     position: relative;
     clear: both;
     float:left;
+    width: 100%;
 }
 
 .RESULT_IMG {
