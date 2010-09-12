@@ -745,7 +745,6 @@ class Form(object):
 
         node_token.output_form_data(self.name, output)
 
-   #     return {self.name : out}
 
     def create_form_item_output(self, node_token, data):
         """create and return the form data stucture used by the front end"""
