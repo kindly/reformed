@@ -102,6 +102,7 @@ class User(TableNode):
         button('user.User:login:', label = 'Log in'),
         layout('box_end'),
 
+        form_type = "action",
         params = {"form_type": "action"}
     )
 
@@ -135,15 +136,17 @@ class User(TableNode):
 
 
     def setup_extra_commands(self):
-        commands = self.__class__.commands
+        commands = {}
         commands['login'] = dict(command = 'check_login')
         commands['logout'] = dict(command = 'logout')
+        commands['list'] = dict(command = 'list')
         commands['about_me'] = dict(command = 'about_me', permissions = ['LoggedIn'])
         commands['_save_about_me'] = dict(command = 'save_about_me', permissions = ['LoggedIn'])
         commands['change_password'] = dict(command = 'change_password', permissions = ['LoggedIn'])
         commands['_save_change_password'] = dict(command = 'save_change_password', permissions = ['LoggedIn'])
         commands['change_other_password'] = dict(command = 'change_other_password', permissions = ['UserAdmin'])
         commands['_save_change_other_password'] = dict(command = 'save_change_other_password', permissions = ['UserAdmin'])
+        self.__class__.commands = commands
 
 
     def save(self, node_token):
@@ -160,7 +163,7 @@ class User(TableNode):
     def check_login(self, node_token):
         message = None
         fail_message = '# Login failed\n\nuser name or password incorrect, try again.'
-        vdata = self.validate_data_full(node_token.data, self.login_validations)
+        vdata = self.validate_data_full(node_token['login_form'].data, self.login_validations)
         if vdata['login_name'] and vdata['password']:
             (message, data) = authenticate.check_login(vdata['login_name'], vdata['password'])
             # if data is returned then the login was a success
@@ -251,7 +254,7 @@ class User(TableNode):
         node_token.user = dict(name = user_name, id = user_id)
 
         # auto login cookie
-        if node_token.data.get('remember_me') and auto_login:
+        if node_token['login_form'].data.get('remember_me') and auto_login:
             node_token.auto_login_cookie = '%s:%s' % (user_id, auto_login)
 
         node_token.action = 'html'
@@ -264,7 +267,7 @@ class User(TableNode):
         authenticate.clear_user_session()
 
         node_token.user = dict(name = None, id = 0)
-        message = dict(title = "You are now logged out", body = '')
+        message = "You are now logged out"
         self.show_login_form(node_token, message)
         # clear bookmarks
         node_token.bookmark = 'CLEAR'
@@ -323,11 +326,11 @@ class UserAdmin(TableNode):
         user_groups = reformed.search.Search(r, 'user_group', session).search().count()
         permissions = reformed.search.Search(r, 'permission', session).search().count()
         data = {'users' : users, "user_groups" : user_groups , "permissions" : permissions }
-        out = self["main"].create_form_data(node_token, data)
-        node_token.out = out
+        data['__message'] = "User Admin"
+        data['__buttons'] = [['cancel', 'BACK']]
+        self["main"].create_form_data(node_token, data)
+
         node_token.action = 'form'
         node_token.title = 'listing'
 
-        node_token.set_form_message("User Admin")
-        node_token.set_form_buttons([['cancel', 'BACK']])
 

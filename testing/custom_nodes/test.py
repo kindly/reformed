@@ -50,11 +50,26 @@ class Node1(Node):
         text('Donec sit amet metus sem, at consectetur arcu. Curabitur condimentum, justo at euismod vehicula, nisl nibh scelerisque magna, aliquam laoreet nisl urna ut justo. Maecenas quis arcu in felis pulvinar egestas in ut lectus. Vestibulum varius fringilla massa, vel posuere risus ultricies ac. Vestibulum molestie facilisis purus, ut tincidunt sem fringilla eget. Cras in ligula hendrerit eros mattis porttitor. Cras eget quam arcu. Fusce non eros ligula, porta gravida velit. Donec erat orci, accumsan vitae varius ac, pulvinar in lectus. Curabitur risus ligula, vestibulum non viverra sed, condimentum sed mi.'),
         layout('box_end'),
 
+
+        layout('spacer'),
+        text('**Box (short)**'),
+        text('`layout(\'box_start\')`\n\n. . .\n\n`layout(\'box_end\')`'),
+        layout('box_start'),
+        text('not much writing'),
+        layout('box_end'),
+
         layout('spacer'),
         text('**Area**'),
         text('`layout(\'area\_start\', css=\'color\_background\')`\n\n. . .\n\n`layout(\'area_end\')`'),
         layout('area_start', css='color_background'),
         text('Donec sit amet metus sem, at consectetur arcu. Curabitur condimentum, justo at euismod vehicula, nisl nibh scelerisque magna, aliquam laoreet nisl urna ut justo. Maecenas quis arcu in felis pulvinar egestas in ut lectus. Vestibulum varius fringilla massa, vel posuere risus ultricies ac. Vestibulum molestie facilisis purus, ut tincidunt sem fringilla eget. Cras in ligula hendrerit eros mattis porttitor. Cras eget quam arcu. Fusce non eros ligula, porta gravida velit. Donec erat orci, accumsan vitae varius ac, pulvinar in lectus. Curabitur risus ligula, vestibulum non viverra sed, condimentum sed mi.'),
+        layout('area_end'),
+
+        layout('spacer'),
+        text('**Area (short)**'),
+        text('`layout(\'area\_start\', css=\'color\_background\')`\n\n. . .\n\n`layout(\'area_end\')`'),
+        layout('area_start', css='color_background'),
+        text('not much writing'),
         layout('area_end'),
 
 
@@ -106,12 +121,18 @@ class Node1(Node):
 
 
         params =  {"form_type": "action"},
+        form_type = "action",
     )
 
+    form_layout = [['main']]
+    layout_type = 'listing'
 
     def call(self, node_token):
         self['main'].show(node_token)
 
+        # add the layout information
+        node_token.layout_type = self.layout_type
+        node_token.form_layout = self.form_layout
 
 class Node2(Node):
 
@@ -133,9 +154,12 @@ class Node2(Node):
                             ['Link List Values 3', 'n:test.Node2:Link+List+Values+3'],
                             ['Link List Values 4', 'n:test.Node2:Link+List+Values+4'],
                             ['Link List Values 5', 'n:test.Node2:Link+List+Values+5']]),
-        params = {"form_type": "action"}
+        params = {"form_type": "action"},
+        form_type = "action",
     )
 
+    form_layout = [['main']]
+    layout_type = 'listing'
 
     def call(self, node_token):
         name = node_token.command.replace('+', ' ')
@@ -150,13 +174,23 @@ class Node2(Node):
                          ['Link List Data 5', 'n:test.Node2:Link+List+Data+5']]
         self['main'].show(node_token, data)
 
+
+        # add the layout information
+        node_token.layout_type = self.layout_type
+        node_token.form_layout = self.form_layout
+
 class Node3(TableNode):
+
+    table = "colour"
+
+    title_field = 'name'
 
     main = form(
         input('name'),
         input('hex'),
         table = "colour",
         params =  {"form_type": "action"},
+        form_type = "action",
         title_field = 'name'
     )
 
@@ -169,11 +203,12 @@ class Node4(TableNode):
 
         table = "table1",
         params =  {"form_type": "action"},
+        form_type = "action",
     )
 
 class Node5(AutoForm):
 
-    table = "table1"
+    table = "colour"
 
 ##class People(AutoForm):
 ##
@@ -193,25 +228,80 @@ class People(TableNode):
         input('notes'),
         input('active'),
         input('colour'),
-        thumb('image'),
-        subform('phone'),
         table = "people",
         params =  {"form_type": "normal"},
         title_field = 'name',
+        form_type = "input",
     )
 
     table = "people"
 
-
+    photo = form(
+        thumb('image'),
+        table = "people",
+        params =  {"form_type": "normal"},
+        title_field = 'name',
+        form_type = "input",
+    )
 
     phone = form(
         input('telephone.number', label = 'number'),
-        table = "communication",
-        child_id = '_core_id',
-        parent_id = '_core_id',
         read_only = True,
-        params = {"form_type": "continuous"},
+        params = {"form_type": "grid"},
+        form_type = "grid",
     )
+
+    form_layout = [['main'], ['photo'], ['phone']]
+    layout_type = 'entity'
+    layout_title_form = 'main'
+
+    def setup_commands(self):
+        commands = {}
+        commands['_update'] = dict(command = 'update')
+        commands['_add'] = dict(command = 'add')
+        commands['edit'] = dict(command = 'edit')
+        commands['_save'] = dict(command = 'save')
+        commands['list'] = dict(command = 'show_listing')
+        self.__class__.commands = commands
+
+    def edit(self, node_token):
+        # process each of the forms
+        for form_name in self.get_form_name_list_form_layout():
+            print form_name
+            if (form_name == self.layout_title_form):
+                set_title = True
+            else:
+                set_title = False
+            self[form_name].view(node_token, read_only = False, set_title = set_title)
+        # add the layout information
+        node_token.layout_type = self.layout_type
+        node_token.form_layout = self.form_layout
+
+    def show_listing(self, node_token):
+        self.list(node_token)
+        node_token.layout_type = 'listing'
+        node_token.form_layout = [['listing']]
+
+
+    def save(self, node_token):
+        for row in node_token.data:
+            form = row['form']
+            data = row['data']
+            print form
+            print data
+            self[form].save(node_token)
+
+    def update(self, node_token):
+        for row in node_token.data:
+            form = row['form']
+            data = row['data']
+            print form
+            print data
+            self[form].view(node_token, read_only = False)
+
+    def add(self, node_token):
+        print node_token.data
+
 
 class DataLoader(JobNode):
 
@@ -231,11 +321,15 @@ class DataGenerate(JobNode):
         intbox('number_records', default = 100),
         button('test.DataGenerate:_generate:', label = 'Generate'),
         params =  {"form_type": "action"},
+        form_type = "action",
     )
 
     job_type = 'generate'
     job_function = 'generate'
     params = []
+
+    form_layout = [['main']]
+    layout_type = 'listing'
 
     def setup_extra_commands(self):
         commands = self.__class__.commands
@@ -251,10 +345,16 @@ class DataGenerate(JobNode):
         data = dict(tables = tables)
         self['main'].show(node_token, data)
 
+        node_token.layout_type = self.layout_type
+        node_token.form_layout = self.form_layout
+
     def generate(self, node_token):
-        table = node_token.data.get('table')
+        # FIXME this is a slight botch to get the node_token data
+        # it should really be done further back
+        data = node_token.data[0].get('data')
+        table = data.get('table')
         try:
-            number = int(node_token.data.get('number_records', 0))
+            number = int(data.get('number_records', 0))
         except ValueError:
             number = 0
         if r[table].table_type == 'user' and number:
@@ -269,19 +369,25 @@ class Truncate(Node):
         dropdown('table', 'DATA', data_field = 'tables'),
         button('test.Truncate:truncate:', label = 'Truncate'),
         params =  {"form_type": "action"},
+        form_type = "action",
     )
     completed = form(
         text("Table {table} has been truncated.  {records} record(s)."),
         extra_data('table'),
         extra_data('records'),
         params =  {"form_type": "action"},
+        form_type = "action",
     )
+
+    form_layout = [['main']]
+    layout_type = 'listing'
 
     def call(self, node_token):
         if node_token.command == 'list':
             self.list_tables(node_token)
         elif node_token.command == 'truncate':
-            table_name = node_token.data.get('table')
+            print node_token.data
+            table_name = node_token['main'].get('table')
             if table_name:
                 self.truncate_table(node_token, table_name)
 
@@ -302,6 +408,8 @@ class Truncate(Node):
                         records = count)
             self['completed'].show(node_token, data)
 
+        node_token.layout_type = self.layout_type
+        node_token.form_layout = [['completed']]
 
     def list_tables(self, node_token):
         tables = []
@@ -312,16 +420,23 @@ class Truncate(Node):
         data = dict(tables = tables)
         self['main'].show(node_token, data)
 
+        node_token.layout_type = self.layout_type
+        node_token.form_layout = [['main']]
+
+
 class Search(TableNode):
 
 
     listing = form(
         result_link('title', data_type = 'link', css = 'form_title'),
         info('summary', data_type = 'info'),
-        params = {"form_type": "results", 'read_only' : True}
+        params = {"form_type": "results", 'read_only' : True},
+        form_type = "results",
 
     )
 
+    form_layout = [['listing']]
+    layout_type = 'listing'
 
     def call(self, node_token, limit = 20):
         where = "_core_entity.title like ?"
@@ -330,6 +445,8 @@ class Search(TableNode):
         values = ['%%%s%%' % query]
         self['listing'].list(node_token, limit, where = where, values = values)
 
+        node_token.layout_type = self.layout_type
+        node_token.form_layout = self.form_layout
 
 
 class Auto(AutoFormPlus):
