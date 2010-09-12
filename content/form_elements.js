@@ -76,7 +76,7 @@ $FormElements = function(){
         value = split.join('|');
         var x = '';
         if (link_node.substring(0,1) == 'n'){
-            x += '<a href="#"' + set_class_list(item, 'link') + ' onclick="node_load(\'' + link_node + '\');return false">' + (value ? value : 'untitled') + '</a>';
+            x += '<a href="#' + link_node + '"' + set_class_list(item, 'link') + ' onclick="node_load(\'' + link_node + '\');return false;">' + (value ? value : 'untitled') + '</a>';
         }
         if (link_node.substring(0,1) == 'd'){
             x += '<a href="#"' + set_class_list(item, 'link') + ' onclick ="link_process(this,\'' + link_node + '\');return false;">' + (value ? value : 'untitled') + '</a>';
@@ -86,7 +86,8 @@ $FormElements = function(){
 
     function result_link(item, value){
         var link_node = $.Util.build_node_link(local_row_data);
-        var x = '<a href="#"' + set_class_list(item, 'link') + ' onclick="' + link_node + 'return false;">' + (value ? value : 'untitled') + '</a>';
+        var link_node_href = $.Util.build_node_link_href(local_row_data);
+        var x = '<a href="' + link_node_href + '"' + set_class_list(item, 'link') + ' onclick="' + link_node + 'return false;">' + (value ? value : 'untitled') + '</a>';
         return x;
     }
 

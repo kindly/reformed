@@ -204,6 +204,27 @@ $.Util.make_normal = function($item, field){
     return cleaned.value;
 };
 
+$.Util.build_node_link_href = function (data){
+    // build a node link based on the item info
+    // used in result listings
+    var link_node
+
+    if (!data.entity){
+        if (data.result_url){
+            return '#' + data.result_url;
+        } else {
+            return '';
+        }
+    }
+    var node = REBASE.application_data.bookmarks[data.entity];
+    if (node !== undefined){
+        node = node.node;
+        link_node = "#n:" + node + ":edit:__id=" + data.__id;
+    } else {
+        link_node = "#n:test.Auto:edit:__id=" + data.__id + "&table=" + data.entity;
+    }
+    return link_node;
+};
 
 $.Util.build_node_link = function (data){
     // build a node link based on the item info
@@ -211,7 +232,11 @@ $.Util.build_node_link = function (data){
     var link_node
 
     if (!data.entity){
-        return '';
+        if (data.result_url){
+            return "node_load('" + data.result_url + "');";
+        } else {
+            return '';
+        }
     }
     var node = REBASE.application_data.bookmarks[data.entity];
     if (node !== undefined){
