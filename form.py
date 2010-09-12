@@ -225,7 +225,7 @@ class Form(object):
 
 
 
-    def save(self, node_token, as_subform = False):
+    def save(self, node_token):
         """Save this form. Its job is to set up the node belongs to
         and handle errors"""
         # TD not reviewed
@@ -241,7 +241,7 @@ class Form(object):
       #  data = node_token.data
 
         try:
-            (save_set, errors) = self.save_row(node_token, session, as_subform = as_subform)
+            (save_set, errors) = self.save_row(node_token, session)
         except Exception, e:
             session.rollback()
             session.close()
