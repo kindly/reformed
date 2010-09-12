@@ -167,75 +167,9 @@ class Form(object):
         self.create_form_data(node_token, data_out)
         node_token.action = 'form'
 
-    def save_row(self, node_token, data, session = None, as_subform = False, parent_obj = None, relation_attr = None):
-        """Saves an individual database row.  Subforms are saved last and
-        the subforms call this method in their own form instance.
-        relation_attr is the attribute on the newly created object that should
-        have the parent_obj as its value.  This is to allow sqlalchemy to determine
-        the ids for new objects.
-        Both form and subform manipulate the same data which is stored agianst the
-        node."""
-
-        id = data.get('id')
-        root = data.get('__root')
-
-        # existing record
-        if id:
-            try:
-                result = r.search_single(self.table, "id = ?",
-                                      values = [id],
-                                      session = session)
-                save_set = SaveItem(result.results[0], session)
-                save_set.new = False
-            except custom_exceptions.SingleResultError:
-                form.errors[root] = 'record not found'
-                raise
-
-            version = data["_version"]
-            save_set.set_value("_version", version)
-        else:
-            # new record (create blank one)
-            save_set = SaveNew(r, self.table, session)
-            session = save_set.session
-            save_set.new = True
-            # subform data will have a parent_obj
-            # which we need to link
-            if parent_obj:
-                setattr(save_set.obj, relation_attr, parent_obj)
-
-        ## prepare save data for normal fields
-
-        # TD we loop through the form items and try to save them
-
-        for form_item in self.form_items:
-      #      if form_item.page_item_type not in ["subform", "layout"]:
-      #     we may need this if we decide to save subforms with main form
-            form_item.save_page_item(node_token, save_set, data, session)
-
-        if as_subform:
-            child_id = self.child_id
-            save_set.set_value(child_id, data[child_id])
-            #setattr(save_set.obj, child_id, data[child_id])
-
-        errors = save_set.save()
-
-        if errors:
-            print "failed to save"
-            if not hasattr(node_token, "errors"):
-                node_token.errors = {}
-
-            node_token.errors[root] = errors
-
-# FIXME subform
-###        for form_item in self.form_items:
-###            if form_item.page_item_type <> "subform":
-###                continue
-###            form_item.save(self, self.node, obj, data, session)
-
-        return save_set
 
 
-    def save_row_new(self, node_token, session = None, as_subform = False, parent_obj = None, relation_attr = None):
+    def save_row(self, node_token, session = None, as_subform = False, parent_obj = None, relation_attr = None):
         """Saves an individual database row.  Subforms are saved last and
         the subforms call this method in their own form instance.
         relation_attr is the attribute on the newly created object that should
@@ -287,6 +221,7 @@ class Form(object):
             #setattr(save_set.obj, child_id, data[child_id])
 
         errors = save_set.save()
+        # FIXME get errors working again :)
 ####        errors = {}
 ####        try:
 ####            session.save_or_update(obj)
@@ -296,11 +231,6 @@ class Form(object):
 ####                errors[key] = value.msg
 ####            errors[root] = errors
 
-# FIXME subform
-###        for form_item in self.form_items:
-###            if form_item.page_item_type <> "subform":
-###                continue
-###            form_item.save(self, self.node, obj, data, session)
 
         return (save_set, errors)
 
@@ -322,7 +252,7 @@ class Form(object):
       #  data = node_token.data
 
         try:
-            (save_set, errors) = self.save_row_new(node_token, session, as_subform = as_subform)
+            (save_set, errors) = self.save_row(node_token, session, as_subform = as_subform)
         except Exception, e:
             session.rollback()
             session.close()
