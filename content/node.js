@@ -85,18 +85,39 @@ function node_call_from_string(arg, change_state, insecure){
     takes a string (arg) of the form
     "/n:<node_name>:<command>:<arguments>"
 
+    insecure: allows 'dangerous' _underscored commands to be sent
+
     change_state: if true will change the state for the root
     FIXME no root info yet defaults to 'main' further along the call chain
 */
+    var process = false;
     var link = arg.split(':');
+    var node = link[1];
+    var command = link[2];
+    var data_hash = {};
+
+    // if arguments are supplied convert them to a hash
+    if (link.length>3){
+        data_hash = convert_url_string_to_hash(link[3]);
+    }
+
     if (link[0]=='/n' || link[0]=='n'){
-        var node = link[1];
-        var command = link[2];
-        var data_hash = {};
-        // if arguments are supplied
-        if (link.length>3){
-            data_hash = convert_url_string_to_hash(link[3]);
-        }
+        process = true;
+    } else if (link[0]=='/l' || link[0]=='l'){
+        // layout commands
+        // TODO The data protocol is changing
+        // this is the new version which needs to be fully
+        // backported.  Allows for multiple form updates and avoids
+        // namespace issues.
+        var data = {data : data_hash};
+        data.form = data_hash.form;
+        data.layout_id = $Layout.get_layout_id();
+        console_log(data);
+        data_hash = [data]
+        process = true;
+    }
+
+    if (process){
         // if the command starts with a underscore we don't want
         // to trigger the command from a url change as this can
         // let dangerous commands be sent via urls
