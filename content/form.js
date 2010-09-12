@@ -934,6 +934,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     };
 
     function size_boxes(){
+        // FIXME this has been disabled TD
+        return;
         var $box;
         var width;
         // BOX layouts
