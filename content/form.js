@@ -1389,58 +1389,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
         }
 
-        function make_paging(){
-            // build a paging bar
-            var PAGING_SIZE = 5;
-            var offset = extra_defaults.offset;
-            var limit = extra_defaults.limit;
-            var count = extra_defaults.row_count;
-            var base = extra_defaults.base_link;
 
-            var pages = Math.ceil(count/limit);
-            var current = Math.floor(offset/limit);
-            var link;
-
-            var html = '<div class="PAGING_BAR">';
-            html += 'paging: ';
-
-            if (current>0){
-                link = base + '&o=0&l=' + limit;
-                html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">|&lt;</a> ';
-                link = base + '&o=' + (current-1) * limit + '&l=' + limit;
-                html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">&lt;</a> ';
-            } else {
-                html += '|&lt; ';
-                html += '&lt; ';
-            }
-            for (var i=0; i < pages; i++){
-                if (i == current){
-                    html += (i+1) + ' ';
-                } else {
-                    if ( Math.abs(current-i)<PAGING_SIZE ||
-                         (i<(PAGING_SIZE*2)-1 && current<PAGING_SIZE) ||
-                         (pages-i<(PAGING_SIZE*2) && current>pages-PAGING_SIZE)
-                    ){
-                        link = base + '&o=' + i * limit + '&l=' + limit;
-                        html += '<a href="#' + link + '" onclick="node_load(\'' + link + '\');return false;">' + (i+1) + '</a> ';
-                    }
-                }
-            }
-            if (current<pages - 1){
-                link = base + '&o=' + (current+1) * limit + '&l=' + limit;
-                html += '<a href="#' + link + '" onclick="node_load(\'' + link + '\');return false;">&gt;</a> ';
-                link = base + '&o=' + (pages-1) * limit + '&l=' + limit;
-                html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">&gt;|</a> ';
-            } else {
-                html += '&gt; ';
-                html += '&gt;| ';
-            }
-
-            html += 'page ' + (current+1) + ' of ' + pages + ' pages';
-            html += ', ' + (count) + ' records';
-            html += '</div>';
-            return html;
-        }
 
         function build_subforms(){
             // subforms
@@ -1486,7 +1435,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         // FIXME why extra_data should be paging_data?
         if (extra_defaults){
             // cache the html for reuse
-            paging_bar = make_paging();
+            paging_bar = make_paging(extra_defaults);
             $builder[builder_depth].append(paging_bar);
         }
         item = {layout : 'area_start'}
@@ -1589,5 +1538,61 @@ $.StatusForm = function(input){
 
 
 };
+
+function make_paging(extra_defaults){
+    // FIXME this function is global and should be somewhere else
+    // shared between grid2 and input_form
+    // build a paging bar
+    var PAGING_SIZE = 5;
+    var offset = extra_defaults.offset;
+    var limit = extra_defaults.limit;
+    var count = extra_defaults.row_count;
+    var base = extra_defaults.base_link;
+
+    var pages = Math.ceil(count/limit);
+    var current = Math.floor(offset/limit);
+    var link;
+
+    var html = '<div class="PAGING_BAR">';
+    html += 'paging: ';
+
+    if (current>0){
+        link = base + '&o=0&l=' + limit;
+        html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">|&lt;</a> ';
+        link = base + '&o=' + (current-1) * limit + '&l=' + limit;
+        html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">&lt;</a> ';
+    } else {
+        html += '|&lt; ';
+        html += '&lt; ';
+    }
+    for (var i=0; i < pages; i++){
+        if (i == current){
+            html += (i+1) + ' ';
+        } else {
+            if ( Math.abs(current-i)<PAGING_SIZE ||
+                 (i<(PAGING_SIZE*2)-1 && current<PAGING_SIZE) ||
+                 (pages-i<(PAGING_SIZE*2) && current>pages-PAGING_SIZE)
+            ){
+                link = base + '&o=' + i * limit + '&l=' + limit;
+                html += '<a href="#' + link + '" onclick="node_load(\'' + link + '\');return false;">' + (i+1) + '</a> ';
+            }
+        }
+    }
+    if (current<pages - 1){
+        link = base + '&o=' + (current+1) * limit + '&l=' + limit;
+        html += '<a href="#' + link + '" onclick="node_load(\'' + link + '\');return false;">&gt;</a> ';
+        link = base + '&o=' + (pages-1) * limit + '&l=' + limit;
+        html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">&gt;|</a> ';
+    } else {
+        html += '&gt; ';
+        html += '&gt;| ';
+    }
+
+    html += 'page ' + (current+1) + ' of ' + pages + ' pages';
+    html += ', ' + (count) + ' records';
+    html += '</div>';
+    return html;
+}
+
 
 })(jQuery);
