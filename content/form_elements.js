@@ -453,3 +453,191 @@ $FormElements = function(){
     }
 
 }()
+
+
+$Layout = function(){
+
+
+    var root = '#main';
+
+    // The version of the layout to make sure we do not mix
+    // data between layouts.  All updates to forms should
+    // have a matching layout_id
+    var layout_id = 0;
+
+    // Form data set by external set_data function.
+    var forms;
+
+    // Layout data set by external set_data function.
+    var layout;
+
+    // Array of layout section JQuery objects.
+    // for the current layout.
+    var $layout_divs;
+
+    var form_count;
+    // The hash of JQuery forms on the layout
+    // by form name.
+    var $forms = {};
+
+
+
+    function add_forms_to_layout(form_data, layout_data){
+        /* Create a new layout or update form(s)
+         * depending on the data provided.
+         * If the layout_type is provided then we
+         * build a whole new layout.  If not we just replace the forms
+         * This function is EXPORTED.
+         */
+
+        // Store the form data.
+        forms = form_data;
+
+        if (layout_data.layout_type){
+            // Layout has changed so update our stored data.
+            layout = layout_data;
+            create_layout();
+        } else {
+            // Update the layout forms
+            layout.layout_forms = layout_data.layout_forms;
+            replace_forms();
+        }
+    }
+
+    function replace_forms(){
+        /* Replace a named form in the layout with
+         * a newly created form of the same name.
+         * Used for updating form(s) whilst keeping
+         * the rest of the layout.
+         */
+
+        for (var i = 0; i< layout.layout_forms.length; i++){
+            var form_name = layout.layout_forms[i];
+            if ($forms[form_name]){
+                $forms[form_name].empty();
+                $forms[form_name].append(make_form(form_name));
+            } else {
+                console_log('TRIED TO USE UNINITIALISED FORM ' + form_name);
+            }
+        }
+    }
+
+
+    function create_layout(){
+        /* Build the layout (including all contained forms)
+         * and place it in the 'root' DOM element.
+         *
+         */
+        var $layout;
+        var sections;
+        var section;
+        var form_name;
+        var $form;
+
+        function build_layout(){
+            /* Create the actual layout HTML.
+             * Refreshes data relating to the layout
+             * this destroys the 'knowledge' of the previous layout.
+             */
+
+            // reset the layout
+            $layout_divs = [];
+            $forms = {};
+            // new layout so change id
+            layout_id++;
+
+            // This is the outer holder for the new layout.
+            var $layout = $('<div class="LAYOUT_HOLDER">');
+
+            function make_layout_section(layout_class){
+                /* Creates a layout section of the requested class.
+                 * Attaches it to the layout and stores the innermost div in
+                 * $layout_divs for later access.
+                 */
+
+                var $section_subdiv = $('<div class="STYLE">');
+                var $section = $('<div class="' + layout_class + '">');
+                $section.append($section_subdiv);
+                $layout_divs.push($section_subdiv);
+                $layout.append($section);
+            }
+
+            // Create the layout.
+            // These are the available layouts.
+            switch (layout.layout_type){
+                case 'entity':
+                    make_layout_section("LAYOUT_COL_LEFT");
+                    make_layout_section("LAYOUT_COL_RIGHT");
+                    make_layout_section("LAYOUT_COL_FULL");
+                    break;
+                case 'listing':
+                    make_layout_section("LAYOUT_COL_FULL");
+                    break;
+                default:
+                    console_log('UNKNOWN LAYOUT: ' + layout.layout_type);
+                    break;
+            }
+            return $layout;
+
+        }
+
+        form_count = 0;
+        // Create the base layout with sections
+        $layout = build_layout();
+        sections = layout.form_layout;
+
+        // Add the required forms to the correct layout section.
+        for (var i = 0; i < sections.length; i++){
+            section = sections[i];
+            for (var j = 0; j < section.length; j++){
+                form_name = section[j];
+                // ensure that we actually have data for this form
+                if (forms[form_name] === undefined){
+                    console_log('ERROR: form `' + form_name + '` is in the layout but no data exists.');
+                } else {
+                    $form = make_form(form_name);
+                    $layout_divs[i].append($form);
+                    // save it for future lookups
+                    $forms[form_name] = $form;
+                }
+            }
+        }
+        // Replace root DOM elements content with the new layout.
+        $(root).empty();
+        $(root).append($layout);
+
+    }
+
+    function make_form(form_name){
+        /* create the form requested and return it as a JQuery object */
+        var form = forms[form_name].form
+        var data = forms[form_name].data
+        var paging = forms[form_name].paging;
+        var form_type = forms[form_name].form.form_type;
+
+        var $div = $('<div class="FORM_HOLDER" id="form_' + (form_count++) + '"/>');
+        // FIXME move to switch statement
+        if (form_type == 'grid'){
+            $div.grid2(form, data, paging);
+        } else if (form_type == 'action' || form_type == 'results'){
+            $div.input_form(form, data, paging);
+        } else {
+            $div.input_form(form, data, paging);
+        }
+        return $div;
+
+    }
+
+
+    // exported functions
+    return {
+        'update_layout' : function(form_data, layout_data){
+            // Create or update the layout.
+            add_forms_to_layout(form_data, layout_data);
+        },
+        'get_layout_id' : function(){
+            return layout_id;
+        }
+    }
+
+}()
