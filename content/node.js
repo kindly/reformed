@@ -233,11 +233,12 @@ function node_button_input_form(item, data){
     var split_data = data.split(':')
     var node = split_data[0];
     var command = split_data[1];
-    var out = {};
+    var out;
+
     if (split_data.length == 3){
         out = $obj.data('command')('get_form_data', split_data[2]);
         if (out){
-            get_node_return(node, command, out, $obj);
+            get_node_return(node, command, [out], $obj);
         }
     } else {
         node_load('n:' + data);
