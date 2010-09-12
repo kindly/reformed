@@ -247,6 +247,15 @@ class DataGenerator(object):
         return out
 
 
+    def make_list_biased(self, list = 'nouns'):
+        words = self.word_lists[list]
+        count = len(words) - 1
+        rand = int(random.triangular(0.0, 1.0, 0.0) * count)
+        out = words[rand]
+        return out
+
+
+
     def make_road(self):
         return str(self.make_int(1,150)) + ' ' + self.make_word(1,2) + ' ' + self.make_list('road_names')
 
@@ -271,9 +280,9 @@ class DataGenerator(object):
                 names.append(initial)
             else:
                 if self.is_male():
-                    name = self.make_list('boy_names')
+                    name = self.make_list_biased('boy_names')
                 else:
-                    name = self.make_list('girl_names')
+                    name = self.make_list_biased('girl_names')
 
                 names.append(name)
                 self.curent_cache['name'].append(name)
