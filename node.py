@@ -313,14 +313,19 @@ class JobNode(Node):
         commands['refresh'] = dict(command = 'refresh')
         commands['status'] = dict(command = 'status')
 
-    def load(self, node_token):
+    def load(self, node_token, form_name = None):
 
         # add the job to the scheduler
 
         # build up the parameters to pass
         params = self.base_params.copy()
+        if form_name:
+            node_data = node_token[form_name]
+        else:
+            node_data = node_token.get_node_data()
+
         for param in self.params:
-            params[param] = node_token.data.get(param)
+            params[param] = node_data.get(param)
         jobId = global_session.application.job_scheduler.add_job(self.job_type, self.job_function, **params)
         node_token.link = "%s:refresh:id=%s" % (self.name, jobId)
         node_token.action = 'redirect'
@@ -328,7 +333,8 @@ class JobNode(Node):
 
     def refresh(self, node_token):
         # TD does this need to be different from status? can we combine?
-        jobId = node_token.data.get('id')
+        node_data = node_token.get_node_data()
+        jobId = node_data.get('id')
         node_token.out = dict(data = self.get_status(jobId), form = True)
         node_token.action = 'status'
         print 'status'
@@ -337,7 +343,8 @@ class JobNode(Node):
 
     def status(self, node_token):
         # report the status of the job
-        jobId = node_token.data.get('id')
+        node_data = node_token.get_node_data()
+        jobId = node_data.get('id')
         node_token.out = dict(data = self.get_status(jobId))
         node_token.action = 'status'
 
@@ -391,7 +398,8 @@ class AutoForm(TableNode):
 class AutoFormPlus(TableNode):
 
     def initialise(self, node_token):
-        table = node_token.data.get('table', '')
+        node_data = node_token.get_node_data()
+        table = node_data.get('table', '')
 
         print repr(table)
         table = table.encode('ascii')
