@@ -279,10 +279,6 @@ class TableNode(Node):
     def edit(self, node_token):
         self["main"].view(node_token, read_only = False)
 
-        node_token.layout_type = 'listing'
-        node_token.form_layout = [['main']]
-
-
     def view(self, node_token, read_only=True):
         self["main"].view(node_token, read_only)
 
@@ -292,9 +288,6 @@ class TableNode(Node):
     def list(self, node_token, limit=20):
         self["listing"].list(node_token, limit)
 
-        # add the layout information
-        node_token.layout_type = 'listing'
-        node_token.form_layout = [['listing']]
 
 class JobNode(Node):
 
