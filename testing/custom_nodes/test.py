@@ -124,15 +124,10 @@ class Node1(Node):
         form_type = "action",
     )
 
-    form_layout = [['main']]
-    layout_type = 'listing'
 
     def call(self, node_token):
         self['main'].show(node_token)
 
-        # add the layout information
-        node_token.layout_type = self.layout_type
-        node_token.form_layout = self.form_layout
 
 class Node2(Node):
 
@@ -158,8 +153,6 @@ class Node2(Node):
         form_type = "action",
     )
 
-    form_layout = [['main']]
-    layout_type = 'listing'
 
     def call(self, node_token):
         name = node_token.command.replace('+', ' ')
@@ -175,9 +168,6 @@ class Node2(Node):
         self['main'].show(node_token, data)
 
 
-        # add the layout information
-        node_token.layout_type = self.layout_type
-        node_token.form_layout = self.form_layout
 
 class Node3(TableNode):
 
@@ -210,9 +200,6 @@ class Node5(AutoForm):
 
     table = "colour"
 
-##class People(AutoForm):
-##
-##    table = "people"
 
 class People(TableNode):
 
@@ -234,7 +221,6 @@ class People(TableNode):
         form_type = "input",
     )
 
-    table = "people"
 
     photo = form(
         thumb('image'),
@@ -251,6 +237,8 @@ class People(TableNode):
         form_type = "grid",
     )
 
+    table = "people"
+
     form_layout = [['main'], ['photo'], ['phone']]
     layout_type = 'entity'
     layout_title_form = 'main'
@@ -261,7 +249,7 @@ class People(TableNode):
         commands['_add'] = dict(command = 'add')
         commands['edit'] = dict(command = 'edit')
         commands['_save'] = dict(command = 'save')
-        commands['list'] = dict(command = 'show_listing')
+        commands['list'] = dict(command = 'list')
         self.__class__.commands = commands
 
     def edit(self, node_token):
@@ -274,14 +262,7 @@ class People(TableNode):
                 set_title = False
             self[form_name].view(node_token, read_only = False, set_title = set_title)
         # add the layout information
-        node_token.layout_type = self.layout_type
-        node_token.form_layout = self.form_layout
-
-    def show_listing(self, node_token):
-        self.list(node_token)
-        node_token.layout_type = 'listing'
-        node_token.form_layout = [['listing']]
-
+        node_token.set_layout(self.layout_type, self.form_layout)
 
     def save(self, node_token):
         for form_name in node_token.form_tokens():
@@ -321,9 +302,6 @@ class DataGenerate(JobNode):
     job_function = 'generate'
     params = []
 
-    form_layout = [['main']]
-    layout_type = 'listing'
-
     def setup_extra_commands(self):
         commands = self.__class__.commands
         commands['select'] = dict(command = 'select')
@@ -338,12 +316,7 @@ class DataGenerate(JobNode):
         data = dict(tables = tables)
         self['main'].show(node_token, data)
 
-        node_token.layout_type = self.layout_type
-        node_token.form_layout = self.form_layout
-
     def generate(self, node_token):
-        # FIXME this is a slight botch to get the node_token data
-        # it should really be done further back
         data = node_token['main']
         table = data.get('table')
         number = data.get_data_int('number_records', 0)
@@ -353,6 +326,10 @@ class DataGenerate(JobNode):
 
 
 class Truncate(Node):
+
+    # FIXME This is horrific and needs to be replaced
+    # Issues of security, user feedback, lack of confirmation,
+    # lack of cancelation, slowness things done in the wrong place etc.
 
     main = form(
         text("Truncate table :)"),
@@ -369,8 +346,6 @@ class Truncate(Node):
         form_type = "action",
     )
 
-    form_layout = [['main']]
-    layout_type = 'listing'
 
     def call(self, node_token):
         if node_token.command == 'list':
@@ -396,9 +371,12 @@ class Truncate(Node):
             data = dict(table = table_name,
                         records = count)
             self['completed'].show(node_token, data)
+            # As this is not a node level request
+            # we need to set the layout by hand.
+            # FIXME Can we do this more automated as this is likely
+            # a common use case.
+            node_token.set_layout('listing', ['completed'])
 
-        node_token.layout_type = self.layout_type
-        node_token.form_layout = [['completed']]
 
     def list_tables(self, node_token):
         tables = []
@@ -409,8 +387,6 @@ class Truncate(Node):
         data = dict(tables = tables)
         self['main'].show(node_token, data)
 
-        node_token.layout_type = self.layout_type
-        node_token.form_layout = [['main']]
 
 
 class Search(TableNode):
@@ -424,8 +400,6 @@ class Search(TableNode):
 
     )
 
-    form_layout = [['listing']]
-    layout_type = 'listing'
 
     def call(self, node_token, limit = 20):
         where = "_core_entity.title like ?"
@@ -434,9 +408,6 @@ class Search(TableNode):
         limit = node_data.get_data_int('l', limit)
         values = ['%%%s%%' % query]
         self['listing'].list(node_token, limit, where = where, values = values)
-
-        node_token.layout_type = self.layout_type
-        node_token.form_layout = self.form_layout
 
 
 class Auto(AutoFormPlus):
