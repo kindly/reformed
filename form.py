@@ -299,14 +299,15 @@ class Form(object):
     def view_single(self, node_token, read_only=True, where = None, set_title = True):
         # TD not reviewed
         node = node_token.node
-        print 'VIEW', node_token.data
-        id = node_token.data.get('id')
+        request_data = node_token[self.name]
+        print 'VIEW', request_data
+        id = request_data.get('id')
         if where:
             pass
         elif id:
             where = 'id=?'
         else:
-            id = node_token.data.get('__id')
+            id = request_data.get('__id')
             where = '_core_id=?'
         print where, id
         try:
