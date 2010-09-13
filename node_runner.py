@@ -222,16 +222,35 @@ class NodeToken(object):
             while node_string.count(':') < 2:
                 node_string += ':'
             node_string += link_data
-        # check we aren't overwriting anything
-        if self.action:
-            raise Exception('Action has already been set for this NodeToken')
-        self.action = 'redirect'
-        self.link = node_string
+        self._set_action('redirect', link = node_string)
 
     def redirect_back(self):
         """ Helper function direct the front end to go back in the history. """
-        self.action = 'redirect'
-        self.link = 'BACK'
+        self._set_action('redirect', link = 'BACK')
+
+    def status(self, data):
+        """ Helper function send status data to front end. """
+        self._set_action('status', data = data)
+
+    def forbidden(self):
+        """ Helper function send status data to front end. """
+        self._set_action('forbidden')
+
+    def general_error(self, error):
+        """ Helper function send status data to front end. """
+        self._set_action('general_error', data = error)
+
+    def _set_action(action, link = None, data = None):
+        """ Set the action for the node token. """
+        if self.action:
+            raise Exception('Action has already been set for this NodeToken')
+        self.action = action
+        if link:
+            self.link = link
+        if data:
+            self.out = data
+
+
 
 class NodeManager(object):
 
