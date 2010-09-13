@@ -26,6 +26,7 @@ import os.path
 import inspect
 from ZODB.PersistentMapping import PersistentMapping
 import transaction
+import urllib
 
 log = logging.getLogger('rebase.node')
 
@@ -63,6 +64,9 @@ class NodeToken(object):
                 value = default
             return value
 
+        def url_encode(self):
+            return urllib.urlencode(self.data)
+
 
     def __init__(self, data):
 
@@ -72,7 +76,7 @@ class NodeToken(object):
         self.command_type = None
 
         self.command = data.pop('command', None)
-        self.data = data.pop('data', None)
+        self._data = data.pop('data', None)
 
         # self.node will be set each time a new node is called with this token
         # it is currently set in NodeRunner.run()
@@ -82,7 +86,8 @@ class NodeToken(object):
 
         # when data is sent in multiple form mode (this should be the default)
         # we want to split it for each form to make processing easier.
-        self.data_split = {}
+        self._data_split = {}
+        self.form_token_list = []
         self.process_data()
 
 
@@ -130,11 +135,11 @@ class NodeToken(object):
         else there is common data for a 'node' level command"""
         if self.command_type == 'layout':
             try:
-                return self.data_split[form_name]
+                return self._data_split[form_name]
             except:
                 raise Exception('Node Token tried to access none existant sent data for form `%s`' % form_name)
         elif self.command_type == 'node':
-            return self.data_split
+            return self._data_split
 
     def process_data(self):
         """Process the data to make it easier to work with and
@@ -144,27 +149,33 @@ class NodeToken(object):
         # as it is a 'layout' level command
         # If not then it is a 'node' level command
         # and we want only have a single source of data
-        if type(self.data).__name__ == 'list':
+        if type(self._data).__name__ == 'list':
             self.command_type = 'layout'
             self.split_data()
         else:
             self.command_type = 'node'
-            self.data_split = self.FormToken(self.data)
+            self._data_split = self.FormToken(self._data)
 
     def split_data(self):
         """We get an array of data for each form,
         split this out into a hash to make it easier to access"""
-        for row in self.data:
-            self.data_split[row['form']] = self.FormToken(row, simple = False)
+        for row in self._data:
+            form_token = self.FormToken(row, simple = False)
+            self._data_split[row['form']] = form_token
+            # Build list of form names too.
+            self.form_token_list.append(row['form'])
 
-    def get_data_int(self, key, default = 0):
-        """ Get integer value out of self.data[key] or default """
-        # FIXME I don't like this here but we'll see TD
-        try:
-            value = int(self.data.get(key, default))
-        except ValueError:
-            value = default
-        return value
+    def form_tokens(self):
+        """returns the form tokens if we have more than one"""
+        return self.form_token_list
+
+    def get_node_data(self):
+        """reeturns the FormToken if there is a node level data"""
+        if self.command_type == 'node':
+            return self._data_split
+        else:
+            raise Exception("Node level data has been requested but there is none available")
+
 
     def output_form_data(self, form_name, output):
         """Helper function to add form data to the node token for a form"""
@@ -365,7 +376,7 @@ class NodeRunner(object):
 
     def run(self, node_name, node_token, last_node = None):
         log.info('running node: %s, user id: %s' % (node_name, global_session.session['user_id']))
-        log.debug('sent data: \n%s' %  pprint.pformat(node_token.data))
+        log.debug('sent data: \n%s' %  pprint.pformat(node_token._data))
 
         sys_info = global_session.sys_info
         # check if application is private
