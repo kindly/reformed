@@ -284,23 +284,16 @@ class People(TableNode):
 
 
     def save(self, node_token):
-        for row in node_token.data:
-            form = row['form']
-            data = row['data']
-            print form
-            print data
-            self[form].save(node_token)
+        for form_name in node_token.form_tokens():
+            self[form_name].save(node_token)
 
     def update(self, node_token):
-        for row in node_token.data:
-            form = row['form']
-            data = row['data']
-            print form
-            print data
-            self[form].view(node_token, read_only = False)
+        for form_name in node_token.form_tokens():
+            self[form_name].view(node_token, read_only = False)
 
     def add(self, node_token):
-        print node_token.data
+        # FIXME what is this doing?
+        print node_token._data
 
 
 class DataLoader(JobNode):
@@ -351,15 +344,12 @@ class DataGenerate(JobNode):
     def generate(self, node_token):
         # FIXME this is a slight botch to get the node_token data
         # it should really be done further back
-        data = node_token.data[0].get('data')
+        data = node_token['main']
         table = data.get('table')
-        try:
-            number = int(data.get('number_records', 0))
-        except ValueError:
-            number = 0
+        number = data.get_data_int('number_records', 0)
         if r[table].table_type == 'user' and number:
             self.base_params = dict(table = table, number_requested = number)
-            self.load(node_token)
+            self.load(node_token, form_name = 'main')
 
 
 class Truncate(Node):
@@ -386,7 +376,6 @@ class Truncate(Node):
         if node_token.command == 'list':
             self.list_tables(node_token)
         elif node_token.command == 'truncate':
-            print node_token.data
             table_name = node_token['main'].get('table')
             if table_name:
                 self.truncate_table(node_token, table_name)
@@ -440,8 +429,9 @@ class Search(TableNode):
 
     def call(self, node_token, limit = 20):
         where = "_core_entity.title like ?"
-        query = node_token.data.get('q', '')
-        limit = node_token.get_data_int('l', limit)
+        node_data = node_token.get_node_data()
+        query = node_data.get('q', '')
+        limit = node_data.get_data_int('l', limit)
         values = ['%%%s%%' % query]
         self['listing'].list(node_token, limit, where = where, values = values)
 
