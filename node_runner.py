@@ -53,11 +53,11 @@ class NodeToken(object):
                 self.form = data['form']
 
         def get(self, name, default = None):
-            """get method"""
+            """ get method """
             return self.data.get(name, default)
 
         def get_data_int(self, key, default = 0):
-            """ Get integer value out of self.data[key] or default """
+            """ Get integer value out of self.data[key] or default. """
             try:
                 value = int(self.data.get(key, default))
             except ValueError:
@@ -83,13 +83,11 @@ class NodeToken(object):
         self.node = None
         self.node_name = None
 
-
         # when data is sent in multiple form mode (this should be the default)
         # we want to split it for each form to make processing easier.
         self._data_split = {}
         self.form_token_list = []
         self.process_data()
-
 
         # form cache is used to cache forms when possible
         # it is a hash of the name and client version of all client
@@ -176,17 +174,14 @@ class NodeToken(object):
         else:
             raise Exception("Node level data has been requested but there is none available")
 
-
     def output_form_data(self, form_name, output):
         """Helper function to add form data to the node token for a form"""
-
         # paranoia check TODO should this be an assertion?
         if form_name in self.layout_forms:
             raise Exception("Attempt to overwrite form data in node token")
 
         self.layout_forms.append(form_name)
         self.out[form_name] = output
-
 
     def set_form_message(self, message):
         """Sets the button info to be displayed by a form."""
@@ -196,25 +191,48 @@ class NodeToken(object):
         """Sets the button info to be displayed by a form."""
         if not self.out.get('data'):
             self.out["data"] = {}
-
         self.out['data']['__buttons'] = button_list
+
+    def set_layout(self, layout_type, form_layout):
+        """ Helper function to set layout. """
+        if self.layout_type:
+            raise Exception('NodeToken layout type already set')
+        self.layout_type = layout_type
+        self.form_layout = form_layout
 
     def get_layout(self):
         """ Returns the layout hash to be sent to the front end. """
-
         if not self.layout_type and self.layout_forms and self.command_type == 'node':
             # No layout has been specified but one is needed
             # because this was a 'node' level command.
             self.layout_type = 'listing'
             self.form_layout = [self.layout_forms]
-
+        # build layout
         layout = dict(layout_type = self.layout_type,
                       form_layout = self.form_layout,
                       layout_forms = self.layout_forms)
         return layout
 
 
-        
+    def redirect(self, node_string, url_data = None):
+        """ Helper function redirect via the front end. """
+        # Append any url_data to the node if needed
+        if url_data:
+            link_data = urllib.urlencode(url_data)
+            while node_string.count(':') < 2:
+                node_string += ':'
+            node_string += link_data
+        # check we aren't overwriting anything
+        if self.action:
+            raise Exception('Action has already been set for this NodeToken')
+        self.action = 'redirect'
+        self.link = node_string
+
+    def redirect_back(self):
+        """ Helper function direct the front end to go back in the history. """
+        self.action = 'redirect'
+        self.link = 'BACK'
+
 class NodeManager(object):
 
     """NodeManager imports and stores nodes form
