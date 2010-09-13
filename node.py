@@ -319,7 +319,8 @@ class JobNode(Node):
         for param in self.params:
             params[param] = node_data.get(param)
         jobId = global_session.application.job_scheduler.add_job(self.job_type, self.job_function, **params)
-        node_token.redirect("%s:refresh:id=%s" % (self.name, jobId))
+        redirect = "%s:refresh:id=%s" % (self.name, jobId)
+        node_token.redirect(redirect)
 
 
     def refresh(self, node_token):
