@@ -31,10 +31,10 @@ class NewPerson(Node):
 class EvaluateDuplicate(Node):
 
     def call(self, node_token):
-        link_data = node_token['main'].url_encode()
-        node_token.action = 'redirect'
-        node_token.link = 'new_person.MakeContact:next:%s' % link_data
-        
+        link_data = node_token['main'].data
+        node_token.redirect('new_person.MakeContact:next:', url_data = link_data)
+
+
 
 class MakeContact(Node):
 
@@ -54,6 +54,7 @@ class MakeContact(Node):
     table = "people"
 
     def call(self, node_token):
+        # retrieve the posted data to populate the form
         data = node_token.get_node_data().data
         data['__message'] = "Enter details"
         self["main"].show(node_token, data)
@@ -62,9 +63,7 @@ class SaveContact(MakeContact):
 
     def call(self, node_token):
         self["main"].save(node_token)
-        node_token.action = 'redirect'
-        node_token.link = 'BACK'
-
+        node_token.redirect_back()
 
 
 
