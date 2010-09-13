@@ -240,7 +240,7 @@ class NodeToken(object):
         """ Helper function send status data to front end. """
         self._set_action('general_error', data = error)
 
-    def _set_action(action, link = None, data = None):
+    def _set_action(self, action, link = None, data = None):
         """ Set the action for the node token. """
         if self.action:
             raise Exception('Action has already been set for this NodeToken')
