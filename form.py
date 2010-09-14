@@ -274,7 +274,13 @@ class Form(object):
             #node_token.data["id"] = obj.id
 
             if self.save_redirect:
-                link = self.save_redirect + ":id=" + str(obj.id)
+                # make sure redirect is correct
+                while self.save_redirect.count(':') < 2:
+                    self.save_redirect += ':'
+                if not self.save_redirect.endswith(':'):
+                    self.save_redirect += '&'
+                # add data
+                link = self.save_redirect + "id=" + str(obj.id)
                 node_token.redirect(link)
                 return
 
