@@ -9,6 +9,10 @@ import os
 root_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 root_dir = os.path.normpath(root_dir)
 
+class Holder(object):
+    def __init__(self, **kw):
+        self.__dict__ = kw
+
 
 def get_dir(file = None, extra_path = None):
 
