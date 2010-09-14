@@ -497,8 +497,7 @@ class NodeRunner(object):
         # the user cannot perform this action
         if not node.check_permissions():
             log.warn('forbidden node or command')
-            # FIXME this should be appended
-            node_token.output = {'action': 'forbidden'}
+            node_token.forbidden()
             return
 
         node.initialise(node_token)
