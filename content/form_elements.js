@@ -241,7 +241,7 @@ $FormElements = function(){
     }
 
     function password(item, value){
-        return add_label(item, 'rf_') + '<input type="password"' + set_class_list(item) + ' value="' + HTML_Encode_Clear(value) + '"/>';
+        return add_label(item, 'rf_') + '<input type="password"' + set_class_list(item, 'inputbox') + ' value="' + HTML_Encode_Clear(value) + '"/>';
     }
 
     function checkbox(item, value){
