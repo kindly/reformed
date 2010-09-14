@@ -152,7 +152,7 @@ class Form(object):
             data = {}
         # update the node that the form is associated with
         self.create_form_data(node_token, data)
-        node_token.action = 'form'
+        node_token.form()
 
 
     def new(self, node_token):
@@ -165,7 +165,7 @@ class Form(object):
 
         # update the node that the form is associated with
         self.create_form_data(node_token, data_out)
-        node_token.action = 'form'
+        node_token.form()
 
 
 
@@ -234,7 +234,7 @@ class Form(object):
         node_token.saved = []
         node_token.errors = {}
         node_token.out = {}
-        node_token.action = 'save'
+        #node_token.action = 'save'
 
         session = r.Session()
 
@@ -274,8 +274,8 @@ class Form(object):
             #node_token.data["id"] = obj.id
 
             if self.save_redirect:
-                node_token.action = 'redirect'
-                node_token.link = self.save_redirect + ":id=" + str(obj.id)
+                link = self.save_redirect + ":id=" + str(obj.id)
+                node_token.redirect(link)
                 return
 
             node_token.next_node = self.save_next_node
@@ -284,8 +284,7 @@ class Form(object):
             #                      command = self.save_next_command or 'new')
 
         else:
-            node_token.action = 'redirect'
-            node_token.link = 'BACK'
+            node_token.redirect_back()
 
     def view(self, node_token, **kw):
         """Calls the appropriate view function for the form"""
@@ -300,6 +299,7 @@ class Form(object):
         # TD not reviewed
         node = node_token.node
         request_data = node_token[self.name]
+        form_title = None
         print 'VIEW', request_data
         id = request_data.get('id')
         if where:
@@ -337,9 +337,9 @@ class Form(object):
             # set the title for bookmarks if this is the main form
             if set_title:
                 if self.title_field and data_out.has_key(self.title_field):
-                    node_token.title = data_out.get(self.title_field)
+                    form_title = data_out.get(self.title_field)
                 else:
-                    node_token.title = '%s: %s' % (self.table, id)
+                    form_title = '%s: %s' % (self.table, id)
 
         except custom_exceptions.SingleResultError:
             # no result found so return error to front end
@@ -367,7 +367,7 @@ class Form(object):
 
         self.create_form_data(node_token, data_out, read_only)
 
-        node_token.action = 'form'
+        node_token.form(form_title)
 
         node_token.bookmark = dict(
             table_name = table,
@@ -452,8 +452,7 @@ class Form(object):
                          'offset' : offset,
                          'base_link' : 'l:%s:_update:form=%s&q=%s%s' % (node_token.node_name, self.name, query, link_id)}
 
-      #  node_token.out = data
-        node_token.action = 'form'
+        node_token.form()
 
 ##        node_token.bookmark = dict(
 ##            table_name = table,
@@ -495,14 +494,12 @@ class Form(object):
                 node_token.action = 'delete'
         except sqlalchemy.orm.exc.NoResultFound:
             error = 'Record not found.'
-            node_token.out = error
-            node_token.action = 'general_error'
+            node_token.general_error(error)
         except sqlalchemy.exc.IntegrityError, e:
             print e
 
             error = 'The record cannot be deleted,\nIt is referenced by another record.'
-            node_token.out = error
-            node_token.action = 'general_error'
+            node_token.general_error(error)
             session.rollback()
         session.close()
 
@@ -609,8 +606,8 @@ class Form(object):
 
         current_page = offset/limit + 1
         total_pages = results.row_count/limit + 1
-        node_token.action = 'form'
-        node_token.title = 'listing page %s of %s' % (current_page, total_pages)
+        title = 'listing page %s of %s' % (current_page, total_pages)
+        node_token.form(title = title)
 
 
     def create_form_data(self, node_token, data=None, read_only=False):
