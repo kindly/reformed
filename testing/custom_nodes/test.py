@@ -329,7 +329,7 @@ class Truncate(Node):
 
     # FIXME This is horrific and needs to be replaced
     # Issues of security, user feedback, lack of confirmation,
-    # lack of cancelation, slowness things done in the wrong place etc.
+    # lack of cancelation, things done in the wrong place etc.
 
     main = form(
         text("Truncate table :)"),
@@ -364,9 +364,9 @@ class Truncate(Node):
             count = 0
             for record in records:
                 session.delete(record)
-                session.commit()
                 count += 1
                 print count
+            session.commit()
             session.close()
             data = dict(table = table_name,
                         records = count)
@@ -375,7 +375,7 @@ class Truncate(Node):
             # we need to set the layout by hand.
             # FIXME Can we do this more automated as this is likely
             # a common use case.
-            node_token.set_layout('listing', ['completed'])
+            node_token.set_layout('listing', [['completed']])
 
 
     def list_tables(self, node_token):
