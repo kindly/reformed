@@ -236,17 +236,23 @@ class NodeToken(object):
         """ Helper function send status data to front end. """
         self._set_action('forbidden')
 
+    def form(self, title = None):
+        """ Helper function send status data to front end. """
+        self._set_action('form', title = title)
+
     def general_error(self, error):
         """ Helper function send status data to front end. """
         self._set_action('general_error', data = error)
 
-    def _set_action(self, action, link = None, data = None):
+    def _set_action(self, action, link = None, data = None, title = None):
         """ Set the action for the node token. """
-        if self.action:
+        if self.action and not(action == self.action and action == 'form'):
             raise Exception('Action has already been set for this NodeToken')
         self.action = action
         if link:
             self.link = link
+        if title:
+            self.title = title
         if data:
             self.out = data
 
