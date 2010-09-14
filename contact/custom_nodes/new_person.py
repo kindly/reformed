@@ -25,16 +25,16 @@ class NewPerson(Node):
     )
 
     def call(self, node_token):
-        self['main'].show(node_token)
-        node_token.out["data"]["__message"] = "Add new person."
+        data = dict(__message = "Add new person.")
+        self['main'].show(node_token, data)
 
 class EvaluateDuplicate(Node):
 
     def call(self, node_token):
-        node_token.action = 'redirect'
-        node_token.link = 'new_person.MakeContact:next:'
-        node_token.out = node_token.data
-        
+        link_data = node_token['main'].data
+        node_token.redirect('new_person.MakeContact:next:', url_data = link_data)
+
+
 
 class MakeContact(Node):
 
@@ -49,22 +49,21 @@ class MakeContact(Node):
         params =  {"form_type": "normal"},
         table = "people",
         title_field = 'name',
+        save_redirect = 'new_person.People:edit',
     )
 
     table = "people"
 
     def call(self, node_token):
-        self["main"].show(node_token)
-        node_token.out["data"]["__message"] = "Enter details"
+        # retrieve the posted data to populate the form
+        data = node_token.get_node_data().data
+        data['__message'] = "Enter details"
+        self["main"].show(node_token, data)
 
 class SaveContact(MakeContact):
 
     def call(self, node_token):
-        self["main"].save_row(node_token, node_token.data)
-        node_token.action = 'redirect'
-        node_token.link = 'BACK'
-
-
+        self["main"].save(node_token)
 
 
 
@@ -97,14 +96,13 @@ class DataGenerate(JobNode):
         self['main'].show(node_token, data)
 
     def generate(self, node_token):
-        table = node_token.data.get('table')
-        try:
-            number = int(node_token.data.get('number_records', 0))
-        except ValueError:
-            number = 0
+        node_data = node_token['main']
+        table = node_data.get('table')
+        number = node_data.get_data_int('number_records', 0)
+
         if r[table].table_type == 'user' and number:
             self.base_params = dict(table = table, number_requested = number)
-            self.load(node_token)
+            self.load(node_token, form_name = 'main')
 
 class People(TableNode):
 

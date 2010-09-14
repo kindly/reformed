@@ -102,6 +102,15 @@ class Node(object):
 
         raise Exception('Form with name `%s` does not exist in this node.' % form_name)
 
+    def get_form_name_list(self):
+        """returns the names of all the forms available to the node"""
+        return self._available_forms.keys()
+
+    def get_form_name_list_form_layout(self):
+        form_names = []
+        for section in self.form_layout:
+            form_names.extend(section)
+        return form_names
 
 
     def call(self, node_token):
@@ -115,8 +124,7 @@ class Node(object):
         # check we have the needed permissions
         if command_info.get('permissions'):
             if not authenticate.check_permission(command_info.get('permissions')):
-                node_token.action = 'forbidden'
-                node_token.command = None
+                node_token.forbidden()
                 print 'forbidden'
                 return
 
@@ -126,8 +134,8 @@ class Node(object):
             command = getattr(self, command)
             command(node_token)
         else:
-            node_token.action = 'general_error'
-            node_token.out = "Command '%s' in node '%s' not known" % (node_token.command, self.name)
+            error = "Command '%s' in node '%s' not known" % (node_token.command, self.name)
+            node_token.general_error(error)
 
     def check_permissions(self):
         return authenticate.check_permission(self.permissions)
@@ -185,7 +193,7 @@ class Node(object):
                 result = {"__table": "bookmarks",
                           "entity_id": node_token.bookmark["entity_id"],
                           "user_id": user_id,
-                          "title": node_token.title,
+                          "title": node_token.get_title(),
                           "entity_table": node_token.bookmark["table_name"],
                           "accessed_date": util.convert_value(datetime.datetime.now())}
             # save
@@ -194,7 +202,7 @@ class Node(object):
         else:
             # anonymous user
             result = {"entity_id": node_token.bookmark["entity_id"],
-                      "title": node_token.title,
+                      "title": node_token.get_title(),
                       "entity_table": node_token.bookmark["table_name"],
                       "accessed_date": util.convert_value(datetime.datetime.now())}
 
@@ -245,18 +253,21 @@ class TableNode(Node):
         result_link('title'),
         info('summary', data_type = 'info'),
 
-        params = {"form_type": "results"}
+        params = {"form_type": "results"},
+        volatile = True,
     )
 
 
     def setup_commands(self):
-        commands = self.__class__.commands
+        commands = {}
         commands['view'] = dict(command = 'view')
         commands['list'] = dict(command = 'list')
         commands['edit'] = dict(command = 'edit')
         commands['_save'] = dict(command = 'save')
         commands['delete'] = dict(command = 'delete')
         commands['new'] = dict(command = 'new')
+        self.__class__.commands = commands
+
 
     def save(self, node_token):
         self["main"].save(node_token)
@@ -294,44 +305,47 @@ class JobNode(Node):
         commands['refresh'] = dict(command = 'refresh')
         commands['status'] = dict(command = 'status')
 
-    def load(self, node_token):
+    def load(self, node_token, form_name = None):
 
         # add the job to the scheduler
 
         # build up the parameters to pass
         params = self.base_params.copy()
+        if form_name:
+            node_data = node_token[form_name]
+        else:
+            node_data = node_token.get_node_data()
+
         for param in self.params:
-            params[param] = node_token.data.get(param)
+            params[param] = node_data.get(param)
         jobId = global_session.application.job_scheduler.add_job(self.job_type, self.job_function, **params)
-        node_token.link = "%s:refresh:id=%s" % (self.name, jobId)
-        node_token.action = 'redirect'
+        redirect = "%s:refresh:id=%s" % (self.name, jobId)
+        node_token.redirect(redirect)
 
 
     def refresh(self, node_token):
         # TD does this need to be different from status? can we combine?
-        jobId = node_token.data.get('id')
-        node_token.out = dict(data = self.get_status(jobId), form = True)
-        node_token.action = 'status'
+        node_data = node_token.get_node_data()
+        jobId = node_data.get('id')
+        node_token.status(dict(data = self.get_status(jobId), form = True))
         print 'status'
-        # ??
-     #   node_token.title = "job %s" % jobId
 
     def status(self, node_token):
         # report the status of the job
-        jobId = node_token.data.get('id')
-        node_token.out = dict(data = self.get_status(jobId))
-        node_token.action = 'status'
+        node_data = node_token.get_node_data()
+        jobId = node_data.get('id')
+        node_token.status(dict(data = self.get_status(jobId)))
 
 
 
     def get_status(self, jobId):
         data_out = r.search_single_data(self.table, where = "id=%s" % jobId)
-        out = dict(id = jobId,
+        status_data = dict(id = jobId,
                    start = data_out['job_started'],
                    message = data_out['message'],
                    percent = data_out['percent'],
                    end = data_out['job_ended'])
-        return out
+        return status_data
 
 
 
@@ -361,7 +375,7 @@ class AutoForm(TableNode):
             else:
                 fields.append(input(field.name, **extra_info))
 
-        main = form(*fields, table = self.table, params = self.form_params)
+        main = form(*fields, table = self.table, params = self.form_params, volatile = True)
         # add this to the available forms
         self._available_forms['main'] = main
 
@@ -369,11 +383,14 @@ class AutoForm(TableNode):
 class AutoFormPlus(TableNode):
 
     def initialise(self, node_token):
-        table = node_token.data.get('table', '')
+        node_data = node_token.get_node_data()
+        table = node_data.get('table', '')
 
-        print repr(table)
         table = table.encode('ascii')
-        print repr(table)
+        # This seems to be needed but I'm not sure why
+        # but without it the listings are incorrect.
+        # TODO investigate a little
+        self.table = table
         rtable = r[table]
 
         self.extra_data = {'table':table}
@@ -398,4 +415,3 @@ class AutoFormPlus(TableNode):
         main = form(*fields, table = table, params = self.form_params, volatile = True)
         # add this to the available forms
         self._available_forms['main'] = main
-

@@ -30,24 +30,27 @@ from page_item import input, FormItemFactory
 
 class Form(object):
 
+    # list of form types
+    # NOTE is this the best place to define this?
+    # what about expansion?
+    form_types = "active normal grid results input".split()
+
     def __init__(self, name, node, version, *form_items, **kw):
 
         self._form_items = form_items
 
         self.name = name
 
-        self.node = node
-        self.node_name = node.name
         self.version = version + 1
 
         # provided keywords
         # TD document `table`
-        # use default table for the node if none specified
-        self.table = kw.get("table", node.table)
+        self.table = kw.get("table", None)
         # general
         self.params = kw.get("params")
         self.title_field = kw.get("title_field")
         self.read_only = kw.get("read_only", False)
+        self.form_type = kw.get("form_type", 'input') # TODO do we want this to default?
 
         # subform
         self.child_id = kw.get("child_id")
@@ -106,17 +109,6 @@ class Form(object):
         # only used in TableNode
         self.name = name
 
-    def set_node(self, node):
-        # don't like want to kill TD
-        # only used in TableNode
-        self.node = node
-        self.node_name = node.name
-        self.table = self.table or node.table
-
-        # TD wtf?
-        ## not in init as fields want to know what table the forms is in
-        for form_item in self.form_items:
-            form_item.set_form(self)
 
     def load_subform(self, node_token, parent_result, data, session):
         # TD wtf how can be called load subform when returns data?
@@ -131,7 +123,7 @@ class Form(object):
         parent_value = data.get(self.parent_id)
         where = "%s=?" % self.child_id
 
-        result = r.search(self.table, where, session = session, 
+        result = r.search(self.table, where, session = session,
                           tables = tables, values = [parent_value])
 
         out = []
@@ -159,36 +151,39 @@ class Form(object):
         if not data:
             data = {}
         # update the node that the form is associated with
-        node_token.out = self.create_form_data(node_token, data)
-        node_token.action = 'form'
+        self.create_form_data(node_token, data)
+        node_token.form()
 
 
     def new(self, node_token):
         """display a 'blank' form on the front end"""
 
         data_out = {}
-        data_out['__buttons'] = [['add %s' % self.table, '%s:_save:' % self.node_name],
+        data_out['__buttons'] = [['add %s' % self.table, '%s:_save:' % node_token.node_name],
                                  ['cancel', 'BACK']]
         data_out['__message'] = "Hello, add new %s" % self.table
 
         # update the node that the form is associated with
-        node_token.out = self.create_form_data(node_token, data_out)
-        node_token.action = 'form'
+        self.create_form_data(node_token, data_out)
+        node_token.form()
 
-    def save_row(self, node_token, data, session = None, as_subform = False, parent_obj = None, relation_attr = None):
+
+
+    def save_row(self, node_token, session = None):
         """Saves an individual database row.  Subforms are saved last and
-        the subforms call this method in their own form instance. 
+        the subforms call this method in their own form instance.
         relation_attr is the attribute on the newly created object that should
         have the parent_obj as its value.  This is to allow sqlalchemy to determine
         the ids for new objects.
         Both form and subform manipulate the same data which is stored agianst the
         node."""
+        data = node_token[self.name]
 
         id = data.get('id')
         root = data.get('__root')
 
-        # existing record
         if id:
+            # existing record
             try:
                 result = r.search_single(self.table, "id = ?",
                                       values = [id],
@@ -199,51 +194,39 @@ class Form(object):
                 form.errors[root] = 'record not found'
                 raise
 
-            version = data["_version"]
+            version = data.get("_version")
             save_set.set_value("_version", version)
         else:
             # new record (create blank one)
             save_set = SaveNew(r, self.table, session)
             session = save_set.session
             save_set.new = True
-            # subform data will have a parent_obj
-            # which we need to link
-            if parent_obj:
-                setattr(save_set.obj, relation_attr, parent_obj)
 
         ## prepare save data for normal fields
 
         # TD we loop through the form items and try to save them
-
         for form_item in self.form_items:
-      #      if form_item.page_item_type not in ["subform", "layout"]:
-      #     we may need this if we decide to save subforms with main form
             form_item.save_page_item(node_token, save_set, data, session)
-
-        if as_subform:
-            child_id = self.child_id
-            save_set.set_value(child_id, data[child_id])
-            #setattr(save_set.obj, child_id, data[child_id])
 
         errors = save_set.save()
 
-        if errors:
-            print "failed to save" 
-            if not hasattr(node_token, "errors"):
-                node_token.errors = {}
-            
-            node_token.errors[root] = errors
+        # FIXME get errors working again :)
+####        errors = {}
+####        try:
+####            session.save_or_update(obj)
+####        except formencode.Invalid, e:
+####            print "failed to save\n%s" % e.msg
+####            for key, value in e.error_dict.items():
+####                errors[key] = value.msg
+####            errors[root] = errors
 
-# FIXME subform 
-###        for form_item in self.form_items:
-###            if form_item.page_item_type <> "subform":
-###                continue
-###            form_item.save(self, self.node, obj, data, session)
 
-        return save_set
+        return (save_set, errors)
 
-    def save(self, node_token, as_subform = False):
-        """Save this form. Its job is to set up the node belongs to 
+
+
+    def save(self, node_token):
+        """Save this form. Its job is to set up the node belongs to
         and handle errors"""
         # TD not reviewed
 
@@ -251,14 +234,14 @@ class Form(object):
         node_token.saved = []
         node_token.errors = {}
         node_token.out = {}
-        node_token.action = 'save'
+        #node_token.action = 'save'
 
         session = r.Session()
 
-        data = node_token.data
+      #  data = node_token.data
 
         try:
-            save_set = self.save_row(node_token, data, session, as_subform = as_subform)
+            (save_set, errors) = self.save_row(node_token, session)
         except Exception, e:
             session.rollback()
             session.close()
@@ -280,41 +263,59 @@ class Form(object):
             else:
                 title = obj.id
             data_out = {}
-            data_out['__buttons'] = [['add %s' % self.table, '%s:_save:' % self.node_name],
+            data_out['__buttons'] = [['add %s' % self.table, '%s:_save:' % node_token.node_name],
                                      ['cancel', 'BACK']]
             data_out['__message'] = "%s saved!  Add more?" % title
 
             node_token.next_data_out = data_out
 
-            node_token.data["id"] = obj.id
+            # FIXME disabled as currently broken
+            # need to decide on how to handle node redirects better
+            #node_token.data["id"] = obj.id
 
             if self.save_redirect:
-                node_token.action = 'redirect'
-                node_token.link = self.save_redirect + ":id=" + str(obj.id)
+                # make sure redirect is correct
+                while self.save_redirect.count(':') < 2:
+                    self.save_redirect += ':'
+                if not self.save_redirect.endswith(':'):
+                    self.save_redirect += '&'
+                # add data
+                link = self.save_redirect + "id=" + str(obj.id)
+                node_token.redirect(link)
                 return
 
-            node_token.next_node = self.save_next_node or self.node_name
-            node_token.next_data = dict(data = node_token.data,
-                                  command = self.save_next_command or 'new')
+            node_token.next_node = self.save_next_node
+            # FIXME as above node data forwarding
+            #node_token.next_data = dict(data = node_token.data,
+            #                      command = self.save_next_command or 'new')
 
         else:
-            node_token.action = 'redirect'
-            node_token.link = 'BACK'
+            node_token.redirect_back()
 
+    def view(self, node_token, **kw):
+        """Calls the appropriate view function for the form"""
+        if self.form_type in ['input', 'action']:
+            self.view_single(node_token, **kw)
+        elif self.form_type in ['grid']:
+            self.view_multiple(node_token, **kw)
+        else:
+            raise Exception('Unknown form_type `%s` form `%s`' % (self.form_type, self.name))
 
-    def view(self, node_token, read_only=True, where = None):
+    def view_single(self, node_token, read_only=True, where = None, set_title = True):
         # TD not reviewed
-        node = self.node
-        print 'VIEW', node_token.data
-        id = node_token.data.get('id')
+        node = node_token.node
+        request_data = node_token[self.name]
+        form_title = None
+        print 'VIEW', request_data
+        id = request_data.get('id')
         if where:
             pass
         elif id:
             where = 'id=?'
         else:
-            id = node_token.data.get('__id')
+            id = request_data.get('__id')
             where = '_core_id=?'
-
+        print where, id
         try:
             session = r.Session()
 
@@ -324,7 +325,7 @@ class Form(object):
 
             tables = util.split_table_fields(self.form_item_name_list, table).keys()
 
-            result = r.search_single(table, where, 
+            result = r.search_single(table, where,
                                           session = session, tables = tables,
                                           values = [id])
 
@@ -338,16 +339,17 @@ class Form(object):
                 form_item.display_page_item(node_token, result, data_out, session)
 
             id = data_out.get('id')
-            # set the title for bookmarks
-            if self.title_field and data_out.has_key(self.title_field):
-                node_token.title = data_out.get(self.title_field)
-            else:
-                node_token.title = '%s: %s' % (self.table, id)
+
+            # set the title for bookmarks if this is the main form
+            if set_title:
+                if self.title_field and data_out.has_key(self.title_field):
+                    form_title = data_out.get(self.title_field)
+                else:
+                    form_title = '%s: %s' % (self.table, id)
 
         except custom_exceptions.SingleResultError:
             # no result found so return error to front end
-            node_token.action = 'general_error'
-            node_token.out = 'No record found for give id'
+            node_token.general_error('No record found for give id')
             session.close()
             return
 
@@ -357,8 +359,8 @@ class Form(object):
             title = result.get("id")
 
         if '__buttons' not in data_out:
-            data_out['__buttons'] = [['save %s' % self.table, '%s:_save:' % self.node_name],
-                                     ['delete %s' % self.table, '%s:_delete:' % self.node_name],
+            data_out['__buttons'] = [['save %s' % self.table, '%s:_save:' % node_token.node_name],
+                                     ['delete %s' % self.table, '%s:_delete:' % node_token.node_name],
                                      ['cancel', 'BACK']]
         if not data_out['__buttons']:
             data_out.pop('__buttons')
@@ -369,16 +371,99 @@ class Form(object):
         if not data_out['__message']:
             data_out.pop('__message')
 
-        data = self.create_form_data(node_token, data_out, read_only)
+        self.create_form_data(node_token, data_out, read_only)
 
-        node_token.out = data
-        node_token.action = 'form'
+        node_token.form(form_title)
 
         node_token.bookmark = dict(
             table_name = table,
             bookmark_string = node.build_node('', 'view', 'id=%s' %  id),
             entity_id = id
         )
+
+        session.close()
+
+
+
+    def view_multiple(self, node_token, read_only=True, where = None, limit=5, set_title = True, **kw):
+        # TD not reviewed
+
+        data = node_token[self.name]
+        query = data.get('q', '')
+        limit = data.get_data_int('l', limit)
+        offset = data.get_data_int('o')
+        id_data = data
+        node = node_token.node
+
+        print "id_data", id_data
+        id = id_data.get('id')
+        if where:
+            link_id = ''
+            pass
+        elif id:
+            where = 'id=?'
+            link_id = '&id=%s' % id
+        else:
+            id = id_data.get('__id')
+            where = '_core_id=?'
+            link_id = '&__id=%s' % id
+
+        session = r.Session()
+
+        data_out = {}
+
+        table = self.table or node.table
+
+        tables = util.split_table_fields(self.form_item_name_list, table).keys()
+
+        results = r.search(table, where,
+                                      session = session, tables = tables,
+                            limit = limit,
+                           offset = offset,
+                           count = True,
+                                      values = [id])
+        results.collect()
+
+        session.close()
+
+        out = []
+        # build the links
+        for result in results:
+            row = {}
+            for field in util.INTERNAL_FIELDS:
+                try:
+                    row[field] = result.get(field)
+                except AttributeError:
+                    extra_field = None
+            for form_item in self.form_items:
+                form_item.display_page_item(node_token, result, row, session)
+            out.append(row)
+
+        data_out = {'__array' : out}
+        data_out ['__message'] = "moo table!"
+        data_out['__buttons'] = [['add %s' % self.table, '%s:_add:' % node_token.node_name],
+                                 ['delete %s' % self.table, '%s:_delete:' % node_token.node_name],
+                                 ['cancel', 'BACK']]
+
+        id = data_out.get('id')
+
+        self.create_form_data(node_token, data_out, read_only)
+
+        # add the paging info
+        base_link = 'l:%s:_update:form=%s&q=%s%s' % (node_token.node_name, self.name, query, link_id)
+        node_token.add_paging(self.name,
+                              count = results.row_count,
+                              limit = limit,
+                              offset = offset,
+                              base_link = base_link)
+
+        node_token.form()
+
+##        node_token.bookmark = dict(
+##            table_name = table,
+##            bookmark_string = node.build_node('', 'view', 'id=%s' %  id),
+##            entity_id = id
+##        )
 
         session.close()
 
@@ -414,14 +499,12 @@ class Form(object):
                 node_token.action = 'delete'
         except sqlalchemy.orm.exc.NoResultFound:
             error = 'Record not found.'
-            node_token.out = error
-            node_token.action = 'general_error'
+            node_token.general_error(error)
         except sqlalchemy.exc.IntegrityError, e:
             print e
 
             error = 'The record cannot be deleted,\nIt is referenced by another record.'
-            node_token.out = error
-            node_token.action = 'general_error'
+            node_token.general_error(error)
             session.rollback()
         session.close()
 
@@ -430,10 +513,9 @@ class Form(object):
 
         node = node_token.node
 
-        query = node_token.data.get('q', '')
-        limit = node_token.get_data_int('l', limit)
-        offset = node_token.get_data_int('o')
-
+        query = node_token[self.name].get('q', '')
+        limit = node_token[self.name].get_data_int('l', limit)
+        offset = node_token[self.name].get_data_int('o')
         table = self.table or node.table
 
         ##FIXME do we need these separated?
@@ -494,36 +576,40 @@ class Form(object):
                 row['actions'] = None
                 out.append(row)
         else:
+            title_field = self.title_field or node.title_field
             for result in results:
                 row = {}
-                if self.title_field:
-                    row['title'] = result.get(self.title_field)
+                if title_field:
+                    row['title'] = result.get(title_field)
                 else:
-                    row['title'] = '%s: %s' % (self.table, result.get('id'))
-                row['__id'] = result.get('id')
+                    row['title'] = '%s: %s' % (table, result.get('id'))
+                row['id'] = result.get('id')
                 row['entity'] = None
+                row['result_url'] = 'n:%s:edit:id=%s' % (node.name, result.get('id'))
                 out.append(row)
 
         data = {'__array' : out}
 
         encoded_data = urllib.urlencode(node.extra_data)
 
-        data['__buttons'] = [['add new %s' % self.table, '%s:new:%s:' % (self.node_name, encoded_data)],
+        data['__buttons'] = [['add new %s' % table, '%s:new:%s:' % (node_token.node_name, encoded_data)],
                              ['cancel', 'BACK']]
 
-        data['__message'] = "These are the current %s(s)." % self.table
+        data['__message'] = "These are the current %s(s)." % table
 
-        out = node["listing"].create_form_data(node_token, data)
+        node[self.name].create_form_data(node_token, data)
 
         # add the paging info
-        out['paging'] = {'row_count' : results.row_count,
-                         'limit' : limit,
-                         'offset' : offset,
-                         'base_link' : 'n:%s:list:q=%s' % (self.node.name, query)}
+        node_token.add_paging(self.name,
+                              count = results.row_count,
+                              limit = limit,
+                              offset = offset,
+                              base_link = 'n:%s:list:q=%s' % (node.name, query))
 
-        node_token.out = out
-        node_token.action = 'form'
-        node_token.title = 'listing'
+        current_page = offset/limit + 1
+        total_pages = results.row_count/limit + 1
+        title = 'listing page %s of %s' % (current_page, total_pages)
+        node_token.form(title = title)
 
 
     def create_form_data(self, node_token, data=None, read_only=False):
@@ -548,13 +634,14 @@ class Form(object):
             print '~~~~~ Cached Form'
             form = {
                 "cache_form" : self.name,
-                "cache_node" : self.node.name
+                "cache_node" : node_token.node_name
             }
         else:
             form = {
                 "fields" : self.create_form_item_output(node_token, data),
                 "version" : self.version,
-                "name" : self.name
+                "name" : self.name,
+                "form_type" : self.form_type,
             }
             # add copy of params if there are some
             # copy is used as it may get modified
@@ -567,12 +654,14 @@ class Form(object):
                 form['params']['read_only'] = True
 
 
-        out = {
+        output = {
             "form" : form,
             "type" : "form",
-            "data" : data
+            "data" : data,
         }
-        return out
+
+        node_token.output_form_data(self.name, output)
+
 
     def create_form_item_output(self, node_token, data):
         """create and return the form data stucture used by the front end"""

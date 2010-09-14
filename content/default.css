@@ -380,8 +380,9 @@ td input {
     overflow:hidden;
 }
 
-#bookmarks li{
-    list-style-type: none;
+#bookmarks ol.bookmark-items li{
+    list-style-type: disc;
+    list-style-position: inside;
     color:#515151;
 }
 #bookmarks ol{
@@ -918,6 +919,7 @@ div.record_info > div {
     position: relative;
     clear: both;
     float:left;
+    width: 100%;
 }
 
 .RESULT_IMG {
@@ -941,7 +943,7 @@ div.record_info > div {
 }
 
 .RECORD_IMG {
-    float:right;
+    float:left;
     position:relative;
     width:300px;
     height:300px;
@@ -963,6 +965,39 @@ div.record_info > div {
     display: block;
 }
 
+.INPUT_FORM{
+    float:left;
+    clear: both;
+    width: 100%;
+}
 
 
+.LAYOUT_COL_LEFT{
+    float:left;
+    position:relative;
+    width: 60%;
+    overflow: hidden;
+}
+
+.LAYOUT_COL_LEFT .STYLE{
+    position: relative;
+    border: 1px solid red;
+}
+.LAYOUT_COL_RIGHT{
+    float:left;
+    width: 40%;
+}
+
+.LAYOUT_COL_FULL{
+    float:left;
+    clear: both;
+    width: 100%;
+
+}
+
+.FORM_HOLDER{
+    float:left;
+    position:relative;
+    width:100%;
+}
 

@@ -147,15 +147,19 @@ def process_node(environ, start_response):
 
     response = webob.Response(environ)
     response.content_type = 'text/plain'
+
+    # Cookie stuff
     if node_interface.auto_login_cookie:
         cookie = node_interface.auto_login_cookie
         if cookie == 'CLEAR':
             response.delete_cookie('auto')
 
         else:
+            # are we are using https?
+            host_secure = (request.scheme == 'https')
+
             response.set_cookie('auto',  cookie,
-                                domain = '127.0.0.1', # FIXME this needs to be set correctly
-                                secure = False, # can be sent over plain http (risky)
+                                secure = host_secure, # can be sent over plain http (risky)
                                 max_age = 31536000, # cookie lifetime in seconds (1 year)
                                 path = '/')
         response.headers['Set-Cookie']

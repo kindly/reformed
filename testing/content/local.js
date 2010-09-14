@@ -8,9 +8,10 @@ $.Buttons.action_hash = {
     test6: ['Simple Form autoform', 'go-home.png', 'h', 'general', 'n:test.Node5:list:'],
     test7: ['Truncate', 'go-home.png', 'h', 'general', 'n:test.Truncate:list:'],
     test8: ['Generate Data', 'go-home.png', 'h', 'general', 'n:test.DataGenerate:select:'],
-    test9: ['People', 'go-home.png', 'h', 'general', 'n:test.People:list:']
+    test9: ['People', 'go-home.png', 'h', 'general', 'n:test.People:list:'],
+    test10 : ['user admin', 'go-home.png', 'h', 'general', 'n:user.UserAdmin:']
 };
 
 
-$.Buttons.action_list = ['test1', 'test2', 'test3', 'test4', 'test5', 'test6', 'test7', 'test8', 'test9'];
+$.Buttons.action_list = ['test1', 'test2', 'test3', 'test4', 'test5', 'test6', 'test7', 'test8', 'test9', 'test10'];
 

@@ -374,7 +374,7 @@ class Field(object):
     restricted_kw = ["field_id", "foreign_key_name", "default",
                      "onupdate", "nullable", "mandatory",
                      "length", "many_side_not_null","many_side_mandatory",
-                     "many_side_default", "many_side_onupdate"]
+                     "many_side_default", "many_side_onupdate", "order_by"]
 
 
     def __new__(cls, name, *args, **kw):

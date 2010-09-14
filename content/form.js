@@ -42,6 +42,10 @@ $.fn.extend({
 		$.InputForm(this, form_data, grid_data, paging_data);
 	},
 
+	grid2: function(form_data, grid_data, paging_data){
+		$.Grid2(this, form_data, grid_data, paging_data);
+	},
+
 	status_form: function(){
 		$.StatusForm(this);
 	}
@@ -930,6 +934,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     };
 
     function size_boxes(){
+        // FIXME this has been disabled TD
+        return;
         var $box;
         var width;
         // BOX layouts
@@ -1063,7 +1069,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         var errors = validate_form_data(data);
         if ($.Util.is_empty(errors)){
             //FIXME Toby {id}  if (fields){
-            return data;
+            return {form:form_data.name, data : data};
         } else {
             save_errors(errors)
             return false;
@@ -1389,58 +1395,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
         }
 
-        function make_paging(){
-            // build a paging bar
-            var PAGING_SIZE = 5;
-            var offset = extra_defaults.offset;
-            var limit = extra_defaults.limit;
-            var count = extra_defaults.row_count;
-            var base = extra_defaults.base_link;
 
-            var pages = Math.ceil(count/limit);
-            var current = Math.floor(offset/limit);
-            var link;
-
-            var html = '<div class="PAGING_BAR">';
-            html += 'paging: ';
-
-            if (current>0){
-                link = base + '&o=0&l=' + limit;
-                html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">|&lt;</a> ';
-                link = base + '&o=' + (current-1) * limit + '&l=' + limit;
-                html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">&lt;</a> ';
-            } else {
-                html += '|&lt; ';
-                html += '&lt; ';
-            }
-            for (var i=0; i < pages; i++){
-                if (i == current){
-                    html += (i+1) + ' ';
-                } else {
-                    if ( Math.abs(current-i)<PAGING_SIZE ||
-                         (i<(PAGING_SIZE*2)-1 && current<PAGING_SIZE) ||
-                         (pages-i<(PAGING_SIZE*2) && current>pages-PAGING_SIZE)
-                    ){
-                        link = base + '&o=' + i * limit + '&l=' + limit;
-                        html += '<a href="#' + link + '" onclick="node_load(\'' + link + '\');return false;">' + (i+1) + '</a> ';
-                    }
-                }
-            }
-            if (current<pages - 1){
-                link = base + '&o=' + (current+1) * limit + '&l=' + limit;
-                html += '<a href="#' + link + '" onclick="node_load(\'' + link + '\');return false;">&gt;</a> ';
-                link = base + '&o=' + (pages-1) * limit + '&l=' + limit;
-                html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">&gt;|</a> ';
-            } else {
-                html += '&gt; ';
-                html += '&gt;| ';
-            }
-
-            html += 'page ' + (current+1) + ' of ' + pages + ' pages';
-            html += ', ' + (count) + ' records';
-            html += '</div>';
-            return html;
-        }
 
         function build_subforms(){
             // subforms
@@ -1486,7 +1441,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         // FIXME why extra_data should be paging_data?
         if (extra_defaults){
             // cache the html for reuse
-            paging_bar = make_paging();
+            paging_bar = make_paging(extra_defaults);
             $builder[builder_depth].append(paging_bar);
         }
         item = {layout : 'area_start'}
@@ -1559,7 +1514,7 @@ $.StatusForm = function(input){
             message = String(message).replace(/\n/g, '<br/>');
         }
         $('#status_job_id').text(data.id);
-        $('#status_job_started').text(data.start);
+        $('#status_job_started').text($.Util.format_data(data.start, 'd'));
         $('#status_job_message').html(message);
         if (data.percent === null){
             data.percent = 0;
@@ -1588,6 +1543,197 @@ $.StatusForm = function(input){
     }
 
 
+};
+
+function make_paging(extra_defaults){
+    // FIXME this function is global and should be somewhere else
+    // shared between grid2 and input_form
+    // build a paging bar
+    var PAGING_SIZE = 5;
+    var offset = extra_defaults.offset;
+    var limit = extra_defaults.limit;
+    var count = extra_defaults.row_count;
+    var base = extra_defaults.base_link;
+
+    var pages = Math.ceil(count/limit);
+    var current = Math.floor(offset/limit);
+    var link;
+
+    var html = '<div class="PAGING_BAR">';
+    html += 'paging: ';
+
+    if (current>0){
+        link = base + '&o=0&l=' + limit;
+        html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">|&lt;</a> ';
+        link = base + '&o=' + (current-1) * limit + '&l=' + limit;
+        html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">&lt;</a> ';
+    } else {
+        html += '|&lt; ';
+        html += '&lt; ';
+    }
+    for (var i=0; i < pages; i++){
+        if (i == current){
+            html += (i+1) + ' ';
+        } else {
+            if ( Math.abs(current-i)<PAGING_SIZE ||
+                 (i<(PAGING_SIZE*2)-1 && current<PAGING_SIZE) ||
+                 (pages-i<(PAGING_SIZE*2) && current>pages-PAGING_SIZE)
+            ){
+                link = base + '&o=' + i * limit + '&l=' + limit;
+                html += '<a href="#' + link + '" onclick="node_load(\'' + link + '\');return false;">' + (i+1) + '</a> ';
+            }
+        }
+    }
+    if (current<pages - 1){
+        link = base + '&o=' + (current+1) * limit + '&l=' + limit;
+        html += '<a href="#' + link + '" onclick="node_load(\'' + link + '\');return false;">&gt;</a> ';
+        link = base + '&o=' + (pages-1) * limit + '&l=' + limit;
+        html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">&gt;|</a> ';
+    } else {
+        html += '&gt; ';
+        html += '&gt;| ';
+    }
+
+    html += 'page ' + (current+1) + ' of ' + pages + ' pages';
+    html += ', ' + (count) + ' records';
+    html += '</div>';
+    return html;
+}
+
+
+$.Grid2 = function(input, form_data, row_data, extra_defaults){
+
+    var $input = $(input);
+    var message = row_data.__message;
+    var buttons = row_data.__buttons;
+    row_data = row_data.__array;
+
+    function build_grid(){
+
+
+        function build_header(){
+            var html = [];
+            var item;
+            html.push('<tr>');
+            for (var i = 0; i < num_fields; i++){
+                html.push('<th>');
+                item = form_data.fields[i];
+                html.push(item.title);
+                html.push('</th>');
+            }
+            html.push('</tr>');
+            return html.join('');
+        }
+
+        function build_data_row(data){
+            var html = [];
+            var item;
+            var control;
+            var value;
+            html.push('<tr>');
+            for (var i = 0; i < num_fields; i++){
+                html.push('<td>');
+                item = form_data.fields[i];
+                value = $.Util.get_item_value(item, data);
+                if (value === ''){
+                    value = '&nbsp;';
+                } else if (value === null){
+                    value = 'Null';
+                }
+                control = correct_value(item, value);
+                html.push(control);
+                html.push('</td>');
+            }
+            html.push('</tr>');
+            return html.join('');
+
+        }
+
+        function build_empty_row(){
+            var html = [];
+            html.push('<tr>');
+            for (var i = 0; i < num_fields; i++){
+                html.push('<td>&nbsp;</td>');
+            }
+            html.push('</tr>');
+            return html.join('');
+        }
+
+    function correct_value(item, value){
+
+        // correct data value if needed
+        switch (item.data_type){
+            case 'DateTime':
+            case 'Date':
+                if (value !== null){
+                    return Date.ISO(value).makeLocaleString();
+                } else {
+                    return null;
+                }
+                break;
+            case 'Boolean':
+                if (value){
+                    return "True"
+                } else {
+                    return "False"
+                }
+            default:
+                return HTML_Encode_Clear(value);
+        }
+    }
+
+        function build_data(){
+            var html = [];
+            for (var i = 0; i < row_data.length; i++){
+                html.push(build_data_row(row_data[i]));
+            }
+            // add empty rows to make correct number
+            for (; i < NUM_TABLE_ROWS; i++){
+                html.push(build_empty_row());
+            }
+            return html.join('');
+        }
+        var NUM_TABLE_ROWS = 5;
+        var $builder= $('<div class="INPUT_FORM" >');
+        var paging_bar;
+        var $control;
+        var value;
+        var html = [];
+
+        // form message
+        if (!$.Util.is_empty(message)){
+            $control = $FormElements.build(true, {control : 'message_area'}, message);
+            $builder.append($control);
+        }
+        // paging bar
+        // FIXME why extra_data should be paging_data?
+        if (extra_defaults){
+            // cache the html for reuse
+            paging_bar = make_paging(extra_defaults);
+            $builder.append(paging_bar);
+        }
+        html.push('<table>');
+        html.push(build_header());
+        html.push(build_data());
+        html.push('</table>');
+        $builder.append(html.join(''));
+        // form buttons
+        if (buttons){
+            item = { buttons : buttons, control: 'button_box'};
+            value = $.Util.get_item_value(item, row_data);
+            $control = $FormElements.build(true, item, value);
+            $builder.append($control);
+        }
+        // second paging bar
+        if (paging_bar){
+            $builder.append(paging_bar);
+        }
+        $input.append($builder);
+    }
+
+    var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
+    var num_fields = form_data.fields.length;
+    build_grid();
 };
 
 })(jQuery);

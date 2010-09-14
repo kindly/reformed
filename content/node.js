@@ -85,18 +85,39 @@ function node_call_from_string(arg, change_state, insecure){
     takes a string (arg) of the form
     "/n:<node_name>:<command>:<arguments>"
 
+    insecure: allows 'dangerous' _underscored commands to be sent
+
     change_state: if true will change the state for the root
     FIXME no root info yet defaults to 'main' further along the call chain
 */
+    var process = false;
     var link = arg.split(':');
+    var node = link[1];
+    var command = link[2];
+    var data_hash = {};
+
+    // if arguments are supplied convert them to a hash
+    if (link.length>3){
+        data_hash = convert_url_string_to_hash(link[3]);
+    }
+
     if (link[0]=='/n' || link[0]=='n'){
-        var node = link[1];
-        var command = link[2];
-        var data_hash = {};
-        // if arguments are supplied
-        if (link.length>3){
-            data_hash = convert_url_string_to_hash(link[3]);
-        }
+        process = true;
+    } else if (link[0]=='/l' || link[0]=='l'){
+        // layout commands
+        // TODO The data protocol is changing
+        // this is the new version which needs to be fully
+        // backported.  Allows for multiple form updates and avoids
+        // namespace issues.
+        var data = {data : data_hash};
+        data.form = data_hash.form;
+        data.layout_id = $Layout.get_layout_id();
+        console_log(data);
+        data_hash = [data]
+        process = true;
+    }
+
+    if (process){
         // if the command starts with a underscore we don't want
         // to trigger the command from a url change as this can
         // let dangerous commands be sent via urls
@@ -149,7 +170,7 @@ function get_node(node_name, node_command, node_data, change_state){
                 lastnode: '',  //fixme
                 command: node_command};
 
-    var cache_info = $.Util.FormDataCacheInfo[node_name];
+    var cache_info = $Layout.get_form_cache_info(node_name);
     if (cache_info !== undefined){
         info['form_cache'] = cache_info;
     }
@@ -212,11 +233,12 @@ function node_button_input_form(item, data){
     var split_data = data.split(':')
     var node = split_data[0];
     var command = split_data[1];
-    var out = {};
+    var out;
+
     if (split_data.length == 3){
         out = $obj.data('command')('get_form_data', split_data[2]);
         if (out){
-            get_node_return(node, command, out, $obj);
+            get_node_return(node, command, [out], $obj);
         }
     } else {
         node_load('n:' + data);
@@ -401,19 +423,7 @@ function process_node(packet, job){
             $('#' + root).html(page_build(packet.data.data));
             break;
          case 'form':
-             var form = packet.data.data.form;
-             form = $.Util.FormDataProcess(form, packet.data.node);
-             data = packet.data.data.data;
-             var paging = packet.data.data.paging;
-             var form_type = form.params.form_type;
-             if (form_type == 'grid'){
-                $('#' + root).grid(form, data, paging);
-             } else if (form_type == 'action' || form_type == 'results'){
-                $('#' + root).input_form(form, data, paging);
-             } else {
-                $('#' + root).input_form(form, data, paging);
-             //   $('#' + root).form(form, data, paging);
-             }
+             $Layout.update_layout(packet.data);
              break;
          case 'save_error':
             data = packet.data.data;

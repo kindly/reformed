@@ -62,7 +62,7 @@ class Table(object):
 
     restricted_kw = ["table_id", "field_order", "persisted",
                      "primary_key", "entity", "relation", "info_table",
-                     "modified_by", "modified_date", "version"]
+                     "modified_by", "modified_date", "version", "entity_relationship"]
 
 
 
