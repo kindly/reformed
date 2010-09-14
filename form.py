@@ -349,10 +349,10 @@ class Form(object):
 
         except custom_exceptions.SingleResultError:
             # no result found so return error to front end
-            node_token.action = 'general_error'
-            node_token.out = 'No record found for give id'
+            node_token.general_error('No record found for give id')
             session.close()
             return
+
         if self.title_field:
             title = result.get(self.title_field)
         else:
