@@ -49,6 +49,7 @@ class MakeContact(Node):
         params =  {"form_type": "normal"},
         table = "people",
         title_field = 'name',
+        save_redirect = 'new_person.People:edit',
     )
 
     table = "people"
@@ -63,8 +64,6 @@ class SaveContact(MakeContact):
 
     def call(self, node_token):
         self["main"].save(node_token)
-        node_token.redirect_back()
-
 
 
 
