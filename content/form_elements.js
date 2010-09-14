@@ -482,8 +482,102 @@ $Layout = function(){
     var $forms = {};
 
 
+    /* FORM DATA PROCESSING */
+    var FormProcessor = function(){
+        /* FormProcessor processes form data sent by the
+         * backend.  Cache form data where possible.
+         * Normailises forms etc.
+         */
 
-    function add_forms_to_layout(form_data, layout_data){
+        var form_data_cache = {};
+        var form_data_cache_info = {};
+
+        function process_form_data_all(forms_data, node){
+            var full_form_data = {};
+            var form_data;
+            for (var form in forms_data){
+                form_data = {};
+                form_data.data = forms_data[form].data
+                form_data.paging = forms_data[form].paging
+                form_data.form = process_form_data(forms_data[form].form, node)
+                full_form_data[form] = form_data;
+            }
+            return full_form_data;
+        }
+
+        function process_form_data(form_data, node){
+            /* If we have a suitable version in the form cache
+             * then just return that else normalise the form.
+             */
+            var cache_name;
+            if (form_data.cache_form !== undefined){
+                cache_name = form_data.cache_node + '|' + form_data.cache_form;
+                return form_data_cache[cache_name];
+            }
+
+            form_data = form_data_normalise(form_data, node)
+            // form caching
+            cache_name = node + '|' + form_data.name;
+            if (!form_data.version){
+                // remove from cache if it exists
+                if (form_data_cache_info[node] !== undefined){
+                    delete form_data_cache_info[node][form_data.name];
+                }
+            } else {
+                // store form in cache
+                form_data_cache[cache_name] = form_data;
+                if (!form_data_cache_info[node]){
+                    form_data_cache_info[node] = {};
+                }
+                form_data_cache_info[node][form_data.name] = form_data.version;
+            }
+            return form_data;
+        }
+
+        function form_data_normalise(form_data, node){
+            /* generally clean up the form data to
+             * make things easier for us later on.
+             * creates .items hash for quick reverse lookups etc.
+             */
+
+            form_data.node = node;
+            // make hash of the fields
+            form_data.items = {};
+            for (var i = 0, n = form_data.fields.length; i < n; i++){
+                var field = form_data.fields[i];
+                field.index = i;
+                if (field.name){
+                    form_data.items[field.name] = field;
+                }
+                if (!field.control){
+                    field.control = 'normal';
+                }
+                // get out the thumb field if one exists
+                // makes life easier later on
+                // TODO do we still use this?
+                if (field.control == 'thumb'){
+                    form_data.thumb = field;
+                }
+            }
+            return form_data;
+        }
+
+        // exported functions
+        return {
+            'process' : function (form_data, node_data){
+                return process_form_data_all(form_data, node_data)
+            },
+            'get_form_cache_data' : function (node_name){
+                return form_data_cache_info[node_name];
+            }
+        }
+    }()
+
+
+
+    /* LAYOUT FUNCTIONS */
+
+    function add_forms_to_layout(packet){
         /* Create a new layout or update form(s)
          * depending on the data provided.
          * If the layout_type is provided then we
@@ -491,8 +585,10 @@ $Layout = function(){
          * This function is EXPORTED.
          */
 
+        // retrieve layout data
+        var layout_data = packet.layout;
         // Store the form data.
-        forms = form_data;
+        forms = FormProcessor.process(packet.data, packet.node);
 
         if (layout_data.layout_type){
             // Layout has changed so update our stored data.
@@ -632,13 +728,17 @@ $Layout = function(){
 
     // exported functions
     return {
-        'update_layout' : function(form_data, layout_data){
+        'update_layout' : function (packet){
             // Create or update the layout.
-            add_forms_to_layout(form_data, layout_data);
+            add_forms_to_layout(packet);
         },
-        'get_layout_id' : function(){
+        'get_layout_id' : function (){
             return layout_id;
+        },
+        'get_form_cache_info' : function (node_name){
+            return FormProcessor.get_form_cache_data(node_name);
         }
     }
 
 }()
+

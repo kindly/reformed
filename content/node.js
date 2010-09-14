@@ -170,7 +170,7 @@ function get_node(node_name, node_command, node_data, change_state){
                 lastnode: '',  //fixme
                 command: node_command};
 
-    var cache_info = $.Util.FormDataCacheInfo[node_name];
+    var cache_info = $Layout.get_form_cache_info(node_name);
     if (cache_info !== undefined){
         info['form_cache'] = cache_info;
     }
@@ -423,8 +423,7 @@ function process_node(packet, job){
             $('#' + root).html(page_build(packet.data.data));
             break;
          case 'form':
-             var forms = $.Util.FormDataProcessAll(packet.data.data, packet.data.node);
-             $Layout.update_layout(forms, packet.data.layout)
+             $Layout.update_layout(packet.data);
              break;
          case 'save_error':
             data = packet.data.data;
