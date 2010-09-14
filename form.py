@@ -444,13 +444,12 @@ class Form(object):
         self.create_form_data(node_token, data_out, read_only)
 
         # add the paging info
-        if self.name not in node_token.out:
-            node_token.out[self.name] = {}
-
-        node_token.out[self.name]['paging'] = {'row_count' : results.row_count,
-                         'limit' : limit,
-                         'offset' : offset,
-                         'base_link' : 'l:%s:_update:form=%s&q=%s%s' % (node_token.node_name, self.name, query, link_id)}
+        base_link = 'l:%s:_update:form=%s&q=%s%s' % (node_token.node_name, self.name, query, link_id)
+        node_token.add_paging(self.name,
+                              count = results.row_count,
+                              limit = limit,
+                              offset = offset,
+                              base_link = base_link)
 
         node_token.form()
 
@@ -595,14 +594,11 @@ class Form(object):
         node[self.name].create_form_data(node_token, data)
 
         # add the paging info
-        if self.name not in node_token.out:
-            node_token.out[self.name] = {}
-
-        print (self.name, query)
-        node_token.out[self.name]['paging'] = {'row_count' : results.row_count,
-                         'limit' : limit,
-                         'offset' : offset,
-                         'base_link' : 'n:%s:list:q=%s' % (node.name, query)}
+        node_token.add_paging(self.name,
+                              count = results.row_count,
+                              limit = limit,
+                              offset = offset,
+                              base_link = 'n:%s:list:q=%s' % (node.name, query))
 
         current_page = offset/limit + 1
         total_pages = results.row_count/limit + 1

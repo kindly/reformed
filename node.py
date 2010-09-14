@@ -193,7 +193,7 @@ class Node(object):
                 result = {"__table": "bookmarks",
                           "entity_id": node_token.bookmark["entity_id"],
                           "user_id": user_id,
-                          "title": node_token.title,
+                          "title": node_token.get_title(),
                           "entity_table": node_token.bookmark["table_name"],
                           "accessed_date": util.convert_value(datetime.datetime.now())}
             # save
@@ -202,7 +202,7 @@ class Node(object):
         else:
             # anonymous user
             result = {"entity_id": node_token.bookmark["entity_id"],
-                      "title": node_token.title,
+                      "title": node_token.get_title(),
                       "entity_table": node_token.bookmark["table_name"],
                       "accessed_date": util.convert_value(datetime.datetime.now())}
 

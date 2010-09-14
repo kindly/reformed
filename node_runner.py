@@ -98,28 +98,27 @@ class NodeToken(object):
         # this is usually requested at start-up
         self.request_application_data = data.pop('request_application_data', False)
 
-        self.output = None
         # output stuff
-        self.out = {}
+        self._out = {}
 
         # the layout_type sets the section layout
         # the form_layout will be an array
         # that has the grouping and ordering of the forms
         # for each section
         # eg. [ ['form1', 'form2'], ['form3'] ]
-        self.layout_type = None
+        self._layout_type = None
         # the form_layout sets the layout
         # eg. 'entity', 'listing'
-        self.form_layout = None
+        self._form_layout = None
         # this is the list of forms provided to the frontend
         # it may be redundant
-        self.layout_forms = []
+        self._layout_forms = []
 
         # title sets the title of the page
-        self.title = None
-        self.link = None
+        self._title = None
+        self._link = None
 
-        self.action = None
+        self._action = None
         self.bookmark = None
         self.user = None
         self.next_node = None
@@ -138,6 +137,11 @@ class NodeToken(object):
                 raise Exception('Node Token tried to access none existant sent data for form `%s`' % form_name)
         elif self.command_type == 'node':
             return self._data_split
+
+    def debug_info(self):
+        """Debug information."""
+        return  pprint.pformat(node_token._data)
+
 
     def process_data(self):
         """Process the data to make it easier to work with and
@@ -177,40 +181,40 @@ class NodeToken(object):
     def output_form_data(self, form_name, output):
         """Helper function to add form data to the node token for a form"""
         # paranoia check TODO should this be an assertion?
-        if form_name in self.layout_forms:
+        if form_name in self._layout_forms:
             raise Exception("Attempt to overwrite form data in node token")
 
-        self.layout_forms.append(form_name)
-        self.out[form_name] = output
+        self._layout_forms.append(form_name)
+        self._out[form_name] = output
 
     def set_form_message(self, message):
         """Sets the button info to be displayed by a form."""
-        self.out['data']['__message'] = message
+        self._out['data']['__message'] = message
 
     def set_form_buttons(self, button_list):
         """Sets the button info to be displayed by a form."""
-        if not self.out.get('data'):
-            self.out["data"] = {}
-        self.out['data']['__buttons'] = button_list
+        if not self._out.get('data'):
+            self._out["data"] = {}
+        self._out['data']['__buttons'] = button_list
 
     def set_layout(self, layout_type, form_layout):
         """ Helper function to set layout. """
-        if self.layout_type:
+        if self._layout_type:
             raise Exception('NodeToken layout type already set')
-        self.layout_type = layout_type
-        self.form_layout = form_layout
+        self._layout_type = layout_type
+        self._form_layout = form_layout
 
-    def get_layout(self):
+    def _get_layout(self):
         """ Returns the layout hash to be sent to the front end. """
-        if not self.layout_type and self.layout_forms and self.command_type == 'node':
+        if not self._layout_type and self._layout_forms and self.command_type == 'node':
             # No layout has been specified but one is needed
             # because this was a 'node' level command.
-            self.layout_type = 'listing'
-            self.form_layout = [self.layout_forms]
+            self._layout_type = 'listing'
+            self._form_layout = [self._layout_forms]
         # build layout
-        layout = dict(layout_type = self.layout_type,
-                      form_layout = self.form_layout,
-                      layout_forms = self.layout_forms)
+        layout = dict(layout_type = self._layout_type,
+                      form_layout = self._form_layout,
+                      layout_forms = self._layout_forms)
         return layout
 
 
@@ -233,29 +237,83 @@ class NodeToken(object):
         self._set_action('status', data = data)
 
     def forbidden(self):
-        """ Helper function send status data to front end. """
+        """ Helper function send forbidden error to front end. """
         self._set_action('forbidden')
 
     def form(self, title = None):
-        """ Helper function send status data to front end. """
+        """ Helper function set action to form. """
         self._set_action('form', title = title)
 
     def general_error(self, error):
-        """ Helper function send status data to front end. """
+        """ Helper function send error to front end. """
         self._set_action('general_error', data = error)
 
     def _set_action(self, action, link = None, data = None, title = None):
         """ Set the action for the node token. """
-        if self.action and not(action == self.action and action == 'form'):
+        if self._action and not(action == self._action and action == 'form'):
             raise Exception('Action has already been set for this NodeToken')
-        self.action = action
+        self._action = action
         if link:
-            self.link = link
+            self._link = link
         if title:
-            self.title = title
+            self._title = title
         if data:
-            self.out = data
+            self._out = data
 
+    def add_paging(self, form_name, count, limit, offset, base_link):
+        """Add paging info to form data"""
+        # check we have data for this form
+        if form_name not in self._out:
+            self._out[form_name] = {}
+
+        self._out[form_name]['paging'] = dict(row_count = count,
+                                             limit = limit,
+                                             offset = offset,
+                                             base_link = base_link)
+
+    def output(self):
+        """Build the output data to be sent to the front end."""
+
+        info = {'action': self._action,
+                'node': self.node_name,
+                'title' : self._title,
+                'link' : self._link,
+                'user' : self.user,
+                'bookmark' : self.bookmark,
+                'layout' : self._get_layout(),
+                'data' : self._out}
+
+        user_id = global_session.session['user_id']
+        # application data
+        if self.request_application_data:
+            info['application_data'] = global_session.sys_info
+            info['application_data']['__user_id'] = user_id
+            info['application_data']['__username'] = global_session.session['username']
+            refresh_frontend = True
+        else:
+            refresh_frontend = False
+        # bookmarks
+        if (self.user or refresh_frontend) and user_id:
+            # we have logged in so we want our bookmarks
+            info['bookmark'] = self._bookmark_list(user_id)
+        log.debug('returned data\n%s\n----- end of node processing -----' % pprint.pformat(info))
+
+        return info
+
+    def _bookmark_list(self, user_id, limit = 100):
+
+        r = global_session.database
+        bookmarks = r.search("bookmarks",
+                             "user_id = ?",
+                             fields = ['title', 'entity_table', 'entity_id', 'accessed_date'],
+                             values = [user_id],
+                             order_by = "accessed_date",
+                             keep_all = False,
+                             limit = limit).data
+        return bookmarks
+
+    def get_title(self):
+        return self._title
 
 
 class NodeManager(object):
@@ -411,7 +469,7 @@ class NodeRunner(object):
         node = data.get('node')
         self.run(node, node_token)
         self.output.append({'type' : 'node',
-                              'data' : node_token.output})
+                              'data' : node_token.output()})
         # auto login cookie info
         if node_token.auto_login_cookie:
             self.auto_login_cookie = node_token.auto_login_cookie
@@ -419,7 +477,7 @@ class NodeRunner(object):
 
     def run(self, node_name, node_token, last_node = None):
         log.info('running node: %s, user id: %s' % (node_name, global_session.session['user_id']))
-        log.debug('sent data: \n%s' %  pprint.pformat(node_token._data))
+        log.debug('sent data: \n%s' % node_token.debug_info)
 
         sys_info = global_session.sys_info
         # check if application is private
@@ -464,45 +522,5 @@ class NodeRunner(object):
             self.form_cache = None
             print node_token.next_node, node_token, node_name
             return self.run(next_node, node_token, node_name)
-        else:
-            refresh_frontend = False
 
 
-
-        info = {'action': node_token.action,
-                'node': node_name,
-                'title' : node_token.title,
-                'link' : node_token.link,
-                'user' : node_token.user,
-                'bookmark' : node_token.bookmark,
-                'layout' : node_token.get_layout(),
-                'data' : node_token.out}
-
-        user_id = global_session.session['user_id']
-        # application data
-        if node_token.request_application_data:
-            info['application_data'] = sys_info
-            info['application_data']['__user_id'] = user_id
-            info['application_data']['__username'] = global_session.session['username']
-            refresh_frontend = True
-        # bookmarks
-        if (info['user'] or refresh_frontend) and user_id:
-            # we have logged in so we want our bookmarks
-            info['bookmark'] = self.bookmark_list(user_id)
-        log.debug('returned data\n%s\n----- end of node processing -----' % pprint.pformat(info))
-
-        ## FIXME botch
-        node_token.output = info
-
-
-    def bookmark_list(self, user_id, limit = 100):
-
-        r = global_session.database
-        bookmarks = r.search("bookmarks",
-                                      "user_id = ?",
-                                      fields = ['title', 'entity_table', 'entity_id', 'accessed_date'],
-                                      values = [user_id],
-                                      order_by = "accessed_date",
-                                      keep_all = False,
-                                      limit = limit).data
-        return bookmarks
