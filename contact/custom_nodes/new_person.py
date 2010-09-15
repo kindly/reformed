@@ -31,8 +31,9 @@ class NewPerson(Node):
 class EvaluateDuplicate(Node):
 
     def call(self, node_token):
-        link_data = node_token['main'].data
-        node_token.redirect('new_person.MakeContact:next:', url_data = link_data)
+        data = node_token['main'].data
+        #node_token.redirect('new_person.MakeContact:next:', node_data = data)
+        node_token.next_node('new_person.MakeContact', node_data = data, command = 'next')
 
 
 

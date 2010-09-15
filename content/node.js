@@ -99,6 +99,14 @@ function node_call_from_string(arg, change_state, insecure){
     // if arguments are supplied convert them to a hash
     if (link.length>3){
         data_hash = convert_url_string_to_hash(link[3]);
+        // override with any node_data
+        if (node_data){
+            for (var key in node_data){
+                data_hash[key] = node_data[key];
+            }
+        }
+    } else {
+        data_hash = node_data;
     }
 
     if (link[0]=='/n' || link[0]=='n'){
@@ -110,7 +118,7 @@ function node_call_from_string(arg, change_state, insecure){
         // this is the new version which needs to be fully
         // backported.  Allows for multiple form updates and avoids
         // namespace issues.
-        var data = {data : data_hash};
+        var data = {};
         data.form = data_hash.form;
         data.layout_id = $Layout.get_layout_id();
         form_data = [data]
@@ -247,7 +255,7 @@ function node_button_input_form(item, data){
     if (split_data.length == 3){
         out = $obj.data('command')('get_form_data', split_data[2]);
         if (out){
-            get_node_return(node, command, false, [out], $obj);
+            get_node_return(node, command, node_data, [out], $obj);
         }
     } else {
         node_load('n:' + data);
@@ -382,6 +390,7 @@ function change_layout(){
     change_user_bar();
 }
 
+var node_data;
 
 function process_node(packet, job){
 
@@ -395,6 +404,11 @@ function process_node(packet, job){
      var title = packet.data.title;
      if (title){
          $.address.title(title);
+     }
+
+     var sent_node_data = packet.data.node_data;
+     if (sent_node_data){
+         node_data = sent_node_data;
      }
 
     if (packet.data.application_data){

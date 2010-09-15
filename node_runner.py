@@ -70,13 +70,27 @@ class NodeToken(object):
 
     def __init__(self, data):
 
+        self.reset()
+
+        self.command = data.pop('command', None)
+        self.form_cache = data.pop('form_cache', None)
+        # the browser can request application data via this method
+        # this is usually requested at start-up
+        self.request_application_data = data.pop('request_application_data', False)
+        self._data = data
+        self.process_data()
+        self.auto_login_cookie = None
+
+
+    def reset(self):
+        """ Clear all NodeToken data. """
+
         self.last_node = None
         self.first_call = False
         # The command type will be set to 'layout' or 'node' in process_data()
         self.command_type = None
+        self._data = {}
 
-        self.command = data.pop('command', None)
-        self._data = data
 
         # self.node will be set each time a new node is called with this token
         # it is currently set in NodeRunner.run()
@@ -88,16 +102,11 @@ class NodeToken(object):
         self._form_data = {}
         self._node_data = None
         self.form_token_list = []
-        self.process_data()
 
         # form cache is used to cache forms when possible
         # it is a hash of the name and client version of all client
         # side cached forms.
-        self.form_cache = data.pop('form_cache', None)
-
-        # the browser can request application data via this method
-        # this is usually requested at start-up
-        self.request_application_data = data.pop('request_application_data', False)
+        self.form_cache = None
 
         # output stuff
         self._out = {}
@@ -120,12 +129,15 @@ class NodeToken(object):
         self._link = None
 
         self._action = None
+        self._sent_node_data = None
         self.bookmark = None
         self.user = None
-        self.next_node = None
-        self.next_data = None
-        self.next_data_out = None
-        self.auto_login_cookie = None
+
+        self._next_node = None
+        self._next_data = None
+        self._next_command = None
+
+        self.next_data_out = None # TODO do we still need this? what is it doing/
 
     def __getitem__(self, form_name):
         """A shortcut method to get the sent data associated with the named form.
@@ -220,7 +232,14 @@ class NodeToken(object):
         return layout
 
 
-    def redirect(self, node_string, url_data = None):
+    def next_node(self, node, node_data = None, command = None):
+        """ Automatically pass control to a new node. """
+        self._next_node = node
+        self._next_data = node_data
+        self._next_command = command
+        self._set_action('next_node')
+
+    def redirect(self, node_string, url_data = None, node_data = None):
         """ Helper function redirect via the front end. """
         # Append any url_data to the node if needed
         if url_data:
@@ -228,7 +247,7 @@ class NodeToken(object):
             while node_string.count(':') < 2:
                 node_string += ':'
             node_string += link_data
-        self._set_action('redirect', link = node_string)
+        self._set_action('redirect', link = node_string, node_data = node_data)
 
     def redirect_back(self):
         """ Helper function direct the front end to go back in the history. """
@@ -250,7 +269,7 @@ class NodeToken(object):
         """ Helper function send error to front end. """
         self._set_action('general_error', data = error)
 
-    def _set_action(self, action, link = None, data = None, title = None):
+    def _set_action(self, action, link = None, data = None, node_data = None, title = None):
         """ Set the action for the node token. """
         if self._action and not(action == self._action and action == 'form'):
             raise Exception('Action has already been set for this NodeToken')
@@ -261,6 +280,8 @@ class NodeToken(object):
             self._title = title
         if data:
             self._out = data
+        if node_data:
+            self._sent_node_data = node_data
 
     def add_paging(self, form_name, count, limit, offset, base_link):
         """Add paging info to form data"""
@@ -283,6 +304,7 @@ class NodeToken(object):
                 'user' : self.user,
                 'bookmark' : self.bookmark,
                 'layout' : self._get_layout(),
+                'node_data' : self._sent_node_data,
                 'data' : self._out}
 
         user_id = global_session.session['user_id']
@@ -316,6 +338,27 @@ class NodeToken(object):
 
     def get_title(self):
         return self._title
+
+    def check_next_node(self):
+        """ Is there a next node to visit. """
+        return (self._action == 'next_node')
+
+
+    def next_node_update(self):
+        """ Set data for next node. """
+        node_name = self.node_name
+        next_node = self._next_node
+        command = self._next_command
+        data = self._next_data
+
+        # clear the node token
+        self.reset()
+
+        self.command_type = 'node'
+        self._node_data  = self.FormToken(data)
+        self.command = command
+        self.last_node = node_name
+        return next_node
 
 
 class NodeManager(object):
@@ -512,16 +555,12 @@ class NodeRunner(object):
 ## todo        if node.prev_node and node.prev_node.next_data_out:
 ## todo            node.out["data"].update(node.prev_node.next_data_out)
 ## todo
-        if node_token.next_node:
+        if node_token.check_next_node():
             log.info('redirect to next node %s' % node_token.next_node)
-            node_token.data = node_token.next_data['data']
-            node_token.command = node_token.next_data['command']
-            next_node = node_token.next_node
-            node_token.next_node = None
-            node_token.next_data = None
+            next_node = node_token.next_node_update()
+
             # clear the form cache so we don't get confussed
             self.form_cache = None
             print node_token.next_node, node_token, node_name
-            return self.run(next_node, node_token, node_name)
-
+            return self.run(next_node, node_token)
 
