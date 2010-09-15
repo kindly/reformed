@@ -103,6 +103,7 @@ function node_call_from_string(arg, change_state, insecure){
 
     if (link[0]=='/n' || link[0]=='n'){
         process = true;
+        form_data = false;
     } else if (link[0]=='/l' || link[0]=='l'){
         // layout commands
         // TODO The data protocol is changing
@@ -112,8 +113,7 @@ function node_call_from_string(arg, change_state, insecure){
         var data = {data : data_hash};
         data.form = data_hash.form;
         data.layout_id = $Layout.get_layout_id();
-        console_log(data);
-        data_hash = [data]
+        form_data = [data]
         process = true;
     }
 
@@ -122,7 +122,7 @@ function node_call_from_string(arg, change_state, insecure){
         // to trigger the command from a url change as this can
         // let dangerous commands be sent via urls
         if (!insecure || command.substring(0,1) != '_'){
-            get_node(node, command, data_hash, change_state);
+            get_node(node, command, data_hash, form_data, change_state);
         }
     }
 }
@@ -157,7 +157,7 @@ function _wrap(arg, tag, my_class){
     }
 }
 
-function get_node(node_name, node_command, node_data, change_state){
+function get_node(node_name, node_command, node_data, form_data, change_state){
 
     // if change_state then we will set the status to that node
     // this helps prevent front-end confusion
@@ -177,7 +177,11 @@ function get_node(node_name, node_command, node_data, change_state){
 
 
     if (node_data){
-        info.data = node_data;
+        info.node_data = node_data;
+    }
+
+    if (form_data){
+        info.form_data = form_data;
     }
 
     if (!REBASE.application_data){
@@ -187,7 +191,7 @@ function get_node(node_name, node_command, node_data, change_state){
     $JOB.add(info, {}, 'node', true);
 }
 
-function get_node_return(node_name, node_command, node_data, $obj, obj_data){
+function get_node_return(node_name, node_command, node_data, form_data, $obj, obj_data){
     // works like get_node but adds a jquery item to call on the return
     // we also drop the state stuff as we will deal with that better
     // when needed
@@ -196,8 +200,13 @@ function get_node_return(node_name, node_command, node_data, $obj, obj_data){
                 command: node_command };
 
     if (node_data){
-        info.data = node_data;
+        info.node_data = node_data;
     }
+
+    if (form_data){
+        info.form_data = form_data;
+    }
+
     $JOB.add(info, {obj : $obj, obj_data : obj_data}, 'node', true);
 }
 
@@ -220,7 +229,7 @@ function node_save(root, command){
 
 function node_button(item, node, command){
     var out = $('#main div.f_form').data('command')('get_form_data');
-    get_node(node, command, out, false);
+    get_node(node, command, out, false, false);
 }
 
 function node_button_input_form(item, data){
@@ -238,7 +247,7 @@ function node_button_input_form(item, data){
     if (split_data.length == 3){
         out = $obj.data('command')('get_form_data', split_data[2]);
         if (out){
-            get_node_return(node, command, [out], $obj);
+            get_node_return(node, command, false, [out], $obj);
         }
     } else {
         node_load('n:' + data);
