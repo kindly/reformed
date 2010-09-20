@@ -35,6 +35,7 @@ from util import get_table_from_instance
 import os
 from events import EventState
 from reformed.tables import Table
+import collections
 
 root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 log_file = os.path.join(root, "session.log")
@@ -55,6 +56,8 @@ class SessionWrapper(object):
         self.changed = []
         self.deleted = []
 
+        self.object_store = collections.defaultdict(set)
+
     def __getattr__(self, item):
         return getattr(self.session, item)
 
@@ -69,15 +72,15 @@ class SessionWrapper(object):
 
         return self.session.query(*new_args, **kw)
 
-
-
     def close(self):
         self.session.close()
 
     def save(self, obj):
+        ##FIXME should be removed 
         self.add(obj)
 
     def save_or_update(self, obj):
+        ##FIXME should be renamed
 
         self.add(obj)
 
@@ -93,6 +96,7 @@ class SessionWrapper(object):
 
     def add(self, obj):
         """save or update and validate a sqlalchemy object"""
+        ##FIXME should be renamed to say it does not do version checking
         obj._table.validate(obj, self.session)
         obj._validated = True
         self.session.add(obj)
@@ -123,6 +127,7 @@ class SessionWrapper(object):
         for obj in self.session:
             obj._validated = False
             obj._version_changed = False
+        self.object_store = collections.defaultdict(set)
 
     def _commit(self):
 

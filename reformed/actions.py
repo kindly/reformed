@@ -34,6 +34,7 @@ class Action(PersistBaseClass):
 
     def __call__(self, action_state):
         
+
         logger.info(self.__class__.__name__)
         logger.info(action_state.__dict__)
         self.run(action_state)
@@ -416,6 +417,14 @@ class UpdateCommunicationInfo(Action):
         core = communication._rel__core
         core_id = core.id
 
+        ##check to see this has not already been run
+        for stored_info_obj in session.object_store["communication_info"]:
+            if (stored_info_obj._core_id == core_id and
+                stored_info_obj.table_name == table.name and
+                stored_info_obj.name == self.name):
+                return
+
+
         result = database.search(
             table.name,
             "communication._core_id = ? and communication.defaulted_date is ?"
@@ -446,7 +455,7 @@ class UpdateCommunicationInfo(Action):
             info_obj.table_name = table.name
             info_obj.name = self.name
             info_obj.display_name = self.display_name
-            info_obj._rel__core = core
+            info_obj._core_id = core.id
         ##TODO  check this works.  It makes sure that if the current object is
         ## then there will be no default.
         elif (self.only_latest and info_obj.original_id == object.id):
@@ -460,6 +469,7 @@ class UpdateCommunicationInfo(Action):
         text = self.make_text(default_obj)
         info_obj.original_id = default_obj.id
         info_obj.value = text
+        session.object_store["communication_info"].add(info_obj)
         session.save(info_obj)
         session.save(core)
 
