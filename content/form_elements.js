@@ -456,7 +456,7 @@ REBASE.FormControls = function(){
 }()
 
 
-$Layout = function(){
+REBASE.Layout = function(){
 
 
     var root = '#main';

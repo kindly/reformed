@@ -120,7 +120,7 @@ function node_call_from_string(arg, change_state, insecure){
         // namespace issues.
         var data = {};
         data.form = data_hash.form;
-        data.layout_id = $Layout.get_layout_id();
+        data.layout_id = REBASE.Layout.get_layout_id();
         form_data = [data]
         process = true;
     }
@@ -178,7 +178,7 @@ function get_node(node_name, node_command, node_data, form_data, change_state){
                 lastnode: '',  //fixme
                 command: node_command};
 
-    var cache_info = $Layout.get_form_cache_info(node_name);
+    var cache_info = REBASE.Layout.get_form_cache_info(node_name);
     if (cache_info !== undefined){
         info['form_cache'] = cache_info;
     }
@@ -446,7 +446,7 @@ function process_node(packet, job){
             $('#' + root).html(page_build(packet.data.data));
             break;
          case 'form':
-             $Layout.update_layout(packet.data);
+             REBASE.Layout.update_layout(packet.data);
              break;
          case 'save_error':
             data = packet.data.data;
