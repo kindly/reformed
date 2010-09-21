@@ -1,4 +1,4 @@
-$FormElements = function(){
+REBASE.FormControls = function(){
 
     function add_label(item, prefix){
         if (item.title){

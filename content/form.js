@@ -1357,7 +1357,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             var $control;
             var control_function;
             var ro = form_data.params.read_only;
-            $FormElements.set_data(local_row_data);
+            REBASE.FormControls.set_data(local_row_data);
 
             // results item box
             if (form_data.params.form_type == 'results'){
@@ -1368,7 +1368,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             if (form_data.thumb){
                 img_value = local_row_data[form_data.thumb.name];
                 item = {control : 'image', css: 'img_large', size: 'l'};
-                var $thumb = $FormElements.build(ro, item, img_value);
+                var $thumb = REBASE.FormControls.build(ro, item, img_value);
                 $thumb = $('<div class="RECORD_IMG">').append($thumb);
                 $builder[builder_depth].append($thumb);
                 form_controls_hash[form_data.thumb.name] = $thumb;
@@ -1380,7 +1380,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 if (item.layout){
                     add_layout_item(item, $builder, builder_depth);
                 } else {
-                    $control = $FormElements.build(ro, item, value);
+                    $control = REBASE.FormControls.build(ro, item, value);
                     if ($control){
                         $builder[builder_depth].append($control);
                         form_controls_hash[item.name] = $control;
@@ -1402,7 +1402,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             var $subforms = $input.find('div.SUBFORM');
             var subform;
             var data;
-            var subforms = $FormElements.get_subforms();
+            var subforms = REBASE.FormControls.get_subforms();
             for (var i = 0, n = subforms.length; i < n; i ++){
                 subform = subforms[i].item;
                 extra_defaults = {__table: subform.form.table_name,
@@ -1426,7 +1426,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             }
         }
 
-        $FormElements.clear_subforms();
+        REBASE.FormControls.clear_subforms();
         $form.empty();
         form_controls_hash = {};
         builder_depth = 0;
@@ -1434,7 +1434,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         $builder = [$('<div/>')];
         // form message
         if (!$.Util.is_empty(row_data.__message)){
-            $control = $FormElements.build(true, {control : 'message_area'}, row_data.__message);
+            $control = REBASE.FormControls.build(true, {control : 'message_area'}, row_data.__message);
             $builder[builder_depth].append($control);
         }
         // paging bar
@@ -1461,7 +1461,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         if (row_data.__buttons){
             item = { buttons : row_data.__buttons, control: 'button_box'};
             value = $.Util.get_item_value(item, row_data);
-            $control = $FormElements.build(true, item, value);
+            $control = REBASE.FormControls.build(true, item, value);
             $builder[builder_depth].append($control);
         }
         // second paging bar
@@ -1702,7 +1702,7 @@ $.Grid2 = function(input, form_data, row_data, extra_defaults){
 
         // form message
         if (!$.Util.is_empty(message)){
-            $control = $FormElements.build(true, {control : 'message_area'}, message);
+            $control = REBASE.FormControls.build(true, {control : 'message_area'}, message);
             $builder.append($control);
         }
         // paging bar
@@ -1721,7 +1721,7 @@ $.Grid2 = function(input, form_data, row_data, extra_defaults){
         if (buttons){
             item = { buttons : buttons, control: 'button_box'};
             value = $.Util.get_item_value(item, row_data);
-            $control = $FormElements.build(true, item, value);
+            $control = REBASE.FormControls.build(true, item, value);
             $builder.append($control);
         }
         // second paging bar
