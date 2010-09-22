@@ -22,7 +22,6 @@
 import os
 import sys
 import shutil
-from ConfigParser import RawConfigParser, NoOptionError, NoSectionError
 from optparse import OptionParser
 import random
 
@@ -259,27 +258,6 @@ def run(host, port, ssl, ssl_cert, no_job_scheduler):
         except KeyboardInterrupt:
             server.stop()
 
-def set_config_value(config, options, option,
-                     type = "string", section = 'main'):
-
-    if hasattr(options, option) and getattr(options, option):
-        return
-
-    if type == "bool":
-        getter = config.getboolean
-    if type == "int":
-        getter = config.getint
-    if type == "float":
-        getter = config.getfloat
-    else:
-        getter = config.get
-
-    try:
-        value = getter(section, option)
-    except (NoOptionError, NoSectionError):
-        value = DEFAULT_OPTIONS.get(option)
-
-    setattr(options, option, value)
 
 if __name__ == "__main__":
     usage = "usage: %prog [options] package"
@@ -365,21 +343,6 @@ if __name__ == "__main__":
     root_folder = os.path.dirname(os.path.abspath(__file__))
     application_folder = os.path.join(root_folder, dir)
     config_file = os.path.join(application_folder, "app.cfg")
-
-    config = RawConfigParser()
-
-    try:
-        config.read(config_file)
-    except:
-        raise
-
-    set_config_value(config, options, "port")
-    set_config_value(config, options, "host")
-    set_config_value(config, options, "ssl_cert")
-    set_config_value(config, options, "ssl", type = "bool")
-    set_config_value(config, options, "logging_tables", type = "bool")
-    set_config_value(config, options, "connection_string")
-    set_config_value(config, options, "image_directory")
 
     # make application
     application = app.Application(dir, options)

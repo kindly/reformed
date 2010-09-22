@@ -40,11 +40,15 @@ import full_text_index
 import whoosh
 from whoosh.index import create_in, open_dir
 import os
-from ZODB import FileStorage, DB
 from zc.lockfile import LockError
+from ConfigParser import RawConfigParser, NoOptionError, NoSectionError
 
 log = logging.getLogger('rebase.application')
 
+DEFAULT_OPTIONS = {"host": "127.0.0.1",
+                   "port": "8000",
+                   "ssl_cert" : "host",
+                   "logging_tables" : False}
 
 class Application(object):
 
@@ -55,6 +59,11 @@ class Application(object):
         self.application_folder = os.path.join(self.root_folder, directory)
         # check that we have the application directory
         self.check_filesystem()
+
+        self.config_file = os.path.join(self.application_folder, "app.cfg")
+
+        if runtime_options:
+            self.update_options_from_config(runtime_options)
 
         self.connection_string = runtime_options.connection_string or\
                 'sqlite:///%s/%s.sqlite' % (self.application_folder, directory)
@@ -93,6 +102,45 @@ class Application(object):
         # system wide settings
         global_session.application = self
         global_session.database = None
+
+    def update_options_from_config(self, options):
+
+        config = RawConfigParser()
+
+        try:
+            config.read(self.config_file)
+        except:
+            raise
+
+        self.set_config_value(config, options, "port")
+        self.set_config_value(config, options, "host")
+        self.set_config_value(config, options, "ssl_cert")
+        self.set_config_value(config, options, "ssl", type = "bool")
+        self.set_config_value(config, options, "logging_tables", type = "bool")
+        self.set_config_value(config, options, "connection_string")
+        self.set_config_value(config, options, "image_directory")
+
+    def set_config_value(self, config, options, option,
+                         type = "string", section = 'main'):
+
+        if hasattr(options, option) and getattr(options, option):
+            return
+
+        if type == "bool":
+            getter = config.getboolean
+        if type == "int":
+            getter = config.getint
+        if type == "float":
+            getter = config.getfloat
+        else:
+            getter = config.get
+
+        try:
+            value = getter(section, option)
+        except (NoOptionError, NoSectionError):
+            value = DEFAULT_OPTIONS.get(option)
+
+        setattr(options, option, value)
 
     def refresh_database(self):
         """remake any data needed"""
@@ -393,6 +441,14 @@ class Application(object):
             self.text_index = open_dir(index_location)
 
         full_text_index.index_database(self)
+
+def empty_database(directory, connection_string = None):
+    import reformed.util as util
+    options = util.Holder(connection_string = connection_string,
+                          quiet = False)
+    app = Application(directory, options)
+    app.initialise_database()
+    return app
 
 
 

@@ -12,8 +12,9 @@ import Queue
 import sqlalchemy as sa
 from multiprocessing import Pool
 import multiprocessing
+import saveset
 
-logger = logging.getLogger('reformed.main')
+logger = logging.getLogger('rebase.application')
 reformed_database = None
 data_load_queues = {}
 
@@ -750,4 +751,96 @@ class SingleRecord(object):
                     self.process_dict(names + [n], v)
                 else:
                     self.process_dict(names + [0, n], v)
+
+class SingleSaveSet(object):
+
+    def __init__(self, database, data,
+                 session = None, table = None):
+
+        if not session:
+            self.session = database.Session()
+        else:
+            self.session = session
+
+        self.session = database.Session()
+
+        self.database = database
+        self.table = data.pop("__table", table)
+        self.rtable = database[self.table]
+        self.save_set = saveset.SaveNew(database, self.table, self.session)
+
+        self.save_set.save_values = data
+
+    def save(self, finish = True):
+
+        errors = self.save_set.save(finish)
+        if finish:
+            self.session.close()
+        return errors
+
+class MultipleSaveSet(object):
+
+    def __init__(self, database, data,
+                 session = None, table = None):
+
+        if not session:
+            self.session = database.Session()
+        else:
+            self.session = session
+
+        self.session = database.Session()
+
+        self.database = database
+        self.table = table
+
+        self.data = data
+
+    def save(self):
+
+        obj = None
+
+        save_sets = []
+
+
+        for row in self.data:
+            table = row.pop("__table", self.table)
+            rtable = self.database[table]
+            save_set = saveset.SaveNew(self.database, table, self.session)
+            save_set.save_values = row
+            if "prev" == row.get("id"):
+                row.pop("id")
+                save_set.prepare(obj)
+            elif "prev" == row.get("_core_id"):
+                row.pop("_core_id")
+                save_set.prepare(obj)
+            else:
+                save_set.prepare()
+            obj = save_set.obj
+            save_sets.append(save_set)
+
+        try:
+            self.session.session.flush()
+        except:
+            self.session.close()
+            raise
             
+        errors = {}
+        for num, save_set in enumerate(save_sets):
+            error = save_set.save(False)
+            if error:
+                errors[num] = error
+        try:
+            self.session.commit()
+        finally:
+            self.session.close()
+
+        return errors
+
+
+
+
+
+
+
+
+
