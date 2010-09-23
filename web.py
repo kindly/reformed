@@ -126,7 +126,7 @@ def process_node(environ, start_response):
     try:
         body = json.loads(request.params["body"])
     except Exception, e:
-        return throw_error('Sent JSON Error:')
+        return throw_error('Sent JSON Error')
 
     node_interface = node_runner.NodeRunner(global_session.application.node_manager)
 
@@ -135,7 +135,7 @@ def process_node(environ, start_response):
         node_interface.process()
     except:
         start_response('200 OK', [('Content-Type', 'text/plain')])
-        return throw_error('Node Error:')
+        return throw_error('Node Error')
 
     data = node_interface.output
 
@@ -143,7 +143,7 @@ def process_node(environ, start_response):
         output = [json.dumps(data, sort_keys=False, indent=4)]#, separators=(',',':'))]
     except TypeError:
         start_response('200 OK', [('Content-Type', 'text/plain')])
-        return throw_error('Output JSON Error:')
+        return throw_error('Output JSON Error')
 
     response = webob.Response(environ)
     response.content_type = 'text/plain'
@@ -171,11 +171,12 @@ def process_node(environ, start_response):
 
 
 
-def throw_error(title):
+def throw_error(error_type):
 
     """an exception was thrown generate the traceback info and send to the frontend"""
-
-    error_msg = '%s\n\n%s' % (title, traceback.format_exc())
+    error = traceback.format_exc()
+    message = "**An error has occured in this application.**\n\n%s\n\n" % error_type
+    error_msg = '%s\n\n<pre>%s</pre>' % (message, error)
     log.error(error_msg)
     info = {'action': 'general_error',
             'data' : error_msg}
