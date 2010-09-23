@@ -206,6 +206,14 @@ class NodeToken(object):
         """returns the FormToken if there is a node level data"""
         return self._node_data
 
+    def set_node_data(self, node_data):
+        if self._output_node_data:
+            raise Exception('node data set multiple times')
+
+        self._clear_node_data = True
+        self._output_node_data = node_data
+
+
     def output_form_data(self, form_name, output):
         """Helper function to add form data to the node token for a form"""
         # paranoia check TODO should this be an assertion?
@@ -231,6 +239,7 @@ class NodeToken(object):
             raise Exception('NodeToken layout type already set')
         self._layout_type = layout_type
         self._form_layout = form_layout
+        self._clear_node_data = True
 
     def _get_layout(self):
         """ Returns the layout hash to be sent to the front end. """
@@ -239,6 +248,7 @@ class NodeToken(object):
             # because this was a 'node' level command.
             self._layout_type = 'listing'
             self._form_layout = [self._layout_forms]
+            self._clear_node_data = True
         # build layout
         layout = dict(layout_type = self._layout_type,
                       form_layout = self._form_layout,
@@ -297,8 +307,7 @@ class NodeToken(object):
         if clear_node_data:
             self._clear_node_data = True
         if node_data:
-            self._clear_node_data = True
-            self._output_node_data = node_data
+            self.set_node_data(node_data)
 
     def add_paging(self, form_name, count, limit, offset, base_link):
         """Add paging info to form data"""
@@ -314,6 +323,7 @@ class NodeToken(object):
     def output(self):
         """Build the output data to be sent to the front end."""
 
+        layout = self._get_layout()
         # By default we will return the same node data
         # unless it is updated elsewhere
         if not self._clear_node_data:
@@ -325,7 +335,7 @@ class NodeToken(object):
                 'link' : self._link,
                 'user' : self.user,
                 'bookmark' : self.bookmark,
-                'layout' : self._get_layout(),
+                'layout' : layout,
                 'node_data' : self._output_node_data,
                 'data' : self._out}
 
