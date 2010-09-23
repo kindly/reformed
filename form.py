@@ -147,7 +147,7 @@ class Form(object):
         return out
 
 
-    def show(self, node_token, data = None):
+    def show(self, node_token, data = None, **kw):
         """display form on front end including data if supplied"""
 
         if not data:
@@ -290,7 +290,9 @@ class Form(object):
                 node_token.redirect(link)
                 return
 
-            node_token.next_node = self.save_next_node
+            if self.save_next_node:
+                node_token.next_node = self.save_next_node
+                return
 
             if self.save_update:
                 node = node_token.node
@@ -305,8 +307,12 @@ class Form(object):
 
     def view(self, node_token, **kw):
         """Calls the appropriate view function for the form"""
-        if self.form_type in ['input', 'action']:
+        if self.form_type in ['input']:
             self.view_single(node_token, **kw)
+        elif self.form_type in ['action']:
+            self.show(node_token, **kw)
+        elif self.form_type in ['results']:
+            pass
         elif self.form_type in ['grid']:
             self.view_multiple(node_token, **kw)
         else:
@@ -379,6 +385,9 @@ class Form(object):
             return
         except KeyError:
             # table not found
+            # we shouldn't be hitting this so raise error
+            # keep code incase we need it
+            raise Exception('Table not found for form `%s`' % self.name)
             print 'TABLE NOT FOUND', self.name, table
             data_out = {}
             result = None
