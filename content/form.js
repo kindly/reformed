@@ -1571,15 +1571,27 @@ function make_paging(extra_defaults){
     var pages = Math.ceil(count/limit);
     var current = Math.floor(offset/limit);
     var link;
+    var href;
+
+    var use_href = (base.substring(0,1) == 'n');
 
     var html = '<div class="PAGING_BAR">';
+
+    function make_href(){
+        if (use_href){
+            return 'href="#' + link + '" ';
+        } else {
+            return 'href="#" ';
+        }
+    }
+
     html += 'paging: ';
 
     if (current>0){
         link = base + '&o=0&l=' + limit;
-        html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">|&lt;</a> ';
+        html += '<a ' + make_href() + 'onclick="node_load(\'' + link +'\');return false;">|&lt;</a> ';
         link = base + '&o=' + (current-1) * limit + '&l=' + limit;
-        html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">&lt;</a> ';
+        html += '<a ' + make_href() + 'onclick="node_load(\'' + link +'\');return false;">&lt;</a> ';
     } else {
         html += '|&lt; ';
         html += '&lt; ';
@@ -1593,15 +1605,15 @@ function make_paging(extra_defaults){
                  (pages-i<(PAGING_SIZE*2) && current>pages-PAGING_SIZE)
             ){
                 link = base + '&o=' + i * limit + '&l=' + limit;
-                html += '<a href="#' + link + '" onclick="node_load(\'' + link + '\');return false;">' + (i+1) + '</a> ';
+                html += '<a ' + make_href() + 'onclick="node_load(\'' + link + '\');return false;">' + (i+1) + '</a> ';
             }
         }
     }
     if (current<pages - 1){
         link = base + '&o=' + (current+1) * limit + '&l=' + limit;
-        html += '<a href="#' + link + '" onclick="node_load(\'' + link + '\');return false;">&gt;</a> ';
+        html += '<a ' + make_href() + 'onclick="node_load(\'' + link + '\');return false;">&gt;</a> ';
         link = base + '&o=' + (pages-1) * limit + '&l=' + limit;
-        html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">&gt;|</a> ';
+        html += '<a ' + make_href() + 'onclick="node_load(\'' + link +'\');return false;">&gt;|</a> ';
     } else {
         html += '&gt; ';
         html += '&gt;| ';
