@@ -99,7 +99,7 @@ class User(TableNode):
         input('login_name', label = 'username:'),
         password('password'),
         checkbox('remember_me', label = 'remember me'),
-        button('user.User:login:', label = 'Log in'),
+        button('n:user.User:login:', label = 'Log in'),
         layout('box_end'),
 
         form_type = "action",
@@ -305,12 +305,12 @@ class UserAdmin(TableNode):
     form_params =  {"form_type": "action"}
     main = form(
         layout('text', text = 'Users {users}'),
-        button_link('user.User:new', label = 'add user'),
-        button_link('user.User:list', label = 'list users'),
+        button_link('n:user.User:new', label = 'add user'),
+        button_link('n:user.User:list', label = 'list users'),
         layout('spacer'),
         layout('text', text = 'User Groups {user_groups}'),
-        button_link('user.UserGroup:new', label = 'add user group'),
-        button_link('user.UserGroup:list', label = 'list user groups'),
+        button_link('n:user.UserGroup:new', label = 'add user group'),
+        button_link('n:user.UserGroup:list', label = 'list user groups'),
         layout('spacer'),
 ##        layout('text', text = 'Permissions {permissions}'),
 ##        button_link('bug.Permission:new', label = 'add permission'),
@@ -329,8 +329,6 @@ class UserAdmin(TableNode):
         data['__message'] = "User Admin"
         data['__buttons'] = [['cancel', 'BACK']]
         self["main"].create_form_data(node_token, data)
-
-        node_token.action = 'form'
-        node_token.title = 'listing'
+        node_token.form(title = "main")
 
 
