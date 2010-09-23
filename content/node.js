@@ -390,7 +390,7 @@ function change_layout(){
     change_user_bar();
 }
 
-var node_data;
+var global_node_data;
 
 function process_node(packet, job){
 
@@ -408,7 +408,7 @@ function process_node(packet, job){
 
      var sent_node_data = packet.data.node_data;
      if (sent_node_data){
-         node_data = sent_node_data;
+         global_node_data = sent_node_data;
      }
 
     if (packet.data.application_data){
