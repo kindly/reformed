@@ -478,12 +478,16 @@ class Form(object):
                 form_item.display_page_item(node_token, result, row, session)
             out.append(row)
 
+        if self.form_buttons:
+            buttons = self.form_buttons
+        else:
+            buttons = [['add %s' % self.table, '%s:_add:' % node_token.node_name],
+                       ['delete %s' % self.table, '%s:_delete:' % node_token.node_name],
+                       ['cancel', 'BACK']]
+
         data_out = {'__array' : out}
         data_out ['__message'] = "moo table!"
-        data_out['__buttons'] = [['add %s' % self.table, '%s:_add:' % node_token.node_name],
-                                 ['delete %s' % self.table, '%s:_delete:' % node_token.node_name],
-                                 ['cancel', 'BACK']]
-
+        data_out['__buttons'] = buttons
         data_out['__join_data'] = join_data
 
         self.create_form_data(node_token, data_out, read_only)
