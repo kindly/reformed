@@ -71,7 +71,7 @@ function node_load(arg){
     } else {
         // sets the address which then forces a page load
         var link = arg.split(':');
-        if (link[2].substring(0,1) == '_'){
+        if (link[2] && link[2].substring(0,1) == '_'){
             node_call_from_string(arg, true, false);
         } else {
             $.address.value(arg);
@@ -91,25 +91,33 @@ function node_call_from_string(arg, change_state, insecure){
     FIXME no root info yet defaults to 'main' further along the call chain
 */
     var process = false;
+    var url_hash = {};
+    var node_data;
     var link = arg.split(':');
     var node = link[1];
     var command = link[2];
-    var data_hash = {};
+    if (!command){
+        command = '';
+    }
 
     // if arguments are supplied convert them to a hash
     if (link.length>3){
-        data_hash = convert_url_string_to_hash(link[3]);
-        // override with any node_data
-        if (node_data){
-            for (var key in node_data){
-                data_hash[key] = node_data[key];
-            }
-        }
-    } else {
-        data_hash = node_data;
+        url_hash = convert_url_string_to_hash(link[3]);
     }
 
     if (link[0]=='/n' || link[0]=='n'){
+        // node command
+        // if we have any extra node data we add it but don't overwrite anything in
+        // the url.  I'm not sure if this is the best thing to do
+        // but it is currently needed for the bookmarks to work correctly.
+        if (global_node_data){
+            for (var key in global_node_data){
+                if (url_hash[key] === undefined){
+                    url_hash[key] = global_node_data[key];
+                }
+            }
+        }
+        node_data = url_hash;
         process = true;
         form_data = false;
     } else if (link[0]=='/l' || link[0]=='l'){
@@ -119,8 +127,10 @@ function node_call_from_string(arg, change_state, insecure){
         // backported.  Allows for multiple form updates and avoids
         // namespace issues.
         var data = {};
-        data.form = data_hash.form;
+        data.form = url_hash.form;
         data.layout_id = REBASE.Layout.get_layout_id();
+        data.data = url_hash;
+        node_data = global_node_data;
         form_data = [data]
         process = true;
     }
@@ -129,8 +139,8 @@ function node_call_from_string(arg, change_state, insecure){
         // if the command starts with a underscore we don't want
         // to trigger the command from a url change as this can
         // let dangerous commands be sent via urls
-        if (!insecure || command.substring(0,1) != '_'){
-            get_node(node, command, data_hash, form_data, change_state);
+        if (!insecure || (command.substring(0,1) != '_')){
+            get_node(node, command, node_data, form_data, change_state);
         }
     }
 }
@@ -240,25 +250,28 @@ function node_button(item, node, command){
     get_node(node, command, out, false, false);
 }
 
-function node_button_input_form(item, data){
-    if (data == 'BACK'){
+function node_button_input_form(item, node_string, target_form){
+    if (node_string == 'BACK'){
         window.history.back();
         return false;
     }
     var $obj = $(item);
     var $obj = $obj.parents('div.INPUT_FORM');
-    var split_data = data.split(':')
-    var node = split_data[0];
-    var command = split_data[1];
+    var split_data = node_string.split(':')
+    var node = split_data[1];
+    var command = split_data[2];
     var out;
 
-    if (split_data.length == 3){
-        out = $obj.data('command')('get_form_data', split_data[2]);
+    if (split_data.length == 4){//, split_data[3]
+        out = $obj.data('command')('get_form_data');
         if (out){
-            get_node_return(node, command, node_data, [out], $obj);
+            if (target_form){
+                out.form = target_form;
+            }
+            get_node_return(node, command, global_node_data, [out], $obj);
         }
     } else {
-        node_load('n:' + data);
+        node_load(node_string);
     }
 }
 
