@@ -82,7 +82,7 @@ class Form(object):
         self.initiate_form_items()
 
     def __repr__(self):
-        return '<Form `%s` in node `%s`>' % (self.name, self.node.name)
+        return '<Form `%s`>' % (self.name)
 
     def initiate_form_items(self):
         """set up the form_items supplied to the form"""
