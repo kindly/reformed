@@ -228,6 +228,7 @@ class People(TableNode):
         params =  {"form_type": "normal"},
         title_field = 'name',
         form_type = "input",
+        form_buttons = [['save image', 'n:test.People:_save:']],
     )
 
     phone = form(
@@ -235,7 +236,18 @@ class People(TableNode):
         read_only = True,
         params = {"form_type": "grid"},
         form_type = "grid",
+        form_buttons = [['new phone', 'l:test.People:_newphone:', 'phone_new']],
     )
+
+    phone_new = form(
+        text('Add a new phone number.'),
+        input('number', label = 'number'),
+        button('l:test.People:_newphone_save:', title = 'save'),
+        params = {"form_type": "normal"},
+        form_type = "input",
+        table = "telephone",
+    )
+
 
     table = "people"
 
@@ -246,6 +258,8 @@ class People(TableNode):
     def setup_commands(self):
         commands = {}
         commands['_update'] = dict(command = 'update')
+        commands['_newphone'] = dict(command = 'newphone')
+        commands['_newphone_save'] = dict(command = 'newphone_save')
         commands['_add'] = dict(command = 'add')
         commands['edit'] = dict(command = 'edit')
         commands['_save'] = dict(command = 'save')
@@ -276,6 +290,13 @@ class People(TableNode):
         # FIXME what is this doing?
         print node_token._data
 
+    def newphone(self, node_token):
+        self['phone_new'].new(node_token)
+
+    def newphone_save(self, node_token):
+        self['phone_new'].save(node_token)
+        self['phone'].view(node_token, read_only = False)
+        pass
 
 class DataLoader(JobNode):
 
