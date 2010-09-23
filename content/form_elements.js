@@ -150,6 +150,11 @@ REBASE.FormControls = function(){
         for (var i = 0, n = buttons.length; i < n; i++){
             but.node = buttons[i][1];
             but.title = buttons[i][0];
+            if (buttons[i].length > 2){
+                but.target_form = buttons[i][2];
+            } else {
+                but.target_form = null;
+            }
             html += button(but);
         }
         return html;
@@ -160,7 +165,8 @@ REBASE.FormControls = function(){
     }
 
     function button(item, value){
-        return '<button' + set_class_list(item, 'button') + ' onclick="node_button_input_form(this, \'' + item.node + '\');return false">' + item.title + '</button>';
+        var target_form = item.target_form || '';
+        return '<button' + set_class_list(item, 'button') + ' onclick="node_button_input_form(this, \'' + item.node + '\',\'' + target_form + '\');return false">' + item.title + '</button>';
     }
 
     function dropdown_code(item, value){
