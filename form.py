@@ -392,13 +392,15 @@ class Form(object):
         else:
             node_data = None
 
-        node_token.bookmark = dict(
-            table_name = table,
-            bookmark_string = node.build_node('', 'view', 'id=%s' %  id),
-            entity_id = id
-        )
         node_token.form(title = form_title, node_data = node_data)
 
+        # hack to stop null bookmarks
+        if id:
+            node_token.bookmark = dict(
+                table_name = table,
+                bookmark_string = node.build_node('', 'view', 'id=%s' %  id),
+                entity_id = id
+            )
 
         session.close()
 
