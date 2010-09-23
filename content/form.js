@@ -1694,7 +1694,8 @@ $.Grid2 = function(input, form_data, row_data, extra_defaults){
             return html.join('');
         }
         var NUM_TABLE_ROWS = 5;
-        var $builder= $('<div class="INPUT_FORM" >');
+        var $builder = $('<div class="INPUT_FORM" >');
+        $builder.data('command', command_caller);
         var paging_bar;
         var $control;
         var value;
@@ -1731,6 +1732,22 @@ $.Grid2 = function(input, form_data, row_data, extra_defaults){
         $input.append($builder);
     }
 
+    function get_form_data(){
+        return {form : form_data.form_name, data : {}}
+    }
+    // custom events
+    var custom_commands = {
+        'get_form_data' : get_form_data
+    };
+
+    function command_caller(type, data){
+        if (custom_commands[type]){
+            return custom_commands[type](data);
+        } else {
+            alert('command: <' + type + '> has no handler');
+            return false;
+        }
+    }
     var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
     var num_fields = form_data.fields.length;
     build_grid();
