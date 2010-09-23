@@ -94,7 +94,7 @@ class SaveNew(object):
         if self.obj:
             return
 
-        if self.rtable.relation or self.rtable.entity or not self.obj:
+        if (self.rtable.relation or self.rtable.entity) and not self.obj:
             core_id_field = self.path_to_defined_name.get(((), "_core_id"))
             if core_id_field:
                 self.core_id = self.save_values[core_id_field]
@@ -121,7 +121,7 @@ class SaveNew(object):
 
     def update_core_id(self):
 
-        if self.rtable.relation or self.rtable.entity and not self.core_id:
+        if (self.rtable.relation or self.rtable.entity) and not self.core_id:
             if not self.core_id:
                 self.session.session.flush()
             self.core_id = self.core.id
