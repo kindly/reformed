@@ -330,5 +330,7 @@ class UserAdmin(TableNode):
         data['__buttons'] = [['cancel', 'BACK']]
         self["main"].create_form_data(node_token, data)
         node_token.form(title = "main")
+      #  node_token.action = 'form'
+      #  node_token.title = 'listing'
 
 
