@@ -133,14 +133,14 @@ class Node2(Node):
 
     main = form(
         text('**Buttons**'),
-        button('test.Node2:Single+Button', label = 'Single Button'),
-        button_box([['Button Box 1', 'test.Node2:Button+Box+1'],
-                    ['Button Box 2', 'test.Node2:Button+Box+2'],
-                    ['Button Box 3', 'test.Node2:Button+Box+3'],
-                    ['Button Box 4', 'test.Node2:Button+Box+4'],
-                    ['Button Box 5', 'test.Node2:Button+Box+5']]),
+        button('n:test.Node2:Single+Button', label = 'Single Button'),
+        button_box([['Button Box 1', 'n:test.Node2:Button+Box+1'],
+                    ['Button Box 2', 'n:test.Node2:Button+Box+2'],
+                    ['Button Box 3', 'n:test.Node2:Button+Box+3'],
+                    ['Button Box 4', 'n:test.Node2:Button+Box+4'],
+                    ['Button Box 5', 'n:test.Node2:Button+Box+5']]),
         text('**Lists**'),
-        button_link('test.Node2:Single+Link', label = 'Single Link'),
+        button_link('n:test.Node2:Single+Link', label = 'Single Link'),
         text('List of links using data.'),
         link_list('links'),
         text('List of links using fixed values.'),
@@ -293,7 +293,7 @@ class DataGenerate(JobNode):
         text("##Data Generator##"),
         dropdown('table', 'DATA', data_field = 'tables', default = 'people'),
         intbox('number_records', default = 100),
-        button('test.DataGenerate:_generate:', label = 'Generate'),
+        button('n:test.DataGenerate:_generate:', label = 'Generate'),
         params =  {"form_type": "action"},
         form_type = "action",
     )
@@ -334,7 +334,7 @@ class Truncate(Node):
     main = form(
         text("Truncate table :)"),
         dropdown('table', 'DATA', data_field = 'tables'),
-        button('test.Truncate:truncate:', label = 'Truncate'),
+        button('n:test.Truncate:truncate:', label = 'Truncate'),
         params =  {"form_type": "action"},
         form_type = "action",
     )
