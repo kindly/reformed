@@ -425,6 +425,7 @@ function process_node(packet, job){
      var sent_node_data = packet.data.node_data;
      if (sent_node_data){
          global_node_data = sent_node_data;
+         console_log('node data:', global_node_data);
      }
 
     if (packet.data.application_data){
