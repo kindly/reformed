@@ -22,6 +22,19 @@
 */
 
 
+/*
+ *           ('>
+ *           /))@@@@@.
+ *          /@"@@@@@()@
+ *         .@@()@@()@@@@    FORM CONTROLS
+ *         @@@O@@@@()@@@
+ *         @()@@\@@@()@@    Generatable form items.
+ *          @()@||@@@@@'
+ *           '@@||@@@'
+ *        jgs   ||
+ *       ^^^^^^^^^^^^^^^^^
+ */
+
 REBASE.FormControls = function(){
 
     function add_label(item, prefix){
@@ -480,6 +493,20 @@ REBASE.FormControls = function(){
 }()
 
 
+
+/*
+ *           ('>
+ *           /))@@@@@.
+ *          /@"@@@@@()@
+ *         .@@()@@()@@@@    LAYOUT
+ *         @@@O@@@@()@@@
+ *         @()@@\@@@()@@    Manage forms and layout.
+ *          @()@||@@@@@'
+ *           '@@||@@@'
+ *        jgs   ||
+ *       ^^^^^^^^^^^^^^^^^
+ */
+
 REBASE.Layout = function(){
 
 
@@ -506,7 +533,13 @@ REBASE.Layout = function(){
     var $forms = {};
 
 
-    /* FORM DATA PROCESSING */
+    /*
+     *      (\  }\   (\  }\   (\  }\
+     *     (  \_('> (  \_('> (  \_('>   FORM DATA PROCESSOR
+     *     (__(=_)  (__(=_)  (__(=_)
+     *   jgs  -"=      -"=      -"=
+     */
+
     var FormProcessor = function(){
         /* FormProcessor processes form data sent by the
          * backend.  Cache form data where possible.
@@ -598,8 +631,12 @@ REBASE.Layout = function(){
     }()
 
 
-
-    /* LAYOUT FUNCTIONS */
+    /*
+     *      (\  }\   (\  }\   (\  }\
+     *     (  \_('> (  \_('> (  \_('>   LAYOUT FUNCTIONS
+     *     (__(=_)  (__(=_)  (__(=_)
+     *   jgs  -"=      -"=      -"=
+     */
 
     function add_forms_to_layout(packet){
         /* Create a new layout or update form(s)
