@@ -560,8 +560,8 @@ class NodeRunner(object):
         # check if application is private
         if not sys_info.get('public') and not global_session.session['user_id']:
             node_name = sys_info.get('default_node', node_name)
-            node_token.data['command'] = sys_info.get('default_command')
-            log.info('User not logged in.  Switching to node %s, command %s' % (node_name, node_token.data['command']))
+            node_token.command = sys_info.get('default_command')
+            log.info('User not logged in.  Switching to node %s, command %s' % (node_name, node_token.command))
 
         # get node from node_manager
         # this should really get an existing node
