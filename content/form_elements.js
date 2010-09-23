@@ -809,3 +809,68 @@ REBASE.Layout = function(){
 
 }()
 
+/*
+ *           ('>
+ *           /))@@@@@.
+ *          /@"@@@@@()@
+ *         .@@()@@()@@@@    DIALOG BOX
+ *         @@@O@@@@()@@@
+ *         @()@@\@@@()@@    Pop up dialog box.
+ *          @()@||@@@@@'
+ *           '@@||@@@'
+ *        jgs   ||
+ *       ^^^^^^^^^^^^^^^^^
+ */
+
+REBASE.Dialog = function (){
+
+    var $dialog_box;
+    var is_setup = false;
+    var is_open = false;
+    var process_html = $.Util.process_html;
+
+    function setup(){
+        $dialog_box = $('<div id="dialog_box"></div>')
+        $('body').append($dialog_box);
+        $dialog_box.dialog({autoOpen: false, height: 'auto', width : 'auto'});
+        is_setup = true;
+    }
+
+    function open(title, data){
+        if (!is_setup){
+            setup()
+        }
+        // If we have sent a string as data then we just want
+        // to process it for any markdown and display it.
+        // If it is form data then we want to process it as a form.
+        if (typeof(data) == 'string'){
+            $dialog_box.html(process_html(data));
+        } else {
+            // assuming it is form_data
+            $dialog_box.input_form(data);
+        }
+        $dialog_box.dialog("option", "title", title)
+        $dialog_box.dialog("option", "modal", true)
+        $dialog_box.dialog('open');
+        is_open = true;
+    }
+
+    function close(){
+        if (is_open){
+            $dialog_box.dialog('close');
+            is_open = false;
+        }
+    }
+
+
+    // exported functions
+    return {
+        'dialog' : function (title, data){
+            open(title, data);
+        },
+        'close' : function(){
+            close();
+        }
+    }
+
+}()
