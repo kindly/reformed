@@ -199,7 +199,11 @@ class Form(object):
             save_set.set_value("_version", version)
         else:
             # new record (create blank one)
+            _core_id = data.get('__id')
+
             save_set = SaveNew(r, self.table, session)
+            if _core_id:
+                save_set.set_value('_core_id', _core_id)
             session = save_set.session
             save_set.new = True
 
