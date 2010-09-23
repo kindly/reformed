@@ -356,7 +356,7 @@ REBASE.FormControls = function(){
             size = item.size;
         }
 
-        var $control = $(add_label(item, 'rf_') + '<div' + set_class_list(item, 'HOLDER') + '"><label class="img_upload_label"><input class="img_uploader" type="file" /></label></div>');
+        var $control = $(add_label(item, 'rf_') + '<div' + set_class_list(item, 'HOLDER') + '"><label class="img_upload_label"><input class="img_uploader" type="file" tabindex="-1" /></label></div>');
         var data = {type : 'image', value : value, size : size}
         $control.find('input').file_upload(data);
         return $control
