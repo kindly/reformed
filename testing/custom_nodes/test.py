@@ -120,7 +120,6 @@ class Node1(Node):
 
 
 
-        params =  {"form_type": "action"},
         form_type = "action",
     )
 
@@ -149,7 +148,6 @@ class Node2(Node):
                             ['Link List Values 3', 'n:test.Node2:Link+List+Values+3'],
                             ['Link List Values 4', 'n:test.Node2:Link+List+Values+4'],
                             ['Link List Values 5', 'n:test.Node2:Link+List+Values+5']]),
-        params = {"form_type": "action"},
         form_type = "action",
     )
 
@@ -179,7 +177,6 @@ class Node3(TableNode):
         input('name'),
         input('hex'),
         table = "colour",
-        params =  {"form_type": "input"},
         form_type = "input",
         title_field = 'name'
     )
@@ -192,7 +189,6 @@ class Node4(TableNode):
         autocomplete('colour', 'colour/name'),
 
         table = "colour",
-        params =  {"form_type": "input"},
         form_type = "input",
     )
 
@@ -216,7 +212,6 @@ class People(EntityNode):
         input('active'),
         input('colour'),
         table = "people",
-        params =  {"form_type": "normal"},
         title_field = 'name',
         form_type = "input",
     )
@@ -225,7 +220,6 @@ class People(EntityNode):
     photo = form(
         thumb('image'),
         table = "people",
-        params =  {"form_type": "normal"},
         title_field = 'name',
         form_type = "input",
         form_buttons = [['save image', 'n:test.People:_save:']],
@@ -234,7 +228,6 @@ class People(EntityNode):
     phone = form(
         input('telephone.number', label = 'number'),
         read_only = True,
-        params = {"form_type": "grid"},
         form_type = "grid",
         form_buttons = [['new phone', 'l:test.People:new:', 'phone_new']],
     )
@@ -243,7 +236,6 @@ class People(EntityNode):
         text('Add a new phone number.'),
         input('number', label = 'number'),
         button('l:test.People:_save:', title = 'save'),
-        params = {"form_type": "normal"},
         form_type = "input",
         table = "telephone",
         save_update = 'phone',
@@ -274,7 +266,6 @@ class DataGenerate(JobNode):
         dropdown('table', 'DATA', data_field = 'tables', default = 'people'),
         intbox('number_records', default = 100),
         button('n:test.DataGenerate:_generate:', label = 'Generate'),
-        params =  {"form_type": "action"},
         form_type = "action",
     )
 
@@ -315,14 +306,12 @@ class Truncate(Node):
         text("Truncate table :)"),
         dropdown('table', 'DATA', data_field = 'tables'),
         button('n:test.Truncate:truncate:', label = 'Truncate'),
-        params =  {"form_type": "action"},
         form_type = "action",
     )
     completed = form(
         text("Table {table} has been truncated.  {records} record(s)."),
         extra_data('table'),
         extra_data('records'),
-        params =  {"form_type": "action"},
         form_type = "action",
     )
 
@@ -375,7 +364,6 @@ class Search(TableNode):
     listing = form(
         result_link('title', data_type = 'link', css = 'form_title'),
         info('summary', data_type = 'info'),
-        params = {"form_type": "results", 'read_only' : True},
         form_type = "results",
 
     )

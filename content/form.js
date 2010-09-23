@@ -1369,11 +1369,11 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             var value;
             var $control;
             var control_function;
-            var ro = form_data.params.read_only;
+            var ro = form_data.read_only;
             REBASE.FormControls.set_data(local_row_data);
 
             // results item box
-            if (form_data.params.form_type == 'results'){
+            if (form_data.form_type == 'results'){
                 item = {layout : 'listing_start'};
                 add_layout_item(item, $builder, builder_depth);
             }
@@ -1401,7 +1401,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 }
             }
 
-            if (form_data.params.form_type == 'results'){
+            if (form_data.form_type == 'results'){
                 item = {layout : 'listing_end'}
                 add_layout_item(item, $builder, builder_depth);
             }
@@ -1422,7 +1422,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                                   __subform: subforms[i].item.name};
                 extra_defaults[subform.form.child_id] = row_data[subform.form.parent_id];
 
-                switch (subform.form.params.form_type){
+                switch (subform.form.form_type){
                     case 'grid':
                         $subforms.eq(i).grid(subform.form, subforms[i].data);
                         break;

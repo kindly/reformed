@@ -549,7 +549,7 @@ class Form(object):
             session.delete(data)
             session.commit()
             # FIXME this needs to be handled more nicely and needs to be completely fixed
-            if self.form_params['form_type'] != 'grid' and self.table == table:
+            if self.form_type != 'grid' and self.table == table:
                 node_token.next_data = {'command': 'list', 'data' : self.extra_data}
                 node_token.next_node = self.name
             else:
@@ -707,9 +707,7 @@ class Form(object):
                 form['params'] = self.params.copy()
             # FIXME read_only should really move into the data?
             if read_only:
-                if not form['params']:
-                    form['params'] = {}
-                form['params']['read_only'] = True
+                form['read_only'] = True
 
 
         output = {
