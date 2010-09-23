@@ -1049,7 +1049,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         for (var i=0, n = fields.length; i < n; i++){
             field = fields[i].trim();
             data[field] = null;
-            if (extra_defaults[field] !== undefined){
+            //normalise extra_defaults?
+            if (extra_defaults && extra_defaults[field] !== undefined){
                 data[field] = extra_defaults[field];
             }
             if (row_data[field] !== undefined){
@@ -1060,16 +1061,28 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     }
 
     function get_form_data_remote(fields){
-        if (fields !== ''){
+        // is this used anywhere?
+        if (fields){
             fields = fields.replace(/^{|}$/g, '') + ',';
             return get_form_data_listed_fields(fields);
         }
         //return get_form_data().save_data;
         var data = get_form_data().save_data;
         var errors = validate_form_data(data);
+        var join_data;
+
+        // join data allows additional data sent with the form to
+        // be returned to the backend
+        // currently used for join information
+        if (form_data.join_data){
+            join_data = form_data.join_data;
+        } else {
+            join_data = false;
+        }
+
         if ($.Util.is_empty(errors)){
             //FIXME Toby {id}  if (fields){
-            return {form:form_data.name, data : data};
+            return {form:form_data.name, data : data, join_data : join_data};
         } else {
             save_errors(errors)
             return false;
