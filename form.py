@@ -376,14 +376,10 @@ class Form(object):
             data_out['__buttons'] = [['save %s' % self.table, '%s:_save:' % node_token.node_name],
                                      ['delete %s' % self.table, '%s:_delete:' % node_token.node_name],
                                      ['cancel', 'BACK']]
-        if not data_out['__buttons']:
-            data_out.pop('__buttons')
 
         if '__message' not in data_out:
             data_out['__message'] = "Hello, edit %s" % title
 
-        if not data_out['__message']:
-            data_out.pop('__message')
 
         self.create_form_data(node_token, data_out, read_only)
 
