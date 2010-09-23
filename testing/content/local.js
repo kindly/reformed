@@ -1,5 +1,6 @@
 
 $.Buttons.action_hash = {
+    testnode: ['test node', 'go-home.png', 'h', 'general', 'n:test.TestNode'],
     test1: ['Basics', 'go-home.png', 'h', 'general', 'n:test.Node1:'],
     test2: ['Buttons & Links', 'go-home.png', 'h', 'general', 'n:test.Node2:'],
     test3: ['Load Data', 'go-home.png', 'h', 'general', 'n:test.DataLoader:load:table=colour&file=testing/color.csv'],
@@ -13,5 +14,5 @@ $.Buttons.action_hash = {
 };
 
 
-$.Buttons.action_list = ['test1', 'test2', 'test3', 'test4', 'test5', 'test6', 'test7', 'test8', 'test9', 'test10'];
+$.Buttons.action_list = ['testnode', 'test1', 'test2', 'test3', 'test4', 'test5', 'test6', 'test7', 'test8', 'test9', 'test10'];
 

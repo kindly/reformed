@@ -412,3 +412,10 @@ class Search(TableNode):
 
 class Auto(AutoFormPlus):
     pass
+
+
+class TestNode(Node):
+
+    def call(self, node_token):
+        #node_token.general_error('moo')
+        node_token.forbidden()
