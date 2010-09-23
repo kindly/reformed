@@ -311,6 +311,7 @@ class Form(object):
         node = node_token.node
         request_data = node_token[self.name]
         form_title = None
+        join_data = None
         print 'VIEW', request_data
         id = request_data.get('id')
         if where:
@@ -345,6 +346,14 @@ class Form(object):
 
             id = data_out.get('id')
 
+            # set the join data for the form will be returned from the front end
+            if set_title:
+                check_table = r[self.table]
+                if check_table.entity or check_table.relation:
+                    join_data = dict(__id = data_out.get('_core_id'))
+                else:
+                    join_data = dict(id = id)
+
             # set the title for bookmarks if this is the main form
             if set_title:
                 if self.title_field and data_out.has_key(self.title_field):
@@ -378,13 +387,18 @@ class Form(object):
 
         self.create_form_data(node_token, data_out, read_only)
 
-        node_token.form(form_title)
+        if set_title and join_data:
+            node_data = join_data
+        else:
+            node_data = None
 
         node_token.bookmark = dict(
             table_name = table,
             bookmark_string = node.build_node('', 'view', 'id=%s' %  id),
             entity_id = id
         )
+        node_token.form(title = form_title, node_data = node_data)
+
 
         session.close()
 
@@ -404,14 +418,17 @@ class Form(object):
         id = id_data.get('id')
         if where:
             link_id = ''
+            join_data = {}
             pass
         elif id:
             where = 'id=?'
             link_id = '&id=%s' % id
+            join_data = dict(id = id)
         else:
             id = id_data.get('__id')
             where = '_core_id=?'
             link_id = '&__id=%s' % id
+            join_data = dict(__id = id)
 
         session = r.Session()
 
@@ -450,7 +467,7 @@ class Form(object):
                                  ['delete %s' % self.table, '%s:_delete:' % node_token.node_name],
                                  ['cancel', 'BACK']]
 
-        id = data_out.get('id')
+        data_out['__join_data'] = join_data
 
         self.create_form_data(node_token, data_out, read_only)
 
@@ -614,7 +631,7 @@ class Form(object):
         current_page = offset/limit + 1
         total_pages = results.row_count/limit + 1
         title = 'listing page %s of %s' % (current_page, total_pages)
-        node_token.form(title = title)
+        node_token.form(title = title, clear_node_data = True)
 
 
     def create_form_data(self, node_token, data=None, read_only=False):
