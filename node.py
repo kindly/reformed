@@ -106,11 +106,16 @@ class Node(object):
         """returns the names of all the forms available to the node"""
         return self._available_forms.keys()
 
-    def get_form_name_list_form_layout(self):
-        form_names = []
-        for section in self.form_layout:
-            form_names.extend(section)
-        return form_names
+    def get_form_name_list_from_layout(self):
+        if self.form_layout:
+            # we have a layout so let's use it to get the form data
+            form_names = []
+            for section in self.form_layout:
+                form_names.extend(section)
+            return form_names
+        else:
+            # just return the forms we have
+            return self.get_form_name_list()
 
 
     def call(self, node_token):
@@ -253,39 +258,61 @@ class TableNode(Node):
         result_link('title'),
         info('summary', data_type = 'info'),
 
+        form_type = "results",
         params = {"form_type": "results"},
         volatile = True,
     )
 
 
+    form_layout = None
+    layout_main_form = None
+
     def setup_commands(self):
         commands = {}
-        commands['view'] = dict(command = 'view')
+     #   commands['view'] = dict(command = 'view')
         commands['list'] = dict(command = 'list')
         commands['edit'] = dict(command = 'edit')
         commands['_save'] = dict(command = 'save')
-        commands['delete'] = dict(command = 'delete')
+      #  commands['_delete'] = dict(command = 'delete')
         commands['new'] = dict(command = 'new')
+        commands['_update'] = dict(command = 'update')
         self.__class__.commands = commands
 
 
-    def save(self, node_token):
-        self["main"].save(node_token)
-
-    def new(self, node_token):
-        self["main"].new(node_token)
+    def list(self, node_token, limit=20):
+        for form_name in self.get_form_name_list():
+            form = self[form_name]
+            if form.form_type == 'results':
+                form.list(node_token, limit)
 
     def edit(self, node_token):
-        self["main"].view(node_token, read_only = False)
+        # process each of the forms
+        for form_name in self.get_form_name_list_from_layout():
+            print form_name
+            if (form_name == self.layout_main_form):
+                is_main_form = True
+            else:
+                is_main_form = False
+            self[form_name].view(node_token, read_only = False, is_main_form = is_main_form)
+        # add the layout information
+        if  self.form_layout:
+            node_token.set_layout(self.layout_type, self.form_layout)
 
-    def view(self, node_token, read_only=True):
-        self["main"].view(node_token, read_only)
+    def save(self, node_token):
+        for form_name in node_token.form_tokens():
+            self[form_name].save(node_token)
 
-    def delete(self, node_token):
-        self["main"].delete(node_token, node_token)
+    def update(self, node_token):
+        for form_name in node_token.form_tokens():
+            self[form_name].view(node_token, read_only = False)
 
-    def list(self, node_token, limit=20):
-        self["listing"].list(node_token, limit)
+    def new(self, node_token):
+        for form_name in node_token.form_tokens():
+            self[form_name].new(node_token)
+
+
+class EntityNode(TableNode):
+    layout_type = 'entity'
 
 
 class JobNode(Node):
@@ -300,10 +327,11 @@ class JobNode(Node):
     table = '_core_job_scheduler'
 
     def setup_commands(self):
-        commands = self.__class__.commands
+        commands = {}
         commands['load'] = dict(command = 'load')
         commands['refresh'] = dict(command = 'refresh')
         commands['status'] = dict(command = 'status')
+        self.__class__.commands = commands
 
     def load(self, node_token, form_name = None):
 
@@ -328,6 +356,7 @@ class JobNode(Node):
         node_data = node_token.get_node_data()
         jobId = node_data.get('id')
         node_token.status(dict(data = self.get_status(jobId), form = True))
+        node_token.set_node_data(dict(id = jobId))
         print 'status'
 
     def status(self, node_token):
