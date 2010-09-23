@@ -61,6 +61,7 @@ class Form(object):
         self.save_next_node = kw.get("save_next_node")
         self.save_next_command = kw.get("save_next_command")
         self.save_redirect = kw.get("save_redirect")
+        self.save_update = kw.get("save_update")
 
         self.buttons = {}
 
@@ -290,6 +291,11 @@ class Form(object):
                 return
 
             node_token.next_node = self.save_next_node
+
+            if self.save_update:
+                node = node_token.node
+                for form in self.save_update.split():
+                    node[form].view(node_token, read_only = False)
             # FIXME as above node data forwarding
             #node_token.next_data = dict(data = node_token.data,
             #                      command = self.save_next_command or 'new')
