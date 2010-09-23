@@ -18,7 +18,7 @@
 ##   Copyright (c) 2008-2010 Toby Dacre & David Raznick
 ##
 
-from node import Node, TableNode, AutoForm, JobNode, AutoFormPlus
+from node import Node, TableNode, AutoForm, JobNode, AutoFormPlus, EntityNode
 from form import form
 from page_item import *
 
@@ -179,8 +179,8 @@ class Node3(TableNode):
         input('name'),
         input('hex'),
         table = "colour",
-        params =  {"form_type": "action"},
-        form_type = "action",
+        params =  {"form_type": "input"},
+        form_type = "input",
         title_field = 'name'
     )
 
@@ -191,9 +191,9 @@ class Node4(TableNode):
         input('int'),
         autocomplete('colour', 'colour/name'),
 
-        table = "table1",
-        params =  {"form_type": "action"},
-        form_type = "action",
+        table = "colour",
+        params =  {"form_type": "input"},
+        form_type = "input",
     )
 
 class Node5(AutoForm):
@@ -201,7 +201,7 @@ class Node5(AutoForm):
     table = "colour"
 
 
-class People(TableNode):
+class People(EntityNode):
 
     main = form(
         input('name'),
@@ -236,67 +236,26 @@ class People(TableNode):
         read_only = True,
         params = {"form_type": "grid"},
         form_type = "grid",
-        form_buttons = [['new phone', 'l:test.People:_newphone:', 'phone_new']],
+        form_buttons = [['new phone', 'l:test.People:new:', 'phone_new']],
     )
 
     phone_new = form(
         text('Add a new phone number.'),
         input('number', label = 'number'),
-        button('l:test.People:_newphone_save:', title = 'save'),
+        button('l:test.People:_save:', title = 'save'),
         params = {"form_type": "normal"},
         form_type = "input",
         table = "telephone",
+        save_update = 'phone',
     )
 
 
     table = "people"
 
     form_layout = [['main'], ['photo'], ['phone']]
-    layout_type = 'entity'
     layout_main_form = 'main'
 
-    def setup_commands(self):
-        commands = {}
-        commands['_update'] = dict(command = 'update')
-        commands['_newphone'] = dict(command = 'newphone')
-        commands['_newphone_save'] = dict(command = 'newphone_save')
-        commands['_add'] = dict(command = 'add')
-        commands['edit'] = dict(command = 'edit')
-        commands['_save'] = dict(command = 'save')
-        commands['list'] = dict(command = 'list')
-        self.__class__.commands = commands
 
-    def edit(self, node_token):
-        # process each of the forms
-        for form_name in self.get_form_name_list_form_layout():
-            print form_name
-            if (form_name == self.layout_main_form):
-                is_main_form = True
-            else:
-                is_main_form = False
-            self[form_name].view(node_token, read_only = False, is_main_form = is_main_form)
-        # add the layout information
-        node_token.set_layout(self.layout_type, self.form_layout)
-
-    def save(self, node_token):
-        for form_name in node_token.form_tokens():
-            self[form_name].save(node_token)
-
-    def update(self, node_token):
-        for form_name in node_token.form_tokens():
-            self[form_name].view(node_token, read_only = False)
-
-    def add(self, node_token):
-        # FIXME what is this doing?
-        print node_token._data
-
-    def newphone(self, node_token):
-        self['phone_new'].new(node_token)
-
-    def newphone_save(self, node_token):
-        self['phone_new'].save(node_token)
-        self['phone'].view(node_token, read_only = False)
-        pass
 
 class DataLoader(JobNode):
 
