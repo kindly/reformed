@@ -306,7 +306,7 @@ class Form(object):
         else:
             raise Exception('Unknown form_type `%s` form `%s`' % (self.form_type, self.name))
 
-    def view_single(self, node_token, read_only=True, where = None, set_title = True):
+    def view_single(self, node_token, read_only=True, where = None, is_main_form = True):
         # TD not reviewed
         node = node_token.node
         request_data = node_token[self.name]
@@ -347,7 +347,7 @@ class Form(object):
             id = data_out.get('id')
 
             # set the join data for the form will be returned from the front end
-            if set_title:
+            if is_main_form:
                 check_table = r[self.table]
                 if check_table.entity or check_table.relation:
                     join_data = dict(__id = data_out.get('_core_id'))
@@ -355,43 +355,62 @@ class Form(object):
                     join_data = dict(id = id)
 
             # set the title for bookmarks if this is the main form
-            if set_title:
+            if is_main_form:
                 if self.title_field and data_out.has_key(self.title_field):
                     form_title = data_out.get(self.title_field)
                 else:
                     form_title = '%s: %s' % (self.table, id)
+
+            if self.title_field:
+                title = result.get(self.title_field)
+            else:
+                title = result.get("id")
 
         except custom_exceptions.SingleResultError:
             # no result found so return error to front end
             node_token.general_error('No record found for give id')
             session.close()
             return
+        except KeyError:
+            # table not found
+            print 'TABLE NOT FOUND', self.name, table
+            data_out = {}
+            result = None
+            id = None
+            join_field = None
+            title = 'Table not Found'
+            data_out = {}
+            for form_item in self.form_items:
+                form_item.display_page_item(node_token, result, data_out, session)
+            session.close()
 
-        if self.title_field:
-            title = result.get(self.title_field)
-        else:
-            title = result.get("id")
-
-        if '__buttons' not in data_out:
-            data_out['__buttons'] = [['save %s' % self.table, '%s:_save:' % node_token.node_name],
-                                     ['delete %s' % self.table, '%s:_delete:' % node_token.node_name],
+        if self.form_buttons:
+            data_out['__buttons'] = self.form_buttons
+        elif '__buttons' not in data_out:
+            data_out['__buttons'] = [['save %s' % self.table, 'n:%s:_save:' % node_token.node_name],
+                                     ['delete %s' % self.table, 'n:%s:_delete:' % node_token.node_name],
                                      ['cancel', 'BACK']]
+
 
         if '__message' not in data_out:
             data_out['__message'] = "Hello, edit %s" % title
 
 
+    #    if join_field:
+    #        data_out['__join_data'] = join_data
+
         self.create_form_data(node_token, data_out, read_only)
 
-        if set_title and join_data:
+        if is_main_form and join_data:
             node_data = join_data
+            print '~~~~~~~', join_data
         else:
             node_data = None
 
         node_token.form(title = form_title, node_data = node_data)
 
         # hack to stop null bookmarks
-        if id:
+        if is_main_form and id:
             node_token.bookmark = dict(
                 table_name = table,
                 bookmark_string = node.build_node('', 'view', 'id=%s' %  id),
@@ -402,7 +421,7 @@ class Form(object):
 
 
 
-    def view_multiple(self, node_token, read_only=True, where = None, limit=5, set_title = True, **kw):
+    def view_multiple(self, node_token, read_only=True, where = None, limit=5, is_main_form = True, **kw):
         # TD not reviewed
 
         data = node_token[self.name]

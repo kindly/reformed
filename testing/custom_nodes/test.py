@@ -253,7 +253,7 @@ class People(TableNode):
 
     form_layout = [['main'], ['photo'], ['phone']]
     layout_type = 'entity'
-    layout_title_form = 'main'
+    layout_main_form = 'main'
 
     def setup_commands(self):
         commands = {}
@@ -270,11 +270,11 @@ class People(TableNode):
         # process each of the forms
         for form_name in self.get_form_name_list_form_layout():
             print form_name
-            if (form_name == self.layout_title_form):
-                set_title = True
+            if (form_name == self.layout_main_form):
+                is_main_form = True
             else:
-                set_title = False
-            self[form_name].view(node_token, read_only = False, set_title = set_title)
+                is_main_form = False
+            self[form_name].view(node_token, read_only = False, is_main_form = is_main_form)
         # add the layout information
         node_token.set_layout(self.layout_type, self.form_layout)
 
