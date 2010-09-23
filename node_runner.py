@@ -42,9 +42,10 @@ class NodeToken(object):
 
         """Helper class to hold data for each form and add some functionality"""
 
-        def __init__(self, data, simple = True):
+        def __init__(self, data, simple = True, node_data = {}):
             """simple: True if shared data for all forms,
             False if separate data for each form"""
+            self.node_data = node_data
             if simple:
                 self.data = data
                 self.form = None
@@ -52,14 +53,21 @@ class NodeToken(object):
                 self.data = data['data']
                 self.form = data['form']
 
-        def get(self, name, default = None):
-            """ get method """
-            return self.data.get(name, default)
+        def get(self, key, default = None):
+            """ Get method
+            Will try to get from form the form data first
+            then will look in node data and finally return the default."""
+            if key in self.data:
+                return self.data.get(key)
+            elif key in self.node_data:
+                return self.node_data.get(key)
+            else:
+                return default
 
         def get_data_int(self, key, default = 0):
-            """ Get integer value out of self.data[key] or default. """
+            """ Get integer value out of self.data[key] or node data or default. """
             try:
-                value = int(self.data.get(key, default))
+                value = int(self.get(key, default))
             except ValueError:
                 value = default
             return value
@@ -129,7 +137,7 @@ class NodeToken(object):
         self._link = None
 
         self._action = None
-        self._sent_node_data = None
+        self._output_node_data = {}
         self.bookmark = None
         self.user = None
 
@@ -137,17 +145,21 @@ class NodeToken(object):
         self._next_data = None
         self._next_command = None
 
+        self._clear_node_data = False
         self.next_data_out = None # TODO do we still need this? what is it doing/
 
     def __getitem__(self, form_name):
         """A shortcut method to get the sent data associated with the named form.
-        If it is a 'layout' level command then there will be individual data for each form,
-        else there is common data for a 'node' level command"""
+        If it is a 'layout' level command then there will be individual data for each form.
+        If there is no data for the form then the node data will be returned.
+        For a 'node' level command node data is returned."""
         if self.command_type == 'layout':
             try:
+                # form data
                 return self._form_data[form_name]
-            except:
-                raise Exception('Node Token tried to access none existant sent data for form `%s`' % form_name)
+            except KeyError:
+                # node data
+                return self._node_data
         elif self.command_type == 'node':
             return self._node_data
 
@@ -168,21 +180,23 @@ class NodeToken(object):
         form_data = self._data.get('form_data', [])
         node_data = self._data.get('node_data', {})
 
-        # Build any form data.
-        # We get an array of data for each form,
-        # split this out into a hash to make it easier to access
-        for row in form_data:
-            form_token = self.FormToken(row, simple = False)
-            self._form_data[row['form']] = form_token
-            # Build list of form names too.
-            self.form_token_list.append(row['form'])
-
         if form_data:
             self.command_type = 'layout'
         else:
             self.command_type = 'node'
+
         # Build the node data
         self._node_data  = self.FormToken(node_data)
+
+        # Build any form data.
+        # We get an array of data for each form,
+        # split this out into a hash to make it easier to access
+        for row in form_data:
+            form_token = self.FormToken(row, simple = False, node_data = node_data)
+            self._form_data[row['form']] = form_token
+            # Build list of form names too.
+            self.form_token_list.append(row['form'])
+
 
     def form_tokens(self):
         """returns the form tokens if we have more than one"""
@@ -261,15 +275,15 @@ class NodeToken(object):
         """ Helper function send forbidden error to front end. """
         self._set_action('forbidden')
 
-    def form(self, title = None):
+    def form(self, **kw):
         """ Helper function set action to form. """
-        self._set_action('form', title = title)
+        self._set_action('form', **kw)
 
     def general_error(self, error):
         """ Helper function send error to front end. """
         self._set_action('general_error', data = error)
 
-    def _set_action(self, action, link = None, data = None, node_data = None, title = None):
+    def _set_action(self, action, link = None, data = None, node_data = None, title = None, clear_node_data = False):
         """ Set the action for the node token. """
         if self._action and not(action == self._action and action == 'form'):
             raise Exception('Action has already been set for this NodeToken')
@@ -280,8 +294,11 @@ class NodeToken(object):
             self._title = title
         if data:
             self._out = data
+        if clear_node_data:
+            self._clear_node_data = True
         if node_data:
-            self._sent_node_data = node_data
+            self._clear_node_data = True
+            self._output_node_data = node_data
 
     def add_paging(self, form_name, count, limit, offset, base_link):
         """Add paging info to form data"""
@@ -297,6 +314,11 @@ class NodeToken(object):
     def output(self):
         """Build the output data to be sent to the front end."""
 
+        # By default we will return the same node data
+        # unless it is updated elsewhere
+        if not self._clear_node_data:
+            self._output_node_data  = self._node_data.data
+
         info = {'action': self._action,
                 'node': self.node_name,
                 'title' : self._title,
@@ -304,7 +326,7 @@ class NodeToken(object):
                 'user' : self.user,
                 'bookmark' : self.bookmark,
                 'layout' : self._get_layout(),
-                'node_data' : self._sent_node_data,
+                'node_data' : self._output_node_data,
                 'data' : self._out}
 
         user_id = global_session.session['user_id']
