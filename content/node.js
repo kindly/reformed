@@ -225,6 +225,7 @@ function get_node_return(node_name, node_command, node_data, form_data, $obj, ob
         info.form_data = form_data;
     }
 
+    REBASE.Dialog.close();
     $JOB.add(info, {obj : $obj, obj_data : obj_data}, 'node', true);
 }
 
@@ -407,6 +408,8 @@ var global_node_data;
 
 function process_node(packet, job){
 
+    var message;
+
      if (packet.data === null){
          console_log("NULL DATA PACKET");
          return;
@@ -482,10 +485,12 @@ function process_node(packet, job){
             }
             break;
          case 'general_error':
-            alert(packet.data.data);
+            message = packet.data.data
+            REBASE.Dialog.dialog('Error', message);
             break;
          case 'forbidden':
-            alert('You do not have the permissions to perform this action');
+            message = 'You do not have the permissions to perform this action.'
+            REBASE.Dialog.dialog('Forbidden', message);
             break;
         case 'status':
             job_processor_status(packet.data.data, packet.data.node, root);
