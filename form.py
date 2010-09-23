@@ -51,6 +51,7 @@ class Form(object):
         self.title_field = kw.get("title_field")
         self.read_only = kw.get("read_only", False)
         self.form_type = kw.get("form_type", 'input') # TODO do we want this to default?
+        self.form_buttons = kw.get("form_buttons")
 
         # subform
         self.child_id = kw.get("child_id")
