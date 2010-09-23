@@ -280,7 +280,6 @@ REBASE.bookmark = function (){
         if (table_data){
             bookmark.bookmark = 'n:' + table_data.node + ':edit:id=' + bookmark.entity_id;
         } else {
-            console_log('missing bookmark data for type ' + bookmark.entity_table);
             bookmark.bookmark = 'n:test.Auto:edit:id=' + bookmark.entity_id + '&table=' + bookmark.entity_table;
         }
 
