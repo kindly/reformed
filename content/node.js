@@ -335,7 +335,10 @@ function job_processor_status(data, node, root){
     }
     // set data refresh if job not finished
     if (!data.data || !data.data.end){
-        status_timer = setTimeout("get_status('/n:" + node + ":status:id=" + data.data.id + "')",1000);
+        var node_string = "/n:" + node + ":_status:id=" + data.data.id;
+        status_timer = setTimeout(function (){
+                                      get_status(node_string);
+                                  }, 1000);
     }
 }
 
