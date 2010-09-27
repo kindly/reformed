@@ -469,6 +469,7 @@ function change_layout(){
 }
 
 var global_node_data;
+var global_current_node;
 
 function process_node(packet, job){
 
@@ -489,6 +490,7 @@ function process_node(packet, job){
      var sent_node_data = packet.data.node_data;
      if (sent_node_data){
          global_node_data = sent_node_data;
+         global_current_node = packet.data.node;
          console_log('node data:', global_node_data);
      }
 
