@@ -1070,6 +1070,7 @@ class Table(object):
         if self.version:
             mapper_kw["version_id_col"] = self.sa_table.c._version
 
+
         self.mapper = mapper(self.sa_class,
                              self.sa_table,
                              **mapper_kw)
@@ -1100,10 +1101,14 @@ class Table(object):
         
         return self.get_edge(table_name).path
 
+    def get_table_from_field(self, field_name):
+
+        return ".".join(field_name.split(".")[:-1])
+
     def get_edge_from_field(self, field_name):
 
         if field_name.count("."):
-            table = ".".join(field_name.split(".")[:-1])
+            table = self.get_table_from_field(field_name)
             return self.get_edge(table)
 
     def get_path_from_field(self, field_name):

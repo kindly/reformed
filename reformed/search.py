@@ -206,7 +206,10 @@ class Search(object):
         query = args[0]
 
         if not hasattr(query, "add_where"):
-            if named_args or pos_args:
+            if isinstance(query, dict):
+                query = QueryFromDict(self, *args)
+
+            elif named_args or pos_args:
                 query = QueryFromStringParam(self, *args, named_args = named_args,
                                                           pos_args = pos_args)
             else:
@@ -409,6 +412,41 @@ class QueryBase(object):
         self.sa_query = self.sa_query.filter(where)
         return self.sa_query
 
+class QueryFromDict(QueryBase):
+
+    def __init__(self, search, *args, **kw):
+
+        self.search = search
+        self.query = args[0]
+
+        self.inner_joins = set()
+        self.outer_joins = set()
+        self.covering_ors = set()
+
+        self.gather_inner_joins()
+
+    def gather_inner_joins(self):
+
+        for field in self.query:
+            if field.count("."):
+                table = self.search.rtable.get_table_from_field(field)
+                self.inner_joins.add(table)
+
+    def add_where(self):
+
+        conditions = []
+        for field, value in self.query.iteritems():
+            if field.count("."):
+                table = self.search.rtable.get_table_from_field(field)
+                table_class = self.search.name_to_alias[table]
+            else:
+                table_class = self.search.rtable.sa_class
+            item = getattr(table_class, field.split(".")[-1])
+            conditions.append(item == value)
+
+        where = and_(*conditions)
+        self.sa_query = self.sa_query.filter(where)
+        return self.sa_query
 
 class QueryFromString(QueryBase):
 
@@ -833,8 +871,91 @@ class Expression(object):
 
         return date
 
+def exprssion_obj_maker(tok, pos, val):
+
+    return Expression(tok, pos, val)
+
+def parser_param():
+
+    Word = pyparsing.Word
+    Literal = pyparsing.Literal
+    Group = pyparsing.Group
+    Combine = pyparsing.Combine
+    nums = pyparsing.nums
+    CaselessKeyword = pyparsing.CaselessKeyword
+
+    attr = Word(pyparsing.alphanums + "_" )
+    name = Word(pyparsing.alphanums + "_" )
+
+    ### really stupid but pyparsing seems to have non greedyness and naming correctly here makes everythin else cleaner
+    objwith4table = Combine(attr + Literal(".") + attr + Literal(".") + attr + Literal(".") + attr).setResultsName("table") +\
+                   Literal(".").suppress() +\
+                   attr.setResultsName("field")
+    objwith3table = Combine(attr + Literal(".") + attr + Literal(".") + attr).setResultsName("table") +\
+                   Literal(".").suppress() +\
+                   attr.setResultsName("field")
+    objwith2table = Combine(attr + Literal(".") + attr).setResultsName("table") +\
+                   Literal(".").suppress() +\
+                   attr.setResultsName("field")
+    objwith1table = attr.setResultsName("table") +\
+                   Literal(".").suppress() +\
+                   attr.setResultsName("field")
+
+                    
+    objnotable = attr.setResultsName("field")
+
+    obj = objwith4table | objwith3table | objwith2table | objwith1table | objnotable
+
+    named_param = Literal("{") + name.setResultsName("name") + Literal("}")
+    assumed_named_param = Literal("{") + Literal("}")
+    positional_param = Literal("?").setResultsName("positional")
+
+
+    value = Group(named_param | assumed_named_param | positional_param)
+
+
+
+    is_ = pyparsing.CaselessKeyword("is")
+
+    null_comarison = is_.setResultsName("operator") + value.setResultsName("value")
+    
+    comparison = ((Literal("<>") | Literal("<=") | Literal("<") | Literal("=") | Literal(">=") |\
+                   Literal(">")).setResultsName("operator") + \
+                   value.setResultsName("value"))
+
+    between = pyparsing.CaselessKeyword("between").setResultsName("operator") +\
+              value.setResultsName("value") +\
+              pyparsing.CaselessKeyword("and") +\
+              value.setResultsName("value2")
+
+
+    like = pyparsing.CaselessKeyword("like").setResultsName("operator") +\
+           value.setResultsName("value")
+
+
+    in_ = pyparsing.CaselessKeyword("in").setResultsName("operator") +\
+          (Literal("(").suppress() +\
+          Group(pyparsing.delimitedList(value)).setResultsName("value") +\
+          Literal(")").suppress())
+
+    singlexpr =  pyparsing.Group( obj + (null_comarison|between|comparison|like|in_)).setParseAction(exprssion_obj_maker)
+
+    expression = pyparsing.StringStart() + pyparsing.operatorPrecedence(singlexpr,
+            [
+            ("not", 1, pyparsing.opAssoc.RIGHT),
+            ("or",  2, pyparsing.opAssoc.LEFT),
+            ("and", 2, pyparsing.opAssoc.LEFT),
+            ]) + pyparsing.StringEnd()
+    
+
+    expression.enablePackrat()
+    return expression
+
+
 
 class QueryFromStringParam(QueryBase):
+
+    parser = parser_param()
 
     def __init__(self, search, *args, **kw):
 
@@ -843,7 +964,7 @@ class QueryFromStringParam(QueryBase):
 
         self.query = args[0]
 
-        parser = self.parser()
+        parser = self.parser
 
         self.ast = parser.parseString(self.query)
 
@@ -933,9 +1054,6 @@ class QueryFromStringParam(QueryBase):
     
         raise 
 
-    def exprssion_obj_maker(self, tok, pos, val):
-
-        return Expression(tok, pos, val)
 
     
     def gather_expressions(self, node):
@@ -973,77 +1091,3 @@ class QueryFromStringParam(QueryBase):
                     except KeyError, e:
                         raise KeyError("%s argument not in param dict" % arg)
 
-    def parser(self):
-
-        Word = pyparsing.Word
-        Literal = pyparsing.Literal
-        Group = pyparsing.Group
-        Combine = pyparsing.Combine
-        nums = pyparsing.nums
-        CaselessKeyword = pyparsing.CaselessKeyword
-
-        attr = Word(pyparsing.alphanums + "_" )
-        name = Word(pyparsing.alphanums + "_" )
-
-        ### really stupid but pyparsing seems to have non greedyness and naming correctly here makes everythin else cleaner
-        objwith4table = Combine(attr + Literal(".") + attr + Literal(".") + attr + Literal(".") + attr).setResultsName("table") +\
-                       Literal(".").suppress() +\
-                       attr.setResultsName("field")
-        objwith3table = Combine(attr + Literal(".") + attr + Literal(".") + attr).setResultsName("table") +\
-                       Literal(".").suppress() +\
-                       attr.setResultsName("field")
-        objwith2table = Combine(attr + Literal(".") + attr).setResultsName("table") +\
-                       Literal(".").suppress() +\
-                       attr.setResultsName("field")
-        objwith1table = attr.setResultsName("table") +\
-                       Literal(".").suppress() +\
-                       attr.setResultsName("field")
-
-                        
-        objnotable = attr.setResultsName("field")
-
-        obj = objwith4table | objwith3table | objwith2table | objwith1table | objnotable
-
-        named_param = Literal("{") + name.setResultsName("name") + Literal("}")
-        assumed_named_param = Literal("{") + Literal("}")
-        positional_param = Literal("?").setResultsName("positional")
-
-
-        value = Group(named_param | assumed_named_param | positional_param)
-
-
-
-        is_ = pyparsing.CaselessKeyword("is")
-
-        null_comarison = is_.setResultsName("operator") + value.setResultsName("value")
-        
-        comparison = ((Literal("<>") | Literal("<=") | Literal("<") | Literal("=") | Literal(">=") |\
-                       Literal(">")).setResultsName("operator") + \
-                       value.setResultsName("value"))
-
-        between = pyparsing.CaselessKeyword("between").setResultsName("operator") +\
-                  value.setResultsName("value") +\
-                  pyparsing.CaselessKeyword("and") +\
-                  value.setResultsName("value2")
-
-
-        like = pyparsing.CaselessKeyword("like").setResultsName("operator") +\
-               value.setResultsName("value")
-
-
-        in_ = pyparsing.CaselessKeyword("in").setResultsName("operator") +\
-              (Literal("(").suppress() +\
-              Group(pyparsing.delimitedList(value)).setResultsName("value") +\
-              Literal(")").suppress())
-
-        singlexpr =  pyparsing.Group( obj + (null_comarison|between|comparison|like|in_)).setParseAction(self.exprssion_obj_maker)
-
-        expression = pyparsing.StringStart() + pyparsing.operatorPrecedence(singlexpr,
-                [
-                ("not", 1, pyparsing.opAssoc.RIGHT),
-                ("or",  2, pyparsing.opAssoc.LEFT),
-                ("and", 2, pyparsing.opAssoc.LEFT),
-                ]) + pyparsing.StringEnd()
-        
-
-        return expression
