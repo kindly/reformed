@@ -47,12 +47,20 @@ def extract():
 
 def load_data(file):
     print 'loading data'
-    from reformed.data_loader import FlatFile
-    flatfile = FlatFile(application.database,
-                        "people",
-                        file)
-
+    import datetime
+    from reformed.data_loader import FlatFileSaveSet
+    application.initialise_database()
+    start_time = datetime.datetime.now() 
+    flatfile = FlatFileSaveSet(application.database,
+                               path = file, lines_per_chunk = 20)
     flatfile.load()
+    time = (datetime.datetime.now() - start_time).seconds
+    print time
+
+def profile(file):
+    import cProfile
+    command = """load_data(file)"""
+    cProfile.runctx( command, globals(), locals(), filename="dataload.profile" )
 
 def load():
     print "loading data"
@@ -328,6 +336,8 @@ if __name__ == "__main__":
                       help="web server ssl certificate/private key prefix")
     parser.add_option("--sysinfo", dest = "sysinfo", action="store_true",
                       help="output system information")
+    parser.add_option("--profile", dest = "profile", action="store_true",
+                      help="profile data loading")
     (options, args) = parser.parse_args()
 
     application = None
@@ -373,6 +383,8 @@ if __name__ == "__main__":
         output_sys_info()
     if options.load:
         load_data(options.load_file)
+    if options.profile:
+        profile(options.load_file)
     if options.upload_files:
         upload_files(options)
     if options.table_load:
