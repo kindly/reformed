@@ -28,7 +28,7 @@ $(document).ready(init);
 
 function init(){
 
-    $.address.change(page_load);
+    $.address.change(REBASE.Node.load_page);
     // if no node info is available go to the login node
     // FIXME this needs fixing with a default node
     // also if you are auto logged in etc
@@ -38,196 +38,259 @@ function init(){
     }
 }
 
+REBASE.Node = function (){
 
 
-function page_load(){
-/*
-    function called on page load by address jquery plug-in
-    used for back/forward buttons, bookmarking etc
-    gets correct 'address' string and passes to calling function
-*/
-    // as we are reloading the page make sure everything has blured
-    itemsBlurLast();
-    var link = $.address.value();
-    node_call_from_string(link, true, true);
-}
+    /* Public functions. */
 
-function node_load_grid(arg){
-    $obj = $('#main').find('div.GRID').eq(0);
-    $obj.data('show_loader')();
-    node_load(arg);
-}
+    function load_page(){
+        /*
+         *  function called on page load by address jquery plug-in
+         *  used for back/forward buttons, bookmarking etc
+         *  gets correct 'address' string and passes to calling function
+         */
 
-function node_load(arg){
-/*
-    force a page load of the node
-*/
-    // as we are reloading the page make sure everything has blured
-    itemsBlurLast();
-    if ($.address.value() == '/' + arg){
-        // the address is already set so we need to force the reload
-        // as changing the address will not trigger an event
-        node_call_from_string(arg, true, true);
-    } else {
-        // sets the address which then forces a page load
-        var link = arg.split(':');
-        if (link[2] && link[2].substring(0,1) == '_'){
-            node_call_from_string(arg, true, false);
+        // as we are reloading the page make sure everything has blured
+        itemsBlurLast();  // FIXME needed?
+        var link = $.address.value();
+        call_node(link, true);
+    }
+
+
+    function load_node(node_string){
+        /*
+         *  Force a page load of the node.
+         */
+
+        // as we are reloading the page make sure everything has blured
+        itemsBlurLast();  // FIXME needed?
+        if ($.address.value() == '/' + node_string){
+            // The address is already set so we need to force the reload
+            // as changing the address will not trigger an event.
+            call_node(node_string, true);
         } else {
-            $.address.value(arg);
-        }
-    }
-}
-
-
-function node_call_from_string(arg, change_state, insecure){
-/*
-    takes a string (arg) of the form
-    "/n:<node_name>:<command>:<arguments>"
-
-    insecure: allows 'dangerous' _underscored commands to be sent
-
-    change_state: if true will change the state for the root
-    FIXME no root info yet defaults to 'main' further along the call chain
-*/
-    var process = false;
-    var url_hash = {};
-    var node_data;
-    var link = arg.split(':');
-    var node = link[1];
-    var command = link[2];
-    if (!command){
-        command = '';
-    }
-
-    // if arguments are supplied convert them to a hash
-    if (link.length>3){
-        url_hash = convert_url_string_to_hash(link[3]);
-    }
-
-    if (link[0]=='/n' || link[0]=='n'){
-        // node command
-        // if we have any extra node data we add it but don't overwrite anything in
-        // the url.  I'm not sure if this is the best thing to do
-        // but it is currently needed for the bookmarks to work correctly.
-        if (global_node_data){
-            for (var key in global_node_data){
-                if (url_hash[key] === undefined){
-                    url_hash[key] = global_node_data[key];
-                }
+            // Check if this is an underscore command which should
+            // not update the address.
+            var link = node_string.split(':');
+            if (link[2] && link[2].substring(0,1) == '_'){
+                call_node(node_string, false);
+            } else {
+                // Sets the address which then forces a page load.
+                $.address.value(node_string);
             }
         }
-        node_data = url_hash;
-        process = true;
-        form_data = false;
-    } else if (link[0]=='/l' || link[0]=='l'){
-        // layout commands
-        // TODO The data protocol is changing
-        // this is the new version which needs to be fully
-        // backported.  Allows for multiple form updates and avoids
-        // namespace issues.
-        var data = {};
-        data.form = url_hash.form;
-        data.layout_id = REBASE.Layout.get_layout_id();
-        data.data = url_hash;
-        node_data = global_node_data;
-        form_data = [data]
-        process = true;
     }
 
-    if (process){
-        // if the command starts with a underscore we don't want
-        // to trigger the command from a url change as this can
-        // let dangerous commands be sent via urls
-        if (!insecure || (command.substring(0,1) != '_')){
-            get_node(node, command, node_data, form_data, change_state);
+
+    function load_node_form(item, node_string, target_form){
+        /*
+         * Called from form buttons etc.
+         * Get any form data needed and request node from backend.
+         */
+
+        // browser history back
+        if (node_string == 'BACK'){
+            window.history.back();
+            return false;
+        }
+        var decode = decode_node_string(node_string);
+        // get any form data
+        var $obj = $(item);
+        var $obj = $obj.parents('div.INPUT_FORM');
+        var form_data = $obj.data('command')('get_form_data');
+        // update the form data with any items in decode.url_data that
+        // have not already been assigned
+        for (var key in decode.url_data){
+            if (form_data[key] === undefined){
+                form_data[key] = decode.url_data[key];
+            }
+        }
+        // set the form data
+        decode.form_data = [form_data];
+        // set target form if not the button containing one.
+        if (target_form){
+            form_data.form = target_form;
+        }
+        get_node(decode);
+    }
+
+
+
+
+    /* Private functions. */
+
+    function call_node(node_string, insecure){
+        /*
+         *  takes a string (node_string) of the form
+         *  "/n:<node_name>:<command>:<arguments>"
+         *
+         *  insecure: allows 'dangerous' _underscored commands to be sent
+         */
+        var decode = decode_node_string(node_string);
+        if (decode){
+            // only call if it is secure to do so.
+            if (!insecure || !decode.secure){
+                get_node(decode);
+            }
         }
     }
-}
 
-function convert_url_string_to_hash(arg){
-/*
-    convert string to a hash
-    input:  "a=1&b=2"
-    output  {a:1, b:2}
-*/
-    var out = {};
-    var args = arg.split('&');
-    var x;
-    var s;
-    for (var i=0; i<args.length; i++){
-        x = args[i];
-        s = x.split('=');
-        if (s.length == 2){
-            out[s[0]] = s[1];
+
+    function decode_node_string(node_string){
+        /*
+         *  Decodes a node string and returns an object.
+         *  { node, type, command, url_data, node_data, layout_id, form_data, secure }
+         *  or false if an error occurs
+         */
+        var error_msg;
+        var decode = {};
+        var split = node_string.split(':');
+        // check enough info
+        if (split.length < 2){
+            error_msg = 'Invalid node data.\n\nNot enough arguments.';
+            REBASE.Dialog.dialog('Application Error', error_msg);
+            return false;
+        }
+        // node
+        decode.node = split[1];
+        //command
+        if (split.length > 2){
+            decode.command = split[2];
+            // if the command starts with a underscore we don't want
+            // to trigger the command from a url change as this can
+            // let dangerous commands be sent via urls
+            decode.secure = (decode.command.substring(0,1) == '_');
+        } else {
+            decode.command = null;
+            decode.secure = false;
+        }
+        // url data converted to a hash
+        if (split.length>3){
+            decode.url_data = convert_url_string_to_hash(split[3]);
+        } else{
+            decode.url_data = {};
+        }
+        // type
+        var type = split[0];
+        switch (split[0]){
+            case 'n':
+            case '/n':
+                decode.type = 'node';
+                // node calls return any url_data as the node_data
+                decode.node_data = decode.url_data;
+                // if we have any extra node data we add it but
+                // don't overwrite anything in the url.
+                // I'm not sure if this is the best thing to do
+                // but it is currently needed for the bookmarks to work correctly.
+                if (global_node_data){
+                    for (var key in global_node_data){
+                        if (decode.node_data[key] === undefined){
+                            decode.node_data[key] = global_node_data[key];
+                        }
+                    }
+                }
+                decode.form_data = false;
+                break;
+            case 'l':
+            case '/l':
+                decode.type = 'layout';
+                // layout calls return the global node_data
+                decode.node_data = global_node_data;
+                // if form supplied in url_data set in decode.form
+                var data = {};
+                data.form = decode.url_data.form || false;
+                data.layout_id = REBASE.Layout.get_layout_id();
+                data.data = decode.url_data;
+                decode.form_data = [data];
+                break;
+            default:
+                error_msg = 'Invalid node data.\n\nUnknown node type.';
+                REBASE.Dialog.dialog('Application Error', error_msg);
+                return false;
+                break;
+        }
+        return decode;
+    }
+
+
+    function convert_url_string_to_hash(arg){
+        /*
+         *  convert string to a hash
+         *  input:  "a=1&b=2"
+         *  output  {a:1, b:2}
+         */
+        var out = {};
+        var args = arg.split('&');
+        var x;
+        var s;
+        for (var i=0; i<args.length; i++){
+            x = args[i];
+            s = x.split('=');
+            if (s.length == 2){
+                out[s[0]] = s[1];
+            }
+        }
+        return out;
+    }
+
+
+    function get_node(decode){
+        /*
+         *  Takes a decoded node request does any processing needed
+         *  and passes it to be the job processor to request
+         */
+        var info = {node: decode.node,
+                    lastnode: '',  //FIXME will we ever need this?
+                    command: decode.command};
+        // get any cached form info for the node
+        var cache_info = REBASE.Layout.get_form_cache_info(decode.node);
+        if (cache_info !== undefined){
+            info['form_cache'] = cache_info;
+        }
+        // node data
+        if (decode.node_data){
+            info.node_data = decode.node_data
+        }
+        // form data
+        if (decode.form_data){
+            info.form_data = decode.form_data;
+        }
+        // application data
+        if (!REBASE.application_data){
+            info.request_application_data = true;
+        }
+        // close any open dialog
+        // may possibly cause problems with status refreshes
+        REBASE.Dialog.close();
+        // FIXME if we never send data as second arg then
+        // remove it.
+        $JOB.add(info, {});
+    }
+
+
+    // exported functions
+
+    return {
+        'load_page' : function (){
+            /* called by $.address.change() */
+            load_page();
+        },
+        'load_node' : function (node_string){
+            /* called to load a node changes the page url if needed. */
+            load_node(node_string);
+        },
+        'load_node_form' : function (item, node_string, target_form){
+            /* called from form buttons etc sends the form
+             * data and can call a target form. */
+            load_node_form(item, node_string, target_form);
         }
     }
-    return out;
-}
+}();
 
+/* helper functions for transition */
+var node_load = REBASE.Node.load_node;
+var node_button_input_form = REBASE.Node.load_node_form;
 
-function _wrap(arg, tag, my_class){
-    // this wraps the item in <tag> tags
-    if (my_class){
-        return '<' + tag + ' class="' + my_class + '" >' + arg + '</' + tag + '>';
-    } else {
-        return '<' + tag + '>' + arg + '</' + tag + '>';
-    }
-}
-
-function get_node(node_name, node_command, node_data, form_data, change_state){
-
-    // if change_state then we will set the status to that node
-    // this helps prevent front-end confusion
-    if (change_state){
-        var root = 'main'; //FIXME
-  //      $INFO.newState(root);
-  //      $INFO.setState(root, 'node', node_name);
-    }
-    var info = {node: node_name,
-                lastnode: '',  //fixme
-                command: node_command};
-
-    var cache_info = REBASE.Layout.get_form_cache_info(node_name);
-    if (cache_info !== undefined){
-        info['form_cache'] = cache_info;
-    }
-
-
-    if (node_data){
-        info.node_data = node_data;
-    }
-
-    if (form_data){
-        info.form_data = form_data;
-    }
-
-    if (!REBASE.application_data){
-        info.request_application_data = true;
-    }
-
-    $JOB.add(info, {}, 'node', true);
-}
-
-function get_node_return(node_name, node_command, node_data, form_data, $obj, obj_data){
-    // works like get_node but adds a jquery item to call on the return
-    // we also drop the state stuff as we will deal with that better
-    // when needed
-    var info = {node: node_name,
-                lastnode: '',  //fixme
-                command: node_command };
-
-    if (node_data){
-        info.node_data = node_data;
-    }
-
-    if (form_data){
-        info.form_data = form_data;
-    }
-
-    REBASE.Dialog.close();
-    $JOB.add(info, {obj : $obj, obj_data : obj_data}, 'node', true);
-}
 
 function link_process(item, link){
     var div = _parse_id(item.id).div;
@@ -241,40 +304,34 @@ function link_process(item, link){
 }
 
 function node_save(root, command){
+    alert('broken');
     console_log('node_save');
     $('#main').find('div').data('command')('save'); //FIXME these want to be found properly
 }
 
 
 function node_button(item, node, command){
+    alert('broken');
     var out = $('#main div.f_form').data('command')('get_form_data');
     get_node(node, command, out, false, false);
 }
 
-function node_button_input_form(item, node_string, target_form){
-    if (node_string == 'BACK'){
-        window.history.back();
-        return false;
-    }
-    var $obj = $(item);
-    var $obj = $obj.parents('div.INPUT_FORM');
-    var split_data = node_string.split(':')
-    var node = split_data[1];
-    var command = split_data[2];
-    var out;
 
-    if (split_data.length == 4){//, split_data[3]
-        out = $obj.data('command')('get_form_data');
-        if (out){
-            if (target_form){
-                out.form = target_form;
-            }
-            get_node_return(node, command, global_node_data, [out], $obj);
-        }
+
+function node_load_grid(arg){
+    $obj = $('#main').find('div.GRID').eq(0);
+    $obj.data('show_loader')();
+    node_load(arg);
+}
+function _wrap(arg, tag, my_class){
+    // this wraps the item in <tag> tags
+    if (my_class){
+        return '<' + tag + ' class="' + my_class + '" >' + arg + '</' + tag + '>';
     } else {
-        node_load(node_string);
+        return '<' + tag + '>' + arg + '</' + tag + '>';
     }
 }
+
 
 function search_box(){
     var node = 'n:test.Search::q=' + $('#search').val();
@@ -318,7 +375,7 @@ function item_remove_error(jquery_obj){
 }
 
 function get_status(call_string){
-    node_call_from_string(call_string, false);
+    node_load(call_string);
 }
 
 
