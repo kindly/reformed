@@ -304,14 +304,16 @@ class Application(object):
         self.create_logger("authentication")
         self.create_logger("node")
         self.create_logger("web")
-        self.create_logger("actions")
+        self.create_logger("actions", handler_level = 'ERROR')
         self.create_logger("rebase", "rebase", log_name = True)
-        self.create_logger("rebase", "rebase", log_name = True, error_logger = True)
+        self.create_logger("rebase", "rebase", log_name = True, handler_level = 'ERROR')
 
         self.create_logger("zodb", "ZODB.FileStorage")
-        self.create_logger("sql", "sqlalchemy.engine")
+        self.create_logger("sql", "sqlalchemy.engine", logger_level = 'ERROR')
 
-    def create_logger(self, name, logger_name = None, log_name = False, error_logger = False):
+    def create_logger(self, name, logger_name = None,
+                      log_name = False, error_logger = False,
+                      logger_level = 'DEBUG', handler_level = 'DEBUG'):
 
         if not logger_name:
             logger_name = 'rebase.%s' % name
@@ -328,13 +330,11 @@ class Application(object):
 
         handler = logging.FileHandler(log_file)
         handler.setFormatter(formatter)
-        if error_logger:
-            handler.setLevel(logging.ERROR)
-        else:
-            handler.setLevel(logging.DEBUG)
+
+        handler.setLevel(getattr(logging, handler_level))
 
         logger = logging.getLogger(logger_name)
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(getattr(logging, logger_level))
 
         logger.addHandler(handler)
 
