@@ -552,6 +552,7 @@ REBASE.Layout = function(){
          * Normailises forms etc.
          */
 
+        // form data is kept here key is 'node_name|form_name'
         var form_data_cache = {};
         var form_data_cache_info = {};
 
