@@ -842,3 +842,6 @@ def codegroup(name, **kw):
     kw['name'] = name
     return FormItemFactory('codegroup', CodeGroup, **kw)
 
+def grid_link(name = None, **kw):
+    kw['name'] = name
+    return FormItemFactory('grid_link', FormControl, **kw)
