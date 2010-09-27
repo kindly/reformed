@@ -144,7 +144,7 @@ REBASE.LayoutManager = function (){
             html.push('</form>');
             $user_bar.append(html.join(''));
             // ajax info
-            $user_bar.append('<span id="ajax_info">Loading ...</span>');
+            $user_bar.append('<span id="ajax_info"><img src="busy.gif" /> Loading ...</span>');
             // login info
             $user_bar.append('<span id="user_login" style="float:right;">user login</span>');
             return $user_bar;
