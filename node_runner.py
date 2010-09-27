@@ -281,6 +281,11 @@ class NodeToken(object):
         """ Helper function send status data to front end. """
         self._set_action('status', data = data)
 
+    def function(self, function_name, data = None):
+        """ Helper function send status data to front end. """
+        packet = dict(function = function_name, data = data)
+        self._set_action('function', data = packet)
+
     def forbidden(self):
         """ Helper function send forbidden error to front end. """
         self._set_action('forbidden')
