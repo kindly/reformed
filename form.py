@@ -279,31 +279,31 @@ class Form(object):
             # need to decide on how to handle node redirects better
             #node_token.data["id"] = obj.id
 
-            if self.save_redirect:
-                # make sure redirect is correct
-                while self.save_redirect.count(':') < 2:
-                    self.save_redirect += ':'
-                if not self.save_redirect.endswith(':'):
-                    self.save_redirect += '&'
-                # add data
-                link = self.save_redirect + "id=" + str(obj.id)
-                node_token.redirect(link)
-                return
+        if self.save_redirect:
+            # make sure redirect is correct
+            while self.save_redirect.count(':') < 2:
+                self.save_redirect += ':'
+            if not self.save_redirect.endswith(':'):
+                self.save_redirect += '&'
+            # add data
+            link = self.save_redirect + "id=" + str(obj.id)
+            node_token.redirect(link)
+            return
 
-            if self.save_next_node:
-                node_token.next_node = self.save_next_node
-                return
+        if self.save_next_node:
+            node_token.next_node = self.save_next_node
+            return
 
-            if self.save_update:
-                node = node_token.node
-                for form in self.save_update.split():
-                    node[form].view(node_token, read_only = False)
+        if self.save_update:
+            node = node_token.node
+            for form in self.save_update.split():
+                node[form].view(node_token, read_only = False)
+            return
             # FIXME as above node data forwarding
             #node_token.next_data = dict(data = node_token.data,
             #                      command = self.save_next_command or 'new')
 
-        else:
-            node_token.redirect_back()
+        node_token.redirect_back()
 
     def view(self, node_token, **kw):
         """Calls the appropriate view function for the form"""
