@@ -387,7 +387,7 @@ class Form(object):
             # table not found
             # we shouldn't be hitting this so raise error
             # keep code incase we need it
-            raise Exception('Table not found for form `%s`' % self.name)
+            raise Exception('Table `%s` not found for form `%s`' % (table, self.name))
             print 'TABLE NOT FOUND', self.name, table
             data_out = {}
             result = None
