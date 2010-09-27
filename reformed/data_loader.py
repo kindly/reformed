@@ -13,6 +13,8 @@ import sqlalchemy as sa
 from multiprocessing import Pool
 import multiprocessing
 import saveset
+from reformed.csv_file import CsvFile
+from itertools import islice, chain
 
 logger = logging.getLogger('rebase.application')
 reformed_database = None
@@ -123,7 +125,6 @@ class ErrorLine(object):
         self.error_dict = error_dict
 
     def __repr__(self):
-
         return "line_number: %s, errors: %s" % (self.line_number, self.error_dict)
 
 class ChunkStatus(object):
@@ -140,7 +141,8 @@ class ChunkStatus(object):
 
     def __repr__(self):
 
-        return "chunk: %s, status: %s, error: %s" % (self.chunk, self.status, self.error)
+        return ("chunk: %s, status: %s, error: %s, error_lines: %s" 
+                % (self.chunk, self.status, self.error, self.error_lines))
 
 class FlatFile(object):
 
@@ -797,25 +799,26 @@ class MultipleSaveSet(object):
 
     def save(self):
 
-        obj = None
-
         save_sets = []
 
-
         for row in self.data:
+            copy = row.copy()
             table = row.pop("__table", self.table)
-            rtable = self.database[table]
-            save_set = saveset.SaveNew(self.database, table, self.session)
+            error = row.get("__error")
+            if error:
+                save_set = saveset.SaveError({"__error": error})
+            else:
+                save_set = saveset.SaveNew(self.database, table, self.session)
+            save_set.original_values = copy
             save_set.save_values = row
             if "prev" == row.get("id"):
                 row.pop("id")
-                save_set.prepare(obj)
+                save_set.prepare(save_sets[-1])
             elif "prev" == row.get("_core_id"):
                 row.pop("_core_id")
-                save_set.prepare(obj)
+                save_set.prepare(save_sets[-1])
             else:
                 save_set.prepare()
-            obj = save_set.obj
             save_sets.append(save_set)
 
         try:
@@ -828,19 +831,128 @@ class MultipleSaveSet(object):
         for num, save_set in enumerate(save_sets):
             error = save_set.save(False)
             if error:
-                errors[num] = error
+                errors[num] = (error, save_set.original_values) 
         try:
             self.session.commit()
+        except:
+            self.session.rollback()
+            raise
         finally:
             self.session.close()
 
         return errors
 
 
+class FlatFileSaveSet(object):
+
+    def __init__(self, database, path = None,
+                 table = None,  buffer = None,
+                 lines_per_chunk = 10000000000):
+
+        self.database = database
+        self.table = table
+
+        self.file = None
+        self.strinhg = None
+
+        self.csv_file = CsvFile(path = path,
+                                buffer = buffer)
+
+        self.csv_file.get_dialect()
+        self.csv_file.get_headings()
+        self.csv_file.parse_headings()
+        self.csv_file.guess_types()
+        self.lines_per_chunk = lines_per_chunk
+        self.lines = self.csv_file.chunk(lines_per_chunk)
+        self.chunks = self.csv_file.chunks
+        self.chunk_status = []
+
+    def get_first_generator(self, chunk):
+        save_data = self.csv_file.iterate_csv(chunk, as_dict = True)
+        for num, line in enumerate(save_data):
+            if "prev" not in (line.get("_core_id"), line.get("id")):
+                break
+        else:
+            return ()
+        
+        try:
+            save_data.send(1)
+            save_data.next()
+        except StopIteration:
+            pass
+
+        generator = self.csv_file.iterate_csv(chunk, as_dict = True)
+
+        return (num, islice(generator, num, None))
 
 
+    def get_end_generator(self, chunk):
+
+        if chunk + 1 not in self.csv_file.chunks:
+            return []
+        save_data = self.csv_file.iterate_csv(chunk + 1, as_dict = True,
+                                              no_end = True)
+
+        num = 0
+        for num, line in enumerate(save_data):
+            if "prev" not in (line.get("_core_id"), line.get("id")):
+                break
+        else:
+            num = num + 1
+
+        try:
+            save_data.send(1)
+            save_data.next()
+        except StopIteration:
+            pass 
+
+        generator = self.csv_file.iterate_csv(chunk + 1, as_dict = True,
+                                                  no_end = True)
+
+        return (num, islice(generator, 0, num))
+
+    def load_chunk(self, chunk):
+
+        try:
+            start, first_generator = self.get_first_generator(chunk)
+        except ValueError:
+            return ChunkStatus((0,0), "empty chunk")
+
+        range_start = chunk * self.lines_per_chunk + start + 1
+
+        try:
+            end, end_generator = self.get_end_generator(chunk) 
+            range_end = (chunk + 1) * self.lines_per_chunk + end
+        except ValueError:
+            range_end, end_generator = self.lines, [] 
+
+        save_data = chain(first_generator, end_generator)
+
+        save_set = MultipleSaveSet(self.database, save_data,
+                                   table = self.table)
+        range = (range_start, range_end)
+
+        try:
+            save_set_errors = save_set.save()
+        except sa.orm.exc.ConcurrentModificationError, e:
+            return ChunkStatus(range, "locking error", error = e)
+        except Exception, e:
+            raise
+            return ChunkStatus(range, "unknown error", error = e)
+        if not save_set_errors:
+            return ChunkStatus(range, "committed")
+
+        error_lines = []
+        for num, (error, line) in save_set_errors.iteritems():
+            error_lines.append(ErrorLine(range_start + num, line, error)) 
+        return ChunkStatus(range, "validation error", error_lines)
 
 
+    def load(self):
 
+        for chunk in self.csv_file.chunks:
+            status = self.load_chunk(chunk)
+            print status
+            self.chunk_status.append(status)
 
-
+        return self.chunk_status
