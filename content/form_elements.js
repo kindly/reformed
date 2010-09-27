@@ -883,3 +883,112 @@ REBASE.Dialog = function (){
     }
 
 }()
+
+
+/*
+ *           ('>
+ *           /))@@@@@.
+ *          /@"@@@@@()@
+ *         .@@()@@()@@@@    FUNCTIONS
+ *         @@@O@@@@()@@@
+ *         @()@@\@@@()@@    Remote functions called by the backend.
+ *          @()@||@@@@@'
+ *           '@@||@@@'
+ *        jgs   ||
+ *       ^^^^^^^^^^^^^^^^^
+ */
+
+
+REBASE.Functions = function (){
+
+    // hash of functions available
+    var functions = {
+        debug_form_info: debug_form_info
+    };
+
+    function call(data){
+        /* calls function if it exists */
+        var fn = functions[data['function']];
+        if (fn){
+            fn(data.data);
+        } else {
+            REBASE.Dialog.dialog('Error', '<pre>Function `' + data['function'] + '` is not available.</pre>');
+        }
+    }
+
+    function debug_form_info(){
+        /* Output the current form cache information */
+        var info = REBASE.Layout.debug_form_info();
+        $('#main').empty();
+        $('#main').append('<p><b>Cached form info</b><div id="treeview_control">		<a title="Collapse the entire tree below" href="#"><img src="jquery/images/minus.gif" /> Collapse All</a> | <a title="Expand the entire tree below" href="#"><img src="jquery/images/plus.gif" /> Expand All</a> | <a title="Toggle the tree below, opening closed branches, closing open branches" href="#">Toggle All</a></div></p>');
+        var $treeview = $(REBASE.Utils.treeview_hash(info)).treeview({collapsed: true, control : '#treeview_control'});
+        $('#main').append($treeview);
+    }
+
+
+    // exported functions
+    return {
+        'call' : function (data){
+            call(data);
+        }
+    }
+
+}()
+
+/*
+ *           ('>
+ *           /))@@@@@.
+ *          /@"@@@@@()@
+ *         .@@()@@()@@@@    UTILS
+ *         @@@O@@@@()@@@
+ *         @()@@\@@@()@@    Useful and shared functions.
+ *          @()@||@@@@@'
+ *           '@@||@@@'
+ *        jgs   ||
+ *       ^^^^^^^^^^^^^^^^^
+ */
+
+
+REBASE.Utils = function (){
+
+
+    function treeview_hash(data, css_class){
+        /* takes a hash of data and converts it into
+         * a jQuery treeview ready unordered list
+         */
+        if (css_class === undefined){
+            css_class = 'treeview-gray';
+        }
+        var output = [];
+        if (css_class !== ''){
+            output.push('<ul class="' + css_class + '" >');
+        } else {
+            output.push('<ul>');
+        }
+        for (var key in data){
+            if (data[key] === null){
+                output.push('<li>' + key + ' : null</li>');
+            } else if (typeof(data[key]) == 'object'){
+                if (data[key].length){
+                    output.push('<li><span>' + key + ' : [\n</span>' + treeview_hash(data[key], '') + '<span>\n]</span></li>');
+                } else {
+                    output.push('<li><span>' + key + ' : {\n</span>' + treeview_hash(data[key], '') + '<span>\n}</span></li>');
+                }
+            } else {
+                output.push('<li>' + key + ' : ' + data[key] + '</li>');
+            }
+        }
+        output.push('</ul>');
+        return output.join('\n');
+
+    }
+
+    // exported functions
+    return {
+        'treeview_hash' : function (data, css_class){
+            return treeview_hash(data, css_class);
+        }
+    }
+
+
+}()
