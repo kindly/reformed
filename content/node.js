@@ -98,6 +98,9 @@ REBASE.Node = function (){
             return false;
         }
         var decode = decode_node_string(node_string);
+        if (!decode){
+            return false;
+        }
         // get any form data
         var $obj = $(item);
         var $obj = $obj.parents('div.INPUT_FORM');
