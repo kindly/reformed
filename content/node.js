@@ -397,9 +397,9 @@ function change_user_bar(){
 
 function change_layout(){
     if (!REBASE.application_data.public && !REBASE.application_data.__user_id){
-         REBASE.layout_manager.layout('mainx');
+         REBASE.LayoutManager.layout('mainx');
     } else {
-         REBASE.layout_manager.layout('main');
+         REBASE.LayoutManager.layout('main');
     }
     change_user_bar();
 }
@@ -440,7 +440,7 @@ function process_node(packet, job){
 
      var bookmark = packet.data.bookmark;
      if (bookmark){
-        REBASE.bookmark.process(bookmark);
+        REBASE.Bookmark.process(bookmark);
      }
 
     var data;

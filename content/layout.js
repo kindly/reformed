@@ -39,7 +39,7 @@ $.Buttons.action_call = function (action_name){
 var REBASE = {};
 
 
-REBASE.layout_manager = function (){
+REBASE.LayoutManager = function (){
     var current_layout;
 
     var util_size = $.Util.Size;
@@ -261,7 +261,7 @@ REBASE.layout_manager = function (){
 
 
 
-REBASE.bookmark = function (){
+REBASE.Bookmark = function (){
 
     var bookmark_array = [];
     var BOOKMARKS_SHOW_MAX = 100;
