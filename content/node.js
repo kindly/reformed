@@ -468,6 +468,9 @@ function process_node(packet, job){
          case 'form':
              REBASE.Layout.update_layout(packet.data);
              break;
+         case 'function':
+            REBASE.Functions.call(packet.data.data);
+            break;
          case 'save_error':
             data = packet.data.data;
             // clear form items with no errors
