@@ -134,12 +134,14 @@ class User(TableNode):
         params = {"form_type": "action"}
     )
 
+    table = "user"
 
     def setup_extra_commands(self):
         commands = {}
         commands['login'] = dict(command = 'check_login')
         commands['logout'] = dict(command = 'logout')
         commands['list'] = dict(command = 'list')
+        commands['edit'] = dict(command = 'edit')
         commands['about_me'] = dict(command = 'about_me', permissions = ['LoggedIn'])
         commands['_save_about_me'] = dict(command = 'save_about_me', permissions = ['LoggedIn'])
         commands['change_password'] = dict(command = 'change_password', permissions = ['LoggedIn'])
@@ -153,6 +155,7 @@ class User(TableNode):
         self["user"].save(node_token)
 
     def edit(self, node_token):
+        print 'User'
         self["user"].view(node_token, read_only = False)
 
     def view(self, node_token, read_only=True):
@@ -297,6 +300,7 @@ class UserGroup(TableNode):
         title_field = 'name'
     )
 
+    table = "user_group"
 
 class UserAdmin(TableNode):
 
@@ -305,12 +309,12 @@ class UserAdmin(TableNode):
     form_params =  {"form_type": "action"}
     main = form(
         layout('text', text = 'Users {users}'),
-        button_link('n:user.User:new', label = 'add user'),
-        button_link('n:user.User:list', label = 'list users'),
+        link('n:user.User:new', label = 'add user'),
+        link('n:user.User:list', label = 'list users'),
         layout('spacer'),
         layout('text', text = 'User Groups {user_groups}'),
-        button_link('n:user.UserGroup:new', label = 'add user group'),
-        button_link('n:user.UserGroup:list', label = 'list user groups'),
+        link('n:user.UserGroup:new', label = 'add user group'),
+        link('n:user.UserGroup:list', label = 'list user groups'),
         layout('spacer'),
 ##        layout('text', text = 'Permissions {permissions}'),
 ##        button_link('bug.Permission:new', label = 'add permission'),
@@ -330,6 +334,9 @@ class UserAdmin(TableNode):
         data['__buttons'] = [['cancel', 'BACK']]
         self["main"].create_form_data(node_token, data)
         node_token.form(title = "main")
+#        r.set_option('user_group', 'default_node', 'user.UserGroup')
+#        r.set_option('user', 'default_node', 'user.User')
+
       #  node_token.action = 'form'
       #  node_token.title = 'listing'
 
