@@ -93,6 +93,10 @@ REBASE.Node = function (){
             window.history.back();
             return false;
         }
+        if (node_string == 'CLOSE'){
+            REBASE.Dialog.close();
+            return false;
+        }
         var decode = decode_node_string(node_string);
         // get any form data
         var $obj = $(item);
