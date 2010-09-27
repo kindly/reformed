@@ -1650,22 +1650,40 @@ $.Grid2 = function(input, form_data, row_data, extra_defaults){
             return html.join('');
         }
 
+
         function build_data_row(data){
             var html = [];
             var item;
             var control;
-            var value;
-            html.push('<tr>');
-            for (var i = 0; i < num_fields; i++){
-                html.push('<td>');
-                item = form_data.fields[i];
-                value = $.Util.get_item_value(item, data);
+
+            function build_value(){
+                var value = $.Util.get_item_value(item, data);
                 if (value === ''){
                     value = '&nbsp;';
                 } else if (value === null){
                     value = 'Null';
                 }
-                control = correct_value(item, value);
+                return correct_value(item, value);
+            }
+
+            function build_link(){
+                var value = ''
+                if (item.field && data[item.field] !== undefined){
+                    value = item.field + '=' + data[item.field];
+                }
+                return '<a href="#" onclick="node_button_input_form(this, \'' + item.base_link + value + '\',\'' + item.target_form + '\');return false">moo</a>';
+            }
+
+
+            html.push('<tr>');
+            for (var i = 0; i < num_fields; i++){
+                html.push('<td>');
+                item = form_data.fields[i];
+                if (item.control == 'grid_link'){
+                    control = build_link();
+                } else {
+                    control = build_value();
+                }
                 html.push(control);
                 html.push('</td>');
             }
