@@ -755,9 +755,9 @@ def result_image(name = None, **kw):
     kw['name'] = name
     return FormItemFactory('result_image', FormControl, **kw)
 
-def link(name = None, **kw):
-    kw['name'] = name
-    return FormItemFactory('link', FormControl, **kw)
+def link(link = None, **kw):
+    kw['link'] = link
+    return FormItemFactory('link', ActionItem, **kw)
 
 
 def link_list(name = None, **kw):
