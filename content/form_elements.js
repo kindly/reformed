@@ -631,6 +631,9 @@ REBASE.Layout = function(){
             'process' : function (form_data, node_data){
                 return process_form_data_all(form_data, node_data)
             },
+            'debug_form_info' : function (){
+                return form_data_cache;
+            },
             'get_form_cache_data' : function (node_name){
                 return form_data_cache_info[node_name];
             }
@@ -804,6 +807,9 @@ REBASE.Layout = function(){
         },
         'get_layout_id' : function (){
             return layout_id;
+        },
+        'debug_form_info' : function (){
+            return FormProcessor.debug_form_info();
         },
         'get_form_cache_info' : function (node_name){
             return FormProcessor.get_form_cache_data(node_name);
