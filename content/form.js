@@ -1049,7 +1049,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         for (var i=0, n = fields.length; i < n; i++){
             field = fields[i].trim();
             data[field] = null;
-            if (extra_defaults[field] !== undefined){
+            //normalise extra_defaults?
+            if (extra_defaults && extra_defaults[field] !== undefined){
                 data[field] = extra_defaults[field];
             }
             if (row_data[field] !== undefined){
@@ -1060,16 +1061,28 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     }
 
     function get_form_data_remote(fields){
-        if (fields !== ''){
+        // is this used anywhere?
+        if (fields){
             fields = fields.replace(/^{|}$/g, '') + ',';
             return get_form_data_listed_fields(fields);
         }
         //return get_form_data().save_data;
         var data = get_form_data().save_data;
         var errors = validate_form_data(data);
+        var join_data;
+
+        // join data allows additional data sent with the form to
+        // be returned to the backend
+        // currently used for join information
+        if (form_data.join_data){
+            join_data = form_data.join_data;
+        } else {
+            join_data = false;
+        }
+
         if ($.Util.is_empty(errors)){
             //FIXME Toby {id}  if (fields){
-            return {form:form_data.name, data : data};
+            return {form:form_data.name, data : data, join_data : join_data};
         } else {
             save_errors(errors)
             return false;
@@ -1356,11 +1369,11 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             var value;
             var $control;
             var control_function;
-            var ro = form_data.params.read_only;
-            $FormElements.set_data(local_row_data);
+            var ro = form_data.read_only;
+            REBASE.FormControls.set_data(local_row_data);
 
             // results item box
-            if (form_data.params.form_type == 'results'){
+            if (form_data.form_type == 'results'){
                 item = {layout : 'listing_start'};
                 add_layout_item(item, $builder, builder_depth);
             }
@@ -1368,7 +1381,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             if (form_data.thumb){
                 img_value = local_row_data[form_data.thumb.name];
                 item = {control : 'image', css: 'img_large', size: 'l'};
-                var $thumb = $FormElements.build(ro, item, img_value);
+                var $thumb = REBASE.FormControls.build(ro, item, img_value);
                 $thumb = $('<div class="RECORD_IMG">').append($thumb);
                 $builder[builder_depth].append($thumb);
                 form_controls_hash[form_data.thumb.name] = $thumb;
@@ -1380,7 +1393,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 if (item.layout){
                     add_layout_item(item, $builder, builder_depth);
                 } else {
-                    $control = $FormElements.build(ro, item, value);
+                    $control = REBASE.FormControls.build(ro, item, value);
                     if ($control){
                         $builder[builder_depth].append($control);
                         form_controls_hash[item.name] = $control;
@@ -1388,7 +1401,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 }
             }
 
-            if (form_data.params.form_type == 'results'){
+            if (form_data.form_type == 'results'){
                 item = {layout : 'listing_end'}
                 add_layout_item(item, $builder, builder_depth);
             }
@@ -1402,14 +1415,14 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             var $subforms = $input.find('div.SUBFORM');
             var subform;
             var data;
-            var subforms = $FormElements.get_subforms();
+            var subforms = REBASE.FormControls.get_subforms();
             for (var i = 0, n = subforms.length; i < n; i ++){
                 subform = subforms[i].item;
                 extra_defaults = {__table: subform.form.table_name,
                                   __subform: subforms[i].item.name};
                 extra_defaults[subform.form.child_id] = row_data[subform.form.parent_id];
 
-                switch (subform.form.params.form_type){
+                switch (subform.form.form_type){
                     case 'grid':
                         $subforms.eq(i).grid(subform.form, subforms[i].data);
                         break;
@@ -1426,7 +1439,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             }
         }
 
-        $FormElements.clear_subforms();
+        REBASE.FormControls.clear_subforms();
         $form.empty();
         form_controls_hash = {};
         builder_depth = 0;
@@ -1434,7 +1447,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         $builder = [$('<div/>')];
         // form message
         if (!$.Util.is_empty(row_data.__message)){
-            $control = $FormElements.build(true, {control : 'message_area'}, row_data.__message);
+            $control = REBASE.FormControls.build(true, {control : 'message_area'}, row_data.__message);
             $builder[builder_depth].append($control);
         }
         // paging bar
@@ -1461,7 +1474,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         if (row_data.__buttons){
             item = { buttons : row_data.__buttons, control: 'button_box'};
             value = $.Util.get_item_value(item, row_data);
-            $control = $FormElements.build(true, item, value);
+            $control = REBASE.FormControls.build(true, item, value);
             $builder[builder_depth].append($control);
         }
         // second paging bar
@@ -1558,15 +1571,27 @@ function make_paging(extra_defaults){
     var pages = Math.ceil(count/limit);
     var current = Math.floor(offset/limit);
     var link;
+    var href;
+
+    var use_href = (base.substring(0,1) == 'n');
 
     var html = '<div class="PAGING_BAR">';
+
+    function make_href(){
+        if (use_href){
+            return 'href="#' + link + '" ';
+        } else {
+            return 'href="#" ';
+        }
+    }
+
     html += 'paging: ';
 
     if (current>0){
         link = base + '&o=0&l=' + limit;
-        html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">|&lt;</a> ';
+        html += '<a ' + make_href() + 'onclick="node_load(\'' + link +'\');return false;">|&lt;</a> ';
         link = base + '&o=' + (current-1) * limit + '&l=' + limit;
-        html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">&lt;</a> ';
+        html += '<a ' + make_href() + 'onclick="node_load(\'' + link +'\');return false;">&lt;</a> ';
     } else {
         html += '|&lt; ';
         html += '&lt; ';
@@ -1580,15 +1605,15 @@ function make_paging(extra_defaults){
                  (pages-i<(PAGING_SIZE*2) && current>pages-PAGING_SIZE)
             ){
                 link = base + '&o=' + i * limit + '&l=' + limit;
-                html += '<a href="#' + link + '" onclick="node_load(\'' + link + '\');return false;">' + (i+1) + '</a> ';
+                html += '<a ' + make_href() + 'onclick="node_load(\'' + link + '\');return false;">' + (i+1) + '</a> ';
             }
         }
     }
     if (current<pages - 1){
         link = base + '&o=' + (current+1) * limit + '&l=' + limit;
-        html += '<a href="#' + link + '" onclick="node_load(\'' + link + '\');return false;">&gt;</a> ';
+        html += '<a ' + make_href() + 'onclick="node_load(\'' + link + '\');return false;">&gt;</a> ';
         link = base + '&o=' + (pages-1) * limit + '&l=' + limit;
-        html += '<a href="#' + link + '" onclick="node_load(\'' + link +'\');return false;">&gt;|</a> ';
+        html += '<a ' + make_href() + 'onclick="node_load(\'' + link +'\');return false;">&gt;|</a> ';
     } else {
         html += '&gt; ';
         html += '&gt;| ';
@@ -1625,22 +1650,40 @@ $.Grid2 = function(input, form_data, row_data, extra_defaults){
             return html.join('');
         }
 
+
         function build_data_row(data){
             var html = [];
             var item;
             var control;
-            var value;
-            html.push('<tr>');
-            for (var i = 0; i < num_fields; i++){
-                html.push('<td>');
-                item = form_data.fields[i];
-                value = $.Util.get_item_value(item, data);
+
+            function build_value(){
+                var value = $.Util.get_item_value(item, data);
                 if (value === ''){
                     value = '&nbsp;';
                 } else if (value === null){
                     value = 'Null';
                 }
-                control = correct_value(item, value);
+                return correct_value(item, value);
+            }
+
+            function build_link(){
+                var value = ''
+                if (item.field && data[item.field] !== undefined){
+                    value = item.field + '=' + data[item.field];
+                }
+                return '<a href="#" onclick="node_button_input_form(this, \'' + item.base_link + value + '\',\'' + item.target_form + '\');return false">moo</a>';
+            }
+
+
+            html.push('<tr>');
+            for (var i = 0; i < num_fields; i++){
+                html.push('<td>');
+                item = form_data.fields[i];
+                if (item.control == 'grid_link'){
+                    control = build_link();
+                } else {
+                    control = build_value();
+                }
                 html.push(control);
                 html.push('</td>');
             }
@@ -1694,7 +1737,8 @@ $.Grid2 = function(input, form_data, row_data, extra_defaults){
             return html.join('');
         }
         var NUM_TABLE_ROWS = 5;
-        var $builder= $('<div class="INPUT_FORM" >');
+        var $builder = $('<div class="INPUT_FORM" >');
+        $builder.data('command', command_caller);
         var paging_bar;
         var $control;
         var value;
@@ -1702,7 +1746,7 @@ $.Grid2 = function(input, form_data, row_data, extra_defaults){
 
         // form message
         if (!$.Util.is_empty(message)){
-            $control = $FormElements.build(true, {control : 'message_area'}, message);
+            $control = REBASE.FormControls.build(true, {control : 'message_area'}, message);
             $builder.append($control);
         }
         // paging bar
@@ -1721,7 +1765,7 @@ $.Grid2 = function(input, form_data, row_data, extra_defaults){
         if (buttons){
             item = { buttons : buttons, control: 'button_box'};
             value = $.Util.get_item_value(item, row_data);
-            $control = $FormElements.build(true, item, value);
+            $control = REBASE.FormControls.build(true, item, value);
             $builder.append($control);
         }
         // second paging bar
@@ -1731,6 +1775,22 @@ $.Grid2 = function(input, form_data, row_data, extra_defaults){
         $input.append($builder);
     }
 
+    function get_form_data(){
+        return {form : form_data.form_name, data : {}}
+    }
+    // custom events
+    var custom_commands = {
+        'get_form_data' : get_form_data
+    };
+
+    function command_caller(type, data){
+        if (custom_commands[type]){
+            return custom_commands[type](data);
+        } else {
+            alert('command: <' + type + '> has no handler');
+            return false;
+        }
+    }
     var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
     var num_fields = form_data.fields.length;
     build_grid();

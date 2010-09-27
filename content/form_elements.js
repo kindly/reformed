@@ -1,4 +1,41 @@
-$FormElements = function(){
+/*
+
+    This file is part of Reformed.
+
+    Reformed is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 2 as
+    published by the Free Software Foundation.
+
+    Reformed is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Reformed.  If not, see <http://www.gnu.org/licenses/>.
+
+    -----------------------------------------------------------------
+
+    Reformed
+    Copyright (c) 2008-2010 Toby Dacre & David Raznick
+
+*/
+
+
+/*
+ *           ('>
+ *           /))@@@@@.
+ *          /@"@@@@@()@
+ *         .@@()@@()@@@@    FORM CONTROLS
+ *         @@@O@@@@()@@@
+ *         @()@@\@@@()@@    Generatable form items.
+ *          @()@||@@@@@'
+ *           '@@||@@@'
+ *        jgs   ||
+ *       ^^^^^^^^^^^^^^^^^
+ */
+
+REBASE.FormControls = function(){
 
     function add_label(item, prefix){
         if (item.title){
@@ -113,6 +150,11 @@ $FormElements = function(){
         for (var i = 0, n = buttons.length; i < n; i++){
             but.node = buttons[i][1];
             but.title = buttons[i][0];
+            if (buttons[i].length > 2){
+                but.target_form = buttons[i][2];
+            } else {
+                but.target_form = null;
+            }
             html += button(but);
         }
         return html;
@@ -123,7 +165,8 @@ $FormElements = function(){
     }
 
     function button(item, value){
-        return '<button' + set_class_list(item, 'button') + ' onclick="node_button_input_form(this, \'' + item.node + '\');return false">' + item.title + '</button>';
+        var target_form = item.target_form || '';
+        return '<button' + set_class_list(item, 'button') + ' onclick="node_button_input_form(this, \'' + item.node + '\',\'' + target_form + '\');return false">' + item.title + '</button>';
     }
 
     function dropdown_code(item, value){
@@ -356,7 +399,7 @@ $FormElements = function(){
             size = item.size;
         }
 
-        var $control = $(add_label(item, 'rf_') + '<div' + set_class_list(item, 'HOLDER') + '"><label class="img_upload_label"><input class="img_uploader" type="file" /></label></div>');
+        var $control = $(add_label(item, 'rf_') + '<div' + set_class_list(item, 'HOLDER') + '"><label class="img_upload_label"><input class="img_uploader" type="file" tabindex="-1" /></label></div>');
         var data = {type : 'image', value : value, size : size}
         $control.find('input').file_upload(data);
         return $control
@@ -456,7 +499,21 @@ $FormElements = function(){
 }()
 
 
-$Layout = function(){
+
+/*
+ *           ('>
+ *           /))@@@@@.
+ *          /@"@@@@@()@
+ *         .@@()@@()@@@@    LAYOUT
+ *         @@@O@@@@()@@@
+ *         @()@@\@@@()@@    Manage forms and layout.
+ *          @()@||@@@@@'
+ *           '@@||@@@'
+ *        jgs   ||
+ *       ^^^^^^^^^^^^^^^^^
+ */
+
+REBASE.Layout = function(){
 
 
     var root = '#main';
@@ -482,13 +539,20 @@ $Layout = function(){
     var $forms = {};
 
 
-    /* FORM DATA PROCESSING */
+    /*
+     *      (\  }\   (\  }\   (\  }\
+     *     (  \_('> (  \_('> (  \_('>   FORM DATA PROCESSOR
+     *     (__(=_)  (__(=_)  (__(=_)
+     *   jgs  -"=      -"=      -"=
+     */
+
     var FormProcessor = function(){
         /* FormProcessor processes form data sent by the
          * backend.  Cache form data where possible.
          * Normailises forms etc.
          */
 
+        // form data is kept here key is 'node_name|form_name'
         var form_data_cache = {};
         var form_data_cache_info = {};
 
@@ -567,6 +631,9 @@ $Layout = function(){
             'process' : function (form_data, node_data){
                 return process_form_data_all(form_data, node_data)
             },
+            'debug_form_info' : function (){
+                return form_data_cache;
+            },
             'get_form_cache_data' : function (node_name){
                 return form_data_cache_info[node_name];
             }
@@ -574,8 +641,12 @@ $Layout = function(){
     }()
 
 
-
-    /* LAYOUT FUNCTIONS */
+    /*
+     *      (\  }\   (\  }\   (\  }\
+     *     (  \_('> (  \_('> (  \_('>   LAYOUT FUNCTIONS
+     *     (__(=_)  (__(=_)  (__(=_)
+     *   jgs  -"=      -"=      -"=
+     */
 
     function add_forms_to_layout(packet){
         /* Create a new layout or update form(s)
@@ -614,6 +685,8 @@ $Layout = function(){
                 $forms[form_name].empty();
                 $forms[form_name].append(make_form(form_name));
             } else {
+                var form_type = forms[form_name].form.form_type;
+                REBASE.Dialog.dialog('test', forms[form_name].form);
                 console_log('TRIED TO USE UNINITIALISED FORM ' + form_name);
             }
         }
@@ -735,6 +808,9 @@ $Layout = function(){
         'get_layout_id' : function (){
             return layout_id;
         },
+        'debug_form_info' : function (){
+            return FormProcessor.debug_form_info();
+        },
         'get_form_cache_info' : function (node_name){
             return FormProcessor.get_form_cache_data(node_name);
         }
@@ -742,3 +818,177 @@ $Layout = function(){
 
 }()
 
+/*
+ *           ('>
+ *           /))@@@@@.
+ *          /@"@@@@@()@
+ *         .@@()@@()@@@@    DIALOG BOX
+ *         @@@O@@@@()@@@
+ *         @()@@\@@@()@@    Pop up dialog box.
+ *          @()@||@@@@@'
+ *           '@@||@@@'
+ *        jgs   ||
+ *       ^^^^^^^^^^^^^^^^^
+ */
+
+REBASE.Dialog = function (){
+
+    var $dialog_box;
+    var is_setup = false;
+    var is_open = false;
+    var process_html = $.Util.process_html;
+
+    function setup(){
+        $dialog_box = $('<div id="dialog_box"></div>')
+        $('body').append($dialog_box);
+        $dialog_box.dialog({autoOpen: false, height: 'auto', width : 'auto'});
+        is_setup = true;
+    }
+
+    function open(title, data){
+        if (!is_setup){
+            setup()
+        }
+        // If we have sent a string as data then we just want
+        // to process it for any markdown and display it.
+        // If it is form data then we want to process it as a form.
+        if (typeof(data) == 'string'){
+            $dialog_box.html(process_html(data));
+        } else {
+            // assuming it is form_data
+            $dialog_box.input_form(data);
+        }
+        $dialog_box.dialog("option", "title", title)
+        $dialog_box.dialog("option", "modal", true)
+        $dialog_box.dialog('open');
+        is_open = true;
+    }
+
+    function close(){
+        if (is_open){
+            $dialog_box.dialog('close');
+            is_open = false;
+        }
+    }
+
+
+    // exported functions
+    return {
+        'dialog' : function (title, data){
+            open(title, data);
+        },
+        'close' : function(){
+            close();
+        }
+    }
+
+}()
+
+
+/*
+ *           ('>
+ *           /))@@@@@.
+ *          /@"@@@@@()@
+ *         .@@()@@()@@@@    FUNCTIONS
+ *         @@@O@@@@()@@@
+ *         @()@@\@@@()@@    Remote functions called by the backend.
+ *          @()@||@@@@@'
+ *           '@@||@@@'
+ *        jgs   ||
+ *       ^^^^^^^^^^^^^^^^^
+ */
+
+
+REBASE.Functions = function (){
+
+    // hash of functions available
+    var functions = {
+        debug_form_info: debug_form_info
+    };
+
+    function call(data){
+        /* calls function if it exists */
+        var fn = functions[data['function']];
+        if (fn){
+            fn(data.data);
+        } else {
+            REBASE.Dialog.dialog('Error', '<pre>Function `' + data['function'] + '` is not available.</pre>');
+        }
+    }
+
+    function debug_form_info(){
+        /* Output the current form cache information */
+        var info = REBASE.Layout.debug_form_info();
+        $('#main').empty();
+        $('#main').append('<p><b>Cached form info</b><div id="treeview_control">		<a title="Collapse the entire tree below" href="#"><img src="jquery/images/minus.gif" /> Collapse All</a> | <a title="Expand the entire tree below" href="#"><img src="jquery/images/plus.gif" /> Expand All</a> | <a title="Toggle the tree below, opening closed branches, closing open branches" href="#">Toggle All</a></div></p>');
+        var $treeview = $(REBASE.Utils.treeview_hash(info)).treeview({collapsed: true, control : '#treeview_control'});
+        $('#main').append($treeview);
+    }
+
+
+    // exported functions
+    return {
+        'call' : function (data){
+            call(data);
+        }
+    }
+
+}()
+
+/*
+ *           ('>
+ *           /))@@@@@.
+ *          /@"@@@@@()@
+ *         .@@()@@()@@@@    UTILS
+ *         @@@O@@@@()@@@
+ *         @()@@\@@@()@@    Useful and shared functions.
+ *          @()@||@@@@@'
+ *           '@@||@@@'
+ *        jgs   ||
+ *       ^^^^^^^^^^^^^^^^^
+ */
+
+
+REBASE.Utils = function (){
+
+
+    function treeview_hash(data, css_class){
+        /* takes a hash of data and converts it into
+         * a jQuery treeview ready unordered list
+         */
+        if (css_class === undefined){
+            css_class = 'treeview-gray';
+        }
+        var output = [];
+        if (css_class !== ''){
+            output.push('<ul class="' + css_class + '" >');
+        } else {
+            output.push('<ul>');
+        }
+        for (var key in data){
+            if (data[key] === null){
+                output.push('<li>' + key + ' : null</li>');
+            } else if (typeof(data[key]) == 'object'){
+                if (data[key].length){
+                    output.push('<li><span>' + key + ' : [\n</span>' + treeview_hash(data[key], '') + '<span>\n]</span></li>');
+                } else {
+                    output.push('<li><span>' + key + ' : {\n</span>' + treeview_hash(data[key], '') + '<span>\n}</span></li>');
+                }
+            } else {
+                output.push('<li>' + key + ' : ' + data[key] + '</li>');
+            }
+        }
+        output.push('</ul>');
+        return output.join('\n');
+
+    }
+
+    // exported functions
+    return {
+        'treeview_hash' : function (data, css_class){
+            return treeview_hash(data, css_class);
+        }
+    }
+
+
+}()

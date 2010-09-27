@@ -18,7 +18,7 @@
 ##   Copyright (c) 2008-2010 Toby Dacre & David Raznick
 ##
 
-from node import Node, TableNode, AutoForm, JobNode, AutoFormPlus
+from node import Node, TableNode, AutoForm, JobNode, AutoFormPlus, EntityNode
 from form import form
 from page_item import *
 
@@ -120,7 +120,6 @@ class Node1(Node):
 
 
 
-        params =  {"form_type": "action"},
         form_type = "action",
     )
 
@@ -133,14 +132,14 @@ class Node2(Node):
 
     main = form(
         text('**Buttons**'),
-        button('test.Node2:Single+Button', label = 'Single Button'),
-        button_box([['Button Box 1', 'test.Node2:Button+Box+1'],
-                    ['Button Box 2', 'test.Node2:Button+Box+2'],
-                    ['Button Box 3', 'test.Node2:Button+Box+3'],
-                    ['Button Box 4', 'test.Node2:Button+Box+4'],
-                    ['Button Box 5', 'test.Node2:Button+Box+5']]),
+        button('n:test.Node2:Single+Button', label = 'Single Button'),
+        button_box([['Button Box 1', 'n:test.Node2:Button+Box+1'],
+                    ['Button Box 2', 'n:test.Node2:Button+Box+2'],
+                    ['Button Box 3', 'n:test.Node2:Button+Box+3'],
+                    ['Button Box 4', 'n:test.Node2:Button+Box+4'],
+                    ['Button Box 5', 'n:test.Node2:Button+Box+5']]),
         text('**Lists**'),
-        button_link('test.Node2:Single+Link', label = 'Single Link'),
+        button_link('n:test.Node2:Single+Link', label = 'Single Link'),
         text('List of links using data.'),
         link_list('links'),
         text('List of links using fixed values.'),
@@ -149,7 +148,6 @@ class Node2(Node):
                             ['Link List Values 3', 'n:test.Node2:Link+List+Values+3'],
                             ['Link List Values 4', 'n:test.Node2:Link+List+Values+4'],
                             ['Link List Values 5', 'n:test.Node2:Link+List+Values+5']]),
-        params = {"form_type": "action"},
         form_type = "action",
     )
 
@@ -179,8 +177,7 @@ class Node3(TableNode):
         input('name'),
         input('hex'),
         table = "colour",
-        params =  {"form_type": "action"},
-        form_type = "action",
+        form_type = "input",
         title_field = 'name'
     )
 
@@ -191,9 +188,8 @@ class Node4(TableNode):
         input('int'),
         autocomplete('colour', 'colour/name'),
 
-        table = "table1",
-        params =  {"form_type": "action"},
-        form_type = "action",
+        table = "colour",
+        form_type = "input",
     )
 
 class Node5(AutoForm):
@@ -201,7 +197,7 @@ class Node5(AutoForm):
     table = "colour"
 
 
-class People(TableNode):
+class People(EntityNode):
 
     main = form(
         input('name'),
@@ -216,7 +212,6 @@ class People(TableNode):
         input('active'),
         input('colour'),
         table = "people",
-        params =  {"form_type": "normal"},
         title_field = 'name',
         form_type = "input",
     )
@@ -225,56 +220,34 @@ class People(TableNode):
     photo = form(
         thumb('image'),
         table = "people",
-        params =  {"form_type": "normal"},
         title_field = 'name',
         form_type = "input",
+        form_buttons = [['save image', 'n:test.People:_save:']],
     )
 
     phone = form(
         input('telephone.number', label = 'number'),
+        grid_link('telephone.id', label = 'edit', field = 'telephone.id', base_link = 'l:test.People:edit:', target_form = 'phone_new'),
         read_only = True,
-        params = {"form_type": "grid"},
         form_type = "grid",
+        form_buttons = [['new phone', 'l:test.People:new:', 'phone_new']],
     )
+
+    phone_new = form(
+        text('Add a new phone number.'),
+        input('number', label = 'number'),
+        button('l:test.People:_save:', title = 'save'),
+        form_type = "input",
+        table = "telephone",
+        save_update = 'phone',
+    )
+
 
     table = "people"
 
     form_layout = [['main'], ['photo'], ['phone']]
-    layout_type = 'entity'
-    layout_title_form = 'main'
+    layout_main_form = 'main'
 
-    def setup_commands(self):
-        commands = {}
-        commands['_update'] = dict(command = 'update')
-        commands['_add'] = dict(command = 'add')
-        commands['edit'] = dict(command = 'edit')
-        commands['_save'] = dict(command = 'save')
-        commands['list'] = dict(command = 'list')
-        self.__class__.commands = commands
-
-    def edit(self, node_token):
-        # process each of the forms
-        for form_name in self.get_form_name_list_form_layout():
-            print form_name
-            if (form_name == self.layout_title_form):
-                set_title = True
-            else:
-                set_title = False
-            self[form_name].view(node_token, read_only = False, set_title = set_title)
-        # add the layout information
-        node_token.set_layout(self.layout_type, self.form_layout)
-
-    def save(self, node_token):
-        for form_name in node_token.form_tokens():
-            self[form_name].save(node_token)
-
-    def update(self, node_token):
-        for form_name in node_token.form_tokens():
-            self[form_name].view(node_token, read_only = False)
-
-    def add(self, node_token):
-        # FIXME what is this doing?
-        print node_token._data
 
 
 class DataLoader(JobNode):
@@ -293,8 +266,7 @@ class DataGenerate(JobNode):
         text("##Data Generator##"),
         dropdown('table', 'DATA', data_field = 'tables', default = 'people'),
         intbox('number_records', default = 100),
-        button('test.DataGenerate:_generate:', label = 'Generate'),
-        params =  {"form_type": "action"},
+        button('n:test.DataGenerate:_generate:', label = 'Generate'),
         form_type = "action",
     )
 
@@ -334,15 +306,13 @@ class Truncate(Node):
     main = form(
         text("Truncate table :)"),
         dropdown('table', 'DATA', data_field = 'tables'),
-        button('test.Truncate:truncate:', label = 'Truncate'),
-        params =  {"form_type": "action"},
+        button('n:test.Truncate:truncate:', label = 'Truncate'),
         form_type = "action",
     )
     completed = form(
         text("Table {table} has been truncated.  {records} record(s)."),
         extra_data('table'),
         extra_data('records'),
-        params =  {"form_type": "action"},
         form_type = "action",
     )
 
@@ -395,7 +365,6 @@ class Search(TableNode):
     listing = form(
         result_link('title', data_type = 'link', css = 'form_title'),
         info('summary', data_type = 'info'),
-        params = {"form_type": "results", 'read_only' : True},
         form_type = "results",
 
     )
@@ -412,3 +381,11 @@ class Search(TableNode):
 
 class Auto(AutoFormPlus):
     pass
+
+
+class TestNode(Node):
+
+    def call(self, node_token):
+        #node_token.general_error('moo')
+        #node_token.forbidden()
+        node_token.function('debug_form_info')

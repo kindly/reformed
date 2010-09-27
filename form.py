@@ -51,6 +51,7 @@ class Form(object):
         self.title_field = kw.get("title_field")
         self.read_only = kw.get("read_only", False)
         self.form_type = kw.get("form_type", 'input') # TODO do we want this to default?
+        self.form_buttons = kw.get("form_buttons")
 
         # subform
         self.child_id = kw.get("child_id")
@@ -60,6 +61,7 @@ class Form(object):
         self.save_next_node = kw.get("save_next_node")
         self.save_next_command = kw.get("save_next_command")
         self.save_redirect = kw.get("save_redirect")
+        self.save_update = kw.get("save_update")
 
         self.buttons = {}
 
@@ -80,7 +82,7 @@ class Form(object):
         self.initiate_form_items()
 
     def __repr__(self):
-        return '<Form `%s` in node `%s`>' % (self.name, self.node.name)
+        return '<Form `%s`>' % (self.name)
 
     def initiate_form_items(self):
         """set up the form_items supplied to the form"""
@@ -145,7 +147,7 @@ class Form(object):
         return out
 
 
-    def show(self, node_token, data = None):
+    def show(self, node_token, data = None, **kw):
         """display form on front end including data if supplied"""
 
         if not data:
@@ -198,7 +200,11 @@ class Form(object):
             save_set.set_value("_version", version)
         else:
             # new record (create blank one)
+            _core_id = data.get('__id')
+
             save_set = SaveNew(r, self.table, session)
+            if _core_id:
+                save_set.set_value('_core_id', _core_id)
             session = save_set.session
             save_set.new = True
 
@@ -284,7 +290,14 @@ class Form(object):
                 node_token.redirect(link)
                 return
 
-            node_token.next_node = self.save_next_node
+            if self.save_next_node:
+                node_token.next_node = self.save_next_node
+                return
+
+            if self.save_update:
+                node = node_token.node
+                for form in self.save_update.split():
+                    node[form].view(node_token, read_only = False)
             # FIXME as above node data forwarding
             #node_token.next_data = dict(data = node_token.data,
             #                      command = self.save_next_command or 'new')
@@ -294,18 +307,23 @@ class Form(object):
 
     def view(self, node_token, **kw):
         """Calls the appropriate view function for the form"""
-        if self.form_type in ['input', 'action']:
+        if self.form_type in ['input']:
             self.view_single(node_token, **kw)
+        elif self.form_type in ['action']:
+            self.show(node_token, **kw)
+        elif self.form_type in ['results']:
+            pass
         elif self.form_type in ['grid']:
             self.view_multiple(node_token, **kw)
         else:
             raise Exception('Unknown form_type `%s` form `%s`' % (self.form_type, self.name))
 
-    def view_single(self, node_token, read_only=True, where = None, set_title = True):
+    def view_single(self, node_token, read_only=True, where = None, is_main_form = True):
         # TD not reviewed
         node = node_token.node
         request_data = node_token[self.name]
         form_title = None
+        join_data = None
         print 'VIEW', request_data
         id = request_data.get('id')
         if where:
@@ -340,52 +358,85 @@ class Form(object):
 
             id = data_out.get('id')
 
+            # set the join data for the form will be returned from the front end
+            if is_main_form:
+                check_table = r[self.table]
+                if check_table.entity or check_table.relation:
+                    join_data = dict(__id = data_out.get('_core_id'))
+                else:
+                    join_data = dict(id = id)
+
             # set the title for bookmarks if this is the main form
-            if set_title:
+            if is_main_form:
                 if self.title_field and data_out.has_key(self.title_field):
                     form_title = data_out.get(self.title_field)
                 else:
                     form_title = '%s: %s' % (self.table, id)
+
+            if self.title_field:
+                title = result.get(self.title_field)
+            else:
+                title = result.get("id")
 
         except custom_exceptions.SingleResultError:
             # no result found so return error to front end
             node_token.general_error('No record found for give id')
             session.close()
             return
+        except KeyError:
+            # table not found
+            # we shouldn't be hitting this so raise error
+            # keep code incase we need it
+            raise Exception('Table not found for form `%s`' % self.name)
+            print 'TABLE NOT FOUND', self.name, table
+            data_out = {}
+            result = None
+            id = None
+            join_field = None
+            title = 'Table not Found'
+            data_out = {}
+            for form_item in self.form_items:
+                form_item.display_page_item(node_token, result, data_out, session)
+            session.close()
 
-        if self.title_field:
-            title = result.get(self.title_field)
-        else:
-            title = result.get("id")
-
-        if '__buttons' not in data_out:
-            data_out['__buttons'] = [['save %s' % self.table, '%s:_save:' % node_token.node_name],
-                                     ['delete %s' % self.table, '%s:_delete:' % node_token.node_name],
+        if self.form_buttons:
+            data_out['__buttons'] = self.form_buttons
+        elif '__buttons' not in data_out:
+            data_out['__buttons'] = [['save %s' % self.table, 'n:%s:_save:' % node_token.node_name],
+                                     ['delete %s' % self.table, 'n:%s:_delete:' % node_token.node_name],
                                      ['cancel', 'BACK']]
-        if not data_out['__buttons']:
-            data_out.pop('__buttons')
+
 
         if '__message' not in data_out:
             data_out['__message'] = "Hello, edit %s" % title
 
-        if not data_out['__message']:
-            data_out.pop('__message')
+
+    #    if join_field:
+    #        data_out['__join_data'] = join_data
 
         self.create_form_data(node_token, data_out, read_only)
 
-        node_token.form(form_title)
+        if is_main_form and join_data:
+            node_data = join_data
+            print '~~~~~~~', join_data
+        else:
+            node_data = None
 
-        node_token.bookmark = dict(
-            table_name = table,
-            bookmark_string = node.build_node('', 'view', 'id=%s' %  id),
-            entity_id = id
-        )
+        node_token.form(title = form_title, node_data = node_data)
+
+        # hack to stop null bookmarks
+        if is_main_form and id:
+            node_token.bookmark = dict(
+                table_name = table,
+                bookmark_string = node.build_node('', 'view', 'id=%s' %  id),
+                entity_id = id
+            )
 
         session.close()
 
 
 
-    def view_multiple(self, node_token, read_only=True, where = None, limit=5, set_title = True, **kw):
+    def view_multiple(self, node_token, read_only=True, where = None, limit=5, is_main_form = True, **kw):
         # TD not reviewed
 
         data = node_token[self.name]
@@ -399,14 +450,17 @@ class Form(object):
         id = id_data.get('id')
         if where:
             link_id = ''
+            join_data = {}
             pass
         elif id:
             where = 'id=?'
             link_id = '&id=%s' % id
+            join_data = dict(id = id)
         else:
             id = id_data.get('__id')
             where = '_core_id=?'
             link_id = '&__id=%s' % id
+            join_data = dict(__id = id)
 
         session = r.Session()
 
@@ -439,13 +493,17 @@ class Form(object):
                 form_item.display_page_item(node_token, result, row, session)
             out.append(row)
 
+        if self.form_buttons:
+            buttons = self.form_buttons
+        else:
+            buttons = [['add %s' % self.table, '%s:_add:' % node_token.node_name],
+                       ['delete %s' % self.table, '%s:_delete:' % node_token.node_name],
+                       ['cancel', 'BACK']]
+
         data_out = {'__array' : out}
         data_out ['__message'] = "moo table!"
-        data_out['__buttons'] = [['add %s' % self.table, '%s:_add:' % node_token.node_name],
-                                 ['delete %s' % self.table, '%s:_delete:' % node_token.node_name],
-                                 ['cancel', 'BACK']]
-
-        id = data_out.get('id')
+        data_out['__buttons'] = buttons
+        data_out['__join_data'] = join_data
 
         self.create_form_data(node_token, data_out, read_only)
 
@@ -491,7 +549,7 @@ class Form(object):
             session.delete(data)
             session.commit()
             # FIXME this needs to be handled more nicely and needs to be completely fixed
-            if self.form_params['form_type'] != 'grid' and self.table == table:
+            if self.form_type != 'grid' and self.table == table:
                 node_token.next_data = {'command': 'list', 'data' : self.extra_data}
                 node_token.next_node = self.name
             else:
@@ -609,7 +667,7 @@ class Form(object):
         current_page = offset/limit + 1
         total_pages = results.row_count/limit + 1
         title = 'listing page %s of %s' % (current_page, total_pages)
-        node_token.form(title = title)
+        node_token.form(title = title, clear_node_data = True)
 
 
     def create_form_data(self, node_token, data=None, read_only=False):
@@ -649,9 +707,7 @@ class Form(object):
                 form['params'] = self.params.copy()
             # FIXME read_only should really move into the data?
             if read_only:
-                if not form['params']:
-                    form['params'] = {}
-                form['params']['read_only'] = True
+                form['read_only'] = True
 
 
         output = {

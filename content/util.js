@@ -784,9 +784,18 @@ $(document).ready($.Util.Size.get);
 //trap keyboard events
 $(document).keydown($.Util.Event_Delegator_keydown);
 
-function console_log(obj){
+function console_log(obj, data){
+    /* Allow logging of data to the console if it exists.
+     * If data is supplied it will be converted to JSON
+     * and output appended to obj which should be a string.
+     */
     if (typeof console == "object"){
-       console.log(obj);
+        if (data === undefined){
+            console.log(obj);
+        } else {
+            data = $.toJSON(data)
+            console.log(obj + ' ' + data);
+        }
     }
 }
 

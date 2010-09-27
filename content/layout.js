@@ -39,7 +39,7 @@ $.Buttons.action_call = function (action_name){
 var REBASE = {};
 
 
-REBASE.layout_manager = function (){
+REBASE.LayoutManager = function (){
     var current_layout;
 
     var util_size = $.Util.Size;
@@ -144,7 +144,7 @@ REBASE.layout_manager = function (){
             html.push('</form>');
             $user_bar.append(html.join(''));
             // ajax info
-            $user_bar.append('<span id="ajax_info">Loading ...</span>');
+            $user_bar.append('<span id="ajax_info"><img src="busy.gif" /> Loading ...</span>');
             // login info
             $user_bar.append('<span id="user_login" style="float:right;">user login</span>');
             return $user_bar;
@@ -190,15 +190,15 @@ REBASE.layout_manager = function (){
         html.push('</div>');
     
     
-        html.push('<ul>');
-        html.push('<li><span onclick="$.Util.stress_test(\'n:table.Edit:list:t=9&l=100&o=\', 9900)">stress test</span></li>');
-        html.push('<li><span onclick="node_load(\'n:table.Table:new\')">new table</span></li>');
-        html.push('<li><span onclick="node_load(\'n:table.Table:list\')">table</span></li>');
-        html.push('<li><span onclick="node_load(\'n:test.Sponsorship:\')">sponsor</span></li>');
-        html.push('<li><span onclick="$JOB.add({}, {}, \'reload\', true)" ><b>reload</b></span></li>');
-        html.push('<li><span onclick="get_node(\'test.DataLoader\', \'load\', {file:\'data.csv\', table:\'people\'})" ><b>load people</b></span></li>');
-        html.push('<li><span onclick="node_call_from_string(\'/n:test.DataLoader:load:file=donkeys.csv&table=donkey\', true)" ><b>load donkeys</b></span></li>');
-        html.push('</ul>');
+//        html.push('<ul>');
+//        html.push('<li><span onclick="$.Util.stress_test(\'n:table.Edit:list:t=9&l=100&o=\', 9900)">stress test</span></li>');
+//        html.push('<li><span onclick="node_load(\'n:table.Table:new\')">new table</span></li>');
+//        html.push('<li><span onclick="node_load(\'n:table.Table:list\')">table</span></li>');
+//        html.push('<li><span onclick="node_load(\'n:test.Sponsorship:\')">sponsor</span></li>');
+//        html.push('<li><span onclick="$JOB.add({}, {}, \'reload\', true)" ><b>reload</b></span></li>');
+//        html.push('<li><span onclick="get_node(\'test.DataLoader\', \'load\', {file:\'data.csv\', table:\'people\'})" ><b>load people</b></span></li>');
+//        html.push('<li><span onclick="node_call_from_string(\'/n:test.DataLoader:load:file=donkeys.csv&table=donkey\', true)" ><b>load donkeys</b></span></li>');
+//        html.push('</ul>');
         html.push('<div id="bookmarks"></div>');
     
         $side.html(html.join(''));
@@ -261,7 +261,7 @@ REBASE.layout_manager = function (){
 
 
 
-REBASE.bookmark = function (){
+REBASE.Bookmark = function (){
 
     var bookmark_array = [];
     var BOOKMARKS_SHOW_MAX = 100;
@@ -280,7 +280,6 @@ REBASE.bookmark = function (){
         if (table_data){
             bookmark.bookmark = 'n:' + table_data.node + ':edit:id=' + bookmark.entity_id;
         } else {
-            console_log('missing bookmark data for type ' + bookmark.entity_table);
             bookmark.bookmark = 'n:test.Auto:edit:id=' + bookmark.entity_id + '&table=' + bookmark.entity_table;
         }
 
