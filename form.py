@@ -318,7 +318,7 @@ class Form(object):
         else:
             raise Exception('Unknown form_type `%s` form `%s`' % (self.form_type, self.name))
 
-    def view_single(self, node_token, read_only=True, where = None, is_main_form = True):
+    def view_single(self, node_token, read_only=True, where = None, is_main_form = False):
         # TD not reviewed
         node = node_token.node
         request_data = node_token[self.name]
