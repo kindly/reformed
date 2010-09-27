@@ -20,11 +20,11 @@ def initialise(application):
                Integer('field'),
                Integer('original_id'),
                Text('value', length = 1000),
+               Index('main_query', "_core_id, table, field, original_id"),
                modified_date = False,
                modified_by = False,
                version = False,
               )
-
 
     table('search_pending', database,
                Integer('_core_id'),
@@ -125,7 +125,7 @@ def initialise(application):
           Event('new change delete',
                 UpdateCommunicationInfo(['address_line_1', 'town', 'postcode'])),
           Event('new change delete',
-                UpdateSearch(['postcode'])),
+                UpdateSearch(['postcode'], "upper_no_space")),
           table_class = 'communication',
     )
 
