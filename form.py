@@ -324,14 +324,15 @@ class Form(object):
         request_data = node_token[self.name]
         form_title = None
         join_data = None
-        print 'VIEW', request_data
-        id = request_data.get('id')
+        print 'VIEW', request_data.data
+        get_data = request_data.get
+        id = get_data('id') or get_data('%s.id' % self.table) 
         if where:
             pass
         elif id:
             where = 'id=?'
         else:
-            id = request_data.get('__id')
+            id = get_data('__id')
             where = '_core_id=?'
         print where, id
         try:
