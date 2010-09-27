@@ -108,18 +108,9 @@ REBASE.FormControls = function(){
 
 
     function link(item, value){
-        var split = value.split("|");
-        var link_node = split.shift();
-        value = split.join('|');
-        var x = '';
-        if (link_node.substring(0,1) == 'n'){
-            x += '<a href="#' + link_node + '"' + set_class_list(item, 'link') + ' onclick="node_load(\'' + link_node + '\');return false;">' + (value ? value : 'untitled') + '</a>';
-        }
-        if (link_node.substring(0,1) == 'd'){
-            x += '<a href="#"' + set_class_list(item, 'link') + ' onclick ="link_process(this,\'' + link_node + '\');return false;">' + (value ? value : 'untitled') + '</a>';
-        }
-        return x;
+        return '<a href="#/' + item.node + '"' + set_class_list(item, 'link') + ' onclick="node_load(this, \'' + item.node + '\');return false">' + item.title + '</a>';
     }
+
 
     function result_link(item, value){
         var link_node = $.Util.build_node_link(local_row_data);
@@ -161,7 +152,7 @@ REBASE.FormControls = function(){
     }
 
     function button_link(item, value){
-        return '<a href="#/n:' + item.node + '"' + set_class_list(item, 'link') + ' onclick="node_button_input_form(this, \'' + item.node + '\');return false">' + item.title + '</a>';
+        return '<a href="#/' + item.node + '"' + set_class_list(item, 'link') + ' onclick="node_button_input_form(this, \'' + item.node + '\');return false">' + item.title + '</a>';
     }
 
     function button(item, value){
@@ -293,7 +284,7 @@ REBASE.FormControls = function(){
             class_list += ' ' + item.css;
         }
         if (item.reverse){
-            $control = $('<div class="CHECKBOX ' + class_list + '"><input type="button"/>&nbsp;</div>' + add_label(item, 'rf_'));
+            $control = $('<div class="CHECKBOX ' + class_list + '"><input type="button"/><img src="/tick.png" />&nbsp;</div>' + add_label(item, 'rf_'));
             $control.eq(0).filter('div').checkbox(item, value);
         } else {
             $control = $(add_label(item, 'rf_') + '<div class="CHECKBOX ' + class_list + '"><input type="button" /><img src="/tick.png" />&nbsp;</div>');
@@ -334,12 +325,14 @@ REBASE.FormControls = function(){
                 }
                 cbox.title = codes[i][1];
                 cbox.code = codes[i][0];
-                if (codes[i].length > 2){
-                    cbox.description = codes[i][2];
-                }
                 cbox.reverse = true;
                 $holder = $('<div class="f_codegroup_holder">');
+                if (codes[i].length > 2){
+                    cbox.description = codes[i][2];
+                    $holder.append(form_description(cbox))
+                }
                 $div.append($holder.append(checkbox(cbox, cbox_value)));
+                console_log('item',cbox)
             }
         }
         return $div;
