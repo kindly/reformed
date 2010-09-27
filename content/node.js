@@ -101,8 +101,8 @@ REBASE.Node = function (){
         // update the form data with any items in decode.url_data that
         // have not already been assigned
         for (var key in decode.url_data){
-            if (form_data[key] === undefined){
-                form_data[key] = decode.url_data[key];
+            if (form_data.data[key] === undefined){
+                form_data.data[key] = decode.url_data[key];
             }
         }
         // set the form data
