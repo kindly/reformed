@@ -22,6 +22,9 @@
 
 import formencode
 import custom_exceptions
+import sqlalchemy
+
+
 
 
 class SaveNew(object):
@@ -37,10 +40,12 @@ class SaveNew(object):
         self.table = table
         self.save_items = {}
         self.save_values = {}
-        self.paths = set()
+        self.paths = {}
         self.core_id = None
         self.core = None
         self.obj = None
+        self.parent_save_set = None
+        self.all_errors = {}
         self.rtable = database[self.table]
         self.path_to_defined_name = {}
         self.path_to_value = {}
@@ -67,12 +72,14 @@ class SaveNew(object):
 
 
         self.path_to_defined_name[(path, field_name)] = field
-        self.paths.add((path, table_name))
+        self.paths[path] = table_name
 
 
-    def process_values(self):
+    def process_values(self, accept_empty = False):
 
         for field, value in self.save_values.iteritems():
+            if not value and value is not False and not accept_empty:
+                continue
             self.process_value(field, value)
 
     def get_obj_from_field(self, value, field = "_core_id", table = None):
@@ -94,7 +101,7 @@ class SaveNew(object):
         if self.obj:
             return
 
-        if self.rtable.relation or self.rtable.entity or not self.obj:
+        if self.rtable.relation or self.rtable.entity:
             core_id_field = self.path_to_defined_name.get(((), "_core_id"))
             if core_id_field:
                 self.core_id = self.save_values[core_id_field]
@@ -121,18 +128,26 @@ class SaveNew(object):
 
     def update_core_id(self):
 
-        if self.rtable.relation or self.rtable.entity and not self.core_id:
+        if self.rtable.relation or self.rtable.entity:
+
+            self.core_id = self.obj._core_id
+            if self.core:
+                self.core_id = self.core.id
+
             if not self.core_id:
                 self.session.session.flush()
-            self.core_id = self.core.id
-            self.obj._core_id = self.core_id
+
+            if self.core:
+                self.core_id = self.core.id
+                self.obj._rel__core = self.core
+                self.obj._core_id = self.core_id
 
 
     def create_save_items(self):
 
         self.update_core_id()
 
-        for path, table_name in self.paths:
+        for path, table_name in self.paths.iteritems():
             if path == ():
                 continue
 
@@ -155,9 +170,11 @@ class SaveNew(object):
         for (path, field_name), value in self.path_to_value.iteritems():
             self.save_items[path].set_value(field_name, value)
 
-    def prepare(self, obj = None):
+    def prepare(self, parent_save_set = None):
 
-        self.obj = obj
+        if parent_save_set:
+            self.obj = parent_save_set.obj
+            self.parent_save_set = parent_save_set
 
         self.process_values()
         self.set_main_obj()
@@ -170,11 +187,22 @@ class SaveNew(object):
         self.create_save_items()
         self.populate_save_items()
 
+        if self.parent_save_set and self.parent_save_set.all_errors:
+            self.all_errors = {"__error": "original row failed validation"}
+            return self.all_errors
+
         all_errors = {}
         for path, save_item in self.save_items.iteritems():
             errors = save_item.save(False)
             for key, value in errors.items():
-                field = self.path_to_defined_name[(path, key)]
+                try:
+                    field = self.path_to_defined_name[(path, key)]
+                except KeyError:
+                    for def_path, def_key in self.path_to_defined_name:
+                        if def_path == path:
+                            field = self.path_to_defined_name[path, def_key]
+                            field = ".".join(field.split(".")[:-1]) + "." + key
+
                 all_errors[field] = value
 
         if finish:
@@ -182,8 +210,30 @@ class SaveNew(object):
                 self.session.rollback()
             else:
                 self.session.commit()
+        elif all_errors:
+            for save_item in self.save_items.itervalues():
+                save_item.expunge()
+            if self.core:
+                self.session.session.delete(self.core)
+            self.all_errors = all_errors
 
         return all_errors
+
+class SaveError(object):
+
+    def __init__(self, error):
+        self.all_errors = error
+        self.obj = None
+
+    def set_value(self):
+        pass
+
+    def save(self, finish = False):
+        return self.all_errors
+
+    def prepare(self, last_save_set = None):
+        pass
+
             
 
 class SaveItem(object):
@@ -194,6 +244,12 @@ class SaveItem(object):
 
     def set_value(self, field, value):
         setattr(self.obj, field, value)
+
+    def expunge(self):
+        try:
+            self.session.session.expunge(self.obj)
+        except sqlalchemy.exc.InvalidRequestError:
+            pass
 
     def save(self, finish = True):
         errors = {}
