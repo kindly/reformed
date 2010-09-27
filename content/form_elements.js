@@ -679,7 +679,7 @@ REBASE.Layout = function(){
                 $forms[form_name].append(make_form(form_name));
             } else {
                 var form_type = forms[form_name].form.form_type;
-                REBASE.Dialog.dialog('test', forms[form_name].form);
+                REBASE.Dialog.dialog('test', forms[form_name]);
                 console_log('TRIED TO USE UNINITIALISED FORM ' + form_name);
             }
         }
@@ -849,7 +849,9 @@ REBASE.Dialog = function (){
             $dialog_box.html(process_html(data));
         } else {
             // assuming it is form_data
-            $dialog_box.input_form(data);
+            var form = data.form
+            var form_data = data.data
+            $dialog_box.input_form(form, form_data);
         }
         $dialog_box.dialog("option", "title", title)
         $dialog_box.dialog("option", "modal", true)
