@@ -57,8 +57,12 @@ $JOB = function(){
         if (outstanding_requests == 0){
             loading_hide();
         }
-        for (var i =0, n = return_data.length; i < n; i++){
-            process_node(return_data[i], sent_data);
+        if (return_data !== null){
+            for (var i =0, n = return_data.length; i < n; i++){
+                process_node(return_data[i], sent_data);
+            }
+        } else {
+            REBASE.Dialog.dialog('Application Error', 'No data was returned.\n\nThe application may not be running.');
         }
     }
 
