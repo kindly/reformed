@@ -1,5 +1,6 @@
 from custom_exceptions import DependencyError
 from sqlalchemy.orm import attributes
+from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 import sqlalchemy as sa
 from sqlalchemy.sql import func, select, and_, cast
 from operator import add
@@ -424,13 +425,16 @@ class UpdateCommunicationInfo(Action):
                 stored_info_obj.name == self.name):
                 return
 
+        query = {
+            "communication._core_id": core_id,
+            "communication.defaulted_date": 'not null',
+            "communication.active": 'true'
+        }
 
         result = database.search(
             table.name,
-            "communication._core_id = ? and communication.defaulted_date is ?"
-            " and communication.active = ?",
+            query,
             session = session,
-            values = [core_id, 'not null', 'true'],
             order_by = 'communication.defaulted_date desc',
             first = True
         )
@@ -438,11 +442,15 @@ class UpdateCommunicationInfo(Action):
         default_obj = result.results[0]
 
         try:
+            query = {
+                "_core_id": core_id,
+                "table_name": table.name,
+                "name": self.name
+            }
             result = database.search_single(
                 "summary_info",
-                "_core_id = ? and table_name = ? and name = ?",
+                query,
                 session = session,
-                values = [core_id, table.name, self.name]
             )
             info_obj = result.results[0]
         except custom_exceptions.SingleResultError:
@@ -540,14 +548,15 @@ class UpdateSearch(Action):
         self.set_names(table)
 
         try:
-            result = database.search_single(
-                "search_info",
-                "_core_id = ? and table = ? and field = ?"
-                " and original_id = ?",
-                session = session,
-                values = [object._core_id, table.table_id, self.event_id, object.id]
-            )
-            search_obj = result.results[0]
+            query = dict(
+                _core_id = object._core_id,
+                table = table.table_id,
+                field = self.event_id,
+                original_id = object.id)
+            result = database.search_single("search_info",
+                                            query,
+                                            session = session
+                                           )
         except custom_exceptions.SingleResultError:
             search_obj = None
 
