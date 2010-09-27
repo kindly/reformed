@@ -119,6 +119,7 @@ class DataGenerator(object):
             sex = self.get_sex,
             phone = self.make_phone,
             core = self.make_core,
+            prev = self.make_prev,
             lookup = self.make_lookup,
         )
 
@@ -226,6 +227,10 @@ class DataGenerator(object):
             towns = self.postcodes.get(base[:1])
         return random.choice(towns)
 
+    def make_prev(self):
+        if random.randint(0,99) < 9:
+            return ""
+        return "prev"
 
     def make_postcode(self):
         part1 = '%s%s' % (random.choice(self.postcodes.keys()), self.make_int(1,32))
