@@ -161,7 +161,11 @@ class Form(object):
         """display a 'blank' form on the front end"""
 
         data_out = {}
-        data_out['__buttons'] = [['add %s' % self.table, '%s:_save:' % node_token.node_name],
+
+        if self.form_buttons:
+            data_out['__buttons'] = self.form_buttons
+        else:
+            data_out['__buttons'] = [['add %s' % self.table, '%s:_save:' % node_token.node_name],
                                  ['cancel', 'BACK']]
         data_out['__message'] = "Hello, add new %s" % self.table
 
