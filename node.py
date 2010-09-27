@@ -260,7 +260,6 @@ class TableNode(Node):
 
         form_type = "results",
         params = {"form_type": "results"},
-        volatile = True,
     )
 
 
@@ -330,7 +329,7 @@ class JobNode(Node):
         commands = {}
         commands['load'] = dict(command = 'load')
         commands['refresh'] = dict(command = 'refresh')
-        commands['status'] = dict(command = 'status')
+        commands['_status'] = dict(command = 'status')
         self.__class__.commands = commands
 
     def load(self, node_token, form_name = None):
@@ -357,7 +356,6 @@ class JobNode(Node):
         jobId = node_data.get('id')
         node_token.status(dict(data = self.get_status(jobId), form = True))
         node_token.set_node_data(dict(id = jobId))
-        print 'status'
 
     def status(self, node_token):
         # report the status of the job
