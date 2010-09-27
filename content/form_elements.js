@@ -851,6 +851,10 @@ REBASE.Dialog = function (){
             // assuming it is form_data
             var form = data.form
             var form_data = data.data
+            if (form_data && form_data.__message){
+                title = form_data.__message;
+                form_data.__message = null;
+            }
             $dialog_box.input_form(form, form_data);
         }
         $dialog_box.dialog("option", "title", title)
