@@ -296,7 +296,7 @@ class UserGroup(TableNode):
         layout("spacer"),
 
         table = "user_group",
-        params =  {"form_type": "action"},
+        form_type = "input",
         title_field = 'name'
     )
 
@@ -321,7 +321,7 @@ class UserAdmin(TableNode):
 ##        button_link('bug.Permission:list', label = 'list permissions'),
 ##        layout('spacer'),
 
-        params =  {"form_type": "action"},
+        form_type = "action",
     )
 
     def call(self, node_token):
