@@ -298,19 +298,24 @@ class NodeToken(object):
         """ Helper function send error to front end. """
         self._set_action('general_error', data = error)
 
-    def _set_action(self, action, link = None, data = None, node_data = None, title = None, clear_node_data = False):
+    def _set_action(self, action, **kw):
         """ Set the action for the node token. """
         if self._action and not(action == self._action and action == 'form'):
             raise Exception('Action has already been set for this NodeToken')
         self._action = action
+        link = kw.get('link')
         if link:
             self._link = link
+        title = kw.get('title')
         if title:
             self._title = title
+        data = kw.get('data')
         if data:
             self._out = data
+        clear_node_data = kw.get('clear_node_data')
         if clear_node_data:
             self._clear_node_data = True
+        node_data = kw.get('node_data')
         if node_data:
             self.set_node_data(node_data)
 
