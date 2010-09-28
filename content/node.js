@@ -153,7 +153,7 @@ REBASE.Node = function (){
         var decode = {};
         var split = node_string.split(':');
         // check enough info
-        if (split.length < 2){
+        if (split.length < 3){
             error_msg = 'Invalid node data.\n\nNot enough arguments.';
             REBASE.Dialog.dialog('Application Error', error_msg);
             return false;
