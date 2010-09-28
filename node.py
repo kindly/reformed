@@ -264,7 +264,7 @@ class TableNode(Node):
 
 
     form_layout = None
-    layout_main_form = None
+    layout_main_form = 'main'
 
     def setup_commands(self):
         commands = {}
@@ -287,12 +287,7 @@ class TableNode(Node):
     def edit(self, node_token):
         # process each of the forms
         for form_name in self.get_form_name_list_from_layout():
-            print form_name
-            if (form_name == self.layout_main_form):
-                is_main_form = True
-            else:
-                is_main_form = False
-            self[form_name].view(node_token, read_only = False, is_main_form = is_main_form)
+            self[form_name].view(node_token, read_only = False)
         # add the layout information
         if  self.form_layout:
             node_token.set_layout(self.layout_type, self.form_layout)

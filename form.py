@@ -322,9 +322,12 @@ class Form(object):
         else:
             raise Exception('Unknown form_type `%s` form `%s`' % (self.form_type, self.name))
 
-    def view_single(self, node_token, read_only=True, where = None, is_main_form = False):
+    def view_single(self, node_token, read_only=True, where = None):
+
         # TD not reviewed
         node = node_token.node
+        is_main_form = (node.layout_main_form == self.name)
+
         request_data = node_token[self.name]
         form_title = None
         join_data = None
