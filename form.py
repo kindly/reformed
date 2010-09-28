@@ -333,6 +333,7 @@ class Form(object):
 
         request_data = node_token[self.name]
         form_title = None
+        layout_title = None
         join_data = None
         print 'VIEW', request_data.data
         get_data = request_data.get
@@ -381,8 +382,13 @@ class Form(object):
             if is_main_form:
                 if self.title_field and data_out.has_key(self.title_field):
                     form_title = data_out.get(self.title_field)
+                    if not form_title:
+                        form_title = 'untitled (%s)' % id
                 else:
                     form_title = '%s: %s' % (self.table, id)
+                # TODO currently the layout title just defaults to the page title
+                # but can be extended as needed.
+                layout_title = form_title
 
             if self.title_field:
                 title = result.get(self.title_field)
@@ -433,7 +439,8 @@ class Form(object):
         else:
             node_data = None
 
-        node_token.form(title = form_title, node_data = node_data)
+
+        node_token.form(title = form_title, layout_title = layout_title, node_data = node_data)
 
         # hack to stop null bookmarks
         if is_main_form and id:
