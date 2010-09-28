@@ -134,6 +134,7 @@ class NodeToken(object):
 
         # title sets the title of the page
         self._title = None
+        self._layout_title = None
         self._link = None
 
         self._action = None
@@ -252,6 +253,7 @@ class NodeToken(object):
         # build layout
         layout = dict(layout_type = self._layout_type,
                       form_layout = self._form_layout,
+                      layout_title = self._layout_title,
                       layout_forms = self._layout_forms)
         return layout
 
@@ -309,6 +311,9 @@ class NodeToken(object):
         title = kw.get('title')
         if title:
             self._title = title
+        layout_title = kw.get('layout_title')
+        if layout_title:
+            self._layout_title = layout_title
         data = kw.get('data')
         if data:
             self._out = data
