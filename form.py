@@ -307,7 +307,10 @@ class Form(object):
             #node_token.next_data = dict(data = node_token.data,
             #                      command = self.save_next_command or 'new')
 
-        node_token.redirect_back()
+    # FIXME We do not want to do the auto back stuff now due to layouts
+    # but we will want it for some forms etc so leave it here for now
+    # even if it is disabled.
+    #    node_token.redirect_back()
 
     def view(self, node_token, **kw):
         """Calls the appropriate view function for the form"""
