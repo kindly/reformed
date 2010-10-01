@@ -304,7 +304,7 @@ class Application(object):
         self.create_logger("authentication")
         self.create_logger("node")
         self.create_logger("web")
-        self.create_logger("actions", handler_level = 'ERROR')
+        self.create_logger("actions", logger_level = 'ERROR')
         self.create_logger("rebase", "rebase", log_name = True)
         self.create_logger("rebase", "rebase", log_name = True, handler_level = 'ERROR')
 
