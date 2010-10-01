@@ -35,9 +35,8 @@ class Action(PersistBaseClass):
 
     def __call__(self, action_state):
         
-
         logger.info(self.__class__.__name__)
-        logger.info(action_state.__dict__)
+        logger.info(action_state)
         self.run(action_state)
             
 class AddRow(Action):
@@ -213,9 +212,12 @@ class AddCommunication(Action):
         communication = object._rel_communication
 
         if not communication:
+            core = None
             communication = database.get_instance("communication")
             communication.communication_type = table.name
             object._rel_communication = communication
+            core_store = session.object_store.get("core")
+            ## optimisation maybe slower for large amounts of core objects
             core = session.query(database["_core"]).get(object._core_id)
             communication._rel__core = core
         elif event_type == 'delete':
@@ -412,6 +414,11 @@ class UpdateCommunicationInfo(Action):
         session = action_state.session
         event_type = action_state.event_type
 
+        ## optimisation
+        defaulted = object.__dict__.get("defaulted")
+        if not defaulted and event_type == "new":
+            return
+
         self.set_names(table)
 
         communication = object._rel_communication
@@ -427,9 +434,10 @@ class UpdateCommunicationInfo(Action):
 
         query = {
             "communication._core_id": core_id,
-            "communication.defaulted_date": 'not null',
-            "communication.active": 'true'
+            "communication.defaulted_date": ("<>", None),
+            "communication.active": 1,
         }
+
 
         result = database.search(
             table.name,
@@ -500,7 +508,7 @@ class UpdateSearch(Action):
         self.stem = kw.get("stem", False)
 
     def text(self, txt):
-        return unicode(txt)
+        return unicode(txt.lower())
 
     def datetime(self, date):
         return date.date().isoformat()
@@ -547,18 +555,21 @@ class UpdateSearch(Action):
 
         self.set_names(table)
 
-        try:
-            query = dict(
-                _core_id = object._core_id,
-                table = table.table_id,
-                field = self.event_id,
-                original_id = object.id)
-            result = database.search_single("search_info",
-                                            query,
-                                            session = session
-                                           )
-        except custom_exceptions.SingleResultError:
-            search_obj = None
+        search_obj = None
+        if event_type <> "new": 
+            try:
+                query = dict(
+                    _core_id = object._core_id,
+                    table = table.table_id,
+                    field = self.event_id,
+                    original_id = object.id)
+                result = database.search_single("search_info",
+                                                query,
+                                                session = session
+                                               )
+                search_obj = result.results[0]
+            except custom_exceptions.SingleResultError:
+                pass
 
         if not search_obj:
             search_obj = database.get_instance("search_info")
