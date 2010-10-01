@@ -30,5 +30,8 @@ class EventState(object):
         self.session = session
         self.event_type = event_type
 
+    def __repr__(self):
+        return "event type: %s, object: %s" % (self.event_type, self.object)
+
 
 

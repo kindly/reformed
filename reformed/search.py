@@ -181,7 +181,7 @@ class Search(object):
 
     def recurse_join_tree(self, current_node):
 
-        for node in current_node["tree"].values():
+        for node in current_node["tree"].itervalues():
             old_table = self.aliases[node["old_path"]]
             table = self.aliases[node["path"]]
             relation = node["join"]
@@ -388,7 +388,7 @@ class QueryBase(object):
     
     def recurse_join_tree(self, current_node):
 
-        for node in current_node["tree"].values():
+        for node in current_node["tree"].itervalues():
             old_table = self.aliases[node["old_path"]]
             table = self.aliases[node["path"]]
             relation = node["join"]
@@ -442,7 +442,22 @@ class QueryFromDict(QueryBase):
             else:
                 table_class = self.search.rtable.sa_class
             item = getattr(table_class, field.split(".")[-1])
-            conditions.append(item == value)
+
+            if isinstance(value, tuple):
+                operator, value = value
+                if operator == "=":
+                    condition = (item == value)
+                if operator in ("!=", "<>"):
+                    condition = (item != value)
+                if operator == "<":
+                    condition = (item < value)
+                if operator == ">":
+                    condition = (item > value)
+                if operator == "bewteen":
+                    condition = (item.between(value[0], value[1]))
+            else:
+                condition = (item == value)
+            conditions.append(condition)
 
         where = and_(*conditions)
         self.sa_query = self.sa_query.filter(where)
