@@ -81,6 +81,7 @@ def initialise(application):
                DateTime('defaulted_date'),
                Boolean('active', default = True),
                Text('description', length = 1000),
+               Index('latest_com', "_core_id, defaulted_date, active"),
                Created('created'),
                CreatedBy('created_by'),
     )
@@ -125,7 +126,7 @@ def initialise(application):
           Event('new change delete',
                 UpdateCommunicationInfo(['address_line_1', 'town', 'postcode'])),
           Event('new change delete',
-                UpdateSearch(['postcode'], "upper_no_space")),
+                UpdateSearch(['postcode'], type = "upper_no_space")),
           table_class = 'communication',
     )
 
