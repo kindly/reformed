@@ -219,12 +219,12 @@ class NodeToken(object):
         self._output_node_data = node_data
 
 
-    def output_form_data(self, form_name, is_dialog, output):
+    def output_form_data(self, form_name, output):
         """Helper function to add form data to the node token for a form"""
         # paranoia check TODO should this be an assertion?
         if form_name in self._out:
             raise Exception("Attempt to overwrite form data in node token")
-        if not is_dialog:
+        if not 'dialog' in self._flags:
             self._layout_forms.append(form_name)
         self._out[form_name] = output
 
