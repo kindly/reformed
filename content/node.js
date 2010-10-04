@@ -34,7 +34,7 @@ function init(){
     // also if you are auto logged in etc
     var url = $.address.value();
     if (url == '/'){
-        node_load('n:user.User:login:');
+        node_load(':user.User:login:');
     }
 }
 
@@ -331,7 +331,7 @@ function _wrap(arg, tag, my_class){
 
 
 function search_box(){
-    var node = 'n:test.Search::q=' + $('#search').val();
+    var node = ':test.Search::q=' + $('#search').val();
     node_load(node);
     return false;
 }
@@ -389,7 +389,7 @@ function job_processor_status(data, node, root){
     }
     // set data refresh if job not finished
     if (!data.data || !data.data.end){
-        var node_string = "/n:" + node + ":_status:id=" + data.data.id;
+        var node_string = "/:" + node + ":_status:id=" + data.data.id;
         status_timer = setTimeout(function (){
                                       get_status(node_string);
                                   }, 1000);
@@ -446,9 +446,9 @@ function change_user(user){
 function change_user_bar(){
 
     if (REBASE.application_data.__user_id === 0){
-        $('#user_login').html('<a href="#" onclick="node_button_input_form(this, \'n:user.User:login\');return false">Login</a>');
+        $('#user_login').html('<a href="#" onclick="node_load(\':user.User:login\',this);return false">Login</a>');
     } else {
-        $('#user_login').html(REBASE.application_data.__username + ' <a href="#" onclick="node_button_input_form(this, \'n:user.User:logout\');return false">Log out</a>');
+        $('#user_login').html(REBASE.application_data.__username + ' <a href="#" onclick="node_load(\':user.User:logout\',this);return false">Log out</a>');
     }
 }
 
@@ -461,7 +461,7 @@ function change_layout(){
     change_user_bar();
 }
 
-var global_node_data;
+var global_node_data = {};
 var global_current_node;
 
 function process_node(packet, job){
@@ -510,7 +510,7 @@ function process_node(packet, job){
                  if (link == 'BACK'){
                     window.history.back();
                  } else {
-                    node_load('n:' + link);
+                    node_load('u:' + link);
                  }
              }
              break;
@@ -522,6 +522,7 @@ function process_node(packet, job){
             $('#' + root).html(page_build(packet.data.data));
             break;
          case 'form':
+         case 'dialog':
              REBASE.Layout.update_layout(packet.data);
              break;
          case 'function':
