@@ -219,9 +219,9 @@ $.Util.build_node_link_href = function (data){
     var node = REBASE.application_data.bookmarks[data.entity];
     if (node !== undefined){
         node = node.node;
-        link_node = "#n:" + node + ":edit:__id=" + data.__id;
+        link_node = "#u:" + node + ":edit:__id=" + data.__id;
     } else {
-        link_node = "#n:test.Auto:edit:__id=" + data.__id + "&table=" + data.entity;
+        link_node = "#u:test.Auto:edit:__id=" + data.__id + "&table=" + data.entity;
     }
     return link_node;
 };
@@ -241,9 +241,9 @@ $.Util.build_node_link = function (data){
     var node = REBASE.application_data.bookmarks[data.entity];
     if (node !== undefined){
         node = node.node;
-        link_node = "node_load('n:" + node + ":edit:__id=" + data.__id + "');";
+        link_node = "node_load('u:" + node + ":edit:__id=" + data.__id + "');";
     } else {
-        link_node = "node_load('n:test.Auto:edit:__id=" + data.__id + "&table=" + data.entity + "');";
+        link_node = "node_load('u:test.Auto:edit:__id=" + data.__id + "&table=" + data.entity + "');";
     }
     return link_node;
 };

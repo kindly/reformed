@@ -108,7 +108,7 @@ REBASE.FormControls = function(){
 
 
     function link(item, value){
-        return '<a href="#/' + item.node + '"' + set_class_list(item, 'link') + ' onclick="node_load(this, \'' + item.node + '\');return false">' + item.title + '</a>';
+        return '<a href="#/' + item.node + '"' + set_class_list(item, 'link') + ' onclick="node_load(\'' + item.node + '\',this);return false">' + item.title + '</a>';
     }
 
 
@@ -120,14 +120,14 @@ REBASE.FormControls = function(){
     }
 
     function result_image(item, value){
-        var link_node = "n:" + REBASE.application_data.bookmarks[local_row_data.entity].node;
+        var link_node = "u:" + REBASE.application_data.bookmarks[local_row_data.entity].node;
         link_node += ":edit:__id=" + local_row_data.__id
         if (item.size){
             size = '.' + item.size;
         } else {
             size = '.m';
         }
-        var $control = '<div' + set_class_list(item, 'HOLDER') + ' onclick="node_load(\'' + link_node + '\');" ><img src="/attach?' + value + size + '" /></div>';
+        var $control = '<div' + set_class_list(item, 'HOLDER') + ' onclick="node_load(\'' + link_node + '\',this);" ><img src="/attach?' + value + size + '" /></div>';
         return $control
     }
 
@@ -152,12 +152,12 @@ REBASE.FormControls = function(){
     }
 
     function button_link(item, value){
-        return '<a href="#/' + item.node + '"' + set_class_list(item, 'link') + ' onclick="node_button_input_form(this, \'' + item.node + '\');return false">' + item.title + '</a>';
+        return '<a href="#/' + item.node + '"' + set_class_list(item, 'link') + ' onclick="node_load(\'' + item.node + '\',this);return false">' + item.title + '</a>';
     }
 
     function button(item, value){
         var target_form = item.target_form || '';
-        return '<button' + set_class_list(item, 'button') + ' onclick="node_button_input_form(this, \'' + item.node + '\',\'' + target_form + '\');return false">' + item.title + '</button>';
+        return '<button' + set_class_list(item, 'button') + ' onclick="node_load(\'' + item.node + '\',this,\'' + target_form + '\');return false">' + item.title + '</button>';
     }
 
     function dropdown_code(item, value){
@@ -357,12 +357,13 @@ REBASE.FormControls = function(){
         var link_node = value[1];
         value = value[0];
         var x = '';
-        if (link_node.substring(0,1) == 'n'){
-            x += '<a href="#/' + link_node + '"' + set_class_list(item, 'link') + ' onclick="node_load(\'' + link_node + '\');return false">' + (value ? value : '&nbsp;') + '</a>';
-        }
-        if (link_node.substring(0,1) == 'd'){
+        // FIXME need to know if this is updatable node for proper href
+    //    if (link_node.substring(0,1) == 'n'){
+            x += '<a href="#/' + link_node + '"' + set_class_list(item, 'link') + ' onclick="node_load(\'' + link_node + '\',this);return false">' + (value ? value : '&nbsp;') + '</a>';
+  //      }
+  /*      if (link_node.substring(0,1) == 'd'){
             x += '<a href="#"' + set_class_list(item, 'link') + ' onclick ="link_process(this,\'' + link_node + '\');return false;">' + (value ? value : '&nbsp;') + '</a>';
-        }
+        } */
         return x;
     }
 
