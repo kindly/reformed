@@ -207,6 +207,13 @@ REBASE.Node = function (){
                     return false;
             }
         }
+        // if we are doing an update we cannot pass form data
+        // as we loose the refering item.  Throw an error
+        if (flags.update && flags.form_data){
+            error_msg = 'Trying to update a form data node, which is not allowed.';
+            REBASE.Dialog.dialog('Application Error', error_msg);
+            return false;
+        }
         decode.flags = flags;
         return decode;
     }
