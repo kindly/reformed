@@ -492,7 +492,6 @@ class CodeGroup(FormControl):
     def custom_control_save(self, node_token, save_set, data, session):
         print "here"
         save_set.prepare()
-        session.session.flush()
         code_groups = getattr(save_set.obj, self.relation_attr)
 
         code_group_data = data.get(self.name, [])
