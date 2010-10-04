@@ -99,7 +99,7 @@ class User(TableNode):
         input('login_name', label = 'username:'),
         password('password'),
         checkbox('remember_me', label = 'remember me'),
-        button('n:user.User:login:', label = 'Log in'),
+        button('f:user.User:login:', label = 'Log in'),
         layout('box_end'),
 
         form_type = "action",
@@ -284,6 +284,7 @@ class UserGroup(TableNode):
     main = form(
         layout("box_start"),
         info('groupname'),
+        input('groupname', description = 'The name of the user group'),
         input('name', description = 'The name of the user group'),
         checkbox('active', description = 'Only active user groups give members permissions'),
         input('description', description = 'A brief description of the user group', css = 'large'),
@@ -291,7 +292,7 @@ class UserGroup(TableNode):
         layout("spacer"),
         layout("box_start"),
         codegroup("p1", code_table = 'permission', code_desc_field = 'description', label = 'General Permissions', filter = 'access_level = 0'),
-        codegroup("p2", code_table = 'permission', code_desc_field = 'description', label = 'Admin Permissions', filter = 'access_level > 0', permissions = ['SysAdmin']),
+        #codegroup("p2", code_table = 'permission', code_desc_field = 'description', label = 'Admin Permissions', filter = 'access_level > 0', permissions = ['SysAdmin']),
         layout("box_end"),
         layout("spacer"),
 
@@ -309,12 +310,12 @@ class UserAdmin(TableNode):
     form_params =  {"form_type": "action"}
     main = form(
         layout('text', text = 'Users {users}'),
-        link('n:user.User:new', label = 'add user'),
-        link('n:user.User:list', label = 'list users'),
+        link('d:user.User:new', label = 'add user'),
+        link('u:user.User:list', label = 'list users'),
         layout('spacer'),
         layout('text', text = 'User Groups {user_groups}'),
-        link('n:user.UserGroup:new', label = 'add user group'),
-        link('n:user.UserGroup:list', label = 'list user groups'),
+        link('d:user.UserGroup:new', label = 'add user group'),
+        link('u:user.UserGroup:list', label = 'list user groups'),
         layout('spacer'),
 ##        layout('text', text = 'Permissions {permissions}'),
 ##        button_link('bug.Permission:new', label = 'add permission'),
@@ -333,7 +334,7 @@ class UserAdmin(TableNode):
         data['__message'] = "User Admin"
         data['__buttons'] = [['cancel', 'BACK']]
         self["main"].create_form_data(node_token, data)
-        node_token.form(title = "main")
+        node_token.form(self.name, title = "main")
 #        r.set_option('user_group', 'default_node', 'user.UserGroup')
 #        r.set_option('user', 'default_node', 'user.User')
 

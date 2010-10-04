@@ -490,9 +490,11 @@ class CodeGroup(FormControl):
         self.join_key = self.relation.join_keys_from_table(self.flag_table)[0][0]
 
     def custom_control_save(self, node_token, save_set, data, session):
-        # FIXME this is broken
+        print "here"
+        save_set.prepare()
+        session.session.flush()
+        code_groups = getattr(save_set.obj, self.relation_attr)
 
-        code_groups = getattr(save_set.object, self.relation_attr)
         code_group_data = data.get(self.name, [])
         yes_codes = set()
         no_codes = set()

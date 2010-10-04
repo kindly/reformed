@@ -49,6 +49,7 @@ class Form(object):
         # general
         self.params = kw.get("params")
         self.title_field = kw.get("title_field")
+        self.layout_title = kw.get("layout_title")
         self.read_only = kw.get("read_only", False)
         self.form_type = kw.get("form_type", 'input') # TODO do we want this to default?
         self.form_buttons = kw.get("form_buttons")
@@ -154,7 +155,7 @@ class Form(object):
             data = {}
         # update the node that the form is associated with
         self.create_form_data(node_token, data)
-        node_token.form()
+        node_token.form(self.name)
 
 
     def new(self, node_token):
@@ -165,13 +166,14 @@ class Form(object):
         if self.form_buttons:
             data_out['__buttons'] = self.form_buttons
         else:
-            data_out['__buttons'] = [['add %s' % self.table, '%s:_save:' % node_token.node_name],
-                                 ['cancel', 'BACK']]
+            data_out['__buttons'] = [['add %s' % self.table, 'f:%s:_save:' % node_token.node_name],
+                                 ['cancel', 'CLOSE']]
         data_out['__message'] = "Hello, add new %s" % self.table
 
         # update the node that the form is associated with
         self.create_form_data(node_token, data_out)
-        node_token.form()
+
+        node_token.form(self.name)
 
 
 
@@ -241,9 +243,9 @@ class Form(object):
         # TD not reviewed
 
         ## set up data to be stored
-        node_token.saved = []
-        node_token.errors = {}
-        node_token.out = {}
+    #    node_token.saved = []
+    #    node_token.errors = {}
+    #    node_token.out = {}
         #node_token.action = 'save'
 
         session = r.Session()
@@ -257,13 +259,13 @@ class Form(object):
             session.close()
             raise
 
-        if node_token.errors:
-            node_token.out['errors'] = node_token.errors
+    #    if node_token.errors:
+    #        node_token.out['errors'] = node_token.errors
             # If there are errors during the save we want to show them at the front end
             # FIXME is this the best way to do this?
-            return
-        if node_token.saved:
-            node_token.out['saved'] = node_token.saved
+     #       return
+     #   if node_token.saved:
+     #       node_token.out['saved'] = node_token.saved
 
 
         if save_set.new:
@@ -294,11 +296,11 @@ class Form(object):
             node_token.redirect(link)
             return
 
-        if self.save_next_node:
+        elif self.save_next_node:
             node_token.next_node = self.save_next_node
             return
 
-        if self.save_update:
+        elif self.save_update:
             node = node_token.node
             for form in self.save_update.split():
                 node[form].view(node_token, read_only = False)
@@ -306,7 +308,8 @@ class Form(object):
             # FIXME as above node data forwarding
             #node_token.next_data = dict(data = node_token.data,
             #                      command = self.save_next_command or 'new')
-
+        else:
+            node_token.redirect_back()
     # FIXME We do not want to do the auto back stuff now due to layouts
     # but we will want it for some forms etc so leave it here for now
     # even if it is disabled.
@@ -419,8 +422,8 @@ class Form(object):
         if self.form_buttons:
             data_out['__buttons'] = self.form_buttons
         elif '__buttons' not in data_out:
-            data_out['__buttons'] = [['save %s' % self.table, 'n:%s:_save:' % node_token.node_name],
-                                     ['delete %s' % self.table, 'n:%s:_delete:' % node_token.node_name],
+            data_out['__buttons'] = [['save %s' % self.table, 'f:%s:_save:' % node_token.node_name],
+                                     ['delete %s' % self.table, ':%s:_delete:' % node_token.node_name],
                                      ['cancel', 'BACK']]
 
 
@@ -440,7 +443,7 @@ class Form(object):
             node_data = None
 
 
-        node_token.form(title = form_title, layout_title = layout_title, node_data = node_data)
+        node_token.form(self.name, title = form_title, layout_title = layout_title, node_data = node_data)
 
         # hack to stop null bookmarks
         if is_main_form and id:
@@ -526,14 +529,14 @@ class Form(object):
         self.create_form_data(node_token, data_out, read_only)
 
         # add the paging info
-        base_link = 'l:%s:_update:form=%s&q=%s%s' % (node_token.node_name, self.name, query, link_id)
+        base_link = ':%s:_update:form=%s&q=%s%s' % (node_token.node_name, self.name, query, link_id)
         node_token.add_paging(self.name,
                               count = results.row_count,
                               limit = limit,
                               offset = offset,
                               base_link = base_link)
 
-        node_token.form()
+        node_token.form(self.name)
 
 ##        node_token.bookmark = dict(
 ##            table_name = table,
@@ -661,14 +664,14 @@ class Form(object):
                     row['title'] = '%s: %s' % (table, result.get('id'))
                 row['id'] = result.get('id')
                 row['entity'] = None
-                row['result_url'] = 'n:%s:edit:id=%s' % (node.name, result.get('id'))
+                row['result_url'] = 'u:%s:edit:id=%s' % (node.name, result.get('id'))
                 out.append(row)
 
         data = {'__array' : out}
 
         encoded_data = urllib.urlencode(node.extra_data)
 
-        data['__buttons'] = [['add new %s' % table, '%s:new:%s:' % (node_token.node_name, encoded_data)],
+        data['__buttons'] = [['add new %s' % table, 'd:%s:new:%s:' % (node_token.node_name, encoded_data)],
                              ['cancel', 'BACK']]
 
         data['__message'] = "These are the current %s(s)." % table
@@ -680,12 +683,13 @@ class Form(object):
                               count = results.row_count,
                               limit = limit,
                               offset = offset,
-                              base_link = 'n:%s:list:q=%s' % (node.name, query))
+                              base_link = 'u:%s:list:q=%s' % (node.name, query))
 
         current_page = offset/limit + 1
         total_pages = results.row_count/limit + 1
         title = 'listing page %s of %s' % (current_page, total_pages)
-        node_token.form(title = title, clear_node_data = True)
+
+        node_token.form(self.name, title = title, layout_title = self.layout_title, clear_node_data = True)
 
 
     def create_form_data(self, node_token, data=None, read_only=False):

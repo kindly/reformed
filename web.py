@@ -172,14 +172,14 @@ def process_node(environ, start_response):
 
 
 
-def throw_error(error_type, extra_info = None):
+def throw_error(error_type, extra_info = ''):
 
     """an exception was thrown generate the traceback info and send to the frontend"""
     if extra_info:
         extra_info = '<pre>%s</pre>' % repr(extra_info)
     error = traceback.format_exc()
     message = "**An error has occured in this application.**\n\n%s\n\n" % error_type
-    error_msg = '%s\n\n%s<pre>%s</pre>' % (message, extra_info, error)
+    error_msg = '%s\n\n%s\n\n<pre>%s</pre>' % (message, extra_info, error)
 
     log.error(error_msg)
     info = {'action': 'general_error',

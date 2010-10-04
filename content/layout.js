@@ -278,9 +278,9 @@ REBASE.Bookmark = function (){
         }
         var table_data = REBASE.application_data.bookmarks[bookmark.entity_table];
         if (table_data){
-            bookmark.bookmark = 'n:' + table_data.node + ':edit:id=' + bookmark.entity_id;
+            bookmark.bookmark = 'u:' + table_data.node + ':edit:id=' + bookmark.entity_id;
         } else {
-            bookmark.bookmark = 'n:test.Auto:edit:id=' + bookmark.entity_id + '&table=' + bookmark.entity_table;
+            bookmark.bookmark = 'u:test.Auto:edit:id=' + bookmark.entity_id + '&table=' + bookmark.entity_table;
         }
 
         // remove the item if already in the list

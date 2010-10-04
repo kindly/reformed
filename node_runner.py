@@ -109,6 +109,7 @@ class NodeToken(object):
         # we want to split it for each form to make processing easier.
         self._form_data = {}
         self._node_data = None
+        self._flags = None
         self.form_token_list = []
 
         # form cache is used to cache forms when possible
@@ -131,6 +132,8 @@ class NodeToken(object):
         # this is the list of forms provided to the frontend
         # it may be redundant
         self._layout_forms = []
+        # any returned form that should be shown as a dialog.
+        self._layout_dialog = None
 
         # title sets the title of the page
         self._title = None
@@ -178,6 +181,7 @@ class NodeToken(object):
         # If not then it is a 'node' level command
         # and we want only have a single source of data
 
+        self._flags = self._data.get('flags')
         form_data = self._data.get('form_data', [])
         node_data = self._data.get('node_data', {})
 
@@ -218,10 +222,10 @@ class NodeToken(object):
     def output_form_data(self, form_name, output):
         """Helper function to add form data to the node token for a form"""
         # paranoia check TODO should this be an assertion?
-        if form_name in self._layout_forms:
+        if form_name in self._out:
             raise Exception("Attempt to overwrite form data in node token")
-
-        self._layout_forms.append(form_name)
+        if not 'dialog' in self._flags:
+            self._layout_forms.append(form_name)
         self._out[form_name] = output
 
     def set_form_message(self, message):
@@ -254,6 +258,7 @@ class NodeToken(object):
         layout = dict(layout_type = self._layout_type,
                       form_layout = self._form_layout,
                       layout_title = self._layout_title,
+                      layout_dialog = self._layout_dialog,
                       layout_forms = self._layout_forms)
         return layout
 
@@ -292,9 +297,16 @@ class NodeToken(object):
         """ Helper function send forbidden error to front end. """
         self._set_action('forbidden')
 
-    def form(self, **kw):
+    def form(self, form_name, **kw):
         """ Helper function set action to form. """
-        self._set_action('form', **kw)
+        if self._flags.get('dialog'):
+            self._set_action('dialog', dialog = form_name, **kw)
+        else:
+            self._set_action('form', **kw)
+
+    def dialog(self, form_name, **kw):
+        """ Helper function set action to form. """
+        self._set_action('dialog', dialog = form_name, **kw)
 
     def general_error(self, error):
         """ Helper function send error to front end. """
@@ -314,6 +326,9 @@ class NodeToken(object):
         layout_title = kw.get('layout_title')
         if layout_title:
             self._layout_title = layout_title
+        dialog = kw.get('dialog')
+        if dialog:
+            self._layout_dialog = dialog
         data = kw.get('data')
         if data:
             self._out = data
