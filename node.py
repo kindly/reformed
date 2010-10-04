@@ -59,6 +59,8 @@ class Node(object):
             # initiate any forms
             self.__class__._forms = {}
             self.__class__._available_forms = {}
+            self.__class__._non_result_forms = {}
+            self.__class__._result_forms = {}
             self.initiate_forms()
 
             self.__class__.first_run = False
@@ -77,6 +79,11 @@ class Node(object):
             if isinstance(getattr(self, form_name), FormFactory):
                 formwrapper = getattr(self, form_name)
                 self._available_forms[form_name] = formwrapper
+                # store list of non-result forms
+                if formwrapper.kw.get('form_type') != 'results':
+                    self._non_result_forms[form_name] = formwrapper
+                else:
+                    self._result_forms[form_name] = formwrapper
 
 
     def setup_commands(self):
@@ -103,8 +110,12 @@ class Node(object):
         raise Exception('Form with name `%s` does not exist in this node.' % form_name)
 
     def get_form_name_list(self):
-        """returns the names of all the forms available to the node"""
-        return self._available_forms.keys()
+        """returns the names of all the non-result forms available to the node"""
+        return self._non_result_forms.keys()
+
+    def get_result_form_name_list(self):
+        """returns the names of all the non-result forms available to the node"""
+        return self._result_forms.keys()
 
     def get_form_name_list_from_layout(self):
         if self.form_layout:
@@ -250,16 +261,14 @@ class TableNode(Node):
     table = None
     core_table = True
     extra_fields = []
-    form_params =  {"form_type": "normal"}
     list_title = 'item %s'
     title_field = 'name'
 
     listing = form(
         result_link('title'),
         info('summary', data_type = 'info'),
-
         form_type = "results",
-        params = {"form_type": "results"},
+        layout_title = "results",
     )
 
 
@@ -279,10 +288,9 @@ class TableNode(Node):
 
 
     def list(self, node_token, limit=20):
-        for form_name in self.get_form_name_list():
+        for form_name in self.get_result_form_name_list():
             form = self[form_name]
-            if form.form_type == 'results':
-                form.list(node_token, limit)
+            form.list(node_token, limit)
 
     def edit(self, node_token):
         # process each of the forms
@@ -301,8 +309,12 @@ class TableNode(Node):
             self[form_name].view(node_token, read_only = False)
 
     def new(self, node_token):
-        for form_name in node_token.form_tokens():
-            self[form_name].new(node_token)
+        if node_token.form_tokens():
+            for form_name in node_token.form_tokens():
+                self[form_name].new(node_token)
+        else:
+            for form_name in self.get_form_name_list_from_layout():
+                self[form_name].new(node_token)
 
 
 class EntityNode(TableNode):
