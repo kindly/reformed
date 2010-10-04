@@ -49,6 +49,7 @@ class SaveNew(object):
         self.rtable = database[self.table]
         self.path_to_defined_name = {}
         self.path_to_value = {}
+        self.prepared = False
 
     def set_value(self, field, value, accept_empty = False):
 
@@ -77,7 +78,9 @@ class SaveNew(object):
 
     def process_values(self, accept_empty = False):
 
-        for field, value in self.save_values.iteritems():
+        for field, value in self.save_values.items():
+            ## pop the objects as this is run twice
+            self.save_values.pop(field)
             if not value and value is not False and not accept_empty:
                 continue
             self.process_value(field, value)
@@ -102,9 +105,10 @@ class SaveNew(object):
             return
 
         if self.rtable.relation or self.rtable.entity:
-            core_id_field = self.path_to_defined_name.get(((), "_core_id"))
+            core_id_key = ((), "_core_id")
+            core_id_field = self.path_to_defined_name.get(core_id_key)
             if core_id_field:
-                self.core_id = self.save_values[core_id_field]
+                self.core_id = self.path_to_value(core_id_key)
                 obj = self.get_obj_from_field(self.core_id)
             else:
                 obj = self.database.get_instance(self.table)
@@ -133,12 +137,6 @@ class SaveNew(object):
             self.core_id = self.obj._core_id
             if self.core:
                 self.core_id = self.core.id
-
-            if not self.core_id:
-                self.session.session.flush()
-
-            if self.core:
-                self.core_id = self.core.id
                 self.obj._rel__core = self.core
                 self.obj._core_id = self.core_id
 
@@ -151,9 +149,10 @@ class SaveNew(object):
             if path == ():
                 continue
 
-            id_field = self.path_to_defined_name.get((path, "id"))
+            id_key = (path, "id")
+            id_field = self.path_to_defined_name.get(id_key)
             if id_field:
-                id_value = self.save_values[id_field]
+                id_value = self.path_to_value(id_key)
                 obj = self.get_obj_from_field(id_value, "id", table_name)
                 if self.core_id and "_core_id" in obj._table.fields:
                     assert obj._core_id == self.core_id
@@ -162,7 +161,6 @@ class SaveNew(object):
                 if self.core_id and "_core_id" in obj._table.fields:
                     obj._core_id = self.core_id
 
-            save_item = SaveItem(obj, self.session)
             self.save_items[path] = SaveItem(obj, self.session)
 
     def populate_save_items(self):
@@ -170,7 +168,11 @@ class SaveNew(object):
         for (path, field_name), value in self.path_to_value.iteritems():
             self.save_items[path].set_value(field_name, value)
 
-    def prepare(self, parent_save_set = None):
+    def prepare(self, last_save_set = None, defer = False,
+               parent_save_set = False):
+
+        if self.prepared:
+            return
 
         if parent_save_set:
             self.obj = parent_save_set.obj
@@ -179,11 +181,14 @@ class SaveNew(object):
         self.process_values()
         self.set_main_obj()
         self.create_main_saveitem()
+        if not defer:
+            self.session.session.flush()
+        self.prepared = True
 
     def save(self, finish = True):
 
-        if not self.paths:
-            self.prepare()
+        self.prepare()
+        self.process_values()
         self.create_save_items()
         self.populate_save_items()
 
@@ -193,7 +198,7 @@ class SaveNew(object):
 
         all_errors = {}
         for path, save_item in self.save_items.iteritems():
-            errors = save_item.save(False)
+            errors = save_item.save(finish = False)
             for key, value in errors.items():
                 try:
                     field = self.path_to_defined_name[(path, key)]
@@ -231,7 +236,7 @@ class SaveError(object):
     def save(self, finish = False):
         return self.all_errors
 
-    def prepare(self, last_save_set = None):
+    def prepare(self, **kw):
         pass
 
             
@@ -267,5 +272,7 @@ class SaveItem(object):
 
         return errors
 
+    def prepare(self, **kw):
+        pass
 
 

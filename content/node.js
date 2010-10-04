@@ -93,7 +93,14 @@ REBASE.Node = function (){
             window.history.back();
             return false;
         }
+        if (node_string == 'CLOSE'){
+            REBASE.Dialog.close();
+            return false;
+        }
         var decode = decode_node_string(node_string);
+        if (!decode){
+            return false;
+        }
         // get any form data
         var $obj = $(item);
         var $obj = $obj.parents('div.INPUT_FORM');
@@ -146,7 +153,7 @@ REBASE.Node = function (){
         var decode = {};
         var split = node_string.split(':');
         // check enough info
-        if (split.length < 2){
+        if (split.length < 3){
             error_msg = 'Invalid node data.\n\nNot enough arguments.';
             REBASE.Dialog.dialog('Application Error', error_msg);
             return false;
@@ -465,6 +472,7 @@ function change_layout(){
 }
 
 var global_node_data;
+var global_current_node;
 
 function process_node(packet, job){
 
@@ -485,6 +493,7 @@ function process_node(packet, job){
      var sent_node_data = packet.data.node_data;
      if (sent_node_data){
          global_node_data = sent_node_data;
+         global_current_node = packet.data.node;
          console_log('node data:', global_node_data);
      }
 

@@ -995,6 +995,14 @@ div.record_info > div {
 
 }
 
+.LAYOUT_HEADER, .LAYOUT_FOOTER{
+    float:left;
+    clear: both;
+    width: 100%;
+    background-color: #FF0;
+
+}
+
 .FORM_HOLDER{
     float:left;
     position:relative;

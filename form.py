@@ -161,7 +161,11 @@ class Form(object):
         """display a 'blank' form on the front end"""
 
         data_out = {}
-        data_out['__buttons'] = [['add %s' % self.table, '%s:_save:' % node_token.node_name],
+
+        if self.form_buttons:
+            data_out['__buttons'] = self.form_buttons
+        else:
+            data_out['__buttons'] = [['add %s' % self.table, '%s:_save:' % node_token.node_name],
                                  ['cancel', 'BACK']]
         data_out['__message'] = "Hello, add new %s" % self.table
 
@@ -279,31 +283,34 @@ class Form(object):
             # need to decide on how to handle node redirects better
             #node_token.data["id"] = obj.id
 
-            if self.save_redirect:
-                # make sure redirect is correct
-                while self.save_redirect.count(':') < 2:
-                    self.save_redirect += ':'
-                if not self.save_redirect.endswith(':'):
-                    self.save_redirect += '&'
-                # add data
-                link = self.save_redirect + "id=" + str(obj.id)
-                node_token.redirect(link)
-                return
+        if self.save_redirect:
+            # make sure redirect is correct
+            while self.save_redirect.count(':') < 2:
+                self.save_redirect += ':'
+            if not self.save_redirect.endswith(':'):
+                self.save_redirect += '&'
+            # add data
+            link = self.save_redirect + "id=" + str(obj.id)
+            node_token.redirect(link)
+            return
 
-            if self.save_next_node:
-                node_token.next_node = self.save_next_node
-                return
+        if self.save_next_node:
+            node_token.next_node = self.save_next_node
+            return
 
-            if self.save_update:
-                node = node_token.node
-                for form in self.save_update.split():
-                    node[form].view(node_token, read_only = False)
+        if self.save_update:
+            node = node_token.node
+            for form in self.save_update.split():
+                node[form].view(node_token, read_only = False)
+            return
             # FIXME as above node data forwarding
             #node_token.next_data = dict(data = node_token.data,
             #                      command = self.save_next_command or 'new')
 
-        else:
-            node_token.redirect_back()
+    # FIXME We do not want to do the auto back stuff now due to layouts
+    # but we will want it for some forms etc so leave it here for now
+    # even if it is disabled.
+    #    node_token.redirect_back()
 
     def view(self, node_token, **kw):
         """Calls the appropriate view function for the form"""
@@ -318,11 +325,15 @@ class Form(object):
         else:
             raise Exception('Unknown form_type `%s` form `%s`' % (self.form_type, self.name))
 
-    def view_single(self, node_token, read_only=True, where = None, is_main_form = True):
+    def view_single(self, node_token, read_only=True, where = None):
+
         # TD not reviewed
         node = node_token.node
+        is_main_form = (node.layout_main_form == self.name)
+
         request_data = node_token[self.name]
         form_title = None
+        layout_title = None
         join_data = None
         print 'VIEW', request_data.data
         get_data = request_data.get
@@ -371,8 +382,13 @@ class Form(object):
             if is_main_form:
                 if self.title_field and data_out.has_key(self.title_field):
                     form_title = data_out.get(self.title_field)
+                    if not form_title:
+                        form_title = 'untitled (%s)' % id
                 else:
                     form_title = '%s: %s' % (self.table, id)
+                # TODO currently the layout title just defaults to the page title
+                # but can be extended as needed.
+                layout_title = form_title
 
             if self.title_field:
                 title = result.get(self.title_field)
@@ -423,7 +439,8 @@ class Form(object):
         else:
             node_data = None
 
-        node_token.form(title = form_title, node_data = node_data)
+
+        node_token.form(title = form_title, layout_title = layout_title, node_data = node_data)
 
         # hack to stop null bookmarks
         if is_main_form and id:

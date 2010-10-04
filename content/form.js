@@ -1671,7 +1671,7 @@ $.Grid2 = function(input, form_data, row_data, extra_defaults){
                 if (item.field && data[item.field] !== undefined){
                     value = item.field + '=' + data[item.field];
                 }
-                return '<a href="#" onclick="node_button_input_form(this, \'' + item.base_link + value + '\',\'' + item.target_form + '\');return false">moo</a>';
+                return '<a href="#" onclick="node_button_input_form(this, \'' + item.base_link + value + '\',\'' + item.target_form + '\');return false">' + item.title + '</a>';
             }
 
 

@@ -214,6 +214,7 @@ class People(EntityNode):
         table = "people",
         title_field = 'name',
         form_type = "input",
+        save_update = 'main',
     )
 
 
@@ -234,12 +235,13 @@ class People(EntityNode):
     )
 
     phone_new = form(
-        text('Add a new phone number.'),
         input('number', label = 'number'),
-        button('l:test.People:_save:', title = 'save'),
         form_type = "input",
         table = "telephone",
         save_update = 'phone',
+        title_field = 'number',
+        form_buttons = [['save', 'l:test.People:_save:'],
+                        ['cancel', 'CLOSE']],
     )
 
 

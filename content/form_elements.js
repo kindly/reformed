@@ -531,6 +531,10 @@ REBASE.Layout = function(){
     // by form name.
     var $forms = {};
 
+    var layout_title;
+    var $header;
+    var $footer;
+
 
     /*
      *      (\  }\   (\  }\   (\  }\
@@ -653,6 +657,7 @@ REBASE.Layout = function(){
         var layout_data = packet.layout;
         // Store the form data.
         forms = FormProcessor.process(packet.data, packet.node);
+        layout_title = layout_data.layout_title;
 
         if (layout_data.layout_type){
             // Layout has changed so update our stored data.
@@ -679,10 +684,11 @@ REBASE.Layout = function(){
                 $forms[form_name].append(make_form(form_name));
             } else {
                 var form_type = forms[form_name].form.form_type;
-                REBASE.Dialog.dialog('test', forms[form_name].form);
+                REBASE.Dialog.dialog('test', forms[form_name]);
                 console_log('TRIED TO USE UNINITIALISED FORM ' + form_name);
             }
         }
+        set_layout_title_and_footer();
     }
 
 
@@ -727,6 +733,8 @@ REBASE.Layout = function(){
 
             // Create the layout.
             // These are the available layouts.
+            $header = $('<div class="LAYOUT_HEADER"></div>');
+            $layout.append($header);
             switch (layout.layout_type){
                 case 'entity':
                     make_layout_section("LAYOUT_COL_LEFT");
@@ -740,6 +748,8 @@ REBASE.Layout = function(){
                     console_log('UNKNOWN LAYOUT: ' + layout.layout_type);
                     break;
             }
+            $footer = $('<div class="LAYOUT_FOOTER"></div>');
+            $layout.append($footer);
             return $layout;
 
         }
@@ -748,7 +758,6 @@ REBASE.Layout = function(){
         // Create the base layout with sections
         $layout = build_layout();
         sections = layout.form_layout;
-
         // Add the required forms to the correct layout section.
         for (var i = 0; i < sections.length; i++){
             section = sections[i];
@@ -765,10 +774,20 @@ REBASE.Layout = function(){
                 }
             }
         }
+        // set the title
+        set_layout_title_and_footer();
         // Replace root DOM elements content with the new layout.
         $(root).empty();
         $(root).append($layout);
 
+    }
+
+    function set_layout_title_and_footer(){
+        if (layout_title){
+            $header.text(layout_title);
+        }
+        footer = 'footer'
+        $footer.text(footer);
     }
 
     function make_form(form_name){
@@ -849,7 +868,13 @@ REBASE.Dialog = function (){
             $dialog_box.html(process_html(data));
         } else {
             // assuming it is form_data
-            $dialog_box.input_form(data);
+            var form = data.form
+            var form_data = data.data
+            if (form_data && form_data.__message){
+                title = form_data.__message;
+                form_data.__message = null;
+            }
+            $dialog_box.input_form(form, form_data);
         }
         $dialog_box.dialog("option", "title", title)
         $dialog_box.dialog("option", "modal", true)
