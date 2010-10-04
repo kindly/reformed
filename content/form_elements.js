@@ -660,6 +660,10 @@ REBASE.Layout = function(){
         forms = FormProcessor.process(packet.data, packet.node);
         layout_title = layout_data.layout_title;
 
+        if (layout_data.layout_dialog){
+            REBASE.Dialog.dialog('test', forms[layout_data.layout_dialog]);
+        } else {
+
         if (layout_data.layout_type){
             // Layout has changed so update our stored data.
             layout = layout_data;
@@ -668,6 +672,7 @@ REBASE.Layout = function(){
             // Update the layout forms
             layout.layout_forms = layout_data.layout_forms;
             replace_forms();
+        }
         }
     }
 
