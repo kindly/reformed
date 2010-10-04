@@ -689,8 +689,6 @@ REBASE.Layout = function(){
                 $forms[form_name].empty();
                 $forms[form_name].append(make_form(form_name));
             } else {
-                var form_type = forms[form_name].form.form_type;
-                REBASE.Dialog.dialog('test', forms[form_name]);
                 console_log('TRIED TO USE UNINITIALISED FORM ' + form_name);
             }
         }
