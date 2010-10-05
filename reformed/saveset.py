@@ -168,9 +168,8 @@ class SaveNew(object):
         for (path, field_name), value in self.path_to_value.iteritems():
             self.save_items[path].set_value(field_name, value)
 
-    def prepare(self, last_save_set = None, defer = False,
-               parent_save_set = False):
-
+    def prepare(self, parent_save_set = None, defer = False):
+        
         if self.prepared:
             return
 
