@@ -58,8 +58,15 @@ def load_data(file):
     print time
 
 def profile(file):
-    import cProfile
+    import hotshot, hotshot.stats, test.pystone
     command = """load_data(file)"""
+    #prof = hotshot.Profile("dataloadhot.profile")
+    #prof.runctx( command, globals(), locals())
+    #prof.close()
+
+
+
+    import cProfile
     cProfile.runctx( command, globals(), locals(), filename="dataload.profile" )
 
 def load():
@@ -220,6 +227,8 @@ def reloader(args, options):
                 command.append('--ssl_cert=%s' % options.ssl_cert)
             if options.no_job_scheduler:
                 command.append('-J')
+            if options.index:
+                command.append('--index')
             if args:
                 command.append(args[0])
             proc = subprocess.Popen(command)

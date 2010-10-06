@@ -97,9 +97,10 @@ class SessionWrapper(object):
     def add(self, obj):
         """save or update and validate a sqlalchemy object"""
         ##FIXME should be renamed to say it does not do version checking
-        obj._table.validate(obj, self.session)
-        obj._validated = True
-        self.session.add(obj)
+        if not obj._validated:
+            obj._table.validate(obj, self)
+            obj._validated = True
+            self.session.add(obj)
 
     def add_no_validate(self, obj):
         """save or update and validate a sqlalchemy object"""
@@ -288,6 +289,7 @@ class SessionWrapper(object):
     def add_extra_instance(self):
 
         for obj in self.session.new:
+            core = None
             if hasattr(obj, "_from_load"):
                 continue
             table = get_table_from_instance(obj, self.database)
@@ -333,6 +335,11 @@ class SessionWrapper(object):
                     obj._rel__core = core
                     self.add(core)
                     self.add(obj)
+                else:
+                    core = obj._rel__core 
+
+            if core:
+                self.object_store["core"].add(core)
 
 
 class SessionClass(object):

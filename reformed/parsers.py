@@ -45,7 +45,7 @@ def postcode(string):
 
     
     
-    return get_result(postcode, string, lambda x:x.replace(" ",""))
+    return get_result(postcode, string, lambda x:x.replace(" ","").lower())
 
 def phonenumber(string):
     def parse_phone(string, pos, toks):
@@ -66,7 +66,7 @@ def email(string):
         return string
     email = Regex(r"(?P<user>[A-Za-z0-9._%+-]+)@(?P<hostname>[A-Za-z0-9.-]+)\.(?P<domain>[A-Za-z]{2,4})")
 
-    return get_result(email, string)
+    return get_result(email, string, lambda x:x.lower() )
 
 
 def date(string, dayfirst = True):

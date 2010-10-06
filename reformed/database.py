@@ -628,7 +628,7 @@ class Database(object):
                     self.search_actions[action.event_id] = (table.name, action)
                     ## FIXME there can be duplicate names so they will overwrite 
                     action.set_names(table.name)
-                    self.search_names[action.name] = action.event_id
+                    self.search_names[action.name] = str(action.event_id)
 
 
 

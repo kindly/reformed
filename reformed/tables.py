@@ -165,6 +165,7 @@ class Table(object):
         self.table_path_list = None
         self.table_path = None
         self.schema_dict = None
+        self.schema = None
 
     def __repr__(self):
         return "%s - %s" % (self.name, self.columns.keys())
@@ -966,12 +967,15 @@ class Table(object):
             def __init__(self):
                 self._table = table
                 self._validated = False
+                self._version_changed = False
+                self._new = True
 
             @sa.orm.reconstructor
             def init_onload(self):
                 self._table = table
-                self._validated = False
+                self._validated = True
                 self._version_changed = False
+                self._new = False
 
             def __repr__(self):
 
@@ -1062,6 +1066,7 @@ class Table(object):
 
             sa_options["primaryjoin"] = sa.sql.and_(*join_conditions)
             sa_options["foreign_keys"] = foriegn_key_columns
+            sa_options["cascade"] = "none"
 
             properties[relation.name] = sa.orm.relation(other_class,
                                                     **sa_options)
@@ -1256,10 +1261,13 @@ class Table(object):
     def validation_schema(self):
         """Gathers all the validation dictionarys from all the Field Objects
         and a makes a formencode Schema out of them"""
-
-        return formencode.Schema(allow_extra_fields = True,
+        if self.schema:
+            return self.schema
+        self.schema = formencode.Schema(allow_extra_fields = True,
                                  ignore_key_missing = True,
                                  **self.schema_dict)
+
+        return self.schema 
 
     def validate(self, instance, session):
         """this validates an instance of sa_class with the schema defined
@@ -1326,9 +1334,9 @@ class ConvertDate(AttributeExtension):
 
         if value == oldvalue:
             return value
+        state.dict["_validated"] = False
         if not value:
             return None
-        state.dict["_validated"] = False
 
         if isinstance(value, ClauseElement):
             return value
@@ -1368,9 +1376,9 @@ class ConvertInteger(AttributeExtension):
 
         if value == oldvalue:
             return value
+        state.dict["_validated"] = False
         if not value:
             return None
-        state.dict["_validated"] = False
 
         if isinstance(value, ClauseElement):
             return value
