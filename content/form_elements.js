@@ -962,20 +962,33 @@ REBASE.Dialog = function (){
 
 REBASE.Functions = function (){
 
-    // hash of functions available
-    var functions = {
-        debug_form_info: debug_form_info
-    };
 
-    function call(data){
+    function call(fn, data){
         /* calls function if it exists */
-        var fn = functions[data['function']];
-        if (fn){
-            fn(data.data);
+        var f = functions[fn];
+        if (f){
+            f(data);
         } else {
-            REBASE.Dialog.dialog('Error', '<pre>Function `' + data['function'] + '` is not available.</pre>');
+            REBASE.Dialog.dialog('Error', '<pre>Function `' + fn + '` is not available.</pre>');
         }
     }
+
+    // hash of functions available
+    var functions = {}
+
+    functions.debug_form_info = debug_form_info;
+
+    // application data
+    functions.application_data = function (data){
+        REBASE.application_data = data;
+        change_layout();
+    };
+
+    // bookmarks
+    functions.load_bookmarks = function (data){
+        REBASE.Bookmark.process(data);
+    };
+
 
     function debug_form_info(){
         /* Output the current form cache information */
@@ -989,8 +1002,8 @@ REBASE.Functions = function (){
 
     // exported functions
     return {
-        'call' : function (data){
-            call(data);
+        'call' : function (fn, data){
+            call(fn, data);
         }
     }
 
