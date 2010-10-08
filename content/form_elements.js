@@ -661,9 +661,10 @@ REBASE.Layout = function(){
         layout_title = layout_data.layout_title;
 
         if (layout_data.layout_dialog){
-            REBASE.Dialog.dialog('test', forms[layout_data.layout_dialog]);
+            REBASE.Dialog.dialog(layout_data.layout_title, forms[layout_data.layout_dialog]);
         } else {
 
+        REBASE.Dialog.close();
         if (layout_data.layout_type){
             // Layout has changed so update our stored data.
             layout = layout_data;
@@ -849,17 +850,27 @@ REBASE.Layout = function(){
 
 REBASE.Dialog = function (){
 
+    var dialog_decode;
     var $dialog_box;
+    var $system_dialog_box;
     var is_setup = false;
     var is_open = false;
     var process_html = $.Util.process_html;
 
     function setup(){
-        $dialog_box = $('<div id="dialog_box"></div>')
+        var options = {autoOpen: false, width: 'auto', modal: true};
+        // dialog box
+        $dialog_box = $('<div id="dialog_box"></div>');
         $('body').append($dialog_box);
-        $dialog_box.dialog({autoOpen: false, height: 'auto', width : 'auto'});
+        $dialog_box.dialog(options);
+        // system dialog box
+        $system_dialog_box = $('<div id="system_dialog_box"></div>');
+        $('body').append($system_dialog_box);
+        $system_dialog_box.dialog(options);
+
         is_setup = true;
     }
+
 
     function open(title, data){
         if (!is_setup){
@@ -874,14 +885,10 @@ REBASE.Dialog = function (){
             // assuming it is form_data
             var form = data.form
             var form_data = data.data
-            if (form_data && form_data.__message){
-                title = form_data.__message;
-                form_data.__message = null;
-            }
+
             $dialog_box.input_form(form, form_data);
         }
         $dialog_box.dialog("option", "title", title)
-        $dialog_box.dialog("option", "modal", true)
         $dialog_box.dialog('open');
         is_open = true;
     }
@@ -893,6 +900,31 @@ REBASE.Dialog = function (){
         }
     }
 
+    function confirm_action(decode, title, message){
+        if (!is_setup){
+            setup()
+        }
+        dialog_decode = decode;
+        var $form = $('<div class="INPUT_FORM"></div>');
+        // clear any form data
+        REBASE.FormControls.set_data({});
+        $form.append(REBASE.FormControls.build(true, {control:'message_area'}, message));
+        $form.append('<div class="f_control_holder"><div class="f_sub"><button onclick="REBASE.Dialog.confirm_action_return(false);return false" class="button">No</button><button onclick="REBASE.Dialog.confirm_action_return(true);return false" class="button">Yes</button></div></div>')
+        $system_dialog_box.empty();
+        $system_dialog_box.append($form);
+
+        $system_dialog_box.dialog("option", "title", title)
+        $system_dialog_box.dialog('open');
+
+    }
+
+    function confirm_action_return(result){
+        $system_dialog_box.dialog('close');
+        if (result){
+            dialog_decode.flags.confirm_action = false;
+            REBASE.Node.get_node(dialog_decode);
+        }
+    }
 
     // exported functions
     return {
@@ -901,7 +933,14 @@ REBASE.Dialog = function (){
         },
         'close' : function(){
             close();
+        },
+        'confirm_action' : function (decode, title, message){
+            confirm_action(decode, title, message);
+        },
+        'confirm_action_return' : function(result){
+            confirm_action_return(result);
         }
+
     }
 
 }()
