@@ -645,37 +645,6 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         }
 
 
-
-        function build_subforms(){
-            // subforms
-            var $subforms = $input.find('div.SUBFORM');
-            var subform;
-            var data;
-            var subforms = REBASE.FormControls.get_subforms();
-            for (var i = 0, n = subforms.length; i < n; i ++){
-                subform = subforms[i].item;
-                extra_defaults = {__table: subform.form.table_name,
-                                  __subform: subforms[i].item.name};
-                extra_defaults[subform.form.child_id] = row_data[subform.form.parent_id];
-
-                switch (subform.form.form_type){
-                    case 'grid':
-                        $subforms.eq(i).grid(subform.form, subforms[i].data);
-                        break;
-                    case 'action':
-                        $subforms.eq(i).input_form(subform.form, subforms[i].data, extra_defaults);
-                        break;
-                    case 'continuous':
-                        data = {__array: subforms[i].data};
-                        $subforms.eq(i).input_form(subform.form, data, extra_defaults);
-                        break;
-                    default:
-                        $subforms.eq(i).form(subform.form, subforms[i].data);
-                }
-            }
-        }
-
-        REBASE.FormControls.clear_subforms();
         $form.empty();
         form_controls_hash = {};
         builder_depth = 0;
@@ -724,9 +693,6 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
         $form.append($builder[0].contents());
 
-       // if (subforms.length){
-            build_subforms();
-      //  }
     }
 
     init();
