@@ -446,6 +446,6 @@ class AutoFormPlus(TableNode):
             else:
                 fields.append(input(field.name, **extra_info))
 
-        main = form(*fields, table = table, params = self.form_params, volatile = True)
+        main = form(*fields, table = table, form_type = 'input', volatile = True)
         # add this to the available forms
         self._available_forms['main'] = main
