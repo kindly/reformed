@@ -64,6 +64,17 @@ class NodeToken(object):
             else:
                 return default
 
+        def pop(self, key, default = None):
+            """ Get method
+            Will try to get from form the form data first
+            then will look in node data and finally return the default."""
+            if key in self.data:
+                return self.data.pop(key)
+            elif key in self.node_data:
+                return self.node_data.pop(key)
+            else:
+                return default
+
         def get_data_int(self, key, default = 0):
             """ Get integer value out of self.data[key] or node data or default. """
             try:
