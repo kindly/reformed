@@ -100,6 +100,7 @@ class NodeToken(object):
         self._data = data
         self.process_data()
         self.auto_login_cookie = None
+        self._added_responses = []
 
 
     def reset(self):
@@ -132,20 +133,22 @@ class NodeToken(object):
         # output stuff
         self._out = {}
 
-        # the layout_type sets the section layout
-        # the form_layout will be an array
+        # self._layout holds layout information if needed
+        # keys are
+        # 'layout_type' sets the section layout
+        # 'form_layout' will be an array
         # that has the grouping and ordering of the forms
         # for each section
         # eg. [ ['form1', 'form2'], ['form3'] ]
-        self._layout_type = None
-        # the form_layout sets the layout
+        # 'form_layout' sets the layout
         # eg. 'entity', 'listing'
-        self._form_layout = None
+        # 'form_layout'
         # this is the list of forms provided to the frontend
         # it may be redundant
-        self._layout_forms = []
+        # 'layout_forms'
         # any returned form that should be shown as a dialog.
-        self._layout_dialog = None
+        # 'layout_dialog' any form to use as a dialog.
+        self._layout = {}
 
         # title sets the title of the page
         self._title = None
@@ -237,7 +240,9 @@ class NodeToken(object):
         if form_name in self._out:
             raise Exception("Attempt to overwrite form data in node token")
         if not 'dialog' in self._flags:
-            self._layout_forms.append(form_name)
+            if 'layout_forms' not in self._layout:
+                self._layout['layout_forms'] = []
+            self._layout['layout_forms'].append(form_name)
         self._out[form_name] = output
 
     def set_form_message(self, message):
@@ -252,27 +257,22 @@ class NodeToken(object):
 
     def set_layout(self, layout_type, form_layout):
         """ Helper function to set layout. """
-        if self._layout_type:
+        if 'layout_type' in self._layout:
             raise Exception('NodeToken layout type already set')
-        self._layout_type = layout_type
-        self._form_layout = form_layout
+        self._layout['layout_type'] = layout_type
+        self._layout['form_layout'] = form_layout
         self._clear_node_data = True
 
     def _get_layout(self):
         """ Returns the layout hash to be sent to the front end. """
-        if not self._layout_type and self._layout_forms and self.command_type == 'node':
+        if not self._layout.get('layout_type') and self._layout.get('layout_forms') and self.command_type == 'node':
             # No layout has been specified but one is needed
             # because this was a 'node' level command.
-            self._layout_type = 'listing'
-            self._form_layout = [self._layout_forms]
+            self._layout['layout_type'] = 'listing'
+            self._layout['form_layout'] = [self._layout['layout_forms']]
             self._clear_node_data = True
-        # build layout
-        layout = dict(layout_type = self._layout_type,
-                      form_layout = self._form_layout,
-                      layout_title = self._layout_title,
-                      layout_dialog = self._layout_dialog,
-                      layout_forms = self._layout_forms)
-        return layout
+
+        return self._layout
 
 
     def next_node(self, node, node_data = None, command = None):
@@ -304,10 +304,10 @@ class NodeToken(object):
         """ Helper function send status data to front end. """
         self._set_action('status', data = data)
 
-    def function(self, function_name, data = None):
-        """ Helper function send status data to front end. """
-        packet = dict(function = function_name, data = data)
-        self._set_action('function', data = packet)
+#   DISABLED for now
+#    def function(self, function_name, data = None):
+#        """ Helper function send status data to front end. """
+#        self._set_action('function', function_name = function_name, data = packet)
 
     def forbidden(self):
         """ Helper function send forbidden error to front end. """
@@ -339,11 +339,11 @@ class NodeToken(object):
             self._title = title
         layout_title = kw.get('layout_title')
         if layout_title:
-            self._layout_title = layout_title
+            self._layout['layout_title'] = layout_title
         dialog = kw.get('dialog')
         if dialog:
             # TODO make sure we only allow one dialog.
-            self._layout_dialog = dialog
+            self._layout['layout_dialog'] = dialog
         data = kw.get('data')
         if data:
             self._out = data
@@ -387,19 +387,29 @@ class NodeToken(object):
         user_id = global_session.session['user_id']
         # application data
         if self.request_application_data:
-            info['application_data'] = global_session.sys_info
-            info['application_data']['__user_id'] = user_id
-            info['application_data']['__username'] = global_session.session['username']
+            data = global_session.sys_info
+            data['__user_id'] = user_id
+            data['__username'] = global_session.session['username']
+            self.add_extra_response_function('application_data', data)
             refresh_frontend = True
         else:
             refresh_frontend = False
         # bookmarks
         if (self.user or refresh_frontend) and user_id:
             # we have logged in so we want our bookmarks
-            info['bookmark'] = self._bookmark_list(user_id)
-        log.debug('returned data\n%s\n----- end of node processing -----' % pprint.pformat(info))
+            data = self._bookmark_list(user_id)
+            self.add_extra_response_function('load_bookmarks', data)
 
-        return info
+
+        self._added_responses.append(dict(type = 'node', data = info))
+        log.debug('returned data\n%s\n----- end of node processing -----' %
+                  pprint.pformat(self._added_responses))
+        return self._added_responses
+
+    def add_extra_response_function(self, function, data):
+        #self._added_responses.append(dict(type = 'node', data = dict(action = action, data = data)))
+        response = dict(action = 'function', function = function, data = data)
+        self._added_responses.append(dict(type = 'node', data = response))
 
     def _bookmark_list(self, user_id, limit = 100):
 
@@ -590,8 +600,8 @@ class NodeRunner(object):
 
         node = data.get('node')
         self.run(node, node_token)
-        self.output.append({'type' : 'node',
-                              'data' : node_token.output()})
+        self.output.extend(node_token.output())
+
         # auto login cookie info
         if node_token.auto_login_cookie:
             self.auto_login_cookie = node_token.auto_login_cookie
@@ -619,9 +629,6 @@ class NodeRunner(object):
         # the user cannot perform this action
         if not node.check_permissions():
             authenticate.forbidden(node_token)
-            #log.warn('forbidden node or command')
-            #node_token.forbidden()
-            #return
         else:
             node.initialise(node_token)
             node.call(node_token)

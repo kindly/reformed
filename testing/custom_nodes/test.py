@@ -397,5 +397,5 @@ class TestNode(Node):
     def call(self, node_token):
         #node_token.general_error('moo')
         #node_token.forbidden()
-        node_token.function('debug_form_info')
+        node_token.add_extra_response_function('debug_form_info', None)
        #self['main'].show(node_token);
