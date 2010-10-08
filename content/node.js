@@ -34,12 +34,11 @@ function init(){
     // also if you are auto logged in etc
     var url = $.address.value();
     if (url == '/'){
-        node_load(':user.User:login:');
+        node_load('d:user.User:login:');
     }
 }
 
 REBASE.Node = function (){
-
 
     /* Public functions. */
 
@@ -54,9 +53,10 @@ REBASE.Node = function (){
         itemsBlurLast();  // FIXME needed?
         var link = $.address.value();
         var decode = decode_node_string(link);
-        call_node(decode);
+        if (!decode.secure){
+            get_node(decode);
+        }
     }
-
 
     function load_node(node_string, item, target_form){
         /*
@@ -69,6 +69,7 @@ REBASE.Node = function (){
             window.history.back();
             return false;
         }
+        // close any open dialog
         if (node_string == 'CLOSE'){
             REBASE.Dialog.close();
             return false;
@@ -78,40 +79,19 @@ REBASE.Node = function (){
             return false;
         }
 
-        if (decode.flags.update){
-           if ($.address.value() != '/' + node_string){
-                // Sets the address which then forces a page load.
-                $.address.value(node_string);
-                return;
-            } else {
-                // The address is already set so we need to force the reload
-                // as changing the address will not trigger an event.
-                call_node(decode);
-            }
-        } else {
-            get_node(decode);
+        if (decode.flags.update &&
+            $.address.value() != '/' + node_string &&
+            $.address.value() != node_string){
+
+            // Sets the address which then forces a page load.
+            $.address.value(node_string);
+            return;
         }
+        get_node(decode);
     }
 
 
     /* Private functions. */
-
-    function call_node(decode){
-        /*
-         *  takes a string (node_string) of the form
-         *  "/n:<node_name>:<command>:<arguments>"
-         *
-         *  insecure: allows 'dangerous' _underscored commands to be sent
-         */
-        if (decode){
-            // only call if it is secure to do so.
-            // FIXME is this test correct?
-            if (!decode.secure){
-                get_node(decode);
-            }
-        }
-    }
-
 
     function decode_node_string(node_string, item, target_form){
         /*
@@ -120,7 +100,7 @@ REBASE.Node = function (){
          *  or false if an error occurs
          */
         console_log(node_string);
-        var error_msg;
+        var error_msg = '';
         var decode = {};
         var split = node_string.split(':');
         // check enough info
@@ -153,13 +133,14 @@ REBASE.Node = function (){
             } else {
                 decode.url_data = url_data;
             }
-            //console_log('url_data:', decode.url_data);
         } else{
             decode.url_data = {};
         }
         decode.node_data = global_node_data;
 
         // flags
+        // The flags are used to indicate
+        // the actions that the node call should perform.
         var flag_data = split[0];
         var flags = {};
         for (var i = 0; i < flag_data.length; i++){
@@ -167,25 +148,20 @@ REBASE.Node = function (){
                 case '/':
                     // ignore this
                     break;
-                case 'u':
-                    if (decode.secure){
-                        error_msg = 'Invalid node data.\n\nCannot update on a secure command.';
-                        REBASE.Dialog.dialog('Application Error', error_msg);
-                        return false;
-                    }
-                    flags.update = true;
-                    // if we have any extra node data we add it but
-                    // don't overwrite anything in the url.
-                    // I'm not sure if this is the best thing to do
-                    // but it is currently needed for the bookmarks to work correctly.
-                    for (var key in decode.url_data){
-                        decode.node_data[key] = decode.url_data[key];
-                    }
+                case 'a':
+                    // authenticate
+                    flags.authenticate = true;
+                    break;
+                case 'c':
+                    // confirm
+                    flags.confirm_action = true;
                     break;
                 case 'd':
+                    // open as dialog
                     flags.dialog = true;
                     break;
                 case 'f':
+                    // send form data
                     flags.form_data = true;
                     // get any form data
                     var $obj = $(item);
@@ -201,6 +177,22 @@ REBASE.Node = function (){
                     // set the form data
                     decode.form_data.push(form_data);
                     break;
+                case 'u':
+                    // update address bar
+                    if (decode.secure){
+                        error_msg = 'Invalid node data.\n\nCannot update on a secure command.';
+                        REBASE.Dialog.dialog('Application Error', error_msg);
+                        return false;
+                    }
+                    flags.update = true;
+                    // if we have any extra node data we add it but
+                    // don't overwrite anything in the url.
+                    // I'm not sure if this is the best thing to do
+                    // but it is currently needed for the bookmarks to work correctly.
+                    for (var key in decode.url_data){
+                        decode.node_data[key] = decode.url_data[key];
+                    }
+                    break;
                 default:
                     error_msg = 'Invalid node flag ' + flag_data.charAt(i);
                     REBASE.Dialog.dialog('Application Error', error_msg);
@@ -209,8 +201,8 @@ REBASE.Node = function (){
         }
         // if we are doing an update we cannot pass form data
         // as we loose the refering item.  Throw an error
-        if (flags.update && flags.form_data){
-            error_msg = 'Trying to update a form data node, which is not allowed.';
+        if (flags.update && (flags.form_data || flags.confirm_action)){
+            error_msg = 'Cannot process request.\n\nTrying to update address to a node with form data or that needs confirmation.';
             REBASE.Dialog.dialog('Application Error', error_msg);
             return false;
         }
@@ -245,23 +237,10 @@ REBASE.Node = function (){
          *  Takes a decoded node request does any processing needed
          *  and passes it to be the job processor to request
          */
-        // TODO can we just send the whole decode?
-        var info = {node: decode.node,
-                    lastnode: '',  //FIXME will we ever need this?
-                    command: decode.command,
-                    flags : decode.flags};
-        // get any cached form info for the node
-        var cache_info = REBASE.Layout.get_form_cache_info(decode.node);
-        if (cache_info !== undefined){
-            info.form_cache = cache_info;
-        }
-        // node data
-        if (decode.node_data){
-            info.node_data = decode.node_data
-        }
-        // form data
-        if (decode.form_data){
-            info.form_data = decode.form_data;
+        if (decode.flags.confirm_action){
+           // && !confirm('Are you sure?')){
+            REBASE.Dialog.confirm_action(decode, 'Confirmation needed', 'are you sure?', decode);
+            return false;
         }
         info = decode;
         // application data
@@ -270,7 +249,7 @@ REBASE.Node = function (){
         }
         // close any open dialog
         // may possibly cause problems with status refreshes
-        REBASE.Dialog.close();
+    //    REBASE.Dialog.close();
         // FIXME if we never send data as second arg then
         // remove it.
         $JOB.add(info, {});
@@ -288,6 +267,9 @@ REBASE.Node = function (){
             /* called from form buttons etc sends the form
              * data and can call a target form. */
             load_node(node_string, item, target_form);
+        },
+        'get_node' : function (decode){
+            get_node(decode);
         }
     }
 }();
@@ -453,7 +435,7 @@ function change_user(user){
 function change_user_bar(){
 
     if (REBASE.application_data.__user_id === 0){
-        $('#user_login').html('<a href="#" onclick="node_load(\':user.User:login\',this);return false">Login</a>');
+        $('#user_login').html('<a href="#" onclick="node_load(\'d:user.User:login\',this);return false">Login</a>');
     } else {
         $('#user_login').html(REBASE.application_data.__username + ' <a href="#" onclick="node_load(\':user.User:logout\',this);return false">Log out</a>');
     }
@@ -514,10 +496,20 @@ function process_node(packet, job){
          case 'redirect':
              var link = packet.data.link;
              if (link){
-                 if (link == 'BACK'){
-                    window.history.back();
-                 } else {
-                    node_load('u:' + link);
+                 switch (link){
+                     case 'BACK':
+                        window.history.back();
+                        break;
+                    case 'CLOSE':
+                        REBASE.Dialog.close();
+                        break;
+                    case 'RELOAD':
+                        REBASE.Dialog.close();
+                        node_load($.address.value());
+                        break;
+                    default:
+                        node_load('u:' + link);
+                        break;
                  }
              }
              break;
