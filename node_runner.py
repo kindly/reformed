@@ -121,7 +121,7 @@ class NodeToken(object):
         # we want to split it for each form to make processing easier.
         self._form_data = {}
         self._node_data = None
-        self._flags = None
+        self._flags = {}
         self.form_token_list = []
 
         # form cache is used to cache forms when possible
@@ -282,6 +282,10 @@ class NodeToken(object):
         self._next_command = command
         self._set_action('next_node')
 
+    def force_dialog(self):
+        """ Force the next sent form to be viewed as a dialog. """
+        self._flags['dialog'] = True
+
     def redirect(self, node_string, url_data = None, node_data = None):
         """ Helper function redirect via the front end. """
         # Append any url_data to the node if needed
@@ -338,6 +342,7 @@ class NodeToken(object):
             self._layout_title = layout_title
         dialog = kw.get('dialog')
         if dialog:
+            # TODO make sure we only allow one dialog.
             self._layout_dialog = dialog
         data = kw.get('data')
         if data:
