@@ -45,7 +45,7 @@ class User(TableNode):
         layout('spacer'),
 
         table = "user",
-        params =  {"form_type": "action"},
+        form_type = 'input',
         title_field = 'name'
     )
 
@@ -103,6 +103,7 @@ class User(TableNode):
         layout('box_end'),
 
         form_type = "action",
+        layout_title = "Login",
         params = {"form_type": "action"}
     )
 
@@ -141,6 +142,8 @@ class User(TableNode):
         commands['login'] = dict(command = 'check_login')
         commands['logout'] = dict(command = 'logout')
         commands['list'] = dict(command = 'list')
+        commands['_save'] = dict(command = 'save')
+        commands['new'] = dict(command = 'new')
         commands['edit'] = dict(command = 'edit')
         commands['about_me'] = dict(command = 'about_me', permissions = ['LoggedIn'])
         commands['_save_about_me'] = dict(command = 'save_about_me', permissions = ['LoggedIn'])
@@ -151,8 +154,6 @@ class User(TableNode):
         self.__class__.commands = commands
 
 
-    def save(self, node_token):
-        self["user"].save(node_token)
 
     def edit(self, node_token):
         print 'User'
@@ -161,10 +162,12 @@ class User(TableNode):
     def view(self, node_token, read_only=True):
         self["user"].view(node_token, read_only)
 
+    def new(self, node_token):
+        self["main"].new(node_token)
 
 
     def check_login(self, node_token):
-        message = None
+        message = node_token['login'].pop('message')
         fail_message = '# Login failed\n\nuser name or password incorrect, try again.'
         vdata = self.validate_data_full(node_token['login_form'].data, self.login_validations)
         if vdata['login_name'] and vdata['password']:
@@ -174,7 +177,7 @@ class User(TableNode):
                 self.login(node_token, data)
                 return
         if not message:
-            message = '# Login.\n\nWelcome to %s enter your login details to continue' % global_session.sys_info['name']
+            message = 'Welcome to %s<br /> enter your login details to continue' % global_session.sys_info['name']
         self.show_login_form(node_token, message)
 
     def show_login_form(self, node_token, message = None):
@@ -182,6 +185,7 @@ class User(TableNode):
             data = dict(__message = message)
         else:
             data = {}
+        node_token.force_dialog()
         self["login_form"].show(node_token, data)
 
     def about_me(self, node_token):
@@ -260,9 +264,7 @@ class User(TableNode):
         if node_token['login_form'].data.get('remember_me') and auto_login:
             node_token.auto_login_cookie = '%s:%s' % (user_id, auto_login)
 
-        node_token.action = 'html'
-        data = "<p>Hello %s you are now logged in, what fun!</p>" % data['name']
-        node_token.out = {'html': data}
+        node_token.redirect('RELOAD')
 
 
 
@@ -292,7 +294,7 @@ class UserGroup(TableNode):
         layout("spacer"),
         layout("box_start"),
         codegroup("p1", code_table = 'permission', code_desc_field = 'description', label = 'General Permissions', filter = 'access_level = 0'),
-        #codegroup("p2", code_table = 'permission', code_desc_field = 'description', label = 'Admin Permissions', filter = 'access_level > 0', permissions = ['SysAdmin']),
+        codegroup("p2", code_table = 'permission', code_desc_field = 'description', label = 'Admin Permissions', filter = 'access_level > 0', permissions = ['SysAdmin']),
         layout("box_end"),
         layout("spacer"),
 
