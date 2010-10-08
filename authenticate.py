@@ -46,6 +46,15 @@ def login(data, auto = False):
     else:
         log.info('Login %s (%s) automatic' % (user_id, username))
 
+def forbidden(node_token):
+    if global_session.session['user_id']:
+        # user logged in but not enough permissions
+        node_token.forbidden()
+    else:
+        # user not logged in so show login form
+        data = dict(message = 'you need to login to see this page')
+        node_token.next_node('user.User', command = 'login', node_data = data);
+
 
 def get_permissions(user_id):
     """return a set of permissions for the user_id provided"""
