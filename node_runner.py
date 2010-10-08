@@ -27,6 +27,7 @@ import inspect
 from ZODB.PersistentMapping import PersistentMapping
 import transaction
 import urllib
+import authenticate
 
 log = logging.getLogger('rebase.node')
 
@@ -612,14 +613,15 @@ class NodeRunner(object):
 
         # the user cannot perform this action
         if not node.check_permissions():
-            log.warn('forbidden node or command')
-            node_token.forbidden()
-            return
-
-        node.initialise(node_token)
-        node.call(node_token)
-        node.finalise(node_token)
-        node.finish_node_processing(node_token)
+            authenticate.forbidden(node_token)
+            #log.warn('forbidden node or command')
+            #node_token.forbidden()
+            #return
+        else:
+            node.initialise(node_token)
+            node.call(node_token)
+            node.finalise(node_token)
+            node.finish_node_processing(node_token)
 
 
 
