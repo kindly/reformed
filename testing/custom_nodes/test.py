@@ -243,6 +243,7 @@ class People(EntityNode):
         title_field = 'number',
         form_buttons = [['save', 'f:test.People:_save:'],
                         ['cancel', 'CLOSE']],
+        layout_title = 'Phone number',
     )
 
 
@@ -309,7 +310,7 @@ class Truncate(Node):
     main = form(
         text("Truncate table :)"),
         dropdown('table', 'DATA', data_field = 'tables'),
-        button('f:test.Truncate:truncate:', label = 'Truncate'),
+        button('fc:test.Truncate:truncate:', label = 'Truncate'),
         form_type = "action",
     )
     completed = form(
@@ -388,7 +389,13 @@ class Auto(AutoFormPlus):
 
 class TestNode(Node):
 
+    main = form(
+        button_box([['add', 'uf:moo']]),
+        form_type = 'input',
+    )
+
     def call(self, node_token):
         #node_token.general_error('moo')
         #node_token.forbidden()
         node_token.function('debug_form_info')
+       #self['main'].show(node_token);
