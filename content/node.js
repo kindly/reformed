@@ -476,11 +476,6 @@ function process_node(packet, job){
          console_log('node data:', global_node_data);
      }
 
-    if (packet.data.application_data){
-        REBASE.application_data = packet.data.application_data;
-        change_layout();
-    }
-
      var user = packet.data.user;
      if (user){
          change_user(user);
@@ -525,7 +520,8 @@ function process_node(packet, job){
              REBASE.Layout.update_layout(packet.data);
              break;
          case 'function':
-            REBASE.Functions.call(packet.data.data);
+            console_log('data', packet.data['function']);
+            REBASE.Functions.call(packet.data['function'], packet.data.data);
             break;
          case 'save_error':
             data = packet.data.data;
