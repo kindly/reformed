@@ -155,7 +155,7 @@ class Form(object):
             data = {}
         # update the node that the form is associated with
         self.create_form_data(node_token, data)
-        node_token.form(self.name)
+        node_token.form(self)
 
 
     def new(self, node_token):
@@ -173,7 +173,7 @@ class Form(object):
         # update the node that the form is associated with
         self.create_form_data(node_token, data_out)
 
-        node_token.form(self.name)
+        node_token.form(self)
 
 
 
@@ -443,7 +443,7 @@ class Form(object):
             node_data = None
 
 
-        node_token.form(self.name, title = form_title, layout_title = layout_title, node_data = node_data)
+        node_token.form(self, title = form_title, layout_title = layout_title, node_data = node_data)
 
         # hack to stop null bookmarks
         if is_main_form and id:
@@ -536,7 +536,7 @@ class Form(object):
                               offset = offset,
                               base_link = base_link)
 
-        node_token.form(self.name)
+        node_token.form(self)
 
 ##        node_token.bookmark = dict(
 ##            table_name = table,
@@ -689,7 +689,7 @@ class Form(object):
         total_pages = results.row_count/limit + 1
         title = 'listing page %s of %s' % (current_page, total_pages)
 
-        node_token.form(self.name, title = title, layout_title = self.layout_title, clear_node_data = True)
+        node_token.form(self, title = title, layout_title = self.layout_title, clear_node_data = True)
 
 
     def create_form_data(self, node_token, data=None, read_only=False):

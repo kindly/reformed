@@ -297,16 +297,14 @@ class NodeToken(object):
         """ Helper function send forbidden error to front end. """
         self._set_action('forbidden')
 
-    def form(self, form_name, **kw):
+    def form(self, form, **kw):
         """ Helper function set action to form. """
         if self._flags.get('dialog'):
-            self._set_action('dialog', dialog = form_name, **kw)
+            if not 'layout_title' in kw or not kw['layout_title']:
+                kw['layout_title'] = form.layout_title
+            self._set_action('dialog', dialog = form.name, **kw)
         else:
             self._set_action('form', **kw)
-
-    def dialog(self, form_name, **kw):
-        """ Helper function set action to form. """
-        self._set_action('dialog', dialog = form_name, **kw)
 
     def general_error(self, error):
         """ Helper function send error to front end. """
