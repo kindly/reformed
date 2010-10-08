@@ -272,7 +272,7 @@ tr.inactive input{
 /*    background-color:#9999EE;*/
 }
 
-.action > a:hover {
+.action > a:active {
     position:relative;
     left:1px;
     top:1px;
