@@ -205,47 +205,40 @@ $.Util.make_normal = function($item, field){
 };
 
 $.Util.build_node_link_href = function (data){
-    // build a node link based on the item info
-    // used in result listings
-    var link_node
-
-    if (!data.entity){
-        if (data.result_url){
-            return '#' + data.result_url;
-        } else {
-            return '';
-        }
-    }
-    var node = REBASE.application_data.bookmarks[data.entity];
-    if (node !== undefined){
-        node = node.node;
-        link_node = "#u:" + node + ":edit:__id=" + data.__id;
-    } else {
-        link_node = "#u:test.Auto:edit:__id=" + data.__id + "&table=" + data.entity;
-    }
-    return link_node;
-};
+    return $.Util.build_node_link_common(data, true);
+}
 
 $.Util.build_node_link = function (data){
+    return $.Util.build_node_link_common(data, false);
+}
+
+$.Util.build_node_link_common = function (data, is_href){
     // build a node link based on the item info
     // used in result listings
-    var link_node
+    var link_node;
+    var node;
 
     if (!data.entity){
         if (data.result_url){
-            return "node_load('" + data.result_url + "');";
+            link_node = data.result_url;
         } else {
-            return '';
+            link_node = '';
+        }
+    } else {
+        node = REBASE.application_data.bookmarks[data.entity];
+        if (node !== undefined){
+            node = node.node;
+            link_node = "u:" + node + ":edit:__id=" + data.__id;
+        } else {
+            link_node = "u:test.Auto:edit:__id=" + data.__id + "&table=" + data.entity;
         }
     }
-    var node = REBASE.application_data.bookmarks[data.entity];
-    if (node !== undefined){
-        node = node.node;
-        link_node = "node_load('u:" + node + ":edit:__id=" + data.__id + "');";
+    // return as href or function call
+    if (is_href){
+        return '#' + link_node;
     } else {
-        link_node = "node_load('u:test.Auto:edit:__id=" + data.__id + "&table=" + data.entity + "');";
+        return "node_load('" + link_node + "');";
     }
-    return link_node;
 };
 
 
