@@ -332,7 +332,6 @@ REBASE.FormControls = function(){
                     $holder.append(form_description(cbox))
                 }
                 $div.append($holder.append(checkbox(cbox, cbox_value)));
-                console_log('item',cbox)
             }
         }
         return $div;
