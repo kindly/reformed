@@ -977,8 +977,6 @@ class QueryFromStringParam(QueryBase):
         self.search = search
         self.query = args[0]
 
-        self.query = args[0]
-
         parser = self.parser
 
         self.ast = parser.parseString(self.query)
