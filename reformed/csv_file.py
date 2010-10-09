@@ -1,7 +1,39 @@
 import csv
+import codecs
 import datetime
 import decimal
 from StringIO import StringIO
+
+## from python documentation
+class UTF8Recoder:
+    """
+    Iterator that reads an encoded stream and reencodes the input to UTF-8
+    """
+    def __init__(self, f, encoding):
+        self.reader = codecs.getreader(encoding)(f)
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        return self.reader.next().encode("utf-8")
+
+class UnicodeReader:
+    """
+    A CSV reader which will iterate over lines in the CSV file "f",
+    which is encoded in the given encoding.
+    """
+
+    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
+        f = UTF8Recoder(f, encoding)
+        self.reader = csv.reader(f, dialect=dialect, **kwds)
+
+    def next(self):
+        row = self.reader.next()
+        return [unicode(s, "utf-8") for s in row]
+
+    def __iter__(self):
+        return self
 
 
 def create_date_formats():
@@ -54,7 +86,8 @@ class CsvFile(object):
 
     def __init__(self, path = None, headings = None,
                  format = None, skip_lines = 0,
-                 buffer = None, types = None):
+                 buffer = None, types = None,
+                 dialect = None, encoding = "utf-8"):
 
         self.path = path
         self.buffer = buffer
@@ -65,10 +98,15 @@ class CsvFile(object):
         self.format = format
         self.headings_type = {}
         self.headings = []
+        self.dialect = dialect 
+        self.encoding = encoding
 
         self.guess_lines = 1000
 
     def get_dialect(self):
+
+        if self.dialect:
+            return
 
         if not self.format:
             try:
@@ -76,8 +114,7 @@ class CsvFile(object):
                     flat_file = StringIO(self.buffer)
                 else:
                     flat_file = open(self.path, mode = "rb")
-                dialect = csv.Sniffer().sniff(flat_file.read(10240))
-                csv.register_dialect(self.path or "import", dialect)
+                self.dialect = csv.Sniffer().sniff(flat_file.read(10240))
                 if self.buffer:
                     flat_file.seek(0)
             finally:
@@ -85,9 +122,12 @@ class CsvFile(object):
         else:
             if "quoting" in self.format:
                 quoting = self.format["quoting"].upper()
-                self.format["quoting"] = getattr(csv, "quoting")
-
-            csv.register_dialect(self.path or 'import', **self.format)  
+                self.format["quoting"] = getattr(csv, quoting)
+            class CustomDialect(csv.excel):
+                pass
+            for key, value in self.format.iteritems():
+                setattr(CustomDialect, key, value)
+            self.dialect = CustomDialect
 
     def get_headings(self):
 
@@ -95,15 +135,10 @@ class CsvFile(object):
             return
 
         try:
-            if self.buffer:
-                flat_file = StringIO(self.buffer)
-            else:
-                flat_file = open(self.path, mode = "rb")
-            csv_reader = csv.reader(flat_file, self.path or "import")
-            for num, line in enumerate(csv_reader):
-                if num == self.skip_lines:
-                    self.file_headings = line
-                    break
+            flat_file, csv_reader = self.get_csv_reader()
+
+            self.file_headings = csv_reader.next() 
+
         finally:
             flat_file.close()
 
@@ -213,14 +248,7 @@ class CsvFile(object):
     def guess_type(self, col):
 
         try:
-            if self.buffer:
-                flat_file = StringIO(self.buffer)
-            else:
-                flat_file = open(self.path, mode = "rb")
-
-            csv_reader = csv.reader(flat_file, self.path or "import")
-
-            self.skip(csv_reader)
+            flat_file, csv_reader = self.get_csv_reader()
 
             if self.file_headings:
                 flat_file.readline()
@@ -262,15 +290,23 @@ class CsvFile(object):
         finally:
             flat_file.close()
 
+    def get_csv_reader(self):
+
+        if self.buffer:
+            flat_file = StringIO(self.buffer)
+        else:
+            flat_file = open(self.path, mode = "rb")
+
+        csv_reader = UnicodeReader(flat_file, self.dialect, self.encoding)
+
+        self.skip(csv_reader)
+
+        return flat_file, csv_reader
+
+
     def chunk(self, lines):
         try:
-            self.lines = lines
-            if self.buffer:
-                flat_file = StringIO(self.buffer)
-            else:
-                flat_file = open(self.path, mode = "rb")
-
-            self.skip(flat_file)
+            flat_file, csv_reader = self.get_csv_reader()
 
             if self.file_headings:
                 flat_file.readline()
@@ -279,27 +315,25 @@ class CsvFile(object):
             
             chunk = 0
             counter = 0
-            total = 0
-            offset = flat_file.tell()
+            pos = 0
+            num = 0
 
-            while True:
-                line = flat_file.readline()
-                if not line:
-                    break
-                counter = counter + 1
-                total = total + 1 
-                if counter == lines:
-                    new_offset = flat_file.tell()
-                    self.chunks[chunk] = (offset, new_offset)
-                    offset = new_offset
-                    counter = 0
+            for num, line in enumerate(csv_reader):
+                if counter + 1 == lines:
+                    self.chunks[chunk] = (pos, num)
                     chunk = chunk + 1
-            new_offset = flat_file.tell()
-            self.chunks[chunk] = (offset, new_offset)
-
-            return total
+                    pos = num + 1
+                    counter = 0
+                else:
+                    counter = counter + 1
+            else:
+                if num >= pos:
+                    self.chunks[chunk] = (pos, num)
+                    pos = num + 1
+            return pos 
         finally:
-            flat_file.close()
+            if "flat_file" in locals():
+                flat_file.close()
 
     def convert(self, line):
 
@@ -331,14 +365,7 @@ class CsvFile(object):
                     no_end = False):
 
         try:
-            if self.buffer:
-                flat_file = StringIO(self.buffer)
-            else:
-                flat_file = open(self.path, mode = "r")
-
-            csv_reader = csv.reader(flat_file, self.path or "import")
-
-            self.skip(csv_reader)
+            flat_file, csv_reader = self.get_csv_reader()
             
             if self.file_headings:
                 flat_file.readline()
@@ -346,13 +373,13 @@ class CsvFile(object):
             if chunk is not None:
                 start, end = self.chunks[chunk]
             else:
-                start, end = flat_file.tell(), None
+                start, end = 0, None
             if no_end:
                 end = None
 
-            flat_file.seek(start)
-
-            for line in csv_reader:
+            for num, line in enumerate(csv_reader):
+                if num < start:
+                    continue
                 if convert:
                     line = self.convert(line)
                 if not as_dict:
@@ -363,13 +390,13 @@ class CsvFile(object):
                         result["__error"] = "wrong length line"
                         result["original_line"] = line
                         stop = (yield result)
-                        continue
-                    for num, value in enumerate(line):
-                        result[self.headings[num]] = value
-                    stop = (yield result)
+                    else:
+                        for col_num, value in enumerate(line):
+                            result[self.headings[col_num]] = value
+                        stop = (yield result)
                 if stop:
                     break
-                if end and csv_reader.line_num == self.lines:
+                if end is not None and num == end:
                     break
 
         finally:
@@ -450,25 +477,26 @@ class OrderedDict(dict, MutableMapping):
 
 if __name__ == "__main__":
 
-    input = """a{ddmmyyyy},b,c
-1.5,afdfsaffsa,01012006
-2.5,s,01012000
-1,b,21012000
-1,c,01012000"""
+    input = """a;b;c
+1.5;afdfsaffsa;01012006
+2.5;s;01012000
+1;b;21012000
+1;b;21012000
+1;c;01012000"""
 
-    csvfile = CsvFile(buffer = input)
+    csvfile = CsvFile(buffer = input, format = {"delimiter" : ";"})
     csvfile.get_dialect()
     csvfile.get_headings()
     csvfile.parse_headings()
     csvfile.guess_types()
-    csvfile.chunk(2)
+    csvfile.chunk(1)
 
     #print "here"
     #for line in csvfile.iterate_csv():
     #    print line
 
     print "here"
-    for line in csvfile.iterate_csv(1, convert = True, as_dict = True):
+    for line in csvfile.iterate_csv(0, convert = True, as_dict = True, no_end = True):
         print line
 
 
