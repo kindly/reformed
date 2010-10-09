@@ -52,6 +52,9 @@ def session(environ):
                 return
         # normal session start
         authenticate.clear_user_session()
+        # Reset session at front-end
+        global_session.session['reset'] = True
+        global_session.session.persist()
 
         log.info('creating new http session\n%s' % pprint.pformat(global_session.session))
 

@@ -553,6 +553,14 @@ REBASE.Layout = function(){
         var form_data_cache = {};
         var form_data_cache_info = {};
 
+        function clear_form_cache(){
+            // Clear the form cache.
+            form_data_cache = {};
+            form_data_cache_info = {};
+            console_log('FORM CACHE deleted');
+        }
+
+
         function process_form_data_all(forms_data, node){
             var full_form_data = {};
             var form_data;
@@ -630,6 +638,9 @@ REBASE.Layout = function(){
             },
             'debug_form_info' : function (){
                 return form_data_cache;
+            },
+            'clear_form_cache' : function (node_name){
+                clear_form_cache();
             },
             'get_form_cache_data' : function (node_name){
                 return form_data_cache_info[node_name];
@@ -827,6 +838,9 @@ REBASE.Layout = function(){
         'debug_form_info' : function (){
             return FormProcessor.debug_form_info();
         },
+        'clear_form_cache' : function (node_name){
+                FormProcessor.clear_form_cache();
+            },
         'get_form_cache_info' : function (node_name){
             return FormProcessor.get_form_cache_data(node_name);
         }
@@ -988,6 +1002,10 @@ REBASE.Functions = function (){
         REBASE.Bookmark.process(data);
     };
 
+    // Clear form cache.
+    functions.clear_form_cache = function (){
+        REBASE.Layout.clear_form_cache();
+    };
 
     function debug_form_info(){
         /* Output the current form cache information */

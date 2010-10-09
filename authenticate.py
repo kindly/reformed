@@ -39,6 +39,8 @@ def login(data, auto = False):
     global_session.session['user_id'] = user_id
     global_session.session['username'] = username
     global_session.session['permissions'] = get_permissions(user_id)
+    # Reset session at front-end
+    global_session.session['reset'] = True
     global_session.session.persist()
 
     if auto:
@@ -77,6 +79,8 @@ def clear_user_session():
     global_session.session['user_id'] = 0
     global_session.session['username'] = ''
     global_session.session['permissions'] = set()
+    # Reset session at front-end
+    global_session.session['reset'] = True
     global_session.session.persist()
 
 def check_login(login_name, password):

@@ -400,13 +400,17 @@ class NodeToken(object):
             data = self._bookmark_list(user_id)
             self.add_extra_response_function('load_bookmarks', data)
 
+        if global_session.session['reset']:
+            self.add_extra_response_function('clear_form_cache')
+            global_session.session['reset'] = False
+            global_session.session.persist()
 
         self._added_responses.append(dict(type = 'node', data = info))
         log.debug('returned data\n%s\n----- end of node processing -----' %
                   pprint.pformat(self._added_responses))
         return self._added_responses
 
-    def add_extra_response_function(self, function, data):
+    def add_extra_response_function(self, function, data = None):
         #self._added_responses.append(dict(type = 'node', data = dict(action = action, data = data)))
         response = dict(action = 'function', function = function, data = data)
         self._added_responses.append(dict(type = 'node', data = response))
