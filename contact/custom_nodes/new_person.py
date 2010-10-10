@@ -20,7 +20,7 @@ class NewPerson(Node):
         layout('spacer'), 
         layout('spacer'), 
 
-        button_box([['add', 'n:new_person.EvaluateDuplicate:_save:'],
+        button_box([['add', 'f:new_person.EvaluateDuplicate::'],
                     ['cancel', 'BACK'],]
                    ),
         params =  {"form_type": "normal"},
@@ -28,23 +28,26 @@ class NewPerson(Node):
     )
 
     def call(self, node_token):
-        data = dict(__message = "Add new person.")
+        data = dict(__message = "Add new person.", name = "fred" )
         self['main'].show(node_token, data)
 
 class EvaluateDuplicate(Node):
 
     def call(self, node_token):
         data = node_token['main'].data
-        #node_token.redirect('new_person.MakeContact:next:', node_data = data)
-        node_token.general_error(self.get_results(data))
-        #node_token.next_node('n:new_person.MakeContact', node_data = data, command = 'next')
+        node_token.redirect('new_person.MakeContact::', node_data = data)
+        #node_token.general_error(str(self.get_results(data)))
+        #if not_results:
+        #node_token.next_node('f:new_person.MakeContact', node_data = data, command = 'next')
 
     def get_results(self, data):
+
 
         index = r.application.text_index
         searcher = index.searcher()
 
         sn = r.search_names
+        si = r.search_ids
         terms = []
 
         names = data["name"].split()
@@ -60,6 +63,8 @@ class EvaluateDuplicate(Node):
         postcode = parsers.postcode(communication)
         dob = parsers.date(communication)
         ana = whoosh.analysis.StandardAnalyzer()
+
+        email_terms = []
 
         if email:
             email_terms = [token.text for token in ana(email[1])]
@@ -78,13 +83,38 @@ class EvaluateDuplicate(Node):
 
         result = searcher.search(query)
 
-        return repr(query) + "\n\n" + "\n\n".join([repr(a) for a in result])
-
-
-
-
+        core_ids = [a["core_id"] for a in result]
         
+        query = {"_core_id": ("in", core_ids)}
 
+        results = r.search("search_info",
+                           query,
+                           order_by = "_core_id")
+        
+        current_core_id = None
+
+        current_result = {}
+
+        result_lookup = {}
+
+        for result in results:
+            result_core_id = result.get("_core_id")
+            if current_core_id != result_core_id and current_core_id:
+                result_lookup[current_core_id] = current_result
+                current_result = {}
+                current_core_id = result_core_id
+            else:
+                current_core_id = result_core_id
+
+            value = result.get("value")
+            field = str(result.get("field"))
+
+            current_result[field] = value
+
+        else:
+            result_lookup[result_core_id] = current_result
+
+        return result_lookup
 
 
 class MakeContact(Node):
