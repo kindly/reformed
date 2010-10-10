@@ -69,11 +69,6 @@ function item_remove_error(jquery_obj){
     }
 }
 
-function get_status(call_string){
-    node_load(call_string);
-}
-
-
 var status_timer;
 
 function job_processor_status(data, node, root){
@@ -89,7 +84,7 @@ function job_processor_status(data, node, root){
     if (!data.data || !data.data.end){
         var node_string = "/:" + node + ":_status:id=" + data.data.id;
         status_timer = setTimeout(function (){
-                                      get_status(node_string);
+                                      node_load(node_string);
                                   }, 1000);
     }
 }
