@@ -911,29 +911,29 @@ $.Grid2 = function(input, form_data, row_data, extra_defaults){
             return html.join('');
         }
 
-    function correct_value(item, value){
+        function correct_value(item, value){
 
-        // correct data value if needed
-        switch (item.data_type){
-            case 'DateTime':
-            case 'Date':
-                if (value !== null){
-                    return Date.ISO(value).makeLocaleString();
-                } else {
-                    return null;
-                }
-                break;
-            case 'Boolean':
-                if (value){
-                    return "True";
-                } else {
-                    return "False";
-                }
-                break;
-            default:
-                return HTML_Encode_Clear(value);
+            // correct data value if needed
+            switch (item.data_type){
+                case 'DateTime':
+                case 'Date':
+                    if (value !== null){
+                        return Date.ISO(value).makeLocaleString();
+                    } else {
+                        return null;
+                    }
+                    break;
+                case 'Boolean':
+                    if (value){
+                        return "True";
+                    } else {
+                        return "False";
+                    }
+                    break;
+                default:
+                    return HTML_Encode_Clear(value);
+            }
         }
-    }
 
         function build_data(){
             var html = [];
