@@ -217,7 +217,6 @@ class AddCommunication(Action):
             communication.communication_type = table.name
             object._rel_communication = communication
             core_store = session.object_store.get("core")
-            ## optimisation maybe slower for large amounts of core objects
             core = session.query(database["_core"]).get(object._core_id)
             communication._rel__core = core
         elif event_type == 'delete':
@@ -227,9 +226,9 @@ class AddCommunication(Action):
         if hasattr(object, "defaulted") and object.defaulted:
             communication.defaulted_date = datetime.datetime.now()
 
-        session.add(communication)
-        session.add(object)
-        session.add(core)
+        session.add_no_validate(communication)
+        session.add_no_validate(object)
+        session.add_no_validate(core)
 
 
 class Counter(Action):
@@ -486,8 +485,8 @@ class UpdateCommunicationInfo(Action):
         info_obj.original_id = default_obj.id
         info_obj.value = text
         session.object_store["communication_info"].add(info_obj)
-        session.save(info_obj)
-        session.save(core)
+        session.add_no_validate(info_obj)
+        session.add_no_validate(core)
 
 
 class UpdateSearch(Action):
@@ -587,8 +586,8 @@ class UpdateSearch(Action):
 
         search_pending = database.get_instance("search_pending")
         search_pending._core_id = object._core_id
-        session.save(search_pending)
+        session.add_no_validate(search_pending)
 
         search_obj.original_id = object.id
         search_obj.value = text
-        session.save(search_obj)
+        session.add_no_validate(search_obj)
