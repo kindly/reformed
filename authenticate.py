@@ -34,6 +34,29 @@ def login(data, auto = False):
     """Set user http session details
     data: sa user object"""
 
+    set_user_session(data)
+
+    # sys admin stuff
+    user_perms = global_session.session.get('permissions')
+    # Allow impersonation of other user account.  This has to be done
+    # outside of the normal set permissions logic.
+    # FIXME we want an actual permission for this.
+    if check_permission('SysAdmin'):
+        user_id = data.get('id')
+        username = data.get('login_name')
+        # These items in the user session allow impersonation.
+        global_session.session['real_user_id'] = user_id
+        global_session.session['real_username'] = username
+        global_session.session.persist()
+
+    if auto:
+        log.info('Login %s (%s)' % (user_id, username))
+    else:
+        log.info('Login %s (%s) automatic' % (user_id, username))
+
+def set_user_session(data):
+    """ This sets permissions etc for the user session."""
+
     user_id = data.get('id')
     username = data.get('login_name')
     global_session.session['user_id'] = user_id
@@ -43,10 +66,23 @@ def login(data, auto = False):
     global_session.session['reset'] = True
     global_session.session.persist()
 
-    if auto:
-        log.info('Login %s (%s)' % (user_id, username))
+
+def impersonate(core_id = None, id = None):
+    # TODO double check we are authorised to use.
+
+    if not global_session.session['real_user_id']:
+        return False
+    r = global_session.database
+    if core_id:
+        data_out = r.search_single_data('user', '_core_id = ?', values = [core_id])
+    elif id:
+        data_out = r.search_single_data('user', 'id = ?', values = [id])
     else:
-        log.info('Login %s (%s) automatic' % (user_id, username))
+        return False
+    set_user_session(data_out)
+    user_name = data_out['name']
+    return True
+
 
 def forbidden(node_token):
     if global_session.session['user_id']:
@@ -79,6 +115,8 @@ def clear_user_session():
     global_session.session['user_id'] = 0
     global_session.session['username'] = ''
     global_session.session['permissions'] = set()
+    global_session.session['real_user_id'] = None
+    global_session.session['real_username'] = None
     # Reset session at front-end
     global_session.session['reset'] = True
     global_session.session.persist()
