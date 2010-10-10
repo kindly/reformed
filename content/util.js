@@ -649,8 +649,10 @@ $.Util.selectStyleSheet = function (type, value){
                 }
 
     if (type == 'size' && sizes[value]){
-        var new_style = "td, body, input, select, button, div.but_dd_f, div.CHECKBOX, label.form_label, textarea, th {font-size:" + sizes[value] + "em;}";
-        new_style += "td input{font-size:1em;}";
+        var new_style = '';
+        new_style += "td input, div{font-size:1em;}";
+        new_style += "td, body, input, select, button, dic.f_sub, div.but_dd_f, div.CHECKBOX, label.form_label, textarea, th, .ac_results li {font-size:" + sizes[value] + "em;}";
+        new_style += ".ac_results li { line-height:" + sizes[value] + "em;}";
         $('#style_size').text(new_style);
     }
 
