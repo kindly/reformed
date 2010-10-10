@@ -50,6 +50,7 @@ def initialise(application):
 
         title_field = 'name',
         table_type = "system",
+        default_node = 'user.User',
     )
 
     entity("user_group",database,
@@ -60,6 +61,7 @@ def initialise(application):
         Text("notes", length = 4000),
         Boolean("active", default = True, mandatory = True),
         Integer("access_level", default = 0),
+        default_node = 'user.UserGroup',
 
         table_type = "system",
         title_field = 'name'
