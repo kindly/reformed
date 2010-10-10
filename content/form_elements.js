@@ -37,6 +37,16 @@
 
 REBASE.FormControls = function(){
 
+
+    var local_row_data = {};
+    var control_build_functions;
+    var subforms = [];
+
+    var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
+    var set_class_list = $.Util.set_class_list;
+    var process_html = $.Util.process_html;
+
+
     function add_label(item, prefix){
         if (item.title){
             return '<label class="form_label" for="' + prefix + item.name + '">' + item.title + '</label>';
@@ -61,10 +71,11 @@ REBASE.FormControls = function(){
                 break;
             case 'Boolean':
                 if (value){
-                    return "True"
+                    return "True";
                 } else {
-                    return "False"
+                    return "False";
                 }
+                break;
             default:
                 return HTML_Encode_Clear(value);
         }
@@ -106,9 +117,15 @@ REBASE.FormControls = function(){
         return $control;
     }
 
-
     function link(item, value){
         return '<a href="#/' + item.node + '"' + set_class_list(item, 'link') + ' onclick="node_load(\'' + item.node + '\',this);return false">' + item.title + '</a>';
+    }
+
+    function result_link(item, value, base_link){
+        var link_node = $.Util.build_node_link(local_row_data, base_link);
+        var link_node_href = $.Util.build_node_link_href(local_row_data, base_link);
+        var x = '<a href="' + link_node_href + '"' + set_class_list(item, 'link') + ' onclick="' + link_node + 'return false;">' + (value ? value : 'untitled') + '</a>';
+        return x;
     }
 
     function result_link_list(item, value){
@@ -127,33 +144,30 @@ REBASE.FormControls = function(){
         return temp;
     }
 
-    function result_link(item, value, base_link){
-        var link_node = $.Util.build_node_link(local_row_data, base_link);
-        var link_node_href = $.Util.build_node_link_href(local_row_data, base_link);
-        var x = '<a href="' + link_node_href + '"' + set_class_list(item, 'link') + ' onclick="' + link_node + 'return false;">' + (value ? value : 'untitled') + '</a>';
-        return x;
-    }
-
     function result_image(item, value){
+        var size;
         var link_node = "u:" + REBASE.application_data.bookmarks[local_row_data.entity].node;
-        link_node += ":edit:__id=" + local_row_data.__id
+        link_node += ":edit:__id=" + local_row_data.__id;
         if (item.size){
             size = '.' + item.size;
         } else {
             size = '.m';
         }
         var $control = '<div' + set_class_list(item, 'HOLDER') + ' onclick="node_load(\'' + link_node + '\',this);" ><img src="/attach?' + value + size + '" /></div>';
-        return $control
+        return $control;
     }
 
-
+    function button(item, value){
+        var target_form = item.target_form || '';
+        return '<button' + set_class_list(item, 'button') + ' onclick="node_load(\'' + item.node + '\',this,\'' + target_form + '\');return false">' + item.title + '</button>';
+    }
 
     function button_box(item, value){
         var html = '';
         var but = {};
         var buttons = item.buttons;
         if (item.css){
-            button.css = item.css;
+            but.css = item.css;
         }
         for (var i = 0, n = buttons.length; i < n; i++){
             but.node = buttons[i][1];
@@ -172,24 +186,6 @@ REBASE.FormControls = function(){
         return '<a href="#/' + item.node + '"' + set_class_list(item, 'link') + ' onclick="node_load(\'' + item.node + '\',this);return false">' + item.title + '</a>';
     }
 
-    function button(item, value){
-        var target_form = item.target_form || '';
-        return '<button' + set_class_list(item, 'button') + ' onclick="node_load(\'' + item.node + '\',this,\'' + target_form + '\');return false">' + item.title + '</button>';
-    }
-
-    function dropdown_code(item, value){
-        var descriptions = item.autocomplete.descriptions;
-        var keys = item.autocomplete.keys;
-        if (value !== null){
-            value = value[1];
-        }
-        return dropdown_core(item, value, descriptions);
-    }
-
-    function dropdown(item, value){
-        return dropdown_core(item, value, item.autocomplete);
-    }
-
     function dropdown_core(item, value, autocomplete){
         var $control;
         var class_list = 'dropdown_f';
@@ -206,16 +202,29 @@ REBASE.FormControls = function(){
         return $control;
     }
 
+    function dropdown_code(item, value){
+        var descriptions = item.autocomplete.descriptions;
+        var keys = item.autocomplete.keys;
+        if (value !== null){
+            value = value[1];
+        }
+        return dropdown_core(item, value, descriptions);
+    }
+
+    function dropdown(item, value){
+        return dropdown_core(item, value, item.autocomplete);
+    }
+
     function autocomplete(item, value){
         var $control;
-        var autocomplete = '/ajax/' + item.autocomplete;
+        var autocomplete_url = '/ajax/' + item.autocomplete;
         var class_list = 'dropdown_f';
         value = correct_value(item, value);
         if (item.css){
             class_list += ' ' + item.css;
         }
         $control = $(add_label(item, 'rf_') + '<span class="' + class_list + ' complex"><input id="rf_' + item.name + '" class="DROPDOWN ' + class_list + '" value="' + value + '" /></span>');
-        $control.find('input').autocomplete(autocomplete, {dropdown : false});
+        $control.find('input').autocomplete(autocomplete_url, {dropdown : false});
         return $control;
     }
 
@@ -227,9 +236,9 @@ REBASE.FormControls = function(){
 
     function file_upload(item, value){
         var $control = $(add_label(item, 'rf_') + '<div' + set_class_list(item, 'HOLDER') + '"><input class="img_uploader" type="file" /></div>');
-        var data = {type : 'normal', value : value}
+        var data = {type : 'normal', value : value};
         $control.find('input').file_upload(data);
-        return $control
+        return $control;
     }
 
     function textarea(item, value){
@@ -279,7 +288,6 @@ REBASE.FormControls = function(){
         return '<div class="f_message' + css + '">' + message + '</div>';
     }
 
-
     function htmlarea(item, value){
         return add_label(item, 'rf_') + '<div' + set_class_list(item) + '>' + value + '</div>';
     }
@@ -296,6 +304,7 @@ REBASE.FormControls = function(){
     }
 
     function checkbox(item, value){
+        var $control;
         var class_list = '';
         if (item.css){
             class_list += ' ' + item.css;
@@ -324,6 +333,7 @@ REBASE.FormControls = function(){
         var holder;
         var code;
         var cbox_value;
+        var $holder;
         var m;
         if (value){
             m = value.length;
@@ -332,8 +342,8 @@ REBASE.FormControls = function(){
         }
         if (codes){
             for (var i = 0, n = codes.length; i < n; i++){
-                code = codes[i][0]
-                cbox_value = false
+                code = codes[i][0];
+                cbox_value = false;
                 for(var j = 0; j < m; j++){
                     if (value[j] == code){
                         cbox_value = true;
@@ -346,14 +356,13 @@ REBASE.FormControls = function(){
                 $holder = $('<div class="f_codegroup_holder">');
                 if (codes[i].length > 2){
                     cbox.description = codes[i][2];
-                    $holder.append(form_description(cbox))
+                    $holder.append(form_description(cbox));
                 }
                 $div.append($holder.append(checkbox(cbox, cbox_value)));
             }
         }
         return $div;
     }
-
 
     function info_area(item, value){
         if (value){
@@ -362,7 +371,6 @@ REBASE.FormControls = function(){
         return value;
     }
 
-
     function link_new(item, value){
         var link_node = value[1];
         value = value[0];
@@ -370,7 +378,6 @@ REBASE.FormControls = function(){
         var x = '<a href="#/' + link_node + '"' + set_class_list(item, 'link') + ' onclick="node_load(\'' + link_node + '\',this);return false">' + (value ? value : '&nbsp;') + '</a>';
         return x;
     }
-
 
     function link_list(item, value){
         var values;
@@ -398,19 +405,20 @@ REBASE.FormControls = function(){
         }
 
         var $control = $(add_label(item, 'rf_') + '<div' + set_class_list(item, 'HOLDER') + '"><label class="img_upload_label"><input class="img_uploader" type="file" tabindex="-1" /></label></div>');
-        var data = {type : 'image', value : value, size : size}
+        var data = {type : 'image', value : value, size : size};
         $control.find('input').file_upload(data);
-        return $control
+        return $control;
     }
 
     function image_ro(item, value){
+        var size;
         if (item.size){
             size = '.' + item.size;
         } else {
             size = '.m';
         }
         var $control = '<div' + set_class_list(item, 'HOLDER') + '><img src="/attach?' + value + size + '" /></div>';
-        return $control
+        return $control;
     }
 
     function build(readonly, item, value){
@@ -442,7 +450,7 @@ REBASE.FormControls = function(){
 
     // these are the available functions
     // the 3rd element set to a true value will stop the f_sub div being added
-    var control_build_functions = {
+    control_build_functions = {
         'normal': [input_box, plaintext],
         'message_area': [message_area, message_area],
         'intbox': [intbox, plaintext],
@@ -469,15 +477,7 @@ REBASE.FormControls = function(){
         'file_upload' : [file_upload, file_upload],
         'image' : [image, image_ro, true],
         'autocomplete' : [autocomplete, plaintext]
-    }
-
-    var local_row_data = {};
-    var subforms = [];
-
-    var HTML_Encode = $.Util.HTML_Encode;
-    var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
-    var set_class_list = $.Util.set_class_list;
-    var process_html = $.Util.process_html;
+    };
 
     return {
         'build' : function(readonly, item, value){
@@ -492,9 +492,8 @@ REBASE.FormControls = function(){
         'get_subforms' : function (){
             return subforms;
         }
-    }
-
-}()
+    };
+}();
 
 
 
@@ -565,49 +564,6 @@ REBASE.Layout = function(){
             console_log('FORM CACHE deleted');
         }
 
-
-        function process_form_data_all(forms_data, node){
-            var full_form_data = {};
-            var form_data;
-            for (var form in forms_data){
-                form_data = {};
-                form_data.data = forms_data[form].data
-                form_data.paging = forms_data[form].paging
-                form_data.form = process_form_data(forms_data[form].form, node)
-                full_form_data[form] = form_data;
-            }
-            return full_form_data;
-        }
-
-        function process_form_data(form_data, node){
-            /* If we have a suitable version in the form cache
-             * then just return that else normalise the form.
-             */
-            var cache_name;
-            if (form_data.cache_form !== undefined){
-                cache_name = form_data.cache_node + '|' + form_data.cache_form;
-                return form_data_cache[cache_name];
-            }
-
-            form_data = form_data_normalise(form_data, node)
-            // form caching
-            cache_name = node + '|' + form_data.name;
-            if (!form_data.version){
-                // remove from cache if it exists
-                if (form_data_cache_info[node] !== undefined){
-                    delete form_data_cache_info[node][form_data.name];
-                }
-            } else {
-                // store form in cache
-                form_data_cache[cache_name] = form_data;
-                if (!form_data_cache_info[node]){
-                    form_data_cache_info[node] = {};
-                }
-                form_data_cache_info[node][form_data.name] = form_data.version;
-            }
-            return form_data;
-        }
-
         function form_data_normalise(form_data, node){
             /* generally clean up the form data to
              * make things easier for us later on.
@@ -636,10 +592,51 @@ REBASE.Layout = function(){
             return form_data;
         }
 
+        function process_form_data(form_data, node){
+            /* If we have a suitable version in the form cache
+             * then just return that else normalise the form.
+             */
+            var cache_name;
+            if (form_data.cache_form !== undefined){
+                cache_name = form_data.cache_node + '|' + form_data.cache_form;
+                return form_data_cache[cache_name];
+            }
+            form_data = form_data_normalise(form_data, node);
+            // form caching
+            cache_name = node + '|' + form_data.name;
+            if (!form_data.version){
+                // remove from cache if it exists
+                if (form_data_cache_info[node] !== undefined){
+                    delete form_data_cache_info[node][form_data.name];
+                }
+            } else {
+                // store form in cache
+                form_data_cache[cache_name] = form_data;
+                if (!form_data_cache_info[node]){
+                    form_data_cache_info[node] = {};
+                }
+                form_data_cache_info[node][form_data.name] = form_data.version;
+            }
+            return form_data;
+        }
+
+        function process_form_data_all(forms_data, node){
+            var full_form_data = {};
+            var form_data;
+            for (var form in forms_data){
+                form_data = {};
+                form_data.data = forms_data[form].data;
+                form_data.paging = forms_data[form].paging;
+                form_data.form = process_form_data(forms_data[form].form, node);
+                full_form_data[form] = form_data;
+            }
+            return full_form_data;
+        }
+
         // exported functions
         return {
             'process' : function (form_data, node_data){
-                return process_form_data_all(form_data, node_data)
+                return process_form_data_all(form_data, node_data);
             },
             'debug_form_info' : function (){
                 return form_data_cache;
@@ -650,8 +647,8 @@ REBASE.Layout = function(){
             'get_form_cache_data' : function (node_name){
                 return form_data_cache_info[node_name];
             }
-        }
-    }()
+        };
+    }();
 
 
     /*
@@ -661,35 +658,32 @@ REBASE.Layout = function(){
      *   jgs  -"=      -"=      -"=
      */
 
-    function add_forms_to_layout(packet){
-        /* Create a new layout or update form(s)
-         * depending on the data provided.
-         * If the layout_type is provided then we
-         * build a whole new layout.  If not we just replace the forms
-         * This function is EXPORTED.
-         */
 
-        // retrieve layout data
-        var layout_data = packet.layout;
-        // Store the form data.
-        forms = FormProcessor.process(packet.data, packet.node);
-        layout_title = layout_data.layout_title;
-
-        if (layout_data.layout_dialog){
-            REBASE.Dialog.dialog(layout_data.layout_title, forms[layout_data.layout_dialog]);
-        } else {
-
-        REBASE.Dialog.close();
-        if (layout_data.layout_type){
-            // Layout has changed so update our stored data.
-            layout = layout_data;
-            create_layout();
-        } else {
-            // Update the layout forms
-            layout.layout_forms = layout_data.layout_forms;
-            replace_forms();
+    function set_layout_title_and_footer(){
+        if (layout_title){
+            $header.text(layout_title);
         }
+        var footer = 'footer';
+        $footer.text(footer);
+    }
+
+    function make_form(form_name){
+        /* create the form requested and return it as a JQuery object */
+        var form = forms[form_name].form;
+        var data = forms[form_name].data;
+        var paging = forms[form_name].paging;
+        var form_type = forms[form_name].form.form_type;
+
+        var $div = $('<div class="FORM_HOLDER" id="form_' + (form_count++) + '"/>');
+        // FIXME move to switch statement
+        if (form_type == 'grid'){
+            $div.grid2(form, data, paging);
+        } else if (form_type == 'action' || form_type == 'results'){
+            $div.input_form(form, data, paging);
+        } else {
+            $div.input_form(form, data, paging);
         }
+        return $div;
     }
 
     function replace_forms(){
@@ -710,7 +704,6 @@ REBASE.Layout = function(){
         }
         set_layout_title_and_footer();
     }
-
 
     function create_layout(){
         /* Build the layout (including all contained forms)
@@ -771,7 +764,6 @@ REBASE.Layout = function(){
             $footer = $('<div class="LAYOUT_FOOTER"></div>');
             $layout.append($footer);
             return $layout;
-
         }
 
         form_count = 0;
@@ -799,38 +791,37 @@ REBASE.Layout = function(){
         // Replace root DOM elements content with the new layout.
         $(root).empty();
         $(root).append($layout);
-
     }
 
-    function set_layout_title_and_footer(){
-        if (layout_title){
-            $header.text(layout_title);
-        }
-        footer = 'footer'
-        $footer.text(footer);
-    }
+    function add_forms_to_layout(packet){
+        /* Create a new layout or update form(s)
+         * depending on the data provided.
+         * If the layout_type is provided then we
+         * build a whole new layout.  If not we just replace the forms
+         * This function is EXPORTED.
+         */
 
-    function make_form(form_name){
-        /* create the form requested and return it as a JQuery object */
-        var form = forms[form_name].form
-        var data = forms[form_name].data
-        var paging = forms[form_name].paging;
-        var form_type = forms[form_name].form.form_type;
+        // retrieve layout data
+        var layout_data = packet.layout;
+        // Store the form data.
+        forms = FormProcessor.process(packet.data, packet.node);
+        layout_title = layout_data.layout_title;
 
-        var $div = $('<div class="FORM_HOLDER" id="form_' + (form_count++) + '"/>');
-        // FIXME move to switch statement
-        if (form_type == 'grid'){
-            $div.grid2(form, data, paging);
-        } else if (form_type == 'action' || form_type == 'results'){
-            $div.input_form(form, data, paging);
+        if (layout_data.layout_dialog){
+            REBASE.Dialog.dialog(layout_data.layout_title, forms[layout_data.layout_dialog]);
         } else {
-            $div.input_form(form, data, paging);
+            REBASE.Dialog.close();
+            if (layout_data.layout_type){
+                // Layout has changed so update our stored data.
+                layout = layout_data;
+                create_layout();
+            } else {
+                // Update the layout forms
+                layout.layout_forms = layout_data.layout_forms;
+                replace_forms();
+            }
         }
-        return $div;
-
     }
-
-
     // exported functions
     return {
         'update_layout' : function (packet){
@@ -849,9 +840,8 @@ REBASE.Layout = function(){
         'get_form_cache_info' : function (node_name){
             return FormProcessor.get_form_cache_data(node_name);
         }
-    }
-
-}()
+    };
+}();
 
 /*
  *           ('>
@@ -889,10 +879,9 @@ REBASE.Dialog = function (){
         is_setup = true;
     }
 
-
     function open(title, data){
         if (!is_setup){
-            setup()
+            setup();
         }
         // If we have sent a string as data then we just want
         // to process it for any markdown and display it.
@@ -901,12 +890,12 @@ REBASE.Dialog = function (){
             $dialog_box.html(process_html(data));
         } else {
             // assuming it is form_data
-            var form = data.form
-            var form_data = data.data
+            var form = data.form;
+            var form_data = data.data;
 
             $dialog_box.input_form(form, form_data);
         }
-        $dialog_box.dialog("option", "title", title)
+        $dialog_box.dialog("option", "title", title);
         $dialog_box.dialog('open');
         is_open = true;
     }
@@ -920,20 +909,19 @@ REBASE.Dialog = function (){
 
     function confirm_action(decode, title, message){
         if (!is_setup){
-            setup()
+            setup();
         }
         dialog_decode = decode;
         var $form = $('<div class="INPUT_FORM"></div>');
         // clear any form data
         REBASE.FormControls.set_data({});
         $form.append(REBASE.FormControls.build(true, {control:'message_area'}, message));
-        $form.append('<div class="f_control_holder"><div class="f_sub"><button onclick="REBASE.Dialog.confirm_action_return(false);return false" class="button">No</button><button onclick="REBASE.Dialog.confirm_action_return(true);return false" class="button">Yes</button></div></div>')
+        $form.append('<div class="f_control_holder"><div class="f_sub"><button onclick="REBASE.Dialog.confirm_action_return(false);return false" class="button">No</button><button onclick="REBASE.Dialog.confirm_action_return(true);return false" class="button">Yes</button></div></div>');
         $system_dialog_box.empty();
         $system_dialog_box.append($form);
 
-        $system_dialog_box.dialog("option", "title", title)
+        $system_dialog_box.dialog("option", "title", title);
         $system_dialog_box.dialog('open');
-
     }
 
     function confirm_action_return(result){
@@ -958,10 +946,8 @@ REBASE.Dialog = function (){
         'confirm_action_return' : function(result){
             confirm_action_return(result);
         }
-
-    }
-
-}()
+    };
+}();
 
 
 /*
@@ -980,6 +966,8 @@ REBASE.Dialog = function (){
 
 REBASE.Functions = function (){
 
+    // hash of functions available
+    var functions = {};
 
     function call(fn, data){
         /* calls function if it exists */
@@ -991,8 +979,17 @@ REBASE.Functions = function (){
         }
     }
 
-    // hash of functions available
-    var functions = {}
+    function debug_form_info(){
+        /* Output the current form cache information */
+        var info = REBASE.Layout.debug_form_info();
+        $('#main').empty();
+        $('#main').append('<p><b>Cached form info</b><div id="treeview_control">		<a title="Collapse the entire tree below" href="#"><img src="jquery/images/minus.gif" /> Collapse All</a> | <a title="Expand the entire tree below" href="#"><img src="jquery/images/plus.gif" /> Expand All</a> | <a title="Toggle the tree below, opening closed branches, closing open branches" href="#">Toggle All</a></div></p>');
+        var $treeview = $(REBASE.Utils.treeview_hash(info)).treeview({collapsed: true, control : '#treeview_control'});
+        $('#main').append($treeview);
+    }
+
+
+    // FUNCTIONS
 
     functions.debug_form_info = debug_form_info;
 
@@ -1012,24 +1009,14 @@ REBASE.Functions = function (){
         REBASE.Layout.clear_form_cache();
     };
 
-    function debug_form_info(){
-        /* Output the current form cache information */
-        var info = REBASE.Layout.debug_form_info();
-        $('#main').empty();
-        $('#main').append('<p><b>Cached form info</b><div id="treeview_control">		<a title="Collapse the entire tree below" href="#"><img src="jquery/images/minus.gif" /> Collapse All</a> | <a title="Expand the entire tree below" href="#"><img src="jquery/images/plus.gif" /> Expand All</a> | <a title="Toggle the tree below, opening closed branches, closing open branches" href="#">Toggle All</a></div></p>');
-        var $treeview = $(REBASE.Utils.treeview_hash(info)).treeview({collapsed: true, control : '#treeview_control'});
-        $('#main').append($treeview);
-    }
-
 
     // exported functions
     return {
         'call' : function (fn, data){
             call(fn, data);
         }
-    }
-
-}()
+    };
+}();
 
 /*
  *           ('>
@@ -1076,7 +1063,6 @@ REBASE.Utils = function (){
         }
         output.push('</ul>');
         return output.join('\n');
-
     }
 
     // exported functions
@@ -1084,7 +1070,5 @@ REBASE.Utils = function (){
         'treeview_hash' : function (data, css_class){
             return treeview_hash(data, css_class);
         }
-    }
-
-
-}()
+    };
+}();
