@@ -326,6 +326,10 @@ class NodeToken(object):
         """ Helper function send error to front end. """
         self._set_action('general_error', data = error)
 
+    def message(self, message):
+        """ Helper function send error to front end. """
+        self._set_action('message', data = message)
+
     def _set_action(self, action, **kw):
         """ Set the action for the node token. """
         if self._action and not(action == self._action and action == 'form'):
@@ -390,6 +394,9 @@ class NodeToken(object):
             data = global_session.sys_info
             data['__user_id'] = user_id
             data['__username'] = global_session.session['username']
+            if global_session.session['username']:
+                data['__real_user_id'] = global_session.session['real_user_id']
+                data['__real_user_name'] = global_session.session['real_username']
             self.add_extra_response_function('application_data', data)
             refresh_frontend = True
         else:
