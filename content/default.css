@@ -19,7 +19,7 @@ p {
 }
 
 .label {
-	color:#333366;
+	color:#336;
 	width:100px;
     float:left;
 }
@@ -81,6 +81,8 @@ div {
     border-color:#BBB #999 #999 #BBB;
     border-style:solid;
     border-width:1px 1px 1px 1px;
+    -moz-background-size:100% 100%;
+    -webkit-background-size:100% 100%;
 }
 #resizer > span:active {
     position:relative;
@@ -281,7 +283,7 @@ tr.inactive input{
     float:left;
 }
 .action > a {
-    border-color:#BBBBBB #999999 #999999 #BBBBBB;
+    border-color:#BBB #999 #999 #BBB;
     border-style:solid;
     border-width:1px 1px 1px 1px;
     color:black;
@@ -338,12 +340,12 @@ tr.inactive input{
 
 
 td input.error {
-	background-color:#FFCCEE;
+	background-color:#FCE;
 }
 
 
 div.form_body > div > input.error {
-	background-color:#FFCCEE;
+	background-color:#FCE;
 }
 
 .error_span{
@@ -420,7 +422,7 @@ td input {
 
 
 .null {
-    color:#BBBBBB;
+    color:#BBB;
 }
 
 
@@ -467,7 +469,7 @@ td {
 
 td input {
     margin : 0;
-    border-color:#999999;
+    border-color:#999;
 }
 
 .scroller {
@@ -496,13 +498,13 @@ td input {
 }
 .scroller-title {
     background-color:#339;
-    color:#BBBBBB;
+    color:#BBB;
     text-align:center;
     font-weight:bold;
 }
 .scroller-foot {
     background-color:#339;
-    color:#BBBBBB;
+    color:#BBB;
     overflow:hidden;
     position:absolute;
 }
@@ -511,7 +513,7 @@ td input {
     display:none;
 }
 .scroller-foot a {
-    color:#BBBBBB;
+    color:#BBB;
 }
 
 .scroller-resizer {
@@ -549,7 +551,7 @@ height:1.6em;
 float:left;
 position:relative;
 width:1.6em;
-border:1px solid #999999;
+border:1px solid #999;
 right:2px;
 }
 
@@ -626,11 +628,11 @@ label.form_label, span.form_label{
     padding-top:1px;
     padding-bottom:1px;
     float:left;
-    color:#333333;
+    color:#333;
 }
 
 textarea {
-    border:1px solid #999999;
+    border:1px solid #999;
     width:200px;
 }
 
@@ -796,10 +798,10 @@ div.f_control_holder button{
 div.f_control_holder .inputbox{
     float:left;
     padding-left:0.2em;
-    border-color:#999999;
+    border-color:#999;
     width:14em;
     height:1.6em;
-    color:#333333;
+    color:#333;
     padding-top:0px;
     padding-bottom:0px;
 }
@@ -808,17 +810,17 @@ div.f_control_holder .dropdown_input{
     float:left;
     padding-left:0.2em;
     padding-right:0.2em;
-    border-color:#999999;
+    border-color:#999;
     width:12.2em;
     height:1.6em;
-    color:#333333;
+    color:#333;
     padding-top:0px;
     padding-bottom:0px;
 }
 
 div.CHECKBOX input{
     float:left;
-    border:1px solid #999999;
+    border:1px solid #999;
     padding-top:1px;
     width:1em;
     height:1em;
@@ -842,7 +844,7 @@ div.f_codegroup_holder div.f_description{
 
 div.f_message {
     color:#F6F6F6;
-    border: 1px solid #999999;
+    border: 1px solid #999;
     background-color:#515151;
     /*color:#DDDD00;
     background-color:#248A00; */
@@ -867,8 +869,8 @@ div.f_message_title {
 #ajax_info {
     margin-left:25px;
     background-color:yellow;
-    color:#333366;
-    border:1px solid #333366;
+    color:#336;
+    border:1px solid #336;
     padding:1px;
     display:none;
 }
@@ -953,7 +955,7 @@ div.record_info > div {
 .RESULT_IMG {
     float:left;
     padding:1px;
-    border:1px solid #BBBBBB;
+    border:1px solid #BBB;
     margin:5px;
     height:75px;
     width:75px;
@@ -975,7 +977,7 @@ div.record_info > div {
     position:relative;
     width:300px;
     height:300px;
-    border: 2px solid #999999;
+    border: 2px solid #999;
     padding:3px;
     text-align:center;
     display: table-cell;
