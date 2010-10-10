@@ -1,5 +1,5 @@
 
-$.Buttons.action_hash = {
+REBASE.LayoutManager.action_hash({
     home: ['home', 'go-home.png', 'h', 'general', 'n:bug.Page:view:page=home'],
     new_ticket: ['new ticket', 'go-home.png', 'h', 'general', 'n:bug.Ticket:new'],
     new_user: ['new user', 'go-home.png', 'h', 'general', 'n:user.User:new'],
@@ -14,8 +14,8 @@ $.Buttons.action_hash = {
     sys_info: ['sys info', 'go-home.png', 'h', 'general', 'n:bug.SysInfo:list'],
     list_user: ['list Users', 'go-home.png', 'h', 'general', 'n:user.User:list'],
     list_page: ['list Pages', 'go-home.png', 'h', 'general', 'n:bug.Page:list']
-};
+});
 
 
-$.Buttons.action_list = ['home', 'new_ticket', 'user_admin', 'user_about_me', 'sys_info', 'list_page', 'list_tickets'];
+REBASE.LayoutManager.action_list(['home', 'new_ticket', 'user_admin', 'user_about_me', 'sys_info', 'list_page', 'list_tickets']);
 
