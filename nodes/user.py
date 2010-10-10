@@ -1,11 +1,12 @@
 import reformed.search
 from reformed.custom_exceptions import SingleResultError
 
-from node import TableNode
+from node import TableNode, Node
 from form import form
 from page_item import *
 from formencode import validators
 import authenticate
+from reformed.saveset import SaveItem
 
 from global_session import global_session
 r = global_session.database
@@ -87,9 +88,6 @@ class User(TableNode):
         layout('box_start'),
         password('newpassword'),
         password('newpassword2'),
-        buttons('about_me',
-               [['Save Changes', 'user.User:_save_password_change:'],
-               ['cancel', 'BACK']]),
         layout('box_end'),
         params = {"form_type": "action"}
     )
@@ -133,6 +131,17 @@ class User(TableNode):
 
         table = "user",
         params = {"form_type": "action"}
+    )
+
+    listing = form(
+        result_link('title'),
+        info('summary', data_type = 'info'),
+        result_link_list([['Edit', 'u:user.User:edit'],
+                            ['Delete', ':user.User:_delete'],
+                            ['Change Password', 'd:user.User:change_other_password'],
+                            ['Impersonate', ':user.Impersonate:_impersonate']]),
+        form_type = "results",
+        layout_title = "results",
     )
 
     table = "user"
@@ -225,30 +234,44 @@ class User(TableNode):
 
 
     def change_other_password(self, node_token, message = None):
-        where = 'id=%s' % node_token.data.get('id') #FIXME insecure
-        user = r.search_single_data("user", where = where, fields = ['login_name'])['login_name']
+        __id = node_token[''].get_data_int('__id')
+        where = '_core_id=%s' % __id #FIXME insecure
+        user = r.search_single_data("user", where = where, fields = ['name'])['name']
         if not message:
-            message = "Change password for user `%s`" % user
-        data = dict(__buttons = [['change password', 'user.User:_save_change_other_password:'],
-                                 ['cancel', 'BACK']],
+            message = "Change password for user %s" % user
+        data = dict(__buttons = [['change password', 'f:user.User:_save_change_other_password:'],
+                                 ['cancel', 'CLOSE']],
                     __message = message,
-                   id = self.data['id'])
-
+                    __id = __id)
+        node_token.force_dialog()
         self["change_other_password_form"].show(node_token, data)
 
     def save_change_other_password(self, node_token):
-        vdata = self.validate_data_full(node_token.data, self.change_password_validators)
+        data = node_token['change_other_password_form']
+        vdata = self.validate_data_full(data, self.change_password_validators)
         if vdata['newpassword'] != vdata['newpassword2']:
             # new password not confirmed
             self.change_other_password(node_token, 'new password does not match')
         else:
-            where = 'id=%s' % self.data.get('id') #FIXME insecure
-            user = r.search_single_data("user", where = where, fields = ['login_name'])['login_name']
+            core_id = data.get_data_int('__id')
+            where = '_core_id=%s' % core_id #FIXME insecure
+            user = r.search_single_data("user", where = where, fields = ['name'])['name']
 
-            # FIXME actually update the database
-            node_token.action = 'html'
-            data = "<p>Password for user `%s` has been updated (this is a lie)</p>" % user
-            node_token.out = {'html': data}
+            self._set_password(core_id, vdata['newpassword'])
+            data = "Password for user %s has been updated." % user
+            node_token.message(data)
+
+
+
+    def _set_password(self, core_id, password):
+        session = r.Session()
+        result = r.search_single('user', "_core_id = ?",
+                              values = [core_id],
+                              session = session)
+        save_set = SaveItem(result.results[0], session)
+        save_set.set_value('password', password)
+        errors = save_set.save()
+
 
 
 
@@ -342,5 +365,35 @@ class UserAdmin(TableNode):
 
       #  node_token.action = 'form'
       #  node_token.title = 'listing'
+
+class Impersonate(Node):
+
+    def call(self, node_token):
+        # check we are allowed to do this.
+        if not global_session.session['real_user_id']:
+            node_token.forbidden()
+            return
+
+        if node_token.command == '_impersonate':
+            core_id = node_token[''].get_data_int('__id')
+            self.impersonate(node_token, core_id = core_id)
+        elif node_token.command == 'revert':
+            self.impersonate(node_token, id = global_session.session['real_user_id'])
+
+    def impersonate(self, node_token, core_id = None, id = None):
+
+        if authenticate.impersonate(core_id, id):
+            # Get the user info to pass to front end.
+            user_id = global_session.session['user_id']
+            username = global_session.session['username']
+            real_user_name = global_session.session['real_username']
+            real_user_id = global_session.session['real_user_id']
+            node_token.user = dict(name = username,
+                                   id = user_id,
+                                   real_user_name = real_user_name,
+                                   real_user_id = real_user_id)
+            node_token.message('you are now logged in as user %s' % username)
+        else:
+            node_token.forbidden()
 
 
