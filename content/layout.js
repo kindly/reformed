@@ -21,20 +21,8 @@
 
 */
 
-
-$.Buttons = {};
-
-$.Buttons.action_hash = {};
-
-$.Buttons.action_list = [];
-
-$.Buttons.action_call = function (action_name){
-    // this function fires the event for action button clicks
-    // we get the base object, function to call and the args from the
-    // array action_hash
-    var cmd_info = $.Buttons.action_hash[action_name][1];
-    cmd_info[1].apply(cmd_info[0], cmd_info[2]);
-};
+// JSLint directives
+/*global $ */
 
 var REBASE = {};
 
@@ -56,6 +44,9 @@ REBASE.LayoutManager = function (){
     var ACTION_BUTTON_SPACING_H = 3;
     var ACTION_BUTTON_SPACING_V = 16;
     var ACTION_BUTTON_WIDTH = 200;
+
+    var action_hash = {};
+    var action_list = [];
 
     var info = {
         margin_left : 10,
@@ -108,8 +99,6 @@ REBASE.LayoutManager = function (){
 
         var $button_holder;
 
-        var action_list = $.Buttons.action_list;
-
         function add_action_button(name, data, button_number){
 
             var $button = $('<div id="action_' + name + '" class="action"></div>');
@@ -156,8 +145,8 @@ REBASE.LayoutManager = function (){
             var html = '';
             for (var i = 0, n = action_list.length; i < n; i++){
                 action = action_list[i];
-                if (action && $.Buttons.action_hash[action]){
-                    add_action_button(action, $.Buttons.action_hash[action], i);
+                if (action && action_hash[action]){
+                    add_action_button(action, action_hash[action], i);
                 }
             }
         }
@@ -241,10 +230,15 @@ REBASE.LayoutManager = function (){
     }
 
 
-
     return {
-        layout : function (arg){
+        'layout' : function (arg){
             create_layout(arg);
+        },
+        'action_hash' : function (arg){
+            action_hash = arg;
+        },
+        'action_list' : function (arg){
+            action_list = arg;
         }
     };
 }();

@@ -23,16 +23,27 @@
     ======
 
 */
+
+// JSLint directives
+/*global document setTimeout window */
+/*global $ REBASE console_log */
+
+
 var global_node_data = {};
 var global_current_node;
+var node_load;
 
 
+function search_box(){
+    var node = ':test.Search::q=' + $('#search').val();
+    node_load(node);
+    return false;
+}
 
 function tooltip_add(jquery_obj, text){
     jquery_obj.attr('title', text);
     jquery_obj.tooltip();
 }
-
 
 function tooltip_clear(jquery_obj){
     jquery_obj.attr('title', '');
@@ -62,8 +73,6 @@ function item_remove_error(jquery_obj){
     }
 }
 
-
-
 function page_build_section_links(data){
     var html = '<ul>';
     for (var i=0; i<data.length; i++){
@@ -74,7 +83,6 @@ function page_build_section_links(data){
     html += '</ul>';
     return html;
 }
-
 
 function page_build_section(data){
     var html = '<div class="page_section">';
@@ -92,7 +100,6 @@ function page_build(data){
     }
     return html;
 }
-
 
 function grid_add_row(){
     console_log('add_row');
@@ -113,7 +120,6 @@ function change_user_bar(){
     }
 }
 
-
 function change_layout(){
     if (!REBASE.application_data['public'] && !REBASE.application_data.__user_id){
          REBASE.LayoutManager.layout('mainx');
@@ -122,7 +128,6 @@ function change_layout(){
     }
     change_user_bar();
 }
-
 
 function change_user(user){
     REBASE.application_data.__user_id = user.id;
@@ -505,20 +510,11 @@ REBASE.Node = function (){
     };
 }();
 
-/* helper function */
-var node_load = REBASE.Node.load_node;
-
-
-function search_box(){
-    var node = ':test.Search::q=' + $('#search').val();
-    node_load(node);
-    return false;
-}
-
-
-
 
 function init(){
+
+    /* helper function */
+    node_load = REBASE.Node.load_node;
 
     $.address.change(REBASE.Node.load_page);
     // if no node info is available go to the login node
