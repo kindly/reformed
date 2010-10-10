@@ -336,19 +336,21 @@ REBASE.Bookmark = function (){
     }
 
     function bookmark_process(bookmark){
-         if ($.isArray(bookmark)){
-             for (var i = 0, n = bookmark.length; i < n; i++){
+        if ($.isArray(bookmark)){
+            // clear any existing bookmarks
+            bookmark_array = [];
+            for (var i = 0, n = bookmark.length; i < n; i++){
                 bookmark_add(bookmark[i]);
-             }
-         } else {
-             if (bookmark == 'CLEAR'){
+            }
+        } else {
+            if (bookmark == 'CLEAR'){
                 // reset the bookmarks
                 bookmark_array = [];
-             } else {
+            } else {
                 bookmark_add(bookmark);
             }
-         }
-         bookmark_display();
+        }
+        bookmark_display();
     }
 
     return {
