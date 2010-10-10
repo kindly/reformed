@@ -229,6 +229,7 @@ class People(EntityNode):
     phone = form(
         input('telephone.number', label = 'number'),
         grid_link('telephone.id', label = 'edit', field = 'telephone.id', base_link = 'd:test.People:_update:', target_form = 'phone_new'),
+        grid_link('telephone.id', label = 'delete', field = 'telephone.id', base_link = ':test.People:_delete:', target_form = 'phone_new'),
         read_only = True,
         form_type = "grid",
         form_buttons = [['new phone', 'd:test.People:new:', 'phone_new']],
