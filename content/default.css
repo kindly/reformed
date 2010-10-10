@@ -85,10 +85,7 @@ div {
     -webkit-background-size:100% 100%;
 }
 #resizer > span:active {
-    position:relative;
-    left:1px;
-    top:1px;
-	text-decoration:none;
+    border-color:#999 #BBB #BBB #999;
 }
 
 #resizer > span > span {
