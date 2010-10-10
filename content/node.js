@@ -429,6 +429,12 @@ function grid_add_row(){
 function change_user(user){
     REBASE.application_data.__user_id = user.id;
     REBASE.application_data.__username = user.name;
+    if (user.real_user_id){
+        REBASE.application_data.__real_user_id = user.real_user_id;
+    }
+    if (user.real_user_name){
+        REBASE.application_data.__real_username = user.real_user_name;
+    }
     change_layout();
 }
 
@@ -437,7 +443,12 @@ function change_user_bar(){
     if (REBASE.application_data.__user_id === 0){
         $('#user_login').html('<a href="#" onclick="node_load(\'d:user.User:login\',this);return false">Login</a>');
     } else {
-        $('#user_login').html(REBASE.application_data.__username + ' <a href="#" onclick="node_load(\':user.User:logout\',this);return false">Log out</a>');
+        var impersonate = ''
+        if (REBASE.application_data.__real_user_id && REBASE.application_data.__real_user_id != REBASE.application_data.__user_id){
+            impersonate = ' <a href="#" onclick="node_load(\':user.Impersonate:revert\',this);return false">revert to ' + REBASE.application_data.__real_username + '</a>';
+        }
+
+        $('#user_login').html(REBASE.application_data.__username + ' <a href="#" onclick="node_load(\':user.User:logout\',this);return false">Log out</a>' + impersonate);
     }
 }
 
