@@ -453,42 +453,42 @@ function process_node(packet, job){
 
     var message;
 
-     if (packet.data === null){
-         console_log("NULL DATA PACKET");
-         return;
-     }
+    if (packet.data === null){
+        console_log("NULL DATA PACKET");
+        return;
+    }
 
-     var root = 'main'; //FIXME
+    var root = 'main'; //FIXME
 
-     var title = packet.data.title;
-     if (title){
-         $.address.title(title);
-     }
+    var title = packet.data.title;
+    if (title){
+        $.address.title(title);
+    }
 
-     var sent_node_data = packet.data.node_data;
-     if (sent_node_data){
-         global_node_data = sent_node_data;
-         global_current_node = packet.data.node;
-         console_log('node data:', global_node_data);
-     }
+    var sent_node_data = packet.data.node_data;
+    if (sent_node_data){
+        global_node_data = sent_node_data;
+        global_current_node = packet.data.node;
+        console_log('node data:', global_node_data);
+    }
 
-     var user = packet.data.user;
-     if (user){
-         change_user(user);
-     }
+    var user = packet.data.user;
+    if (user){
+        change_user(user);
+    }
 
-     var bookmark = packet.data.bookmark;
-     if (bookmark){
-        REBASE.Bookmark.process(bookmark);
-     }
+    var bookmark = packet.data.bookmark;
+    if (bookmark){
+       REBASE.Bookmark.process(bookmark);
+    }
 
     var data;
-     switch (packet.data.action){
-         case 'redirect':
-             var link = packet.data.link;
-             if (link){
-                 switch (link){
-                     case 'BACK':
+    switch (packet.data.action){
+        case 'redirect':
+            var link = packet.data.link;
+            if (link){
+                switch (link){
+                    case 'BACK':
                         window.history.back();
                         break;
                     case 'CLOSE':
@@ -501,29 +501,29 @@ function process_node(packet, job){
                     default:
                         node_load('u:' + link);
                         break;
-                 }
-             }
-             break;
-         case 'html':
-             $('#' + root).html(packet.data.data.html);
-             break;
-         case 'page':
+                }
+            }
+            break;
+        case 'html':
+            $('#' + root).html(packet.data.data.html);
+            break;
+        case 'page':
             //alert($.toJSON(packet.data.data));
             $('#' + root).html(page_build(packet.data.data));
             break;
-         case 'form':
-         case 'dialog':
+        case 'form':
+        case 'dialog':
              REBASE.Layout.update_layout(packet.data);
              break;
-         case 'function':
+        case 'function':
             console_log('data', packet.data['function']);
             REBASE.Functions.call(packet.data['function'], packet.data.data);
             break;
-         case 'save_error':
+        case 'save_error':
             data = packet.data.data;
             // clear form items with no errors
             break;
-         case 'save':
+        case 'save':
             data = packet.data.data;
             if (job && job.obj){
                 // copy the obj_data that was saved with the job
@@ -533,21 +533,21 @@ function process_node(packet, job){
                 alert("we have not sent the object");
             }
             break;
-         case 'delete':
+        case 'delete':
             data = packet.data.data;
             if (data.deleted){
                 form_process_deleted(data.deleted);
             }
             break;
-         case 'general_error':
+        case 'general_error':
             message = packet.data.data;
             REBASE.Dialog.dialog('Error', message);
             break;
-         case 'message':
+        case 'message':
             message = packet.data.data;
             REBASE.Dialog.dialog('Message', message);
             break;
-         case 'forbidden':
+        case 'forbidden':
             message = 'You do not have the permissions to perform this action.';
             REBASE.Dialog.dialog('Forbidden', message);
             break;
@@ -557,7 +557,6 @@ function process_node(packet, job){
         default:
             REBASE.Dialog.dialog('Error', 'Action `' + packet.data.action + '` not recognised');
             break;
-
     }
 }
 
