@@ -16,7 +16,8 @@ class UTF8Recoder:
         return self
 
     def next(self):
-        return self.reader.next().encode("utf-8")
+        result = self.reader.readline().encode("utf-8")
+        return result
 
 class UnicodeReader:
     """
@@ -30,6 +31,9 @@ class UnicodeReader:
 
     def next(self):
         row = self.reader.next()
+        self.line_num = self.reader.line_num
+        if not row:
+            raise StopIteration
         return [unicode(s, "utf-8") for s in row]
 
     def __iter__(self):
@@ -251,7 +255,7 @@ class CsvFile(object):
             flat_file, csv_reader = self.get_csv_reader()
 
             if self.file_headings:
-                flat_file.readline()
+                csv_reader.next()
 
             possible_types = set(POSSIBLE_TYPES)
             
@@ -306,31 +310,32 @@ class CsvFile(object):
 
     def chunk(self, lines):
         try:
+            self.lines = lines
             flat_file, csv_reader = self.get_csv_reader()
 
             if self.file_headings:
-                flat_file.readline()
+                csv_reader.next()
 
             self.chunks = {}
             
             chunk = 0
             counter = 0
-            pos = 0
-            num = 0
+            total = 0
+            offset = flat_file.tell()
 
             for num, line in enumerate(csv_reader):
-                if counter + 1 == lines:
-                    self.chunks[chunk] = (pos, num)
-                    chunk = chunk + 1
-                    pos = num + 1
+                counter = counter + 1
+                total = total + 1 
+                if counter == lines:
+                    new_offset = flat_file.tell()
+                    self.chunks[chunk] = (offset, new_offset)
+                    offset = new_offset
                     counter = 0
-                else:
-                    counter = counter + 1
-            else:
-                if num >= pos:
-                    self.chunks[chunk] = (pos, num)
-                    pos = num + 1
-            return pos 
+                    chunk = chunk + 1
+            new_offset = flat_file.tell()
+            self.chunks[chunk] = (offset, new_offset)
+
+            return total
         finally:
             if "flat_file" in locals():
                 flat_file.close()
@@ -368,18 +373,18 @@ class CsvFile(object):
             flat_file, csv_reader = self.get_csv_reader()
             
             if self.file_headings:
-                flat_file.readline()
+                csv_reader.next()
 
             if chunk is not None:
                 start, end = self.chunks[chunk]
             else:
-                start, end = 0, None
+                start, end = flat_file.tell(), None
             if no_end:
                 end = None
 
-            for num, line in enumerate(csv_reader):
-                if num < start:
-                    continue
+            flat_file.seek(start)
+
+            for line in csv_reader:
                 if convert:
                     line = self.convert(line)
                 if not as_dict:
@@ -396,7 +401,7 @@ class CsvFile(object):
                         stop = (yield result)
                 if stop:
                     break
-                if end is not None and num == end:
+                if end and csv_reader.line_num == self.lines:
                     break
 
         finally:
