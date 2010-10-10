@@ -37,6 +37,21 @@
 
 */
 
+// JSLint directives
+/*global $ REBASE */
+
+/*
+ *           ('>
+ *           /))@@@@@.
+ *          /@"@@@@@()@
+ *         .@@()@@()@@@@    JOB
+ *         @@@O@@@@()@@@
+ *         @()@@\@@@()@@    Send/receive ajax data calls.
+ *          @()@||@@@@@'
+ *           '@@||@@@'
+ *        jgs   ||
+ *       ^^^^^^^^^^^^^^^^^
+ */
 
 
 REBASE.Job = function(){

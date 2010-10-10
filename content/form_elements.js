@@ -22,6 +22,10 @@
 */
 
 
+// JSLint directives
+/*global $ REBASE console_log */
+
+
 /*
  *           ('>
  *           /))@@@@@.

@@ -141,6 +141,18 @@ function change_user(user){
     change_layout();
 }
 
+/*
+ *           ('>
+ *           /))@@@@@.
+ *          /@"@@@@@()@
+ *         .@@()@@()@@@@    NODE
+ *         @@@O@@@@()@@@
+ *         @()@@\@@@()@@    Processing node calls and
+ *          @()@||@@@@@'    deal with backend responses.
+ *           '@@||@@@'
+ *        jgs   ||
+ *       ^^^^^^^^^^^^^^^^^
+ */
 
 REBASE.Node = function (){
 
@@ -510,6 +522,19 @@ REBASE.Node = function (){
     };
 }();
 
+
+/*
+ *           ('>
+ *           /))@@@@@.
+ *          /@"@@@@@()@
+ *         .@@()@@()@@@@    INITIALISATIONS
+ *         @@@O@@@@()@@@
+ *         @()@@\@@@()@@    Code to initialise stuff.
+ *          @()@||@@@@@'
+ *           '@@||@@@'
+ *        jgs   ||
+ *       ^^^^^^^^^^^^^^^^^
+ */
 
 function init(){
 
