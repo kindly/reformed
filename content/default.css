@@ -68,6 +68,31 @@ div {
     background-color:transparent
 }
 
+#resizer > span {
+    width:20px;
+    height:20px;
+    background-color:green;
+    margin-left:5px;
+    float:left;
+    text-align:center;
+    font-size:16px;
+    cursor:pointer;
+    background-image:url("grad.png");
+    border-color:#BBB #999 #999 #BBB;
+    border-style:solid;
+    border-width:1px 1px 1px 1px;
+}
+#resizer > span:active {
+    position:relative;
+    left:1px;
+    top:1px;
+	text-decoration:none;
+}
+
+#resizer > span > span {
+    line-height:20px;
+    color:black;
+}
 	
 	
 /* FORMS */
@@ -378,6 +403,7 @@ td input {
 
 #bookmarks{
     overflow:hidden;
+    clear:left;
 }
 
 #bookmarks ol.bookmark-items li{
@@ -388,7 +414,9 @@ td input {
 #bookmarks ol{
     padding-left:3px;
 }
-
+#bookmarks li{
+    cursor:pointer;
+}
 
 
 .null {

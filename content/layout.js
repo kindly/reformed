@@ -166,24 +166,25 @@ REBASE.LayoutManager = function (){
     }
 
     function create_side(){
-        $side = $('<div id="side"></div>');
-
         var html = [];
-        // FIXME this wants to be ripped out asap
-        html.push('<div style=\'font-size:12px\'>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 1);" style="font-size:8px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 2);" style="font-size:10px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 3);" style="font-size:12px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 4);" style="font-size:14px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 5);" style="font-size:16px">A</span>');
-        html.push('</div>');
-
+        $side = $('<div id="side"></div>');
+        html.push(make_resizer());
         html.push('<div id="bookmarks"></div>');
-
         $side.html(html.join(''));
-
         position_side();
         $body.append($side);
+    }
+
+    function make_resizer(){
+        var html = [];
+        var sizes = [8, 10, 12, 14, 16];
+        html.push('<div id="resizer" >');
+        for (var i = 0; i < sizes.length; i++){
+            html.push('<span onclick="$.Util.selectStyleSheet(\'size\', ' + (i + 1) + ');" >');
+            html.push('<span style="font-size:' + sizes[i] + 'px">A</span></span>');
+        }
+        html.push('</div>');
+        return html.join('');
     }
 
     function create_logo(){
