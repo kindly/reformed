@@ -204,15 +204,15 @@ $.Util.make_normal = function($item, field){
     return cleaned.value;
 };
 
-$.Util.build_node_link_href = function (data){
-    return $.Util.build_node_link_common(data, true);
+$.Util.build_node_link_href = function (data, base_link){
+    return $.Util.build_node_link_common(data, true, base_link);
 }
 
-$.Util.build_node_link = function (data){
-    return $.Util.build_node_link_common(data, false);
+$.Util.build_node_link = function (data, base_link){
+    return $.Util.build_node_link_common(data, false, base_link);
 }
 
-$.Util.build_node_link_common = function (data, is_href){
+$.Util.build_node_link_common = function (data, is_href, base_link){
     // build a node link based on the item info
     // used in result listings
     var link_node;
@@ -225,12 +225,24 @@ $.Util.build_node_link_common = function (data, is_href){
             link_node = '';
         }
     } else {
+        if (base_link){
+            // make sure that the link is ready for additional info
+            // TODO make this a general function
+            while (base_link.split(':') .length < 4){
+                base_link += ':';
+            }
+            if (base_link.charAt(base_link.length - 1) != ':'){
+                base_link += '&';
+            }
+            link_node = base_link + "__id=" + data.__id;
+        } else {
         node = REBASE.application_data.bookmarks[data.entity];
         if (node !== undefined){
             node = node.node;
             link_node = "u:" + node + ":edit:__id=" + data.__id;
         } else {
             link_node = "u:test.Auto:edit:__id=" + data.__id + "&table=" + data.entity;
+        }
         }
     }
     // return as href or function call
