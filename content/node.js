@@ -237,12 +237,7 @@ REBASE.Node = function (){
         if (!REBASE.application_data){
             info.request_application_data = true;
         }
-        // close any open dialog
-        // may possibly cause problems with status refreshes
-    //    REBASE.Dialog.close();
-        // FIXME if we never send data as second arg then
-        // remove it.
-        $JOB.add(info, {});
+        REBASE.Job.add(info);
     }
 
 
@@ -449,7 +444,7 @@ function change_user(user){
 
 
 
-function process_node(packet, job){
+REBASE.process_node = function (packet, job){
 
     var message;
 

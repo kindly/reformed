@@ -39,9 +39,8 @@
 
 
 
-$JOB = function(){
+REBASE.Job = function(){
 
-    var request_number = 0;
     var outstanding_requests = 0;
 
     function loading_show(){
@@ -52,14 +51,16 @@ $JOB = function(){
         $('#ajax_info').hide();
     }
 
-    function process_return(return_data, sent_data, request_number){
+    function process_return(return_data, sent_data){
+        var i;
+        var n;
         outstanding_requests--;
-        if (outstanding_requests == 0){
+        if (outstanding_requests === 0){
             loading_hide();
         }
         if (return_data !== null){
-            for (var i =0, n = return_data.length; i < n; i++){
-                process_node(return_data[i], sent_data);
+            for (i = 0, n = return_data.length; i < n; i++){
+                REBASE.process_node(return_data[i], sent_data);
             }
         } else {
             REBASE.Dialog.dialog('Application Error', 'No data was returned.\n\nThe application may not be running.');
@@ -71,20 +72,17 @@ $JOB = function(){
 		var body = $.toJSON(request);
 		$.post("/ajax", {body: body},
 		  function(return_data){
-			 process_return(return_data, sent_data, request_number);
+			 process_return(return_data, sent_data);
 		  }, "json");
-        request_number++;
         outstanding_requests++;
         loading_show();
 	}
-
 
     return {
         'add' : function (request, data){
             add(request, data);
         }
-    }
-
+    };
 }();
 
 
