@@ -455,6 +455,8 @@ class QueryFromDict(QueryBase):
                     condition = (item > value)
                 if operator == "bewteen":
                     condition = (item.between(value[0], value[1]))
+                if operator == "in":
+                    condition = (item.in_(value))
             else:
                 condition = (item == value)
             conditions.append(condition)
