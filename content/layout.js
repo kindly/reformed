@@ -111,7 +111,7 @@ REBASE.LayoutManager = function (){
         var action_list = $.Buttons.action_list;
 
         function add_action_button(name, data, button_number){
-            
+
             var $button = $('<div id="action_' + name + '" class="action"></div>');
             var $link = $('<a href="javascript:node_load(\'' + data[4] + '\')"></a>');
             var $img = $('<img src="icon/22x22/' + data[1] + '" />');
@@ -164,7 +164,7 @@ REBASE.LayoutManager = function (){
 
         $actions = $('<div id="actions"></div>');
         position_actions();
-    
+
         $button_holder = $('<div class="button_holder" style="position:relative"></div>');
         $actions.append($button_holder);
 
@@ -188,19 +188,9 @@ REBASE.LayoutManager = function (){
         html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 4);" style="font-size:14px">A</span>');
         html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 5);" style="font-size:16px">A</span>');
         html.push('</div>');
-    
-    
-//        html.push('<ul>');
-//        html.push('<li><span onclick="$.Util.stress_test(\'n:table.Edit:list:t=9&l=100&o=\', 9900)">stress test</span></li>');
-//        html.push('<li><span onclick="node_load(\'n:table.Table:new\')">new table</span></li>');
-//        html.push('<li><span onclick="node_load(\'n:table.Table:list\')">table</span></li>');
-//        html.push('<li><span onclick="node_load(\'n:test.Sponsorship:\')">sponsor</span></li>');
-//        html.push('<li><span onclick="$JOB.add({}, {}, \'reload\', true)" ><b>reload</b></span></li>');
-//        html.push('<li><span onclick="get_node(\'test.DataLoader\', \'load\', {file:\'data.csv\', table:\'people\'})" ><b>load people</b></span></li>');
-//        html.push('<li><span onclick="node_call_from_string(\'/n:test.DataLoader:load:file=donkeys.csv&table=donkey\', true)" ><b>load donkeys</b></span></li>');
-//        html.push('</ul>');
+
         html.push('<div id="bookmarks"></div>');
-    
+
         $side.html(html.join(''));
 
         position_side();
