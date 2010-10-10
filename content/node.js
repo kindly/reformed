@@ -23,20 +23,9 @@
     ======
 
 */
+var global_node_data = {};
+var global_current_node;
 
-$(document).ready(init);
-
-function init(){
-
-    $.address.change(REBASE.Node.load_page);
-    // if no node info is available go to the login node
-    // FIXME this needs fixing with a default node
-    // also if you are auto logged in etc
-    var url = $.address.value();
-    if (url == '/'){
-        node_load('d:user.User:login:');
-    }
-}
 
 REBASE.Node = function (){
 
@@ -50,7 +39,6 @@ REBASE.Node = function (){
          */
 
         // as we are reloading the page make sure everything has blured
-        itemsBlurLast();  // FIXME needed?
         var link = $.address.value();
         var decode = decode_node_string(link);
         if (!decode.secure){
@@ -103,6 +91,7 @@ REBASE.Node = function (){
         var error_msg = '';
         var decode = {};
         var split = node_string.split(':');
+        var key;
         // check enough info
         if (split.length < 2){
             error_msg = 'Invalid node data.\n\nNot enough arguments.';
@@ -142,7 +131,7 @@ REBASE.Node = function (){
         // don't overwrite anything in the url.
         // I'm not sure if this is the best thing to do
         // but it is currently needed for the bookmarks to work correctly.
-        for (var key in decode.url_data){
+        for (key in decode.url_data){
             decode.node_data[key] = decode.url_data[key];
         }
 
@@ -173,11 +162,11 @@ REBASE.Node = function (){
                     flags.form_data = true;
                     // get any form data
                     var $obj = $(item);
-                    var $obj = $obj.parents('div.INPUT_FORM');
+                    $obj = $obj.parents('div.INPUT_FORM');
                     var form_data = $obj.data('command')('get_form_data');
                     // update the form data with any items in decode.url_data that
                     // have not already been assigned
-                    for (var key in decode.url_data){
+                    for (key in decode.url_data){
                         if (form_data.data[key] === undefined){
                             form_data.data[key] = decode.url_data[key];
                         }
@@ -243,7 +232,7 @@ REBASE.Node = function (){
             REBASE.Dialog.confirm_action(decode, 'Confirmation needed', 'are you sure?', decode);
             return false;
         }
-        info = decode;
+        var info = decode;
         // application data
         if (!REBASE.application_data){
             info.request_application_data = true;
@@ -272,13 +261,13 @@ REBASE.Node = function (){
         'get_node' : function (decode){
             get_node(decode);
         }
-    }
+    };
 }();
 
 /* helper function */
 var node_load = REBASE.Node.load_node;
 
-
+/*
 function link_process(item, link){
     var div = _parse_id(item.id).div;
     var info = link.split(':');
@@ -317,7 +306,7 @@ function _wrap(arg, tag, my_class){
     } else {
         return '<' + tag + '>' + arg + '</' + tag + '>';
     }
-}
+} */
 
 
 function search_box(){
@@ -416,16 +405,35 @@ function page_build(data){
 }
 
 
-function itemsBlurLast(){
-    // FIXME called on page loads but does nothing
-}
-
-
 function grid_add_row(){
     console_log('add_row');
     $('#main div.GRID').data('command')('add_row');
 }
 // user bits
+function change_user_bar(){
+
+    if (REBASE.application_data.__user_id === 0){
+        $('#user_login').html('<a href="#" onclick="node_load(\'d:user.User:login\',this);return false">Login</a>');
+    } else {
+        var impersonate = '';
+        if (REBASE.application_data.__real_user_id && REBASE.application_data.__real_user_id != REBASE.application_data.__user_id){
+            impersonate = ' <a href="#" onclick="node_load(\':user.Impersonate:revert\',this);return false">revert to ' + REBASE.application_data.__real_username + '</a>';
+        }
+
+        $('#user_login').html(REBASE.application_data.__username + ' <a href="#" onclick="node_load(\':user.User:logout\',this);return false">Log out</a>' + impersonate);
+    }
+}
+
+
+function change_layout(){
+    if (!REBASE.application_data['public'] && !REBASE.application_data.__user_id){
+         REBASE.LayoutManager.layout('mainx');
+    } else {
+         REBASE.LayoutManager.layout('main');
+    }
+    change_user_bar();
+}
+
 
 function change_user(user){
     REBASE.application_data.__user_id = user.id;
@@ -439,31 +447,7 @@ function change_user(user){
     change_layout();
 }
 
-function change_user_bar(){
 
-    if (REBASE.application_data.__user_id === 0){
-        $('#user_login').html('<a href="#" onclick="node_load(\'d:user.User:login\',this);return false">Login</a>');
-    } else {
-        var impersonate = ''
-        if (REBASE.application_data.__real_user_id && REBASE.application_data.__real_user_id != REBASE.application_data.__user_id){
-            impersonate = ' <a href="#" onclick="node_load(\':user.Impersonate:revert\',this);return false">revert to ' + REBASE.application_data.__real_username + '</a>';
-        }
-
-        $('#user_login').html(REBASE.application_data.__username + ' <a href="#" onclick="node_load(\':user.User:logout\',this);return false">Log out</a>' + impersonate);
-    }
-}
-
-function change_layout(){
-    if (!REBASE.application_data.public && !REBASE.application_data.__user_id){
-         REBASE.LayoutManager.layout('mainx');
-    } else {
-         REBASE.LayoutManager.layout('main');
-    }
-    change_user_bar();
-}
-
-var global_node_data = {};
-var global_current_node;
 
 function process_node(packet, job){
 
@@ -556,15 +540,15 @@ function process_node(packet, job){
             }
             break;
          case 'general_error':
-            message = packet.data.data
+            message = packet.data.data;
             REBASE.Dialog.dialog('Error', message);
             break;
          case 'message':
-            message = packet.data.data
+            message = packet.data.data;
             REBASE.Dialog.dialog('Message', message);
             break;
          case 'forbidden':
-            message = 'You do not have the permissions to perform this action.'
+            message = 'You do not have the permissions to perform this action.';
             REBASE.Dialog.dialog('Forbidden', message);
             break;
         case 'status':
@@ -577,3 +561,16 @@ function process_node(packet, job){
     }
 }
 
+function init(){
+
+    $.address.change(REBASE.Node.load_page);
+    // if no node info is available go to the login node
+    // FIXME this needs fixing with a default node
+    // also if you are auto logged in etc
+    var url = $.address.value();
+    if (url == '/'){
+        node_load('d:user.User:login:');
+    }
+}
+
+$(document).ready(init);
