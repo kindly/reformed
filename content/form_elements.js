@@ -111,10 +111,25 @@ REBASE.FormControls = function(){
         return '<a href="#/' + item.node + '"' + set_class_list(item, 'link') + ' onclick="node_load(\'' + item.node + '\',this);return false">' + item.title + '</a>';
     }
 
+    function result_link_list(item, value){
+        var values;
+        if (item.link_list){
+            values = item.link_list;
+        } else {
+            values = value;
+        }
+        var temp = '';
+        var info;
+        for (var i = 0, n = values.length; i < n; i++){
+            info = values[i];
+            temp += result_link(item, info[0], info[1]) + '  ';
+        }
+        return temp;
+    }
 
-    function result_link(item, value){
-        var link_node = $.Util.build_node_link(local_row_data);
-        var link_node_href = $.Util.build_node_link_href(local_row_data);
+    function result_link(item, value, base_link){
+        var link_node = $.Util.build_node_link(local_row_data, base_link);
+        var link_node_href = $.Util.build_node_link_href(local_row_data, base_link);
         var x = '<a href="' + link_node_href + '"' + set_class_list(item, 'link') + ' onclick="' + link_node + 'return false;">' + (value ? value : 'untitled') + '</a>';
         return x;
     }
@@ -345,24 +360,18 @@ REBASE.FormControls = function(){
         return value;
     }
 
-
-    function add_subform(item, value){
-        subforms.push({item: item, data: value});
-        return '<div class="SUBFORM"></div>';
-    }
-
+//
+//    function add_subform(item, value){
+//        subforms.push({item: item, data: value});
+//        return '<div class="SUBFORM"></div>';
+//    }
+//
 
     function link_new(item, value){
         var link_node = value[1];
         value = value[0];
-        var x = '';
         // FIXME need to know if this is updatable node for proper href
-    //    if (link_node.substring(0,1) == 'n'){
-            x += '<a href="#/' + link_node + '"' + set_class_list(item, 'link') + ' onclick="node_load(\'' + link_node + '\',this);return false">' + (value ? value : '&nbsp;') + '</a>';
-  //      }
-  /*      if (link_node.substring(0,1) == 'd'){
-            x += '<a href="#"' + set_class_list(item, 'link') + ' onclick ="link_process(this,\'' + link_node + '\');return false;">' + (value ? value : '&nbsp;') + '</a>';
-        } */
+        var x = '<a href="#/' + link_node + '"' + set_class_list(item, 'link') + ' onclick="node_load(\'' + link_node + '\',this);return false">' + (value ? value : '&nbsp;') + '</a>';
         return x;
     }
 
@@ -451,6 +460,7 @@ REBASE.FormControls = function(){
         'button': [button, button],
         'button_link': [button_link, plaintext],
         'button_box': [button_box, button_box],
+        'result_link_list': [result_link_list, result_link_list],
         'result_link': [result_link, result_link],
         'result_image': [result_image, result_image],
         'html': [htmlarea, plaintext],
