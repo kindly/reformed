@@ -76,7 +76,10 @@ REBASE.Job = function(){
         }
         // show info on form
         if (data.data){
-            $('div.STATUS_FORM').data('command')('update', data.data);
+            var $status_form = $('div.STATUS_FORM');
+            if ($status_form.length){
+                $status_form.data('command')('update', data.data);
+            }
         }
         // set data refresh if job not finished
         if (!data.data || !data.data.end){
