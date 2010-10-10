@@ -138,6 +138,14 @@ REBASE.Node = function (){
         }
         decode.node_data = global_node_data;
 
+        // if we have any extra node data we add it but
+        // don't overwrite anything in the url.
+        // I'm not sure if this is the best thing to do
+        // but it is currently needed for the bookmarks to work correctly.
+        for (var key in decode.url_data){
+            decode.node_data[key] = decode.url_data[key];
+        }
+
         // flags
         // The flags are used to indicate
         // the actions that the node call should perform.
@@ -185,13 +193,6 @@ REBASE.Node = function (){
                         return false;
                     }
                     flags.update = true;
-                    // if we have any extra node data we add it but
-                    // don't overwrite anything in the url.
-                    // I'm not sure if this is the best thing to do
-                    // but it is currently needed for the bookmarks to work correctly.
-                    for (var key in decode.url_data){
-                        decode.node_data[key] = decode.url_data[key];
-                    }
                     break;
                 default:
                     error_msg = 'Invalid node flag ' + flag_data.charAt(i);
