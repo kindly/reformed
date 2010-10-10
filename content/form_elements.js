@@ -146,6 +146,8 @@ REBASE.FormControls = function(){
         return $control
     }
 
+
+
     function button_box(item, value){
         var html = '';
         var but = {};
@@ -360,12 +362,6 @@ REBASE.FormControls = function(){
         return value;
     }
 
-//
-//    function add_subform(item, value){
-//        subforms.push({item: item, data: value});
-//        return '<div class="SUBFORM"></div>';
-//    }
-//
 
     function link_new(item, value){
         var link_node = value[1];
@@ -472,8 +468,7 @@ REBASE.FormControls = function(){
         'codegroup': [codegroup, codegroup],
         'file_upload' : [file_upload, file_upload],
         'image' : [image, image_ro, true],
-        'autocomplete' : [autocomplete, plaintext],
-        'subform': [add_subform, add_subform]
+        'autocomplete' : [autocomplete, plaintext]
     }
 
     var local_row_data = {};
