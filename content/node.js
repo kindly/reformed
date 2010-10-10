@@ -27,6 +27,146 @@ var global_node_data = {};
 var global_current_node;
 
 
+
+function search_box(){
+    var node = ':test.Search::q=' + $('#search').val();
+    node_load(node);
+    return false;
+}
+
+
+function tooltip_add(jquery_obj, text){
+    jquery_obj.attr('title', text);
+    jquery_obj.tooltip();
+}
+
+
+function tooltip_clear(jquery_obj){
+    jquery_obj.attr('title', '');
+    jquery_obj.tooltip();
+}
+
+function item_add_error(jquery_obj, text, tooltip){
+    jquery_obj.addClass('error');
+    if (tooltip){
+        tooltip_add(jquery_obj, text.join(', '));
+    } else {
+        var next = jquery_obj.next();
+        if (next.is('span')){
+            next.remove();
+        }
+        jquery_obj.after("<span class='field_error'>ERROR: " + text.join(', ') + "</span>");
+    }
+}
+
+function item_remove_error(jquery_obj){
+    jquery_obj.removeClass('error');
+    var next = jquery_obj.next();
+    if (next.is('span')){
+        next.remove();
+    } else {
+        tooltip_clear(jquery_obj);
+    }
+}
+
+function get_status(call_string){
+    node_load(call_string);
+}
+
+
+var status_timer;
+
+function job_processor_status(data, node, root){
+    // display the message form if it exists
+    if (data.form){
+        $('#' + root).status_form();
+    }
+    // show info on form
+    if (data.data){
+        $('div.STATUS_FORM').data('command')('update', data.data);
+    }
+    // set data refresh if job not finished
+    if (!data.data || !data.data.end){
+        var node_string = "/:" + node + ":_status:id=" + data.data.id;
+        status_timer = setTimeout(function (){
+                                      get_status(node_string);
+                                  }, 1000);
+    }
+}
+
+function page_build_section_links(data){
+    var html = '<ul>';
+    for (var i=0; i<data.length; i++){
+        html += '<li><a href="#/' + data[i].link + '">';
+        html += data[i].title;
+        html += '</a></li>';
+    }
+    html += '</ul>';
+    return html;
+}
+
+
+function page_build_section(data){
+    var html = '<div class="page_section">';
+    html += '<div class="page_section_title">' + data.title + '</div>';
+    html += '<div class="page_section_summary">' + data.summary + '</div>';
+    html += page_build_section_links(data.options);
+    html += "</div>";
+    return html;
+}
+
+function page_build(data){
+    var html = '';
+    for (var i=0; i<data.length; i++){
+        html += page_build_section(data[i]);
+    }
+    return html;
+}
+
+
+function grid_add_row(){
+    console_log('add_row');
+    $('#main div.GRID').data('command')('add_row');
+}
+// user bits
+function change_user_bar(){
+
+    if (REBASE.application_data.__user_id === 0){
+        $('#user_login').html('<a href="#" onclick="node_load(\'d:user.User:login\',this);return false">Login</a>');
+    } else {
+        var impersonate = '';
+        if (REBASE.application_data.__real_user_id && REBASE.application_data.__real_user_id != REBASE.application_data.__user_id){
+            impersonate = ' <a href="#" onclick="node_load(\':user.Impersonate:revert\',this);return false">revert to ' + REBASE.application_data.__real_username + '</a>';
+        }
+
+        $('#user_login').html(REBASE.application_data.__username + ' <a href="#" onclick="node_load(\':user.User:logout\',this);return false">Log out</a>' + impersonate);
+    }
+}
+
+
+function change_layout(){
+    if (!REBASE.application_data['public'] && !REBASE.application_data.__user_id){
+         REBASE.LayoutManager.layout('mainx');
+    } else {
+         REBASE.LayoutManager.layout('main');
+    }
+    change_user_bar();
+}
+
+
+function change_user(user){
+    REBASE.application_data.__user_id = user.id;
+    REBASE.application_data.__username = user.name;
+    if (user.real_user_id){
+        REBASE.application_data.__real_user_id = user.real_user_id;
+    }
+    if (user.real_user_name){
+        REBASE.application_data.__real_username = user.real_user_name;
+    }
+    change_layout();
+}
+
+
 REBASE.Node = function (){
 
     /* Public functions. */
@@ -78,7 +218,134 @@ REBASE.Node = function (){
         get_node(decode);
     }
 
+    function get_node(decode){
+        /*
+         *  Takes a decoded node request does any processing needed
+         *  and passes it to be the job processor to request
+         */
+        if (decode.flags.confirm_action){
+           // && !confirm('Are you sure?')){
+            REBASE.Dialog.confirm_action(decode, 'Confirmation needed', 'are you sure?', decode);
+            return false;
+        }
+        var info = decode;
+        // application data
+        if (!REBASE.application_data){
+            info.request_application_data = true;
+        }
+        REBASE.Job.add(info);
+    }
 
+function process_node(packet, job){
+
+    var message;
+
+    if (packet.data === null){
+        console_log("NULL DATA PACKET");
+        return;
+    }
+
+    var root = 'main'; //FIXME
+
+    var title = packet.data.title;
+    if (title){
+        $.address.title(title);
+    }
+
+    var sent_node_data = packet.data.node_data;
+    if (sent_node_data){
+        global_node_data = sent_node_data;
+        global_current_node = packet.data.node;
+        console_log('node data:', global_node_data);
+    }
+
+    var user = packet.data.user;
+    if (user){
+        change_user(user);
+    }
+
+    var bookmark = packet.data.bookmark;
+    if (bookmark){
+       REBASE.Bookmark.process(bookmark);
+    }
+
+    var data;
+    switch (packet.data.action){
+        case 'redirect':
+            var link = packet.data.link;
+            if (link){
+                switch (link){
+                    case 'BACK':
+                        window.history.back();
+                        break;
+                    case 'CLOSE':
+                        REBASE.Dialog.close();
+                        break;
+                    case 'RELOAD':
+                        REBASE.Dialog.close();
+                        load_node($.address.value());
+                        break;
+                    default:
+                        load_node('u:' + link);
+                        break;
+                }
+            }
+            break;
+        case 'html':
+            $('#' + root).html(packet.data.data.html);
+            break;
+        case 'page':
+            //alert($.toJSON(packet.data.data));
+            $('#' + root).html(page_build(packet.data.data));
+            break;
+        case 'form':
+        case 'dialog':
+             REBASE.Layout.update_layout(packet.data);
+             break;
+        case 'function':
+            console_log('data', packet.data['function']);
+            REBASE.Functions.call(packet.data['function'], packet.data.data);
+            break;
+        case 'save_error':
+            data = packet.data.data;
+            // clear form items with no errors
+            break;
+        case 'save':
+            data = packet.data.data;
+            if (job && job.obj){
+                // copy the obj_data that was saved with the job
+                data.obj_data = job.obj_data;
+                job.obj.data('command')('save_return', data);
+            } else {
+                alert("we have not sent the object");
+            }
+            break;
+        case 'delete':
+            data = packet.data.data;
+            if (data.deleted){
+                form_process_deleted(data.deleted);
+            }
+            break;
+        case 'general_error':
+            message = packet.data.data;
+            REBASE.Dialog.dialog('Error', message);
+            break;
+        case 'message':
+            message = packet.data.data;
+            REBASE.Dialog.dialog('Message', message);
+            break;
+        case 'forbidden':
+            message = 'You do not have the permissions to perform this action.';
+            REBASE.Dialog.dialog('Forbidden', message);
+            break;
+        case 'status':
+            job_processor_status(packet.data.data, packet.data.node, root);
+            break;
+        default:
+            REBASE.Dialog.dialog('Error', 'Action `' + packet.data.action + '` not recognised');
+            break;
+    }
+}
     /* Private functions. */
 
     function decode_node_string(node_string, item, target_form){
@@ -222,25 +489,6 @@ REBASE.Node = function (){
     }
 
 
-    function get_node(decode){
-        /*
-         *  Takes a decoded node request does any processing needed
-         *  and passes it to be the job processor to request
-         */
-        if (decode.flags.confirm_action){
-           // && !confirm('Are you sure?')){
-            REBASE.Dialog.confirm_action(decode, 'Confirmation needed', 'are you sure?', decode);
-            return false;
-        }
-        var info = decode;
-        // application data
-        if (!REBASE.application_data){
-            info.request_application_data = true;
-        }
-        REBASE.Job.add(info);
-    }
-
-
     // exported functions
 
     return {
@@ -255,6 +503,9 @@ REBASE.Node = function (){
         },
         'get_node' : function (decode){
             get_node(decode);
+        },
+        'process' : function (packet, job){
+            process_node(packet, job);
         }
     };
 }();
@@ -304,256 +555,7 @@ function _wrap(arg, tag, my_class){
 } */
 
 
-function search_box(){
-    var node = ':test.Search::q=' + $('#search').val();
-    node_load(node);
-    return false;
-}
 
-
-function tooltip_add(jquery_obj, text){
-    jquery_obj.attr('title', text);
-    jquery_obj.tooltip();
-}
-
-
-function tooltip_clear(jquery_obj){
-    jquery_obj.attr('title', '');
-    jquery_obj.tooltip();
-}
-
-function item_add_error(jquery_obj, text, tooltip){
-    jquery_obj.addClass('error');
-    if (tooltip){
-        tooltip_add(jquery_obj, text.join(', '));
-    } else {
-        var next = jquery_obj.next();
-        if (next.is('span')){
-            next.remove();
-        }
-        jquery_obj.after("<span class='field_error'>ERROR: " + text.join(', ') + "</span>");
-    }
-}
-
-function item_remove_error(jquery_obj){
-    jquery_obj.removeClass('error');
-    var next = jquery_obj.next();
-    if (next.is('span')){
-        next.remove();
-    } else {
-        tooltip_clear(jquery_obj);
-    }
-}
-
-function get_status(call_string){
-    node_load(call_string);
-}
-
-
-var status_timer;
-
-function job_processor_status(data, node, root){
-    // display the message form if it exists
-    if (data.form){
-        $('#' + root).status_form();
-    }
-    // show info on form
-    if (data.data){
-        $('div.STATUS_FORM').data('command')('update', data.data);
-    }
-    // set data refresh if job not finished
-    if (!data.data || !data.data.end){
-        var node_string = "/:" + node + ":_status:id=" + data.data.id;
-        status_timer = setTimeout(function (){
-                                      get_status(node_string);
-                                  }, 1000);
-    }
-}
-
-function page_build_section_links(data){
-    var html = '<ul>';
-    for (var i=0; i<data.length; i++){
-        html += '<li><a href="#/' + data[i].link + '">';
-        html += data[i].title;
-        html += '</a></li>';
-    }
-    html += '</ul>';
-    return html;
-}
-
-
-function page_build_section(data){
-    var html = '<div class="page_section">';
-    html += '<div class="page_section_title">' + data.title + '</div>';
-    html += '<div class="page_section_summary">' + data.summary + '</div>';
-    html += page_build_section_links(data.options);
-    html += "</div>";
-    return html;
-}
-
-function page_build(data){
-    var html = '';
-    for (var i=0; i<data.length; i++){
-        html += page_build_section(data[i]);
-    }
-    return html;
-}
-
-
-function grid_add_row(){
-    console_log('add_row');
-    $('#main div.GRID').data('command')('add_row');
-}
-// user bits
-function change_user_bar(){
-
-    if (REBASE.application_data.__user_id === 0){
-        $('#user_login').html('<a href="#" onclick="node_load(\'d:user.User:login\',this);return false">Login</a>');
-    } else {
-        var impersonate = '';
-        if (REBASE.application_data.__real_user_id && REBASE.application_data.__real_user_id != REBASE.application_data.__user_id){
-            impersonate = ' <a href="#" onclick="node_load(\':user.Impersonate:revert\',this);return false">revert to ' + REBASE.application_data.__real_username + '</a>';
-        }
-
-        $('#user_login').html(REBASE.application_data.__username + ' <a href="#" onclick="node_load(\':user.User:logout\',this);return false">Log out</a>' + impersonate);
-    }
-}
-
-
-function change_layout(){
-    if (!REBASE.application_data['public'] && !REBASE.application_data.__user_id){
-         REBASE.LayoutManager.layout('mainx');
-    } else {
-         REBASE.LayoutManager.layout('main');
-    }
-    change_user_bar();
-}
-
-
-function change_user(user){
-    REBASE.application_data.__user_id = user.id;
-    REBASE.application_data.__username = user.name;
-    if (user.real_user_id){
-        REBASE.application_data.__real_user_id = user.real_user_id;
-    }
-    if (user.real_user_name){
-        REBASE.application_data.__real_username = user.real_user_name;
-    }
-    change_layout();
-}
-
-
-
-REBASE.process_node = function (packet, job){
-
-    var message;
-
-    if (packet.data === null){
-        console_log("NULL DATA PACKET");
-        return;
-    }
-
-    var root = 'main'; //FIXME
-
-    var title = packet.data.title;
-    if (title){
-        $.address.title(title);
-    }
-
-    var sent_node_data = packet.data.node_data;
-    if (sent_node_data){
-        global_node_data = sent_node_data;
-        global_current_node = packet.data.node;
-        console_log('node data:', global_node_data);
-    }
-
-    var user = packet.data.user;
-    if (user){
-        change_user(user);
-    }
-
-    var bookmark = packet.data.bookmark;
-    if (bookmark){
-       REBASE.Bookmark.process(bookmark);
-    }
-
-    var data;
-    switch (packet.data.action){
-        case 'redirect':
-            var link = packet.data.link;
-            if (link){
-                switch (link){
-                    case 'BACK':
-                        window.history.back();
-                        break;
-                    case 'CLOSE':
-                        REBASE.Dialog.close();
-                        break;
-                    case 'RELOAD':
-                        REBASE.Dialog.close();
-                        node_load($.address.value());
-                        break;
-                    default:
-                        node_load('u:' + link);
-                        break;
-                }
-            }
-            break;
-        case 'html':
-            $('#' + root).html(packet.data.data.html);
-            break;
-        case 'page':
-            //alert($.toJSON(packet.data.data));
-            $('#' + root).html(page_build(packet.data.data));
-            break;
-        case 'form':
-        case 'dialog':
-             REBASE.Layout.update_layout(packet.data);
-             break;
-        case 'function':
-            console_log('data', packet.data['function']);
-            REBASE.Functions.call(packet.data['function'], packet.data.data);
-            break;
-        case 'save_error':
-            data = packet.data.data;
-            // clear form items with no errors
-            break;
-        case 'save':
-            data = packet.data.data;
-            if (job && job.obj){
-                // copy the obj_data that was saved with the job
-                data.obj_data = job.obj_data;
-                job.obj.data('command')('save_return', data);
-            } else {
-                alert("we have not sent the object");
-            }
-            break;
-        case 'delete':
-            data = packet.data.data;
-            if (data.deleted){
-                form_process_deleted(data.deleted);
-            }
-            break;
-        case 'general_error':
-            message = packet.data.data;
-            REBASE.Dialog.dialog('Error', message);
-            break;
-        case 'message':
-            message = packet.data.data;
-            REBASE.Dialog.dialog('Message', message);
-            break;
-        case 'forbidden':
-            message = 'You do not have the permissions to perform this action.';
-            REBASE.Dialog.dialog('Forbidden', message);
-            break;
-        case 'status':
-            job_processor_status(packet.data.data, packet.data.node, root);
-            break;
-        default:
-            REBASE.Dialog.dialog('Error', 'Action `' + packet.data.action + '` not recognised');
-            break;
-    }
-}
 
 function init(){
 

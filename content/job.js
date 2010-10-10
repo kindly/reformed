@@ -60,7 +60,7 @@ REBASE.Job = function(){
         }
         if (return_data !== null){
             for (i = 0, n = return_data.length; i < n; i++){
-                REBASE.process_node(return_data[i], sent_data);
+                REBASE.Node.process(return_data[i], sent_data);
             }
         } else {
             REBASE.Dialog.dialog('Application Error', 'No data was returned.\n\nThe application may not be running.');
