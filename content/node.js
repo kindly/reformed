@@ -558,6 +558,10 @@ function process_node(packet, job){
             message = packet.data.data
             REBASE.Dialog.dialog('Error', message);
             break;
+         case 'message':
+            message = packet.data.data
+            REBASE.Dialog.dialog('Message', message);
+            break;
          case 'forbidden':
             message = 'You do not have the permissions to perform this action.'
             REBASE.Dialog.dialog('Forbidden', message);
@@ -565,6 +569,10 @@ function process_node(packet, job){
         case 'status':
             job_processor_status(packet.data.data, packet.data.node, root);
             break;
+        default:
+            REBASE.Dialog.dialog('Error', 'Action `' + packet.data.action + '` not recognised');
+            break;
+
     }
 }
 
