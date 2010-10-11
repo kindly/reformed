@@ -1094,7 +1094,6 @@ REBASE.Form = function (){
         var page_offset = (current - 1);
         make_item(page_offset, '&lt;', active);
 
-
         for (var i = first_page; i < last_page; i++){
             make_item(i, i + 1, (i != current));
         }
@@ -1116,8 +1115,6 @@ REBASE.Form = function (){
             return make_paging(paging_data);
         }
     };
-
-
 }();
 
 
