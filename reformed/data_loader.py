@@ -813,12 +813,12 @@ class MultipleSaveSet(object):
             save_set.save_values = row
             if "prev" == row.get("id"):
                 row.pop("id")
-                save_set.prepare(save_sets[-1])
+                save_set.prepare(save_sets[-1], defer = True)
             elif "prev" == row.get("_core_id"):
                 row.pop("_core_id")
-                save_set.prepare(save_sets[-1])
+                save_set.prepare(save_sets[-1], defer = True)
             else:
-                save_set.prepare()
+                save_set.prepare(defer = True)
             save_sets.append(save_set)
 
         try:

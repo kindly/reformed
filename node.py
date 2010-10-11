@@ -281,7 +281,7 @@ class TableNode(Node):
         commands['list'] = dict(command = 'list')
         commands['edit'] = dict(command = 'edit')
         commands['_save'] = dict(command = 'save')
-      #  commands['_delete'] = dict(command = 'delete')
+        commands['_delete'] = dict(command = 'delete')
         commands['new'] = dict(command = 'new')
         commands['_update'] = dict(command = 'update')
         self.__class__.commands = commands
@@ -315,6 +315,10 @@ class TableNode(Node):
         else:
             for form_name in self.get_form_name_list_from_layout():
                 self[form_name].new(node_token)
+
+    def delete(self, node_token):
+        for form_name in node_token.form_tokens():
+            self[form_name].delete(node_token)
 
 
 class EntityNode(TableNode):

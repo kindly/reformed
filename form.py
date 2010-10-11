@@ -348,7 +348,6 @@ class Form(object):
         else:
             id = get_data('__id')
             where = '_core_id=?'
-        print where, id
         try:
             session = r.Session()
 
@@ -550,11 +549,15 @@ class Form(object):
         # TD not reviewed
         ##FIXME does not work and has not been tested
 
-        id = node_token.data.get('id')
+        data = node_token[self.name]
+        id = data.get_data_int("%s.id" % self.table)
+        if not id:
+            id = data.get_data_int("id")
+
         if id:
             filter = {'id' : id}
         else:
-            id = node_token.data.get('__id')
+            id = data.get_data_int("__id")
             filter = {'_core_id' : id}
 
         table = self.table
@@ -565,17 +568,19 @@ class Form(object):
             data = session.query(obj).filter_by(**filter).one()
 
             for form_item in self.form_items:
-                form_item.delete(self, node_token, data, data, session)
-
+                form_item.delete_page_item(node_token, data, data, session)
             session.delete(data)
             session.commit()
             # FIXME this needs to be handled more nicely and needs to be completely fixed
-            if self.form_type != 'grid' and self.table == table:
-                node_token.next_data = {'command': 'list', 'data' : self.extra_data}
-                node_token.next_node = self.name
-            else:
-                node_token.out = {'deleted': [self.data]}
-                node_token.action = 'delete'
+            #if self.form_type != 'grid' and self.table == table:
+                #node_token.next_data = {'command': 'list', 'data' : self.extra_data}
+                #node_token.next_node = self.name
+            #else:
+                #node_token.out = {'deleted': [self.data]}
+                #node_token.action = 'delete'
+            node = node_token.node
+            for form in self.save_update.split():
+                node[form].view(node_token, read_only = False)
         except sqlalchemy.orm.exc.NoResultFound:
             error = 'Record not found.'
             node_token.general_error(error)

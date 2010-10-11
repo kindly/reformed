@@ -76,6 +76,7 @@ class Database(object):
 
         self.search_actions = {}
         self.search_names = {}
+        self.search_ids = {}
 
         self.zodb_tables_init()
 
@@ -464,6 +465,7 @@ class Database(object):
         self.graph = None
         self.search_actions = {}
         self.search_names = {}
+        self.search_ids = {}
 
 
     def tables_with_relations(self, table):
@@ -629,7 +631,7 @@ class Database(object):
                     ## FIXME there can be duplicate names so they will overwrite 
                     action.set_names(table.name)
                     self.search_names[action.name] = str(action.event_id)
-
+                    self.search_ids[str(action.event_id)] = action.name
 
 
     def make_graph(self):

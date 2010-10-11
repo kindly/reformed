@@ -93,7 +93,7 @@ class FormItem(object):
         # FIXME Not called from anywhere AFAIK
         # check permissions etc
         if authenticate.check_permission(self.permissions):
-            self.custom_control_delete(self, node_token, object, data, session)
+            self.custom_control_delete(node_token, object, data, session)
 
     def get_page_item_structure(self, node_token, data):
 
