@@ -21,20 +21,8 @@
 
 */
 
-
-$.Buttons = {};
-
-$.Buttons.action_hash = {};
-
-$.Buttons.action_list = [];
-
-$.Buttons.action_call = function (action_name){
-    // this function fires the event for action button clicks
-    // we get the base object, function to call and the args from the
-    // array action_hash
-    var cmd_info = $.Buttons.action_hash[action_name][1];
-    cmd_info[1].apply(cmd_info[0], cmd_info[2]);
-};
+// JSLint directives
+/*global $ */
 
 var REBASE = {};
 
@@ -56,6 +44,9 @@ REBASE.LayoutManager = function (){
     var ACTION_BUTTON_SPACING_H = 3;
     var ACTION_BUTTON_SPACING_V = 16;
     var ACTION_BUTTON_WIDTH = 200;
+
+    var action_hash = {};
+    var action_list = [];
 
     var info = {
         margin_left : 10,
@@ -108,10 +99,8 @@ REBASE.LayoutManager = function (){
 
         var $button_holder;
 
-        var action_list = $.Buttons.action_list;
-
         function add_action_button(name, data, button_number){
-            
+
             var $button = $('<div id="action_' + name + '" class="action"></div>');
             var $link = $('<a href="javascript:node_load(\'' + data[4] + '\')"></a>');
             var $img = $('<img src="icon/22x22/' + data[1] + '" />');
@@ -156,15 +145,15 @@ REBASE.LayoutManager = function (){
             var html = '';
             for (var i = 0, n = action_list.length; i < n; i++){
                 action = action_list[i];
-                if (action && $.Buttons.action_hash[action]){
-                    add_action_button(action, $.Buttons.action_hash[action], i);
+                if (action && action_hash[action]){
+                    add_action_button(action, action_hash[action], i);
                 }
             }
         }
 
         $actions = $('<div id="actions"></div>');
         position_actions();
-    
+
         $button_holder = $('<div class="button_holder" style="position:relative"></div>');
         $actions.append($button_holder);
 
@@ -177,34 +166,25 @@ REBASE.LayoutManager = function (){
     }
 
     function create_side(){
-        $side = $('<div id="side"></div>');
-
         var html = [];
-        // FIXME this wants to be ripped out asap
-        html.push('<div style=\'font-size:12px\'>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 1);" style="font-size:8px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 2);" style="font-size:10px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 3);" style="font-size:12px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 4);" style="font-size:14px">A</span>');
-        html.push('<span onclick="$.Util.selectStyleSheet(\'size\', 5);" style="font-size:16px">A</span>');
-        html.push('</div>');
-    
-    
-//        html.push('<ul>');
-//        html.push('<li><span onclick="$.Util.stress_test(\'n:table.Edit:list:t=9&l=100&o=\', 9900)">stress test</span></li>');
-//        html.push('<li><span onclick="node_load(\'n:table.Table:new\')">new table</span></li>');
-//        html.push('<li><span onclick="node_load(\'n:table.Table:list\')">table</span></li>');
-//        html.push('<li><span onclick="node_load(\'n:test.Sponsorship:\')">sponsor</span></li>');
-//        html.push('<li><span onclick="$JOB.add({}, {}, \'reload\', true)" ><b>reload</b></span></li>');
-//        html.push('<li><span onclick="get_node(\'test.DataLoader\', \'load\', {file:\'data.csv\', table:\'people\'})" ><b>load people</b></span></li>');
-//        html.push('<li><span onclick="node_call_from_string(\'/n:test.DataLoader:load:file=donkeys.csv&table=donkey\', true)" ><b>load donkeys</b></span></li>');
-//        html.push('</ul>');
+        $side = $('<div id="side"></div>');
+        html.push(make_resizer());
         html.push('<div id="bookmarks"></div>');
-    
         $side.html(html.join(''));
-
         position_side();
         $body.append($side);
+    }
+
+    function make_resizer(){
+        var html = [];
+        var sizes = [8, 10, 12, 14, 16];
+        html.push('<div id="resizer" >');
+        for (var i = 0; i < sizes.length; i++){
+            html.push('<span onclick="$.Util.selectStyleSheet(\'size\', ' + (i + 1) + ');" >');
+            html.push('<span style="font-size:' + sizes[i] + 'px">A</span></span>');
+        }
+        html.push('</div>');
+        return html.join('');
     }
 
     function create_logo(){
@@ -251,10 +231,15 @@ REBASE.LayoutManager = function (){
     }
 
 
-
     return {
-        layout : function (arg){
+        'layout' : function (arg){
             create_layout(arg);
+        },
+        'action_hash' : function (arg){
+            action_hash = arg;
+        },
+        'action_list' : function (arg){
+            action_list = arg;
         }
     };
 }();
@@ -336,19 +321,21 @@ REBASE.Bookmark = function (){
     }
 
     function bookmark_process(bookmark){
-         if ($.isArray(bookmark)){
-             for (var i = 0, n = bookmark.length; i < n; i++){
+        if ($.isArray(bookmark)){
+            // clear any existing bookmarks
+            bookmark_array = [];
+            for (var i = 0, n = bookmark.length; i < n; i++){
                 bookmark_add(bookmark[i]);
-             }
-         } else {
-             if (bookmark == 'CLEAR'){
+            }
+        } else {
+            if (bookmark == 'CLEAR'){
                 // reset the bookmarks
                 bookmark_array = [];
-             } else {
+            } else {
                 bookmark_add(bookmark);
             }
-         }
-         bookmark_display();
+        }
+        bookmark_display();
     }
 
     return {

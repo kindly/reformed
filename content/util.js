@@ -204,48 +204,53 @@ $.Util.make_normal = function($item, field){
     return cleaned.value;
 };
 
-$.Util.build_node_link_href = function (data){
+$.Util.build_node_link_href = function (data, base_link){
+    return $.Util.build_node_link_common(data, true, base_link);
+}
+
+$.Util.build_node_link = function (data, base_link){
+    return $.Util.build_node_link_common(data, false, base_link);
+}
+
+$.Util.build_node_link_common = function (data, is_href, base_link){
     // build a node link based on the item info
     // used in result listings
-    var link_node
+    var link_node;
+    var node;
 
     if (!data.entity){
         if (data.result_url){
-            return '#' + data.result_url;
+            link_node = data.result_url;
         } else {
-            return '';
+            link_node = '';
+        }
+    } else {
+        if (base_link){
+            // make sure that the link is ready for additional info
+            // TODO make this a general function
+            while (base_link.split(':') .length < 4){
+                base_link += ':';
+            }
+            if (base_link.charAt(base_link.length - 1) != ':'){
+                base_link += '&';
+            }
+            link_node = base_link + "__id=" + data.__id;
+        } else {
+        node = REBASE.application_data.bookmarks[data.entity];
+        if (node !== undefined){
+            node = node.node;
+            link_node = "u:" + node + ":edit:__id=" + data.__id;
+        } else {
+            link_node = "u:test.Auto:edit:__id=" + data.__id + "&table=" + data.entity;
+        }
         }
     }
-    var node = REBASE.application_data.bookmarks[data.entity];
-    if (node !== undefined){
-        node = node.node;
-        link_node = "#u:" + node + ":edit:__id=" + data.__id;
+    // return as href or function call
+    if (is_href){
+        return '#' + link_node;
     } else {
-        link_node = "#u:test.Auto:edit:__id=" + data.__id + "&table=" + data.entity;
+        return "node_load('" + link_node + "');";
     }
-    return link_node;
-};
-
-$.Util.build_node_link = function (data){
-    // build a node link based on the item info
-    // used in result listings
-    var link_node
-
-    if (!data.entity){
-        if (data.result_url){
-            return "node_load('" + data.result_url + "');";
-        } else {
-            return '';
-        }
-    }
-    var node = REBASE.application_data.bookmarks[data.entity];
-    if (node !== undefined){
-        node = node.node;
-        link_node = "node_load('u:" + node + ":edit:__id=" + data.__id + "');";
-    } else {
-        link_node = "node_load('u:test.Auto:edit:__id=" + data.__id + "&table=" + data.entity + "');";
-    }
-    return link_node;
 };
 
 
@@ -644,8 +649,10 @@ $.Util.selectStyleSheet = function (type, value){
                 }
 
     if (type == 'size' && sizes[value]){
-        var new_style = "td, body, input, select, div.but_dd_f, div.CHECKBOX, label.form_label, textarea, th {font-size:" + sizes[value] + "em;}";
-        new_style += "td input{font-size:1em;}";
+        var new_style = '';
+        new_style += "td input, div{font-size:1em;}";
+        new_style += "td, body, input, select, button, dic.f_sub, div.but_dd_f, div.CHECKBOX, label.form_label, textarea, th, .ac_results li {font-size:" + sizes[value] + "em;}";
+        new_style += ".ac_results li { line-height:" + sizes[value] + "em;}";
         $('#style_size').text(new_style);
     }
 

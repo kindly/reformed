@@ -54,7 +54,7 @@ $.Checkbox = function(input, item, value){
 
     // default to being a 2 state control
     // unless explicit validation rule
-    var is_2_state = !(item.validation && item.validation[0].not_empty == false);
+    var is_2_state = !(item.validation && item.validation[0].not_empty === false);
 
     function mousedown_2_state(){
         switch (value){
@@ -136,7 +136,7 @@ $.Checkbox = function(input, item, value){
     }
     set_state();
     $checkbox.data('value', value);
-    var $checkbox_wrapper = $checkbox.find("div")
+    var $checkbox_wrapper = $checkbox.find("div");
     // FIXME need to unbind this
     $checkbox.mousedown(mousedown);
     $checkbox.keydown(keydown);
@@ -145,7 +145,8 @@ $.Checkbox = function(input, item, value){
 
 
 $.InputForm = function(input, form_data, row_data, extra_defaults){
-    $input = $(input);
+    var custom_commands;
+    var $input = $(input);
 
     $.Util.unbind_all_children($input);
 
@@ -160,23 +161,15 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
 
 
-    // custom events
-    var custom_commands = {
-        'unbind_all' : unbind_all,
-        'register_events' : register_events,
-        'save' : save,
-        'save_return' : save_return,
-        'get_form_data' : get_form_data_remote
-    };
-
     function size_boxes(){
         // FIXME this has been disabled TD
         return;
         var $box;
         var width;
+        var i, n;
         // BOX layouts
         var $boxes = $form.find('div.BOX');
-        for (var i = 0, n = $boxes.size(); i < n ; i++){
+        for (i = 0, n = $boxes.size(); i < n ; i++){
             $box = $boxes.eq(i);
             width = $box.parent().width() - util_size.FORM_BOX_W;
             $box.width(width);
@@ -194,10 +187,10 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         if ($img.size() !== 0){
             var position = $img.position();
             var img_top = position.top;
-            var img_bottom = img_top  + $img.outerHeight()
+            var img_bottom = img_top  + $img.outerHeight();
             var img_width = $img.outerWidth();
-            var $boxes = $img.parent().find('div.f_control_holder');
-            for (var i = 0, n = $boxes.size(); i < n ; i++){
+            $boxes = $img.parent().find('div.f_control_holder');
+            for (i = 0, n = $boxes.size(); i < n ; i++){
                 $box = $boxes.eq(i);
                 width = $box.parent().width() - img_width;
                 $box.width(width);
@@ -225,6 +218,16 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         init_movement();
         register_events();
     }
+
+    function command_caller(type, data){
+        if (custom_commands[type]){
+            return custom_commands[type](data);
+        } else {
+            alert('command: <' + type + '> has no handler');
+            return false;
+        }
+    }
+
 
     function init_movement(){
 
@@ -260,8 +263,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         var error;
         for (var field in errors){
             index = form_data.items[field].index;
-            // FIXME don't like this double assignment
-            $item = $control = form_controls_hash[field];
+            $item = form_controls_hash[field];
             // add error class to the containing div
             $item.addClass('f_error_control');
 
@@ -299,7 +301,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     function get_form_data_remote(fields){
         // is this used anywhere?
         if (fields){
-            fields = fields.replace(/^{|}$/g, '') + ',';
+            fields = fields.replace(/^\{|\}$/g, '') + ',';
             return get_form_data_listed_fields(fields);
         }
         //return get_form_data().save_data;
@@ -320,16 +322,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             //FIXME Toby {id}  if (fields){
             return {form:form_data.name, data : data, join_data : join_data};
         } else {
-            save_errors(errors)
-            return false;
-        }
-    }
-
-    function command_caller(type, data){
-        if (custom_commands[type]){
-            return custom_commands[type](data);
-        } else {
-            alert('command: <' + type + '> has no handler');
+            save_errors(errors);
             return false;
         }
     }
@@ -354,6 +347,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         }
         var copy_of_row_info = {};
         var row_info = get_row_info();
+        var extra;
 
         for (item in row_info){
             save_data[item] = row_info[item];
@@ -362,14 +356,14 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         // any extra data needed from the form
         params = form_data.params;
         if (params && params.extras){
-            for (var extra in params.extras){
+            for (extra in params.extras){
                 if (params.extras.hasOwnProperty(extra)){
                     save_data[extra] = params.extras[extra];
                 }
             }
         }
         if (extra_defaults){
-            for (var extra in extra_defaults){
+            for (extra in extra_defaults){
                 if (extra_defaults.hasOwnProperty(extra)){
                     save_data[extra] = extra_defaults[extra];
                 }
@@ -386,7 +380,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             item = form_data.fields[i];
 
             if (item.validation){
-                error = validate(item.validation, data[item.name], false)
+                error = validate(item.validation, data[item.name], false);
                 if (error.length > 0){
                     errors[item.name] = error;
                 }
@@ -401,7 +395,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         if ($.Util.is_empty(errors)){
             get_node_return(form_data.node, '_save', info.save_data, $form, info.copy_of_row_info);
         } else {
-            save_errors(errors)
+            save_errors(errors);
         }
     }
 
@@ -425,23 +419,17 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             case 'thumb':
             case 'file_upload':
                 return $item.find("input:first").data('value');
-                break;
             case 'wmd':
             case 'textarea':
                 return $item.find("textarea:first").val();
-                break;
             case 'dropdown_code':
                 return get_key_from_description(item, $item.find("input:first").val());
-                break;
             case 'checkbox':
                 return $item.find("div.CHECKBOX").data('value');
-                break;
             case 'codegroup':
                 return get_codegroup_values($item, item);
-                break;
             default:
                 return $item.find("input:first").val();
-                break;
         }
     }
 
@@ -502,7 +490,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         var $item = $(e.target);
         var fn_finalise;
         var $field;
-        var $img
+        var $img;
         // if this control is complex eg. dropdown.
         if ($item[0].nodeName == 'DIV' || $item[0].nodeName == 'IMG'){
             if ($item.hasClass('data')){
@@ -589,6 +577,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                         $builder[--builder_depth].append($builder.pop());
                     }
                     // drop through so outer div is also closed!
+                    // JSlint complains here but intentional
                 case 'box_end':
                 case 'area_end':
                     if (builder_depth > 0){
@@ -596,7 +585,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                     }
                     break;
                 default:
-                    console_log('unknown layout ' + item.layout)
+                    console_log('unknown layout ' + item.layout);
             }
         }
 
@@ -638,7 +627,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
             }
 
             if (form_data.form_type == 'results'){
-                item = {layout : 'listing_end'}
+                item = {layout : 'listing_end'};
                 add_layout_item(item, $builder, builder_depth);
             }
 
@@ -659,10 +648,10 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         // FIXME why extra_data should be paging_data?
         if (extra_defaults){
             // cache the html for reuse
-            paging_bar = make_paging(extra_defaults);
+            paging_bar = REBASE.Form.make_paging(extra_defaults);
             $builder[builder_depth].append(paging_bar);
         }
-        item = {layout : 'area_start'}
+        item = {layout : 'area_start'};
         add_layout_item(item, $builder, builder_depth);
         // main form
         if (!row_data.__array){
@@ -695,17 +684,36 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     }
 
+    // custom events
+    custom_commands = {
+        'unbind_all' : unbind_all,
+        'register_events' : register_events,
+        'save' : save,
+        'save_return' : save_return,
+        'get_form_data' : get_form_data_remote
+    };
+
     init();
 };
 
 $.StatusForm = function(input){
-    $input = $(input);
+    var $input = $(input);
     $.Util.unbind_all_children($input);
 
     // make our div that everything will hang off
     var $form = $('<div class="STATUS_FORM"></div>');
     $input.append($form);
 
+    var custom_commands;
+
+    function command_caller(type, data){
+        if (custom_commands[type]){
+            return custom_commands[type](data);
+        } else {
+            alert('command: <' + type + '> has no handler');
+            return false;
+        }
+    }
 
 
 //   $form.data('command')('register_events');
@@ -723,7 +731,7 @@ $.StatusForm = function(input){
     $form.data('command', command_caller);
 
     function update_status(data){
-        var message = data.message
+        var message = data.message;
         if (message !== null){
             // make readable especially errors
             message = String(message).replace(/\n/g, '<br/>');
@@ -742,90 +750,12 @@ $.StatusForm = function(input){
     }
 
     // custom events
-    var custom_commands = {
+    custom_commands = {
         'unbind_all' : unbind_all,
-//        'register_events' : register_events,
         'update' : update_status
     };
 
-    function command_caller(type, data){
-        if (custom_commands[type]){
-            return custom_commands[type](data);
-        } else {
-            alert('command: <' + type + '> has no handler');
-            return false;
-        }
-    }
-
-
 };
-
-function make_paging(extra_defaults){
-    // FIXME this function is global and should be somewhere else
-    // shared between grid2 and input_form
-    // build a paging bar
-    var PAGING_SIZE = 5;
-    var offset = extra_defaults.offset;
-    var limit = extra_defaults.limit;
-    var count = extra_defaults.row_count;
-    var base = extra_defaults.base_link;
-
-    var pages = Math.ceil(count/limit);
-    var current = Math.floor(offset/limit);
-    var link;
-    var href;
-
-    var use_href = (base.substring(0,1) == 'n');
-
-    var html = '<div class="PAGING_BAR">';
-
-    function make_href(){
-        if (use_href){
-            return 'href="#' + link + '" ';
-        } else {
-            return 'href="#" ';
-        }
-    }
-
-    html += 'paging: ';
-
-    if (current>0){
-        link = base + '&o=0&l=' + limit;
-        html += '<a ' + make_href() + 'onclick="node_load(\'' + link +'\');return false;">|&lt;</a> ';
-        link = base + '&o=' + (current-1) * limit + '&l=' + limit;
-        html += '<a ' + make_href() + 'onclick="node_load(\'' + link +'\');return false;">&lt;</a> ';
-    } else {
-        html += '|&lt; ';
-        html += '&lt; ';
-    }
-    for (var i=0; i < pages; i++){
-        if (i == current){
-            html += (i+1) + ' ';
-        } else {
-            if ( Math.abs(current-i)<PAGING_SIZE ||
-                 (i<(PAGING_SIZE*2)-1 && current<PAGING_SIZE) ||
-                 (pages-i<(PAGING_SIZE*2) && current>pages-PAGING_SIZE)
-            ){
-                link = base + '&o=' + i * limit + '&l=' + limit;
-                html += '<a ' + make_href() + 'onclick="node_load(\'' + link + '\');return false;">' + (i+1) + '</a> ';
-            }
-        }
-    }
-    if (current<pages - 1){
-        link = base + '&o=' + (current+1) * limit + '&l=' + limit;
-        html += '<a ' + make_href() + 'onclick="node_load(\'' + link + '\');return false;">&gt;</a> ';
-        link = base + '&o=' + (pages-1) * limit + '&l=' + limit;
-        html += '<a ' + make_href() + 'onclick="node_load(\'' + link +'\');return false;">&gt;|</a> ';
-    } else {
-        html += '&gt; ';
-        html += '&gt;| ';
-    }
-
-    html += 'page ' + (current+1) + ' of ' + pages + ' pages';
-    html += ', ' + (count) + ' records';
-    html += '</div>';
-    return html;
-}
 
 
 $.Grid2 = function(input, form_data, row_data, extra_defaults){
@@ -835,6 +765,16 @@ $.Grid2 = function(input, form_data, row_data, extra_defaults){
     var buttons = row_data.__buttons;
     row_data = row_data.__array;
 
+    var custom_commands;
+
+    function command_caller(type, data){
+        if (custom_commands[type]){
+            return custom_commands[type](data);
+        } else {
+            alert('command: <' + type + '> has no handler');
+            return false;
+        }
+    }
     function build_grid(){
 
 
@@ -869,7 +809,7 @@ $.Grid2 = function(input, form_data, row_data, extra_defaults){
             }
 
             function build_link(){
-                var value = ''
+                var value = '';
                 if (item.field && data[item.field] !== undefined){
                     value = item.field + '=' + data[item.field];
                 }
@@ -904,28 +844,29 @@ $.Grid2 = function(input, form_data, row_data, extra_defaults){
             return html.join('');
         }
 
-    function correct_value(item, value){
+        function correct_value(item, value){
 
-        // correct data value if needed
-        switch (item.data_type){
-            case 'DateTime':
-            case 'Date':
-                if (value !== null){
-                    return Date.ISO(value).makeLocaleString();
-                } else {
-                    return null;
-                }
-                break;
-            case 'Boolean':
-                if (value){
-                    return "True"
-                } else {
-                    return "False"
-                }
-            default:
-                return HTML_Encode_Clear(value);
+            // correct data value if needed
+            switch (item.data_type){
+                case 'DateTime':
+                case 'Date':
+                    if (value !== null){
+                        return Date.ISO(value).makeLocaleString();
+                    } else {
+                        return null;
+                    }
+                    break;
+                case 'Boolean':
+                    if (value){
+                        return "True";
+                    } else {
+                        return "False";
+                    }
+                    break;
+                default:
+                    return HTML_Encode_Clear(value);
+            }
         }
-    }
 
         function build_data(){
             var html = [];
@@ -955,7 +896,7 @@ $.Grid2 = function(input, form_data, row_data, extra_defaults){
         // FIXME why extra_data should be paging_data?
         if (extra_defaults){
             // cache the html for reuse
-            paging_bar = make_paging(extra_defaults);
+            paging_bar = REBASE.Form.make_paging(extra_defaults);
             $builder.append(paging_bar);
         }
         html.push('<table>');
@@ -978,21 +919,15 @@ $.Grid2 = function(input, form_data, row_data, extra_defaults){
     }
 
     function get_form_data(){
-        return {form : form_data.form_name, data : {}}
+        return {form : form_data.form_name, data : {}};
     }
+
+
     // custom events
-    var custom_commands = {
+    custom_commands = {
         'get_form_data' : get_form_data
     };
 
-    function command_caller(type, data){
-        if (custom_commands[type]){
-            return custom_commands[type](data);
-        } else {
-            alert('command: <' + type + '> has no handler');
-            return false;
-        }
-    }
     var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
     var num_fields = form_data.fields.length;
     build_grid();

@@ -326,6 +326,10 @@ class NodeToken(object):
         """ Helper function send error to front end. """
         self._set_action('general_error', data = error)
 
+    def message(self, message):
+        """ Helper function send error to front end. """
+        self._set_action('message', data = message)
+
     def _set_action(self, action, **kw):
         """ Set the action for the node token. """
         if self._action and not(action == self._action and action == 'form'):
@@ -390,6 +394,9 @@ class NodeToken(object):
             data = global_session.sys_info
             data['__user_id'] = user_id
             data['__username'] = global_session.session['username']
+            if global_session.session['username']:
+                data['__real_user_id'] = global_session.session['real_user_id']
+                data['__real_user_name'] = global_session.session['real_username']
             self.add_extra_response_function('application_data', data)
             refresh_frontend = True
         else:
@@ -400,13 +407,17 @@ class NodeToken(object):
             data = self._bookmark_list(user_id)
             self.add_extra_response_function('load_bookmarks', data)
 
+        if global_session.session['reset']:
+            self.add_extra_response_function('clear_form_cache')
+            global_session.session['reset'] = False
+            global_session.session.persist()
 
         self._added_responses.append(dict(type = 'node', data = info))
         log.debug('returned data\n%s\n----- end of node processing -----' %
                   pprint.pformat(self._added_responses))
         return self._added_responses
 
-    def add_extra_response_function(self, function, data):
+    def add_extra_response_function(self, function, data = None):
         #self._added_responses.append(dict(type = 'node', data = dict(action = action, data = data)))
         response = dict(action = 'function', function = function, data = data)
         self._added_responses.append(dict(type = 'node', data = response))
