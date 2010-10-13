@@ -105,41 +105,209 @@ function grid_add_row(){
     console_log('add_row');
     $('#main div.GRID').data('command')('add_row');
 }
-// user bits
-function change_user_bar(){
 
-    if (REBASE.application_data.__user_id === 0){
-        $('#user_login').html('<a href="#" onclick="node_load(\'d:user.User:login\',this);return false">Login</a>');
-    } else {
-        var impersonate = '';
-        if (REBASE.application_data.__real_user_id && REBASE.application_data.__real_user_id != REBASE.application_data.__user_id){
-            impersonate = ' <a href="#" onclick="node_load(\':user.Impersonate:revert\',this);return false">revert to ' + REBASE.application_data.__real_username + '</a>';
+
+/*
+ *           ('>
+ *           /))@@@@@.
+ *          /@"@@@@@()@
+ *         .@@()@@()@@@@    USER
+ *         @@@O@@@@()@@@
+ *         @()@@\@@@()@@    User management functions.
+ *          @()@||@@@@@'
+ *           '@@||@@@'
+ *        jgs   ||
+ *       ^^^^^^^^^^^^^^^^^
+ */
+
+REBASE.User = function (){
+
+    function change_user_bar(){
+        // update the user bar with the correct user info
+        // log in/out options etc.
+        var app_data = REBASE.application_data;
+        var html;
+        if (app_data.__user_id === 0){
+            html = '<a href="#" onclick="node_load(\'d:user.User:login\',this);return false;">Log in</a>';
+        } else {
+            var impersonate = '';
+            if (app_data.__real_user_id && app_data.__real_user_id != app_data.__user_id){
+                impersonate = ' <a href="#" onclick="node_load(\':user.Impersonate:revert\',this);return false;">revert to ' + app_data.__real_username + '</a>';
+            }
+            html = app_data.__username + ' <a href="#" onclick="node_load(\':user.User:logout\',this);return false;">Log out</a>' + impersonate;
         }
+        $('#user_login').html(html);
+    }
 
-        $('#user_login').html(REBASE.application_data.__username + ' <a href="#" onclick="node_load(\':user.User:logout\',this);return false">Log out</a>' + impersonate);
+    function update_user(user_data){
+        // if we have new user data then update the application data
+        if (user_data){
+            var app_data = REBASE.application_data;
+            app_data.__user_id = user_data.id;
+            app_data.__username = user_data.name;
+            if (user_data.real_user_id){
+                app_data.__real_user_id = user_data.real_user_id;
+            }
+            if (user_data.real_user_name){
+                app_data.__real_username = user_data.real_user_name;
+            }
+        }
+        change_user_bar();
     }
-}
 
-function change_layout(){
-    if (!REBASE.application_data['public'] && !REBASE.application_data.__user_id){
-         REBASE.LayoutManager.layout('mainx');
-    } else {
-         REBASE.LayoutManager.layout('main');
-    }
-    change_user_bar();
-}
+    return {
+        'update' : function (user_data){
+            update_user(user_data);
+        }
+    };
 
-function change_user(user){
-    REBASE.application_data.__user_id = user.id;
-    REBASE.application_data.__username = user.name;
-    if (user.real_user_id){
-        REBASE.application_data.__real_user_id = user.real_user_id;
+}();
+
+
+/*
+ *           ('>
+ *           /))@@@@@.
+ *          /@"@@@@@()@
+ *         .@@()@@()@@@@    INTERFACE
+ *         @@@O@@@@()@@@
+ *         @()@@\@@@()@@    Create and manage the user interface.
+ *          @()@||@@@@@'
+ *           '@@||@@@'
+ *        jgs   ||
+ *       ^^^^^^^^^^^^^^^^^
+ */
+
+REBASE.Interface = function (){
+
+    var $interface_layout;
+    var $side;
+    var $user_area;
+    var $user_bar;
+    var $logo;
+    var $menu;
+
+    function resize_north_pane(){
+        // due to floats we have to measure the user bar items
+        var size = $user_bar.outerHeight(true) + $menu.outerHeight(true);
+        $interface_layout.sizePane('north', size);
+        $logo.height(size - 10);
     }
-    if (user.real_user_name){
-        REBASE.application_data.__real_username = user.real_user_name;
+
+    function make_menu(menu){
+        // Build the menu.
+        function build(data){
+            var i;
+            var item;
+            var html = [];
+            for(i = 0; i < data.length; i++){
+                item = data[i];
+                html.push('<li>');
+                if (item.node){
+                    html.push('<a onclick="node_load(\'' + item.node + '\');$(\'#menu\').hideSuperfishUl();" >');
+                } else {
+                    if (item['function']) {
+                        html.push('<a onclick="REBASE.Functions.call(\'' + item['function'] + '\');$(\'#menu\').hideSuperfishUl();" >');
+                    } else {
+                        html.push('<a onclick="return false;" >');
+                    }
+                }
+                html.push(item.title);
+                html.push('</a>');
+                if (item.sub){
+                    html.push('<ul>');
+                    html.push(build(item.sub));
+                    html.push('</ul>');
+                }
+                html.push('</li>');
+            }
+            return html.join('');
+        }
+        $menu.empty();
+        $menu.append(build(menu));
+        $menu.superfish();
     }
-    change_layout();
-}
+
+    function add_logo(){
+        $logo = $('<img id="logo_image" src="logo.png" />');
+        $('#logo').append($logo);
+    }
+
+    function add_user_bar(){
+        $user_bar = $('<div id="user_bar"></div>');
+        // search box
+        var html = [];
+        html.push('<form action="" onclick="$.Util.Event_Delegator(\'clear\');" onsubmit="return search_box();" style="display:inline">');
+        html.push('<input type="text" name="search" id="search" />');
+        html.push('<input type="submit" name="search_button" id="search_button" value="search"/>');
+        html.push('</form>');
+        $user_bar.append(html.join(''));
+        // ajax info
+        $user_bar.append('<span id="ajax_info"><img src="busy.gif" /> Loading ...</span>');
+        // login info
+        $user_bar.append('<span id="user_login" style="float:right;">user login</span>');
+        $user_area.append($user_bar);
+    }
+
+    function add_menu(){
+        $menu = $('<ul id="menu" class="sf-menu" ><li><a onclick="return false;" >menu</a></li><ul>');
+        $menu.superfish();
+        var $menu_bar = $('<div id="menu_bar">');
+        $menu_bar.append($menu);
+        $user_area.append($menu_bar);
+    }
+
+    function make_resizer(){
+        var html = [];
+        var sizes = [8, 10, 12, 14, 16];
+        html.push('<div id="resizer" >');
+        for (var i = 0; i < sizes.length; i++){
+            html.push('<span onclick="$.Util.selectStyleSheet(\'size\', ' + (i + 1) + ');" >');
+            html.push('<span style="font-size:' + sizes[i] + 'px">A</span></span>');
+        }
+        html.push('</div>');
+        return html.join('');
+    }
+
+    function add_side(){
+        $side.empty();
+        $side.append(make_resizer());
+        $side.append('<div id="bookmarks"></div>');
+    }
+
+    function init(){
+        /* initialise the layout */
+        var $body = $('body');
+        $body.append('<div class="ui-layout-center"><div id="main" /></div>');
+        $body.append('<div class="ui-layout-west" id="left"><div id="side" /></div>');
+        $body.append('<div class="ui-layout-north"><div id="logo" /><div id="user_area" /></div>');
+        $side = $('#side');
+        $user_area = $('#user_area');
+
+        add_side();
+        add_user_bar();
+        add_menu();
+        add_logo();
+
+        // set options for the panes
+        var layout_defaults = {spacing_open:3, spacing_close:6, padding:0, applyDefaultStyles:true};
+        var layout_north = {resizable:true, closable: false, slidable:false, spacing_open:0};
+
+        $interface_layout = $body.layout({defaults: layout_defaults, north : layout_north});
+        resize_north_pane();
+    }
+    return {
+        'init' : function (){
+            init();
+        },
+        'resize_north_pane': function (){
+            resize_north_pane();
+        },
+        'make_menu': function (menu_data){
+            make_menu(menu_data);
+        }
+    };
+}();
+
 
 /*
  *           ('>
@@ -403,7 +571,10 @@ REBASE.Node = function (){
  */
 
 function init(){
-
+    // turn off any jquery animations
+    $.fx.off = true;
+    // build the user interface
+    REBASE.Interface.init();
     /* helper function */
     node_load = REBASE.Node.load_node;
 

@@ -115,7 +115,7 @@ REBASE.Job = function(){
 
         var user = packet.data.user;
         if (user){
-            change_user(user);
+            REBASE.User.update(user);
         }
 
         var bookmark = packet.data.bookmark;

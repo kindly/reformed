@@ -1000,7 +1000,7 @@ REBASE.Functions = function (){
     // application data
     functions.application_data = function (data){
         REBASE.application_data = data;
-        change_layout();
+        REBASE.User.update();
     };
 
     // bookmarks
@@ -1013,6 +1013,10 @@ REBASE.Functions = function (){
         REBASE.Layout.clear_form_cache();
     };
 
+    // Make menu.
+    functions.make_menu = function (data){
+        REBASE.Interface.make_menu(data)
+    };
 
     // exported functions
     return {

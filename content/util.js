@@ -657,7 +657,7 @@ $.Util.selectStyleSheet = function (type, value){
     }
 
     update();
-
+    REBASE.Interface.resize_north_pane()
 };
 
 $.Util.HTML_Encode = function (arg) {
