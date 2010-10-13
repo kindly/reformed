@@ -1036,3 +1036,21 @@ div.record_info > div {
     width:100%;
 }
 
+.ui-layout-pane {
+    padding:0 !important;
+
+}
+.ui-layout-pane-north {
+    overflow:visible !important;
+    border:0 !important;
+}
+
+ul.sf-menu {
+    margin-bottom:0;
+}
+.sf-sub-indicator {
+    background-image:url("../arrows-ffffff.png") !important;
+}
+.sf-shadow ul {
+    background-image:url('../shadow.png') !important;
+}
