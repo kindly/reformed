@@ -357,6 +357,13 @@ REBASE.Interface = function (){
 
 REBASE.Dialog = function (){
 
+    var DIALOG_BORDER_HEIGHT = 150;
+    var DIALOG_BORDER_WIDTH = 150;
+    // FIXME these numbers are magic
+    // should be calculated
+    var DIALOG_CHROME_HEIGHT = 75;
+    var DIALOG_CHROME_WIDTH = 35;
+
     var dialog_decode;
     var $dialog_box;
     var $system_dialog_box;
@@ -369,13 +376,42 @@ REBASE.Dialog = function (){
         // dialog box
         $dialog_box = $('<div id="dialog_box"></div>');
         $('body').append($dialog_box);
-        $dialog_box.dialog(options);
         // system dialog box
         $system_dialog_box = $('<div id="system_dialog_box"></div>');
         $('body').append($system_dialog_box);
-        $system_dialog_box.dialog(options);
 
         is_setup = true;
+    }
+
+    function show_dialog($dialog, title){
+        // Show the dialog.  Unfortunatly the dialog appears to
+        // lack some functionality so we have to manually shrink
+        // it if it is too big.  We also need to centre it.
+
+        var height = $(window).height() - DIALOG_BORDER_HEIGHT;
+        var width = $(window).width() - DIALOG_BORDER_WIDTH;
+        // Destroy the dialog and recreate so smaller
+        // content is sized correctly.
+        $dialog.dialog('destroy');
+        var options = {width: 'auto', height: 'auto', modal: true, title: title};
+        $dialog.dialog(options);
+        var $container = $dialog.parent();
+        var c_height = $container.height();
+        var c_width = $container.width();
+        // Shrink if needed.
+        if (c_height > height){
+            $container.height(height);
+            $dialog.height(height - DIALOG_CHROME_HEIGHT);
+            c_height = height;
+        }
+        if (c_width > width){
+            $container.width(width);
+            $dialog.width(width - DIALOG_CHROME_WIDTH);
+            c_width = width;
+        }
+        // Centre the dialog on the page.
+        $container.css({'top':Math.floor((height - c_height + DIALOG_BORDER_HEIGHT) / 2),
+                     'left':Math.floor((width - c_width + DIALOG_BORDER_WIDTH) / 2)});
     }
 
     function open(title, data){
@@ -394,8 +430,7 @@ REBASE.Dialog = function (){
 
             $dialog_box.input_form(form, form_data);
         }
-        $dialog_box.dialog("option", "title", title);
-        $dialog_box.dialog('open');
+        show_dialog($dialog_box, title);
         is_open = true;
     }
 
@@ -419,8 +454,7 @@ REBASE.Dialog = function (){
         $system_dialog_box.empty();
         $system_dialog_box.append($form);
 
-        $system_dialog_box.dialog("option", "title", title);
-        $system_dialog_box.dialog('open');
+        show_dialog($system_dialog_box, title);
     }
 
     function confirm_action_return(result){
