@@ -129,15 +129,32 @@ REBASE.Form = function (){
         return ' class="' + class_list + '" ';
     };
 
+    function HTML_Encode_Clear(arg) {
+        // encode html also show null as ''
+        // replace & " < > with html entity
+        if (arg === null){
+            return '';
+        }
+        if (typeof arg != 'string'){
+            return arg;
+        }
+        return arg.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    };
+
+
 
     // exported functions
     return {
         'make_paging' : function (paging_data){
             return make_paging(paging_data);
         },
-        'make_item_class' : function (paging_data){
-            return make_item_class(paging_data);
+        'make_item_class' : function (item, extra_class){
+            return make_item_class(item, extra_class);
+        },
+        'HTML_Encode_Clear' : function (arg){
+            return HTML_Encode_Clear(arg);
         }
+
     };
 }();
 
@@ -161,7 +178,7 @@ REBASE.FormControls = function(){
     var local_row_data = {};
     var control_build_functions;
 
-    var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
+    var HTML_Encode_Clear = REBASE.Form.HTML_Encode_Clear;
     var set_class_list = REBASE.Form.make_item_class;
     var process_html = $.Util.process_html;
 

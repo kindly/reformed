@@ -209,7 +209,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     var util_size = $.Util.Size;
     var HTML_Encode = $.Util.HTML_Encode;
     var process_html = $.Util.process_html;
-    var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
+    var HTML_Encode_Clear = REBASE.Form.HTML_Encode_Clear;
     //FIXME how do we deal with data in the form
 
     function init(){
@@ -928,7 +928,7 @@ $.Grid2 = function(input, form_data, row_data, extra_defaults){
         'get_form_data' : get_form_data
     };
 
-    var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
+    var HTML_Encode_Clear = REBASE.Form.HTML_Encode_Clear;
     var num_fields = form_data.fields.length;
     build_grid();
 };
