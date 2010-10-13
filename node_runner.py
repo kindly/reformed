@@ -751,6 +751,5 @@ class NodeRunner(object):
 
             # clear the form cache so we don't get confussed
             self.form_cache = None
-            print node_token.next_node, node_token, node_name
             return self.run(next_node, node_token)
 
