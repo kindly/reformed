@@ -427,7 +427,7 @@ REBASE.Dialog = function (){
         $system_dialog_box.dialog('close');
         if (result){
             dialog_decode.flags.confirm_action = false;
-            REBASE.Node.get_node(dialog_decode);
+            REBASE.Node._get_node(dialog_decode);
         }
     }
 
@@ -593,6 +593,9 @@ REBASE.Utils = function (){
  */
 
 REBASE.Node = function (){
+
+    var global_node_data = {};
+    var global_current_node_name;
 
 
     /* Private functions. */
@@ -802,6 +805,11 @@ REBASE.Node = function (){
         get_node(decode);
     }
 
+    function set_node_data(node_name, node_data){
+        global_current_node_name = node_name;
+        global_node_data = node_data;
+        console_log('node data:', node_data);
+    }
 
 
     // exported functions
@@ -816,7 +824,11 @@ REBASE.Node = function (){
              * data and can call a target form. */
             load_node(node_string, item, target_form);
         },
-        'get_node' : function (decode){
+        'set_node_data' : function (node_name, node_data){
+            /* Used to set the node name and data */
+            set_node_data(node_name, node_data);
+        },
+        '_get_node' : function (decode){
             // Called to automatically load a node decode
             // needed by confirm dialog.
             // DO NOT USE THIS FUNCTION
@@ -892,9 +904,7 @@ REBASE.Job = function(){
 
         var sent_node_data = packet.data.node_data;
         if (sent_node_data){
-            global_node_data = sent_node_data;
-            global_current_node = packet.data.node;
-            console_log('node data:', global_node_data);
+            REBASE.Node.set_node_data(packet.data.node, sent_node_data);
         }
 
         var user = packet.data.user;

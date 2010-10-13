@@ -30,8 +30,6 @@
 
 
 
-var global_node_data = {};
-var global_current_node;
 var node_load;
 
 
