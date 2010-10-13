@@ -1059,3 +1059,10 @@ ul.sf-menu {
 .sf-shadow ul {
     background-image:url('../shadow.png') !important;
 }
+
+textarea.debug {
+    font-family:monospace !important;
+    width:800px;
+    height:300px;
+    font-size:12px !important;
+}

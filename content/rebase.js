@@ -588,7 +588,7 @@ REBASE.Dialog = function (){
                      'left':Math.floor((width - c_width + DIALOG_BORDER_WIDTH) / 2)});
     }
 
-    function open(title, data){
+    function open(title, data, no_processing){
         if (!is_setup){
             setup();
         }
@@ -596,7 +596,10 @@ REBASE.Dialog = function (){
         // to process it for any markdown and display it.
         // If it is form data then we want to process it as a form.
         if (typeof(data) == 'string'){
-            $dialog_box.html(process_html(data));
+            if (!no_processing){
+                data = process_html(data)
+            }
+            $dialog_box.html(data);
         } else {
             // assuming it is form_data
             var form = data.form;
@@ -641,8 +644,8 @@ REBASE.Dialog = function (){
 
     // exported functions
     return {
-        'dialog' : function (title, data){
-            open(title, data);
+        'dialog' : function (title, data, no_processing){
+            open(title, data, no_processing);
         },
         'close' : function(){
             close();
@@ -696,10 +699,16 @@ REBASE.Functions = function (){
         $('#main').append($treeview);
     }
 
+    function debug_html(){
+        /* Output the current form cache information */
+        var info = $('html').html();
+        REBASE.Dialog.dialog('HTML', '<textarea class="debug"><html xmlns="http://www.w3.org/1999/xhtml">' + info + '</html></textarea>', true);
+    }
 
     // FUNCTIONS
 
     functions.debug_form_info = debug_form_info;
+    functions.debug_html = debug_html;
 
     // application data
     functions.application_data = function (data){

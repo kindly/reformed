@@ -30,6 +30,7 @@ def make_menu(node_manager):
     node_manager.add_menu(dict(name = 'Data', menu = 'Admin', title = 'Data', node = None))
     node_manager.add_menu(dict(name = 'Debug', menu = 'Admin', title = 'Debug', node = None))
     node_manager.add_menu(dict(menu = 'Debug', title = 'Form Data', function = 'debug_form_info'))
+    node_manager.add_menu(dict(menu = 'Debug', title = 'HTML', function = 'debug_html'))
     node_manager.add_menu(dict(name = 'Test', title = 'Test', node = None))
 
 class Node1(Node):
