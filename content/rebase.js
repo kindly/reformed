@@ -745,7 +745,12 @@ REBASE.Node = function (){
                         }
                     }
                     // set the form data
-                    decode.form_data.push(form_data);
+                    if (form_data){
+                        decode.form_data.push(form_data);
+                    } else {
+                        // an error occurred on the form so we don't want to continue.
+                        return false;
+                    }
                     break;
                 case 'u':
                     // update address bar
