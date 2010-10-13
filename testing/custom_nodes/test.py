@@ -26,6 +26,12 @@ from global_session import global_session
 r = global_session.database
 application = global_session.application
 
+def make_menu(node_manager):
+    node_manager.add_menu(dict(name = 'Data', menu = 'Admin', title = 'Data', node = None))
+    node_manager.add_menu(dict(name = 'Debug', menu = 'Admin', title = 'Debug', node = None))
+    node_manager.add_menu(dict(menu = 'Debug', title = 'Form Data', function = 'debug_form_info'))
+    node_manager.add_menu(dict(name = 'Test', title = 'Test', node = None))
+
 class Node1(Node):
     main = form(
         text('Test Form.\n====\nThis demonstrates the page items available.'),
@@ -124,6 +130,9 @@ class Node1(Node):
     )
 
 
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(menu = 'Test', title = 'Basic Form Elements', node = '$'))
+
     def call(self, node_token):
         self['main'].show(node_token)
 
@@ -151,6 +160,9 @@ class Node2(Node):
         form_type = "action",
     )
 
+
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(menu = 'Test', title = 'Buttons & Links', node = '$:'))
 
     def call(self, node_token):
         name = node_token.command.replace('+', ' ')
@@ -253,7 +265,9 @@ class People(EntityNode):
     form_layout = [['main'], ['photo'], ['phone']]
     layout_main_form = 'main'
 
-
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(name = 'People', title = 'People', node = '$:list'))
+        node_manager.add_menu(dict(menu = 'People', title = 'New person', node = '$:new'))
 
 class DataLoader(JobNode):
 
@@ -262,6 +276,9 @@ class DataLoader(JobNode):
     params = ['file', 'table']
 
   #  permissions = ['LoggedIn']
+
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(menu = 'Data', title = 'Load Data', node = '$:load:table=colour&file=testing/color.csv'))
 
 
 
@@ -278,6 +295,9 @@ class DataGenerate(JobNode):
     job_type = 'generate'
     job_function = 'generate'
     params = []
+
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(menu = 'Data', title = 'Generate Data', node = '$:select'))
 
     def setup_extra_commands(self):
         commands = self.__class__.commands
@@ -321,6 +341,8 @@ class Truncate(Node):
         form_type = "action",
     )
 
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(menu = 'Data', title = 'Truncate Table', node = '$:list'))
 
     def call(self, node_token):
         if node_token.command == 'list':
