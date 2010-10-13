@@ -1233,11 +1233,8 @@ REBASE.Layout = function(){
         var form_type = forms[form_name].form.form_type;
 
         var $div = $('<div class="FORM_HOLDER" id="form_' + (form_count++) + '"/>');
-        // FIXME move to switch statement
         if (form_type == 'grid'){
             $div.grid2(form, data, paging);
-        } else if (form_type == 'action' || form_type == 'results'){
-            $div.input_form(form, data, paging);
         } else {
             $div.input_form(form, data, paging);
         }
