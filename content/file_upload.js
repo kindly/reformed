@@ -24,7 +24,8 @@
 
 */
 
-
+// JSLint directives
+/*global $ jQuery setTimeout */
 
 
 (function($) {
@@ -38,6 +39,12 @@ $.fn.extend({
 
 
 $.FileUpload = function (input, data){
+
+    var type = 'normal';
+    var size = '.m';
+    var value = data.value;
+    var $input = $(input);
+    var $input_parent = $input.parent();
 
     function create_uid(length){
         // generate a unique id
@@ -62,14 +69,14 @@ $.FileUpload = function (input, data){
     }
 
     function process_return(return_data, data){
-        if (return_data.completed == false){
+        if (return_data.completed === false){
             var bytes_left = return_data.bytes_left;
             var bytes = return_data.bytes;
             var now = new Date().getTime();
             var time = (now - data.start) / 1000;
             var percent = 1 - bytes_left/bytes;
             var remaining;
-            if (bytes_left == 0){
+            if (bytes_left === 0){
                 remaining = 'unknown';
             } else {
                 remaining = nice_time((time/percent) - time + 1);
@@ -78,7 +85,7 @@ $.FileUpload = function (input, data){
             percent = Math.floor(percent * 1000)/10;
             var time_info = time + ', ' + remaining + ' remaining';
             data.$info.text(percent + '% ' + time_info);
-            var timer = setTimeout(function() {update_status(data)}, 1000);
+            var timer = setTimeout(function() {update_status(data);}, 1000);
         } else {
             if (return_data.error !== ''){
                 data.$info.text('ERROR: ' + return_data.error);
@@ -90,7 +97,7 @@ $.FileUpload = function (input, data){
                     data.$info.text('completed');
                 }
                 // store value
-                value = return_data.id;
+                var value = return_data.id;
             }
             $input = $('<input class="img_uploader" type="file" />').change(file_changed);
             $input.data('value', value);
@@ -125,15 +132,11 @@ $.FileUpload = function (input, data){
         var start = new Date().getTime();
         var data = { uid : uid, $info : $info, $form : $form, $iframe : $iframe, start : start};
         // delay the status update so that the file is registered on the server
-        var timer = setTimeout(function() {update_status(data)}, 1000);
+        var timer = setTimeout(function() {update_status(data);}, 1000);
     }
 
 
-    var type = 'normal';
-    var size = '.m';
-    var value = data.value;
-    var $input = $(input);
-    var $input_parent = $(input).parent();
+
 
     function init(){
         if (data && data.type){
