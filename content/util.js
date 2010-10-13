@@ -293,42 +293,7 @@ $.Util.format_data = function (data, format){
 
 };
 
-$.Util.process_html = function (text, data, inline){
-    var match;
-    var out = text;
-    var start;
-    var end;
-    var substitute_data;
-    var format;
-    // data substitution
-    var offset = 0;
-    var reg = /\{([^}:]+):?([^}]*)\}/g;
-    if (data){
-        while (match = reg.exec(text)){
-            if (data[match[1]] === undefined){
-                continue;
-            }
-            substitute_data = data[match[1]];
-            if (match[2] && substitute_data){
-                substitute_data = $.Util.format_data(substitute_data, match[2]);
-            }
 
-            start = match.index + offset;
-            end = match.index + match[0].length + offset;
-            offset += substitute_data.length - match[0].length;
-            out = out.substring(0, start) + substitute_data + out.substring(end);
-        }
-    }
-
-    var mode = Showdown.MODE_FULL;
-    if (inline){
-        mode = Showdown.MODE_SIMPLE;
-    }
-    var converter = new Showdown.converter();
-    out = converter.makeHtml(out, mode);
-
-    return out;
-};
 
 $.Util.clean_value = function (value, field){
 

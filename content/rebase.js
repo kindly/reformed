@@ -28,6 +28,180 @@
 
 var REBASE = {};
 
+
+/*
+ *           ('>
+ *           /))@@@@@.
+ *          /@"@@@@@()@
+ *         .@@()@@()@@@@    FORM
+ *         @@@O@@@@()@@@
+ *         @()@@\@@@()@@    Useful and shared form functions.
+ *          @()@||@@@@@'
+ *           '@@||@@@'
+ *        jgs   ||
+ *       ^^^^^^^^^^^^^^^^^
+ */
+
+
+REBASE.Form = function (){
+
+    function make_paging(paging_data){
+        // build and return a paging bar
+        var PAGING_SIZE = 5;
+
+        var offset = paging_data.offset;
+        var limit = paging_data.limit;
+        var count = paging_data.row_count;
+        var base = paging_data.base_link;
+
+        var html = [];
+
+        function make_item(offset, description, active){
+
+            var link;
+            // FIXME do a better test for this
+            var use_href = (base.substring(0,1) == 'u');
+
+            function make_href(link){
+                if (use_href){
+                    return 'href="#' + link + '" ';
+                } else {
+                    return 'href="#" ';
+                }
+            }
+
+            if (active){
+                link = base + (offset * limit);
+                html.push( '<a ' + make_href(link) + 'onclick="node_load(\'' +
+                    link +'\');return false;">' + description + '</a> ');
+            } else {
+                html.push( description + ' ');
+            }
+        }
+
+        var pages = Math.ceil(count/limit);
+        var current = Math.floor(offset/limit);
+
+        var first_page = current - PAGING_SIZE;
+        if (first_page < 0){
+            first_page = 0;
+        }
+        var last_page = first_page + (PAGING_SIZE * 2);
+        if (last_page > pages){
+            last_page = pages;
+        }
+
+        base = base + '&l=' + limit + '&o=';
+
+        html.push('<div class="PAGING_BAR">');
+        html.push('paging: ');
+
+        var active = (current > 0);
+        make_item(0, '|&lt;', active);
+        var page_offset = (current - 1);
+        make_item(page_offset, '&lt;', active);
+
+        for (var i = first_page; i < last_page; i++){
+            make_item(i, i + 1, (i != current));
+        }
+
+        active = (current < pages - 1);
+        page_offset = (current + 1);
+        make_item(page_offset, '&gt;', active);
+        make_item(pages - 1, '&gt;|', active);
+
+        html.push('page ' + (current + 1) + ' of ' + pages + ' pages');
+        html.push(', ' + count + ' records');
+        html.push('</div>');
+        return html.join('');
+    }
+
+    function make_item_class(item, extra_class){
+        // Returns a html ' class=".." ' string for
+        // an item containing both css and extra class lists.
+        if (!item.css && !extra_class){
+            return '';
+        }
+        var class_list = '';
+        if (extra_class){
+           class_list = extra_class;
+        }
+        if (item.css){
+            class_list += ' ' + item.css;
+        }
+        return ' class="' + class_list + '" ';
+    };
+
+    function HTML_Encode_Clear(arg) {
+        // encode html also show null as ''
+        // replace & " < > with html entity
+        if (arg === null){
+            return '';
+        }
+        if (typeof arg != 'string'){
+            return arg;
+        }
+        return arg.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    };
+
+
+    function process_html(text, data, inline){
+        var match;
+        var out = text;
+        var start;
+        var end;
+        var substitute_data;
+        var format;
+        // data substitution
+        var offset = 0;
+        var reg = /\{([^}:]+):?([^}]*)\}/g;
+        if (data){
+            while (match = reg.exec(text)){
+                if (data[match[1]] === undefined){
+                    continue;
+                }
+                substitute_data = data[match[1]];
+                if (match[2] && substitute_data){
+                    substitute_data = $.Util.format_data(substitute_data, match[2]);
+                }
+
+                start = match.index + offset;
+                end = match.index + match[0].length + offset;
+                offset += substitute_data.length - match[0].length;
+                out = out.substring(0, start) + substitute_data + out.substring(end);
+            }
+        }
+
+        var mode = Showdown.MODE_FULL;
+        if (inline){
+            mode = Showdown.MODE_SIMPLE;
+        }
+        var converter = new Showdown.converter();
+        out = converter.makeHtml(out, mode);
+
+        return out;
+    };
+
+
+
+    // exported functions
+    return {
+        'make_paging' : function (paging_data){
+            return make_paging(paging_data);
+        },
+        'make_item_class' : function (item, extra_class){
+            return make_item_class(item, extra_class);
+        },
+        'HTML_Encode_Clear' : function (arg){
+            return HTML_Encode_Clear(arg);
+        },
+        'process_html' : function (arg){
+            return process_html(arg);
+        }
+    };
+}();
+
+
 /*
  *           ('>
  *           /))@@@@@.
@@ -369,7 +543,7 @@ REBASE.Dialog = function (){
     var $system_dialog_box;
     var is_setup = false;
     var is_open = false;
-    var process_html = $.Util.process_html;
+    var process_html = REBASE.Form.process_html;
 
     function setup(){
         var options = {autoOpen: false, width: 'auto', modal: true};

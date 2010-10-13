@@ -208,7 +208,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     var subforms = [];
     var util_size = $.Util.Size;
     var HTML_Encode = $.Util.HTML_Encode;
-    var process_html = $.Util.process_html;
+    var process_html = REBASE.Form.process_html;
     var HTML_Encode_Clear = REBASE.Form.HTML_Encode_Clear;
     //FIXME how do we deal with data in the form
 
