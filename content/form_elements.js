@@ -792,9 +792,12 @@ REBASE.Layout = function(){
         }
         // set the title
         set_layout_title_and_footer();
-        // Replace root DOM elements content with the new layout.
-        $(root).empty();
-        $(root).append($layout);
+        // Replace root DOM elements content with the new layout
+        // and scroll to the top.
+        var $root = $(root);
+        $root.empty();
+        $root.scrollTop(0);
+        $root.append($layout);
     }
 
     function add_forms_to_layout(packet){
