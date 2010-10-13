@@ -88,8 +88,9 @@ class NodeToken(object):
             return urllib.urlencode(self.data)
 
 
-    def __init__(self, data):
+    def __init__(self, data, application):
 
+        self.application = application
         self.reset()
 
         self.command = data.pop('command', None)
@@ -608,7 +609,7 @@ class NodeRunner(object):
     def node(self, data):
 
         # create our node token to hold state
-        node_token = NodeToken(data)
+        node_token = NodeToken(data, self.application)
 
         node = data.get('node')
         self.run(node, node_token)
