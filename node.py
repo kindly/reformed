@@ -45,7 +45,7 @@ class Node(object):
 
     table = None # forms need this defined
 
-    def __init__(self, node_name):
+    def __init__(self, node_name = None):
 
         # FIXME can this die?
         self.name = node_name
