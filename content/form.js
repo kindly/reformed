@@ -512,7 +512,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         return !actioned;
     }
 
-    var set_class_list = $.Util.set_class_list;
+    var set_class_list = REBASE.Form.make_item_class;
 
     var form_controls_hash; // holder for the form controls
 
