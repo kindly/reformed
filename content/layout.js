@@ -26,6 +26,18 @@
 
 var REBASE = {};
 
+/*
+ *           ('>
+ *           /))@@@@@.
+ *          /@"@@@@@()@
+ *         .@@()@@()@@@@    BOOKMARK
+ *         @@@O@@@@()@@@
+ *         @()@@\@@@()@@    Bookmark functions.
+ *          @()@||@@@@@'
+ *           '@@||@@@'
+ *        jgs   ||
+ *       ^^^^^^^^^^^^^^^^^
+ */
 
 
 REBASE.Bookmark = function (){
@@ -49,7 +61,6 @@ REBASE.Bookmark = function (){
         } else {
             bookmark.bookmark = 'u:test.Auto:edit:id=' + bookmark.entity_id + '&table=' + bookmark.entity_table;
         }
-
         // remove the item if already in the list
         for (var i = 0, n = bookmark_array.length; i < n; i++){
             if (bookmark_array[i].bookmark == bookmark.bookmark){
@@ -70,41 +81,41 @@ REBASE.Bookmark = function (){
         var category;
         var entity_table;
         var html;
-
+        // create an item for each bookmark and put it in
+        // the array for its category
         for(var i = 0; i < bookmark_array.length && i < BOOKMARKS_SHOW_MAX; i++){
             entity_table = bookmark_array[i].entity_table;
             if (category_items[entity_table] === undefined){
                 categories.push(entity_table);
                 category_items[entity_table] = [];
             }
-
-            html  = '<li class ="bookmark-item-' + entity_table + '">';
+            html  = '<li>';
             html += '<span onclick="node_load(\'' + bookmark_array[i].bookmark + '\')">';
             html += bookmark_array[i].title + '</span>';
             html += '</li>';
 
             category_items[entity_table].push(html);
         }
-
+        // create the actual bookmarks list
         html = '<ol class = "bookmark">';
         for(i = 0; i < categories.length; i++){
             category = categories[i];
-            html += '<li class ="bookmark-category-title-' + category + '">';
+            html += '<li class ="bookmark-title bookmark-category-' + category + '">';
             html += category;
-            html += '</li>';
-            html += '<ol class ="bookmark-items bookmark-category-list-' + category + '">';
+            html += '<ol class ="bookmark-items">';
             html += category_items[category].join('\n');
             html += '</ol>';
+            html += '</li>';
         }
-
         html += '</ol>';
-
         $('#bookmarks').html(html);
     }
 
     function bookmark_process(bookmark){
         if ($.isArray(bookmark)){
+            // if we get an array of bookmarks
             // clear any existing bookmarks
+            // and replace with the new ones
             bookmark_array = [];
             for (var i = 0, n = bookmark.length; i < n; i++){
                 bookmark_add(bookmark[i]);
