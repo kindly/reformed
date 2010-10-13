@@ -132,7 +132,7 @@ def process_node(environ, start_response):
         start_response('200 OK', [('Content-Type', 'text/plain')])
         return throw_error('Sent JSON Error', request.params["body"])
 
-    node_interface = node_runner.NodeRunner(global_session.application.node_manager)
+    node_interface = node_runner.NodeRunner(global_session.application)
 
     node_interface.add_command(body)
     try:

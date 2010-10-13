@@ -590,8 +590,9 @@ class NodeManager(object):
 
 class NodeRunner(object):
 
-    def __init__(self, node_manager):
-        self.node_manager = node_manager
+    def __init__(self, application):
+        self.application = application
+        self.node_manager = application.node_manager
         self.command_queue = []
         self.output = [] # this will be returned
         self.auto_login_cookie = None
