@@ -932,37 +932,21 @@ REBASE.Job = function(){
             case 'html':
                 $('#' + root).html(packet.data.data.html);
                 break;
-            case 'page':
-                //alert($.toJSON(packet.data.data));
-                $('#' + root).html(page_build(packet.data.data));
-                break;
             case 'form':
             case 'dialog':
                  REBASE.Layout.update_layout(packet.data);
                  break;
             case 'function':
-                console_log('data', packet.data['function']);
                 REBASE.Functions.call(packet.data['function'], packet.data.data);
                 break;
             case 'save_error':
-                data = packet.data.data;
-                // clear form items with no errors
+                // FIXME not implemented
                 break;
             case 'save':
-                data = packet.data.data;
-                if (job && job.obj){
-                    // copy the obj_data that was saved with the job
-                    data.obj_data = job.obj_data;
-                    job.obj.data('command')('save_return', data);
-                } else {
-                    alert("we have not sent the object");
-                }
+                // FIXME not implemented
                 break;
             case 'delete':
-                data = packet.data.data;
-                if (data.deleted){
-                    form_process_deleted(data.deleted);
-                }
+                // FIXME not implemented
                 break;
             case 'general_error':
                 message = packet.data.data;
