@@ -69,6 +69,10 @@ div {
     background-color:transparent
 }
 
+#resizer {
+    padding:5px;
+}
+
 #resizer > span {
     width:20px;
     height:20px;
