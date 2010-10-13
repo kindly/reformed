@@ -738,14 +738,6 @@ REBASE.Node = function (){
                     var $obj = $(item);
                     $obj = $obj.parents('div.INPUT_FORM');
                     var form_data = $obj.data('command')('get_form_data');
-                    // update the form data with any items in decode.url_data that
-                    // have not already been assigned
-                    // # FIXME can this be removed?
-               /*     for (key in decode.url_data){
-                        if (form_data.data[key] === undefined){
-                            form_data.data[key] = decode.url_data[key];
-                        }
-                    }*/
                     // set the form data
                     if (form_data){
                         decode.form_data.push(form_data);
