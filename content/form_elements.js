@@ -983,6 +983,7 @@ REBASE.Functions = function (){
             f(data);
         } else {
             REBASE.Dialog.dialog('Error', '<pre>Function `' + fn + '` is not available.</pre>');
+            console_log('ERROR: function `' + fn + '` not available');
         }
     }
 
