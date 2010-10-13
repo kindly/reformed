@@ -407,6 +407,8 @@ class NodeToken(object):
             # we have logged in so we want our bookmarks
             data = self._bookmark_list(user_id)
             self.add_extra_response_function('load_bookmarks', data)
+            data = self._make_menu()
+            self.add_extra_response_function('make_menu', data)
 
         if global_session.session['reset']:
             self.add_extra_response_function('clear_form_cache')
@@ -434,6 +436,31 @@ class NodeToken(object):
                              keep_all = False,
                              limit = limit).data
         return bookmarks
+
+    def _make_menu(self):
+        """Make the data for the users menu.
+        Menu item permissions are checked and only allowed items are returned. """
+
+        def build_items(items):
+            # checks the permissions
+            output = []
+            for item in items:
+                if not authenticate.check_permission(item.get('permissions')):
+                    continue
+                menu_item = {}
+                if 'title' in item:
+                    menu_item['title'] = item['title']
+                if 'node' in item:
+                    menu_item['node'] = item['node']
+                if 'function' in item:
+                    menu_item['function'] = item['function']
+                if 'sub' in item:
+                    menu_item['sub'] = build_items(item['sub'])
+                output.append(menu_item)
+            return output
+
+        return build_items(self.application.menu)
+
 
     def get_title(self):
         return self._title
@@ -475,6 +502,12 @@ class NodeManager(object):
         self.node_instances = {}
         self.modules = {}
         self.processed_nodes = {}
+        # menu stuff
+        self.menu = []
+        self.menu_pending = {}
+        self.menu_lookup = {}
+        self.current_node = None
+
         self.get_nodes()
 
 
@@ -507,6 +540,7 @@ class NodeManager(object):
         self.import_nodes()
 
         zodb.close()
+        self.application.menu = self.menu
 
     def import_node(self, name):
         mod = __import__(name)
@@ -554,13 +588,71 @@ class NodeManager(object):
 
     def process_nodes(self):
         for module, node_root, root in self.modules.itervalues():
+            # add any menu items for the module
+            if hasattr(module, 'make_menu'):
+                self.current_node = None
+                make_menu = getattr(module, 'make_menu')
+                make_menu(self)
+            # find and store nodes
             for name in dir(module):
                 item = getattr(module, name)
                 if inspect.isclass(item):
                     if item.__module__ == node_root + '.' + root:
                         node_title = '%s.%s' % (root, name)
                         self.nodes[node_title] = item
+                        # add any menu items for the node
+                        if hasattr(item, 'make_menu'):
+                            self.current_node = node_title
+                            item().make_menu(self)
+        # Check menu build completed
+        if self.menu_pending:
+            print 'Warning: Orphaned menu items wanting', self.menu_pending.keys()
 
+
+
+    def add_menu(self, data):
+
+        actioned = False
+        node = data.get('node')
+        if node:
+            # process the node data
+            # we can use $ as shorthand for the current node.
+            if self.current_node:
+                node = node.replace('$', self.current_node)
+            # make the item an update link or use supplied flags
+            flags = data.get('flags', 'u')
+            # store updated node
+            data['node'] = '%s:%s' % (flags, node)
+        if 'menu' in data:
+            # adding this item to a sub menu.
+            master_name = data['menu']
+            if master_name in self.menu_lookup:
+                # we have the menu master so add to it
+                master = self.menu_lookup[master_name]
+            else:
+                # menu master not yet defined so store in pending
+                if master_name not in self.menu_pending:
+                    self.menu_pending[master_name] = {}
+                master = self.menu_pending[master_name]
+            if 'sub' not in master:
+                master['sub'] = []
+            master['sub'].append(data)
+            actioned = True
+        if 'name' not in data:
+            if not actioned:
+                print 'MENU: no name given', data
+        else:
+            if data['name'] not in self.menu_lookup:
+                # have we got any pending sub menus?
+                if data['name'] in self.menu_pending:
+                    data['sub'] = self.menu_pending[data['name']]['sub']
+                    del self.menu_pending[data['name']]
+                # store our menu item so sub items can
+                # easily be added later.
+                self.menu_lookup[data['name']] = data
+        if not actioned:
+            # is in the root of the menu
+            self.menu.append(data)
 
     def initialise_nodes(self):
         for module, node_root, root in self.modules.itervalues():

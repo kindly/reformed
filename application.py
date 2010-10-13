@@ -78,6 +78,8 @@ class Application(object):
         self.scheduler_thread = None
         self.manager_thread = None
 
+        self.menu = []
+
         self.node_manager = None
 
         self.logging_setup()
