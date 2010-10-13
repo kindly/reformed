@@ -44,7 +44,6 @@ REBASE.FormControls = function(){
 
     var local_row_data = {};
     var control_build_functions;
-    var subforms = [];
 
     var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
     var set_class_list = $.Util.set_class_list;
@@ -489,12 +488,6 @@ REBASE.FormControls = function(){
         },
         'set_data' : function(data){
             local_row_data = data;
-        },
-        'clear_subforms' : function (){
-            subforms = [];
-        },
-        'get_subforms' : function (){
-            return subforms;
         }
     };
 }();
