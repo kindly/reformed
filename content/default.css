@@ -54,14 +54,14 @@ div {
 }
 
 #logo {
-    background-image:url('gradall.png');
-    -moz-background-size:100% 100%;
-    -webkit-background-size:100% 100%;
+    float:left;
+    background-color:white;
 }
 
 #logo_image {
-    padding-top:10px;
-    padding-left:5px;
+    padding-top:5px;
+    padding-left:25px;
+    padding-right:25px;
 }
 
 
