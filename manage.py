@@ -58,13 +58,10 @@ def load_data(file):
     print time
 
 def profile(file):
-    import hotshot, hotshot.stats, test.pystone
     command = """load_data(file)"""
     #prof = hotshot.Profile("dataloadhot.profile")
     #prof.runctx( command, globals(), locals())
     #prof.close()
-
-
 
     import cProfile
     cProfile.runctx( command, globals(), locals(), filename="dataload.profile" )
