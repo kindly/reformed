@@ -295,6 +295,10 @@ class NodeToken(object):
             while node_string.count(':') < 2:
                 node_string += ':'
             node_string += link_data
+        # if this is not a special command make it an update node
+        # TODO this can be improved.
+        if node_string not in ['RELOAD', 'CLOSE', 'BACK']:
+            node_string = 'u:%s' % node_string
         self._set_action('redirect', link = node_string, node_data = node_data)
 
     def redirect_back(self):

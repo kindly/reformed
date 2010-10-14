@@ -1006,6 +1006,12 @@ REBASE.Node = function (){
             REBASE.Dialog.close();
             return false;
         }
+        // reload the current page
+        if (node_string == 'RELOAD'){
+            REBASE.Dialog.close();
+            // get the current page
+            node_string = $.address.value();
+        }
 
         var decode = decode_node_string(node_string, item, target_form);
         if (!decode){
@@ -1153,21 +1159,7 @@ REBASE.Job = function(){
             case 'redirect':
                 var link = packet.data.link;
                 if (link){
-                    switch (link){
-                        case 'BACK':
-                            window.history.back();
-                            break;
-                        case 'CLOSE':
-                            REBASE.Dialog.close();
-                            break;
-                        case 'RELOAD':
-                            REBASE.Dialog.close();
-                            REBASE.Node.load_node($.address.value());
-                            break;
-                        default:
-                            REBASE.Node.load_node('u:' + link);
-                            break;
-                    }
+                    REBASE.Node.load_node(link);
                 }
                 break;
             case 'html':
