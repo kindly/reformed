@@ -23,7 +23,7 @@
 
 // JSLint directives
 /*global window setTimeout*/
-/*global $ REBASE console_log */
+/*global $ REBASE console_log Showdown*/
 
 
 var REBASE = {};
