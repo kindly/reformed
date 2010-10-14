@@ -233,9 +233,9 @@ REBASE.Bookmark = function (){
         }
         var table_data = REBASE.application_data.bookmarks[bookmark.entity_table];
         if (table_data){
-            bookmark.bookmark = 'u:' + table_data.node + ':edit:id=' + bookmark.entity_id;
+            bookmark.bookmark = 'u:' + table_data.node.replace('&', '&amp;') + ':edit:id=' + bookmark.entity_id;
         } else {
-            bookmark.bookmark = 'u:test.Auto:edit:id=' + bookmark.entity_id + '&table=' + bookmark.entity_table;
+            bookmark.bookmark = 'u:test.Auto:edit:id=' + bookmark.entity_id + '&amp;table=' + bookmark.entity_table;
         }
         // remove the item if already in the list
         for (var i = 0, n = bookmark_array.length; i < n; i++){
@@ -702,6 +702,8 @@ REBASE.Functions = function (){
     function debug_html(){
         /* Output the current form cache information */
         var info = $('html').html();
+        info = info.replace(/<textarea/g, '<_textarea');
+        info = info.replace(/<\/textarea/g, '</_textarea')
         REBASE.Dialog.dialog('HTML', '<textarea class="debug"><html xmlns="http://www.w3.org/1999/xhtml">' + info + '</html></textarea>', true);
     }
 
