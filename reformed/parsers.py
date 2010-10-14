@@ -99,7 +99,8 @@ def date(string, dayfirst = True):
 
 if __name__ == "__main__":
 
-    print postcode("se10qz") 
+    print postcode("se1 0qz") 
+    print postcode("WN2 83RE") 
     print postcode("seqz") 
     print phonenumber("fsdfa@bob.com 74 3892743920") 
     print email("fsdfa@bob.com 74 3892743920") 
