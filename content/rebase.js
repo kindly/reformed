@@ -53,14 +53,13 @@ REBASE.Form = function (){
         var limit = paging_data.limit;
         var count = paging_data.row_count;
         var base = paging_data.base_link;
+        var use_href = REBASE.Node.is_update_node(base);
 
         var html = [];
 
         function make_item(offset, description, active){
 
             var link;
-            // FIXME do a better test for this
-            var use_href = (base.substring(0,1) == 'u');
 
             function make_href(link){
                 if (use_href){
@@ -90,6 +89,7 @@ REBASE.Form = function (){
         if (last_page > pages){
             last_page = pages;
         }
+
 
         base = base + '&l=' + limit + '&o=';
 
@@ -1029,6 +1029,15 @@ REBASE.Node = function (){
         console_log('node data:', node_data);
     }
 
+    function is_update_node(node_string){
+        // check if this is an update node_string
+        // This is a fairly poor check at the moment.
+        if (node_string.substring(0,1) == 'u' || node_string.substring(1,2) == 'u'){
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     // exported functions
 
@@ -1045,6 +1054,10 @@ REBASE.Node = function (){
         'set_node_data' : function (node_name, node_data){
             /* Used to set the node name and data */
             set_node_data(node_name, node_data);
+        },
+        'is_update_node' : function (node_string){
+            /* is this an update node? */
+            return is_update_node(node_string);
         },
         '_get_node' : function (decode){
             // Called to automatically load a node decode
