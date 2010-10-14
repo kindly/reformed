@@ -852,14 +852,20 @@ REBASE.Node = function (){
         var split = node_string.split(':');
         var key;
 
+        // node
+        decode.node = split[1];
+        // $ is shorthand for current node.
+        if (decode.node == '$'){
+            decode.node = split[1] = global_current_node_name;
+        }
+
         // check enough info
         if (split.length < 2){
             error_msg = 'Invalid node data.\n\nNot enough arguments.';
             REBASE.Dialog.dialog('Application Error', error_msg);
             return false;
         }
-        // node
-        decode.node = split[1];
+
         //command
         if (split.length > 2){
             decode.command = split[2];
@@ -885,6 +891,7 @@ REBASE.Node = function (){
         } else{
             decode.url_data = {};
         }
+
         decode.node_data = global_node_data;
 
         // if we have any extra node data we add it but
@@ -955,6 +962,8 @@ REBASE.Node = function (){
             return false;
         }
         decode.flags = flags;
+        decode.node_string = split.join(':');
+
         return decode;
     }
 
@@ -1020,11 +1029,11 @@ REBASE.Node = function (){
         }
 
         if (decode.flags.update &&
-            $.address.value() != '/' + node_string &&
-            $.address.value() != node_string){
+            $.address.value() != '/' + decode.node_string &&
+            $.address.value() != decode.node_string){
 
             // Sets the address which then forces a page load.
-            $.address.value(node_string);
+            $.address.value(decode.node_string);
             return;
         }
         get_node(decode);
