@@ -996,21 +996,21 @@ REBASE.Node = function (){
          * Get any form data needed and request node from backend.
          */
 
-        // browser history back
-        if (node_string == 'BACK'){
-            window.history.back();
-            return false;
-        }
-        // close any open dialog
-        if (node_string == 'CLOSE'){
-            REBASE.Dialog.close();
-            return false;
-        }
-        // reload the current page
-        if (node_string == 'RELOAD'){
-            REBASE.Dialog.close();
-            // get the current page
-            node_string = $.address.value();
+        // Deal with any special commands.
+        switch (node_string){
+            case 'BACK':
+                // browser history back
+                window.history.back();
+                return false;
+            case 'CLOSE':
+                // close any open dialog
+                REBASE.Dialog.close();
+                return false;
+            case 'RELOAD':
+                // reload the current page
+                REBASE.Dialog.close();
+                // get the current page
+                node_string = $.address.value();
         }
 
         var decode = decode_node_string(node_string, item, target_form);
