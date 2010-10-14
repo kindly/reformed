@@ -167,6 +167,18 @@ class Table(object):
         self.schema_dict = None
         self.schema = None
 
+    def code_repr(self):
+        header = "table('%s', database, \n    " % self.name
+        footer = "\n)"
+        field_list = [field.code_repr() for field in self.field_list]
+        fields_repr = ",\n    ".join(field_list)
+        kw_repr = ""
+        kw_list = ["%s = %s" % (i[0], i[1]) for i in self.kw.items()]
+        if self.kw:
+            kw_repr = ",\n    " + ",\n    ".join(kw_list)
+
+        return header + fields_repr + kw_repr + footer
+
     def __repr__(self):
         return "%s - %s" % (self.name, self.columns.keys())
 

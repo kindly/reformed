@@ -35,15 +35,19 @@ import sqlalchemy as sa
 import datetime
 import events
 
-def get_user_id():
+class GetUserId:
+    def __call__(self):
+        try:
+            user_id = html_session.global_session.session["user_id"]
+        except AttributeError, e:
+            user_id = 1
 
-    try:
-        user_id = html_session.global_session.session["user_id"]
-    except AttributeError, e:
-        user_id = 1
+        return user_id
 
-    return user_id
+    def __str__(self):
+        return "get_user_id()"
 
+get_user_id = GetUserId()
 
 
 class Text(Field):
