@@ -200,14 +200,17 @@ REBASE.Form = function (){
     function focus($input, select){
         // focus the element and
         // if select select all.
-        var length = $input.val().length;
-        var start
-        if (select){
-            start = 0;
-        } else {
-            start = length;
+        var value = $input.val();
+        if (value){
+            var length = value.length;
+            var start
+            if (select){
+                start = 0;
+            } else {
+                start = length;
+            }
+            make_selection($input[0], start, length);
         }
-        make_selection($input[0], start, length);
         $input.focus();
     }
 
