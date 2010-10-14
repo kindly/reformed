@@ -336,6 +336,7 @@ class CsvFile(object):
             self.chunks[chunk] = (offset, new_offset)
 
             return total
+
         finally:
             if "flat_file" in locals():
                 flat_file.close()
@@ -401,7 +402,7 @@ class CsvFile(object):
                         stop = (yield result)
                 if stop:
                     break
-                if end and csv_reader.line_num == self.lines:
+                if end and end <= flat_file.tell():
                     break
 
         finally:

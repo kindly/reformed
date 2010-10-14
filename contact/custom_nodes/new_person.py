@@ -35,36 +35,36 @@ class EvaluateDuplicate(Node):
 
     def call(self, node_token):
         data = node_token['main'].data
-        node_token.redirect('new_person.MakeContact::', node_data = data)
-        #node_token.general_error(str(self.get_results(data)))
+        #node_token.redirect('new_person.MakeContact::', node_data = data)
+        node_token.general_error(str(self.get_results(data)))
         #if not_results:
         #node_token.next_node('f:new_person.MakeContact', node_data = data, command = 'next')
 
-    def get_results(self, data):
-
+    def run_full_text_search(self, data):
 
         index = r.application.text_index
         searcher = index.searcher()
 
         sn = r.search_names
-        si = r.search_ids
         terms = []
 
-        names = data["name"].split()
+        names = data["name"]
+        ana = whoosh.analysis.StandardAnalyzer()
         communication = data["communication"]
-
-        for name in names:
-            terms.append(Term(sn["name"], name.lower()))
-
-        terms.append(Phrase(sn["name"], names))
 
         email = parsers.email(communication)
         phone_number = parsers.phonenumber(communication)
         postcode = parsers.postcode(communication)
         dob = parsers.date(communication)
-        ana = whoosh.analysis.StandardAnalyzer()
+
+        print postcode 
 
         email_terms = []
+        
+        if names:
+            terms.append(Phrase(sn["name"], names))
+            for token in ana(names):
+                terms.append(Term(sn["name"], token.text))
 
         if email:
             email_terms = [token.text for token in ana(email[1])]
@@ -81,10 +81,39 @@ class EvaluateDuplicate(Node):
 
         query = Or(terms)
 
+        print query
+
         result = searcher.search(query)
 
         core_ids = [a["core_id"] for a in result]
-        
+
+        return core_ids
+
+    def match_results(self, data, field, value):
+
+        ana = whoosh.analysis.StandardAnalyzer()
+
+        if field == "name":
+            for token in ana(value):
+                if token.text in data["name"]:
+                    return True
+
+        if field == "email":
+            for token in ana(value):
+                if token.text in data["communication"]:
+                    return True
+
+        if value in data["communication"]:
+            return True
+
+    def get_results(self, data):
+
+        si = r.search_ids
+        core_ids = self.run_full_text_search(data)
+
+        if not core_ids:
+            return
+
         query = {"_core_id": ("in", core_ids)}
 
         results = r.search("search_info",
@@ -100,6 +129,7 @@ class EvaluateDuplicate(Node):
         for result in results:
             result_core_id = result.get("_core_id")
             if current_core_id != result_core_id and current_core_id:
+                current_result["_core_id"] = current_core_id 
                 result_lookup[current_core_id] = current_result
                 current_result = {}
                 current_core_id = result_core_id
@@ -107,14 +137,20 @@ class EvaluateDuplicate(Node):
                 current_core_id = result_core_id
 
             value = result.get("value")
-            field = str(result.get("field"))
+            field = si[str(result.get("field"))]
 
-            current_result[field] = value
-
+            if self.match_results(data, field, value):
+                current_result[field] = value
         else:
+            current_result["_core_id"] = current_core_id
             result_lookup[result_core_id] = current_result
 
-        return result_lookup
+        ordered_results = []
+        for core_id in core_ids:
+            ordered_results.append(result_lookup[int(core_id)])
+
+
+        return ordered_results
 
 
 class MakeContact(Node):
