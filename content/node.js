@@ -54,7 +54,7 @@ function search_box(){
 
 function init(){
     // turn off any jquery animations
-  //  $.fx.off = true;
+    $.fx.off = true;
     // build the user interface
     REBASE.Interface.init();
     /* helper function */
