@@ -130,7 +130,7 @@ REBASE.Form = function (){
             class_list += ' ' + item.css;
         }
         return ' class="' + class_list + '" ';
-    };
+    }
 
     function HTML_Encode_Clear(arg) {
         // encode html also show null as ''
@@ -142,7 +142,7 @@ REBASE.Form = function (){
             return arg;
         }
         return arg.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    };
+    }
 
 
     function process_html(text, data, inline){
@@ -156,6 +156,7 @@ REBASE.Form = function (){
         var offset = 0;
         var reg = /\{([^}:]+):?([^}]*)\}/g;
         if (data){
+            // JSLint complains but this is intentional.
             while (match = reg.exec(text)){
                 if (data[match[1]] === undefined){
                     continue;
@@ -180,7 +181,7 @@ REBASE.Form = function (){
         out = converter.makeHtml(out, mode);
 
         return out;
-    };
+    }
 
 
 
@@ -597,7 +598,7 @@ REBASE.Dialog = function (){
         // If it is form data then we want to process it as a form.
         if (typeof(data) == 'string'){
             if (!no_processing){
-                data = process_html(data)
+                data = process_html(data);
             }
             $dialog_box.html(data);
         } else {
@@ -703,7 +704,7 @@ REBASE.Functions = function (){
         /* Output the current form cache information */
         var info = $('html').html();
         info = info.replace(/<textarea/g, '<_textarea');
-        info = info.replace(/<\/textarea/g, '</_textarea')
+        info = info.replace(/<\/textarea/g, '</_textarea');
         REBASE.Dialog.dialog('HTML', '<textarea class="debug"><html xmlns="http://www.w3.org/1999/xhtml">' + info + '</html></textarea>', true);
     }
 
