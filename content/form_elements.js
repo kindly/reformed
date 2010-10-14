@@ -389,7 +389,7 @@ REBASE.FormControls = function(){
         var link_node = value[1];
         value = value[0];
         var href;
-        if (is_update_node(link_node){
+        if (is_update_node(link_node)){
             href = "#" + link_node;
         } else {
             href = "#";
