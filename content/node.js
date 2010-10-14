@@ -306,10 +306,11 @@ REBASE.Node = function (){
          *  Takes a decoded node request does any processing needed
          *  and passes it to be the job processor to request
          */
-        if (decode.flags.confirm_action){
+        if (decode.flags && decode.flags.confirm_action){
             REBASE.Dialog.confirm_action(decode, 'Confirmation needed', 'are you sure?', decode);
             return false;
         }
+
         var info = decode;
         // application data
         if (!REBASE.application_data){
