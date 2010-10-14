@@ -182,7 +182,34 @@ REBASE.Form = function (){
 
         return out;
     }
+    function make_selection(input, start, end){
+        // select the text in the input
+        // between start and end.
+        if (input.setSelectionRange){
+            // DOM 3
+            input.setSelectionRange(start ,end);
+        } else if (input.createTextRange){
+            // IE
+            var range = input.createTextRange();
+            range.moveStart("character", start);
+            range.moveEnd("character", end);
+            range.select();
+        }
+    }
 
+    function focus($input, select){
+        // focus the element and
+        // if select select all.
+        var length = $input.val().length;
+        var start
+        if (select){
+            start = 0;
+        } else {
+            start = length;
+        }
+        make_selection($input[0], start, length);
+        $input.focus();
+    }
 
 
     // exported functions
@@ -198,6 +225,9 @@ REBASE.Form = function (){
         },
         'process_html' : function (arg){
             return process_html(arg);
+        },
+        'focus' : function ($input, select){
+            return focus($input, select);
         }
     };
 }();
@@ -609,6 +639,8 @@ REBASE.Dialog = function (){
             $dialog_box.input_form(form, form_data);
         }
         show_dialog($dialog_box, title);
+        // focus first enabled input
+        REBASE.Form.focus($dialog_box.find(':input:enabled').first(), true);
         is_open = true;
     }
 
@@ -1565,6 +1597,8 @@ REBASE.Layout = function(){
                 // Layout has changed so update our stored data.
                 layout = layout_data;
                 create_layout();
+                // focus first enabled input
+                REBASE.Form.focus($(root).find(':input:enabled').first(), true);
             } else {
                 // Update the layout forms
                 layout.layout_forms = layout_data.layout_forms;
