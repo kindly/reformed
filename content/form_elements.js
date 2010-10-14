@@ -52,6 +52,7 @@ REBASE.FormControls = function(){
     var HTML_Encode_Clear = REBASE.Form.HTML_Encode_Clear;
     var make_item_class = REBASE.Form.make_item_class;
     var process_html = REBASE.Form.process_html;
+    var is_update_node = REBASE.Node.is_update_node;
 
     var build_node_link = $.Util.build_node_link;
     var build_node_link_href = $.Util.build_node_link_href;
@@ -387,8 +388,13 @@ REBASE.FormControls = function(){
     function link_new(item, value){
         var link_node = value[1];
         value = value[0];
-        // FIXME need to know if this is updatable node for proper href
-        var x = '<a href="#/' + link_node + '"' + make_item_class(item, 'link') + ' onclick="node_load(\'' + link_node + '\',this);return false">' + (value ? value : '&nbsp;') + '</a>';
+        var href;
+        if (is_update_node(link_node){
+            href = "#" + link_node;
+        } else {
+            href = "#";
+        }
+        var x = '<a href="' + href + '"' + make_item_class(item, 'link') + ' onclick="node_load(\'' + link_node + '\',this);return false">' + (value ? value : '&nbsp;') + '</a>';
         return x;
     }
 
