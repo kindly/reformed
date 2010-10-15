@@ -463,7 +463,7 @@ class NodeToken(object):
                 output.append(menu_item)
             return output
 
-        return build_items(self.application.menu)
+        return build_items(self.application.node_manager.menu)
 
 
     def get_title(self):
@@ -544,7 +544,6 @@ class NodeManager(object):
         self.import_nodes()
 
         zodb.close()
-        self.application.menu = self.menu
 
     def import_node(self, name):
         mod = __import__(name)
