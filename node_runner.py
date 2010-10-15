@@ -406,13 +406,14 @@ class NodeToken(object):
             refresh_frontend = True
         else:
             refresh_frontend = False
-        # bookmarks
-        if (self.user or refresh_frontend) and user_id:
-            # we have logged in so we want our bookmarks
-            data = self._bookmark_list(user_id)
-            self.add_extra_response_function('load_bookmarks', data)
+        # menu and bookmarks
+        if (self.user or refresh_frontend):
             data = self._make_menu()
             self.add_extra_response_function('make_menu', data)
+            if user_id:
+                # we have logged in so we want our bookmarks
+                data = self._bookmark_list(user_id)
+                self.add_extra_response_function('load_bookmarks', data)
 
         if global_session.session['reset']:
             self.add_extra_response_function('clear_form_cache')

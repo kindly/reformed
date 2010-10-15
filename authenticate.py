@@ -62,6 +62,7 @@ def set_user_session(data):
     global_session.session['user_id'] = user_id
     global_session.session['username'] = username
     global_session.session['permissions'] = get_permissions(user_id)
+    global_session.session['impersonating'] = False
     # Reset session at front-end
     global_session.session['reset'] = True
     global_session.session.persist()
@@ -70,7 +71,8 @@ def set_user_session(data):
 def impersonate(core_id = None, id = None):
     # TODO double check we are authorised to use.
 
-    if not global_session.session['real_user_id']:
+    real_user_id = global_session.session['real_user_id']
+    if not real_user_id:
         return False
     r = global_session.database
     if core_id:
@@ -80,7 +82,9 @@ def impersonate(core_id = None, id = None):
     else:
         return False
     set_user_session(data_out)
-    user_name = data_out['name']
+    user_id = data_out.get('id')
+    global_session.session['impersonating'] = user_id != real_user_id
+    global_session.session.persist()
     return True
 
 
@@ -115,6 +119,7 @@ def clear_user_session():
     global_session.session['user_id'] = 0
     global_session.session['username'] = ''
     global_session.session['permissions'] = set()
+    global_session.session['impersonating'] = False
     global_session.session['real_user_id'] = None
     global_session.session['real_username'] = None
     # Reset session at front-end
