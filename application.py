@@ -56,7 +56,7 @@ class Application(object):
 
         self.directory = directory
         self.root_folder = os.path.dirname(os.path.abspath(__file__))
-        self.application_folder = os.path.join(self.root_folder, directory)
+        self.application_folder = os.path.join(self.root_folder, "projects", directory)
         # check that we have the application directory
         self.check_filesystem()
 
