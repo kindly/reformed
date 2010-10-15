@@ -40,6 +40,22 @@ class Action(PersistBaseClass):
         logger.info(action_state)
         self.run(action_state)
 
+    def code_repr(self):
+
+        kw_display = ""
+        arg_display = ""
+
+        if self._args:
+            arg_list = ["%s" % i for i in self._args]
+            arg_display = ", ".join(arg_list)
+        if self._kw:
+            kw_list = ["%s = %s" % (i[0], i[1]) for i in self._kw.items()]
+            kw_display = ", " + ", ".join(kw_list)
+        
+        return "%s(%s%s)" % (self._class_name,
+                             arg_display, kw_display) 
+        
+            
 class AddRow(Action):
 
     def __init__(self, related_table, pre_flush = True, **kw):

@@ -14,6 +14,13 @@ class Event(object):
         for event_cause in self.event_causes:
             table.events[event_cause].extend(self.actions)
 
+    def code_repr(self):
+        action_repr_list = [action.code_repr() for action in self.actions]
+
+        return ("Event(" + " ". join(self.event_causes) + ",\n        " 
+                + ",\n        ".join(action_repr_list) + "\n    )")
+
+
 
 class EventState(object):
 

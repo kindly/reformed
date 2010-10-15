@@ -433,7 +433,7 @@ class Field(object):
         obj.length = kw.get("length", None)
         ## ignore length if empty string
         if not obj.length:
-            kw.pop("length", None)
+            kw.get("length", None)
         else:
             obj.length = int(obj.length)
         obj.many_side_not_null = kw.get("many_side_not_null", True)
@@ -452,6 +452,22 @@ class Field(object):
         obj.generator = kw.get("generator", None)
 
         return obj
+
+    def code_repr(self):
+
+        class_name = self.__class__.__name__
+        kw_display = ""
+        arg_display = ""
+
+        if self.args:
+            arg_list = ["%s" % i for i in self.args]
+            arg_display = ", " + ", ".join(arg_list)
+        if self.kw:
+            kw_list = ["%s = %s" % (i[0], i[1]) for i in self.kw.items()]
+            kw_display = ", " + ", ".join(kw_list)
+        
+        return "%s('%s'%s%s)" % (class_name, self.name, arg_display, kw_display) 
+
 
     def __eq__(self, other):
         if (self.__class__.__name__ == other.__class__.__name__
