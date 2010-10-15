@@ -1,6 +1,6 @@
 from tests.donkey_test import test_donkey
-from reformed.export import *
-from reformed.data_loader import *
+from database.export import *
+from database.data_loader import *
 
 
 class test_export_database(test_donkey):

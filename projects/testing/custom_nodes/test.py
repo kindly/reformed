@@ -18,11 +18,11 @@
 ##   Copyright (c) 2008-2010 Toby Dacre & David Raznick
 ##
 
-from node import Node, TableNode, AutoForm, JobNode, AutoFormPlus, EntityNode
-from form import form
-from page_item import *
+from node.node import Node, TableNode, AutoForm, JobNode, AutoFormPlus, EntityNode
+from node.form import form
+from node.page_item import *
+from web.global_session import global_session
 
-from global_session import global_session
 r = global_session.database
 application = global_session.application
 

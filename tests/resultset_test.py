@@ -1,9 +1,9 @@
-from reformed.fields import *
-from reformed.tables import *
-from reformed.database import *
+from database.fields import *
+from database.tables import *
+from database.database import *
 from donkey_test import test_donkey
-import reformed.resultset as resultset
-from reformed.search import Search
+import database.resultset as resultset
+from database.search import Search
 
 class test_result_set_basic(test_donkey):
 

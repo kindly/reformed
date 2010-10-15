@@ -18,8 +18,8 @@
 ##   Copyright (c) 2008-2009 Toby Dacre & David Raznick
 ##
 
-from reformed.database import table, entity, relation
-from reformed.fields import *
+from database.database import table, entity, relation
+from database.fields import *
 
 
 def initialise(application):

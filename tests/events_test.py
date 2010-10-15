@@ -1,13 +1,13 @@
-from reformed.fields import *
-from reformed.tables import *
-from reformed.database import *
+from database.fields import *
+from database.tables import *
+from database.database import *
 from tests.donkey_test import test_donkey
 from nose.tools import assert_raises,raises
 import sqlalchemy as sa
-import reformed.custom_exceptions
-from reformed.data_loader import SingleRecord
+import custom_exceptions
+from database.data_loader import SingleRecord
 from sqlalchemy import create_engine
-from reformed.util import get_table_from_instance, create_data_dict, make_local_tables, get_all_local_data, load_local_data
+from database.util import get_table_from_instance, create_data_dict, make_local_tables, get_all_local_data, load_local_data
 import datetime
 from decimal import Decimal
 import formencode as fe

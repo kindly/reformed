@@ -1,7 +1,8 @@
-from node import TableNode
-from page_item import *
-from form import form
-from global_session import global_session
+from node.node import TableNode
+from node.page_item import *
+from node.form import form
+from web.global_session import global_session
+
 r = global_session.database
 
 

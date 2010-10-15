@@ -1,9 +1,9 @@
 ## This is a blank schema template
 
-from reformed.database import table, entity, relation, info_table
-from reformed.fields import *
-from reformed.events import Event
-from reformed.actions import *
+from database.database import table, entity, relation, info_table
+from database.fields import *
+from database.events import Event
+from database.actions import *
 
 
 def initialise(application):

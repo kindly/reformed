@@ -1,7 +1,7 @@
 import donkey_test
-from reformed.data_loader import *
+from database.data_loader import *
 from nose.tools import assert_raises,raises
-from reformed.custom_exceptions import *
+from custom_exceptions import *
 import formencode as fe
 import yaml
 

@@ -1,8 +1,8 @@
 import donkey_test
-from reformed.search import *
+from database.search import *
 from nose.tools import assert_raises,raises
-from reformed.custom_exceptions import *
-from reformed.data_loader import FlatFile
+from custom_exceptions import *
+from database.data_loader import FlatFile
 import yaml
 from sqlalchemy.sql import not_, or_
 import pyparsing

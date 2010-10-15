@@ -1,7 +1,6 @@
-#!/usr/bin/env python
-from reformed.fields import *
-from reformed.tables import *
-from reformed.database import *
+from database.fields import *
+from database.tables import *
+from database.database import *
 from nose.tools import assert_raises,raises
 import formencode as fe
 import logging

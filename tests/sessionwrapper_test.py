@@ -1,6 +1,5 @@
 import donkey_test
 import sqlalchemy as sa
-import reformed.custom_exceptions
 from nose.tools import assert_raises
 import random
 

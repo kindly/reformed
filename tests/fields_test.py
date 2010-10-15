@@ -1,4 +1,4 @@
-from reformed.fields import *
+from database.fields import *
 import formencode
 from formencode import validators
 from nose.tools import assert_raises

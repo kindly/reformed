@@ -1,7 +1,7 @@
-from reformed.search import  QueryFromStringParam, Search
-from reformed.resultset import ResultSet
+from database.search import  QueryFromStringParam, Search
+from database.resultset import ResultSet
 from donkey_test import test_donkey
-from reformed.data_loader import FlatFile
+from database.data_loader import FlatFile
 from sqlalchemy.sql import not_, or_, and_
 import datetime
 

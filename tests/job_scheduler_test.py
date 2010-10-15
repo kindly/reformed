@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 import sqlalchemy as sa
-from reformed.database import Database
-import reformed.job_scheduler
+from database.database import Database
+import job_scheduler.job_scheduler
 import time
 import os
 
@@ -39,7 +39,7 @@ class test_single_request(object):
 
         cls.session = cls.Donkey.Session()
 
-        reformed.job_scheduler.POLL_INTERVAL = 1
+        job_scheduler.job_scheduler.POLL_INTERVAL = 1
         cls.job_scheduler = cls.Donkey.job_scheduler
         cls.scheduler_thread = cls.Donkey.scheduler_thread
 

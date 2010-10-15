@@ -1,24 +1,24 @@
-from reformed.fields import *
-from reformed.tables import *
-from reformed.database import *
+from database.fields import *
+from database.tables import *
+from database.database import *
 from nose.tools import assert_raises,raises
 import sqlalchemy as sa
-import reformed.custom_exceptions
-from reformed.data_loader import SingleRecord
+import custom_exceptions
+from database.data_loader import SingleRecord
 from sqlalchemy import create_engine
-from reformed.util import get_paths, get_table_from_instance, create_data_dict, make_local_tables, get_all_local_data, load_local_data
+from database.util import get_paths, get_table_from_instance, create_data_dict, make_local_tables, get_all_local_data, load_local_data
 import datetime
 import application
-import reformed.fshp as fshp
+import database.fshp as fshp
 from decimal import Decimal
 import formencode as fe
 import yaml
 import os
 import logging
-import reformed.user_tables
-from reformed.resultset import ResultSet
-from reformed.events import Event
-import reformed.actions as actions
+import database.user_tables
+from database.resultset import ResultSet
+from database.events import Event
+import database.actions as actions
 
 sqlhandler = logging.FileHandler("sql.log")
 sqllogger = logging.getLogger('sqlalchemy.engine')

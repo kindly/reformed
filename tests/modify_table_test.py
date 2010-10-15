@@ -1,19 +1,19 @@
-from reformed.fields import *
-from reformed.tables import *
-from reformed.database import *
-from reformed.data_loader import FlatFile, load_json_from_file, SingleRecord
-from reformed.export import json_dump_all_from_table
+from database.fields import *
+from database.tables import *
+from database.database import *
+from database.data_loader import FlatFile, load_json_from_file, SingleRecord
+from database.export import json_dump_all_from_table
 from nose.tools import assert_raises
 from tests.donkey_persist_test import test_donkey_persist
 import yaml
-import reformed.custom_exceptions
+import custom_exceptions
 import datetime
 import sqlalchemy as sa
 from sqlalchemy import create_engine
 import random
 import time
-from reformed.util import get_table_from_instance, load_local_data
-from reformed.validate_database import validate_database
+from database.util import get_table_from_instance, load_local_data
+from database.validate_database import validate_database
 import logging
 from migrate.versioning import schemadiff
 

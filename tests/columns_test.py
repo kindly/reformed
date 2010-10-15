@@ -1,6 +1,6 @@
-#!/usr/bin/env python
-from reformed.columns import *
 from nose.tools import assert_raises
+
+from database.columns import *
 
 
 class test_fields():

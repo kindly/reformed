@@ -1,10 +1,11 @@
-#!/usr/bin/env python
-from reformed.fields import *
-from reformed.tables import *
-from reformed.database import *
-from nose.tools import assert_raises,raises
 import logging
 import os
+
+from nose.tools import assert_raises,raises
+
+from database.fields import *
+from database.tables import *
+from database.database import *
 
 sqlhandler = logging.FileHandler("sql.log")
 sqllogger = logging.getLogger('sqlalchemy.engine')

@@ -1,15 +1,20 @@
-from node import Node, TableNode, AutoForm, JobNode, AutoFormPlus
-from form import form
-from page_item import *
 from pprint import pprint
-from whoosh.query import Term, Or, And, Phrase
-import reformed.parsers as parsers
-import whoosh.analysis
 
-from global_session import global_session
+import whoosh.analysis
+from whoosh.query import Term, Or, And, Phrase
+
+from node.node import Node, TableNode, AutoForm, JobNode, AutoFormPlus
+from node.form import form
+from node.page_item import *
+import database.parsers as parsers
+
+from web.global_session import global_session
+
 r = global_session.database
 application = global_session.application
 
+def make_menu(node_manager):
+    node_manager.add_menu(dict(name = 'people', title = 'people'))
 
 class NewPerson(Node):
 
@@ -26,6 +31,9 @@ class NewPerson(Node):
         params =  {"form_type": "normal"},
         volitile = True
     )
+
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(menu = 'people', title = 'new person', node = '$'))
 
     def call(self, node_token):
         data = dict(__message = "Add new person.", name = "fred" )
