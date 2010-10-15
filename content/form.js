@@ -208,8 +208,8 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
     var subforms = [];
     var util_size = $.Util.Size;
     var HTML_Encode = $.Util.HTML_Encode;
-    var process_html = $.Util.process_html;
-    var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
+    var process_html = REBASE.Form.process_html;
+    var HTML_Encode_Clear = REBASE.Form.HTML_Encode_Clear;
     //FIXME how do we deal with data in the form
 
     function init(){
@@ -233,8 +233,6 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
         // remove any previous bound events
         unbind_all();
-
-        $form.mousedown(form_mousedown);
 
         total_fields = form_data.fields.length;
         $form.data('command', command_caller);
@@ -484,35 +482,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
 
     }
 
-    function form_mousedown(e){
-        var actioned = false;
-        var item = e.target;
-        var $item = $(e.target);
-        var fn_finalise;
-        var $field;
-        var $img;
-        // if this control is complex eg. dropdown.
-        if ($item[0].nodeName == 'DIV' || $item[0].nodeName == 'IMG'){
-            if ($item.hasClass('data')){
-                $item = $item.parent();
-            } else if ($item.hasClass('but_dd_f')){
-                $item = $item.parent().find('input');
-                $item.focus();
-                $item.trigger('dropdown');
-                actioned = true;
-            } else if ($item.hasClass('but_dd_img_f')){
-                $item = $item.parent().parent().find('input');
-                $item.focus();
-                $item.trigger('dropdown');
-                actioned = true;
-            }
-           // $field = $(item).parent().parent('div');
-        }
-
-        return !actioned;
-    }
-
-    var set_class_list = $.Util.set_class_list;
+    var set_class_list = REBASE.Form.make_item_class;
 
     var form_controls_hash; // holder for the form controls
 
@@ -928,7 +898,7 @@ $.Grid2 = function(input, form_data, row_data, extra_defaults){
         'get_form_data' : get_form_data
     };
 
-    var HTML_Encode_Clear = $.Util.HTML_Encode_Clear;
+    var HTML_Encode_Clear = REBASE.Form.HTML_Encode_Clear;
     var num_fields = form_data.fields.length;
     build_grid();
 };

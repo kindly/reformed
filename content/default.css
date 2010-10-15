@@ -47,25 +47,30 @@ div {
 }
 
 #side {
+    height:100%;
     background-image:url('gradallrev.png');
     -moz-background-size:100% 100%;
     -webkit-background-size:100% 100%;
 }
 
 #logo {
-    background-image:url('gradall.png');
-    -moz-background-size:100% 100%;
-    -webkit-background-size:100% 100%;
+    float:left;
+    background-color:white;
 }
 
 #logo_image {
-    padding-top:10px;
-    padding-left:5px;
+    padding-top:5px;
+    padding-left:25px;
+    padding-right:25px;
 }
 
 
 #user_bar {
     background-color:transparent
+}
+
+#resizer {
+    padding:5px;
 }
 
 #resizer > span {
@@ -1036,3 +1041,28 @@ div.record_info > div {
     width:100%;
 }
 
+.ui-layout-pane {
+    padding:0 !important;
+
+}
+.ui-layout-pane-north {
+    overflow:visible !important;
+    border:0 !important;
+}
+
+ul.sf-menu {
+    margin-bottom:0;
+}
+.sf-sub-indicator {
+    background-image:url("../arrows-ffffff.png") !important;
+}
+.sf-shadow ul {
+    background-image:url('../shadow.png') !important;
+}
+
+textarea.debug {
+    font-family:monospace !important;
+    width:800px;
+    height:300px;
+    font-size:12px !important;
+}

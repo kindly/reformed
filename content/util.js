@@ -254,19 +254,6 @@ $.Util.build_node_link_common = function (data, is_href, base_link){
 };
 
 
-$.Util.set_class_list = function (item, extra_class){
-    if (!item.css && !extra_class){
-        return '';
-    }
-    var class_list = '';
-    if (extra_class){
-       class_list = extra_class;
-    }
-    if (item.css){
-        class_list += ' ' + item.css;
-    }
-    return ' class="' + class_list + '" ';
-};
 
 $.Util.get_item_value = function (item, data){
 
@@ -306,42 +293,7 @@ $.Util.format_data = function (data, format){
 
 };
 
-$.Util.process_html = function (text, data, inline){
-    var match;
-    var out = text;
-    var start;
-    var end;
-    var substitute_data;
-    var format;
-    // data substitution
-    var offset = 0;
-    var reg = /\{([^}:]+):?([^}]*)\}/g;
-    if (data){
-        while (match = reg.exec(text)){
-            if (data[match[1]] === undefined){
-                continue;
-            }
-            substitute_data = data[match[1]];
-            if (match[2] && substitute_data){
-                substitute_data = $.Util.format_data(substitute_data, match[2]);
-            }
 
-            start = match.index + offset;
-            end = match.index + match[0].length + offset;
-            offset += substitute_data.length - match[0].length;
-            out = out.substring(0, start) + substitute_data + out.substring(end);
-        }
-    }
-
-    var mode = Showdown.MODE_FULL;
-    if (inline){
-        mode = Showdown.MODE_SIMPLE;
-    }
-    var converter = new Showdown.converter();
-    out = converter.makeHtml(out, mode);
-
-    return out;
-};
 
 $.Util.clean_value = function (value, field){
 
@@ -657,7 +609,7 @@ $.Util.selectStyleSheet = function (type, value){
     }
 
     update();
-
+    REBASE.Interface.resize_north_pane()
 };
 
 $.Util.HTML_Encode = function (arg) {
@@ -669,17 +621,7 @@ $.Util.HTML_Encode = function (arg) {
     return arg.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 };
 
-$.Util.HTML_Encode_Clear = function (arg) {
-    // encode html also show null as ''
-    // replace & " < > with html entity
-    if (arg === null){
-        return '';
-    }
-    if (typeof arg != 'string'){
-        return arg;
-    }
-    return arg.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-};
+
 
 
 $.Util.Event_Delegator_Store = {};

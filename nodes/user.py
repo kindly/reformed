@@ -1,3 +1,23 @@
+##   This file is part of Reformed.
+##
+##   Reformed is free software: you can redistribute it and/or modify
+##   it under the terms of the GNU General Public License version 2 as
+##   published by the Free Software Foundation.
+##
+##   Reformed is distributed in the hope that it will be useful,
+##   but WITHOUT ANY WARRANTY; without even the implied warranty of
+##   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+##   GNU General Public License for more details.
+##
+##   You should have received a copy of the GNU General Public License
+##   along with Reformed.  If not, see <http://www.gnu.org/licenses/>.
+##
+##   -----------------------------------------------------------------
+##
+##   Reformed
+##   Copyright (c) 2008-2010 Toby Dacre & David Raznick
+##
+
 import reformed.search
 from reformed.custom_exceptions import SingleResultError
 
@@ -19,6 +39,7 @@ def initialise():
     # user group
     predefine.user_group(u'UserAdmins', u'User Administrators', u'Administer user accounts', permissions = ['UserAdmin', 'Login'])
     predefine.user_group(u'Users', u'User', u'General user accounts', permissions = ['Login'])
+
 
 
 class User(TableNode):
@@ -303,6 +324,9 @@ class User(TableNode):
         # auto login cookie
         node_token.auto_login_cookie = 'CLEAR'
 
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(menu = 'UserAdmin', title = 'List Users', node = '$:list'))
+        node_manager.add_menu(dict(menu = 'UserAdmin', title = 'New User', node = '$:new', flags = 'd'))
 
 class UserGroup(TableNode):
 
@@ -327,6 +351,10 @@ class UserGroup(TableNode):
     )
 
     table = "user_group"
+
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(menu = 'UserAdmin', title = 'List User Groups', node = '$:list'))
+        node_manager.add_menu(dict(menu = 'UserAdmin', title = 'New User Group', node = '$:new', flags = 'd'))
 
 class UserAdmin(TableNode):
 
@@ -365,6 +393,10 @@ class UserAdmin(TableNode):
 
       #  node_token.action = 'form'
       #  node_token.title = 'listing'
+
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(name = 'UserAdmin', menu = 'Admin', title = 'User Admin', node = 'user.UserAdmin', permissions = 'UserAdmin'))
+        node_manager.add_menu(dict(name = 'Admin', title = 'Admin', node = None))
 
 class Impersonate(Node):
 

@@ -26,6 +26,13 @@ from global_session import global_session
 r = global_session.database
 application = global_session.application
 
+def make_menu(node_manager):
+    node_manager.add_menu(dict(name = 'Data', menu = 'Admin', title = 'Data', node = None))
+    node_manager.add_menu(dict(name = 'Debug', menu = 'Admin', title = 'Debug', node = None))
+    node_manager.add_menu(dict(menu = 'Debug', title = 'Form Data', function = 'debug_form_info'))
+    node_manager.add_menu(dict(menu = 'Debug', title = 'HTML', function = 'debug_html'))
+    node_manager.add_menu(dict(name = 'Test', title = 'Test', node = None))
+
 class Node1(Node):
     main = form(
         text('Test Form.\n====\nThis demonstrates the page items available.'),
@@ -124,6 +131,9 @@ class Node1(Node):
     )
 
 
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(menu = 'Test', title = 'Basic Form Elements', node = '$'))
+
     def call(self, node_token):
         self['main'].show(node_token)
 
@@ -132,25 +142,28 @@ class Node2(Node):
 
     main = form(
         text('**Buttons**'),
-        button('u:test.Node2:Single+Button', label = 'Single Button'),
-        button_box([['Button Box 1', 'u:test.Node2:Button+Box+1'],
-                    ['Button Box 2', 'u:test.Node2:Button+Box+2'],
-                    ['Button Box 3', 'u:test.Node2:Button+Box+3'],
-                    ['Button Box 4', 'u:test.Node2:Button+Box+4'],
-                    ['Button Box 5', 'u:test.Node2:Button+Box+5']]),
+        button('u:$:Single+Button', label = 'Single Button'),
+        button_box([['Button Box 1', 'u:$:Button+Box+1'],
+                    ['Button Box 2', 'u:$:Button+Box+2'],
+                    ['Button Box 3', 'u:$:Button+Box+3'],
+                    ['Button Box 4', 'u:$:Button+Box+4'],
+                    ['Button Box 5', 'u:$:Button+Box+5']]),
         text('**Lists**'),
-        button_link('u:test.Node2:Single+Link', label = 'Single Link'),
+        button_link('u:$:Single+Link', label = 'Single Link'),
         text('List of links using data.'),
         link_list('links'),
         text('List of links using fixed values.'),
-        link_list(values = [['Link List Values 1', 'u:test.Node2:Link+List+Values+1'],
-                            ['Link List Values 2', 'u:test.Node2:Link+List+Values+2'],
-                            ['Link List Values 3', 'u:test.Node2:Link+List+Values+3'],
-                            ['Link List Values 4', 'u:test.Node2:Link+List+Values+4'],
-                            ['Link List Values 5', 'u:test.Node2:Link+List+Values+5']]),
+        link_list(values = [['Link List Values 1', 'u:$:Link+List+Values+1'],
+                            ['Link List Values 2', 'u:$:Link+List+Values+2'],
+                            ['Link List Values 3', 'u:$:Link+List+Values+3'],
+                            ['Link List Values 4', 'u:$:Link+List+Values+4'],
+                            ['Link List Values 5', 'u:$:Link+List+Values+5']]),
         form_type = "action",
     )
 
+
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(menu = 'Test', title = 'Buttons & Links', node = '$:'))
 
     def call(self, node_token):
         name = node_token.command.replace('+', ' ')
@@ -158,11 +171,11 @@ class Node2(Node):
             data = dict(__message = 'clicked: %s' % name)
         else:
             data = {}
-        data['links'] = [['Link List Data 1', 'u:test.Node2:Link+List+Data+1'],
-                         ['Link List Data 2', 'u:test.Node2:Link+List+Data+2'],
-                         ['Link List Data 3', 'u:test.Node2:Link+List+Data+3'],
-                         ['Link List Data 4', 'u:test.Node2:Link+List+Data+4'],
-                         ['Link List Data 5', 'u:test.Node2:Link+List+Data+5']]
+        data['links'] = [['Link List Data 1', 'u:$:Link+List+Data+1'],
+                         ['Link List Data 2', 'u:$:Link+List+Data+2'],
+                         ['Link List Data 3', 'u:$:Link+List+Data+3'],
+                         ['Link List Data 4', 'u:$:Link+List+Data+4'],
+                         ['Link List Data 5', 'u:$:Link+List+Data+5']]
         self['main'].show(node_token, data)
 
 
@@ -223,16 +236,16 @@ class People(EntityNode):
         table = "people",
         title_field = 'name',
         form_type = "input",
-        form_buttons = [['save image', 'f:test.People:_save:']],
+        form_buttons = [['save image', 'f:$:_save:']],
     )
 
     phone = form(
         input('telephone.number', label = 'number'),
-        grid_link('telephone.id', label = 'edit', field = 'telephone.id', base_link = 'd:test.People:_update:', target_form = 'phone_new'),
-        grid_link('telephone.id', label = 'delete', field = 'telephone.id', base_link = ':test.People:_delete:', target_form = 'phone_new'),
+        grid_link('telephone.id', label = 'edit', field = 'telephone.id', base_link = 'd:$:_update:', target_form = 'phone_new'),
+        grid_link('telephone.id', label = 'delete', field = 'telephone.id', base_link = ':$:_delete:', target_form = 'phone_new'),
         read_only = True,
         form_type = "grid",
-        form_buttons = [['new phone', 'd:test.People:new:', 'phone_new']],
+        form_buttons = [['new phone', 'd:$:new:', 'phone_new']],
     )
 
     phone_new = form(
@@ -242,7 +255,7 @@ class People(EntityNode):
         table = "telephone",
         save_update = 'phone',
         title_field = 'number',
-        form_buttons = [['save', 'f:test.People:_save:'],
+        form_buttons = [['save', 'f:$:_save:'],
                         ['cancel', 'CLOSE']],
         layout_title = 'Phone number',
     )
@@ -253,7 +266,9 @@ class People(EntityNode):
     form_layout = [['main'], ['photo'], ['phone']]
     layout_main_form = 'main'
 
-
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(name = 'People', title = 'People', node = '$:list'))
+        node_manager.add_menu(dict(menu = 'People', title = 'New person', node = '$:new'))
 
 class DataLoader(JobNode):
 
@@ -263,6 +278,9 @@ class DataLoader(JobNode):
 
   #  permissions = ['LoggedIn']
 
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(menu = 'Data', title = 'Load Data', node = '$:load:table=colour&file=testing/color.csv'))
+
 
 
 class DataGenerate(JobNode):
@@ -271,13 +289,16 @@ class DataGenerate(JobNode):
         text("##Data Generator##"),
         dropdown('table', 'DATA', data_field = 'tables', default = 'people'),
         intbox('number_records', default = 100),
-        button('f:test.DataGenerate:_generate:', label = 'Generate'),
+        button('f:$:_generate:', label = 'Generate'),
         form_type = "action",
     )
 
     job_type = 'generate'
     job_function = 'generate'
     params = []
+
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(menu = 'Data', title = 'Generate Data', node = '$:select'))
 
     def setup_extra_commands(self):
         commands = self.__class__.commands
@@ -311,7 +332,7 @@ class Truncate(Node):
     main = form(
         text("Truncate table :)"),
         dropdown('table', 'DATA', data_field = 'tables'),
-        button('fc:test.Truncate:truncate:', label = 'Truncate'),
+        button('fc:$:truncate:', label = 'Truncate'),
         form_type = "action",
     )
     completed = form(
@@ -321,6 +342,8 @@ class Truncate(Node):
         form_type = "action",
     )
 
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(menu = 'Data', title = 'Truncate Table', node = '$:list'))
 
     def call(self, node_token):
         if node_token.command == 'list':

@@ -40,23 +40,20 @@ import lookup
 log = logging.getLogger('rebase.web')
 
 def session(environ):
-    authenticate.create_auto_login_id()
     global_session.session = environ['beaker.session']
     # if this is a new session set up the defaults
     if global_session.session.get('user_id') == None:
         # auto login
         request = webob.Request(environ)
+        global_session.session['IP_address'] = request.remote_addr
         auto_cookie = request.cookies.get('auto')
         if auto_cookie:
             if authenticate.auto_login(auto_cookie):
                 return
         # normal session start
         authenticate.clear_user_session()
-        # Reset session at front-end
-        global_session.session['reset'] = True
-        global_session.session.persist()
 
-        log.info('creating new http session\n%s' % pprint.pformat(global_session.session))
+        log.info('%s creating new http session\n%s' % (request.remote_addr, pprint.pformat(global_session.session)))
 
 
 # I'd like to put this in the WebApplication class but it
@@ -132,7 +129,7 @@ def process_node(environ, start_response):
         start_response('200 OK', [('Content-Type', 'text/plain')])
         return throw_error('Sent JSON Error', request.params["body"])
 
-    node_interface = node_runner.NodeRunner(global_session.application.node_manager)
+    node_interface = node_runner.NodeRunner(global_session.application)
 
     node_interface.add_command(body)
     try:
