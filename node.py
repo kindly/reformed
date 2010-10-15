@@ -193,7 +193,6 @@ class Node(object):
  
 
     def update_bookmarks(self, node_token):
-
         user_id = global_session.session['user_id']
         impersonating = global_session.session['impersonating']
         # only update bookmarks for proper users
