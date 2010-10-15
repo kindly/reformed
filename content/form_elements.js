@@ -211,7 +211,7 @@ REBASE.FormControls = function(){
         if (autocomplete == 'DATA' && item.data_field){
             autocomplete = local_row_data[item.data_field];
         }
-        $control = $(add_label_for(item) + '<div class="' + class_list + ' complex"><input id="' + id_name + '" class="dropdown_input" value="' + value + '" /><div class="but_dd_f"><img class="but_dd_img_f" src="/bullet_arrow_down2.png" /></div></div>');
+        $control = $(add_label_for(item) + '<div class="' + class_list + ' complex"><input id="' + id_name + '" class="dropdown_input" value="' + value + '" /><div class="but_dd_f"><img onclick="REBASE.Form.dropdown_click(\'' + id_name + '\')" class="but_dd_img_f" src="/bullet_arrow_down2.png" /></div></div>');
         $control.find('input').autocomplete(autocomplete, {dropdown : true});
         return $control;
     }

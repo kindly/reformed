@@ -226,7 +226,9 @@ REBASE.Form = function (){
         $input.focus();
     }
 
-
+    function dropdown_click(item_id){
+        $('#' + item_id).trigger('dropdown');
+    }
     // exported functions
     return {
         'make_paging' : function (paging_data){
@@ -243,7 +245,11 @@ REBASE.Form = function (){
         },
         'focus' : function ($input){
             return focus($input);
+        },
+        'dropdown_click' : function (item_id){
+            return dropdown_click(item_id);
         }
+
     };
 }();
 
