@@ -4,7 +4,7 @@ from datetime import timedelta
 
 import sqlalchemy as sa
 from sqlalchemy.sql import not_, and_, or_
-import pyparsing 
+import pyparsing
 
 import custom_exceptions
 from util import split_table_fields
@@ -64,7 +64,7 @@ class Search(object):
 
         if self.base_tables:
             base_tables = [self.database.get_class(self.table)]
-            base_tables.extend([self.database.get_class(table) for table in self.base_tables]) 
+            base_tables.extend([self.database.get_class(table) for table in self.base_tables])
             self.search_base = self.session.query(*base_tables)
         else:
             self.search_base = self.session.query(self.database.get_class(self.table))
@@ -160,7 +160,7 @@ class Search(object):
             if len(parts) == 1:
                 ordering = "asc"
             else:
-                ordering = parts[1] 
+                ordering = parts[1]
             field_parts = parts[0].split(".")
             if len(field_parts) == 1:
                 table = self.table
@@ -269,15 +269,15 @@ class Search(object):
 
             sa_queries.append([new_query, exclude])
 
-        current_unions = [] 
-        current_excepts = [] 
+        current_unions = []
+        current_excepts = []
 
         for n, item in enumerate(sa_queries):
             query, exclude = item
             if n == 0:
                 main_subquery = query
                 continue
-            
+
             if exclude:
                 current_excepts.append(query)
             else:
@@ -288,7 +288,7 @@ class Search(object):
                     current_unions = []
                 else:
                     main_subquery = self.exclude(main_subquery, current_excepts, exclude_mode)
-                    current_excepts = [] 
+                    current_excepts = []
         if current_unions:
             main_subquery = main_subquery.union(*current_unions)
         if current_excepts:
@@ -332,7 +332,7 @@ class Search(object):
             distict_select_paths.add(self.name_to_path[table])
 
         self.select_path_list = list(distict_select_paths)
-            
+
     def exclude(self, query, current_excepts, exclude_mode):
 
         if exclude_mode == "except":
@@ -384,7 +384,7 @@ class QueryBase(object):
 
         return join_tree
 
-    
+
     def recurse_join_tree(self, current_node):
 
         for node in current_node["tree"].itervalues():
@@ -503,7 +503,7 @@ class QueryFromString(QueryBase):
         for item in node:
             if isinstance(item, pyparsing.ParseResults) and item.table and ored:
                 self.covering_ors.update([item.table])
-                
+
             if isinstance(item, pyparsing.ParseResults):
                 self.gather_covering_ors(item, notted, ored)
 
@@ -539,7 +539,7 @@ class QueryFromString(QueryBase):
                 table_class = self.search.name_to_alias[node.table]
             else:
                 table_class = self.search.name_to_alias[self.search.table]
-            
+
             field = getattr(table_class, node.field)
 
             if node.operator == "<":
@@ -573,12 +573,12 @@ class QueryFromString(QueryBase):
         if to_and:
             ors = [self.convert_where(stat) for stat in node[0::2]]
             return and_(*ors)
-    
-        raise 
-    
+
+        raise
+
 
     def parser(self):
-        
+
         Word = pyparsing.Word
         Literal = pyparsing.Literal
         Group = pyparsing.Group
@@ -621,7 +621,7 @@ class QueryFromString(QueryBase):
 
         now_diff = CaselessKeyword("now") + (Literal("+") | Literal("-")) + Word(pyparsing.nums) + \
                    (CaselessKeyword("days") | CaselessKeyword("mins") | CaselessKeyword("minutes") | CaselessKeyword("hours"))
-        
+
 
         date = now_diff.setParseAction(convert_now_diff) |\
                pyparsing.CaselessKeyword("now").setParseAction(convert_now) |\
@@ -655,7 +655,7 @@ class QueryFromString(QueryBase):
                        Literal(".").suppress() +\
                        attr.setResultsName("field")
 
-                        
+
         objnotable = attr.setResultsName("field")
 
         obj = objwith4table | objwith3table | objwith2table | objwith1table | objnotable
@@ -665,7 +665,7 @@ class QueryFromString(QueryBase):
         is_not = is_.suppress() + pyparsing.CaselessKeyword("not")
 
         null_comarison = (is_not | is_).setResultsName("operator") + pyparsing.CaselessKeyword("null").setResultsName("value")
-        
+
         comparison = ((Literal("<>") | Literal("<=") | Literal("<") | Literal("=") | Literal(">=") |\
                        Literal(">")).setResultsName("operator") + \
                        value.setResultsName("value"))
@@ -693,7 +693,7 @@ class QueryFromString(QueryBase):
                 ("or",  2, pyparsing.opAssoc.LEFT),
                 ("and", 2, pyparsing.opAssoc.LEFT),
                 ]) + pyparsing.StringEnd()
-        
+
 
         return expression
 
@@ -878,12 +878,12 @@ class Expression(object):
 
         now_diff = CaselessKeyword("now") + (Literal("+") | Literal("-")) + Word(pyparsing.nums) + \
                    (CaselessKeyword("days") | CaselessKeyword("mins") | CaselessKeyword("minutes") | CaselessKeyword("hours"))
-        
+
 
         date = now_diff.setParseAction(convert_now_diff) |\
                pyparsing.CaselessKeyword("now").setParseAction(convert_now) |\
                Combine(iso_date_full).setParseAction(convert_iso_full) |\
-               Combine(iso_date_partial).setParseAction(convert_iso_partial) 
+               Combine(iso_date_partial).setParseAction(convert_iso_partial)
 
         return date
 
@@ -917,7 +917,7 @@ def parser_param():
                    Literal(".").suppress() +\
                    attr.setResultsName("field")
 
-                    
+
     objnotable = attr.setResultsName("field")
 
     obj = objwith4table | objwith3table | objwith2table | objwith1table | objnotable
@@ -934,7 +934,7 @@ def parser_param():
     is_ = pyparsing.CaselessKeyword("is")
 
     null_comarison = is_.setResultsName("operator") + value.setResultsName("value")
-    
+
     comparison = ((Literal("<>") | Literal("<=") | Literal("<") | Literal("=") | Literal(">=") |\
                    Literal(">")).setResultsName("operator") + \
                    value.setResultsName("value"))
@@ -962,7 +962,7 @@ def parser_param():
             ("or",  2, pyparsing.opAssoc.LEFT),
             ("and", 2, pyparsing.opAssoc.LEFT),
             ]) + pyparsing.StringEnd()
-    
+
 
     expression.enablePackrat()
     return expression
@@ -985,7 +985,7 @@ class QueryFromStringParam(QueryBase):
         self.expressions = []
         self.gather_expressions(self.ast)
 
-        self.expressions.sort(lambda a, b: a.pos - b.pos) 
+        self.expressions.sort(lambda a, b: a.pos - b.pos)
 
 
         self.pos_args = kw.get("pos_args", [])
@@ -995,7 +995,7 @@ class QueryFromStringParam(QueryBase):
         if kw.get("test", False):
             return
 
-        self.add_positional(self.pos_args) 
+        self.add_positional(self.pos_args)
         self.add_named(self.named_args)
 
         if not self.search:
@@ -1024,7 +1024,7 @@ class QueryFromStringParam(QueryBase):
         for item in node:
             if isinstance(item, Expression) and item.table and ored:
                 self.covering_ors.update([item.table])
-                
+
             if isinstance(item, pyparsing.ParseResults):
                 self.gather_covering_ors(item, notted, ored)
 
@@ -1065,11 +1065,11 @@ class QueryFromStringParam(QueryBase):
         if to_and:
             ors = [self.convert_where(stat) for stat in node[0::2]]
             return and_(*ors)
-    
-        raise 
+
+        raise
 
 
-    
+
     def gather_expressions(self, node):
 
         for item in node:

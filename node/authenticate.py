@@ -215,5 +215,5 @@ def create_auto_login_id():
     h.update(random_string)
     digest = h.digest()
     return base64.encodestring(digest).replace('\n','')
-    
+
 

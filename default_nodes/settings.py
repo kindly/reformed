@@ -26,13 +26,13 @@ def initialise():
     sysinfo = global_session.application.predefine.sysinfo
     permission = global_session.application.predefine.permission
     user_group = global_session.application.predefine.user_group
-    
+
     sysinfo("file_uploads>dir_depth", 1, "How many levels of directories for uploaded files")
     sysinfo("file_uploads>root_directory", 'files', "Root directory for uploaded files, relative to the application directory")
     sysinfo("file_uploads>max_file_size", 100000, "Maximum file size for uploaded files (in bytes)")
-    
+
     permission(u"FileUploader", u'File uploader', u'can upload files to the server')
     permission(u"FileUploaderLargeFiles", u'Large files', u'can upload files large files to the server')
-    
+
     # sys admin user_group
     user_group(u'fileuploaders', u'File Uploaders', u'Able to upload files', permissions = ['FileUploader'])

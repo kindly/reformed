@@ -309,7 +309,7 @@ class DataGenerator(object):
             names.append(name)
 
         return ' '.join(names)
- 
+
 
     def make_int(self, min = 0, max = 100):
         return random.randint(min,max)
@@ -436,7 +436,7 @@ class DataGenerator(object):
             while not out:
                 out = random.choice(data)
         return out
- 
+
 
     def make_images(self, category):
         # there is a limit on how many values are grabbed

@@ -14,7 +14,7 @@ sqllogger.addHandler(sqlhandler)
 
 
 class test_database(object):
-     
+
     @classmethod
     def setUpClass(self):
 
@@ -29,7 +29,7 @@ class test_database(object):
         except OSError:
             raise
             pass
-    
+
         self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
         self.Donkey = Database("Donkey",
                          Table("people",
@@ -51,7 +51,7 @@ class test_database(object):
         self.session = self.Donkey.Session()
 
         #self.list_of_tables = self.session.query(self.Donkey.get_class("__table")).all()
-    
+
         #self.list_of_fields = self.session.query(self.Donkey.get_class("__field")).all()
 #   @classmethod
 #   def tearDownClass(self):
@@ -73,7 +73,7 @@ class test_database(object):
     def test_relations(self):
 
         print self.Donkey.relations
-        assert "Email" in [email.name for email in self.Donkey.relations] 
+        assert "Email" in [email.name for email in self.Donkey.relations]
 
     def test_checkrelations(self):
 
@@ -111,22 +111,22 @@ class test_database(object):
         newperson = self.Donkey.tables["people"].sa_class()
         newperson.address_line_1 = u"67 appplod street"
         newperson.postcode = u"sdffas"
-        
+
         session.add(newperson)
         session.commit()
 
         new = session.query(self.Donkey.tables["people"].sa_class).all()
 
-        assert (u"67 appplod street", "sdffas") in [(a.address_line_1,a.postcode) for a in new] 
+        assert (u"67 appplod street", "sdffas") in [(a.address_line_1,a.postcode) for a in new]
 
         assert self.Donkey.validate_database() == [[],[],[],[],[]]
-        
+
     #@raises(custom_exceptions.NoTableAddError)
     #def test_add_bad_table_after_persist(self):
 
     #    self.Donkey.add_table(Table("New2" , Text("new2"),
     #    OneToMany("email","email")))
-    
+
     def test_get_class(self):
 
         assert self.Donkey.get_class("people") is \
@@ -134,26 +134,26 @@ class test_database(object):
 
         assert_raises(custom_exceptions.NoTableError,
                       self.Donkey.get_class,"peopley")
-    
+
     def test_get_instance(self):
 
-        assert isinstance(self.Donkey.get_instance("people"), 
+        assert isinstance(self.Donkey.get_instance("people"),
                 self.Donkey.tables["people"].sa_class)
 
         assert_raises(custom_exceptions.NoTableError,
                       self.Donkey.get_class,"peopley")
 
-        
+
     def test_add_entity(self):
 
-        assert_raises(custom_exceptions.NoTableAddError, self.Donkey.add_entity, 
+        assert_raises(custom_exceptions.NoTableAddError, self.Donkey.add_entity,
                       Table("address2",
                             Address("address")
                                  ))
 
         self.Donkey.add_entity_table()
 
-        self.Donkey.add_entity(Table("donkey", 
+        self.Donkey.add_entity(Table("donkey",
                                Text("name", validation = '__^[a-zA-Z0-9]*$'),
                                Integer("age", validation = 'Int')))
 

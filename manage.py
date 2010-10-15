@@ -51,7 +51,7 @@ def load_data(file):
     import datetime
     from database.data_loader import FlatFileSaveSet
     application.initialise_database()
-    start_time = datetime.datetime.now() 
+    start_time = datetime.datetime.now()
     flatfile = FlatFileSaveSet(application.database,
                                path = file, lines_per_chunk = 20)
     flatfile.load()

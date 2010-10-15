@@ -49,7 +49,7 @@ class test_donkey_persist(test_donkey):
 
 #        cls.meta = sa.MetaData()
 #        cls.Session = sa.orm.sessionmaker(bind =cls.engine , autoflush = False)
-#        cls.Donkey = Database("Donkey", 
+#        cls.Donkey = Database("Donkey",
 #                        zodb_store = "tests/zodb.fs",
 #                        metadata = cls.meta,
 #                        engine = cls.engine,
@@ -102,9 +102,9 @@ class test_donkey_persist(test_donkey):
         davidsjim._people = cls.david
         davidsjim._donkey = cls.jim
         davidsjim.amount = 50
-        
+
         jimpic = file("tests/jim.xcf", mode = "rb").read()
-        
+
         jimimage = cls.Donkey.tables["donkey_pics"].sa_class()
         jimimage.pic = jimpic
 
@@ -145,7 +145,7 @@ class test_donkey_persist(test_donkey):
 
 class test_donkey_persist_sqlite(test_donkey_persist):
 
-        
+
     @classmethod
     def tearDownClass(cls):
 
@@ -170,7 +170,7 @@ class test_donkey_persist_sqlite(test_donkey_persist):
     def test_address_validation(self):
 
         assert len(get_table_from_instance(self.david, self.Donkey).validate(self.david, self.session)) > 3
-        
+
         assert_raises(formencode.Invalid,
                       get_table_from_instance(self.david2, self.Donkey).validate,self.david2, self.session)
 
@@ -197,7 +197,7 @@ class test_donkey_persist_sqlite(test_donkey_persist):
         self.jim.moo = u"zjimbobidoobo"
         self.session.add(self.jim)
         self.session.commit()
-    
+
     def test_zz_drop_table(self):
 
         self.Donkey.drop_table("moo%s" % self.p)
@@ -222,7 +222,7 @@ class test_donkey_persist_sqlite(test_donkey_persist):
         b = len(self.Donkey.tables)
 
         assert a == b
-        
+
     def test_z_add_drop_existing_table(self):
         print self.Donkey.tables.keys()
 
@@ -235,7 +235,7 @@ class test_donkey_persist_sqlite(test_donkey_persist):
 
         print validate_database(self.Donkey)
         diff = schemadiff.getDiffOfModelAgainstDatabase(self.Donkey.metadata,
-                                                    self.Donkey.engine) 
+                                                    self.Donkey.engine)
 
         print diff
         assert validate_database(self.Donkey)[0] == []
@@ -244,7 +244,7 @@ class test_donkey_persist_sqlite(test_donkey_persist):
 
         ## field difference ok due to server default diffs not workin
         ## assert validate_database(self.Donkey)[4] == []
-        
+
     def test_z_add_entity_after_loaded(self):
 
         p = random.randrange(1,10000)
@@ -270,7 +270,7 @@ class test_donkey_persist_sqlite(test_donkey_persist):
     def test_params_load(self):
 
         assert self.Donkey.tables["donkey"].fields["name"].field_validation == "__^[a-zA-Z0-9]*$"
-        assert self.Donkey.tables["donkey"].fields["donkey_pics"].many_side_not_null == False 
+        assert self.Donkey.tables["donkey"].fields["donkey_pics"].many_side_not_null == False
         assert self.Donkey.tables["donkey"].fields["age"].field_validation == "Int"
         assert self.Donkey.tables["people"].fields["name"].length == 30
         assert self.Donkey.tables["people"].fields["name"].mandatory == True
@@ -288,7 +288,7 @@ class test_donkey_persist_sqlite(test_donkey_persist):
 
         flatfile = FlatFile(self.Donkey,
                             "people",
-                            "tests/new_people_with_header.csv")    
+                            "tests/new_people_with_header.csv")
 
         flatfile.load()
 
@@ -299,8 +299,8 @@ class test_donkey_persist_sqlite(test_donkey_persist):
 
     def test_indexs_present(self):
 
-        print [a.name for a in self.Donkey.tables["donkey"].sa_table.indexes] 
-        assert "idx_name" in [a.name for a in self.Donkey.tables["donkey"].sa_table.indexes] 
+        print [a.name for a in self.Donkey.tables["donkey"].sa_table.indexes]
+        assert "idx_name" in [a.name for a in self.Donkey.tables["donkey"].sa_table.indexes]
 
 
     def test_all_fields_have_different_numbers(self):
@@ -316,12 +316,12 @@ class test_donkey_persist_sqlite(test_donkey_persist):
                 print field.name,field.field_id
                 field_ids.append(field.field_id)
 
-            
+
             print field_ids
             assert len(field_ids) == len(set(field_ids))
-        
+
     ## to test later
-    
+
     #def test_zzz_cascade(self):
 
     #    load_local_data(self.Donkey, {"__table": u"sub_sub_category",

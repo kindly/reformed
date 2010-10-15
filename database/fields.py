@@ -279,8 +279,8 @@ class LookupId(Field):
 
         self.integer = Column(sa.Integer, use_parent = True)
 
-        self.manytoone = Relation("manytoone", other, 
-                                  foreign_key_name = name, 
+        self.manytoone = Relation("manytoone", other,
+                                  foreign_key_name = name,
                                   backref = backref, use_parent = True)
 
         self.validation = {name: validators.CheckInField("%s.id" % other,

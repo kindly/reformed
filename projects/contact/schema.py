@@ -94,7 +94,7 @@ def initialise(application):
           Event('new change delete',
                 UpdateCommunicationInfo(['number'])),
           Event('new change delete',
-                UpdateSearch(['number'], 
+                UpdateSearch(['number'],
                               type = 'only_numbers')),
           table_class = 'communication',
     )

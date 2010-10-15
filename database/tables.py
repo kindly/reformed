@@ -80,7 +80,7 @@ class Table(object):
 
         self.all_kw = set(self.modifiable_kw + self.restricted_kw)
         self.all_updatable_kw = set(self.modifiable_kw)
-        assert set(kw.keys()) - self.all_kw == set() 
+        assert set(kw.keys()) - self.all_kw == set()
 
         self.name = name
         self.kw = kw
@@ -118,7 +118,7 @@ class Table(object):
         else:
             self.valid_info_tables = []
 
-        ## for info tables to be populated 
+        ## for info tables to be populated
         self.valid_core_types = []
 
         self.logged = kw.get("logged", True)
@@ -149,7 +149,7 @@ class Table(object):
             field._set_parent(self)
 
         if "_version" not in self.fields and self.version:
-            self.add_field(Integer("_version")) 
+            self.add_field(Integer("_version"))
         if "_modified_date" not in self.fields and self.modified_date:
             self.add_field(Modified("_modified_date"))
         if "_modified_by" not in self.fields and self.modified_by:
@@ -182,7 +182,7 @@ class Table(object):
         root = connection.root()
         table_params = root["tables"][self.name]["params"]
         try:
-            table_params[key] = value 
+            table_params[key] = value
             setattr(self, key, value)
         except Exception, e:
             transaction.abort()
@@ -290,7 +290,7 @@ class Table(object):
 
     def add_relation(self, field):
 
-        #TODO make into more general add relation, currently 
+        #TODO make into more general add relation, currently
         #only works if both tables are already persisted
         if not self.persisted:
             self._add_field_no_persist(field)
@@ -1100,11 +1100,11 @@ class Table(object):
         if ">" in table_name:
             path = tuple(table_name.split(">")[:-1])
             return self.paths[path]
-        
+
         return self.table_path[table_name]
 
     def get_path(self, table_name):
-        
+
         return self.get_edge(table_name).path
 
     def get_table_from_field(self, field_name):
@@ -1185,7 +1185,7 @@ class Table(object):
                     chained_validators.append(field.chained_validator)
 
         # Non nullable foriegn keys are validated on the
-        # relationship attribute for relationships with attributes 
+        # relationship attribute for relationships with attributes
         for column in self.foriegn_key_columns.itervalues():
             mand = not column.sa_options.get("nullable", True)
             relation = column.defined_relation
@@ -1268,7 +1268,7 @@ class Table(object):
                                  ignore_key_missing = True,
                                  **self.schema_dict)
 
-        return self.schema 
+        return self.schema
 
     def validate(self, instance, session):
         """this validates an instance of sa_class with the schema defined
@@ -1319,7 +1319,7 @@ class ConvertUnicode(AttributeExtension):
             return value
 
         state.dict["_validated"] = False
- 
+
         if value is None:
             return None
 

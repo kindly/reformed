@@ -35,7 +35,7 @@ def postcode(string):
 
     fifth_opt = pyparsing.Combine(Word(first_char, exact = 1) + Word(nums, exact = 1) + Word(third_char, exact = 1) )
 
-    sixth_opt = pyparsing.Combine(Word(first_char, exact = 1) + Word(second_char, exact = 1) + Word(nums, exact = 1) + Word(forth_char, exact = 1)) 
+    sixth_opt = pyparsing.Combine(Word(first_char, exact = 1) + Word(second_char, exact = 1) + Word(nums, exact = 1) + Word(forth_char, exact = 1))
 
     def parse_post(string, pos, toks):
         return toks[0].upper() + " " + toks[1].upper()
@@ -43,8 +43,8 @@ def postcode(string):
     postcode =  ((second_opt + ending) |  (forth_opt + ending) | (first_opt + ending) | (third_opt + ending) | (fifth_opt + ending) | (sixth_opt + ending) |\
                 (pyparsing.CaselessLiteral("GIR") + pyparsing.CaselessLiteral("0AA"))).setParseAction(parse_post)
 
-    
-    
+
+
     return get_result(postcode, string, lambda x:x.replace(" ","").lower())
 
 def phonenumber(string):
@@ -99,19 +99,19 @@ def date(string, dayfirst = True):
 
 if __name__ == "__main__":
 
-    print postcode("se1 0qz") 
-    print postcode("WN2 83RE") 
-    print postcode("seqz") 
-    print phonenumber("fsdfa@bob.com 74 3892743920") 
-    print email("fsdfa@bob.com 74 3892743920") 
-    print phonenumber("743 89") 
-    print email("dave@wee.com") 
-    print email("dave") 
-    print date("1 jan 09") 
-    print date("1.5.49") 
-    print date("1.5.2009") 
-    print date("n 09") 
-    print date("1 jandfsaf 09") 
+    print postcode("se1 0qz")
+    print postcode("WN2 83RE")
+    print postcode("seqz")
+    print phonenumber("fsdfa@bob.com 74 3892743920")
+    print email("fsdfa@bob.com 74 3892743920")
+    print phonenumber("743 89")
+    print email("dave@wee.com")
+    print email("dave")
+    print date("1 jan 09")
+    print date("1.5.49")
+    print date("1.5.2009")
+    print date("n 09")
+    print date("1 jandfsaf 09")
 
 
 

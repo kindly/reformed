@@ -29,9 +29,9 @@ class JobScheduler(object):
         ## FIXME why does this need the user table?
         if not table_name in self.database.tables and 'user' in self.database.tables:
             self.database.add_table(tables.Table(table_name,
-                                            Text("job_type"), 
-                                            Text("function"), 
-                                            Text("arg"), 
+                                            Text("job_type"),
+                                            Text("function"),
+                                            Text("arg"),
                                             DateTime("job_start_time"),
                                             DateTime("job_started"),
                                             DateTime("job_ended"),
@@ -118,13 +118,13 @@ class JobSchedulerThread(threading.Thread):
             if time_counter > POLL_INTERVAL:
                 time_counter = 0.0
 
-            ## added as last resort 
+            ## added as last resort
             if time_counter == 0:
                 try:
                     to_run = self.database.search("_core_job_scheduler",
                                                   "job_start_time <= now and job_started is null",
                                                   internal = True).data
-    
+
                     for result in to_run:
                         result["job_started"] = datetime.datetime.now()
                         result["message"] = "starting"
@@ -142,13 +142,13 @@ class JobSchedulerThread(threading.Thread):
                                                     traceback.format_exc())
                     self.stop()
                     break
-    
-    
+
+
                 try:
                     self.job_scheduler.poll()
                 except threadpool.NoResultsPending:
                     pass
-    
+
 
     def stop(self):
 

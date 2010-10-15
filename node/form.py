@@ -341,7 +341,7 @@ class Form(object):
         join_data = None
         print 'VIEW', request_data.data
         get_data = request_data.get
-        id = get_data('id') or get_data('%s.id' % self.table) 
+        id = get_data('id') or get_data('%s.id' % self.table)
         if where:
             pass
         elif id:

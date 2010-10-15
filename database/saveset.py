@@ -1,7 +1,7 @@
 ##   This file is part of Reformed.
 ##
 ##   Reformed is free software: you can redistribute it and/or modify
-##   it under the terms of the GNU General Public License version 2 as 
+##   it under the terms of the GNU General Public License version 2 as
 ##   published by the Free Software Foundation.
 ##
 ##   Reformed is distributed in the hope that it will be useful,
@@ -64,11 +64,11 @@ class SaveNew(object):
         path = ()
         if edge:
             table_name = edge.table
-            path = tuple(edge.path) 
+            path = tuple(edge.path)
 
         field_name = field.split(".")[-1]
 
-        self.path_to_value[(path, field_name)] = value 
+        self.path_to_value[(path, field_name)] = value
 
 
         self.path_to_defined_name[(path, field_name)] = field
@@ -168,7 +168,7 @@ class SaveNew(object):
             self.save_items[path].set_value(field_name, value)
 
     def prepare(self, parent_save_set = None, defer = False):
-        
+
         if self.prepared:
             return
 
@@ -237,7 +237,7 @@ class SaveError(object):
     def prepare(self, **kw):
         pass
 
-            
+
 
 class SaveItem(object):
 

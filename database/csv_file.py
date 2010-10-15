@@ -102,7 +102,7 @@ class CsvFile(object):
         self.format = format
         self.headings_type = {}
         self.headings = []
-        self.dialect = dialect 
+        self.dialect = dialect
         self.encoding = encoding
 
         self.guess_lines = 1000
@@ -141,7 +141,7 @@ class CsvFile(object):
         try:
             flat_file, csv_reader = self.get_csv_reader()
 
-            self.file_headings = csv_reader.next() 
+            self.file_headings = csv_reader.next()
 
         finally:
             flat_file.close()
@@ -173,7 +173,7 @@ class CsvFile(object):
             if heading not in self.headings_type:
                 continue
             self.headings_type[heading] = type
-        
+
 
     def check_type(self, type):
 
@@ -198,7 +198,7 @@ class CsvFile(object):
                     raise ValueError("unable to guess type for column %s"
                                      % name)
                 self.headings_type[name] = guessed_type
-    
+
     def is_int(self, val):
 
         try:
@@ -229,12 +229,12 @@ class CsvFile(object):
 
     def check_possible_types(self, possible_types):
 
-        if (len(possible_types) == 3 and 
+        if (len(possible_types) == 3 and
             "int" in possible_types and
             "decimal" in possible_types):
             possible_types.remove("int")
             possible_types.remove("decimal")
-        if (len(possible_types) == 2 and 
+        if (len(possible_types) == 2 and
             "decimal" in possible_types):
             possible_types.remove("decimal")
         if 'bool' in possible_types:
@@ -258,7 +258,7 @@ class CsvFile(object):
                 csv_reader.next()
 
             possible_types = set(POSSIBLE_TYPES)
-            
+
             max_length = 0
 
             for num, line in enumerate(csv_reader):
@@ -317,7 +317,7 @@ class CsvFile(object):
                 csv_reader.next()
 
             self.chunks = {}
-            
+
             chunk = 0
             counter = 0
             total = 0
@@ -325,7 +325,7 @@ class CsvFile(object):
 
             for num, line in enumerate(csv_reader):
                 counter = counter + 1
-                total = total + 1 
+                total = total + 1
                 if counter == lines:
                     new_offset = flat_file.tell()
                     self.chunks[chunk] = (offset, new_offset)
@@ -372,7 +372,7 @@ class CsvFile(object):
 
         try:
             flat_file, csv_reader = self.get_csv_reader()
-            
+
             if self.file_headings:
                 csv_reader.next()
 

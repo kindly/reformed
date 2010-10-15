@@ -20,7 +20,7 @@
 
 from formencode import validators
 
-from node.node import TableNode, Node 
+from node.node import TableNode, Node
 from node.page_item import *
 from web.global_session import global_session
 

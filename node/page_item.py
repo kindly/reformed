@@ -181,7 +181,7 @@ class FormControl(FormItem):
         override for custom behaviour"""
 
         value = data.get(self.name)
-        save_set.set_value(self.name, value) 
+        save_set.set_value(self.name, value)
 
 
 class Password(FormControl):
@@ -195,7 +195,7 @@ class Password(FormControl):
 
         value = data.get(self.name)
         if value:
-            save_set.set_value(self.name, value) 
+            save_set.set_value(self.name, value)
 
 
 class ActionItem(FormControl):

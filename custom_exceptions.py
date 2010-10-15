@@ -1,7 +1,7 @@
 ##   This file is part of Reformed.
 ##
 ##   Reformed is free software: you can redistribute it and/or modify
-##   it under the terms of the GNU General Public License version 2 as 
+##   it under the terms of the GNU General Public License version 2 as
 ##   published by the Free Software Foundation.
 ##
 ##   Reformed is distributed in the hope that it will be useful,
@@ -66,10 +66,10 @@ class LockingError(Exception):
         self.obj = obj
 
     def __str__(self):
-        return str(self.msg) 
+        return str(self.msg)
 
     def __repr__(self):
-        return str(self.msg) 
+        return str(self.msg)
 
 class DatabaseInvalid(AttributeError):
     def __init__(self, msg, list):
@@ -77,7 +77,7 @@ class DatabaseInvalid(AttributeError):
         self.list = list
 
     def __str__(self):
-        return str(self.msg) 
+        return str(self.msg)
 
     def __repr__(self):
-        return str(self.msg) 
+        return str(self.msg)

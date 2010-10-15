@@ -35,11 +35,11 @@ class Action(PersistBaseClass):
         return obj
 
     def __call__(self, action_state):
-        
+
         logger.info(self.__class__.__name__)
         logger.info(action_state)
         self.run(action_state)
-            
+
 class AddRow(Action):
 
     def __init__(self, related_table, pre_flush = True, **kw):
@@ -58,7 +58,7 @@ class AddRow(Action):
 
         if len(path) != 1:
             raise custom_exceptions.InvalidTableReference(
-                "table %s not one join away from objects table %s" % 
+                "table %s not one join away from objects table %s" %
                 (self.related_table, table.name))
 
         new_obj = database[self.related_table].sa_class()
@@ -187,7 +187,7 @@ class MaxDate(Action):
 
         super(MaxDate, self).__init__(target, field, base_level, initial_event, **kw)
 
-        self.end = kw.get("end", "end_date") 
+        self.end = kw.get("end", "end_date")
         self.default_end = kw.get("default_end", datetime.datetime(2199,12,31))
 
     def update_after(self, object, result, session):
@@ -264,7 +264,7 @@ class Counter(Action):
     def delete(self, result, base_table_obj, object, session):
 
         session.add_after_flush(self.update_after, (object, result, session))
-            
+
     def update(self, result, base_table_obj, object, session):
 
         session.add_after_flush(self.update_after, (object, result, session))
@@ -297,7 +297,7 @@ class CopyValue(Action):
 
         setattr(new_obj, dest_field, value)
         action_state.session.add_no_validate(new_obj)
- 
+
 
 class CopyTextAfter(Action):
 
@@ -326,7 +326,7 @@ class CopyTextAfter(Action):
         for relation in path:
             new_obj = getattr(new_obj, relation)
             assert new_obj is not None
-        
+
         values = [getattr(object, field) for field in self.field_list]
 
         value = u' '.join([val for val in values if val])
@@ -357,7 +357,7 @@ class CopyTextAfterField(CopyTextAfter):
         for relation in path:
             new_obj = getattr(new_obj, relation)
             assert new_obj is not None
-        
+
         values = [getattr(object, field) for field in self.field_list]
 
         values = [u"%s: %s" % (field, getattr(object, field)) for field in self.field_list]
@@ -556,7 +556,7 @@ class UpdateSearch(Action):
         self.set_names(table)
 
         search_obj = None
-        if event_type <> "new": 
+        if event_type <> "new":
             try:
                 query = dict(
                     _core_id = object._core_id,

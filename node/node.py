@@ -191,7 +191,7 @@ class Node(object):
             out.append('%s=%s' % (key, dict[key]))
         return '&'.join(out)
 
- 
+
 
     def update_bookmarks(self, node_token):
         user_id = global_session.session['user_id']

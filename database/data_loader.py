@@ -22,7 +22,7 @@ reformed_database = None
 data_load_queues = {}
 
 def get_key_data(key, database, table):
-    """from a particular key get out what table the key relates to and the last 
+    """from a particular key get out what table the key relates to and the last
     join to that table"""
 
     relations = key[::2]
@@ -37,7 +37,7 @@ def get_key_data(key, database, table):
 
 def get_parent_key(key, all_rows):
     """get the key of the of the table that joins to the keys table"""
-    
+
     if len(key) <= 2:
         return "root"
     try:
@@ -72,7 +72,7 @@ def string_key_parser(key_string):
     for part in numbers:
         key.append(key_string[current_pos: part.start()])
         key.append(int(part.group(0)[2:-2]))
-        current_pos = part.end() 
+        current_pos = part.end()
     key.append(key_string[current_pos:])
     return key
 
@@ -93,9 +93,9 @@ def get_key_item_dict(key_item_list):
     key_item_dict = {}
     for key, item in key_item_list:
         if key == "root":
-            key_item_dict.setdefault("root", {})[item] = None 
+            key_item_dict.setdefault("root", {})[item] = None
         else:
-            key_item_dict.setdefault(tuple(key), {})[item] = None 
+            key_item_dict.setdefault(tuple(key), {})[item] = None
     return key_item_dict
 
 def get_keys_from_list(key_item_list):
@@ -142,7 +142,7 @@ class ChunkStatus(object):
 
     def __repr__(self):
 
-        return ("chunk: %s, status: %s, error: %s, error_lines: %s" 
+        return ("chunk: %s, status: %s, error: %s, error_lines: %s"
                 % (self.chunk, self.status, self.error, self.error_lines))
 
 class FlatFile(object):
@@ -187,7 +187,7 @@ class FlatFile(object):
         self.fields_correct = self.check_fields()
 
         self.get_all_decendants()
-        
+
         self.keys.sort(lambda a, b : len(a) - len(b))
 
         self.status = []
@@ -205,7 +205,7 @@ class FlatFile(object):
                 key_field_dict[key + (col_name, )] = column.type
 
         return key_field_dict
-    
+
 
     def get_file(self):
 
@@ -329,7 +329,7 @@ class FlatFile(object):
         self.start_time = datetime.datetime.now()
 
         self.session = self.database.Session()
-        
+
         total_lines = self.count_lines()
 
         chunks = self.make_chunks(batch)
@@ -378,7 +378,7 @@ class FlatFile(object):
 
         return message
 
-    
+
 
     def get_rate(self, completed):
 
@@ -473,7 +473,7 @@ class SingleRecord(object):
             self.keys = self.all_rows.keys()
             self.keys.sort(lambda a, b : len(a) - len(b))
 
-        self.all_obj = {} 
+        self.all_obj = {}
 
     def load(self):
 
@@ -513,8 +513,8 @@ class SingleRecord(object):
     def save_all_objs(self, session):
 
         invalid_msg = {}
-        invalid_dict = {} 
-        
+        invalid_dict = {}
+
         for key, obj in self.all_obj.iteritems():
             if self.from_load:
                 obj._from_load = True
@@ -544,14 +544,14 @@ class SingleRecord(object):
             if not self.flat_file:
                 session.expunge_all()
             raise fe.Invalid("invalid object(s) are %s" % invalid_msg,
-                             self.data, self, None, invalid_dict) 
+                             self.data, self, None, invalid_dict)
 
     def add_values_to_obj(self, key):
 
         for name, value in self.all_rows[key].iteritems():
             if not name.startswith("__"):
                 setattr(self.all_obj[key], name, value)
-    
+
     def add_all_values_to_obj(self):
 
         self.add_values_to_obj("root")
@@ -596,7 +596,7 @@ class SingleRecord(object):
         self.all_obj["root"] = obj
 
         return obj
-        
+
 
     def get_obj(self, key):
 
@@ -636,7 +636,7 @@ class SingleRecord(object):
             setattr(self.all_obj[parent_key], relation_name, obj)
             self.all_obj[key] = obj
             return obj
-        
+
         obj = self.database.get_instance(table)
         parents_obj_relation.append(obj)
         self.all_obj[key] = obj
@@ -668,7 +668,7 @@ class SingleRecord(object):
                 pk_current_values[item] = getattr(parents_obj_relation, item)
             if pk_current_values != pk_values:
                 raise custom_exceptions.InvalidData("""primary key value(s) %s in table %s
-                                        either do(es) not exist or 
+                                        either do(es) not exist or
                                         is not associted with join"""
                                         % (pk_values, table))
             return parents_obj_relation
@@ -681,7 +681,7 @@ class SingleRecord(object):
                 if pk_current_values == pk_values:
                     return obj
             raise custom_exceptions.InvalidData("primary key value(s) %s in table %s"
-                                    "either do(es) not exist or" 
+                                    "either do(es) not exist or"
                                     "is not associted with join"
                                     % (pk_values, table))
 
@@ -705,7 +705,7 @@ class SingleRecord(object):
                                                         % (id, table))
             if parents_obj_relation.id <> id:
                 raise custom_exceptions.InvalidData("""id %s in table %s
-                                        either does not exist or 
+                                        either does not exist or
                                         is not associted with join"""
                                         % (id, table))
             return parents_obj_relation
@@ -716,7 +716,7 @@ class SingleRecord(object):
                 if obj.id == id:
                     return obj
             raise custom_exceptions.InvalidData("""id %s in table %s
-                                        either does not exist or 
+                                        either does not exist or
                                         is not associted with join"""
                                         % (id, table))
 
@@ -731,11 +731,11 @@ class SingleRecord(object):
                 self.process_dict([n], v)
 
     def process_list(self, names, list):
-        
+
         for index, value in enumerate(list):
             if isinstance(value, dict):
                 self.process_dict(names + [index], value, from_list = True)
-    
+
     def process_dict(self, names, sub_dict, from_list = False):
 
         for n, v in sub_dict.iteritems():
@@ -827,12 +827,12 @@ class MultipleSaveSet(object):
         except:
             self.session.close()
             raise
-            
+
         errors = {}
         for num, save_set in enumerate(save_sets):
             error = save_set.save(False)
             if error:
-                errors[num] = (error, save_set.original_values) 
+                errors[num] = (error, save_set.original_values)
         try:
             self.session.commit()
         except:
@@ -875,7 +875,7 @@ class FlatFileSaveSet(object):
                 break
         else:
             return ()
-        
+
         try:
             save_data.send(1)
             save_data.next()
@@ -905,7 +905,7 @@ class FlatFileSaveSet(object):
             save_data.send(1)
             save_data.next()
         except StopIteration:
-            pass 
+            pass
 
         generator = self.csv_file.iterate_csv(chunk + 1, as_dict = True,
                                                   no_end = True)
@@ -922,10 +922,10 @@ class FlatFileSaveSet(object):
         range_start = chunk * self.lines_per_chunk + start + 1
 
         try:
-            end, end_generator = self.get_end_generator(chunk) 
+            end, end_generator = self.get_end_generator(chunk)
             range_end = (chunk + 1) * self.lines_per_chunk + end
         except ValueError:
-            range_end, end_generator = self.lines, [] 
+            range_end, end_generator = self.lines, []
 
         save_data = chain(first_generator, end_generator)
 
@@ -945,7 +945,7 @@ class FlatFileSaveSet(object):
 
         error_lines = []
         for num, (error, line) in save_set_errors.iteritems():
-            error_lines.append(ErrorLine(range_start + num, line, error)) 
+            error_lines.append(ErrorLine(range_start + num, line, error))
         return ChunkStatus(range, "validation error", error_lines)
 
 

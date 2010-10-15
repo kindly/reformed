@@ -22,7 +22,7 @@ def json_dump_all_from_table(session, table, database, file, style=None):
         else:
             dumpfile.write(json.dumps(export))
 
-    
+
 
 class SingleObject(object):
 
@@ -62,7 +62,7 @@ class SingleObject(object):
             for column in current_table.columns.iterkeys():
                 if not self.modified and column in ("_modified_by", "_modified_date"):
                     continue
-                cell = getattr(obj, column) 
+                cell = getattr(obj, column)
                 if cell:
                     row[column] = str(cell)
         else:
@@ -71,7 +71,7 @@ class SingleObject(object):
                     continue
                 if rcolumn.original_column == "id":
                     continue
-                cell = getattr(obj, column) 
+                cell = getattr(obj, column)
                 if cell:
                     row[column] = str(cell)
 
@@ -107,4 +107,4 @@ class SingleObject(object):
                         list.append(single_row)
         return list
 
-            
+

@@ -250,7 +250,7 @@ class UnicodeString(UnicodeString):
         if self.not_empty_string and value == '':
             raise Invalid(self.message("emptyString", state), value, state)
 
-        
+
 
 class RequireIfMissing(FormValidator):
 

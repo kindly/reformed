@@ -1,7 +1,7 @@
 ##   This file is part of Reformed.
 ##
 ##   Reformed is free software: you can redistribute it and/or modify
-##   it under the terms of the GNU General Public License version 2 as 
+##   it under the terms of the GNU General Public License version 2 as
 ##   published by the Free Software Foundation.
 ##
 ##   Reformed is distributed in the hope that it will be useful,
@@ -141,8 +141,8 @@ class Result(object):
         self.search = search
         self.data = None
 
-        self.data = data 
-        self.select_path_list = self.search.select_path_list 
+        self.data = data
+        self.select_path_list = self.search.select_path_list
 
     def get(self, name):
 

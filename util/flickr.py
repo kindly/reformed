@@ -32,11 +32,11 @@ def flicker_get_xml(method, sent_params = {}):
     hash = hashlib.md5()
     hash.update(signer)
     signature = hash.hexdigest()
-    
+
     # build url
     encoded_params = urllib.urlencode(params)
     url = 'http://api.flickr.com/services/rest/?%s&api_sig=%s' % (encoded_params, signature)
-    
+
     xml_data = urllib2.urlopen(url)
     if xml_data:
         return '\n'.join(xml_data)

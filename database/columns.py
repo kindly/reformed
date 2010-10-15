@@ -220,7 +220,7 @@ class Relation(BaseSchema):
                              "manytoone", "onetomany")
         if self.type == "onetooneother":
             self.type = "onetoone"
-        
+
         if self.type == "onetoone":
             self.sa_options["uselist"] = False
 
@@ -380,7 +380,7 @@ class Field(object):
 
     def __new__(cls, name, *args, **kw):
 
-        cls.all_kw = set(cls.modifiable_kw + cls.restricted_kw 
+        cls.all_kw = set(cls.modifiable_kw + cls.restricted_kw
                          + cls.extra_kw)
         cls.all_updatable_kw = set(cls.modifiable_kw + cls.extra_kw)
 
@@ -476,7 +476,7 @@ class Field(object):
 
     def set_kw(self, key, value):
 
-        application = self.table.database.application 
+        application = self.table.database.application
         zodb = application.aquire_zodb()
 
         if key not in self.all_updatable_kw:
@@ -487,7 +487,7 @@ class Field(object):
         root = connection.root()
         field_params = root["tables"][self.table.name]["fields"][self.name]["params"]
         try:
-            field_params[key] = value 
+            field_params[key] = value
             setattr(self, key, value)
         except Exception, e:
             transaction.abort()

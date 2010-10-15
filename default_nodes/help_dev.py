@@ -30,10 +30,10 @@ def make_menu(node_manager):
 class Menu(Node):
 
     main = form(
-        
+
         text("""
 ## Menu Setup
-             
+
 Menu items are added as a dict and use the following keys
 
 * `name` (optional) - The name of the menu item needed if sub menus are to be attached.
@@ -70,4 +70,4 @@ node example:
 
     def call(self, node_token):
         self['main'].show(node_token)
-    
+

@@ -53,8 +53,8 @@ class test_donkey(object):
               Text("name", mandatory = True, length = 30),
               ManyToOne("gender", "code", foreign_key_name = "gender_id", backref = "gender", many_side_not_null = False), ##enumeration look up table
               Address("supporter_address"),
-              OneToMany("email","email", 
-                        eager = True, 
+              OneToMany("email","email",
+                        eager = True,
                         cascade = "all, delete-orphan"),
               OneToMany("donkey_sponsership",
                         "donkey_sponsership"),
@@ -63,7 +63,7 @@ class test_donkey(object):
               OneToMany("transactions",
                        "transactions", foreign_key_name = "pop"),
               ManyToOne("over_18", "code", foreign_key_name = "over_18_id", backref = "over_18", many_side_not_null = False), ##enumeration look up table
-              
+
               Event("new", actions.AddRow("contact_summary")),
               Event('new change delete',
                     actions.UpdateSearch(['name'])),
@@ -81,9 +81,9 @@ class test_donkey(object):
 #              AddRow("new_row", "people", initial_event = True),
 #              CountRows("transaction_count", "transactions.id", base_level = "people"),
 #              MaxDate("membership", "membership", base_level = "people"),
-#              CopyText("email", "email", 
-#                       base_level = "people", 
-#                       fields = "email,email", 
+#              CopyText("email", "email",
+#                       base_level = "people",
+#                       fields = "email,email",
 #                       update_when_flag = "active_email",
 #                       counter = "email_number"),
 #              CopyTextAfter("address", "people",
@@ -98,11 +98,11 @@ class test_donkey(object):
                DateTime("date"),
                Money("amount"),
                Text("Type", default = u"payment"),
-               Event("new delete change", 
+               Event("new delete change",
                      actions.SumEvent("contact_summary.total_amount",
                                         "amount")
                     ),
-               Event("new delete", 
+               Event("new delete",
                      actions.CountEvent("contact_summary.transaction_count",
                                         "amount")
                     )
@@ -149,7 +149,7 @@ class test_donkey(object):
         info_table("membership", cls.Donkey,
                DateTime("start_date"),#, mandatory = True),
                DateTime("end_date" ),
-               CheckNoTwoNulls("val_duplicate_membership", parent_table = "_core", field = "end_date"),  
+               CheckNoTwoNulls("val_duplicate_membership", parent_table = "_core", field = "end_date"),
               )
 
         relation("donkey_people", cls.Donkey,
@@ -198,12 +198,12 @@ class test_donkey(object):
 
         table("code", cls.Donkey,
            Text("type"), ## name of relationship
-           Text("code"), 
+           Text("code"),
            Text("desctiption", length = 2000),
            Created("created_date"), ## when data was gathered
            CreatedBy("created_by"),
            lookup = True
-        ) 
+        )
 
         info_table('summary_info', cls.Donkey,
                    Text('table_name'),
@@ -299,9 +299,9 @@ class test_donkey(object):
         davidsjim._people = cls.david
         davidsjim._donkey = cls.jim
         davidsjim.amount = 50
-        
+
         jimpic = file("tests/jim.xcf", mode = "rb").read()
-        
+
         jimimage = cls.Donkey.tables["donkey_pics"].sa_class()
         jimimage.pic = jimpic
 
@@ -341,7 +341,7 @@ class test_donkey(object):
         cls.session.add(donkey_type3)
         cls.session.commit()
 
-        
+
     @classmethod
     def tearDownClass(cls):
 
@@ -392,7 +392,7 @@ class test_basic_input(test_donkey):
         pprint.pprint(self.Donkey.tables["people"].paths)
 
         assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey")].node == "donkey"
-        
+
         assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey")].join == "manytoone"
         assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey", "donkey_pics",)].node == "donkey_pics"
         assert self.Donkey.tables["people"].paths[("donkey_sponsership", "_donkey", "donkey_pics",)].join == "onetoone"
@@ -407,16 +407,16 @@ class test_basic_input(test_donkey):
         people.paths = None
         people.make_paths()
 
-        #assert self.Donkey.aliases == {} 
+        #assert self.Donkey.aliases == {}
 
     def test_create_data_dict(self):
 
         results = self.session.query(self.Donkey.tables["donkey"].sa_class)[:2]
-        print create_data_dict(results) 
+        print create_data_dict(results)
         assert create_data_dict(results) == {1: {'donkey_type': None, 'age': 13, 'name': u'jim'}, 2: {'donkey_type': None, 'age': 131, 'name': u'jim1'}}
 
         results2 = self.session.query(self.Donkey.tables["donkey"].sa_class).first()
-        print create_data_dict(results2) 
+        print create_data_dict(results2)
         assert create_data_dict(results2) == {1: {'donkey_type': None, 'age': 13, 'name': u'jim'}}
 
     def test_create_local_data(self):
@@ -426,13 +426,13 @@ class test_basic_input(test_donkey):
 
         print get_all_local_data(result, internal = True)
 
-        assert get_all_local_data(result, internal = True) == {'contact_summary.people_id': 1, 'giving_date': None, 'contact_summary.transaction_count': 0, 'people.name': u'david', '__table': 'donkey_sponsership', 'primary_entity._core_entity.summary': u'name: david -- address_line_1: 43 union street -- postcode: es388', 'people.address_line_1': u'43 union street', 'people.town': None, 'people_id': 1, 'people.postcode': u'es388', 'people.country': None, 'people.address_line_2': None, 'people.over_18_id': None, 'people.address_line_3': None, 'primary_entity._core_entity.title': u'david', 'contact_summary.total_amount': Decimal('0'), 'amount': Decimal('50'), 'donkey_id': 1, 'people.gender_id': None, 'donkey.donkey_type': None, 'primary_entity._core_entity.table': u'people', 'donkey.age': 13, 'primary_entity._core_entity.thumb': None, 'donkey.name': u'jim'} 
+        assert get_all_local_data(result, internal = True) == {'contact_summary.people_id': 1, 'giving_date': None, 'contact_summary.transaction_count': 0, 'people.name': u'david', '__table': 'donkey_sponsership', 'primary_entity._core_entity.summary': u'name: david -- address_line_1: 43 union street -- postcode: es388', 'people.address_line_1': u'43 union street', 'people.town': None, 'people_id': 1, 'people.postcode': u'es388', 'people.country': None, 'people.address_line_2': None, 'people.over_18_id': None, 'people.address_line_3': None, 'primary_entity._core_entity.title': u'david', 'contact_summary.total_amount': Decimal('0'), 'amount': Decimal('50'), 'donkey_id': 1, 'people.gender_id': None, 'donkey.donkey_type': None, 'primary_entity._core_entity.table': u'people', 'donkey.age': 13, 'primary_entity._core_entity.thumb': None, 'donkey.name': u'jim'}
 
 
         print get_all_local_data(result, fields = ["donkey_id", "contact_summary.total_amount", "donkey.name"])
-        assert get_all_local_data(result, fields = ["donkey_id", "contact_summary.total_amount", "donkey.name"]) == {'contact_summary.total_amount': '0.00', '__table': 'donkey_sponsership', 'donkey.name': u'jim', 'donkey_id': 1, 'id': 1} 
+        assert get_all_local_data(result, fields = ["donkey_id", "contact_summary.total_amount", "donkey.name"]) == {'contact_summary.total_amount': '0.00', '__table': 'donkey_sponsership', 'donkey.name': u'jim', 'donkey_id': 1, 'id': 1}
 
-        
+
     def test_zz_add_local(self):
 
         assert_raises(formencode.Invalid, load_local_data, self.Donkey, {"__table": "people",
@@ -448,14 +448,14 @@ class test_basic_input(test_donkey):
 
 
         assert_raises(formencode.Invalid, load_local_data, self.Donkey, {"__table": "donkey_sponsership",
-                                                                         "donkey_sponsership.amount" : 70,                                   
+                                                                         "donkey_sponsership.amount" : 70,
                                       "people.address_line_1" : "poo1010101",
                                       "people.address_line_2" : "poop"})
 
         try:
             load_local_data(self.Donkey, {"__table": "donkey_sponsership",
-                                          "donkey_sponsership.amount" : 70,                                   
-                                          "donkey.age" : u"poo",                                   
+                                          "donkey_sponsership.amount" : 70,
+                                          "donkey.age" : u"poo",
                                       "people.address_line_1" : u"poo1010101",
                                       "people.address_line_2" : u"poop"})
         except formencode.Invalid, e:
@@ -465,8 +465,8 @@ class test_basic_input(test_donkey):
 
 
         load_local_data(self.Donkey, {"__table": u"donkey_sponsership",
-                                      "donkey_sponsership.amount" : 711110,                                   
-                                      "donkey.age" : 12,                                   
+                                      "donkey_sponsership.amount" : 711110,
+                                      "donkey.age" : 12,
                                       "people.name" : u"fred",
                                       "people.postcode" : u"fred",
                                       "people.address_line_1" : u"poo1010101",
@@ -496,7 +496,7 @@ class test_basic_input(test_donkey):
 
         assert [get_all_local_data(a) for a in results] == [{'sub_sub_category_name': u'abc', 'sub_category_id': 1, 'sub_category.sub_category_name': u'ab', '__table': 'sub_sub_category', 'sub_category.sub_category_description': u'this is ab', 'category.category_type': u'wee', 'category.category_description': u'this is a', 'sub_category.category_name': u'a', 'category.category_name': u'a', 'sub_category.category_id': 1, 'sub_sub_category_description': u'this is abc', 'sub_category_name': u'ab', 'category_name': u'a'}]
 
-        
+
         load_local_data(self.Donkey, {"__table": u"sub_sub_category",
                                       "category.category_name": u"a",
                                       "sub_category.sub_category_name": u"ac",
@@ -579,15 +579,15 @@ class test_basic_input(test_donkey):
 
     def test_search_with_convert(self):
 
-        print self.Donkey.search("people", session = self.session, fields = ["contact_summary.total_amount", "name", "address_line_1"], keep_all = False) 
+        print self.Donkey.search("people", session = self.session, fields = ["contact_summary.total_amount", "name", "address_line_1"], keep_all = False)
         assert self.Donkey.search("people", session = self.session, fields = ["contact_summary.total_amount", "name", "address_line_1"], keep_all = False).data == [{'__table': 'people', 'address_line_1': u'43 union street', 'contact_summary.total_amount': '0.00', 'id': 1, 'name': u'david'}]
 
-        print self.Donkey.search("people", session = self.session, fields = ["contact_summary.total_amount", "name", "address_line_1"], count = True, keep_all = False) 
+        print self.Donkey.search("people", session = self.session, fields = ["contact_summary.total_amount", "name", "address_line_1"], count = True, keep_all = False)
         assert self.Donkey.search("people", session = self.session, fields = ["contact_summary.total_amount", "name", "address_line_1"], count = True, keep_all = False).data == [{'__table': 'people', 'address_line_1': u'43 union street', 'contact_summary.total_amount': '0.00', 'id': 1, 'name': u'david'}]
 
         assert self.Donkey.search("donkey",  count = True).row_count == 11
 
-        
+
         assert self.Donkey.search("donkey", "name > {}", params = {"name": "jim5"},  count = True).row_count == 4
 
     def test_search_single_result(self):
@@ -672,7 +672,7 @@ class test_basic_input(test_donkey):
                 print field.name,field.field_id
                 field_ids.append(field.field_id)
 
-            
+
             print field_ids
             assert len(field_ids) == len(set(field_ids))
 
@@ -709,7 +709,7 @@ class test_basic_input(test_donkey):
         sub_cat.sub_category_name = u"and this"
         cat._rel_sub_category.append(sub_cat)
 
-        sub_sub_cat  = self.Donkey.get_instance("sub_sub_category")      
+        sub_sub_cat  = self.Donkey.get_instance("sub_sub_category")
         sub_sub_cat.sub_sub_category_name = u"wee"
         sub_cat._rel_sub_sub_category.append(sub_sub_cat)
 
@@ -742,7 +742,7 @@ class test_basic_input(test_donkey):
 
         self.session.save(donkey)
         self.session.commit()
-        
+
         donkey.name = u"poo2"
         donkey._version = u"1"
 
@@ -775,15 +775,15 @@ class test_basic_input(test_donkey):
         self.session.save(donkey_people)
 
         assert_raises(AssertionError, self.session.commit)
-        
+
         self.session.rollback()
-    
+
     def test_communication_table(self):
 
         person = self.session.query(self.Donkey.get_class("people")).first()
 
         telephone = self.Donkey.get_instance("telephone")
-        
+
         core_id = person._core_id
 
         telephone._core_id = core_id
@@ -814,15 +814,15 @@ class test_basic_input(test_donkey):
 
         self.session.delete(telephone2)
         self.session.commit()
-        
+
         assert person._rel__core.summary_info[0].value == '121321434334'
 
         self.session.delete(telephone)
         self.session.commit()
 
-        assert not person._rel__core.summary_info 
+        assert not person._rel__core.summary_info
 
-    
+
     def test_set_option(self):
 
         self.Donkey.set_option("people", "default_node", "people.people")
@@ -868,7 +868,7 @@ class test_basic_input(test_donkey):
         #print self.Donkey["people"].local_tables.keys()
 
         assert set(self.Donkey["people"].local_tables.keys()) == \
-                set(['over_18.code', '_core', 'gender.code', 
+                set(['over_18.code', '_core', 'gender.code',
                      'contact_summary', 'primary_entity._core_entity',
                      'secondary_entity._core_entity'])
 

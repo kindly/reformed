@@ -25,7 +25,7 @@ def initialise(application):
         ModifiedByNoRelation("modified_by"),
         table_type = "internal",
         summary = u'The entity table',
-        lookup = True,  
+        lookup = True,
         modified_by = False
     )
 

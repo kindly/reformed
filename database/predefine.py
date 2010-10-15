@@ -16,7 +16,7 @@
 ##
 ##   Reformed
 ##   Copyright (c) 2008-2010 Toby Dacre & David Raznick
-##  
+##
 
 
 class Predefine(object):

@@ -3,15 +3,15 @@ from migrate.versioning import schemadiff
 from custom_exceptions import DatabaseInvalid
 
 def check_tables(database, diff):
-    """ see if there is a difference beteen the defined tables and the 
+    """ see if there is a difference beteen the defined tables and the
     database"""
-    missing_database = [] 
-    missing_definition = [] 
-    
+    missing_database = []
+    missing_definition = []
+
     if diff.tablesMissingInDatabase:
         for table in diff.tablesMissingInDatabase:
             missing_database.append(table.name)
-        raise DatabaseInvalid("Defined tables are not in the database \n %s" % missing_database, 
+        raise DatabaseInvalid("Defined tables are not in the database \n %s" % missing_database,
                               missing_database)
 
     #TODO decide if this is needed, or if its logged
@@ -36,7 +36,7 @@ def check_fields(database, diff):
         for difference in table[2]:
             different.append("%s.%s" % (name, difference[0].name))
     pass
-    
+
     if missing_in_database:
         raise DatabaseInvalid("Defined fields are not in database %s" % missing_in_database,
                               missing_in_database)
@@ -52,7 +52,7 @@ def check_fields(database, diff):
 def validate_database(database):
 
     diff = schemadiff.getDiffOfModelAgainstDatabase(database.metadata,
-                                                    database.engine) 
+                                                    database.engine)
     all_diff = []
 
     tables_diff = check_tables(database, diff)

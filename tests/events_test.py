@@ -25,8 +25,8 @@ class test_events(test_donkey):
 #    @classmethod
 #    def setUpClass(cls):
 #        super(test_events, cls).setUpClass()
-#        cls.Donkey.tables["contact_summary"].add_field(CopyText("categories", "entity_categories", 
-#                                                base_level = "people", 
+#        cls.Donkey.tables["contact_summary"].add_field(CopyText("categories", "entity_categories",
+#                                                base_level = "people",
 #                                                fields = "category.category_description,sub_category.sub_category_description,sub_sub_category.sub_sub_category_description",
 #                                                counter = "category_number"
 #                                                ))
@@ -75,7 +75,7 @@ class test_events(test_donkey):
         self.session.save(first)
         self.session.commit()
 
-        assert first._rel_summary.total_amount == 20 
+        assert first._rel_summary.total_amount == 20
         assert first._rel_summary.transaction_count == 2
 
         transaction3 = self.Donkey.get_instance("transactions")
@@ -85,7 +85,7 @@ class test_events(test_donkey):
         self.session.save(first)
         self.session.commit()
 
-        assert first._rel_summary.total_amount == 40 
+        assert first._rel_summary.total_amount == 40
         assert first._rel_summary.transaction_count == 3
 
         self.session.delete(transaction2)
@@ -168,7 +168,7 @@ class test_events(test_donkey):
 #        self.session.add(entity2)
 #        self.session.commit()
 #
-#        assert entity.people.contact_summary.membership == datetime.datetime(2013,07,02) 
+#        assert entity.people.contact_summary.membership == datetime.datetime(2013,07,02)
 #
 #        person3 = self.session.query(self.Donkey.aliases["people"]).first()
 #        entity3 = person._entity
@@ -179,7 +179,7 @@ class test_events(test_donkey):
 #        self.session.add(entity3)
 #        self.session.commit()
 #
-#        assert entity.people.contact_summary.membership == datetime.datetime(2199,12,31) 
+#        assert entity.people.contact_summary.membership == datetime.datetime(2199,12,31)
 #
 #        self.session.delete(membership3)
 #        self.session.commit()
@@ -201,8 +201,8 @@ class test_events(test_donkey):
 #        self.session.add(entity4)
 #        self.session.commit()
 #
-#        assert entity.people.contact_summary.membership == datetime.datetime(2013,06,02) 
-#        
+#        assert entity.people.contact_summary.membership == datetime.datetime(2013,06,02)
+#
 #        self.session.delete(membership4)
 #        self.session.delete(membership1)
 #        self.session.commit()
@@ -241,7 +241,7 @@ class test_events(test_donkey):
 #
 #
 #        assert person.contact_summary.email == u"poo@poo.com poo@poo.com zpoo@poo.com zpoo@poo.com"
-#        
+#
 #
 #        person.contact_summary.modified = False
 #        self.session.save(person.contact_summary)
@@ -298,13 +298,13 @@ class test_events(test_donkey):
 #
 #        assert entity_categories.category_number == 2
 #
-#        print person.contact_summary.categories 
+#        print person.contact_summary.categories
 #
 #        assert person.contact_summary.categories == "this is a this is ab this is abc this is aa this is aab this is aabc"
-#        
 #
 #
-#        
+#
+#
 #
 #    def test_z_recreate_all(self):
 #
@@ -338,7 +338,7 @@ class test_events(test_donkey):
 #
 #        assert person.contact_summary.email == u"poo@poo.com poo@poo.com zpoo@poo.com zpoo@poo.com"
 #        assert person.contact_summary.modified == True
-#        
+#
 #        email = self.Donkey.get_instance("email")
 #        email.email = u"zzpoo@poo.com"
 #        email._people = person
@@ -373,15 +373,15 @@ class test_events(test_donkey):
 #        assert donkey._entity.summary == "name: jim -- age: 13"
 #
 #    def zz_delete_entity_test(self):
-#    
+#
 #        donkey = self.Donkey.get_instance("donkey")
 #        donkey.name = u"fresddy"
 #        self.session.save(donkey)
 #        self.session.commit()
 #
-#        entity_id = donkey._entity.id 
+#        entity_id = donkey._entity.id
 #
-#        self.session.delete(donkey) 
+#        self.session.delete(donkey)
 #
 #        self.session.commit()
 #

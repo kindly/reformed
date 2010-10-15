@@ -694,7 +694,7 @@ class NodeRunner(object):
         self.command_queue = []
         self.output = [] # this will be returned
         self.auto_login_cookie = None
-        
+
     def add_command(self, data):
         self.command_queue.append(data)
 

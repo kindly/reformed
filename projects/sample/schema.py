@@ -80,7 +80,7 @@ table("user_group_permission",d,
 
     ManyToOne("user_group", "user_group"),
     ManyToOne("permissionx", "permission"),
-      
+
     table_type = "system"
 )
 

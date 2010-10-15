@@ -16,7 +16,7 @@ index_type_lookup = dict(
 
 def make_schema(application):
     database = application.database
-    schema_kw = dict(core_id = ID(stored = True, unique = True, 
+    schema_kw = dict(core_id = ID(stored = True, unique = True,
                                    field_boost = 10.0))
 
     for index_id, (table, search_action) in database.search_actions.iteritems():

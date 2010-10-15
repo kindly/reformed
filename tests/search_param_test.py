@@ -15,7 +15,7 @@ class TestParserParams(test_donkey):
 
         cls.flatfile = FlatFile(cls.Donkey,
                             "people",
-                            "tests/new_people.csv",    
+                            "tests/new_people.csv",
                             ["id",
                             "name",
                             "address_line_1",
@@ -49,7 +49,7 @@ class TestParserParams(test_donkey):
         ast = QueryFromStringParam(None, "name between {poo} and {moo}", test = True).ast
 
         assert ast[0].params == ["poo", "moo"]
-        
+
         ast = QueryFromStringParam(None, "name between ? and {moo}", test = True).ast
 
         assert ast[0].params == ["?", "moo"]
@@ -62,7 +62,7 @@ class TestParserParams(test_donkey):
 
         assert ast[0][0].params == ["?"]
 
-        assert ast[0][2].pos == 20 
+        assert ast[0][2].pos == 20
 
         search = Search(self.Donkey, "people", self.session)
         query = QueryFromStringParam(search, "donkey.name = ? and name in ({moo}, ?, {poo})",
@@ -71,7 +71,7 @@ class TestParserParams(test_donkey):
 
 
         assert len(query.expressions) == 2
-        assert query.expressions[0].pos == 0 
+        assert query.expressions[0].pos == 0
         assert query.expressions[1].pos == 20
 
 
@@ -79,7 +79,7 @@ class TestParserParams(test_donkey):
         assert query.expressions[1].param_values == ['cow', 'pooop', 'man']
 
         search = Search(self.Donkey, "people", self.session)
-        query = QueryFromStringParam(search, 
+        query = QueryFromStringParam(search,
                                    "(donkey.name between {} and ?)"
                                    "or (email.email <= {} "
                                    "and name in ({moo}, ?, {poo}))"
@@ -88,7 +88,7 @@ class TestParserParams(test_donkey):
                                    named_args =  {"donkey.name": "yes",
                                                   "email.email": "got",
                                                   "moo": "cow",
-                                                  "poo": "man"} 
+                                                  "poo": "man"}
                                     )
 
 
@@ -110,7 +110,7 @@ class TestParserParams(test_donkey):
         assert query.expressions[3].parsed_values == [False]
 
         search = Search(self.Donkey, "people", self.session)
-        query = QueryFromStringParam(search, 
+        query = QueryFromStringParam(search,
                                    "(donkey.name between {} and ?)"
                                    "or (email.email <= {} "
                                    "and name in ({moo}, ?, {poo}))"
@@ -119,7 +119,7 @@ class TestParserParams(test_donkey):
                                    named_args =  {"donkey.name": "yes",
                                                   "email.email": "got",
                                                   "moo": "cow",
-                                                  "poo": "man"} 
+                                                  "poo": "man"}
                                     )
 
 
@@ -139,7 +139,7 @@ class TestParserParams(test_donkey):
         assert query.expressions[3].parsed_values == [False]
 
         search = Search(self.Donkey, "people", self.session)
-        query = QueryFromStringParam(search, 
+        query = QueryFromStringParam(search,
                                    "(donkey._modified_date between {} and ?)"
                                    "or (email.active_email = {}"
                                    "and name in ({moo}, ?, {poo}))"
@@ -148,7 +148,7 @@ class TestParserParams(test_donkey):
                                    named_args =  {"donkey._modified_date": "2019-01-01",
                                                   "email.active_email": "True",
                                                   "moo": "cow",
-                                                  "poo": "man"} 
+                                                  "poo": "man"}
                                     )
 
         query.sa_query = search.search_base
@@ -158,11 +158,11 @@ class TestParserParams(test_donkey):
         expression = query.expressions[0].make_sa_expression(search, "people")
 
         assert query.expressions[0].parsed_values == [datetime.datetime(2019, 1, 1),
-                                                      datetime.datetime(2009, 1, 1)] 
+                                                      datetime.datetime(2009, 1, 1)]
 
         expression = query.expressions[1].make_sa_expression(search, "people")
 
-        assert query.expressions[1].parsed_values == [True] 
+        assert query.expressions[1].parsed_values == [True]
 
     def test_where(self):
 
@@ -206,7 +206,7 @@ class TestParserParams(test_donkey):
 
         assert set(QueryFromStringParam(search, 'name < ?', pos_args = ["popp02"]).add_conditions(base_query).all()).symmetric_difference(
                set(session.query(people_class.id).filter(people_class.name < u"popp02").all())) == set()
-              
+
 
         assert set(QueryFromStringParam(search, 'name < ? and email.email like ?', pos_args = ["popp02", "popi%"]).add_conditions(base_query).all()).symmetric_difference(
                set(session.query(people_class.id).join(["email"]).filter(and_(people_class.name < u"popp02", email_class.email.like(u"popi%"))).all())) == set()
@@ -233,7 +233,7 @@ class TestParserParams(test_donkey):
         people_class = self.Donkey.get_class(u"people")
         email_class = self.Donkey.get_class(u"email")
 
-        assert set(search.search().all()).symmetric_difference( 
+        assert set(search.search().all()).symmetric_difference(
                set(session.query(people_class).outerjoin(["_rel_email"]).\
                    filter(and_(people_class.name < u"popp02", or_(email_class.email == None, not_(email_class.email.like(u"popi%"))))).all())) == set()
 
@@ -253,7 +253,7 @@ class TestParserParams(test_donkey):
         assert len(search.search().all()) == 6
 
         search.add_query('donkey_sponsership.amount > 248')
-                         
+
         assert len(search.search().all()) == 8
 
 
@@ -340,15 +340,15 @@ class TestParserParams(test_donkey):
         print str(search.search())
 
 
-        assert str(search.search()) ==  """SELECT people.town AS people_town, people.name AS people_name, people.country AS people_country, people._core_id AS people__core_id, people._version AS people__version, people.gender_id AS people_gender_id, people._modified_by AS people__modified_by, people.postcode AS people_postcode, people._modified_date AS people__modified_date, people.over_18_id AS people_over_18_id, people.address_line_2 AS people_address_line_2, people.address_line_3 AS people_address_line_3, people.address_line_1 AS people_address_line_1, people.id AS people_id, email_1.active_email AS email_1_active_email, email_1._version AS email_1__version, email_1._modified_by AS email_1__modified_by, email_1._modified_date AS email_1__modified_date, email_1.people_id AS email_1_people_id, email_1.email AS email_1_email, email_1.id AS email_1_id 
-FROM people JOIN email AS email_2 ON people.id = email_2.people_id LEFT OUTER JOIN email AS email_1 ON people.id = email_1.people_id 
+        assert str(search.search()) ==  """SELECT people.town AS people_town, people.name AS people_name, people.country AS people_country, people._core_id AS people__core_id, people._version AS people__version, people.gender_id AS people_gender_id, people._modified_by AS people__modified_by, people.postcode AS people_postcode, people._modified_date AS people__modified_date, people.over_18_id AS people_over_18_id, people.address_line_2 AS people_address_line_2, people.address_line_3 AS people_address_line_3, people.address_line_1 AS people_address_line_1, people.id AS people_id, email_1.active_email AS email_1_active_email, email_1._version AS email_1__version, email_1._modified_by AS email_1__modified_by, email_1._modified_date AS email_1__modified_date, email_1.people_id AS email_1_people_id, email_1.email AS email_1_email, email_1.id AS email_1_id
+FROM people JOIN email AS email_2 ON people.id = email_2.people_id LEFT OUTER JOIN email AS email_1 ON people.id = email_1.people_id
 WHERE people.id > ? AND people.id IS NOT NULL ORDER BY email_1.email"""
 
 
         search = Search(self.Donkey, "people", self.session, "id>0", extra_outer = ["gender>code", "over_18>code"])
         print search.search()
-        assert str(search.search()) == """SELECT people.town AS people_town, people.name AS people_name, people.country AS people_country, people._core_id AS people__core_id, people._version AS people__version, people.gender_id AS people_gender_id, people._modified_by AS people__modified_by, people.postcode AS people_postcode, people._modified_date AS people__modified_date, people.over_18_id AS people_over_18_id, people.address_line_2 AS people_address_line_2, people.address_line_3 AS people_address_line_3, people.address_line_1 AS people_address_line_1, people.id AS people_id, email_1.active_email AS email_1_active_email, email_1._version AS email_1__version, email_1._modified_by AS email_1__modified_by, email_1._modified_date AS email_1__modified_date, email_1.people_id AS email_1_people_id, email_1.email AS email_1_email, email_1.id AS email_1_id 
-FROM people LEFT OUTER JOIN code AS code_1 ON people.gender_id = code_1.id LEFT OUTER JOIN code AS code_2 ON people.over_18_id = code_2.id LEFT OUTER JOIN email AS email_1 ON people.id = email_1.people_id 
+        assert str(search.search()) == """SELECT people.town AS people_town, people.name AS people_name, people.country AS people_country, people._core_id AS people__core_id, people._version AS people__version, people.gender_id AS people_gender_id, people._modified_by AS people__modified_by, people.postcode AS people_postcode, people._modified_date AS people__modified_date, people.over_18_id AS people_over_18_id, people.address_line_2 AS people_address_line_2, people.address_line_3 AS people_address_line_3, people.address_line_1 AS people_address_line_1, people.id AS people_id, email_1.active_email AS email_1_active_email, email_1._version AS email_1__version, email_1._modified_by AS email_1__modified_by, email_1._modified_date AS email_1__modified_date, email_1.people_id AS email_1_people_id, email_1.email AS email_1_email, email_1.id AS email_1_id
+FROM people LEFT OUTER JOIN code AS code_1 ON people.gender_id = code_1.id LEFT OUTER JOIN code AS code_2 ON people.over_18_id = code_2.id LEFT OUTER JOIN email AS email_1 ON people.id = email_1.people_id
 WHERE people.id > ? AND people.id IS NOT NULL ORDER BY email_1.email"""
 
 

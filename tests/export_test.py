@@ -12,7 +12,7 @@ class test_export_database(test_donkey):
 
         person = session.query(self.Donkey.get_class("people")).first()
 
-        print SingleObject(person, self.Donkey).data 
+        print SingleObject(person, self.Donkey).data
         assert SingleObject(person, self.Donkey).data == {'donkey_sponsership': [{'_donkey': [{'age': '13', 'name': 'jim', '_version': '1'}], 'amount': '50', '_version': '1'}], 'address_line_1': '43 union street', 'postcode': 'es388', 'name': 'david', '_version': '1'}
 
         assert SingleRecord(self.Donkey, "people", SingleObject(person, self.Donkey).data).load() == None
@@ -31,7 +31,7 @@ class test_export_database(test_donkey):
         print all_rows
 
         for line in all_rows:
-            SingleRecord(self.Donkey, "people", line).load() 
+            SingleRecord(self.Donkey, "people", line).load()
 
         countpeopleafter = session.query(self.Donkey.get_class("people")).count()
         countsponeafter = session.query(self.Donkey.get_class("donkey_sponsership")).count()
@@ -66,9 +66,9 @@ class test_export_database(test_donkey):
 
 
 
-        
 
-        
+
+
 
 
 

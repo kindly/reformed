@@ -34,18 +34,18 @@ class test_donkey_validate_sqlite(test_donkey):
 
     def test_validate_database(self):
 
-        tab_def, tab_dat, col_def, col_dat, col_dif = database.validate_database.validate_database(self.Donkey) 
+        tab_def, tab_dat, col_def, col_dat, col_dif = database.validate_database.validate_database(self.Donkey)
         assert tab_def == []
         assert col_def == []
 
     def test_validate_after_add_table(self):
 
         rand = random.randrange(1,10000)
-        
+
         self.Donkey._add_table_no_persist(tables.Table("woo%s" % rand , Text("woo")))
         self.Donkey.update_sa()
 
-        assert_raises(custom_exceptions.DatabaseInvalid, 
+        assert_raises(custom_exceptions.DatabaseInvalid,
                       database.validate_database.validate_database, self.Donkey)
         try:
             database.validate_database.validate_database(self.Donkey)
@@ -63,7 +63,7 @@ class test_donkey_validate_sqlite(test_donkey):
 
         self.Donkey.update_sa(reload = True)
 
-        tab_def, tab_dat, col_def, col_dat, col_dif = database.validate_database.validate_database(self.Donkey) 
+        tab_def, tab_dat, col_def, col_dat, col_dif = database.validate_database.validate_database(self.Donkey)
 
         assert u"people.wrong%s" % rand in col_dat
 
@@ -78,11 +78,11 @@ class test_donkey_validate_sqlite(test_donkey):
         self.Donkey.load_from_persist(True)
 
 
-        tab_def, tab_dat, col_def, col_dat, col_dif = database.validate_database.validate_database(self.Donkey) 
+        tab_def, tab_dat, col_def, col_dat, col_dif = database.validate_database.validate_database(self.Donkey)
         print tab_def, tab_dat, col_def, col_dat, col_dif
-        
+
         assert u"people.wrong%s" % rand in col_dat
-        
+
 
 
 class test_donkey_validate_mysql(test_donkey_validate_sqlite):

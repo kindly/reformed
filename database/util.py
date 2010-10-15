@@ -20,7 +20,7 @@ class Holder(object):
 def get_dir(file = None, extra_path = None):
 
     """path from parent directory of this this file
-    file:  
+    file:
         file to be added to end of path
     extra path:
         path from this directory"""
@@ -116,7 +116,7 @@ class Edge(object):
         self.changed_table_names = self.changed_table_names + [self.alt_name]
 
         self.table_path = zip(self.changed_table_names, self.path)
-            
+
 def get_next_relation(gr, path_dict, edge, first = False):
 
     node = edge.node
@@ -130,11 +130,11 @@ def get_next_relation(gr, path_dict, edge, first = False):
 
     if last_relation and last_relation.no_auto_path:
         return
-        
-    
+
+
     for edge in gr.out_edges(node, data = True):
         node1, node2, relation = edge
-            
+
         relation = relation["relation"]
 
         rtables = relation.table.database.tables
@@ -149,7 +149,7 @@ def get_next_relation(gr, path_dict, edge, first = False):
             continue
         if len(tables) > 1 and check_two_entities(tables, node2, rtables):
             continue
-        
+
         split = None
 
         relation_name = relation.name
@@ -161,8 +161,8 @@ def get_next_relation(gr, path_dict, edge, first = False):
 
         new_name_changes = name_changes + [split]
 
-        new_path = current_path + [relation_name] 
-        new_path_no_rel = current_path_no_rel + [relation_name[5:]] 
+        new_path = current_path + [relation_name]
+        new_path_no_rel = current_path_no_rel + [relation_name[5:]]
 
         if len(new_path) > JOINS_DEEP:
             continue
@@ -175,7 +175,7 @@ def get_next_relation(gr, path_dict, edge, first = False):
         path_dict[tuple(new_path_no_rel)] = edge
         get_next_relation(gr, path_dict, edge)
 
-        
+
     for edge in gr.in_edges(node, data = True):
         node1, node2, relation = edge
         relation = relation["relation"]
@@ -203,8 +203,8 @@ def get_next_relation(gr, path_dict, edge, first = False):
         backref = relation.sa_options.get("backref", "_%s" % node1)
         if not backref:
             continue
-        new_path = current_path + [backref.encode("ascii")] 
-        new_path_no_rel = current_path_no_rel + [backref.encode("ascii")] 
+        new_path = current_path + [backref.encode("ascii")]
+        new_path_no_rel = current_path_no_rel + [backref.encode("ascii")]
 
         new_name_changes = name_changes + [split]
 
@@ -222,17 +222,17 @@ def get_collection_of_obj(database, obj, parent_name):
     table_name = obj._table.name
 
     table = database.tables[table_name]
- 
+
     relation_path = table.local_tables[parent_name]
- 
-    parent_obj = reduce(getattr, relation_path, obj) 
- 
+
+    parent_obj = reduce(getattr, relation_path, obj)
+
     parent_obj_table = parent_obj._table
- 
+
     relation_back_path = parent_obj_table.one_to_many_tables[table.name]
- 
+
     return reduce(getattr, relation_back_path, parent_obj)
- 
+
 
 def get_paths(gr, table):
 
@@ -267,7 +267,7 @@ def make_local_tables(path_dict):
 
     local_tables = {}
     one_to_many_tables = {}
-    
+
     for path, edge in path_dict.iteritems():
         if len(path) == 1:
             get_local_tables(path_dict, one_to_many_tables, local_tables, edge)
@@ -277,13 +277,13 @@ def make_local_tables(path_dict):
 
 def create_table_path_list(path_dict):
 
-    table_paths_list = [] 
+    table_paths_list = []
 
     for k, v in path_dict.iteritems():
         table_paths_list.append([k, v])
 
     return table_paths_list
-    
+
 
 def create_table_path(table_path_list, table):
 
@@ -342,7 +342,7 @@ def convert_value(value):
 def get_row_data(obj, fields = None, keep_all = False,
                  internal = False, basic = False,
                  table = None, alias_name = None):
-    
+
     row_data = {}
 
     obj_table = obj._table.name
@@ -540,7 +540,7 @@ def recurse_relationships(database, obj, edge):
 
 
 def load_local_data(database, data):
-    
+
     session = database.Session()
 
     table = data["__table"]
@@ -569,7 +569,7 @@ def load_local_data(database, data):
 
         record.setdefault(path_key, {})[field] = value
     try:
-        data_loader.SingleRecord(database, table, all_rows = record).load() 
+        data_loader.SingleRecord(database, table, all_rows = record).load()
         session.close()
     except fe.Invalid, e:
         error_dict = {}
@@ -583,16 +583,16 @@ def load_local_data(database, data):
                 edge = rtable.paths[new_key]
                 new_table = edge.name
 
-            
+
             error_dict["%s.%s" % (new_table,
                                   field_name)] = invalid
 
             invalid_msg = invalid_msg + "\n" + "\n".join(["%s\n" % inv.msg for inv in invalid])
 
         if error_dict:
-            raise fe.Invalid(invalid_msg, data, record, None, error_dict) 
+            raise fe.Invalid(invalid_msg, data, record, None, error_dict)
         session.close()
-        
+
 
 def get_table_from_instance(instance, database):
 

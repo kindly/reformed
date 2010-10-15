@@ -11,7 +11,7 @@ class test_record_loader(donkey_test.test_donkey):
     def set_up_inserts(cls):
 
         super(cls, test_record_loader).set_up_inserts()
-        
+
         david ="""
         id : 1
         address_line_1 : 16 blooey
@@ -24,7 +24,7 @@ class test_record_loader(donkey_test.test_donkey):
         donkey_sponsership:
             id : 1
             amount : 10
-            _donkey : 
+            _donkey :
                 name : fred
                 age : 10
         """
@@ -42,7 +42,7 @@ class test_record_loader(donkey_test.test_donkey):
                 email : poo2@poo.com
         donkey_sponsership:
             amount : 10
-            _donkey : 
+            _donkey :
                 name : fred
                 age : 10
         """
@@ -54,18 +54,18 @@ class test_record_loader(donkey_test.test_donkey):
         cls.session = cls.Donkey.Session()
 
         cls.existing_record = SingleRecord(cls.Donkey, "people", david)
-        cls.new_record = SingleRecord(cls.Donkey, "people", peter)        
+        cls.new_record = SingleRecord(cls.Donkey, "people", peter)
 
         cls.new_record.get_all_obj(cls.session)
         cls.existing_record.get_all_obj(cls.session)
 
         #cls.new_record.load()
 
-    
+
     def test_single_record_process(self):
-        
+
         assert ("donkey_sponsership", 0, "_donkey", 0) in self.new_record.all_rows.keys()
-        assert self.new_record.all_rows[("donkey_sponsership", 0, "_donkey", 0)] == dict(name = "fred", age =10) 
+        assert self.new_record.all_rows[("donkey_sponsership", 0, "_donkey", 0)] == dict(name = "fred", age =10)
         assert self.new_record.all_rows[("email" , 1)] == dict(email = "poo2@poo.com")
 
     def test_get_key_data(self):
@@ -73,12 +73,12 @@ class test_record_loader(donkey_test.test_donkey):
         assert get_key_data(("donkey_sponsership", 0, "_donkey", 0), self.Donkey , "people").node == "donkey"
         assert get_key_data(("donkey_sponsership", 0, "_donkey", 0), self.Donkey , "people").join == "manytoone"
 
-        assert_raises(InvalidKey, get_key_data, 
+        assert_raises(InvalidKey, get_key_data,
                      ("donkey_sponsership", 0, "donkey", 0), self.Donkey , "people")
 
     def test_get_parent_key(self):
 
-        assert_raises(InvalidKey, 
+        assert_raises(InvalidKey,
                       get_parent_key,
                       ("donkey_sponsership", 1, "donkey", 5),
                       self.new_record.all_rows)
@@ -87,7 +87,7 @@ class test_record_loader(donkey_test.test_donkey):
                                              self.new_record.all_rows) == ("donkey_sponsership", 0)
 
         assert get_parent_key(("donkey", 0),
-                                             self.new_record.all_rows) == "root" 
+                                             self.new_record.all_rows) == "root"
 
     def test_check_correct_fields(self):
 
@@ -124,11 +124,11 @@ class test_record_loader(donkey_test.test_donkey):
         assert self.existing_record.all_obj[("email" , 0)].email is None
 
     def test_get_obj_new_many_to_one(self):
-        
+
         assert self.new_record.all_obj[("donkey_sponsership" , 0, "_donkey", 0)].age is None
 
     def test_get_obj_existing_many_to_one(self):
-        
+
         assert self.existing_record.all_obj[("donkey_sponsership" , 0, "_donkey", 0)].age == 13
 
 
@@ -137,7 +137,7 @@ class test_record_loader(donkey_test.test_donkey):
         assert string_key_parser("poo") == ["poo"]
         assert string_key_parser("poo__24__weeee__2__plop") == ["poo", 24, "weeee", 2, "plop"]
         assert string_key_parser("___field__0__field_name") == ["___field", 0, "field_name"]
-        
+
     def test_get_keys_and_items_from_list(self):
 
         assert get_keys_and_items_from_list(["poo__24__weeee__2__plop", "poo", "___field__0__field_name"]) ==\
@@ -147,8 +147,8 @@ class test_record_loader(donkey_test.test_donkey):
 
         assert get_keys_from_list([[["poo", 24, "weeee", 2], "plop"],["root","poo"],[["___field", 0],"field_name"]])==\
                 {"root":{}, ("poo", 24, "weeee", 2):{}, ("___field", 0):{}}
-    
-        
+
+
     def test_invalid(self):
 
         peter_invalid ="""
@@ -160,7 +160,7 @@ class test_record_loader(donkey_test.test_donkey):
                 email : poo2@poo.com
         donkey_sponsership:
             amount : a
-            _donkey : 
+            _donkey :
                 name : fred
                 age : 90
         """
@@ -191,7 +191,7 @@ class test_record_loader(donkey_test.test_donkey):
         assert self.new_record.all_obj[(u"email" , 0)].email == "poo@poo.com"
         assert self.new_record.all_obj[(u"donkey_sponsership", 0,)].amount == 10
         assert self.new_record.all_obj[(u"donkey_sponsership", 0, "_donkey", 0)].age == 10
-        
+
 
     def test_zz_load_record(self):
 
@@ -201,15 +201,15 @@ class test_record_loader(donkey_test.test_donkey):
         email = self.session.query(self.Donkey.get_class(u"email")).all()
         donkey = self.session.query(self.Donkey.get_class(u"donkey")).all()
         donkey_spon = self.session.query(self.Donkey.get_class(u"donkey_sponsership")).all()
-        
 
-        assert (u"peter", u"sewjfd") in [( a.name, a.postcode) for a in 
+
+        assert (u"peter", u"sewjfd") in [( a.name, a.postcode) for a in
                                          people]
-        assert (u"fred", 10 ) in [( a.name, a.age) for a in 
+        assert (u"fred", 10 ) in [( a.name, a.age) for a in
                                          donkey]
-        assert u"poo@poo.com" in [ a.email for a in 
+        assert u"poo@poo.com" in [ a.email for a in
                                          email]
-        assert  10  in [ a.amount for a in 
+        assert  10  in [ a.amount for a in
                                          donkey_spon]
 
 
@@ -222,7 +222,7 @@ class test_flat_file(donkey_test.test_donkey):
 
         cls.flatfile = FlatFile(cls.Donkey,
                             "people",
-                            "tests/new_people.csv",    
+                            "tests/new_people.csv",
                             ["id",
                             "name",
                             "address_line_1",
@@ -326,7 +326,7 @@ class test_flat_file(donkey_test.test_donkey):
                 {('email', 1): {'email': 'poo2@poo.com'},
                  'root': {'postcode': 'sewjfd', 'name': 'peter', 'address_line_1': '16 blooey'},
                  ('email', 0): {'email': 'poo@poo.com'}}
-        
+
         assert self.flatfile.create_all_rows(["", "peter", "16 blooey", "sewjfd", "poo@poo.com", "poo2@poo.com", None, None, "fred"]) ==\
                 {('donkey_sponsership', 0, '_donkey', 0): {'name': 'fred'},
                  ('email', 1): {'email': 'poo2@poo.com'},
@@ -346,7 +346,7 @@ class test_flat_file(donkey_test.test_donkey):
 
         flatfile = FlatFile(self.Donkey,
                             "people",
-                            "tests/new_people_with_header.csv")    
+                            "tests/new_people_with_header.csv")
 
         print flatfile.count_lines()
         assert flatfile.count_lines() == 28
@@ -361,35 +361,35 @@ class test_flat_file(donkey_test.test_donkey):
 
         flatfile = FlatFile(self.Donkey,
                             "people",
-                            "tests/new_people_with_header_errors.csv")    
+                            "tests/new_people_with_header_errors.csv")
 
-        
+
         flatfile.load()
-        print flatfile.status[0].error_count 
+        print flatfile.status[0].error_count
         assert flatfile.status[0].error_count == 5
-        
-    
+
+
     def test_make_chunks(self):
 
         flatfile = FlatFile(self.Donkey,
                             "people",
-                            "tests/data.csv")    
+                            "tests/data.csv")
 
         assert flatfile.make_chunks(250) == [[0, 250], [250, 500], [500, 750], [750, 1000], [1000, 1250], [1250, 1500], [1500, 1750], [1750, 2000], [2000, 2250], [2250, 2500], [2500, 2750], [2750, 3000], [3000, 3250], [3250, 3500], [3500, 3750], [3750, 4000], [4000, 4250], [4250, 4500], [4500, 4750], [4750, 5000]]
 
         flatfile.total_lines = 450
-        
+
         assert flatfile.make_chunks(250) == [[0, 250], [250, 450]]
 
     def test_load_chunk(self):
-        
+
         session = self.Donkey.Session()
 
         count_before = session.query(self.Donkey.aliases["people"]).count()
 
         flatfile = FlatFile(self.Donkey,
                             "people",
-                            "tests/data.csv")    
+                            "tests/data.csv")
 
         chunk_status = flatfile.load_chunk([0,250])
 
@@ -405,7 +405,7 @@ class test_flat_file(donkey_test.test_donkey):
         assert chunk_status.error_count == 2
 #        assert repr(chunk_status.error_lines) == """[line_number: 301, errors: {('email', 0): Invalid('email: The domain portion of the email address is invalid (the portion after the @: .com)',)}, line_number: 428, errors: {('email', 0): Invalid('email: The domain portion of the email address is invalid (the portion after the @: .org)',)}]"""
 
-        print chunk_status.error_lines[0].error_dict 
+        print chunk_status.error_lines[0].error_dict
         assert str(chunk_status.error_lines[0].error_dict) == """{('email', 0, 'email'): [Invalid(u'The domain portion of the email address is invalid (the portion after the @: .com)',)]}"""
 
 

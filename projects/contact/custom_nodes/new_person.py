@@ -20,10 +20,10 @@ class NewPerson(Node):
 
     main = form(
         input('name', label = 'Name', description = "Persons name."),
-        layout('spacer', label = 'spacer'), 
-        input('communication', label = 'Contact info', description = "Enter either email, postcode or phone number."), 
-        layout('spacer'), 
-        layout('spacer'), 
+        layout('spacer', label = 'spacer'),
+        input('communication', label = 'Contact info', description = "Enter either email, postcode or phone number."),
+        layout('spacer'),
+        layout('spacer'),
 
         button_box([['add', 'f:new_person.EvaluateDuplicate::'],
                     ['cancel', 'BACK'],]
@@ -65,10 +65,10 @@ class EvaluateDuplicate(Node):
         postcode = parsers.postcode(communication)
         dob = parsers.date(communication)
 
-        print postcode 
+        print postcode
 
         email_terms = []
-        
+
         if names:
             terms.append(Phrase(sn["name"], names))
             for token in ana(names):
@@ -127,7 +127,7 @@ class EvaluateDuplicate(Node):
         results = r.search("search_info",
                            query,
                            order_by = "_core_id")
-        
+
         current_core_id = None
 
         current_result = {}
@@ -137,7 +137,7 @@ class EvaluateDuplicate(Node):
         for result in results:
             result_core_id = result.get("_core_id")
             if current_core_id != result_core_id and current_core_id:
-                current_result["_core_id"] = current_core_id 
+                current_result["_core_id"] = current_core_id
                 result_lookup[current_core_id] = current_result
                 current_result = {}
                 current_core_id = result_core_id

@@ -62,7 +62,7 @@ def create_file_path(filename, id, application):
 
 
 def fileupload_status(environ, start_response):
-    
+
     """Return the status of a file upload"""
 
     reference = environ['QUERY_STRING']
@@ -190,10 +190,10 @@ def fileupload(environ, start_response, application):
             save_file(item.file, item.filename, title, category, application, status)
     status['complete'] = True
     status['bytes_left'] = 0
-  
+
     http_session.persist()
-   
-            
+
+
     start_response('200 OK', [('Content-Type', 'text/html')])
     return ['moo']
 

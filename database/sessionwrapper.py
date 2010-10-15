@@ -1,7 +1,7 @@
 ##   This file is part of Reformed.
 ##
 ##   Reformed is free software: you can redistribute it and/or modify
-##   it under the terms of the GNU General Public License version 2 as 
+##   it under the terms of the GNU General Public License version 2 as
 ##   published by the Free Software Foundation.
 ##
 ##   Reformed is distributed in the hope that it will be useful,
@@ -29,7 +29,7 @@ import warnings
 import os
 import collections
 
-from sqlalchemy.orm import attributes 
+from sqlalchemy.orm import attributes
 from sqlalchemy.sql import text
 import sqlalchemy as sa
 
@@ -48,7 +48,7 @@ logger.addHandler(sessionhandler)
 
 class SessionWrapper(object):
     """add hooks and overides sqlalchemy session"""
-            
+
     def __init__(self, Session, database, has_entity = False):
         self.session = Session()
         self.database = database
@@ -77,7 +77,7 @@ class SessionWrapper(object):
         self.session.close()
 
     def save(self, obj):
-        ##FIXME should be removed 
+        ##FIXME should be removed
         self.add(obj)
 
     def save_or_update(self, obj):
@@ -134,7 +134,7 @@ class SessionWrapper(object):
     def _commit(self):
 
         self.session.commit()
-    
+
     def commit(self):
 
         self._flush()
@@ -313,7 +313,7 @@ class SessionWrapper(object):
                     obj._rel__core = core
                 core.type = unicode(table.name)
                 table = obj._table
-                primary_id = obj._primary 
+                primary_id = obj._primary
                 secondary_id = obj._secondary
                 core_entity_cls = self.database["_core_entity"].sa_class
                 primary_obj = self.query(core_entity_cls).get(primary_id)
@@ -337,7 +337,7 @@ class SessionWrapper(object):
                     self.add(core)
                     self.add(obj)
                 else:
-                    core = obj._rel__core 
+                    core = obj._rel__core
 
             if core:
                 self.object_store["core"].add(core)
@@ -353,4 +353,4 @@ class SessionClass(object):
         if "_core_entity" in self.database.tables:
             return SessionWrapper(self.Session, self.database, has_entity = True)
         return SessionWrapper(self.Session, self.database)
-       
+

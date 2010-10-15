@@ -47,7 +47,7 @@ class test_modify_table_sqlite(object):
 
         cls.meta = sa.MetaData()
         cls.Session = sa.orm.sessionmaker(bind =cls.engine , autoflush = False)
-        cls.Donkey = Database("Donkey", 
+        cls.Donkey = Database("Donkey",
                         zodb_store = "tests/zodb.fs",
                         metadata = cls.meta,
                         engine = cls.engine,
@@ -59,9 +59,9 @@ class test_modify_table_sqlite(object):
         sa.orm.clear_mappers()
         cls.Donkey.status = "terminated"
 
-    
+
     randish = str(time.time()).replace(".","")
-    
+
     def test_1_add_table(self):
 
         self.Donkey.add_table(tables.Table("moo01%s" % self.randish, Text("moo")))
@@ -115,7 +115,7 @@ class test_modify_table_sqlite(object):
         table1 =  self.Donkey["moo01%s" % self.randish]
 
         connection = self.Donkey.db.open()
-        root = connection.root() 
+        root = connection.root()
 
         print root["tables"]["moo01%s" % self.randish]["field_order"]
         print table1.field_order
@@ -151,7 +151,7 @@ class test_modify_table_sqlite(object):
         self.Donkey.add_table(table1)
         self.Donkey.add_table(table2)
         self.Donkey.persist()
-        
+
         table2 =  self.Donkey["to_join%s" % self.randish]
 
         table2.add_relation(ManyToOne("to_rename%s" % self.randish,
@@ -160,7 +160,7 @@ class test_modify_table_sqlite(object):
 
 
 
-        self.Donkey.rename_table("to_rename%s" % self.randish, "renamed%s" % self.randish) 
+        self.Donkey.rename_table("to_rename%s" % self.randish, "renamed%s" % self.randish)
 
 
         result = validate_database(self.Donkey)
@@ -178,20 +178,20 @@ class test_modify_table_sqlite(object):
         self.Donkey.persist()
 
         if self.Donkey.engine.name == "sqlite":
-            assert_raises(Exception, table1.rename_field, "moo", "mooed") 
+            assert_raises(Exception, table1.rename_field, "moo", "mooed")
             return
 
         print [a.name for a in table1.ordered_user_fields]
 
         assert [a.name for a in table1.ordered_user_fields] == ["man", "moo", "man2", "man3", "man4"]
 
-        table1.rename_field("moo", "mooed") 
+        table1.rename_field("moo", "mooed")
 
         result = validate_database(self.Donkey)
 
         assert not any([result[num] for num in range(0,4)])
 
-        table1.drop_field("man") 
+        table1.drop_field("man")
 
         result = validate_database(self.Donkey)
 
@@ -207,7 +207,7 @@ class test_modify_table_sqlite(object):
         assert table1.fields["man2"].field_validation == "Email"
 
         table1.alter_field("man2", type = "Text", nullable = False, default = "wee", validation = "__.*")
-        
+
         result = validate_database(self.Donkey)
 
         assert not any([result[num] for num in range(0,4)])

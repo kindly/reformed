@@ -37,7 +37,7 @@ import search
 import resultset
 import tables
 from util import split_table_fields
-from fields import ForeignKey, Integer 
+from fields import ForeignKey, Integer
 import fields as field_types
 import sessionwrapper
 import validate_database
@@ -225,7 +225,7 @@ class Database(object):
         relation = ForeignKey("_core_id", "_core", backref = table.name)
         table._add_field_no_persist(relation)
 
-        event = Event("delete", 
+        event = Event("delete",
                       actions.DeleteRows("_core"))
 
         table.add_event(event)
@@ -285,7 +285,7 @@ class Database(object):
 
             table.add_event(event)
 
-        event = Event("delete", 
+        event = Event("delete",
                       actions.DeleteRows("primary_entity._core_entity"))
 
         table.add_event(event)
@@ -370,7 +370,7 @@ class Database(object):
                                             field_order = list(table["field_order"]),
                                             persisted = True,
                                             **table["params"])
-                                            
+
                 for event_type in table["events"]:
                     action_list = []
                     for class_name, args, kw in table["events"][event_type]:
@@ -548,7 +548,7 @@ class Database(object):
         try:
             query = search.Search(self, table_name, session, where, *args, **kw)
             result = resultset.ResultSet(query, **kw)
-            result.collect() 
+            result.collect()
             return result
 
         except Exception, e:
@@ -630,7 +630,7 @@ class Database(object):
             for action in table.events["new"]:
                 if isinstance(action, actions.UpdateSearch):
                     self.search_actions[action.event_id] = (table.name, action)
-                    ## FIXME there can be duplicate names so they will overwrite 
+                    ## FIXME there can be duplicate names so they will overwrite
                     action.set_names(table.name)
                     self.search_names[action.name] = str(action.event_id)
                     self.search_ids[str(action.event_id)] = action.name

@@ -431,13 +431,13 @@ class Application(object):
             self.schema = full_text_index.make_schema(self)
 
     def initialise_index(self):
-        
+
         self.initialise_database()
         self.make_index_schema()
         index_location = os.path.join(self.application_folder, 'index')
 
         all_files = glob.glob(index_location + "/*.*")
-        
+
         if not all_files:
             self.text_index = create_in(index_location, self.schema)
         else:

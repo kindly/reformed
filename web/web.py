@@ -34,7 +34,7 @@ import webob
 from global_session import global_session
 import node.node_runner as node_runner
 import fileupload
-import database.util 
+import database.util
 import node.authenticate as authenticate
 import lookup
 log = logging.getLogger('rebase.web')

@@ -41,7 +41,7 @@ class test_validation(test_donkey):
     def test_address_validation(self):
 
         assert len(get_table_from_instance(self.david, self.Donkey).validate(self.david, None)) > 3
-        
+
         assert_raises(formencode.Invalid,
                       get_table_from_instance(self.david2, self.Donkey).validate,self.david2, None)
 
@@ -57,7 +57,7 @@ class test_validation(test_donkey):
         assert_raises(
             fe.Invalid,
             load_local_data,
-            self.Donkey, 
+            self.Donkey,
             {"__table": u"category",
             "category.category_name": u"z",
             "category.category_description": u"this is a",
@@ -66,7 +66,7 @@ class test_validation(test_donkey):
         )
 
         try:
-            load_local_data(self.Donkey, 
+            load_local_data(self.Donkey,
                             {"__table": u"category",
                             "category.category_name": u"z",
                             "category.category_description": u"this is a",
@@ -105,7 +105,7 @@ class test_validation(test_donkey):
 
         assert self.session.save(cat1) is None
         self.session.expunge_all()
-        
+
 
     def test_zzzzz_two_nulls_validation(self):
 
@@ -126,10 +126,10 @@ class test_validation(test_donkey):
 
         assert self.session.add(membership2) == None
 
-    
+
     def test_lookup_validation(self):
 
-        load_local_data(self.Donkey, 
+        load_local_data(self.Donkey,
                         {"__table": u"donkey",
                         "donkey.name": u"good",
                         "donkey.donkey_type": u"smooth",
@@ -138,7 +138,7 @@ class test_validation(test_donkey):
 
         assert_raises(formencode.Invalid,
                       load_local_data,
-                      self.Donkey, 
+                      self.Donkey,
                       {"__table": u"donkey",
                       "donkey.name": u"z",
                       "donkey.donkey_type": u"pooey",

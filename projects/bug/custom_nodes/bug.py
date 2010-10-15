@@ -60,7 +60,7 @@ class ListTicket(TableNode):
         input('priority', label = "priority:"),
         layout('column_end'),
         layout('box_end'),
-        button('bug.Ticket:edit:{id}' ,label = 'edit', permissions = ['logged_in']), 
+        button('bug.Ticket:edit:{id}' ,label = 'edit', permissions = ['logged_in']),
         layout('hr'),
         subform('old_comments'),
         subform('comment'),
@@ -147,7 +147,7 @@ class Page(TableNode):
         title_field = 'title'
     )
 
-    view_form = form( 
+    view_form = form(
         info('title'),
         info('body'),
 
