@@ -25,6 +25,17 @@
 /*global window setTimeout*/
 /*global $ REBASE console_log Showdown*/
 
+var CONFIG = {
+    FORM_PAGING_SIZE : 5,
+    BOOKMARKS_SHOW_MAX : 100,
+    BOOKMARK_ARRAY_MAX : 100,
+    DIALOG_BORDER_HEIGHT : 150,
+    DIALOG_BORDER_WIDTH : 150,
+    // FIXME these numbers are magic
+    // should be calculated
+    DIALOG_CHROME_HEIGHT : 75,
+    DIALOG_CHROME_WIDTH : 35
+}
 
 var REBASE = {};
 
@@ -47,7 +58,6 @@ REBASE.Form = function (){
 
     function make_paging(paging_data){
         // build and return a paging bar
-        var PAGING_SIZE = 5;
 
         var offset = paging_data.offset;
         var limit = paging_data.limit;
@@ -81,11 +91,11 @@ REBASE.Form = function (){
         var pages = Math.ceil(count/limit);
         var current = Math.floor(offset/limit);
 
-        var first_page = current - PAGING_SIZE;
+        var first_page = current - CONFIG.FORM_PAGING_SIZE;
         if (first_page < 0){
             first_page = 0;
         }
-        var last_page = first_page + (PAGING_SIZE * 2);
+        var last_page = first_page + (CONFIG.FORM_PAGING_SIZE * 2);
         if (last_page > pages){
             last_page = pages;
         }
@@ -253,8 +263,6 @@ REBASE.Form = function (){
 REBASE.Bookmark = function (){
 
     var bookmark_array = [];
-    var BOOKMARKS_SHOW_MAX = 100;
-    var BOOKMARK_ARRAY_MAX = 100;
 
     function bookmark_add(bookmark){
         // create the bookmark view link
@@ -279,8 +287,8 @@ REBASE.Bookmark = function (){
             }
         }
         // trim the array if it's too long
-        if (bookmark_array.length >= BOOKMARK_ARRAY_MAX){
-            bookmark_array.splice(BOOKMARK_ARRAY_MAX - 1, 1);
+        if (bookmark_array.length >= CONFIG.BOOKMARK_ARRAY_MAX){
+            bookmark_array.splice(CONFIG.BOOKMARK_ARRAY_MAX - 1, 1);
         }
         bookmark_array.unshift(bookmark);
     }
@@ -293,7 +301,7 @@ REBASE.Bookmark = function (){
         var html;
         // create an item for each bookmark and put it in
         // the array for its category
-        for(var i = 0; i < bookmark_array.length && i < BOOKMARKS_SHOW_MAX; i++){
+        for(var i = 0; i < bookmark_array.length && i < CONFIG.BOOKMARKS_SHOW_MAX; i++){
             entity_table = bookmark_array[i].entity_table;
             if (category_items[entity_table] === undefined){
                 categories.push(entity_table);
@@ -565,12 +573,6 @@ REBASE.Interface = function (){
 
 REBASE.Dialog = function (){
 
-    var DIALOG_BORDER_HEIGHT = 150;
-    var DIALOG_BORDER_WIDTH = 150;
-    // FIXME these numbers are magic
-    // should be calculated
-    var DIALOG_CHROME_HEIGHT = 75;
-    var DIALOG_CHROME_WIDTH = 35;
 
     var dialog_decode;
     var $dialog_box;
@@ -596,8 +598,8 @@ REBASE.Dialog = function (){
         // lack some functionality so we have to manually shrink
         // it if it is too big.  We also need to centre it.
 
-        var height = $(window).height() - DIALOG_BORDER_HEIGHT;
-        var width = $(window).width() - DIALOG_BORDER_WIDTH;
+        var height = $(window).height() - CONFIG.DIALOG_BORDER_HEIGHT;
+        var width = $(window).width() - CONFIG.DIALOG_BORDER_WIDTH;
         // Destroy the dialog and recreate so smaller
         // content is sized correctly.
         $dialog.dialog('destroy');
@@ -609,17 +611,17 @@ REBASE.Dialog = function (){
         // Shrink if needed.
         if (c_height > height){
             $container.height(height);
-            $dialog.height(height - DIALOG_CHROME_HEIGHT);
+            $dialog.height(height - CONFIG.DIALOG_CHROME_HEIGHT);
             c_height = height;
         }
         if (c_width > width){
             $container.width(width);
-            $dialog.width(width - DIALOG_CHROME_WIDTH);
+            $dialog.width(width - CONFIG.DIALOG_CHROME_WIDTH);
             c_width = width;
         }
         // Centre the dialog on the page.
-        $container.css({'top':Math.floor((height - c_height + DIALOG_BORDER_HEIGHT) / 2),
-                     'left':Math.floor((width - c_width + DIALOG_BORDER_WIDTH) / 2)});
+        $container.css({'top':Math.floor((height - c_height + CONFIG.DIALOG_BORDER_HEIGHT) / 2),
+                     'left':Math.floor((width - c_width + CONFIG.DIALOG_BORDER_WIDTH) / 2)});
     }
 
     function open(title, data, no_processing){
