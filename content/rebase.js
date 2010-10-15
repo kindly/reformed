@@ -27,6 +27,7 @@
 
 var CONFIG = {
     FORM_PAGING_SIZE : 5,
+    FORM_FOCUS_SELECT_ALL : true,
     BOOKMARKS_SHOW_MAX : 100,
     BOOKMARK_ARRAY_MAX : 100,
     DIALOG_BORDER_HEIGHT : 150,
@@ -207,14 +208,14 @@ REBASE.Form = function (){
         }
     }
 
-    function focus($input, select){
+    function focus($input){
         // focus the element and
         // if select select all.
         var value = $input.val();
         if (value){
             var length = value.length;
             var start
-            if (select){
+            if (CONFIG.FORM_FOCUS_SELECT_ALL){
                 start = 0;
             } else {
                 start = length;
@@ -239,8 +240,8 @@ REBASE.Form = function (){
         'process_html' : function (arg){
             return process_html(arg);
         },
-        'focus' : function ($input, select){
-            return focus($input, select);
+        'focus' : function ($input){
+            return focus($input);
         }
     };
 }();
@@ -645,7 +646,7 @@ REBASE.Dialog = function (){
         }
         show_dialog($dialog_box, title);
         // focus first enabled input
-        REBASE.Form.focus($dialog_box.find(':input:enabled').first(), true);
+        REBASE.Form.focus($dialog_box.find(':input:enabled').first());
         is_open = true;
     }
 
@@ -1603,7 +1604,7 @@ REBASE.Layout = function(){
                 layout = layout_data;
                 create_layout();
                 // focus first enabled input
-                REBASE.Form.focus($(root).find(':input:enabled').first(), true);
+                REBASE.Form.focus($(root).find(':input:enabled').first());
             } else {
                 // Update the layout forms
                 layout.layout_forms = layout_data.layout_forms;
