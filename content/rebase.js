@@ -26,6 +26,7 @@
 /*global $ REBASE console_log Showdown*/
 
 var CONFIG = {
+    DISABLE_FX : true,
     FORM_PAGING_SIZE : 5,
     FORM_FOCUS_SELECT_ALL : true,
     BOOKMARKS_SHOW_MAX : 100,
