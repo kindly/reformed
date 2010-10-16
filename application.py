@@ -255,7 +255,9 @@ class Application(object):
             self.engine = create_engine(self.connection_string)
             self.metadata.bind = self.engine
             self.Session = sessionmaker(bind=self.engine, autoflush = False)
-            self.database = database.database.Database(self)
+
+            self.database = database.database.Database()
+            self.database.set_application(self)
             # add to global session
             global_session.database = self.database
 

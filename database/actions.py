@@ -44,13 +44,16 @@ class Action(PersistBaseClass):
 
         kw_display = ""
         arg_display = ""
+        extra = ""
 
         if self._args:
             arg_list = ["%s" % i for i in self._args]
             arg_display = ", ".join(arg_list)
+            extra = ", "
         if self._kw:
-            kw_list = ["%s = %s" % (i[0], i[1]) for i in self._kw.items()]
-            kw_display = ", " + ", ".join(kw_list)
+            kw_list = ["%s = %s" % (i[0], repr(i[1])) for i in self._kw.items()]
+            kw_display = extra + ", ".join(kw_list)
+
         
         return "%s(%s%s)" % (self._class_name,
                              arg_display, kw_display) 
