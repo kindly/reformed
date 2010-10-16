@@ -1,9 +1,9 @@
-from reformed.fields import *
-from reformed.tables import *
-from reformed.database import *
+from database.fields import *
+from database.tables import *
+from database.database import *
 from donkey_test import test_donkey
-import reformed.resultset as resultset
-from reformed.search import Search
+import database.resultset as resultset
+from database.search import Search
 
 class test_result_set_basic(test_donkey):
 
@@ -26,7 +26,7 @@ class test_result_set_basic(test_donkey):
                                                          u'jim2',
                                                          u'jim3',
                                                          u'jim4']
-        
+
         results = resultset.ResultSet(Search(self.Donkey, "donkey", self.session))
         last_set = results.last_set()
         assert [donkey.name for donkey in last_set] == [u'jim0']
@@ -82,7 +82,7 @@ class test_result_set_basic(test_donkey):
                                                         u'jim9']
         prevset2 = results.prev_set()
         prevset3 = results.prev_set()
-        
+
         assert [donkey.name for donkey in prevset3] == [u'jim',
                                                          u'jim1',
                                                          u'jim2',

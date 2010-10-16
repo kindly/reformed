@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 import sqlalchemy as sa
-from reformed.database import Database
-import reformed.job_scheduler
+from database.database import Database
+import job_scheduler.job_scheduler
 import time
 import os
 
@@ -29,7 +29,7 @@ class test_single_request(object):
 
         cls.meta = sa.MetaData()
         cls.Sess = sa.orm.sessionmaker(bind =cls.engine, autoflush = False)
-        cls.Donkey = Database("Donkey", 
+        cls.Donkey = Database("Donkey",
                         metadata = cls.meta,
                         engine = cls.engine,
                         session = cls.Sess,
@@ -39,7 +39,7 @@ class test_single_request(object):
 
         cls.session = cls.Donkey.Session()
 
-        reformed.job_scheduler.POLL_INTERVAL = 1
+        job_scheduler.job_scheduler.POLL_INTERVAL = 1
         cls.job_scheduler = cls.Donkey.job_scheduler
         cls.scheduler_thread = cls.Donkey.scheduler_thread
 
@@ -76,10 +76,10 @@ class test_single_request(object):
         assert self.session.query(self.Donkey.get_class("_core_job_scheduler")).get(self.wait1).message.count("1 is done") > 0
 
         print self.session.query(self.Donkey.get_class("_core_job_scheduler")).get(self.wait3).job_ended
-        print self.session.query(self.Donkey.get_class("_core_job_scheduler")).get(self.wait1).job_ended  
+        print self.session.query(self.Donkey.get_class("_core_job_scheduler")).get(self.wait1).job_ended
 
         assert self.session.query(self.Donkey.get_class("_core_job_scheduler")).get(self.wait3).job_ended  >= \
-               self.session.query(self.Donkey.get_class("_core_job_scheduler")).get(self.wait1).job_ended  
+               self.session.query(self.Donkey.get_class("_core_job_scheduler")).get(self.wait1).job_ended
 
     def test_z_add_basic_error(self):
 

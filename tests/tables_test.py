@@ -1,7 +1,6 @@
-#!/usr/bin/env python
-from reformed.fields import *
-from reformed.tables import *
-from reformed.database import *
+from database.fields import *
+from database.tables import *
+from database.database import *
 from nose.tools import assert_raises,raises
 import formencode as fe
 import logging
@@ -15,23 +14,23 @@ sqllogger.addHandler(sqlhandler)
 
 
 class test_table_basic(object):
-    
+
     def setUp(self):
-        
+
         self.a = Table("poo",
                        Text("col"),
                        Text("col2"),
                        ManyToOne("rel1","table2"))
-        
+
     def test_items(self):
-        
+
         assert self.a.items["col"].name == "col"
         assert self.a.defined_columns["col"].name == "col"
         assert self.a.items["col2"].name == "col2"
         assert self.a.defined_columns["col2"].name == "col2"
         assert self.a.items["rel1"].name == "rel1"
-        assert self.a.relations["rel1"].name == "rel1"         
-    
+        assert self.a.relations["rel1"].name == "rel1"
+
     def test_fields(self):
 
         assert self.a.fields["col"].name == "col"
@@ -42,19 +41,19 @@ class test_table_basic(object):
         assert self.a.fields["rel1"].table is self.a
 
     def test_primary_key_columns(self):
-        
+
         print self.a.primary_key_columns
         assert self.a.primary_key_columns ==  {}
 
     def test_defined_non_primary_key(self):
-        
+
         assert self.a.defined_non_primary_key_columns.has_key("col")
         assert self.a.defined_non_primary_key_columns.has_key("col2")
 
 
 
 class test_database_default_primary_key(object):
-    
+
     @classmethod
     def setUpClass(self):
 
@@ -65,7 +64,7 @@ class test_database_default_primary_key(object):
             os.remove("tests/zodb.fs.tmp")
         except OSError:
             pass
-        
+
         self.engine = sa.create_engine('sqlite:///:memory:')
         self.meta1 = sa.MetaData()
         self.Session = sa.orm.sessionmaker(bind =self.engine, autoflush = False)
@@ -83,7 +82,7 @@ class test_database_default_primary_key(object):
                            session = self.Session)
 
         self.Donkey1.persist()
-                        
+
 
     @classmethod
     def tearDownClass(self):
@@ -93,7 +92,7 @@ class test_database_default_primary_key(object):
         del self.Session
 
     def test_foriegn_key_columns(self):
-        
+
         assert self.Donkey1.tables["email"].\
                 foriegn_key_columns.has_key("people_id")
 
@@ -114,7 +113,7 @@ class test_database_primary_key(object):
             os.remove("tests/zodb.fs.tmp")
         except OSError:
             pass
-        
+
         self.Donkey = Database("Donkey2",
                             Table("people",
                                   Text("name"),
@@ -128,7 +127,7 @@ class test_database_primary_key(object):
                                   Text("name9"),
                                   RequireIfMissing("req_name9", field = 'name9', missing = 'name'),
                                   OneToOne("address","address"),
-                                  OneToMany("Email","email", 
+                                  OneToMany("Email","email",
                                            order_by = 'email desc,name2, email_type'),
                                   Index("idx_name3_name4", "name3, name4"),
                                   UniqueIndex("idx_name5", "name5"),
@@ -148,7 +147,7 @@ class test_database_primary_key(object):
                            metadata = self.meta,
                            engine = self.engine,
                            session = self.Session)
-                        
+
 
         self.Donkey.persist()
         session = self.Donkey.Session()
@@ -158,7 +157,7 @@ class test_database_primary_key(object):
         self.email = self.Donkey.tables["email"].sa_class()
         self.email2 = self.Donkey.tables["email"].sa_class()
         self.email3 = self.Donkey.tables["email"].sa_class()
-        
+
         self.people = self.Donkey.tables["people"].sa_class()
         self.people.name = u"david"
         self.people.name2 = u"david"
@@ -171,7 +170,7 @@ class test_database_primary_key(object):
         self.people.Email.append(self.email)
         self.people.Email.append(self.email2)
         self.people.Email.append(self.email3)
-        
+
         session.add(self.people)
         session.add(self.email)
         session.add(self.email2)
@@ -182,7 +181,7 @@ class test_database_primary_key(object):
         self.session = session
 
         self.peoplelogged = self.Donkey.tables["_log_people"].sa_table
-        
+
 #    def tearDown(self):
 #        self.meta.clear()
     @classmethod
@@ -194,7 +193,7 @@ class test_database_primary_key(object):
         del self.session
 
     def test_foriegn_key_columns2(self):
-        
+
         assert self.Donkey.tables["email"].\
                 foriegn_key_columns.has_key("name2")
         assert self.Donkey.tables["email"].\
@@ -217,23 +216,23 @@ class test_database_primary_key(object):
 
     def test_index(self):
 
-        assert "idx_name3_name4" in [a.name for a in self.peopletable.indexes] 
-        assert "idx_name5" in [a.name for a in self.peopletable.indexes] 
-        
+        assert "idx_name3_name4" in [a.name for a in self.peopletable.indexes]
+        assert "idx_name5" in [a.name for a in self.peopletable.indexes]
+
     def test_unique_index(self):
-        a = self.Donkey.get_instance("people") 
+        a = self.Donkey.get_instance("people")
         a.name9 = u"poo"
         a.name5 = u"poo"
         self.session.add(a)
         self.session.commit()
 
-        b = self.Donkey.get_instance("people") 
+        b = self.Donkey.get_instance("people")
         b.name9 = u"poo"
         b.name5 = u"poo"
         self.session.add(b)
         assert_raises(IntegrityError, self.session.commit)
 
-        
+
     def test_unique_constraints(self):
 
 
@@ -251,7 +250,7 @@ class test_database_primary_key(object):
         assert self.peoplelogged.columns.has_key("name")
 
     def test_class_and_mapper(self):
-        
+
         assert hasattr(self.people,"name")
         assert hasattr(self.people,"name2")
         assert hasattr(self.email,"name")
@@ -264,19 +263,19 @@ class test_database_primary_key(object):
 
     def test_validation_from_field_types(self):
 
-        email = self.Donkey.tables["email"].columns["email"] 
-        email_table = self.Donkey.tables["email"] 
+        email = self.Donkey.tables["email"].columns["email"]
+        email_table = self.Donkey.tables["email"]
         assert isinstance(email_table.validation_from_field_types(email)\
                           .validators[0], fe.validators.UnicodeString)
-                
-        
+
+
 
     def test_validation_schemas(self):
 
         validation_schema = self.Donkey.tables["email"].validation_schema
 
 
-        
+
         assert self.Donkey.tables["email"].validation_schema.to_python(
                                                 {"people_id" : 1,
                                               "email": "pop@david.com",
@@ -286,7 +285,7 @@ class test_database_primary_key(object):
                                               "email": "pop@david.com",
                                               "name2" :"david",
                                               "name" : "david"}
-                                                
+
         assert_raises(formencode.Invalid,
                       self.Donkey.tables["email"].validation_schema.to_python,
                                              {"email": "popdavid.com"})
@@ -304,7 +303,7 @@ class test_database_primary_key(object):
                                            "postcode" : "IG5 0dp",
                                            "name2" :"david",
                                            "name" : "david"}
-        
+
         assert_raises(formencode.Invalid,
                     self.Donkey.tables["address"].validation_schema.to_python,
                                           {"address_line_1": "56 moreland",
@@ -323,7 +322,7 @@ class test_database_primary_key(object):
         assert all.Email[2].email_type == u"a"
 
     def test_length(self):
-        
+
         assert self.peopletable.columns['name3'].type.length == 10
 
         session = self.Donkey.Session()
@@ -355,7 +354,7 @@ class test_database_primary_key(object):
 
         people.name9 = u"pop"
         assert self.session.add(people) is None
-        
+
         people = self.Donkey.tables["people"].sa_class()
         people.name = u"pop"
 
@@ -363,7 +362,7 @@ class test_database_primary_key(object):
 
 
 
-        
+
 class test_field_type_validation(object):
 
     @classmethod
@@ -380,7 +379,7 @@ class test_field_type_validation(object):
             os.remove("tests/zodb.fs.tmp")
         except OSError:
             pass
-        
+
         self.Donkey = Database("Donkey",
                             Table("people",
                                   Email("name1", length = 10, mandatory = True),
@@ -396,7 +395,7 @@ class test_field_type_validation(object):
                            engine = self.engine,
                            zodb_store = "tests/zodb.fs",
                            session = self.Session)
-                        
+
 
         self.Donkey.persist()
         self.session = self.Donkey.Session()
@@ -410,7 +409,7 @@ class test_field_type_validation(object):
         person.name5 = True
         pic = file("tests/jim.xcf", mode = "rb").read()
         person.name6 = pic
-        
+
         assert_raises(fe.Invalid, self.session.add, person)
 
         person.email = "p@pl.com"

@@ -1,7 +1,7 @@
 ## This is a blank schema template
 
-from reformed.database import table, entity, relation
-from reformed.fields import *
+from database.database import table, entity, relation
+from database.fields import *
 
 
 def initialise(application):

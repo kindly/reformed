@@ -25,13 +25,14 @@ import shutil
 from optparse import OptionParser
 import random
 
-from reformed.export import json_dump_all_from_table
-from reformed.data_loader import load_json_from_file
+from database.export import json_dump_all_from_table
+from database.data_loader import load_json_from_file
 import application as app
 
 application = None
 dir = None
 
+##FIXME duplicated in application
 DEFAULT_OPTIONS = {"host": "127.0.0.1",
                    "port": "8000",
                    "ssl_cert" : "host",
@@ -48,9 +49,9 @@ def extract():
 def load_data(file):
     print 'loading data'
     import datetime
-    from reformed.data_loader import FlatFileSaveSet
+    from database.data_loader import FlatFileSaveSet
     application.initialise_database()
-    start_time = datetime.datetime.now() 
+    start_time = datetime.datetime.now()
     flatfile = FlatFileSaveSet(application.database,
                                path = file, lines_per_chunk = 20)
     flatfile.load()
@@ -58,13 +59,10 @@ def load_data(file):
     print time
 
 def profile(file):
-    import hotshot, hotshot.stats, test.pystone
     command = """load_data(file)"""
     #prof = hotshot.Profile("dataloadhot.profile")
     #prof.runctx( command, globals(), locals())
     #prof.close()
-
-
 
     import cProfile
     cProfile.runctx( command, globals(), locals(), filename="dataload.profile" )
@@ -121,7 +119,7 @@ def purge_attachments():
 
 
 def upload_files(options):
-    import fileupload
+    import web.fileupload
     import os
 
     print 'uploading images'
@@ -240,7 +238,7 @@ def reloader(args, options):
 def run(host, port, ssl, ssl_cert, no_job_scheduler):
     print 'starting webserver'
     import beaker.middleware
-    import web
+    import web.web as web
 
 
     web_application = web.WebApplication(application)

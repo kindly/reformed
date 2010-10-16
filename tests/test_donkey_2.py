@@ -1,13 +1,12 @@
-from reformed.data_loader import FlatFile 
-from reformed.fields import *
-from reformed.tables import *
-from reformed.database import *
+from database.data_loader import FlatFile
+from database.fields import *
+from database.tables import *
+from database.database import *
 from nose.tools import assert_raises,raises
 import sqlalchemy as sa
-import reformed.custom_exceptions
-from reformed.data_loader import SingleRecord
+from database.data_loader import SingleRecord
 from sqlalchemy import create_engine
-from reformed.util import get_table_from_instance, create_data_dict, make_local_tables, get_all_local_data, load_local_data
+from database.util import get_table_from_instance, create_data_dict, make_local_tables, get_all_local_data, load_local_data
 import datetime
 import yaml
 from decimal import Decimal
@@ -31,11 +30,11 @@ class test_donkey_search(object):
             os.remove("tests/zodb.fs.tmp")
         except OSError:
             pass
-        
+
 #        cls.engine = create_engine('mysql://localhost/test_donkey', echo = True)
         cls.meta = sa.MetaData()
         cls.Sess = sa.orm.sessionmaker(bind =cls.engine, autoflush = False)
-        cls.donkey = Database("donkey", 
+        cls.donkey = Database("donkey",
                             Table("people",
                                   Text("name", mandatory = True, length = 30),
                                   Address("supporter_address"),
@@ -78,7 +77,7 @@ class test_donkey_search(object):
         cls.session.close()
         cls.donkey.status = "terminated"
 
-    
+
     def test_basic(self):
 
         david = yaml.load("""
@@ -99,8 +98,8 @@ class test_donkey_search(object):
         print self.donkey.search("people",
                                   "email.default_email in (?)",
                                   values = ["false"],
-                                  tables = ["people", "email"], 
-                                  keep_all = False) 
+                                  tables = ["people", "email"],
+                                  keep_all = False)
 
         assert self.donkey.search("people",
                                   "email.default_email = ?",
@@ -108,7 +107,7 @@ class test_donkey_search(object):
                                   tables = ["people", "email"],
                                   keep_all = False) == \
 {'data': [{'town': None, 'email.email': u'poo2@poo.com', 'email.people_id': 1, 'name': u'david', 'dob': None, '__table': 'people', 'email.email_number': 1, 'postcode': u'sewjfd', 'country': None, 'active': None, 'email.default_email': False, 'address_line_2': None, 'address_line_3': None, 'address_line_1': u'16 blooey'}]}
-        
+
 
 
 

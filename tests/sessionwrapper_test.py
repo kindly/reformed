@@ -1,6 +1,5 @@
 import donkey_test
 import sqlalchemy as sa
-import reformed.custom_exceptions
 from nose.tools import assert_raises
 import random
 
@@ -28,7 +27,7 @@ class test_session_wrapper(donkey_test.test_donkey):
 
         assert u"david%s" % p in [people.name for people in allpeople]
         assert u"david"  in [people.name for people in allpeople]
-        
+
         assert p in [spon.amount for spon in allspon]
         assert 50 in [spon.amount for spon in allspon]
 
@@ -38,7 +37,7 @@ class test_session_wrapper(donkey_test.test_donkey):
         person = session1.query(self.Donkey.aliases["people"]).first()
         person.name = u"poo"
         session1.save(person)
-        
+
         session2 = self.Donkey.Session()
         person = session2.query(self.Donkey.aliases["people"]).first()
         person.name = u"poo"

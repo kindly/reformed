@@ -25,23 +25,24 @@ import time
 import glob
 import os.path
 import sys
+import logging
+from ConfigParser import RawConfigParser, NoOptionError, NoSectionError
+
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
 from ZODB import FileStorage, DB
 from ZODB.PersistentMapping import PersistentMapping
-import transaction
-import reformed.database
-from global_session import global_session
-import reformed.job_scheduler as job_scheduler
-import predefine
-import logging
-import node_runner
-import full_text_index
 import whoosh
 from whoosh.index import create_in, open_dir
-import os
 from zc.lockfile import LockError
-from ConfigParser import RawConfigParser, NoOptionError, NoSectionError
+import transaction
+
+import database.database
+from web.global_session import global_session
+import job_scheduler.job_scheduler as job_scheduler
+import database.predefine as predefine
+import node.node_runner as node_runner
+import database.full_text_index as full_text_index
 
 log = logging.getLogger('rebase.application')
 
@@ -56,7 +57,7 @@ class Application(object):
 
         self.directory = directory
         self.root_folder = os.path.dirname(os.path.abspath(__file__))
-        self.application_folder = os.path.join(self.root_folder, directory)
+        self.application_folder = os.path.join(self.root_folder, "projects", directory)
         # check that we have the application directory
         self.check_filesystem()
 
@@ -254,7 +255,7 @@ class Application(object):
             self.engine = create_engine(self.connection_string)
             self.metadata.bind = self.engine
             self.Session = sessionmaker(bind=self.engine, autoflush = False)
-            self.database = reformed.database.Database(self)
+            self.database = database.database.Database(self)
             # add to global session
             global_session.database = self.database
 
@@ -265,8 +266,9 @@ class Application(object):
     def create_database(self):
         self.initialise_database()
         print 'creating database structure'
-        import reformed.user_tables
-        reformed.user_tables.initialise(self)
+        ##FIXME should use user tables in specific project
+        import template.user_tables
+        template.user_tables.initialise(self)
         import schema
         schema.initialise(self)
         # FIXME botch to get _job_schedulat table added
@@ -429,13 +431,13 @@ class Application(object):
             self.schema = full_text_index.make_schema(self)
 
     def initialise_index(self):
-        
+
         self.initialise_database()
         self.make_index_schema()
         index_location = os.path.join(self.application_folder, 'index')
 
         all_files = glob.glob(index_location + "/*.*")
-        
+
         if not all_files:
             self.text_index = create_in(index_location, self.schema)
         else:
@@ -444,7 +446,7 @@ class Application(object):
         full_text_index.index_database(self)
 
 def empty_database(directory, connection_string = None):
-    import reformed.util as util
+    import database.util as util
     options = util.Holder(connection_string = connection_string,
                           quiet = False)
     app = Application(directory, options)

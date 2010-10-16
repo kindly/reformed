@@ -1,12 +1,12 @@
-from reformed.fields import *
-from reformed.tables import *
-from reformed.database import *
+from database.fields import *
+from database.tables import *
+from database.database import *
 from nose.tools import assert_raises,raises
 import sqlalchemy as sa
 from sqlalchemy import create_engine
 import random
 import logging
-import reformed.validate_database
+import database.validate_database
 import migrate.changeset
 from tests.donkey_test import test_donkey
 
@@ -34,21 +34,21 @@ class test_donkey_validate_sqlite(test_donkey):
 
     def test_validate_database(self):
 
-        tab_def, tab_dat, col_def, col_dat, col_dif = reformed.validate_database.validate_database(self.Donkey) 
+        tab_def, tab_dat, col_def, col_dat, col_dif = database.validate_database.validate_database(self.Donkey)
         assert tab_def == []
         assert col_def == []
 
     def test_validate_after_add_table(self):
 
         rand = random.randrange(1,10000)
-        
+
         self.Donkey._add_table_no_persist(tables.Table("woo%s" % rand , Text("woo")))
         self.Donkey.update_sa()
 
-        assert_raises(custom_exceptions.DatabaseInvalid, 
-                      reformed.validate_database.validate_database, self.Donkey)
+        assert_raises(custom_exceptions.DatabaseInvalid,
+                      database.validate_database.validate_database, self.Donkey)
         try:
-            reformed.validate_database.validate_database(self.Donkey)
+            database.validate_database.validate_database(self.Donkey)
         except custom_exceptions.DatabaseInvalid, e:
             assert "woo%s" % rand in e.list
 
@@ -63,7 +63,7 @@ class test_donkey_validate_sqlite(test_donkey):
 
         self.Donkey.update_sa(reload = True)
 
-        tab_def, tab_dat, col_def, col_dat, col_dif = reformed.validate_database.validate_database(self.Donkey) 
+        tab_def, tab_dat, col_def, col_dat, col_dif = database.validate_database.validate_database(self.Donkey)
 
         assert u"people.wrong%s" % rand in col_dat
 
@@ -78,11 +78,11 @@ class test_donkey_validate_sqlite(test_donkey):
         self.Donkey.load_from_persist(True)
 
 
-        tab_def, tab_dat, col_def, col_dat, col_dif = reformed.validate_database.validate_database(self.Donkey) 
+        tab_def, tab_dat, col_def, col_dat, col_dif = database.validate_database.validate_database(self.Donkey)
         print tab_def, tab_dat, col_def, col_dat, col_dif
-        
+
         assert u"people.wrong%s" % rand in col_dat
-        
+
 
 
 class test_donkey_validate_mysql(test_donkey_validate_sqlite):

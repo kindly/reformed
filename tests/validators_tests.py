@@ -1,14 +1,13 @@
-from reformed.fields import *
-from reformed.tables import *
-from reformed.database import *
+from database.fields import *
+from database.tables import *
+from database.database import *
 from nose.tools import assert_raises,raises
 import sqlalchemy as sa
-import reformed.validators as val
-import reformed.custom_exceptions
+import database.validators as val
 from tests.donkey_test import test_donkey
-from reformed.data_loader import SingleRecord
+from database.data_loader import SingleRecord
 from sqlalchemy import create_engine
-from reformed.util import get_table_from_instance, create_data_dict, make_local_tables, get_all_local_data, load_local_data
+from database.util import get_table_from_instance, create_data_dict, make_local_tables, get_all_local_data, load_local_data
 import datetime
 from decimal import Decimal
 import formencode as fe
@@ -42,7 +41,7 @@ class test_validation(test_donkey):
     def test_address_validation(self):
 
         assert len(get_table_from_instance(self.david, self.Donkey).validate(self.david, None)) > 3
-        
+
         assert_raises(formencode.Invalid,
                       get_table_from_instance(self.david2, self.Donkey).validate,self.david2, None)
 
@@ -58,7 +57,7 @@ class test_validation(test_donkey):
         assert_raises(
             fe.Invalid,
             load_local_data,
-            self.Donkey, 
+            self.Donkey,
             {"__table": u"category",
             "category.category_name": u"z",
             "category.category_description": u"this is a",
@@ -67,7 +66,7 @@ class test_validation(test_donkey):
         )
 
         try:
-            load_local_data(self.Donkey, 
+            load_local_data(self.Donkey,
                             {"__table": u"category",
                             "category.category_name": u"z",
                             "category.category_description": u"this is a",
@@ -106,7 +105,7 @@ class test_validation(test_donkey):
 
         assert self.session.save(cat1) is None
         self.session.expunge_all()
-        
+
 
     def test_zzzzz_two_nulls_validation(self):
 
@@ -127,10 +126,10 @@ class test_validation(test_donkey):
 
         assert self.session.add(membership2) == None
 
-    
+
     def test_lookup_validation(self):
 
-        load_local_data(self.Donkey, 
+        load_local_data(self.Donkey,
                         {"__table": u"donkey",
                         "donkey.name": u"good",
                         "donkey.donkey_type": u"smooth",
@@ -139,7 +138,7 @@ class test_validation(test_donkey):
 
         assert_raises(formencode.Invalid,
                       load_local_data,
-                      self.Donkey, 
+                      self.Donkey,
                       {"__table": u"donkey",
                       "donkey.name": u"z",
                       "donkey.donkey_type": u"pooey",
