@@ -625,6 +625,15 @@ class Field(object):
     def _set_parent(self, table):
 
         self.check_table(table)
+        max_field_id = table.max_field_id
+        if not self.field_id:
+            new_id = table.max_field_id + 1
+            table.max_field_id = new_id
+            self.kw["field_id"] = new_id
+            self.field_id = new_id
+        else:
+            table.max_field_id = max(table.max_field_id, self.field_id)
+
         table.fields[self.name] = self
         if not table.persisted:
             table.field_order.append(self.name)

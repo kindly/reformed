@@ -29,8 +29,10 @@ import custom_exceptions
 import search
 import resultset
 import tables
+from sqlalchemy import MetaData, create_engine
+from sqlalchemy.orm import sessionmaker
 from collections import defaultdict
-from util import split_table_fields
+from util import split_table_fields, OrderedDict
 from fields import ForeignKey, Integer 
 import fields as field_types
 import sessionwrapper
@@ -46,43 +48,64 @@ log = logging.getLogger('rebase.application.database')
 
 class Database(object):
 
-    def __init__(self, application):
+    def __init__(self, *tables, **kw):
 
         log.info("initialising database")
         self.status = "updating"
 
-        self.application = application
-        self.metadata = application.metadata
-        self.engine = application.engine
-        self._Session = application.Session
-        self.logging_tables = application.logging_tables
-        self.quiet = application.quiet
+        self.engine = kw.get("engine", None)
+        if self.engine:
+            self.metadata = MetaData()
+            self.metadata.bind = self.engine
+            self._Session = sessionmaker(bind=self.engine, autoflush = False)
+            self.Session = sessionwrapper.SessionClass(self._Session, self)
 
+        self.logging_tables = kw.get("logging_tables", None)
+        self.quiet = kw.get("quiet", None)
 
-        self.zodb = self.application.zodb
-        self.application_folder = self.application.application_folder
+        self.application = kw.get("application", None)
+        if self.application:
+            self.set_application(self.application)
 
-        self.metadata.bind = self.engine
-        self.Session = sessionwrapper.SessionClass(self._Session, self)
-        # update the application Session
-        self.application.Session = self.Session
+        self.max_table_id = 0
+        self.max_event_id = 0
 
         self.persisted = False
         self.graph = None
         self.fields_to_persist = []
         self.relations = []
 
-        self.tables = {}
+        self.tables = OrderedDict()
 
         self.search_actions = {}
         self.search_names = {}
         self.search_ids = {}
 
+        for table in tables:
+            self.add_table(table)
+
+    def set_application(self, application):
+
+        self.application = application
+        if not self.engine:
+            self.metadata = application.metadata
+            self.engine = application.engine
+            self._Session = application.Session
+            self.Session = sessionwrapper.SessionClass(self._Session, self)
+
+        if self.logging_tables is not None:
+            self.logging_tables = self.application.logging_tables
+        if self.quiet is not None:
+            self.quiet = self.application.quiet
+
+        self.application_folder = self.application.application_folder
+        self.zodb = self.application.zodb
         self.zodb_tables_init()
+        self.application.Session = self.Session
 
         self.load_from_persist()
-
         self.status = "active"
+
 
     def zodb_tables_init(self):
         zodb = self.application.aquire_zodb()
@@ -322,6 +345,7 @@ class Database(object):
                 table.persist_foreign_key_columns(connection)
 
             for table in self.tables.itervalues():
+                print table.code_repr()
                 if not table.persisted:
                     table.set_field_order(connection)
 
@@ -665,25 +689,25 @@ def table(name, database, *args, **kw):
     if name in database.tables:
         print '<%s> exists will not create' % name
         return
-    database.add_table(tables.Table(name, *args, quiet = database.quiet, **kw))
+    database.add_table(tables.Table(name, *args,  **kw))
 
 def entity(name, database, *args, **kw):
     """helper to add entity to database args and keywords same as Table definition"""
     if name in database.tables:
         print '<%s> exists will not create' % name
         return
-    database.add_entity(tables.Table(name, *args, quiet = database.quiet, **kw))
+    database.add_entity(tables.Table(name, *args,  **kw))
 
 def relation(name, database, *args, **kw):
     """helper to add entity to database args and keywords same as Table definition"""
     if name in database.tables:
         print '<%s> exists will not create' % name
         return
-    database.add_relation_table(tables.Table(name, *args, quiet = database.quiet, **kw))
+    database.add_relation_table(tables.Table(name, *args,  **kw))
 
 def info_table(name, database, *args, **kw):
     """helper to add entity to database args and keywords same as Table definition"""
     if name in database.tables:
         print '<%s> exists will not create' % name
         return
-    database.add_info_table(tables.Table(name, *args, quiet = database.quiet, **kw))
+    database.add_info_table(tables.Table(name, *args,  **kw))

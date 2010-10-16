@@ -36,6 +36,7 @@ from validators import All, UnicodeString, RequireIfMissing
 from fields import Modified, ModifiedBySession, Integer
 import fields
 from util import get_paths, make_local_tables, create_table_path_list, create_table_path
+from util import OrderedDict
 import logging
 import migrate.changeset
 import datetime
@@ -85,7 +86,7 @@ class Table(object):
         self.kw = kw
         self.table_id = kw.get("table_id", None)
         self.field_list = args
-        self.fields = {}
+        self.fields = OrderedDict()
         self.field_order = kw.get("field_order", [])
         self.current_order = 0
         self.primary_key = kw.get("primary_key", None)
@@ -119,6 +120,8 @@ class Table(object):
 
         ## for info tables to be populated 
         self.valid_core_types = []
+
+        self.max_field_id = 0
 
         self.logged = kw.get("logged", True)
         self.validated = kw.get("validated", True)
@@ -168,12 +171,12 @@ class Table(object):
         self.schema = None
 
     def code_repr(self):
-        header = "table('%s', database, \n    " % self.name
+        header = "Table('%s',\n    " % self.name
         footer = "\n)"
         field_list = [field.code_repr() for field in self.field_list]
         fields_repr = ",\n    ".join(field_list)
         kw_repr = ""
-        kw_list = ["%s = %s" % (i[0], i[1]) for i in self.kw.items()]
+        kw_list = ["%s = %s" % (i[0], repr(i[1])) for i in self.kw.items()]
         if self.kw:
             kw_repr = ",\n    " + ",\n    ".join(kw_list)
 
@@ -222,8 +225,6 @@ class Table(object):
 
         root = connection.root()
         tables = root["tables"]
-        table_count = root["table_count"] + 1
-        root["table_count"] = table_count
 
         table = PersistentMapping()
 
@@ -231,9 +232,6 @@ class Table(object):
         table["field_count"] = 0
 
         params = PersistentMapping(**self.kw)
-
-        params["table_id"] = table_count
-        params["summary"] = self.summary
 
         table["params"] = params
 
@@ -610,14 +608,13 @@ class Table(object):
 
         field = PersistentMapping()
         table_fields[rfield.name] = field
-        field_count = table["field_count"] + 1
-        table["field_count"] = field_count
 
         field["type"] = rfield.__class__.__name__
 
         params = PersistentMapping(**rfield.kw)
-        params["foreign_key_name"] = rfield.foreign_key_name
-        params["field_id"] = field_count
+
+        if rfield.foreign_key_name:
+            params["foreign_key_name"] = rfield.foreign_key_name
 
         field["params"] = params
         field["args"] = PersistentList(rfield.args)
@@ -747,6 +744,14 @@ class Table(object):
 
     def _set_parent(self, database):
         """adds this table to a database object"""
+        if not self.table_id:
+            new_id = database.max_table_id + 1
+            self.table_id = new_id
+            self.kw["table_id"] = new_id
+            database.max_table_id = new_id
+        else:
+            database.max_table_id = max(database.max_table_id, self.table_id)
+
         database.tables[self.name]=self
         database.add_relations()
         self.database = database
