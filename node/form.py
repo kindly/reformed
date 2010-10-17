@@ -339,7 +339,6 @@ class Form(object):
         form_title = None
         layout_title = None
         join_data = None
-        print 'VIEW', request_data.data
         get_data = request_data.get
         id = get_data('id') or get_data('%s.id' % self.table)
         if where:
@@ -438,7 +437,6 @@ class Form(object):
 
         if is_main_form and join_data:
             node_data = join_data
-            print '~~~~~~~', join_data
         else:
             node_data = None
 
@@ -467,7 +465,6 @@ class Form(object):
         id_data = data
         node = node_token.node
 
-        print "id_data", id_data
         id = id_data.get('id')
         if where:
             link_id = ''
@@ -717,7 +714,6 @@ class Form(object):
                 pass
 
         if cached_version and cached_version == self.version:
-            print '~~~~~ Cached Form'
             form = {
                 "cache_form" : self.name,
                 "cache_node" : node_token.node_name
@@ -770,7 +766,6 @@ class FormFactory(object):
     def __call__(self, name, node):
 
         if not self.instance:
-            print 'create form %s in node %s' % (name, node.name)
             instance = Form(name, node, self.version, *self.form_items, **self.kw)
             if instance.volatile:
                 self.version = 0
@@ -779,9 +774,6 @@ class FormFactory(object):
                 # we have a new stable form update it's version
                 self.version = instance.version
                 self.instance = instance
-        else:
-            print 'reuse form %s' % name
-
         return self.instance
 
 
