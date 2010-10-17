@@ -44,7 +44,7 @@ class GetUserId:
 
         return user_id
 
-    def __str__(self):
+    def __repr__(self):
         return "get_user_id()"
 
 get_user_id = GetUserId()

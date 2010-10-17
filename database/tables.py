@@ -174,12 +174,13 @@ class Table(object):
     def code_repr(self):
         header = "Table('%s',\n    " % self.name
         footer = "\n)"
-        field_list = [field.code_repr() for field in self.field_list]
+        field_list = [field.code_repr() for field in
+                      sorted(self.field_list, key = lambda x:x.field_id)]
         fields_repr = ",\n    ".join(field_list)
         kw_repr = ""
         kw_list = ["%s = %s" % (i[0], repr(i[1])) for i in self.kw.items()]
         if self.kw:
-            kw_repr = ",\n    " + ",\n    ".join(kw_list)
+            kw_repr = ",\n    " + ",\n    ".join(sorted(kw_list))
 
         return header + fields_repr + kw_repr + footer
 

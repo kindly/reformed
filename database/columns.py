@@ -460,11 +460,11 @@ class Field(object):
         arg_display = ""
 
         if self.args:
-            arg_list = ["%s" % i for i in self.args]
+            arg_list = ["%s" % repr(i) for i in self.args]
             arg_display = ", " + ", ".join(arg_list)
         if self.kw:
-            kw_list = ["%s = %s" % (i[0], i[1]) for i in self.kw.items()]
-            kw_display = ", " + ", ".join(kw_list)
+            kw_list = ["%s = %s" % (i[0], repr(i[1])) for i in self.kw.items()]
+            kw_display = ", " + ", ".join(sorted(kw_list))
         
         return "%s('%s'%s%s)" % (class_name, self.name, arg_display, kw_display) 
 

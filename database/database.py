@@ -26,6 +26,8 @@
 
 import logging
 from collections import defaultdict
+import os
+import uuid
 
 import sqlalchemy as sa
 import networkx as nx
@@ -56,8 +58,10 @@ class Database(object):
         log.info("initialising database")
         self.status = "updating"
 
+        self.kw = kw
+
         self.connection_string = kw.get("connection_string", None)
-        if self.engine:
+        if self.connection_string:
             self.engine = create_engine(self.connection_string)
             self.metadata = MetaData()
             self.metadata.bind = self.engine
@@ -76,7 +80,6 @@ class Database(object):
 
         self.persisted = False
         self.graph = None
-        self.fields_to_persist = []
         self.relations = []
 
         self.tables = OrderedDict()
@@ -91,7 +94,7 @@ class Database(object):
     def set_application(self, application):
 
         self.application = application
-        if not self.engine:
+        if not self.connection_string:
             self.metadata = application.metadata
             self.engine = application.engine
             self._Session = application.Session
@@ -338,23 +341,22 @@ class Database(object):
                 if table.logged and "_log_%s" % table.name not in self.tables.iterkeys() :
                     self.add_table(self.logged_table(table))
 
-            for table in self.tables.itervalues():
+            for table in self.tables.values():
                 if not table.persisted:
                     table.persist(connection)
-
-            for field in self.fields_to_persist:
-                field.table._persist_extra_field(field, connection)
 
             for table in self.tables.itervalues():
                 table.persist_foreign_key_columns(connection)
 
-            for table in self.tables.itervalues():
-                print table.code_repr()
+            for table in self.tables.values():
                 if not table.persisted:
                     table.set_field_order(connection)
 
             self.update_sa(True)
+            self.code_repr_export(uuid_name = True)
             self.metadata.create_all(self.engine)
+            self.code_repr_export()
+
         except Exception, e:
             transaction.abort()
             raise
@@ -374,13 +376,57 @@ class Database(object):
 
         self.load_from_persist(True)
 
+    def code_repr_export(self, uuid_name = False):
+
+        if uuid_name:
+            file_name = "generated_schema-%s.py" % uuid.uuid1()
+        else:
+            file_name = "generated_schema.py"
+
+        file_save = os.path.join(
+            self.application.application_folder,
+            "_schema",
+            file_name
+        )
+
+        out_file = open(file_save, "w")
+
+        output = [
+            "from database.database import Database",
+            "from database.tables import Table",
+            "from database.fields import *",
+            "from database.database import table, entity, relation",
+            "from database.events import Event",
+            "from database.actions import *",
+            "",
+            "",
+            "database = Database(",
+            "",
+            "",
+        ]
+
+        for table in sorted(self.tables.values(),
+                            key = lambda x:x.table_id):
+            output.append(table.code_repr() + ",")
+
+        kw_display = ""
+        if self.kw:
+            kw_list = ["%s = %s" % (i[0], repr(i[1])) for i in self.kw.items()]
+            kw_display = ", ".join(sorted(kw_list))
+
+        output.append(kw_display)
+        output.append(")")
+
+        out_file.write("\n".join(output))
+        out_file.close()
+
 
     def load_from_persist(self, restart = False):
 
         connection = self.application.zodb.open()
 
         if connection:
-            self.tables = {}
+            self.tables = OrderedDict()
             self.clear_sa()
             root = connection.root()
             for table_name, table in root["tables"].iteritems():

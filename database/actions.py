@@ -52,7 +52,7 @@ class Action(PersistBaseClass):
             extra = ", "
         if self._kw:
             kw_list = ["%s = %s" % (i[0], repr(i[1])) for i in self._kw.items()]
-            kw_display = extra + ", ".join(kw_list)
+            kw_display = extra + ", ".join(sorted(kw_list))
 
         
         return "%s(%s%s)" % (self._class_name,
