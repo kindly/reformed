@@ -25,11 +25,12 @@ import mimetypes
 import cgi
 import traceback
 import wsgiref.util
-import json
+#import json
 import pprint
 import logging
 
 import webob
+import simplejson as json
 
 from global_session import global_session
 import node.node_runner as node_runner
@@ -249,6 +250,17 @@ class WebApplication(object):
         else:
             # content request
             return (self.static(environ, start_response, request_url))
+
+
+    def fake_requests(self):
+        """ For performance testing we can run the web application
+        outside of a webserver but we need to fake the servers
+        request and response objects this swaps in our fakes."""
+        import fake_webob
+        global Request
+        Request = fake_webob.Request
+        global Response
+        Response = fake_webob.Response
 
 
 def get_file(environ, start_response, path):
