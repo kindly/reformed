@@ -39,12 +39,16 @@ import node.authenticate as authenticate
 import lookup
 log = logging.getLogger('rebase.web')
 
+Request = webob.Request
+Response = webob.Response
+
+
 def session(environ):
     global_session.session = environ['beaker.session']
     # if this is a new session set up the defaults
     if global_session.session.get('user_id') == None:
         # auto login
-        request = webob.Request(environ)
+        request = Request(environ)
         global_session.session['IP_address'] = request.remote_addr
         auto_cookie = request.cookies.get('auto')
         if auto_cookie:
@@ -115,19 +119,17 @@ def process_attachment(environ, start_response):
 
 
 
-
 def process_node(environ, start_response):
 
     session(environ)
 
-    request = webob.Request(environ)
+    request = Request(environ)
 
     ##FIXME make sure we have a head and a body
     try:
         body = json.loads(request.params["body"])
     except Exception, e:
-        start_response('200 OK', [('Content-Type', 'text/plain')])
-        return throw_error('Sent JSON Error', request.params["body"])
+        return throw_error(environ, start_response, 'Sent JSON Error', request.params["body"])
 
     node_interface = node_runner.NodeRunner(global_session.application)
 
@@ -135,18 +137,19 @@ def process_node(environ, start_response):
     try:
         node_interface.process()
     except:
-        start_response('200 OK', [('Content-Type', 'text/plain')])
-        return throw_error('Node Error')
+        return throw_error(environ, start_response, 'Node Error')
 
     data = node_interface.output
 
     try:
-        output = [json.dumps(data, sort_keys=False, indent=4)]#, separators=(',',':'))]
+        # fast output
+        output = [json.dumps(data, separators=(',',':'))]
+        # slow pretty output
+        #output = [json.dumps(data, sort_keys=False, indent=4)]
     except TypeError:
-        start_response('200 OK', [('Content-Type', 'text/plain')])
-        return throw_error('Output JSON Error')
+        return throw_error(environ, start_response, 'Output JSON Error')
 
-    response = webob.Response(environ)
+    response = Response(environ)
     response.content_type = 'text/plain'
 
     # Cookie stuff
@@ -172,7 +175,7 @@ def process_node(environ, start_response):
 
 
 
-def throw_error(error_type, extra_info = ''):
+def throw_error(environ, start_response, error_type, extra_info = ''):
 
     """an exception was thrown generate the traceback info and send to the frontend"""
     if extra_info:
@@ -185,7 +188,12 @@ def throw_error(error_type, extra_info = ''):
     info = {'action': 'general_error',
             'data' : error_msg}
     data = [{'data' : info, 'type' : 'node'}]
-    return [json.dumps(data, separators=(',',':'))]
+
+    response = Response(environ)
+    response.content_type = 'text/plain'
+
+    response.body = json.dumps(data, separators=(',',':'))
+    return response(environ, start_response)
 
 class WebApplication(object):
     """New leaner webapplication server."""
