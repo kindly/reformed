@@ -2,7 +2,6 @@ import random
 import re
 import datetime
 
-from sqlalchemy.exceptions import ProgrammingError
 import sqlalchemy as sa
 from formencode import Invalid
 
@@ -274,7 +273,7 @@ class DataGenerator(object):
         self.curent_cache['name'] = []
 
         # first names
-        num_names = random.triangular(0,4,1)
+        num_names = int(random.triangular(0,4,2))
         initials = random.randint(0,99) < 10
         tail = (self.random % 2 == 0)
 
@@ -348,10 +347,13 @@ class DataGenerator(object):
     def make_email(self):
         # do we have a name to base email on?
         bases = self.curent_cache.get('name')
-        if bases:
+        if bases and random.randint(0, 9) != 0:
             return random.choice(bases) + '@' + self.make_domain()
         else:
-            return self.make_char(3,20, extras='__..') + '@' + self.make_domain()
+            if self.random < 80:
+                return self.make_word(min = 1, max = 4, delimit = '.') + '@' + self.make_domain()
+            else:
+                return self.make_char(3,20, extras='__..') + '@' + self.make_domain()
 
 
     def make_word(self, min = 0, max = 10, delimit = ' '):
