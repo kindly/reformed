@@ -314,7 +314,7 @@ class Worker(object):
         """ log in to the system """
         self.request_node("user.User", "logout")
 
-    def setup_function(self, function, count = 10):
+    def setup_function(self, function):
         """ Set the test function. """
         self._setup_function = function
 
