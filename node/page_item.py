@@ -75,7 +75,7 @@ class FormItem(object):
 
         # check we are allowed to save this item
         # TD what about invisibles?
-        if authenticate.check_permission(self.permissions):
+        if not self.permissions or authenticate.check_permission(self.permissions):
             self.custom_control_save(node_token, save_set, data, session)
 
 
@@ -92,7 +92,7 @@ class FormItem(object):
         # TD doc string
         # FIXME Not called from anywhere AFAIK
         # check permissions etc
-        if authenticate.check_permission(self.permissions):
+        if not self.permissions or authenticate.check_permission(self.permissions):
             self.custom_control_delete(node_token, object, data, session)
 
     def get_page_item_structure(self, node_token, data):

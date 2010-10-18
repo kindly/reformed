@@ -59,6 +59,7 @@ class Response(object):
     """ Fake version of webob.Response used for performance testing. """
     
     response = {}
+    headers = {'Set-Cookie' : None}
 
     def __init__(self, environ):
         self.environ = environ
@@ -68,3 +69,6 @@ class Response(object):
 
     def __call__(self, environ, start_request):
         return self.response['body']
+
+    def delete_cookie(*args):
+        pass
