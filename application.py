@@ -70,7 +70,6 @@ class Application(object):
                 'sqlite:///%s/%s.sqlite' % (self.application_folder, directory)
 
         sys.path.append(self.application_folder)
-        print sys.path
         self.database = None
         self.engine = None
         self.metadata = None
