@@ -186,7 +186,7 @@ class NodeToken(object):
 
     def debug_info(self):
         """Debug information."""
-        return  pprint.pformat(node_token._data)
+        return  self._data
 
 
     def process_data(self):
@@ -198,7 +198,7 @@ class NodeToken(object):
         # If not then it is a 'node' level command
         # and we want only have a single source of data
 
-        self._flags = self._data.get('flags')
+        self._flags = self._data.get('flags', {})
         form_data = self._data.get('form_data', [])
         node_data = self._data.get('node_data', {})
 
@@ -422,8 +422,8 @@ class NodeToken(object):
             global_session.session.persist()
 
         self._added_responses.append(dict(type = 'node', data = info))
-        log.debug('returned data\n%s\n----- end of node processing -----' %
-                  pprint.pformat(self._added_responses))
+      #  log.debug('returned data\n%s\n----- end of node processing -----' %
+      #            pprint.pformat(self._added_responses))
         return self._added_responses
 
     def add_extra_response_function(self, function, data = None):

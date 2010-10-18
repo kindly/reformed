@@ -66,8 +66,10 @@ class Application(object):
         if runtime_options:
             self.update_options_from_config(runtime_options)
 
-        self.connection_string = runtime_options.connection_string or\
-                'sqlite:///%s/%s.sqlite' % (self.application_folder, directory)
+        if runtime_options and runtime_options.connection_string:
+            self.connection_string = runtime_options.connection_string
+        else:
+            self.connection_string = 'sqlite:///%s/%s.sqlite' % (self.application_folder, directory)
 
         sys.path.append(self.application_folder)
         self.database = None
@@ -89,7 +91,10 @@ class Application(object):
         else:
             self.quiet = False
 
-        self.logging_tables = runtime_options.logging_tables
+        if runtime_options and runtime_options.logging_tables:
+            self.logging_tables = runtime_options.logging_tables
+        else:
+            self.logging_tables = None
 
         # zodb data store
         self.zodb = None

@@ -83,7 +83,7 @@ class FormItem(object):
         # TD doc string
 
         # check permissions etc
-        if authenticate.check_permission(self.permissions):
+        if not self.permissions or authenticate.check_permission(self.permissions):
             # FIXME result.results[0] is horrible
             self.custom_control_display(node_token, result, data, session)
 
@@ -97,7 +97,7 @@ class FormItem(object):
 
     def get_page_item_structure(self, node_token, data):
 
-        if authenticate.check_permission(self.permissions):
+        if not self.permissions or authenticate.check_permission(self.permissions):
             return self.custom_page_item_structure(node_token, data)
 
 
@@ -490,7 +490,6 @@ class CodeGroup(FormControl):
         self.join_key = self.relation.join_keys_from_table(self.flag_table)[0][0]
 
     def custom_control_save(self, node_token, save_set, data, session):
-        print "here"
         save_set.prepare()
         code_groups = getattr(save_set.obj, self.relation_attr)
 
@@ -625,10 +624,8 @@ class FormItemFactory(object):
                 return None
         if self.volatile:
             # return a new instance of the FormItem
-            print 'creating volatile form item %s (%s)' % (self.name, self.form_item_class)
             return self.form_item_class(self, form)
         else:
-            print 'creating form item %s (%s)' % (self.name, self.form_item_class)
             instance = self.form_item_class(self, form)
             if instance.static:
                 self.instance = instance
