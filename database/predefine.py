@@ -88,7 +88,7 @@ class Predefine(object):
 
     def build_data_cache(self, table, key_field):
         if table not in self.database.tables:
-            print 'Table <%s> does not exist cannot add data <%s>' % (table, key_data)
+            print 'Table <%s> does not exist cannot add data <%s>' % (table, key_field)
             raise #FIXME what exception?
         # cache data if we don't have it already
         if table not in self.cached_data:

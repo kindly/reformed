@@ -70,6 +70,7 @@ class Application(object):
                 'sqlite:///%s/%s.sqlite' % (self.application_folder, directory)
 
         sys.path.append(self.application_folder)
+        print sys.path
         self.database = None
         self.engine = None
         self.metadata = None
@@ -166,6 +167,10 @@ class Application(object):
                 os.remove(zodb_path)
         # delete index
         all_index_files = glob.glob(os.path.join(self.application_folder, "index") + "/*.*")
+        for path in all_index_files:
+            os.remove(path)
+        # delete schema folder
+        all_index_files = glob.glob(os.path.join(self.application_folder, "_schema") + "/generated*")
         for path in all_index_files:
             os.remove(path)
 

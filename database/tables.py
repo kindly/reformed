@@ -48,7 +48,7 @@ from validators import All, UnicodeString, RequireIfMissing
 from fields import Modified, ModifiedBySession, Integer
 import fields
 from util import get_paths, make_local_tables, create_table_path_list, create_table_path
-from util import OrderedDict
+from util import OrderedDict, FileLock
 
 log = logging.getLogger('rebase.application.database')
 
@@ -85,8 +85,9 @@ class Table(object):
 
         self.name = name
         self.kw = kw
+        self.args = args
         self.table_id = kw.get("table_id", None)
-        self.field_list = args
+        self.field_list = []
         self.fields = OrderedDict()
         self.field_order = kw.get("field_order", [])
         self.current_order = 0
@@ -189,28 +190,15 @@ class Table(object):
 
     def set_kw(self, key, value):
 
-        zodb = self.database.application.aquire_zodb()
         if key not in self.all_updatable_kw:
             raise ValueError("%s not allowed to be added or modified" % key)
 
-        connection = zodb.open()
-
-        root = connection.root()
-        table_params = root["tables"][self.name]["params"]
-        try:
-            table_params[key] = value
+        self.database.code_repr_export(uuid_name = True)
+        with FileLock(self.database.get_file_path()) as file_lock:
             setattr(self, key, value)
-        except Exception, e:
-            transaction.abort()
-            zodb.close()
-            raise
-        else:
-            transaction.commit()
-        finally:
-            connection.close()
-
-        zodb.close()
-        self.database.application.get_zodb(True)
+            self.kw[key] = value
+            self.persisted = True
+            self.database.code_repr_export()
 
 
     def set_field_order(self, connection):
@@ -220,60 +208,22 @@ class Table(object):
             root["tables"][self.name]["field_order"] = PersistentList(self.field_order)
 
 
-    def persist(self, connection):
-        """This puts the information about the this objects parameters
-        and its collection of fields into private database tables so that in future they
-        no longer need to be explicitely defined"""
+    def add_foreign_key_columns(self):
 
-        root = connection.root()
-        tables = root["tables"]
+        for column in self.foriegn_key_columns.values():
+            original_col = column.original_column
+            name = column.name
+            if original_col == "id" and name not in self.defined_columns:
+                relation = column.defined_relation
+                field = relation.parent
+                new_field = Integer(name, mandatory = relation.many_side_not_null,
+                                    default = relation.many_side_default,
+                                    onupdate = relation.many_side_onupdate)
 
-        table = PersistentMapping()
+                self._add_field_no_persist(new_field)
+                field.kw["foreign_key_name"] = name
+                field.foreign_key_name = name
 
-        tables[self.name] = table
-        table["field_count"] = 0
-
-        params = PersistentMapping(**self.kw)
-
-        table["params"] = params
-
-        table_fields = PersistentMapping()
-        table["fields"] = table_fields
-
-        events = PersistentMapping(new = PersistentList(),
-                                   delete = PersistentList(),
-                                   change = PersistentList())
-        table["events"] = events
-
-        for field_name, rfield in self.fields.iteritems():
-            self._persist_extra_field(rfield, connection)
-
-        for event_type in self.events:
-            for action in self.events[event_type]:
-                self._persist_action(action, event_type, connection)
-
-
-        if not self.quiet:
-            print 'creating %s' % self.name
-
-    def _persist_action(self, action, event_type, connection):
-
-        root = connection.root()
-        table = root["tables"][self.name]
-        events = table["events"][event_type]
-        if not action.event_id:
-            event_count = root["event_count"] + 1
-            root["event_count"] = event_count
-            action._kw["event_id"] = event_count
-            action.event_id = event_count
-
-        events.append(
-            PersistentList(
-                [action._class_name,
-                PersistentList(action._args),
-                PersistentMapping(action._kw)]
-            )
-        )
 
     def persist_foreign_key_columns(self, connection):
 
@@ -757,6 +707,13 @@ class Table(object):
         database.tables[self.name]=self
         database.add_relations()
         self.database = database
+        self.add_events()
+
+    def add_events(self):
+
+        for event in self.field_list:
+            if hasattr(event, "_set_actions"):
+                event._set_actions(self)
 
     @property
     def tables_with_relations(self):

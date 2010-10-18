@@ -492,30 +492,15 @@ class Field(object):
 
     def set_kw(self, key, value):
 
-        application = self.table.database.application
-        zodb = application.aquire_zodb()
-
         if key not in self.all_updatable_kw:
             raise ValueError("%s not allowed to be added or modified" % key)
 
-        connection = zodb.open()
-
-        root = connection.root()
-        field_params = root["tables"][self.table.name]["fields"][self.name]["params"]
-        try:
-            field_params[key] = value
+        database = self.table.database
+        database.code_repr_export(uuid_name = True)
+        with util.FileLock(database.get_file_path()) as file_lock:
+            self.kw[key] = value
             setattr(self, key, value)
-        except Exception, e:
-            transaction.abort()
-            zodb.close()
-            raise
-        else:
-            transaction.commit()
-        finally:
-            connection.close()
-
-        zodb.close()
-        application.get_zodb(True)
+            database.code_repr_export()
 
 
     def diff(self, other):
@@ -636,6 +621,7 @@ class Field(object):
             table.max_field_id = max(table.max_field_id, self.field_id)
 
         table.fields[self.name] = self
+        table.field_list.append(self)
         if not table.persisted:
             table.field_order.append(self.name)
         table.add_relations()

@@ -38,7 +38,7 @@ import custom_exceptions
 import search
 import resultset
 import tables
-from util import split_table_fields
+from util import split_table_fields, FileLock
 from fields import ForeignKey, Integer
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
@@ -59,6 +59,7 @@ class Database(object):
         self.status = "updating"
 
         self.kw = kw
+        self.metadata = None
 
         self.connection_string = kw.get("connection_string", None)
         if self.connection_string:
@@ -110,7 +111,8 @@ class Database(object):
         self.zodb_tables_init()
         self.application.Session = self.Session
 
-        self.load_from_persist()
+        with FileLock(self.get_file_path()) as file_lock:
+            self.load_from_persist()
         self.status = "active"
 
 
@@ -293,6 +295,7 @@ class Database(object):
         table._add_field_no_persist(relation)
 
 
+
         ##add title events
 
         if table.title_field:
@@ -327,69 +330,62 @@ class Database(object):
     def persist(self):
 
         self.status = "updating"
-        zodb = self.application.aquire_zodb()
 
-        connection = zodb.open()
-        try:
+        for table in self.tables.values():
+            if not self.logging_tables:
+                ## FIXME should look at better place to set this
+                table.kw["logged"] = False
+                table.logged = False
+            if table.logged and "_log_%s" % table.name not in self.tables.iterkeys() :
+                self.add_table(self.logged_table(table))
 
-            ## add logging tables
-            for table in self.tables.values():
-                if not self.logging_tables:
-                    ## FIXME should look at better place to set this
-                    table.kw["logged"] = False
-                    table.logged = False
-                if table.logged and "_log_%s" % table.name not in self.tables.iterkeys() :
-                    self.add_table(self.logged_table(table))
+        for table in self.tables.itervalues():
+            table.add_foreign_key_columns()
 
-            for table in self.tables.values():
-                if not table.persisted:
-                    table.persist(connection)
 
-            for table in self.tables.itervalues():
-                table.persist_foreign_key_columns(connection)
-
-            for table in self.tables.values():
-                if not table.persisted:
-                    table.set_field_order(connection)
-
-            self.update_sa(True)
-            self.code_repr_export(uuid_name = True)
+        self.update_sa(True)
+        self.code_repr_export(uuid_name = True)
+        with FileLock(self.get_file_path()) as file_lock:
             self.metadata.create_all(self.engine)
+            self.persisted = True
             self.code_repr_export()
+            self.load_from_persist(True)
 
-        except Exception, e:
-            transaction.abort()
-            raise
-        else:
-            transaction.commit()
-        finally:
-            connection.close()
-
-
-        self.fields_to_persist = []
-        self.persisted = True
-
-        self.status = "updating"
-
-        zodb.close()
-        self.application.get_zodb(True)
-
-        self.load_from_persist(True)
-
-    def code_repr_export(self, uuid_name = False):
+    def get_file_path(self, uuid_name = False):
 
         if uuid_name:
             file_name = "generated_schema-%s.py" % uuid.uuid1()
         else:
             file_name = "generated_schema.py"
 
-        file_save = os.path.join(
+        file_path = os.path.join(
             self.application.application_folder,
             "_schema",
             file_name
         )
+        return file_path
 
-        out_file = open(file_save, "w")
+    def code_repr_load(self):
+
+        import _schema.generated_schema as schema
+        reload(schema)
+        database = schema.database
+        database.clear_sa()
+        for table in database.tables.values():
+            table.database = self
+            self.add_table(table)
+
+        self.max_table_id = database.max_table_id
+        self.max_event_id = database.max_event_id
+
+        self.persisted = True
+
+
+    def code_repr_export(self, uuid_name = False):
+
+        file_path = self.get_file_path(uuid_name)
+
+        out_file = open(file_path, "w")
 
         output = [
             "from database.database import Database",
@@ -423,41 +419,16 @@ class Database(object):
 
     def load_from_persist(self, restart = False):
 
-        connection = self.application.zodb.open()
-
-        if connection:
-            self.tables = OrderedDict()
-            self.clear_sa()
-            root = connection.root()
-            for table_name, table in root["tables"].iteritems():
-                fields = []
-                for field_name, field in table["fields"].iteritems():
-                    field_cls = getattr(field_types, field["type"])
-                    fields.append(field_cls(field_name,
-                                            *field["args"],
-                                            **field["params"]))
-
-                rtable = tables.Table(table_name,
-                                            *fields,
-                                            field_order = list(table["field_order"]),
-                                            persisted = True,
-                                            **table["params"])
-
-                for event_type in table["events"]:
-                    action_list = []
-                    for class_name, args, kw in table["events"][event_type]:
-                        ##FIXME find a better way of finding the classes
-                        action_class = getattr(actions, class_name)
-                        action_list.append(action_class(*args, **kw))
-                    event = Event(event_type, *action_list)
-                    event._set_parent(rtable)
-
-                self.add_table(rtable)
-
-
+        self.clear_sa()
+        self.tables = OrderedDict()
+        try:
+            self.code_repr_load()
+        except ImportError:
+            return
+        self.add_relations()
         self.update_sa()
         self.validate_database()
-        connection.close()
+
 
     def add_relations(self):     #not property for optimisation
         self.relations = []
@@ -498,9 +469,6 @@ class Database(object):
                 for column in table.columns.iterkeys():
                     getattr(table.sa_class, column).impl.active_history = True
             for table in self.tables.itervalues():
-                for field in table.fields.itervalues():
-                    if hasattr(field, "event"):
-                        field.event.add_event(self)
                 table.make_schema_dict()
             ## put valid_info tables into info_table
             for table in self.tables.itervalues():
@@ -520,7 +488,8 @@ class Database(object):
 
     def clear_sa(self):
         sa.orm.clear_mappers()
-        self.metadata.clear()
+        if self.metadata:
+            self.metadata.clear()
         for table in self.tables.itervalues():
             table.foriegn_key_columns_current = None
             table.mapper = None
@@ -533,7 +502,6 @@ class Database(object):
                                 delete = [],
                                 change = [])
             table.schema_dict = None
-            table.valid_info_tables = []
             table.valid_core_types = []
 
         self.graph = None

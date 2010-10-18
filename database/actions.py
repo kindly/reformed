@@ -29,9 +29,7 @@ class Action(PersistBaseClass):
 
     def __new__(cls, *arg, **kw):
         obj = PersistBaseClass.__new__(cls, *arg, **kw)
-        obj.event_id = None
-        if "event_id" in kw:
-            obj.event_id = kw.pop("event_id")
+        obj.event_id = kw.pop("event_id", None)
         return obj
 
     def __call__(self, action_state):
@@ -47,7 +45,7 @@ class Action(PersistBaseClass):
         extra = ""
 
         if self._args:
-            arg_list = ["%s" % i for i in self._args]
+            arg_list = ["%s" % repr(i) for i in self._args]
             arg_display = ", ".join(arg_list)
             extra = ", "
         if self._kw:
@@ -82,7 +80,12 @@ class AddRow(Action):
 
         new_obj = database[self.related_table].sa_class()
 
+        print table.events
+        print getattr(object, path[0])
+
         setattr(object, path[0], new_obj)
+
+        print getattr(object, path[0])
         session.add_no_validate(new_obj)
 
 
