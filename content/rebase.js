@@ -283,9 +283,9 @@ REBASE.Bookmark = function (){
         }
         var table_data = REBASE.application_data.bookmarks[bookmark.entity_table];
         if (table_data){
-            bookmark.bookmark = 'u:' + table_data.node.replace('&', '&amp;') + ':edit:id=' + bookmark.entity_id;
+            bookmark.bookmark = table_data.node.replace('&', '&amp;') + ':edit?id=' + bookmark.entity_id;
         } else {
-            bookmark.bookmark = 'u:test.Auto:edit:id=' + bookmark.entity_id + '&amp;table=' + bookmark.entity_table;
+            bookmark.bookmark = 'test.Auto:edit?id=' + bookmark.entity_id + '&amp;table=' + bookmark.entity_table;
         }
         // remove the item if already in the list
         for (var i = 0, n = bookmark_array.length; i < n; i++){
