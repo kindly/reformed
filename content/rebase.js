@@ -386,13 +386,13 @@ REBASE.User = function (){
         var app_data = REBASE.application_data;
         var html;
         if (app_data.__user_id === 0){
-            html = '<a href="#" onclick="node_load(\'d:user.User:login\',this);return false;">Log in</a>';
+            html = '<a href="#" onclick="node_load(\'d@user.User:login\',this);return false;">Log in</a>';
         } else {
             var impersonate = '';
             if (app_data.__real_user_id && app_data.__real_user_id != app_data.__user_id){
-                impersonate = ' <a href="#" onclick="node_load(\':user.Impersonate:revert\',this);return false;">revert to ' + app_data.__real_username + '</a>';
+                impersonate = ' <a href="#" onclick="node_load(\'@user.Impersonate:revert\',this);return false;">revert to ' + app_data.__real_username + '</a>';
             }
-            html = app_data.__username + ' <a href="#" onclick="node_load(\':user.User:logout\',this);return false;">Log out</a>' + impersonate;
+            html = app_data.__username + ' <a href="#" onclick="node_load(\'@user.User:logout\',this);return false;">Log out</a>' + impersonate;
         }
         $('#user_login').html(html);
     }
