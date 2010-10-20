@@ -875,7 +875,7 @@ REBASE.Node = function (){
         var args = arg.split('&');
         var x;
         var s;
-        for (var i=0; i<args.length; i++){
+        for (var i = 0; i < args.length; i++){
             x = args[i];
             s = x.split('=');
             if (s.length == 2){
@@ -891,124 +891,130 @@ REBASE.Node = function (){
          *  { node, type, command, url_data, node_data, layout_id, form_data, secure }
          *  or false if an error occurs
          */
-        console_log(node_string);
-        var error_msg = '';
-        var decode = {};
-        var split = node_string.split(':');
-        var key;
+        console_log('node: ' + node_string);
 
-        // node
-        decode.node = split[1];
-        // $ is shorthand for current node.
-        if (decode.node == '$'){
-            decode.node = split[1] = global_current_node_name;
-        }
-
-        // check enough info
-        if (split.length < 2){
-            error_msg = 'Invalid node data.\n\nNot enough arguments.';
-            REBASE.Dialog.dialog('Application Error', error_msg);
+        function decode_error(error_msg){
+            REBASE.Dialog.error(error_msg);
             return false;
         }
 
-        //command
-        if (split.length > 2){
-            decode.command = split[2];
-            // if the command starts with a underscore we don't want
-            // to trigger the command from a url change as this can
-            // let dangerous commands be sent via urls
-            decode.secure = (decode.command.substring(0,1) == '_');
-        } else {
-            decode.command = null;
-            decode.secure = false;
+        if (typeof node_string != 'string'){
+            return decode_error('Invalid node string requested.\n(wrong type)\n' + node_string);
         }
+
+        var decode = {};
+        decode.node_string = node_string;
         decode.form_data = [];
+
+        // chop up the string
+        // url string
+        var split = node_string.split('?', 2);
+        var part_url = split[1];
+        // command
+        split = split[0].split(':');
+        if (split.length > 2){
+            return decode_error('Invalid node string requested.\n(more than one : in node string)\n' + node_string);
+        }
+        decode.command = split[1] ? split[1] : '';
+        // node
+        split = split[0].split('@');
+        var part_flags;
+        switch (split.length){
+            case 1:
+                decode.node = split[0];
+                break;
+            case 2:
+                part_flags = split[0];
+                decode.node = split[1];
+                break;
+            default:
+                return decode_error('Invalid node string requested.\n(more than one @ in node string)\n' + node_string);
+        }
+        // FLAGS
+        // The flags are used to indicate
+        // the actions that the node call should perform.
+        var flags = {};
+        if (part_flags){
+            split = part_flags.split('');
+            for (var i = 0; i < split.length; i++){
+                switch (split[i]){
+                    case 'a':
+                        // authenticate
+                        flags.authenticate = true;
+                        break;
+                    case 'c':
+                        // confirm
+                        flags.confirm_action = true;
+                        break;
+                    case 'd':
+                        // open as dialog
+                        flags.dialog = true;
+                        break;
+                    case 'f':
+                        // send form data
+                        flags.form_data = true;
+                        // get any form data
+                        var $obj = $(item);
+                        $obj = $obj.parents('div.INPUT_FORM');
+                        var form_data = $obj.data('command')('get_form_data');
+                        // set the form data
+                        if (form_data){
+                            decode.form_data.push(form_data);
+                        } else {
+                            // an error occurred on the form so we don't want to continue.
+                            return decode_error('Error getting form data.');
+                        }
+                        break;
+                    default:
+                        return decode_error('Invalid flag in node string\n' + node_string);
+                }
+            }
+        } else if (part_flags === undefined){
+            flags.update = true;
+        }
+        decode.flags = flags;
+
+        // $ is shorthand for current node.
+        if (decode.node == '$'){
+            decode.node = global_current_node_name;
+            decode.node_string = decode.node_string.replace('$', global_current_node_name);
+        }
+
+        // if the command starts with a underscore we don't want
+        // to trigger the command from a url change as this can
+        // let dangerous commands be sent via urls
+        decode.secure = (decode.command && decode.command.substring(0,1) == '_');
+
+        decode.node_data = global_node_data;
         // url data converted to a hash
-        if (split.length>3){
-            var url_data = convert_url_string_to_hash(split[3]);
+        if (part_url){
+            var url_data = convert_url_string_to_hash(part_url);
             if (target_form){
                 decode.form_data.push({form : target_form, data : url_data});
             } else if (url_data.form){
                 decode.form_data.push({form : url_data.form, data : url_data});
             } else {
-                decode.url_data = url_data;
-            }
-        } else{
-            decode.url_data = {};
-        }
-
-        decode.node_data = global_node_data;
-
-        // if we have any extra node data we add it but
-        // don't overwrite anything in the url.
-        // I'm not sure if this is the best thing to do
-        // but it is currently needed for the bookmarks to work correctly.
-        for (key in decode.url_data){
-            decode.node_data[key] = decode.url_data[key];
-        }
-
-        // FLAGS
-        // The flags are used to indicate
-        // the actions that the node call should perform.
-        var flag_data = split[0];
-        var flags = {};
-        for (var i = 0; i < flag_data.length; i++){
-            switch (flag_data.charAt(i)){
-                case '/':
-                    // ignore this
-                    break;
-                case 'a':
-                    // authenticate
-                    flags.authenticate = true;
-                    break;
-                case 'c':
-                    // confirm
-                    flags.confirm_action = true;
-                    break;
-                case 'd':
-                    // open as dialog
-                    flags.dialog = true;
-                    break;
-                case 'f':
-                    // send form data
-                    flags.form_data = true;
-                    // get any form data
-                    var $obj = $(item);
-                    $obj = $obj.parents('div.INPUT_FORM');
-                    var form_data = $obj.data('command')('get_form_data');
-                    // set the form data
-                    if (form_data){
-                        decode.form_data.push(form_data);
-                    } else {
-                        // an error occurred on the form so we don't want to continue.
-                        return false;
-                    }
-                    break;
-                case 'u':
-                    // update address bar
-                    if (decode.secure){
-                        error_msg = 'Invalid node data.\n\nCannot update on a secure command.';
-                        REBASE.Dialog.dialog('Application Error', error_msg);
-                        return false;
-                    }
-                    flags.update = true;
-                    break;
-                default:
-                    error_msg = 'Invalid node flag ' + flag_data.charAt(i);
-                    REBASE.Dialog.dialog('Application Error', error_msg);
-                    return false;
+                // if we have any extra node data we add it but
+                // don't overwrite anything in the url.
+                // I'm not sure if this is the best thing to do
+                // but it is currently needed for the bookmarks to work correctly.
+                for (key in url_data){
+                    decode.node_data[key] = url_data[key];
+                }
             }
         }
-        // if we are doing an update we cannot pass form data
-        // as we loose the refering item.  Throw an error
-        if (flags.update && (flags.form_data || flags.confirm_action)){
-            error_msg = 'Cannot process request.\n\nTrying to update address to a node with form data or that needs confirmation.';
-            REBASE.Dialog.dialog('Application Error', error_msg);
-            return false;
-        }
-        decode.flags = flags;
-        decode.node_string = split.join(':');
 
+        // if target form but no data the send empty data
+        if (target_form && !decode.form_data.length){
+            decode.form_data.push({form: target_form, data: {}});
+        }
+        // sanity checks
+        if (decode.secure && flags.update){
+            return decode_error('Invalid node request\ncan\'t update a secure command\nadd an @ to start of node string\n' + node_string);
+        }
+        if (!decode.node){
+            return decode_error('Invalid node request\n' + node_string);
+        }
         return decode;
     }
 
@@ -1039,8 +1045,12 @@ REBASE.Node = function (){
          *  gets correct 'address' string and passes to calling function
          */
         var link = $.address.value();
+        // Trim any leading /
+        if (link.substr(0, 1) == '/'){
+            link = link.substr(1, link.length -1);
+        }
         var decode = decode_node_string(link);
-        if (!decode.secure){
+        if (decode && !decode.secure){
             get_node(decode);
         }
     }
@@ -1066,16 +1076,18 @@ REBASE.Node = function (){
                 REBASE.Dialog.close();
                 // get the current page
                 node_string = $.address.value();
+                // Trim any leading /
+                if (node_string.substr(0, 1) == '/'){
+                    node_string = node_string.substr(1, node_string.length -1);
+                }
         }
 
         var decode = decode_node_string(node_string, item, target_form);
         if (!decode){
             return false;
         }
-
         if (decode.flags.update &&
-            $.address.value() != '/' + decode.node_string &&
-            $.address.value() != decode.node_string){
+            $.address.value() != '/' + decode.node_string){
 
             // Sets the address which then forces a page load.
             $.address.value(decode.node_string);
@@ -1093,7 +1105,7 @@ REBASE.Node = function (){
     function is_update_node(node_string){
         // check if this is an update node_string
         // This is a fairly poor check at the moment.
-        if (node_string.substring(0,1) == 'u' || node_string.substring(1,2) == 'u'){
+        if (node_string && node_string.split('?')[0].split('@').length == 2){
             return true;
         } else {
             return false;
