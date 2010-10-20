@@ -297,9 +297,6 @@ class NodeToken(object):
                 node_string += ':'
             node_string += link_data
         # if this is not a special command make it an update node
-        # TODO this can be improved.
-        if node_string not in ['RELOAD', 'CLOSE', 'BACK']:
-            node_string = 'u:%s' % node_string
         self._set_action('redirect', link = node_string, node_data = node_data)
 
     def redirect_back(self):
@@ -625,9 +622,12 @@ class NodeManager(object):
             if self.current_node:
                 node = node.replace('$', self.current_node)
             # make the item an update link or use supplied flags
-            flags = data.get('flags', 'u')
-            # store updated node
-            data['node'] = '%s:%s' % (flags, node)
+            # and store updated node
+            flags = data.get('flags')
+            if flags:
+                data['node'] = '%s@%s' % (flags, node)
+            else:
+                data['node'] = node
         if 'menu' in data:
             # adding this item to a sub menu.
             master_name = data['menu']
