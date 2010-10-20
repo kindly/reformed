@@ -160,8 +160,8 @@ REBASE.FormControls = function(){
 
     function result_image(item, value){
         var size;
-        var link_node = "u:" + REBASE.application_data.bookmarks[local_row_data.entity].node;
-        link_node += ":edit:__id=" + local_row_data.__id;
+        var link_node = "" + REBASE.application_data.bookmarks[local_row_data.entity].node;
+        link_node += ":edit?__id=" + local_row_data.__id;
         if (item.size){
             size = '.' + item.size;
         } else {
