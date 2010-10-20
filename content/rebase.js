@@ -1183,7 +1183,7 @@ REBASE.Job = function(){
         }
         // set data refresh if job not finished
         if (!data.data || !data.data.end){
-            var node_string = "/:" + node + ":_status:id=" + data.data.id;
+            var node_string = '@' + node + ":_status?id=" + data.data.id;
             status_timer = setTimeout(function (){
                                           REBASE.Node.load_node(node_string);
                                       }, 1000);
