@@ -66,7 +66,7 @@ function init(){
     // also if you are auto logged in etc
     var url = $.address.value();
     if (url == '/'){
-        node_load('d:user.User:login:');
+        node_load('user.User:login');
     }
 }
 
