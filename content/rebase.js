@@ -585,8 +585,10 @@ REBASE.Dialog = function (){
     var dialog_decode;
     var $dialog_box;
     var $system_dialog_box;
-    var is_setup = false;
     var is_open = false;
+    var error_is_open = false;
+    var dialog_queue = [];
+    var error_queue = [];
     var process_html = REBASE.Form.process_html;
 
     function setup(){
@@ -594,14 +596,15 @@ REBASE.Dialog = function (){
         // dialog box
         $dialog_box = $('<div id="dialog_box"></div>');
         $('body').append($dialog_box);
+        // error box
+        $error_dialog_box = $('<div id="error_dialog_box"></div>');
+        $('body').append($error_dialog_box);
         // system dialog box
         $system_dialog_box = $('<div id="system_dialog_box"></div>');
         $('body').append($system_dialog_box);
-
-        is_setup = true;
     }
 
-    function show_dialog($dialog, title){
+    function show_dialog($dialog, title, close_fn){
         // Show the dialog.  Unfortunatly the dialog appears to
         // lack some functionality so we have to manually shrink
         // it if it is too big.  We also need to centre it.
@@ -612,6 +615,9 @@ REBASE.Dialog = function (){
         // content is sized correctly.
         $dialog.dialog('destroy');
         var options = {width: 'auto', height: 'auto', modal: true, title: title};
+        if (close_fn){
+            options['close'] = close_fn;
+        }
         $dialog.dialog(options);
         var $container = $dialog.parent();
         var c_height = $container.height();
@@ -632,10 +638,50 @@ REBASE.Dialog = function (){
                      'left':Math.floor((width - c_width + CONFIG.DIALOG_BORDER_WIDTH) / 2)});
     }
 
-    function open(title, data, no_processing){
-        if (!is_setup){
-            setup();
+    function dialog(title, data, no_processing){
+        // If no dialog/error is showing, show dialog.
+        // Otherwise put it in a queue.
+        if (!is_open && !error_is_open){
+            open(title, data, no_processing);
+        } else {
+            dialog_queue.push([title, data, no_processing]);
         }
+    }
+
+    function error(error_msg){
+        // replace \n
+        error_msg = error_msg.replace(/\n/g, '<br />');
+        // Show error if non showing, else queue.
+        if (!error_is_open){
+            open_error(error_msg);
+        } else {
+            error_queue.push(error_msg);
+        }
+    }
+
+    function show_waiting(){
+        // Show next queued dialog.
+        if (dialog_queue.length){
+            var request = dialog_queue.shift();
+            open(request[0], request[1], request[2]);
+        } else {
+            is_open = false;
+        }
+    }
+
+    function show_waiting_error(){
+        // show any queued errors then dialogs.
+        if (error_queue.length){
+            var request = error_queue.shift();
+            open_error(request);
+        } else {
+            error_is_open = false;
+            // show any waiting dialogs
+            show_waiting();
+        }
+    }
+
+    function open(title, data, no_processing){
         // If we have sent a string as data then we just want
         // to process it for any markdown and display it.
         // If it is form data then we want to process it as a form.
@@ -651,23 +697,28 @@ REBASE.Dialog = function (){
 
             $dialog_box.input_form(form, form_data);
         }
-        show_dialog($dialog_box, title);
+        show_dialog($dialog_box, title, function (){show_waiting();});
         // focus first enabled input
         REBASE.Form.focus($dialog_box.find(':input:enabled').first());
         is_open = true;
     }
 
+    function open_error(error_msg){
+        // Show the error dialog.
+        $error_dialog_box.html(error_msg);
+        error_is_open = true;
+        show_dialog($error_dialog_box, 'Error', function (){show_waiting_error();});
+    }
+
     function close(){
+        // Remote close call.
         if (is_open){
             $dialog_box.dialog('close');
-            is_open = false;
         }
     }
 
     function confirm_action(decode, title, message){
-        if (!is_setup){
-            setup();
-        }
+        // Show the confirm dialog.
         dialog_decode = decode;
         var $form = $('<div class="INPUT_FORM"></div>');
         // clear any form data
@@ -681,6 +732,8 @@ REBASE.Dialog = function (){
     }
 
     function confirm_action_return(result){
+        // Event called confirm dialog has been closed by button press.
+        // TODO check works with ESC and X.
         $system_dialog_box.dialog('close');
         if (result){
             dialog_decode.flags.confirm_action = false;
@@ -688,10 +741,15 @@ REBASE.Dialog = function (){
         }
     }
 
+    setup();
+
     // exported functions
     return {
         'dialog' : function (title, data, no_processing){
-            open(title, data, no_processing);
+            dialog(title, data, no_processing);
+        },
+        'error' : function (error_msg){
+            error(error_msg);
         },
         'close' : function(){
             close();
