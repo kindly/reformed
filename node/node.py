@@ -157,32 +157,6 @@ class Node(object):
     def check_permissions(self):
         return authenticate.check_permission(self.permissions)
 
-
-    def build_node(self, title, command, data = '', node = None):
-        if not node:
-            node = self.name
-        new_node = 'n:%s:%s:%s' % (node, command, data)
-        if self.extra_data:
-            if data:
-                new_node += '&%s' % self.build_url_string_from_dict(self.extra_data)
-            else:
-                new_node += self.extra_data
-        if title:
-             new_node = '%s|%s' % (new_node, title)
-        return new_node
-
-
-    def build_function_node(self, title, function, data = '', command = ''):
-        new_node = 'd:%s:%s:%s' % (function, command, data)
-        if self.extra_data:
-            if data:
-                new_node += '&%s' % self.build_url_string_from_dict(self.extra_data)
-            else:
-                new_node += self.build_url_string_from_dict(self.extra_data)
-        if title:
-             new_node = '%s|%s' % (new_node, title)
-        return new_node
-
     def build_url_string_from_dict(self, dict):
         # returns a url encoded string of a dict
         # FIXME not safe needs proper encodings

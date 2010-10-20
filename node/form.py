@@ -447,7 +447,6 @@ class Form(object):
         if is_main_form and id:
             node_token.bookmark = dict(
                 table_name = table,
-                bookmark_string = node.build_node('', 'view', 'id=%s' %  id),
                 entity_id = id
             )
 
@@ -534,12 +533,6 @@ class Form(object):
                               base_link = base_link)
 
         node_token.form(self)
-
-##        node_token.bookmark = dict(
-##            table_name = table,
-##            bookmark_string = node.build_node('', 'view', 'id=%s' %  id),
-##            entity_id = id
-##        )
 
         session.close()
 
