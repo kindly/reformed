@@ -98,7 +98,7 @@ class User(TableNode):
         password('newpassword'),
         password('newpassword2'),
         buttons('about_me',
-               [['Save Changes', 'user.User:_save_password_change:'],
+               [['Save Changes', 'user.User:_save_password_change'],
                ['cancel', 'BACK']]),
         layout('box_end'),
         params = {"form_type": "action"}
@@ -117,7 +117,7 @@ class User(TableNode):
         input('login_name', label = 'username:'),
         password('password'),
         checkbox('remember_me', label = 'remember me'),
-        button('f:user.User:login:', label = 'Log in'),
+        button('f@user.User:login', label = 'Log in'),
         layout('box_end'),
 
         form_type = "action",
@@ -144,7 +144,7 @@ class User(TableNode):
         layout('box_end'),
 
         buttons('about_me',
-               [['Save Changes', 'user.User:_save_about_me:'],
+               [['Save Changes', 'user.User:_save_about_me'],
                ['cancel', 'BACK']]),
 
         message('about_me', 'About Me'),
@@ -156,10 +156,10 @@ class User(TableNode):
     listing = form(
         result_link('title'),
         info('summary', data_type = 'info'),
-        result_link_list([['Edit', 'u:user.User:edit'],
-                            ['Delete', ':user.User:_delete'],
-                            ['Change Password', 'd:user.User:change_other_password'],
-                            ['Impersonate', ':user.Impersonate:_impersonate']]),
+        result_link_list([['Edit', 'user.User:edit'],
+                            ['Delete', 'user.User:_delete'],
+                            ['Change Password', 'd@user.User:change_other_password'],
+                            ['Impersonate', '@user.Impersonate:_impersonate']]),
         form_type = "results",
         layout_title = "results",
     )
@@ -227,7 +227,7 @@ class User(TableNode):
     def change_password(self, node_token, message = None):
         if not message:
             message = "Change your password"
-        data = dict(__buttons = [['change password', 'user.User:_save_change_password:'],
+        data = dict(__buttons = [['change password', 'f@user.User:_save_change_password'],
                                  ['cancel', 'BACK']],
                     __message = message)
 
@@ -259,7 +259,7 @@ class User(TableNode):
         user = r.search_single_data("user", where = where, fields = ['name'])['name']
         if not message:
             message = "Change password for user %s" % user
-        data = dict(__buttons = [['change password', 'f:user.User:_save_change_other_password:'],
+        data = dict(__buttons = [['change password', 'f@user.User:_save_change_other_password'],
                                  ['cancel', 'CLOSE']],
                     __message = message,
                     __id = __id)
@@ -362,12 +362,12 @@ class UserAdmin(TableNode):
     form_params =  {"form_type": "action"}
     main = form(
         layout('text', text = 'Users {users}'),
-        link('d:user.User:new', label = 'add user'),
-        link('u:user.User:list', label = 'list users'),
+        link('d@user.User:new', label = 'add user'),
+        link('user.User:list', label = 'list users'),
         layout('spacer'),
         layout('text', text = 'User Groups {user_groups}'),
-        link('d:user.UserGroup:new', label = 'add user group'),
-        link('u:user.UserGroup:list', label = 'list user groups'),
+        link('d@user.UserGroup:new', label = 'add user group'),
+        link('user.UserGroup:list', label = 'list user groups'),
         layout('spacer'),
 ##        layout('text', text = 'Permissions {permissions}'),
 ##        button_link('bug.Permission:new', label = 'add permission'),
