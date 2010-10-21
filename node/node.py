@@ -177,7 +177,7 @@ class Node(object):
                 result = r.search_single_data("bookmarks",
                                          "user_id = ? and  _core_id = ?",
                                          session = session,
-         node_token.bookmark.get("title")                                fields = ['_core_entity.title',  'entity_table', '_core_id', 'accessed_date'],
+                                         fields = ['_core_entity.title',  'entity_table', '_core_id', 'accessed_date'],
                                          values = [user_id, node_token.bookmark["_core_id"]])
                 result["accessed_date"] = util.convert_value(datetime.datetime.now())
                 # update
