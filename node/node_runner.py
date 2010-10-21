@@ -328,7 +328,7 @@ class NodeToken(object):
 
     def general_error(self, error):
         """ Helper function send error to front end. """
-        self._set_action('general_error', data = error)
+        self._set_action('error', data = error)
 
     def message(self, message):
         """ Helper function send error to front end. """
@@ -701,6 +701,7 @@ class NodeRunner(object):
         self.command_queue = []
         self.output = [] # this will be returned
         self.auto_login_cookie = None
+        self.node_name = None
 
     def add_command(self, data):
         self.command_queue.append(data)
@@ -716,6 +717,7 @@ class NodeRunner(object):
         node_token = NodeToken(data, self.application)
 
         node = data.get('node')
+        self.node_name = node
         self.run(node, node_token)
         self.output.extend(node_token.output())
 

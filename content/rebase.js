@@ -1310,9 +1310,14 @@ REBASE.Job = function(){
             case 'delete':
                 // FIXME not implemented
                 break;
-            case 'general_error':
+            case 'error':
                 message = packet.data;
-                REBASE.Dialog.dialog('Error', message);
+                var error_type = packet.error_type;
+                var error_title = packet.error_title;
+                if (!error_title){
+                    error_title = 'Error';
+                }
+                REBASE.Dialog.dialog(error_title, message);
                 break;
             case 'message':
                 message = packet.data;
