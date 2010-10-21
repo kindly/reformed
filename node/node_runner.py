@@ -419,7 +419,7 @@ class NodeToken(object):
             global_session.session['reset'] = False
             global_session.session.persist()
 
-        self._added_responses.append(dict(type = 'node', data = info))
+        self._added_responses.append(info)
       #  log.debug('returned data\n%s\n----- end of node processing -----' %
       #            pprint.pformat(self._added_responses))
         return self._added_responses
@@ -427,7 +427,7 @@ class NodeToken(object):
     def add_extra_response_function(self, function, data = None):
         #self._added_responses.append(dict(type = 'node', data = dict(action = action, data = data)))
         response = dict(action = 'function', function = function, data = data)
-        self._added_responses.append(dict(type = 'node', data = response))
+        self._added_responses.append(response)
 
     def _bookmark_list(self, user_id, limit = 100):
 

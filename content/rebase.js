@@ -1252,50 +1252,50 @@ REBASE.Job = function(){
 
         var message;
 
-        if (packet.data === null){
+        if (packet === null){
             console_log("NULL DATA PACKET");
             return;
         }
 
         var root = 'main'; //FIXME
 
-        var title = packet.data.title;
+        var title = packet.title;
         if (title){
             $.address.title(title);
         }
 
-        var sent_node_data = packet.data.node_data;
+        var sent_node_data = packet.node_data;
         if (sent_node_data){
-            REBASE.Node.set_node_data(packet.data.node, sent_node_data);
+            REBASE.Node.set_node_data(packet.node, sent_node_data);
         }
 
-        var user = packet.data.user;
+        var user = packet.user;
         if (user){
             REBASE.User.update(user);
         }
 
-        var bookmark = packet.data.bookmark;
+        var bookmark = packet.bookmark;
         if (bookmark){
            REBASE.Bookmark.process(bookmark);
         }
 
         var data;
-        switch (packet.data.action){
+        switch (packet.action){
             case 'redirect':
-                var link = packet.data.link;
+                var link = packet.link;
                 if (link){
                     REBASE.Node.load_node(link);
                 }
                 break;
             case 'html':
-                $('#' + root).html(packet.data.data.html);
+                $('#' + root).html(packet.data.html);
                 break;
             case 'form':
             case 'dialog':
-                REBASE.Layout.update_layout(packet.data);
+                REBASE.Layout.update_layout(packet);
                 break;
             case 'function':
-                REBASE.Functions.call(packet.data['function'], packet.data.data);
+                REBASE.Functions.call(packet['function'], packet.data);
                 break;
             case 'save_error':
                 // FIXME not implemented
@@ -1307,11 +1307,11 @@ REBASE.Job = function(){
                 // FIXME not implemented
                 break;
             case 'general_error':
-                message = packet.data.data;
+                message = packet.data;
                 REBASE.Dialog.dialog('Error', message);
                 break;
             case 'message':
-                message = packet.data.data;
+                message = packet.data;
                 REBASE.Dialog.dialog('Message', message);
                 break;
             case 'forbidden':
@@ -1319,10 +1319,10 @@ REBASE.Job = function(){
                 REBASE.Dialog.dialog('Forbidden', message);
                 break;
             case 'status':
-                job_processor_status(packet.data.data, packet.data.node, root);
+                job_processor_status(packet.data, packet.node, root);
                 break;
             default:
-                REBASE.Dialog.dialog('Error', 'Action `' + packet.data.action + '` not recognised');
+                REBASE.Dialog.dialog('Error', 'Action `' + packet.action + '` not recognised');
                 break;
         }
     }
