@@ -212,6 +212,13 @@ REBASE.Form = function (){
     function focus($input){
         // focus the element and
         // if select select all.
+
+        // If the element is not in view then don't focus.
+        var page_height = $(window).height();
+        var element_bottom = $input.offset().top + $input.outerHeight();
+        if (element_bottom  > page_height){
+            return;
+        }
         var value = $input.val();
         if (value){
             var length = value.length;
