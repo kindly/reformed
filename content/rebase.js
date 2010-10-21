@@ -807,7 +807,7 @@ REBASE.Functions = function (){
 
     function debug_form_info(){
         /* Output the current form cache information */
-        var info = REBASE.Layout.debug_form_info();
+        var info = REBASE.FormProcessor.debug_form_info();
         $('#main').empty();
         $('#main').append('<p><b>Cached form info</b><div id="treeview_control">		<a title="Collapse the entire tree below" href="#"><img src="jquery/images/minus.gif" /> Collapse All</a> | <a title="Expand the entire tree below" href="#"><img src="jquery/images/plus.gif" /> Expand All</a> | <a title="Toggle the tree below, opening closed branches, closing open branches" href="#">Toggle All</a></div></p>');
         var $treeview = $(REBASE.Utils.treeview_hash(info)).treeview({collapsed: true, control : '#treeview_control'});
@@ -840,7 +840,7 @@ REBASE.Functions = function (){
 
     // Clear form cache.
     functions.clear_form_cache = function (){
-        REBASE.Layout.clear_form_cache();
+        REBASE.FormProcessor.clear_form_cache();
     };
 
     // Make menu.
@@ -1379,6 +1379,117 @@ REBASE.Job = function(){
 
 
 /*
+ *      (\  }\   (\  }\   (\  }\
+ *     (  \_('> (  \_('> (  \_('>   FORM DATA PROCESSOR
+ *     (__(=_)  (__(=_)  (__(=_)
+ *   jgs  -"=      -"=      -"=
+ */
+
+REBASE.FormProcessor = function(){
+    /* FormProcessor processes form data sent by the
+     * backend.  Cache form data where possible.
+     * Normailises forms etc.
+     */
+
+    // form data is kept here key is 'node_name|form_name'
+    var form_data_cache = {};
+    var form_data_cache_info = {};
+
+    function clear_form_cache(){
+        // Clear the form cache.
+        form_data_cache = {};
+        form_data_cache_info = {};
+        console_log('FORM CACHE deleted');
+    }
+
+    function form_data_normalise(form_data, node){
+        /* generally clean up the form data to
+         * make things easier for us later on.
+         * creates .items hash for quick reverse lookups etc.
+         */
+
+        form_data.node = node;
+        // make hash of the fields
+        form_data.items = {};
+        for (var i = 0, n = form_data.fields.length; i < n; i++){
+            var field = form_data.fields[i];
+            field.index = i;
+            if (field.name){
+                form_data.items[field.name] = field;
+            }
+            if (!field.control){
+                field.control = 'normal';
+            }
+            // get out the thumb field if one exists
+            // makes life easier later on
+            // TODO do we still use this?
+            if (field.control == 'thumb'){
+                form_data.thumb = field;
+            }
+        }
+        return form_data;
+    }
+
+    function process_form_data(form_data, node){
+        /* If we have a suitable version in the form cache
+         * then just return that else normalise the form.
+         */
+        var cache_name;
+        if (form_data.cache_form !== undefined){
+            cache_name = form_data.cache_node + '|' + form_data.cache_form;
+            return form_data_cache[cache_name];
+        }
+        form_data = form_data_normalise(form_data, node);
+        // form caching
+        cache_name = node + '|' + form_data.name;
+        if (!form_data.version){
+            // remove from cache if it exists
+            if (form_data_cache_info[node] !== undefined){
+                delete form_data_cache_info[node][form_data.name];
+            }
+        } else {
+            // store form in cache
+            form_data_cache[cache_name] = form_data;
+            if (!form_data_cache_info[node]){
+                form_data_cache_info[node] = {};
+            }
+            form_data_cache_info[node][form_data.name] = form_data.version;
+        }
+        return form_data;
+    }
+
+    function process_form_data_all(forms_data, node){
+        var full_form_data = {};
+        var form_data;
+        for (var form in forms_data){
+            form_data = {};
+            form_data.data = forms_data[form].data;
+            form_data.paging = forms_data[form].paging;
+            form_data.form = process_form_data(forms_data[form].form, node);
+            full_form_data[form] = form_data;
+        }
+        return full_form_data;
+    }
+
+    // exported functions
+    return {
+        'process' : function (form_data, node_data){
+            return process_form_data_all(form_data, node_data);
+        },
+        'debug_form_info' : function (){
+            return form_data_cache;
+        },
+        'clear_form_cache' : function (node_name){
+            clear_form_cache();
+        },
+        'get_form_cache_data' : function (node_name){
+            return form_data_cache_info[node_name];
+        }
+    };
+}();
+
+
+/*
  *           ('>
  *           /))@@@@@.
  *          /@"@@@@@()@
@@ -1419,125 +1530,6 @@ REBASE.Layout = function(){
     var layout_title;
     var $header;
     var $footer;
-
-
-    /*
-     *      (\  }\   (\  }\   (\  }\
-     *     (  \_('> (  \_('> (  \_('>   FORM DATA PROCESSOR
-     *     (__(=_)  (__(=_)  (__(=_)
-     *   jgs  -"=      -"=      -"=
-     */
-
-    var FormProcessor = function(){
-        /* FormProcessor processes form data sent by the
-         * backend.  Cache form data where possible.
-         * Normailises forms etc.
-         */
-
-        // form data is kept here key is 'node_name|form_name'
-        var form_data_cache = {};
-        var form_data_cache_info = {};
-
-        function clear_form_cache(){
-            // Clear the form cache.
-            form_data_cache = {};
-            form_data_cache_info = {};
-            console_log('FORM CACHE deleted');
-        }
-
-        function form_data_normalise(form_data, node){
-            /* generally clean up the form data to
-             * make things easier for us later on.
-             * creates .items hash for quick reverse lookups etc.
-             */
-
-            form_data.node = node;
-            // make hash of the fields
-            form_data.items = {};
-            for (var i = 0, n = form_data.fields.length; i < n; i++){
-                var field = form_data.fields[i];
-                field.index = i;
-                if (field.name){
-                    form_data.items[field.name] = field;
-                }
-                if (!field.control){
-                    field.control = 'normal';
-                }
-                // get out the thumb field if one exists
-                // makes life easier later on
-                // TODO do we still use this?
-                if (field.control == 'thumb'){
-                    form_data.thumb = field;
-                }
-            }
-            return form_data;
-        }
-
-        function process_form_data(form_data, node){
-            /* If we have a suitable version in the form cache
-             * then just return that else normalise the form.
-             */
-            var cache_name;
-            if (form_data.cache_form !== undefined){
-                cache_name = form_data.cache_node + '|' + form_data.cache_form;
-                return form_data_cache[cache_name];
-            }
-            form_data = form_data_normalise(form_data, node);
-            // form caching
-            cache_name = node + '|' + form_data.name;
-            if (!form_data.version){
-                // remove from cache if it exists
-                if (form_data_cache_info[node] !== undefined){
-                    delete form_data_cache_info[node][form_data.name];
-                }
-            } else {
-                // store form in cache
-                form_data_cache[cache_name] = form_data;
-                if (!form_data_cache_info[node]){
-                    form_data_cache_info[node] = {};
-                }
-                form_data_cache_info[node][form_data.name] = form_data.version;
-            }
-            return form_data;
-        }
-
-        function process_form_data_all(forms_data, node){
-            var full_form_data = {};
-            var form_data;
-            for (var form in forms_data){
-                form_data = {};
-                form_data.data = forms_data[form].data;
-                form_data.paging = forms_data[form].paging;
-                form_data.form = process_form_data(forms_data[form].form, node);
-                full_form_data[form] = form_data;
-            }
-            return full_form_data;
-        }
-
-        // exported functions
-        return {
-            'process' : function (form_data, node_data){
-                return process_form_data_all(form_data, node_data);
-            },
-            'debug_form_info' : function (){
-                return form_data_cache;
-            },
-            'clear_form_cache' : function (node_name){
-                clear_form_cache();
-            },
-            'get_form_cache_data' : function (node_name){
-                return form_data_cache_info[node_name];
-            }
-        };
-    }();
-
-
-    /*
-     *      (\  }\   (\  }\   (\  }\
-     *     (  \_('> (  \_('> (  \_('>   LAYOUT FUNCTIONS
-     *     (__(=_)  (__(=_)  (__(=_)
-     *   jgs  -"=      -"=      -"=
-     */
 
 
     function set_layout_title_and_footer(){
@@ -1685,7 +1677,7 @@ REBASE.Layout = function(){
         // retrieve layout data
         var layout_data = packet.layout;
         // Store the form data.
-        forms = FormProcessor.process(packet.data, packet.node);
+        forms = REBASE.FormProcessor.process(packet.data, packet.node);
         layout_title = layout_data.layout_title;
 
         if (layout_data.layout_dialog){
@@ -1713,15 +1705,6 @@ REBASE.Layout = function(){
         },
         'get_layout_id' : function (){
             return layout_id;
-        },
-        'debug_form_info' : function (){
-            return FormProcessor.debug_form_info();
-        },
-        'clear_form_cache' : function (node_name){
-                FormProcessor.clear_form_cache();
-            },
-        'get_form_cache_info' : function (node_name){
-            return FormProcessor.get_form_cache_data(node_name);
         }
     };
 }();
