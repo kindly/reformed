@@ -31,7 +31,7 @@ def make_menu(node_manager):
     node_manager.add_menu(dict(name = 'Debug', menu = 'Admin', title = 'Debug', node = None))
     node_manager.add_menu(dict(menu = 'Debug', title = 'Form Data', function = 'debug_form_info'))
     node_manager.add_menu(dict(menu = 'Debug', title = 'HTML', function = 'debug_html'))
-    node_manager.add_menu(dict(name = 'Test', title = 'Test', node = None))
+    node_manager.add_menu(dict(name = 'Test', title = 'Test', node = None, index = 2))
 
 class Node1(Node):
     main = form(
@@ -267,7 +267,7 @@ class People(EntityNode):
     layout_main_form = 'main'
 
     def make_menu(self, node_manager):
-        node_manager.add_menu(dict(name = 'People', title = 'People', node = '$:list'))
+        node_manager.add_menu(dict(name = 'People', title = 'People', node = '$:list', index = 1))
         node_manager.add_menu(dict(menu = 'People', title = 'New person', node = '$:new'))
 
 class DataLoader(JobNode):

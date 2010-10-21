@@ -23,6 +23,7 @@ import glob
 import os.path
 import inspect
 import urllib
+from operator import itemgetter
 
 from ZODB.PersistentMapping import PersistentMapping
 import transaction
@@ -447,7 +448,9 @@ class NodeToken(object):
         def build_items(items):
             # checks the permissions
             output = []
-            for item in items:
+            # TODO we should just sort the menu when it's created.
+            # sort by index, alpha
+            for item in sorted(sorted(items, key = itemgetter('title')), key = itemgetter('index')):
                 if not authenticate.check_permission(item.get('permissions')):
                     continue
                 menu_item = {}
@@ -615,6 +618,8 @@ class NodeManager(object):
     def add_menu(self, data):
 
         actioned = False
+        if 'index' not in data:
+            data['index'] = 5
         node = data.get('node')
         if node:
             # process the node data

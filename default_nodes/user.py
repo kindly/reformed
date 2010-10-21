@@ -324,8 +324,8 @@ class User(TableNode):
         node_token.auto_login_cookie = 'CLEAR'
 
     def make_menu(self, node_manager):
-        node_manager.add_menu(dict(menu = 'UserAdmin', title = 'List Users', node = '$:list'))
-        node_manager.add_menu(dict(menu = 'UserAdmin', title = 'New User', node = '$:new', flags = 'd'))
+        node_manager.add_menu(dict(menu = 'UserAdmin', title = 'List Users', node = '$:list', index = 2))
+        node_manager.add_menu(dict(menu = 'UserAdmin', title = 'New User', node = '$:new', flags = 'd', index = 2))
 
 class UserGroup(TableNode):
 
@@ -352,8 +352,8 @@ class UserGroup(TableNode):
     table = "user_group"
 
     def make_menu(self, node_manager):
-        node_manager.add_menu(dict(menu = 'UserAdmin', title = 'List User Groups', node = '$:list'))
-        node_manager.add_menu(dict(menu = 'UserAdmin', title = 'New User Group', node = '$:new', flags = 'd'))
+        node_manager.add_menu(dict(menu = 'UserAdmin', title = 'List User Groups', node = '$:list', index = 4))
+        node_manager.add_menu(dict(menu = 'UserAdmin', title = 'New User Group', node = '$:new', flags = 'd', index = 4))
 
 class UserAdmin(TableNode):
 
@@ -395,7 +395,7 @@ class UserAdmin(TableNode):
 
     def make_menu(self, node_manager):
         node_manager.add_menu(dict(name = 'UserAdmin', menu = 'Admin', title = 'User Admin', node = 'user.UserAdmin', permissions = 'UserAdmin'))
-        node_manager.add_menu(dict(name = 'Admin', title = 'Admin', node = None))
+        node_manager.add_menu(dict(name = 'Admin', title = 'Admin', node = None, index = 10))
 
 class Impersonate(Node):
 
