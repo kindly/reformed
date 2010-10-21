@@ -240,8 +240,8 @@ REBASE.Form = function (){
         'HTML_Encode_Clear' : function (arg){
             return HTML_Encode_Clear(arg);
         },
-        'process_html' : function (arg){
-            return process_html(arg);
+        'process_html' : function (text, data, inline){
+            return process_html(text, data, inline);
         },
         'focus' : function ($input){
             return focus($input);
@@ -1292,8 +1292,8 @@ REBASE.Job = function(){
                 break;
             case 'form':
             case 'dialog':
-                 REBASE.Layout.update_layout(packet.data);
-                 break;
+                REBASE.Layout.update_layout(packet.data);
+                break;
             case 'function':
                 REBASE.Functions.call(packet.data['function'], packet.data.data);
                 break;
