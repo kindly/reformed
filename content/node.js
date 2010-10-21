@@ -34,7 +34,7 @@ var node_load;
 
 
 function search_box(){
-    var node = ':test.Search::q=' + $('#search').val();
+    var node = 'test.Search?q=' + $('#search').val();
     node_load(node);
     return false;
 }
