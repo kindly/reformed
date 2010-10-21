@@ -279,13 +279,17 @@ REBASE.Bookmark = function (){
         }
         // stop null bookmarks
         if (!bookmark.title){
-            bookmark.title = 'untitled';
+            if(bookmark['_core_entity.title']){
+                bookmark.title = bookmark['_core_entity.title'];
+            } else {
+                bookmark.title = 'untitled';
+            }
         }
         var table_data = REBASE.application_data.bookmarks[bookmark.entity_table];
         if (table_data){
-            bookmark.bookmark = table_data.node.replace('&', '&amp;') + ':edit?id=' + bookmark.entity_id;
+            bookmark.bookmark = table_data.node.replace('&', '&amp;') + ':edit?__id=' + bookmark._core_id;
         } else {
-            bookmark.bookmark = 'test.Auto:edit?id=' + bookmark.entity_id + '&amp;table=' + bookmark.entity_table;
+            bookmark.bookmark = 'test.Auto:edit?__id=' + bookmark._core_id + '&amp;table=' + bookmark.entity_table;
         }
         // remove the item if already in the list
         for (var i = 0, n = bookmark_array.length; i < n; i++){

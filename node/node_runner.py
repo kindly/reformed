@@ -432,12 +432,14 @@ class NodeToken(object):
     def _bookmark_list(self, user_id, limit = 100):
 
         r = global_session.database
+        session = r.Session()
         bookmarks = r.search("bookmarks",
                              "user_id = ?",
-                             fields = ['title', 'entity_table', 'entity_id', 'accessed_date'],
+                             fields = ['_core_entity.title', 'entity_table', '_core_id', 'accessed_date'],
                              values = [user_id],
                              order_by = "accessed_date",
                              keep_all = False,
+                             session = session,
                              limit = limit).data
         return bookmarks
 

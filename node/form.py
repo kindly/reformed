@@ -371,6 +371,7 @@ class Form(object):
                 form_item.display_page_item(node_token, result, data_out, session)
 
             id = data_out.get('id')
+            _core_id = data_out.get('_core_id')
 
             # set the join data for the form will be returned from the front end
             if is_main_form:
@@ -444,10 +445,11 @@ class Form(object):
         node_token.form(self, title = form_title, layout_title = layout_title, node_data = node_data)
 
         # hack to stop null bookmarks
-        if is_main_form and id:
+        if is_main_form and _core_id:
             node_token.bookmark = dict(
                 table_name = table,
-                entity_id = id
+                title = form_title,
+                _core_id = _core_id
             )
 
         session.close()
