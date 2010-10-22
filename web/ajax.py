@@ -272,7 +272,13 @@ class Worker(object):
             for form_name in data.get('data'):
                 form_data = data.get('data').get(form_name).get('data')
                 if '__array' in form_data:
-                    form_data = form_data.get('__array')[0]
+                    array_data = form_data.get('__array')
+                    if array_data:
+                        form_data = array_data
+                    else:
+                        if not self.quiet:
+                            print "No array data sent"
+                        form_data = {}
                 version = data.get('data').get(form_name).get('form').get('version')
                 self.decode['form'][form_name] = dict(version = version, data = form_data)
             self.decode['node_data'] = data.get('node_data')
