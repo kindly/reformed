@@ -552,8 +552,8 @@ REBASE.Interface = function (){
         $user_area = $('#user_area');
 
         add_side();
-        add_user_bar();
         add_menu();
+        add_user_bar();
         add_logo();
 
         // set options for the panes
