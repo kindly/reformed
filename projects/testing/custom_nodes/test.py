@@ -31,7 +31,7 @@ def make_menu(node_manager):
     node_manager.add_menu(dict(name = 'Debug', menu = 'Admin', title = 'Debug', node = None))
     node_manager.add_menu(dict(menu = 'Debug', title = 'Form Data', function = 'debug_form_info'))
     node_manager.add_menu(dict(menu = 'Debug', title = 'HTML', function = 'debug_html'))
-    node_manager.add_menu(dict(name = 'Test', title = 'Test', node = None))
+    node_manager.add_menu(dict(name = 'Test', title = 'Test', node = None, index = 2))
 
 class Node1(Node):
     main = form(
@@ -142,22 +142,22 @@ class Node2(Node):
 
     main = form(
         text('**Buttons**'),
-        button('u:$:Single+Button', label = 'Single Button'),
-        button_box([['Button Box 1', 'u:$:Button+Box+1'],
-                    ['Button Box 2', 'u:$:Button+Box+2'],
-                    ['Button Box 3', 'u:$:Button+Box+3'],
-                    ['Button Box 4', 'u:$:Button+Box+4'],
-                    ['Button Box 5', 'u:$:Button+Box+5']]),
+        button('$:Single+Button', label = 'Single Button'),
+        button_box([['Button Box 1', '$:Button+Box+1'],
+                    ['Button Box 2', '$:Button+Box+2'],
+                    ['Button Box 3', '$:Button+Box+3'],
+                    ['Button Box 4', '$:Button+Box+4'],
+                    ['Button Box 5', '$:Button+Box+5']]),
         text('**Lists**'),
-        button_link('u:$:Single+Link', label = 'Single Link'),
+        button_link('$:Single+Link', label = 'Single Link'),
         text('List of links using data.'),
         link_list('links'),
         text('List of links using fixed values.'),
-        link_list(values = [['Link List Values 1', 'u:$:Link+List+Values+1'],
-                            ['Link List Values 2', 'u:$:Link+List+Values+2'],
-                            ['Link List Values 3', 'u:$:Link+List+Values+3'],
-                            ['Link List Values 4', 'u:$:Link+List+Values+4'],
-                            ['Link List Values 5', 'u:$:Link+List+Values+5']]),
+        link_list(values = [['Link List Values 1', '$:Link+List+Values+1'],
+                            ['Link List Values 2', '$:Link+List+Values+2'],
+                            ['Link List Values 3', '$:Link+List+Values+3'],
+                            ['Link List Values 4', '$:Link+List+Values+4'],
+                            ['Link List Values 5', '$:Link+List+Values+5']]),
         form_type = "action",
     )
 
@@ -171,11 +171,11 @@ class Node2(Node):
             data = dict(__message = 'clicked: %s' % name)
         else:
             data = {}
-        data['links'] = [['Link List Data 1', 'u:$:Link+List+Data+1'],
-                         ['Link List Data 2', 'u:$:Link+List+Data+2'],
-                         ['Link List Data 3', 'u:$:Link+List+Data+3'],
-                         ['Link List Data 4', 'u:$:Link+List+Data+4'],
-                         ['Link List Data 5', 'u:$:Link+List+Data+5']]
+        data['links'] = [['Link List Data 1', '$:Link+List+Data+1'],
+                         ['Link List Data 2', '$:Link+List+Data+2'],
+                         ['Link List Data 3', '$:Link+List+Data+3'],
+                         ['Link List Data 4', '$:Link+List+Data+4'],
+                         ['Link List Data 5', '$:Link+List+Data+5']]
         self['main'].show(node_token, data)
 
 
@@ -236,16 +236,16 @@ class People(EntityNode):
         table = "people",
         title_field = 'name',
         form_type = "input",
-        form_buttons = [['save image', 'f:$:_save:']],
+        form_buttons = [['save image', 'f@$:_save:']],
     )
 
     phone = form(
         input('telephone.number', label = 'number'),
-        grid_link('telephone.id', label = 'edit', field = 'telephone.id', base_link = 'd:$:_update:', target_form = 'phone_new'),
-        grid_link('telephone.id', label = 'delete', field = 'telephone.id', base_link = ':$:_delete:', target_form = 'phone_new'),
+        grid_link('telephone.id', label = 'edit', field = 'telephone.id', base_link = 'd@$:_update?', target_form = 'phone_new'),
+        grid_link('telephone.id', label = 'delete', field = 'telephone.id', base_link = '@$:_delete?', target_form = 'phone_new'),
         read_only = True,
         form_type = "grid",
-        form_buttons = [['new phone', 'd:$:new:', 'phone_new']],
+        form_buttons = [['new phone', 'd@$:new', 'phone_new']],
     )
 
     phone_new = form(
@@ -255,7 +255,7 @@ class People(EntityNode):
         table = "telephone",
         save_update = 'phone',
         title_field = 'number',
-        form_buttons = [['save', 'f:$:_save:'],
+        form_buttons = [['save', 'f@$:_save'],
                         ['cancel', 'CLOSE']],
         layout_title = 'Phone number',
     )
@@ -267,7 +267,7 @@ class People(EntityNode):
     layout_main_form = 'main'
 
     def make_menu(self, node_manager):
-        node_manager.add_menu(dict(name = 'People', title = 'People', node = '$:list'))
+        node_manager.add_menu(dict(name = 'People', title = 'People', node = '$:list', index = 1))
         node_manager.add_menu(dict(menu = 'People', title = 'New person', node = '$:new'))
 
 class DataLoader(JobNode):
@@ -279,7 +279,7 @@ class DataLoader(JobNode):
   #  permissions = ['LoggedIn']
 
     def make_menu(self, node_manager):
-        node_manager.add_menu(dict(menu = 'Data', title = 'Load Data', node = '$:load:table=colour&file=testing/color.csv'))
+        node_manager.add_menu(dict(menu = 'Data', title = 'Load Data', node = '$:load?table=colour&file=testing/color.csv'))
 
 
 
@@ -289,7 +289,7 @@ class DataGenerate(JobNode):
         text("##Data Generator##"),
         dropdown('table', 'DATA', data_field = 'tables', default = 'people'),
         intbox('number_records', default = 100),
-        button('f:$:_generate:', label = 'Generate'),
+        button('f@$:_generate', label = 'Generate'),
         form_type = "action",
     )
 
@@ -332,7 +332,7 @@ class Truncate(Node):
     main = form(
         text("Truncate table :)"),
         dropdown('table', 'DATA', data_field = 'tables'),
-        button('fc:$:truncate:', label = 'Truncate'),
+        button('fc@$:truncate', label = 'Truncate'),
         form_type = "action",
     )
     completed = form(

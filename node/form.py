@@ -167,7 +167,7 @@ class Form(object):
         if self.form_buttons:
             data_out['__buttons'] = self.form_buttons
         else:
-            data_out['__buttons'] = [['add %s' % self.table, 'f:%s:_save:' % node_token.node_name],
+            data_out['__buttons'] = [['add %s' % self.table, 'f@%s:_save' % node_token.node_name],
                                  ['cancel', 'CLOSE']]
         data_out['__message'] = "Hello, add new %s" % self.table
 
@@ -371,6 +371,7 @@ class Form(object):
                 form_item.display_page_item(node_token, result, data_out, session)
 
             id = data_out.get('id')
+            _core_id = data_out.get('_core_id')
 
             # set the join data for the form will be returned from the front end
             if is_main_form:
@@ -421,8 +422,8 @@ class Form(object):
         if self.form_buttons:
             data_out['__buttons'] = self.form_buttons
         elif '__buttons' not in data_out:
-            data_out['__buttons'] = [['save %s' % self.table, 'f:%s:_save:' % node_token.node_name],
-                                     ['delete %s' % self.table, ':%s:_delete:' % node_token.node_name],
+            data_out['__buttons'] = [['save %s' % self.table, 'f@%s:_save' % node_token.node_name],
+                                     ['delete %s' % self.table, '@%s:_delete' % node_token.node_name],
                                      ['cancel', 'BACK']]
 
 
@@ -444,11 +445,11 @@ class Form(object):
         node_token.form(self, title = form_title, layout_title = layout_title, node_data = node_data)
 
         # hack to stop null bookmarks
-        if is_main_form and id:
+        if is_main_form and _core_id:
             node_token.bookmark = dict(
                 table_name = table,
-                bookmark_string = node.build_node('', 'view', 'id=%s' %  id),
-                entity_id = id
+                title = form_title,
+                _core_id = _core_id
             )
 
         session.close()
@@ -526,7 +527,7 @@ class Form(object):
         self.create_form_data(node_token, data_out, read_only)
 
         # add the paging info
-        base_link = ':%s:_update:form=%s&q=%s%s' % (node_token.node_name, self.name, query, link_id)
+        base_link = '@%s:_update?form=%s&q=%s%s' % (node_token.node_name, self.name, query, link_id)
         node_token.add_paging(self.name,
                               count = results.row_count,
                               limit = limit,
@@ -534,12 +535,6 @@ class Form(object):
                               base_link = base_link)
 
         node_token.form(self)
-
-##        node_token.bookmark = dict(
-##            table_name = table,
-##            bookmark_string = node.build_node('', 'view', 'id=%s' %  id),
-##            entity_id = id
-##        )
 
         session.close()
 
@@ -667,14 +662,14 @@ class Form(object):
                     row['title'] = '%s: %s' % (table, result.get('id'))
                 row['id'] = result.get('id')
                 row['entity'] = None
-                row['result_url'] = 'u:%s:edit:id=%s' % (node.name, result.get('id'))
+                row['result_url'] = '%s:edit?id=%s' % (node.name, result.get('id'))
                 out.append(row)
 
         data = {'__array' : out}
 
         encoded_data = urllib.urlencode(node.extra_data)
 
-        data['__buttons'] = [['add new %s' % table, 'd:%s:new:%s:' % (node_token.node_name, encoded_data)],
+        data['__buttons'] = [['add new %s' % table, 'd@%s:new?%s:' % (node_token.node_name, encoded_data)],
                              ['cancel', 'BACK']]
 
         data['__message'] = "These are the current %s(s)." % table
@@ -686,7 +681,7 @@ class Form(object):
                               count = results.row_count,
                               limit = limit,
                               offset = offset,
-                              base_link = 'u:%s:list:q=%s' % (node.name, query))
+                              base_link = '%s:list?q=%s' % (node.name, query))
 
         current_page = offset/limit + 1
         total_pages = results.row_count/limit + 1

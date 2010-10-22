@@ -212,6 +212,13 @@ REBASE.Form = function (){
     function focus($input){
         // focus the element and
         // if select select all.
+
+        // If the element is not in view then don't focus.
+        var page_height = $(window).height();
+        var element_bottom = $input.offset().top + $input.outerHeight();
+        if (element_bottom  > page_height){
+            return;
+        }
         var value = $input.val();
         if (value){
             var length = value.length;
@@ -240,8 +247,8 @@ REBASE.Form = function (){
         'HTML_Encode_Clear' : function (arg){
             return HTML_Encode_Clear(arg);
         },
-        'process_html' : function (arg){
-            return process_html(arg);
+        'process_html' : function (text, data, inline){
+            return process_html(text, data, inline);
         },
         'focus' : function ($input){
             return focus($input);
@@ -279,13 +286,17 @@ REBASE.Bookmark = function (){
         }
         // stop null bookmarks
         if (!bookmark.title){
-            bookmark.title = 'untitled';
+            if(bookmark['_core_entity.title']){
+                bookmark.title = bookmark['_core_entity.title'];
+            } else {
+                bookmark.title = 'untitled';
+            }
         }
         var table_data = REBASE.application_data.bookmarks[bookmark.entity_table];
         if (table_data){
-            bookmark.bookmark = 'u:' + table_data.node.replace('&', '&amp;') + ':edit:id=' + bookmark.entity_id;
+            bookmark.bookmark = table_data.node.replace('&', '&amp;') + ':edit?__id=' + bookmark._core_id;
         } else {
-            bookmark.bookmark = 'u:test.Auto:edit:id=' + bookmark.entity_id + '&amp;table=' + bookmark.entity_table;
+            bookmark.bookmark = 'test.Auto:edit?__id=' + bookmark._core_id + '&amp;table=' + bookmark.entity_table;
         }
         // remove the item if already in the list
         for (var i = 0, n = bookmark_array.length; i < n; i++){
@@ -386,13 +397,13 @@ REBASE.User = function (){
         var app_data = REBASE.application_data;
         var html;
         if (app_data.__user_id === 0){
-            html = '<a href="#" onclick="node_load(\'d:user.User:login\',this);return false;">Log in</a>';
+            html = '<a href="#" onclick="node_load(\'d@user.User:login\',this);return false;">Log in</a>';
         } else {
             var impersonate = '';
             if (app_data.__real_user_id && app_data.__real_user_id != app_data.__user_id){
-                impersonate = ' <a href="#" onclick="node_load(\':user.Impersonate:revert\',this);return false;">revert to ' + app_data.__real_username + '</a>';
+                impersonate = ' <a href="#" onclick="node_load(\'@user.Impersonate:revert\',this);return false;">revert to ' + app_data.__real_username + '</a>';
             }
-            html = app_data.__username + ' <a href="#" onclick="node_load(\':user.User:logout\',this);return false;">Log out</a>' + impersonate;
+            html = app_data.__username + ' <a href="#" onclick="node_load(\'@user.User:logout\',this);return false;">Log out</a>' + impersonate;
         }
         $('#user_login').html(html);
     }
@@ -585,8 +596,10 @@ REBASE.Dialog = function (){
     var dialog_decode;
     var $dialog_box;
     var $system_dialog_box;
-    var is_setup = false;
     var is_open = false;
+    var error_is_open = false;
+    var dialog_queue = [];
+    var error_queue = [];
     var process_html = REBASE.Form.process_html;
 
     function setup(){
@@ -594,14 +607,15 @@ REBASE.Dialog = function (){
         // dialog box
         $dialog_box = $('<div id="dialog_box"></div>');
         $('body').append($dialog_box);
+        // error box
+        $error_dialog_box = $('<div id="error_dialog_box"></div>');
+        $('body').append($error_dialog_box);
         // system dialog box
         $system_dialog_box = $('<div id="system_dialog_box"></div>');
         $('body').append($system_dialog_box);
-
-        is_setup = true;
     }
 
-    function show_dialog($dialog, title){
+    function show_dialog($dialog, title, close_fn){
         // Show the dialog.  Unfortunatly the dialog appears to
         // lack some functionality so we have to manually shrink
         // it if it is too big.  We also need to centre it.
@@ -612,6 +626,9 @@ REBASE.Dialog = function (){
         // content is sized correctly.
         $dialog.dialog('destroy');
         var options = {width: 'auto', height: 'auto', modal: true, title: title};
+        if (close_fn){
+            options['close'] = close_fn;
+        }
         $dialog.dialog(options);
         var $container = $dialog.parent();
         var c_height = $container.height();
@@ -632,10 +649,50 @@ REBASE.Dialog = function (){
                      'left':Math.floor((width - c_width + CONFIG.DIALOG_BORDER_WIDTH) / 2)});
     }
 
-    function open(title, data, no_processing){
-        if (!is_setup){
-            setup();
+    function dialog(title, data, no_processing){
+        // If no dialog/error is showing, show dialog.
+        // Otherwise put it in a queue.
+        if (!is_open && !error_is_open){
+            open(title, data, no_processing);
+        } else {
+            dialog_queue.push([title, data, no_processing]);
         }
+    }
+
+    function error(error_msg){
+        // replace \n
+        error_msg = error_msg.replace(/\n/g, '<br />');
+        // Show error if non showing, else queue.
+        if (!error_is_open){
+            open_error(error_msg);
+        } else {
+            error_queue.push(error_msg);
+        }
+    }
+
+    function show_waiting(){
+        // Show next queued dialog.
+        if (dialog_queue.length){
+            var request = dialog_queue.shift();
+            open(request[0], request[1], request[2]);
+        } else {
+            is_open = false;
+        }
+    }
+
+    function show_waiting_error(){
+        // show any queued errors then dialogs.
+        if (error_queue.length){
+            var request = error_queue.shift();
+            open_error(request);
+        } else {
+            error_is_open = false;
+            // show any waiting dialogs
+            show_waiting();
+        }
+    }
+
+    function open(title, data, no_processing){
         // If we have sent a string as data then we just want
         // to process it for any markdown and display it.
         // If it is form data then we want to process it as a form.
@@ -651,23 +708,28 @@ REBASE.Dialog = function (){
 
             $dialog_box.input_form(form, form_data);
         }
-        show_dialog($dialog_box, title);
+        show_dialog($dialog_box, title, function (){show_waiting();});
         // focus first enabled input
         REBASE.Form.focus($dialog_box.find(':input:enabled').first());
         is_open = true;
     }
 
+    function open_error(error_msg){
+        // Show the error dialog.
+        $error_dialog_box.html(error_msg);
+        error_is_open = true;
+        show_dialog($error_dialog_box, 'Error', function (){show_waiting_error();});
+    }
+
     function close(){
+        // Remote close call.
         if (is_open){
             $dialog_box.dialog('close');
-            is_open = false;
         }
     }
 
     function confirm_action(decode, title, message){
-        if (!is_setup){
-            setup();
-        }
+        // Show the confirm dialog.
         dialog_decode = decode;
         var $form = $('<div class="INPUT_FORM"></div>');
         // clear any form data
@@ -681,6 +743,8 @@ REBASE.Dialog = function (){
     }
 
     function confirm_action_return(result){
+        // Event called confirm dialog has been closed by button press.
+        // TODO check works with ESC and X.
         $system_dialog_box.dialog('close');
         if (result){
             dialog_decode.flags.confirm_action = false;
@@ -688,10 +752,15 @@ REBASE.Dialog = function (){
         }
     }
 
+    setup();
+
     // exported functions
     return {
         'dialog' : function (title, data, no_processing){
-            open(title, data, no_processing);
+            dialog(title, data, no_processing);
+        },
+        'error' : function (error_msg){
+            error(error_msg);
         },
         'close' : function(){
             close();
@@ -738,7 +807,7 @@ REBASE.Functions = function (){
 
     function debug_form_info(){
         /* Output the current form cache information */
-        var info = REBASE.Layout.debug_form_info();
+        var info = REBASE.FormProcessor.debug_form_info();
         $('#main').empty();
         $('#main').append('<p><b>Cached form info</b><div id="treeview_control">		<a title="Collapse the entire tree below" href="#"><img src="jquery/images/minus.gif" /> Collapse All</a> | <a title="Expand the entire tree below" href="#"><img src="jquery/images/plus.gif" /> Expand All</a> | <a title="Toggle the tree below, opening closed branches, closing open branches" href="#">Toggle All</a></div></p>');
         var $treeview = $(REBASE.Utils.treeview_hash(info)).treeview({collapsed: true, control : '#treeview_control'});
@@ -771,7 +840,7 @@ REBASE.Functions = function (){
 
     // Clear form cache.
     functions.clear_form_cache = function (){
-        REBASE.Layout.clear_form_cache();
+        REBASE.FormProcessor.clear_form_cache();
     };
 
     // Make menu.
@@ -875,7 +944,7 @@ REBASE.Node = function (){
         var args = arg.split('&');
         var x;
         var s;
-        for (var i=0; i<args.length; i++){
+        for (var i = 0; i < args.length; i++){
             x = args[i];
             s = x.split('=');
             if (s.length == 2){
@@ -891,124 +960,130 @@ REBASE.Node = function (){
          *  { node, type, command, url_data, node_data, layout_id, form_data, secure }
          *  or false if an error occurs
          */
-        console_log(node_string);
-        var error_msg = '';
-        var decode = {};
-        var split = node_string.split(':');
-        var key;
+        console_log('node: ' + node_string);
 
-        // node
-        decode.node = split[1];
-        // $ is shorthand for current node.
-        if (decode.node == '$'){
-            decode.node = split[1] = global_current_node_name;
-        }
-
-        // check enough info
-        if (split.length < 2){
-            error_msg = 'Invalid node data.\n\nNot enough arguments.';
-            REBASE.Dialog.dialog('Application Error', error_msg);
+        function decode_error(error_msg){
+            REBASE.Dialog.error(error_msg);
             return false;
         }
 
-        //command
-        if (split.length > 2){
-            decode.command = split[2];
-            // if the command starts with a underscore we don't want
-            // to trigger the command from a url change as this can
-            // let dangerous commands be sent via urls
-            decode.secure = (decode.command.substring(0,1) == '_');
-        } else {
-            decode.command = null;
-            decode.secure = false;
+        if (typeof node_string != 'string'){
+            return decode_error('Invalid node string requested.\n(wrong type)\n' + node_string);
         }
+
+        var decode = {};
+        decode.node_string = node_string;
         decode.form_data = [];
+
+        // chop up the string
+        // url string
+        var split = node_string.split('?', 2);
+        var part_url = split[1];
+        // command
+        split = split[0].split(':');
+        if (split.length > 2){
+            return decode_error('Invalid node string requested.\n(more than one : in node string)\n' + node_string);
+        }
+        decode.command = split[1] ? split[1] : '';
+        // node
+        split = split[0].split('@');
+        var part_flags;
+        switch (split.length){
+            case 1:
+                decode.node = split[0];
+                break;
+            case 2:
+                part_flags = split[0];
+                decode.node = split[1];
+                break;
+            default:
+                return decode_error('Invalid node string requested.\n(more than one @ in node string)\n' + node_string);
+        }
+        // FLAGS
+        // The flags are used to indicate
+        // the actions that the node call should perform.
+        var flags = {};
+        if (part_flags){
+            split = part_flags.split('');
+            for (var i = 0; i < split.length; i++){
+                switch (split[i]){
+                    case 'a':
+                        // authenticate
+                        flags.authenticate = true;
+                        break;
+                    case 'c':
+                        // confirm
+                        flags.confirm_action = true;
+                        break;
+                    case 'd':
+                        // open as dialog
+                        flags.dialog = true;
+                        break;
+                    case 'f':
+                        // send form data
+                        flags.form_data = true;
+                        // get any form data
+                        var $obj = $(item);
+                        $obj = $obj.parents('div.INPUT_FORM');
+                        var form_data = $obj.data('command')('get_form_data');
+                        // set the form data
+                        if (form_data){
+                            decode.form_data.push(form_data);
+                        } else {
+                            // an error occurred on the form so we don't want to continue.
+                            return decode_error('Error getting form data.');
+                        }
+                        break;
+                    default:
+                        return decode_error('Invalid flag in node string\n' + node_string);
+                }
+            }
+        } else if (part_flags === undefined){
+            flags.update = true;
+        }
+        decode.flags = flags;
+
+        // $ is shorthand for current node.
+        if (decode.node == '$'){
+            decode.node = global_current_node_name;
+            decode.node_string = decode.node_string.replace('$', global_current_node_name);
+        }
+
+        // if the command starts with a underscore we don't want
+        // to trigger the command from a url change as this can
+        // let dangerous commands be sent via urls
+        decode.secure = (decode.command && decode.command.substring(0,1) == '_');
+
+        decode.node_data = global_node_data;
         // url data converted to a hash
-        if (split.length>3){
-            var url_data = convert_url_string_to_hash(split[3]);
+        if (part_url){
+            var url_data = convert_url_string_to_hash(part_url);
             if (target_form){
                 decode.form_data.push({form : target_form, data : url_data});
             } else if (url_data.form){
                 decode.form_data.push({form : url_data.form, data : url_data});
             } else {
-                decode.url_data = url_data;
-            }
-        } else{
-            decode.url_data = {};
-        }
-
-        decode.node_data = global_node_data;
-
-        // if we have any extra node data we add it but
-        // don't overwrite anything in the url.
-        // I'm not sure if this is the best thing to do
-        // but it is currently needed for the bookmarks to work correctly.
-        for (key in decode.url_data){
-            decode.node_data[key] = decode.url_data[key];
-        }
-
-        // FLAGS
-        // The flags are used to indicate
-        // the actions that the node call should perform.
-        var flag_data = split[0];
-        var flags = {};
-        for (var i = 0; i < flag_data.length; i++){
-            switch (flag_data.charAt(i)){
-                case '/':
-                    // ignore this
-                    break;
-                case 'a':
-                    // authenticate
-                    flags.authenticate = true;
-                    break;
-                case 'c':
-                    // confirm
-                    flags.confirm_action = true;
-                    break;
-                case 'd':
-                    // open as dialog
-                    flags.dialog = true;
-                    break;
-                case 'f':
-                    // send form data
-                    flags.form_data = true;
-                    // get any form data
-                    var $obj = $(item);
-                    $obj = $obj.parents('div.INPUT_FORM');
-                    var form_data = $obj.data('command')('get_form_data');
-                    // set the form data
-                    if (form_data){
-                        decode.form_data.push(form_data);
-                    } else {
-                        // an error occurred on the form so we don't want to continue.
-                        return false;
-                    }
-                    break;
-                case 'u':
-                    // update address bar
-                    if (decode.secure){
-                        error_msg = 'Invalid node data.\n\nCannot update on a secure command.';
-                        REBASE.Dialog.dialog('Application Error', error_msg);
-                        return false;
-                    }
-                    flags.update = true;
-                    break;
-                default:
-                    error_msg = 'Invalid node flag ' + flag_data.charAt(i);
-                    REBASE.Dialog.dialog('Application Error', error_msg);
-                    return false;
+                // if we have any extra node data we add it but
+                // don't overwrite anything in the url.
+                // I'm not sure if this is the best thing to do
+                // but it is currently needed for the bookmarks to work correctly.
+                for (key in url_data){
+                    decode.node_data[key] = url_data[key];
+                }
             }
         }
-        // if we are doing an update we cannot pass form data
-        // as we loose the refering item.  Throw an error
-        if (flags.update && (flags.form_data || flags.confirm_action)){
-            error_msg = 'Cannot process request.\n\nTrying to update address to a node with form data or that needs confirmation.';
-            REBASE.Dialog.dialog('Application Error', error_msg);
-            return false;
-        }
-        decode.flags = flags;
-        decode.node_string = split.join(':');
 
+        // if target form but no data the send empty data
+        if (target_form && !decode.form_data.length){
+            decode.form_data.push({form: target_form, data: {}});
+        }
+        // sanity checks
+        if (decode.secure && flags.update){
+            return decode_error('Invalid node request\ncan\'t update a secure command\nadd an @ to start of node string\n' + node_string);
+        }
+        if (!decode.node){
+            return decode_error('Invalid node request\n' + node_string);
+        }
         return decode;
     }
 
@@ -1039,8 +1114,12 @@ REBASE.Node = function (){
          *  gets correct 'address' string and passes to calling function
          */
         var link = $.address.value();
+        // Trim any leading /
+        if (link.substr(0, 1) == '/'){
+            link = link.substr(1, link.length -1);
+        }
         var decode = decode_node_string(link);
-        if (!decode.secure){
+        if (decode && !decode.secure){
             get_node(decode);
         }
     }
@@ -1066,16 +1145,18 @@ REBASE.Node = function (){
                 REBASE.Dialog.close();
                 // get the current page
                 node_string = $.address.value();
+                // Trim any leading /
+                if (node_string.substr(0, 1) == '/'){
+                    node_string = node_string.substr(1, node_string.length -1);
+                }
         }
 
         var decode = decode_node_string(node_string, item, target_form);
         if (!decode){
             return false;
         }
-
         if (decode.flags.update &&
-            $.address.value() != '/' + decode.node_string &&
-            $.address.value() != decode.node_string){
+            $.address.value() != '/' + decode.node_string){
 
             // Sets the address which then forces a page load.
             $.address.value(decode.node_string);
@@ -1093,7 +1174,7 @@ REBASE.Node = function (){
     function is_update_node(node_string){
         // check if this is an update node_string
         // This is a fairly poor check at the moment.
-        if (node_string.substring(0,1) == 'u' || node_string.substring(1,2) == 'u'){
+        if (node_string && node_string.split('?')[0].split('@').length == 2){
             return true;
         } else {
             return false;
@@ -1171,7 +1252,7 @@ REBASE.Job = function(){
         }
         // set data refresh if job not finished
         if (!data.data || !data.data.end){
-            var node_string = "/:" + node + ":_status:id=" + data.data.id;
+            var node_string = '@' + node + ":_status?id=" + data.data.id;
             status_timer = setTimeout(function (){
                                           REBASE.Node.load_node(node_string);
                                       }, 1000);
@@ -1182,50 +1263,50 @@ REBASE.Job = function(){
 
         var message;
 
-        if (packet.data === null){
+        if (packet === null){
             console_log("NULL DATA PACKET");
             return;
         }
 
         var root = 'main'; //FIXME
 
-        var title = packet.data.title;
+        var title = packet.title;
         if (title){
             $.address.title(title);
         }
 
-        var sent_node_data = packet.data.node_data;
+        var sent_node_data = packet.node_data;
         if (sent_node_data){
-            REBASE.Node.set_node_data(packet.data.node, sent_node_data);
+            REBASE.Node.set_node_data(packet.node, sent_node_data);
         }
 
-        var user = packet.data.user;
+        var user = packet.user;
         if (user){
             REBASE.User.update(user);
         }
 
-        var bookmark = packet.data.bookmark;
+        var bookmark = packet.bookmark;
         if (bookmark){
            REBASE.Bookmark.process(bookmark);
         }
 
         var data;
-        switch (packet.data.action){
+        switch (packet.action){
             case 'redirect':
-                var link = packet.data.link;
+                var link = packet.link;
                 if (link){
                     REBASE.Node.load_node(link);
                 }
                 break;
             case 'html':
-                $('#' + root).html(packet.data.data.html);
+                $('#' + root).html(packet.data.html);
                 break;
             case 'form':
             case 'dialog':
-                 REBASE.Layout.update_layout(packet.data);
-                 break;
+                REBASE.Layout.update_layout(packet);
+                break;
             case 'function':
-                REBASE.Functions.call(packet.data['function'], packet.data.data);
+                REBASE.Functions.call(packet['function'], packet.data);
                 break;
             case 'save_error':
                 // FIXME not implemented
@@ -1236,12 +1317,17 @@ REBASE.Job = function(){
             case 'delete':
                 // FIXME not implemented
                 break;
-            case 'general_error':
-                message = packet.data.data;
-                REBASE.Dialog.dialog('Error', message);
+            case 'error':
+                message = packet.data;
+                var error_type = packet.error_type;
+                var error_title = packet.error_title;
+                if (!error_title){
+                    error_title = 'Error';
+                }
+                REBASE.Dialog.dialog(error_title, message);
                 break;
             case 'message':
-                message = packet.data.data;
+                message = packet.data;
                 REBASE.Dialog.dialog('Message', message);
                 break;
             case 'forbidden':
@@ -1249,10 +1335,10 @@ REBASE.Job = function(){
                 REBASE.Dialog.dialog('Forbidden', message);
                 break;
             case 'status':
-                job_processor_status(packet.data.data, packet.data.node, root);
+                job_processor_status(packet.data, packet.node, root);
                 break;
             default:
-                REBASE.Dialog.dialog('Error', 'Action `' + packet.data.action + '` not recognised');
+                REBASE.Dialog.dialog('Error', 'Action `' + packet.action + '` not recognised');
                 break;
         }
     }
@@ -1287,6 +1373,117 @@ REBASE.Job = function(){
     return {
         'add' : function (request, data){
             add(request, data);
+        }
+    };
+}();
+
+
+/*
+ *      (\  }\   (\  }\   (\  }\
+ *     (  \_('> (  \_('> (  \_('>   FORM DATA PROCESSOR
+ *     (__(=_)  (__(=_)  (__(=_)
+ *   jgs  -"=      -"=      -"=
+ */
+
+REBASE.FormProcessor = function(){
+    /* FormProcessor processes form data sent by the
+     * backend.  Cache form data where possible.
+     * Normailises forms etc.
+     */
+
+    // form data is kept here key is 'node_name|form_name'
+    var form_data_cache = {};
+    var form_data_cache_info = {};
+
+    function clear_form_cache(){
+        // Clear the form cache.
+        form_data_cache = {};
+        form_data_cache_info = {};
+        console_log('FORM CACHE deleted');
+    }
+
+    function form_data_normalise(form_data, node){
+        /* generally clean up the form data to
+         * make things easier for us later on.
+         * creates .items hash for quick reverse lookups etc.
+         */
+
+        form_data.node = node;
+        // make hash of the fields
+        form_data.items = {};
+        for (var i = 0, n = form_data.fields.length; i < n; i++){
+            var field = form_data.fields[i];
+            field.index = i;
+            if (field.name){
+                form_data.items[field.name] = field;
+            }
+            if (!field.control){
+                field.control = 'normal';
+            }
+            // get out the thumb field if one exists
+            // makes life easier later on
+            // TODO do we still use this?
+            if (field.control == 'thumb'){
+                form_data.thumb = field;
+            }
+        }
+        return form_data;
+    }
+
+    function process_form_data(form_data, node){
+        /* If we have a suitable version in the form cache
+         * then just return that else normalise the form.
+         */
+        var cache_name;
+        if (form_data.cache_form !== undefined){
+            cache_name = form_data.cache_node + '|' + form_data.cache_form;
+            return form_data_cache[cache_name];
+        }
+        form_data = form_data_normalise(form_data, node);
+        // form caching
+        cache_name = node + '|' + form_data.name;
+        if (!form_data.version){
+            // remove from cache if it exists
+            if (form_data_cache_info[node] !== undefined){
+                delete form_data_cache_info[node][form_data.name];
+            }
+        } else {
+            // store form in cache
+            form_data_cache[cache_name] = form_data;
+            if (!form_data_cache_info[node]){
+                form_data_cache_info[node] = {};
+            }
+            form_data_cache_info[node][form_data.name] = form_data.version;
+        }
+        return form_data;
+    }
+
+    function process_form_data_all(forms_data, node){
+        var full_form_data = {};
+        var form_data;
+        for (var form in forms_data){
+            form_data = {};
+            form_data.data = forms_data[form].data;
+            form_data.paging = forms_data[form].paging;
+            form_data.form = process_form_data(forms_data[form].form, node);
+            full_form_data[form] = form_data;
+        }
+        return full_form_data;
+    }
+
+    // exported functions
+    return {
+        'process' : function (form_data, node_data){
+            return process_form_data_all(form_data, node_data);
+        },
+        'debug_form_info' : function (){
+            return form_data_cache;
+        },
+        'clear_form_cache' : function (node_name){
+            clear_form_cache();
+        },
+        'get_form_cache_data' : function (node_name){
+            return form_data_cache_info[node_name];
         }
     };
 }();
@@ -1333,125 +1530,6 @@ REBASE.Layout = function(){
     var layout_title;
     var $header;
     var $footer;
-
-
-    /*
-     *      (\  }\   (\  }\   (\  }\
-     *     (  \_('> (  \_('> (  \_('>   FORM DATA PROCESSOR
-     *     (__(=_)  (__(=_)  (__(=_)
-     *   jgs  -"=      -"=      -"=
-     */
-
-    var FormProcessor = function(){
-        /* FormProcessor processes form data sent by the
-         * backend.  Cache form data where possible.
-         * Normailises forms etc.
-         */
-
-        // form data is kept here key is 'node_name|form_name'
-        var form_data_cache = {};
-        var form_data_cache_info = {};
-
-        function clear_form_cache(){
-            // Clear the form cache.
-            form_data_cache = {};
-            form_data_cache_info = {};
-            console_log('FORM CACHE deleted');
-        }
-
-        function form_data_normalise(form_data, node){
-            /* generally clean up the form data to
-             * make things easier for us later on.
-             * creates .items hash for quick reverse lookups etc.
-             */
-
-            form_data.node = node;
-            // make hash of the fields
-            form_data.items = {};
-            for (var i = 0, n = form_data.fields.length; i < n; i++){
-                var field = form_data.fields[i];
-                field.index = i;
-                if (field.name){
-                    form_data.items[field.name] = field;
-                }
-                if (!field.control){
-                    field.control = 'normal';
-                }
-                // get out the thumb field if one exists
-                // makes life easier later on
-                // TODO do we still use this?
-                if (field.control == 'thumb'){
-                    form_data.thumb = field;
-                }
-            }
-            return form_data;
-        }
-
-        function process_form_data(form_data, node){
-            /* If we have a suitable version in the form cache
-             * then just return that else normalise the form.
-             */
-            var cache_name;
-            if (form_data.cache_form !== undefined){
-                cache_name = form_data.cache_node + '|' + form_data.cache_form;
-                return form_data_cache[cache_name];
-            }
-            form_data = form_data_normalise(form_data, node);
-            // form caching
-            cache_name = node + '|' + form_data.name;
-            if (!form_data.version){
-                // remove from cache if it exists
-                if (form_data_cache_info[node] !== undefined){
-                    delete form_data_cache_info[node][form_data.name];
-                }
-            } else {
-                // store form in cache
-                form_data_cache[cache_name] = form_data;
-                if (!form_data_cache_info[node]){
-                    form_data_cache_info[node] = {};
-                }
-                form_data_cache_info[node][form_data.name] = form_data.version;
-            }
-            return form_data;
-        }
-
-        function process_form_data_all(forms_data, node){
-            var full_form_data = {};
-            var form_data;
-            for (var form in forms_data){
-                form_data = {};
-                form_data.data = forms_data[form].data;
-                form_data.paging = forms_data[form].paging;
-                form_data.form = process_form_data(forms_data[form].form, node);
-                full_form_data[form] = form_data;
-            }
-            return full_form_data;
-        }
-
-        // exported functions
-        return {
-            'process' : function (form_data, node_data){
-                return process_form_data_all(form_data, node_data);
-            },
-            'debug_form_info' : function (){
-                return form_data_cache;
-            },
-            'clear_form_cache' : function (node_name){
-                clear_form_cache();
-            },
-            'get_form_cache_data' : function (node_name){
-                return form_data_cache_info[node_name];
-            }
-        };
-    }();
-
-
-    /*
-     *      (\  }\   (\  }\   (\  }\
-     *     (  \_('> (  \_('> (  \_('>   LAYOUT FUNCTIONS
-     *     (__(=_)  (__(=_)  (__(=_)
-     *   jgs  -"=      -"=      -"=
-     */
 
 
     function set_layout_title_and_footer(){
@@ -1599,7 +1677,7 @@ REBASE.Layout = function(){
         // retrieve layout data
         var layout_data = packet.layout;
         // Store the form data.
-        forms = FormProcessor.process(packet.data, packet.node);
+        forms = REBASE.FormProcessor.process(packet.data, packet.node);
         layout_title = layout_data.layout_title;
 
         if (layout_data.layout_dialog){
@@ -1627,15 +1705,6 @@ REBASE.Layout = function(){
         },
         'get_layout_id' : function (){
             return layout_id;
-        },
-        'debug_form_info' : function (){
-            return FormProcessor.debug_form_info();
-        },
-        'clear_form_cache' : function (node_name){
-                FormProcessor.clear_form_cache();
-            },
-        'get_form_cache_info' : function (node_name){
-            return FormProcessor.get_form_cache_data(node_name);
         }
     };
 }();

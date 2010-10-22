@@ -500,7 +500,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         function add_layout_item(item){
             switch (item.layout){
                 case 'text':
-                    var text = process_html(item.text, local_row_data);
+                    var text = process_html(item.text, row_data);
                     $builder[builder_depth].append('<div class="f_control_holder f_text">' + text + '</div>');
                     break;
                 case 'spacer':

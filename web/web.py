@@ -129,15 +129,19 @@ def process_node(environ, start_response):
     try:
         body = json.loads(request.params["body"])
     except Exception, e:
-        return throw_error(environ, start_response, 'Sent JSON Error', request.params["body"])
+        return throw_error(environ, start_response, 'sent_data', 'Sent JSON Error', request.params["body"])
 
     node_interface = node_runner.NodeRunner(global_session.application)
 
     node_interface.add_command(body)
     try:
         node_interface.process()
+    except node_runner.NodeNotFound:
+        error = 'The requested node `%s` does not exist.' % node_interface.node_name
+        return throw_error(environ, start_response, 'Node Error', 'Node not found', error)
     except:
-        return throw_error(environ, start_response, 'Node Error')
+        error = '<pre>%s</pre>' % traceback.format_exc()
+        return throw_error(environ, start_response, 'Application Error', 'Application error', error)
 
     data = node_interface.output
 
@@ -147,7 +151,7 @@ def process_node(environ, start_response):
         # slow pretty output
         #output = [json.dumps(data, sort_keys=False, indent=4)]
     except TypeError:
-        return throw_error(environ, start_response, 'Output JSON Error')
+        return throw_error(environ, start_response, 'Application Error', 'Output JSON Error', 'Generated data cannot be convered to JSON.' )
 
     response = Response(environ)
     response.content_type = 'text/plain'
@@ -175,19 +179,15 @@ def process_node(environ, start_response):
 
 
 
-def throw_error(environ, start_response, error_type, extra_info = ''):
+def throw_error(environ, start_response, error_type, error_title, details):
 
     """an exception was thrown generate the traceback info and send to the frontend"""
-    if extra_info:
-        extra_info = '<pre>%s</pre>' % repr(extra_info)
-    error = traceback.format_exc()
-    message = "**An error has occured in this application.**\n\n%s\n\n" % error_type
-    error_msg = '%s\n\n%s\n\n<pre>%s</pre>' % (message, extra_info, error)
 
-    log.error(error_msg)
-    info = {'action': 'general_error',
-            'data' : error_msg}
-    data = [{'data' : info, 'type' : 'node'}]
+    info = {'action': 'error',
+            'error_type' : error_type,
+            'error_title' : error_title,
+            'data' : details}
+    data = [info]
 
     response = Response(environ)
     response.content_type = 'text/plain'

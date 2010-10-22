@@ -23,6 +23,7 @@ import glob
 import os.path
 import inspect
 import urllib
+from operator import itemgetter
 
 from ZODB.PersistentMapping import PersistentMapping
 import transaction
@@ -297,9 +298,6 @@ class NodeToken(object):
                 node_string += ':'
             node_string += link_data
         # if this is not a special command make it an update node
-        # TODO this can be improved.
-        if node_string not in ['RELOAD', 'CLOSE', 'BACK']:
-            node_string = 'u:%s' % node_string
         self._set_action('redirect', link = node_string, node_data = node_data)
 
     def redirect_back(self):
@@ -330,7 +328,7 @@ class NodeToken(object):
 
     def general_error(self, error):
         """ Helper function send error to front end. """
-        self._set_action('general_error', data = error)
+        self._set_action('error', data = error)
 
     def message(self, message):
         """ Helper function send error to front end. """
@@ -421,7 +419,7 @@ class NodeToken(object):
             global_session.session['reset'] = False
             global_session.session.persist()
 
-        self._added_responses.append(dict(type = 'node', data = info))
+        self._added_responses.append(info)
       #  log.debug('returned data\n%s\n----- end of node processing -----' %
       #            pprint.pformat(self._added_responses))
         return self._added_responses
@@ -429,17 +427,19 @@ class NodeToken(object):
     def add_extra_response_function(self, function, data = None):
         #self._added_responses.append(dict(type = 'node', data = dict(action = action, data = data)))
         response = dict(action = 'function', function = function, data = data)
-        self._added_responses.append(dict(type = 'node', data = response))
+        self._added_responses.append(response)
 
     def _bookmark_list(self, user_id, limit = 100):
 
         r = global_session.database
+        session = r.Session()
         bookmarks = r.search("bookmarks",
                              "user_id = ?",
-                             fields = ['title', 'entity_table', 'entity_id', 'accessed_date'],
+                             fields = ['_core_entity.title', 'entity_table', '_core_id', 'accessed_date'],
                              values = [user_id],
                              order_by = "accessed_date",
                              keep_all = False,
+                             session = session,
                              limit = limit).data
         return bookmarks
 
@@ -450,7 +450,9 @@ class NodeToken(object):
         def build_items(items):
             # checks the permissions
             output = []
-            for item in items:
+            # TODO we should just sort the menu when it's created.
+            # sort by index, alpha
+            for item in sorted(sorted(items, key = itemgetter('title')), key = itemgetter('index')):
                 if not authenticate.check_permission(item.get('permissions')):
                     continue
                 menu_item = {}
@@ -618,6 +620,8 @@ class NodeManager(object):
     def add_menu(self, data):
 
         actioned = False
+        if 'index' not in data:
+            data['index'] = 5
         node = data.get('node')
         if node:
             # process the node data
@@ -625,9 +629,12 @@ class NodeManager(object):
             if self.current_node:
                 node = node.replace('$', self.current_node)
             # make the item an update link or use supplied flags
-            flags = data.get('flags', 'u')
-            # store updated node
-            data['node'] = '%s:%s' % (flags, node)
+            # and store updated node
+            flags = data.get('flags')
+            if flags:
+                data['node'] = '%s@%s' % (flags, node)
+            else:
+                data['node'] = node
         if 'menu' in data:
             # adding this item to a sub menu.
             master_name = data['menu']
@@ -694,6 +701,7 @@ class NodeRunner(object):
         self.command_queue = []
         self.output = [] # this will be returned
         self.auto_login_cookie = None
+        self.node_name = None
 
     def add_command(self, data):
         self.command_queue.append(data)
@@ -709,6 +717,7 @@ class NodeRunner(object):
         node_token = NodeToken(data, self.application)
 
         node = data.get('node')
+        self.node_name = node
         self.run(node, node_token)
         self.output.extend(node_token.output())
 

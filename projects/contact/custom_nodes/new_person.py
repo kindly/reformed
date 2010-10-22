@@ -25,7 +25,7 @@ class NewPerson(Node):
         layout('spacer'),
         layout('spacer'),
 
-        button_box([['add', 'f:new_person.EvaluateDuplicate::'],
+        button_box([['add', 'f@new_person.EvaluateDuplicate'],
                     ['cancel', 'BACK'],]
                    ),
         params =  {"form_type": "normal"},
@@ -168,7 +168,7 @@ class MakeContact(Node):
         input('name', label = 'Name'),
         input('email.email', label = 'Email'),
         input('note.note', label = 'Note'),
-        button_box([['save', 'new_person.SaveContact:_:'],
+        button_box([['save', 'f@new_person.SaveContact:_'],
                     ['cancel', 'BACK'],]
                    ),
         params =  {"form_type": "normal"},
@@ -198,7 +198,7 @@ class DataGenerate(JobNode):
         text("##Data Generator##"),
         dropdown('table', 'DATA', data_field = 'tables', default = 'people'),
         intbox('number_records', default = "100"),
-        button('new_person.DataGenerate:_generate:', label = 'Generate'),
+        button('f@new_person.DataGenerate:_generate', label = 'Generate'),
         params =  {"form_type": "action"},
     )
 

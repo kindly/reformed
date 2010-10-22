@@ -228,21 +228,21 @@ $.Util.build_node_link_common = function (data, is_href, base_link){
         if (base_link){
             // make sure that the link is ready for additional info
             // TODO make this a general function
-            while (base_link.split(':') .length < 4){
-                base_link += ':';
+            if (base_link.split('?').length < 2){
+                base_link += '?';
             }
-            if (base_link.charAt(base_link.length - 1) != ':'){
+            if (base_link.charAt(base_link.length - 1) != '?'){
                 base_link += '&';
             }
             link_node = base_link + "__id=" + data.__id;
         } else {
-        node = REBASE.application_data.bookmarks[data.entity];
-        if (node !== undefined){
-            node = node.node;
-            link_node = "u:" + node + ":edit:__id=" + data.__id;
-        } else {
-            link_node = "u:test.Auto:edit:__id=" + data.__id + "&table=" + data.entity;
-        }
+            node = REBASE.application_data.bookmarks[data.entity];
+            if (node !== undefined){
+                node = node.node;
+                link_node = node + ":edit?__id=" + data.__id;
+            } else {
+                link_node = "test.Auto:edit?__id=" + data.__id + "&table=" + data.entity;
+            }
         }
     }
     // return as href or function call

@@ -95,10 +95,8 @@ def initialise(application):
 
     table("bookmarks",database,
 
-        Integer("entity_id"),
+        ForeignKey("_core_id", "_core_entity", ),
         Integer("user_id"),
-        Text("bookmark"),
-        Text("title"),
         Text("entity_table"),
         DateTime("accessed_date"),
         table_type = "system",

@@ -209,11 +209,11 @@ def reload(host, options):
 def reloader(args, options):
 
     import subprocess
-
+    python_exec = sys.executable
     application.release_all()
     while 1:
         try:
-            command = ["python",
+            command = [python_exec,
                        "manage.py",
                        "--reloader",
                        "--port=%s" % options.port,

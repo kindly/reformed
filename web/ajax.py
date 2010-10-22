@@ -262,7 +262,7 @@ class Worker(object):
             print '== Returned Data', '=' * 43
             pprint.pprint(data)
             print '-' * 60
-        data = data['data']
+#        data = data['data']
         action = data.get('action')
         if action == 'function':
             info = 'function: %s' % data['function']
@@ -272,7 +272,13 @@ class Worker(object):
             for form_name in data.get('data'):
                 form_data = data.get('data').get(form_name).get('data')
                 if '__array' in form_data:
-                    form_data = form_data.get('__array')[0]
+                    array_data = form_data.get('__array')
+                    if array_data:
+                        form_data = array_data
+                    else:
+                        if not self.quiet:
+                            print "No array data sent"
+                        form_data = {}
                 version = data.get('data').get(form_name).get('form').get('version')
                 self.decode['form'][form_name] = dict(version = version, data = form_data)
             self.decode['node_data'] = data.get('node_data')
@@ -314,7 +320,7 @@ class Worker(object):
         """ log in to the system """
         self.request_node("user.User", "logout")
 
-    def setup_function(self, function, count = 10):
+    def setup_function(self, function):
         """ Set the test function. """
         self._setup_function = function
 

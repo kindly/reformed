@@ -157,32 +157,6 @@ class Node(object):
     def check_permissions(self):
         return authenticate.check_permission(self.permissions)
 
-
-    def build_node(self, title, command, data = '', node = None):
-        if not node:
-            node = self.name
-        new_node = 'n:%s:%s:%s' % (node, command, data)
-        if self.extra_data:
-            if data:
-                new_node += '&%s' % self.build_url_string_from_dict(self.extra_data)
-            else:
-                new_node += self.extra_data
-        if title:
-             new_node = '%s|%s' % (new_node, title)
-        return new_node
-
-
-    def build_function_node(self, title, function, data = '', command = ''):
-        new_node = 'd:%s:%s:%s' % (function, command, data)
-        if self.extra_data:
-            if data:
-                new_node += '&%s' % self.build_url_string_from_dict(self.extra_data)
-            else:
-                new_node += self.build_url_string_from_dict(self.extra_data)
-        if title:
-             new_node = '%s|%s' % (new_node, title)
-        return new_node
-
     def build_url_string_from_dict(self, dict):
         # returns a url encoded string of a dict
         # FIXME not safe needs proper encodings
@@ -199,25 +173,29 @@ class Node(object):
         # only update bookmarks for proper users
         if user_id and not impersonating:
             try:
+                session = r.Session()
                 result = r.search_single_data("bookmarks",
-                                         "user_id = ? and bookmark = ?",
-                                         fields = ['title', 'bookmark', 'entity_table', 'entity_id', 'accessed_date'],
-                                         values = [user_id, node_token.bookmark["bookmark_string"]])
+                                         "user_id = ? and  _core_id = ?",
+                                         session = session,
+                                         fields = ['_core_entity.title',  'entity_table', '_core_id', 'accessed_date'],
+                                         values = [user_id, node_token.bookmark["_core_id"]])
                 result["accessed_date"] = util.convert_value(datetime.datetime.now())
-                result["title"] = node_token.title
+                # update
+                # FIXME does this try to write to _core_entity?
+                util.load_local_data(r, result)
             except custom_exceptions.SingleResultError:
                 result = {"__table": "bookmarks",
-                          "entity_id": node_token.bookmark["entity_id"],
+                          "_core_id": node_token.bookmark["_core_id"],
                           "user_id": user_id,
-                          "title": node_token.get_title(),
                           "entity_table": node_token.bookmark["table_name"],
                           "accessed_date": util.convert_value(datetime.datetime.now())}
-            # save
-            util.load_local_data(r, result)
+                # save
+                util.load_local_data(r, result)
+                result['title'] = node_token.bookmark.get("title")
 
         else:
             # anonymous user
-            result = {"entity_id": node_token.bookmark["entity_id"],
+            result = {"_core_id": node_token.bookmark["_core_id"],
                       "title": node_token.get_title(),
                       "entity_table": node_token.bookmark["table_name"],
                       "accessed_date": util.convert_value(datetime.datetime.now())}
@@ -357,7 +335,7 @@ class JobNode(Node):
         for param in self.params:
             params[param] = node_data.get(param)
         jobId = global_session.application.job_scheduler.add_job(self.job_type, self.job_function, **params)
-        redirect = "%s:refresh:id=%s" % (self.name, jobId)
+        redirect = "%s:refresh?id=%s" % (self.name, jobId)
         node_token.redirect(redirect)
 
 
