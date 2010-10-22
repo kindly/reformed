@@ -2,6 +2,7 @@ from database.fields import *
 from database.tables import *
 from database.database import *
 from database.data_loader import FlatFile, load_json_from_file, SingleRecord
+import application
 from database.export import json_dump_all_from_table
 from nose.tools import assert_raises
 from tests.donkey_persist_test import test_donkey_persist
@@ -28,30 +29,27 @@ class test_modify_table_sqlite(object):
 
     @classmethod
     def setUpClass(cls):
-
         if not hasattr(cls, "engine"):
-            cls.engine = create_engine('sqlite:///tests/test_donkey.sqlite')
+            cls.engine = 'sqlite:///:memory:'
 
-        meta_to_drop = sa.MetaData()
-        meta_to_drop.reflect(bind=cls.engine)
-        for table in reversed(meta_to_drop.sorted_tables):
-            table.drop(bind=cls.engine)
-
-        try:
-            os.remove("tests/zodb.fs")
-            os.remove("tests/zodb.fs.lock")
-            os.remove("tests/zodb.fs.index")
-            os.remove("tests/zodb.fs.tmp")
-        except OSError:
+        class Options(object):
             pass
 
-        cls.meta = sa.MetaData()
-        cls.Session = sa.orm.sessionmaker(bind =cls.engine , autoflush = False)
-        cls.Donkey = Database("Donkey",
-                        zodb_store = "tests/zodb.fs",
-                        metadata = cls.meta,
-                        engine = cls.engine,
-                        session = cls.Session)
+        options = Options()
+        options.connection_string = False
+        options.logging_tables = True
+        options.quiet = False
+
+        cls.application = application.Application("test_donkey", options)
+        cls.application.logging_tables = True
+
+        cls.application.delete_database()
+
+        cls.application.create_database()
+
+
+        cls.Donkey = cls.application.database
+
 
     @classmethod
     def tearDownClass(cls):
@@ -74,6 +72,8 @@ class test_modify_table_sqlite(object):
 
         result = validate_database(self.Donkey)
 
+        print result
+
         assert not any([result[num] for num in range(0,4)])
 
 
@@ -94,13 +94,14 @@ class test_modify_table_sqlite(object):
         table2 = self.Donkey["moo02%s" % self.randish]
 
         print table1.field_order
-        assert table1.field_order == ['moo', '_version', '_modified_date', '_modified_by', "moo02%s" % self.randish]
+        assert table1.field_order == ['moo', '_version', '_modified_date', '__modified_by', '_modified_by', "moo02%s" % self.randish]
 
 
         table1 = self.Donkey["moo01%s" % self.randish]
         table2 = self.Donkey["moo02%s" % self.randish]
 
-        assert hasattr(table1.sa_class(), "moo02%s" % self.randish)
+        print dir(table1.sa_class())
+        assert hasattr(table1.sa_class(), "_rel_moo02%s" % self.randish)
 
         assert "moo01%s_id" % self.randish in table2.fields
         assert "moo01%s_id" % self.randish in table2.defined_columns
@@ -114,19 +115,15 @@ class test_modify_table_sqlite(object):
 
         table1 =  self.Donkey["moo01%s" % self.randish]
 
-        connection = self.Donkey.db.open()
-        root = connection.root()
 
-        print root["tables"]["moo01%s" % self.randish]["field_order"]
         print table1.field_order
-
-        assert  table1.field_order == ['moo', '_version', '_modified_date', '_modified_by', "moo02%s" % self.randish, "moo03%s" % self.randish, "moo03%s_id" % self.randish]
+        assert  table1.field_order == ['moo', '_version', '_modified_date', '__modified_by', '_modified_by', "moo02%s" % self.randish, "moo03%s" % self.randish, "moo03%s_id" % self.randish]
 
         assert "moo03%s_id" % self.randish in table1.fields
         assert "moo03%s_id" % self.randish in table1.defined_columns
         assert not table1.defined_columns["moo03%s_id" % self.randish].sa_options["nullable"]
 
-        assert hasattr(table1.sa_class(), "moo03%s" % self.randish)
+        assert hasattr(table1.sa_class(), "_rel_moo03%s" % self.randish)
 
 
         table1.add_relation(OneToOne("moo04%s" % self.randish,
@@ -134,9 +131,9 @@ class test_modify_table_sqlite(object):
 
         table1 =  self.Donkey["moo01%s" % self.randish]
 
-        assert hasattr(table1.sa_class(), "moo04%s" % self.randish)
+        assert hasattr(table1.sa_class(), "_rel_moo04%s" % self.randish)
 
-        assert  table1.field_order == ['moo', '_version', '_modified_date', '_modified_by', "moo02%s" % self.randish,
+        assert  table1.field_order == ['moo', '_version', '_modified_date',  '__modified_by', '_modified_by', "moo02%s" % self.randish,
                                        "moo03%s" % self.randish, "moo03%s_id" % self.randish, "moo04%s" % self.randish]
 
 
@@ -275,17 +272,17 @@ class test_modify_table_sqlite(object):
 
 
 
-class test_modify_table_mysql(test_modify_table_sqlite):
+#class test_modify_table_mysql(test_modify_table_sqlite):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.engine = create_engine('mysql://localhost/test_donkey')
-        super(test_modify_table_mysql, cls).setUpClass()
+#    @classmethod
+#    def setUpClass(cls):
+#        cls.engine = create_engine('mysql://localhost/test_donkey')
+#        super(test_modify_table_mysql, cls).setUpClass()
 
 
-class test_modify_table_postgres(test_modify_table_sqlite):
+#class test_modify_table_postgres(test_modify_table_sqlite):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.engine = create_engine('postgres://david:@:5432/test_donkey')
-        super(test_modify_table_postgres, cls).setUpClass()
+#    @classmethod
+#    def setUpClass(cls):
+#        cls.engine = create_engine('postgres://david:@:5432/test_donkey')
+#        super(test_modify_table_postgres, cls).setUpClass()

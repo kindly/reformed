@@ -1,4 +1,6 @@
-from web.ajax import Worker, Sample, Generator
+import sys
+sys.path.append(".")
+from .web.ajax import Worker, Sample, Generator
 import random
 
 if __name__ == "__main__":
@@ -25,7 +27,7 @@ if __name__ == "__main__":
         node_data = worker.decode.get('node_data')
         form_data = [dict(form = 'main', data = data)]
         worker.request_node("test.People", "_save", node_data = node_data, form_data = form_data)
-        offset = random.randint(1, 1000)
+        offset = random.randint(1, 99)
         worker.request_node("test.People", "list", node_data = dict(l = 20, o = offset))
 
 

@@ -27,7 +27,7 @@
 import logging
 from collections import defaultdict
 import os
-import uuid
+import datetime
 
 import sqlalchemy as sa
 import networkx as nx
@@ -38,7 +38,7 @@ import custom_exceptions
 import search
 import resultset
 import tables
-from util import split_table_fields, FileLock
+from util import split_table_fields, SchemaLock
 from fields import ForeignKey, Integer
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
@@ -111,7 +111,7 @@ class Database(object):
         self.zodb_tables_init()
         self.application.Session = self.Session
 
-        with FileLock(self.get_file_path()) as file_lock:
+        with SchemaLock(self) as file_lock:
             self.load_from_persist()
         self.status = "active"
 
@@ -169,44 +169,28 @@ class Database(object):
         else:
             table_to_rename = self.tables[table]
 
-        connection = self.zodb.open()
-        root = connection.root()
-        persisted_tables = root["tables"]
-
-        try:
-
+        with SchemaLock(self) as file_lock:
             for relations in table_to_rename.tables_with_relations.values():
                 for rel in relations:
                     if rel.other == table_to_rename.name:
                         field = rel.parent
-                        persisted_field = persisted_tables[field.table.name]["fields"][field.name]
-                        persisted_field["args"][0] = new_name
+                        field.args = [new_name] + list(field.args[1:])
 
-            persisted_table = persisted_tables.pop(table_to_rename.name)
-            persisted_tables[new_name] = persisted_table
+            table_to_rename.name = new_name
+            file_lock.export(uuid = True)
             table_to_rename.sa_table.rename(new_name)
-
-        except Exception, e:
-            transaction.abort()
-            raise
-        else:
-            transaction.commit()
+            file_lock.export()
             self.load_from_persist(True)
-        finally:
-            connection.close()
 
         if table_to_rename.logged:
             self.rename_table("_log_%s" % table_to_rename.name, "_log_%s" % new_name, session)
 
     def drop_table(self, table):
 
-        connection = self.zodb.open()
-        root = connection.root()
-        persisted_tables = root["tables"]
-
-        try:
+        with SchemaLock(self) as file_lock:
             if isinstance(table, tables.Table):
                 table_to_drop = table
+
             else:
                 table_to_drop = self.tables[table]
 
@@ -218,21 +202,15 @@ class Database(object):
             for relations in table_to_drop.tables_with_relations.itervalues():
                 for relation in relations:
                     field = relation.parent
-                    persisted_tables[field.table.name]["fields"].pop(field.name)
-                    persisted_tables[field.table.name]["field_order"].remove(field.name)
+                    field.table.fields.pop(field.name)
+                    field.table.field_list.remove(field)
 
-            persisted_tables.pop(table_to_drop.name)
+            self.tables.pop(table_to_drop.name)
 
+            file_lock.export(uuid = True)
             table_to_drop.sa_table.drop()
-
-        except Exception, e:
-            transaction.abort()
-            raise
-        else:
-            transaction.commit()
+            file_lock.export()
             self.load_from_persist(True)
-        finally:
-            connection.close()
 
         if table_to_drop.logged:
             self.drop_table(self.tables["_log_" + table_to_drop.name])
@@ -342,19 +320,21 @@ class Database(object):
         for table in self.tables.itervalues():
             table.add_foreign_key_columns()
 
-
         self.update_sa(True)
-        self.code_repr_export(uuid_name = True)
-        with FileLock(self.get_file_path()) as file_lock:
+
+        with SchemaLock(self) as file_lock:
+            file_lock.export(uuid = True)
             self.metadata.create_all(self.engine)
             self.persisted = True
-            self.code_repr_export()
+            file_lock.export()
             self.load_from_persist(True)
 
     def get_file_path(self, uuid_name = False):
 
+        uuid = datetime.datetime.now().isoformat().\
+                replace(":", "-").replace(".", "-")
         if uuid_name:
-            file_name = "generated_schema-%s.py" % uuid.uuid1()
+            file_name = "generated_schema-%s.py" % uuid
         else:
             file_name = "generated_schema.py"
 
@@ -367,13 +347,14 @@ class Database(object):
 
     def code_repr_load(self):
 
-        import _schema.generated_schema as schema
-        reload(schema)
-        database = schema.database
+        import _schema.generated_schema as sch
+        sch = reload(sch)
+        database = sch.database
         database.clear_sa()
         for table in database.tables.values():
             table.database = self
             self.add_table(table)
+            table.persisted = True
 
         self.max_table_id = database.max_table_id
         self.max_event_id = database.max_event_id
@@ -381,9 +362,13 @@ class Database(object):
         self.persisted = True
 
 
-    def code_repr_export(self, uuid_name = False):
+    def code_repr_export(self, file_path):
 
-        file_path = self.get_file_path(uuid_name)
+        try:
+            os.remove(file_path)
+            os.remove(file_path+"c")
+        except OSError:
+            pass
 
         out_file = open(file_path, "w")
 
@@ -415,6 +400,8 @@ class Database(object):
 
         out_file.write("\n".join(output))
         out_file.close()
+
+        return file_path
 
 
     def load_from_persist(self, restart = False):

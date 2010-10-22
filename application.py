@@ -464,6 +464,14 @@ def empty_database(directory, connection_string = None):
     app.initialise_database()
     return app
 
+def delete_database(directory, connection_string = None):
+    import database.util as util
+    options = util.Holder(connection_string = connection_string,
+                          quiet = False)
+    app = Application(directory, options)
+    app.delete_database()
+
+
 
 
 

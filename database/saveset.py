@@ -183,7 +183,7 @@ class SaveNew(object):
             self.session.session.flush()
         self.prepared = True
 
-    def save(self, finish = True):
+    def save(self, finish = True, validate = True):
 
         self.prepare()
         self.process_values()
@@ -196,7 +196,7 @@ class SaveNew(object):
 
         all_errors = {}
         for path, save_item in self.save_items.iteritems():
-            errors = save_item.save(finish = False)
+            errors = save_item.save(finish = False, validate = validate)
             for key, value in errors.items():
                 try:
                     field = self.path_to_defined_name[(path, key)]
@@ -231,7 +231,7 @@ class SaveError(object):
     def set_value(self):
         pass
 
-    def save(self, finish = False):
+    def save(self, finish = False, validate = True):
         return self.all_errors
 
     def prepare(self, **kw):
@@ -254,10 +254,13 @@ class SaveItem(object):
         except sqlalchemy.exc.InvalidRequestError:
             pass
 
-    def save(self, finish = True):
+    def save(self, finish = True, validate = True):
         errors = {}
         try:
-            self.session.save(self.obj)
+            if validate:
+                self.session.save(self.obj)
+            else:
+                self.session.add_no_validate(self.obj)
         except formencode.Invalid, e:
             for key, value in e.error_dict.items():
                 errors[key] = value.msg

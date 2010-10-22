@@ -742,9 +742,45 @@ class FileLock(object):
         if self.is_locked:
             self.release()
 
-
     def __del__(self):
         """ Make sure that the FileLock instance doesn't leave a lockfile
             lying around.
         """
         self.release()
+###
+
+class SchemaLock(FileLock):
+
+    def __init__(self, database, timeout=10, delay=.05):
+
+        self.database = database
+        self.schema_path = database.get_file_path()
+        self.uuid_path = database.get_file_path(True)
+
+        self.is_locked = False
+        self.lockfile = self.schema_path + ".lock"
+        self.timeout = timeout
+        self.delay = delay
+        self.export_uuid = False
+
+    def export(self, uuid = False):
+        if uuid:
+            self.database.code_repr_export(self.uuid_path)
+            self.export_uuid = True
+        else:
+            self.database.code_repr_export(self.schema_path)
+
+    def __enter__(self):
+        if not self.is_locked:
+            self.acquire()
+
+        return self
+
+    def __exit__(self, type, value, traceback):
+        """ Activated at the end of the with statement.
+            It automatically releases the lock if it isn't locked.
+        """
+        if self.is_locked:
+            self.release()
+        if not traceback and self.export_uuid:
+            os.rename(self.uuid_path, self.uuid_path[:-3] + "-complete.py")

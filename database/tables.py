@@ -48,7 +48,7 @@ from validators import All, UnicodeString, RequireIfMissing
 from fields import Modified, ModifiedBySession, Integer
 import fields
 from util import get_paths, make_local_tables, create_table_path_list, create_table_path
-from util import OrderedDict, FileLock
+from util import OrderedDict, SchemaLock
 
 log = logging.getLogger('rebase.application.database')
 
@@ -193,19 +193,10 @@ class Table(object):
         if key not in self.all_updatable_kw:
             raise ValueError("%s not allowed to be added or modified" % key)
 
-        self.database.code_repr_export(uuid_name = True)
-        with FileLock(self.database.get_file_path()) as file_lock:
+        with SchemaLock(self.database) as file_lock:
             setattr(self, key, value)
             self.kw[key] = value
-            self.persisted = True
-            self.database.code_repr_export()
-
-
-    def set_field_order(self, connection):
-
-        if connection:
-            root = connection.root()
-            root["tables"][self.name]["field_order"] = PersistentList(self.field_order)
+            file_lock.export()
 
 
     def add_foreign_key_columns(self):
@@ -225,30 +216,6 @@ class Table(object):
                 field.foreign_key_name = name
 
 
-    def persist_foreign_key_columns(self, connection):
-
-        for column in self.foriegn_key_columns.values():
-            original_col = column.original_column
-            name = column.name
-            if original_col == "id" and name not in self.defined_columns:
-                relation = column.defined_relation
-                field = relation.parent
-                new_field = Integer(name, mandatory = relation.many_side_not_null,
-                                    default = relation.many_side_default,
-                                    onupdate = relation.many_side_onupdate)
-
-                self._add_field_no_persist(new_field)
-                self._persist_extra_field(new_field, connection)
-
-                root = connection.root()
-
-                if field.name in self.field_order and not self.persisted:
-                    self.field_order.pop()
-                    pos = self.field_order.index(field.name)
-                    self.field_order.insert(pos, name)
-
-                root["tables"][field.table.name]["fields"][field.name]["params"]["foreign_key_name"] = name
-
     def add_relation(self, field):
 
         #TODO make into more general add relation, currently
@@ -257,12 +224,8 @@ class Table(object):
             self._add_field_no_persist(field)
             return
 
-        connection = self.database.db.open()
-        root = connection.root()
-
-        try:
+        with SchemaLock(self.database) as file_lock:
             self._add_field_no_persist(field)
-            self._persist_extra_field(field, connection)
 
             self.database.add_relations()
             name, relation = field.relations.copy().popitem()
@@ -276,7 +239,9 @@ class Table(object):
                     if self.database.engine.name == 'sqlite':
                         sa_options["server_default"] = "null"
                     col = sa.Column(name, column.type, **sa_options)
-                    fk_table.persist_foreign_key_columns(connection)
+                    fk_table.add_foreign_key_columns()
+                    file_lock.export(uuid = True)
+                    print "hererer"
                     col.create(fk_table.sa_table)
 
             for name, con in fk_table.foreign_key_constraints.iteritems():
@@ -289,15 +254,8 @@ class Table(object):
 
                 if name == relation.foreign_key_constraint_name:
                     fk_const.create()
-
-        except Exception, e:
-            transaction.abort()
-            raise
-        else:
-            transaction.commit()
+            file_lock.export()
             self.database.load_from_persist(True)
-        finally:
-            connection.close()
 
     def delete_relation(self, field):
 
@@ -305,16 +263,14 @@ class Table(object):
             field = self.fields[field]
         name, relation = field.relations.copy().popitem()
 
-        connection = self.database.db.open()
+        with SchemaLock(self.database) as file_lock:
 
-        try:
             mandatory = True if relation.many_side_not_null else False
             fk_table = self.database[relation.foreign_key_table]
             pk_table = self.database[relation.primary_key_table]
 
-            root = connection.root()
-            root["tables"][field.table.name]["fields"].pop(field.name)
-            root["tables"][field.table.name]["field_order"].remove(field.name)
+            field.table.fields.pop(field.name)
+            file_lock.export(uuid = True)
 
             for name, con in fk_table.foreign_key_constraints.iteritems():
 
@@ -323,22 +279,15 @@ class Table(object):
 
                 if name == relation.foreign_key_constraint_name:
                     fk_const.drop()
-
-        except Exception, e:
-            transaction.abort()
-            raise
-        else:
-            transaction.commit()
+            file_lock.export()
             self.database.load_from_persist(True)
-        finally:
-            connection.close()
+
 
     def add_index(self, field, defer_update_sa = False):
 
-        connection = self.database.db.open()
-        try:
+        with SchemaLock(self.database) as file_lock:
             self._add_field_no_persist(field)
-            self._persist_extra_field(field, connection)
+            file_lock.export(uuid = True)
 
             name, index = field.indexes.popitem()
 
@@ -348,89 +297,44 @@ class Table(object):
             else:
                 sa.Index(index.name, *ind).create()
 
-        except Exception, e:
-            transaction.abort()
-            raise
-        else:
-            transaction.commit()
+            file_lock.export()
             self.database.load_from_persist(True)
-        finally:
-            connection.close()
 
     def delete_index(self, field):
 
         if isinstance(field, basestring):
             field = self.fields[field]
 
-        connection = self.database.db.open()
-        try:
-            root = connection.root()
+        with SchemaLock(self.database) as file_lock:
 
-            root["tables"][field.table.name]["fields"].pop(field.name)
-            root["tables"][field.table.name]["field_order"].remove(field.name)
+            field.table.fields.pop(field.name)
+            file_lock.export(uuid = True)
 
             for sa_index in self.sa_table.indexes:
                 if sa_index.name == field.name:
                     sa_index.drop()
 
-        except Exception, e:
-            transaction.abort()
-            raise
-        else:
-            transaction.commit()
-            self.database.load_from_persist(True)
-        finally:
-            connection.close()
+            file_lock.export()
 
+            self.database.load_from_persist(True)
 
     def add_field(self, field, defer_update_sa = False):
         """add a Field object to this Table"""
         if self.persisted == True:
 
-            connection = self.database.application.zodb.open()
-
-            field.check_table(self)
-            try:
+            with SchemaLock(self.database) as file_lock:
                 self._add_field_no_persist(field)
-                self._persist_extra_field(field, connection)
+                file_lock.export(uuid = True)
                 self._add_field_by_alter_table(field)
-
-                root = connection.root()
-
-
-            except Exception, e:
-                transaction.abort()
-                raise
-            else:
-                transaction.commit()
+                file_lock.export()
                 self.database.load_from_persist(True)
-            finally:
-                connection.close()
-            return
 
         else:
             self._add_field_no_persist(field)
 
     def add_event(self, event):
 
-        if self.persisted == True:
-
-            connection = self.database.application.zodb.open()
-            try:
-                event._set_parent(self)
-                for action in event.actions:
-                    self._persist_action(action, event.event_type, connection)
-
-            except Exception, e:
-                transaction.abort()
-                raise
-            else:
-                transaction.commit()
-            finally:
-                connection.close()
-        else:
-            event._set_parent(self)
-
+        self.add_field(event)
 
     def rename_field(self, field, new_name):
 
@@ -441,30 +345,16 @@ class Table(object):
         if isinstance(field, basestring):
             field = self.fields[field]
 
-        connection = self.database.db.open()
+        with SchemaLock(self.database) as file_lock:
 
-        try:
-            root = connection.root()
-
-            persistant_fields = root["tables"][field.table.name]["fields"]
-            persistant_field = persistant_fields.pop(field.name)
-            persistant_fields[new_name] = persistant_field
-
-            field_order = root["tables"][field.table.name]["field_order"]
-            index = field_order.index(field.name)
-            field_order[index] = new_name
+            field.name = new_name
 
             column = field.columns[field.column_order[0]] ##TODO make sure only 1 column in field
+            file_lock.export(uuid = True)
             self.sa_table.c[column.name].alter(name = new_name)
 
-        except Exception, e:
-            transaction.abort()
-            raise
-        else:
-            transaction.commit()
+            file_lock.export()
             self.database.load_from_persist(True)
-        finally:
-            connection.close()
 
     def drop_field(self, field):
 
@@ -475,24 +365,16 @@ class Table(object):
         if isinstance(field, basestring):
             field = self.fields[field]
 
-        connection = self.database.db.open()
+        with SchemaLock(self.database) as file_lock:
 
-        try:
-            root = connection.root()
-            root["tables"][field.table.name]["fields"].pop(field.name)
-            root["tables"][field.table.name]["field_order"].remove(field.name)
+            self.fields.pop(field.name)
+            file_lock.export(uuid = True)
 
             for column in field.columns.values():
                 self.sa_table.c[column.name].drop()
 
-        except Exception, e:
-            transaction.abort()
-            raise
-        else:
-            transaction.commit()
+            file_lock.export()
             self.database.load_from_persist(True)
-        finally:
-            connection.close()
 
 
     def alter_field(self, field, **kw):
@@ -507,40 +389,31 @@ class Table(object):
 
         connection = self.database.db.open()
 
-        try:
-            root = connection.root()
-            persisted_field = root["tables"][field.table.name]["fields"][field.name]
-            params = persisted_field["params"]
+        with SchemaLock(self.database) as file_lock:
 
             field_type = kw.pop("type", None)
 
-            params.update(kw)
+            field.kw.update(kw)
 
             if field_type:
                 if isinstance(field_type, basestring):
                     field_type = getattr(fields, field_type)
-                new_field = field_type(field.name, **params)
+                new_field = field_type(field.name, **field.kw)
             else:
-                new_field = field.__class__(field.name, **params)
+                new_field = field.__class__(field.name, **field.kw)
 
             _, column = new_field.columns.copy().popitem()
 
-            sa_options = column.sa_options
+            self.fields[field.name] = new_field
 
-            if field_type:
-                persisted_field["type"] = new_field.__class__.__name__
+            file_lock.export(uuid = True)
+            sa_options = column.sa_options
 
             col = self.sa_table.c[column.name]
             col.alter(sa.Column(column.name, column.type, **sa_options))
+            file_lock.export()
 
-        except Exception, e:
-            transaction.abort()
-            raise
-        else:
-            transaction.commit()
             self.database.load_from_persist(True)
-        finally:
-            connection.close()
 
     def _add_field_no_persist(self, field):
         """add a Field object to this Table"""
@@ -550,29 +423,6 @@ class Table(object):
         for name, column in field.columns.iteritems():
             col = sa.Column(name, column.type, **column.sa_options)
             col.create(self.sa_table)
-
-    def _persist_extra_field(self, field, connection):
-
-        root = connection.root()
-        table = root["tables"][self.name]
-        table_fields = table["fields"]
-        rfield = field
-
-        field = PersistentMapping()
-        table_fields[rfield.name] = field
-
-        field["type"] = rfield.__class__.__name__
-
-        params = PersistentMapping(**rfield.kw)
-
-        if rfield.foreign_key_name:
-            params["foreign_key_name"] = rfield.foreign_key_name
-
-        field["params"] = params
-        field["args"] = PersistentList(rfield.args)
-
-        if self.persisted:
-            table["field_order"].append(rfield.name)
 
     @property
     def ordered_fields(self):

@@ -23,9 +23,6 @@
 ##	This file contains the classes that hold information about database
 ##  fields such as name,type, indexes and constraints.
 
-import sqlalchemy as sa
-import transaction
-
 import util
 import custom_exceptions
 
@@ -496,11 +493,10 @@ class Field(object):
             raise ValueError("%s not allowed to be added or modified" % key)
 
         database = self.table.database
-        database.code_repr_export(uuid_name = True)
-        with util.FileLock(database.get_file_path()) as file_lock:
+        with util.SchemaLock(database) as file_lock:
             self.kw[key] = value
             setattr(self, key, value)
-            database.code_repr_export()
+            file_lock.export()
 
 
     def diff(self, other):
