@@ -545,7 +545,7 @@ REBASE.Interface = function (){
     function init(){
         /* initialise the layout */
         var $body = $('body');
-        $body.append('<div class="ui-layout-center"><div id="main" /></div>');
+        $body.append('<div class="ui-layout-center" id="main_pane" ></div>');
         $body.append('<div class="ui-layout-west" id="left"><div id="side" /></div>');
         $body.append('<div class="ui-layout-north"><div id="logo" /><div id="user_area" /></div>');
         $side = $('#side');
@@ -562,6 +562,11 @@ REBASE.Interface = function (){
 
         $interface_layout = $body.layout({defaults: layout_defaults, north : layout_north});
         resize_north_pane();
+        // the main div layout
+        var $main_pane = $('#main_pane');
+        $main_pane.append('<div class="ui-layout-center"><div id="main" /></div>');
+        $main_pane.append('<div class="ui-layout-north" id="layout_header">HEADER</div>');
+        $main_layout = $main_pane.layout({defaults: layout_defaults, north : layout_north});
     }
     return {
         'init' : function (){
@@ -1534,6 +1539,7 @@ REBASE.Layout = function(){
 
     function set_layout_title_and_footer(){
         if (layout_title){
+            $header = $('#layout_header');
             $header.text(layout_title);
         }
         var footer = 'footer';
@@ -1616,8 +1622,6 @@ REBASE.Layout = function(){
 
             // Create the layout.
             // These are the available layouts.
-            $header = $('<div class="LAYOUT_HEADER"></div>');
-            $layout.append($header);
             switch (layout.layout_type){
                 case 'entity':
                     make_layout_section("LAYOUT_COL_LEFT");
