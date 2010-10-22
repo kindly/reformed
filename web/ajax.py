@@ -262,7 +262,7 @@ class Worker(object):
             print '== Returned Data', '=' * 43
             pprint.pprint(data)
             print '-' * 60
-        data = data['data']
+#        data = data['data']
         action = data.get('action')
         if action == 'function':
             info = 'function: %s' % data['function']
