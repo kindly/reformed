@@ -167,8 +167,8 @@ def upload_files(options):
         sys.stdout.flush()
     print
 
-def delete():
-    application.delete_database()
+def delete(purge_files = True):
+    application.delete_database(purge_files = purge_files)
 
 def dump():
     print 'dumping data'

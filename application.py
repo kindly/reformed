@@ -157,10 +157,11 @@ class Application(object):
         self.initialise_sys_info()
         self.database = None
 
-    def delete_database(self):
+    def delete_database(self, purge_files = True):
         """remove database, zodb and any uploaded files"""
         # remove files
-        self.purge_attachments()
+        if purge_files:
+            self.purge_attachments()
 
         # check for zodb files
         zodb_file_names = ["zodb.fs", "zodb.fs.lock", "zodb.fs.index", "zodb.fs.tmp"]
