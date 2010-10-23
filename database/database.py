@@ -455,6 +455,7 @@ class Database(object):
             for table in self.tables.itervalues():
                 for column in table.columns.iterkeys():
                     getattr(table.sa_class, column).impl.active_history = True
+                table.columns_cache = table.columns
             for table in self.tables.itervalues():
                 table.make_schema_dict()
             ## put valid_info tables into info_table
@@ -490,6 +491,7 @@ class Database(object):
                                 change = [])
             table.schema_dict = None
             table.valid_core_types = []
+            table.columns_cache = None
 
         self.graph = None
         self.search_actions = {}
@@ -597,14 +599,18 @@ class Database(object):
 
     def search_single_data(self, table_name, *args, **kw):
 
-        result = self.search(table_name, *args, limit = 2, **kw)
-        data = result.results
+        try:
+            session = self.Session()
+            result = self.search(table_name, *args,
+                                 limit = 2, session = session, **kw)
+            data = result.results
 
-        if not data or len(data) == 2:
-            raise custom_exceptions.SingleResultError("one result not found")
+            if not data or len(data) == 2:
+                raise custom_exceptions.SingleResultError("one result not found")
 
-        return result.data[0]
-
+            return result.data[0]
+        finally:
+            session.close()
 
     def logged_table(self, logged_table):
 

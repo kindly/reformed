@@ -172,6 +172,8 @@ class Table(object):
         self.schema_dict = None
         self.schema = None
 
+        self.columns_cache = None
+
     def code_repr(self):
         header = "Table('%s',\n    " % self.name
         footer = "\n)"
@@ -489,6 +491,8 @@ class Table(object):
     def columns(self):
         """gathers all columns this table has whether defined here on in
         another tables relation"""
+        if self.columns_cache:
+            return self.columns_cache
         columns = {}
         try:
             for field in self.fields.itervalues():
