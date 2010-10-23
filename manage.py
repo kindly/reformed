@@ -158,7 +158,7 @@ def upload_files(options):
     count = 0
     for (category, file_path, file_name) in item_list:
         file_handle = open(file_path)
-        fileupload.save_file(file_handle, file_name, '', category, application)
+        web.fileupload.save_file(file_handle, file_name, '', category, application)
         # status info
         count += 1
         sys.stdout.write(chr(8) * len(out))
