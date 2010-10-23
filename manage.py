@@ -346,6 +346,8 @@ if __name__ == "__main__":
                       help="output system information")
     parser.add_option("--profile", dest = "profile", action="store_true",
                       help="profile data loading")
+    parser.add_option("--refresh", dest = "refresh", action="store_true",
+                      help="recreate the database but keep uploads")
     (options, args) = parser.parse_args()
 
     application = None
@@ -407,4 +409,8 @@ if __name__ == "__main__":
         delete()
         create()
         load()
-
+    if options.refresh:
+        application.extract_table('upload')
+        delete(purge_files = False)
+        create()
+        application.import_file('upload')

@@ -27,6 +27,8 @@ import os.path
 import sys
 import logging
 from ConfigParser import RawConfigParser, NoOptionError, NoSectionError
+import csv
+import errno
 
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
@@ -43,6 +45,7 @@ import job_scheduler.job_scheduler as job_scheduler
 import database.predefine as predefine
 import node.node_runner as node_runner
 import database.full_text_index as full_text_index
+from database.data_loader import FlatFileSaveSet
 
 log = logging.getLogger('rebase.application')
 
@@ -451,6 +454,62 @@ class Application(object):
 
         full_text_index.index_database(self)
 
+
+
+
+    def extract_table(self, table, output_dir = 'output', filename = None):
+
+        ignored_columns = "__table _version _core_id id"
+
+        data_folder = os.path.join(self.application_folder, output_dir)
+        mkdir_p(data_folder)
+
+        print 'extracting ', table
+        if not filename:
+            filename = '%s.csv' % table
+
+        output_file = os.path.join(data_folder, filename)
+
+        self.initialise_database()
+        results = self.database.search(table, tables = [table]).data
+
+        if results:
+            with file(output_file, mode = "w+") as out_file:
+                csv_file = csv.writer(out_file, quoting=csv.QUOTE_ALL)
+
+                columns = results[0].keys()
+                for field in ignored_columns.split():
+                    columns.remove(field)
+
+                csv_file.writerow(columns)
+
+                for row in results:
+                    out = []
+                    for column in columns:
+                        out.append(row[column])
+
+                    csv_file.writerow(out)
+
+
+    def extract_tables(self, tables = [], output_dir = 'output'):
+
+        for table in tables:
+            self.extract_table(table, output_dir = output_dir)
+
+
+    def import_file(self, table, filename = None):
+        self.initialise_database()
+        database = self.database
+        if not filename:
+            filename = '%s.csv' % table
+        path = os.path.join(self.application_folder, 'output', filename)
+
+        file_loader = FlatFileSaveSet(database, path = path, table = table)
+        file_loader.load()
+
+
+
+
 def empty_database(directory, connection_string = None):
     import database.util as util
     options = util.Holder(connection_string = connection_string,
@@ -459,6 +518,15 @@ def empty_database(directory, connection_string = None):
     app.initialise_database()
     return app
 
+
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno == errno.EEXIST:
+            pass
+        else:
+            raise
 
 
 
