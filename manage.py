@@ -67,6 +67,7 @@ def profile(file):
     import cProfile
     cProfile.runctx( command, globals(), locals(), filename="dataload.profile" )
 
+# FIXME broken
 def load():
     print "loading data"
     import load
