@@ -25,6 +25,10 @@
 /*global window setTimeout*/
 /*global $ REBASE console_log Showdown*/
 
+var node_load;
+
+
+
 var CONFIG = {
     DISABLE_FX : true,
     FORM_PAGING_SIZE : 5,
@@ -40,6 +44,44 @@ var CONFIG = {
 }
 
 var REBASE = {};
+
+
+
+/*
+ *           ('>
+ *           /))@@@@@.
+ *          /@"@@@@@()@
+ *         .@@()@@()@@@@    INITIALISATIONS
+ *         @@@O@@@@()@@@
+ *         @()@@\@@@()@@    Code to initialise stuff.
+ *          @()@||@@@@@'
+ *           '@@||@@@'
+ *        jgs   ||
+ *       ^^^^^^^^^^^^^^^^^
+ */
+
+REBASE.init = function(){
+    // turn off any jquery animations
+    $.fx.off = CONFIG.DISABLE_FX;
+    /* helper function */
+    node_load = REBASE.Node.load_node;
+
+    $.address.change(REBASE.Node.load_page);
+    // if no node info is available go to the login node
+    // FIXME this needs fixing with a default node
+    // also if you are auto logged in etc
+    var url = $.address.value();
+    if (url == '/'){
+        node_load('user.User:login');
+    }
+
+    // find any REBASE init functions and call them
+    for(var key in REBASE){
+        if (REBASE[key].init){
+            REBASE[key].init();
+        }
+    }
+}
 
 
 /*
@@ -860,10 +902,13 @@ REBASE.Functions = function (){
 
     functions.debug_form_info = debug_form_info;
     functions.debug_html = debug_html;
-    functions.load_bookmarks = REBASE.Bookmark.process;
-    functions.clear_form_cache = REBASE.FormProcessor.clear_form_cache;
-    functions.make_menu = REBASE.Interface.make_menu;
-    functions.update_user = REBASE.User.update;
+
+    function init(){
+        functions.load_bookmarks = REBASE.Bookmark.process;
+        functions.clear_form_cache = REBASE.FormProcessor.clear_form_cache;
+        functions.make_menu = REBASE.Interface.make_menu;
+        functions.update_user = REBASE.User.update;
+    }
 
     // application data
     functions.application_data = function (data){
@@ -875,6 +920,9 @@ REBASE.Functions = function (){
     return {
         'call' : function (fn, data){
             call(fn, data);
+        },
+        'init' : function (){
+            init();
         }
     };
 }();
@@ -1745,3 +1793,7 @@ REBASE.Layout = function(){
         }
     };
 }();
+
+
+
+$(document).ready(REBASE.init);
