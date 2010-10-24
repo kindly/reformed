@@ -194,9 +194,9 @@ class Form(object):
         if id:
             # existing record
             try:
-                result = r.search_single(self.table, "id = ?",
-                                      values = [id],
-                                      session = session)
+                result = r.search_single(self.table,
+                                         dict(id = id),
+                                         session = session)
                 save_set = SaveItem(result.results[0], session)
                 save_set.new = False
             except custom_exceptions.SingleResultError:
@@ -344,10 +344,10 @@ class Form(object):
         if where:
             pass
         elif id:
-            where = 'id=?'
+            where = dict(id=id)
         else:
             id = get_data('__id')
-            where = '_core_id=?'
+            where = dict(_core_id = id)
         try:
             session = r.Session()
 
@@ -358,8 +358,9 @@ class Form(object):
             tables = util.split_table_fields(self.form_item_name_list, table).keys()
 
             result = r.search_single(table, where,
-                                          session = session, tables = tables,
-                                          values = [id])
+                                     session = session,
+                                     tables = tables,
+                                     )
 
             for field in util.INTERNAL_FIELDS:
                 try:
@@ -472,12 +473,12 @@ class Form(object):
             join_data = {}
             pass
         elif id:
-            where = 'id=?'
+            where = dict(id = id)
             link_id = '&id=%s' % id
             join_data = dict(id = id)
         else:
             id = id_data.get('__id')
-            where = '_core_id=?'
+            where = dict(_core_id = id)
             link_id = '&__id=%s' % id
             join_data = dict(__id = id)
 
@@ -490,11 +491,10 @@ class Form(object):
         tables = util.split_table_fields(self.form_item_name_list, table).keys()
 
         results = r.search(table, where,
-                                      session = session, tables = tables,
-                            limit = limit,
+                           session = session, tables = tables,
+                           limit = limit,
                            offset = offset,
-                           count = True,
-                                      values = [id])
+                           count = True)
         results.collect()
 
         session.close()
@@ -600,7 +600,7 @@ class Form(object):
         session = r.Session()
 
         if not table:
-            where = kw.pop('where', "id>0")
+            where = kw.pop('where', {"id": (">", 0)})
             values = kw.pop('values', None)
             results = r.search('_core_entity',
                                where = where,
@@ -612,7 +612,7 @@ class Form(object):
 
         elif r[table].entity:
             results = r.search('_core',
-                               where = "type = %s" % table,
+                               where = dict(type = table),
                                extra_inner = ["primary_entity._core_entity"],
                                limit = limit,
                                session = session,

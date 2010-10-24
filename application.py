@@ -177,6 +177,10 @@ class Application(object):
         all_index_files = glob.glob(os.path.join(self.application_folder, "index") + "/*.*")
         for path in all_index_files:
             os.remove(path)
+        # delete schema folder
+        all_index_files = glob.glob(os.path.join(self.application_folder, "_schema") + "/generated*")
+        for path in all_index_files:
+            os.remove(path)
 
         # delete main database tables
         engine = create_engine(self.connection_string)
@@ -264,7 +268,9 @@ class Application(object):
             self.engine = create_engine(self.connection_string)
             self.metadata.bind = self.engine
             self.Session = sessionmaker(bind=self.engine, autoflush = False)
-            self.database = database.database.Database(self)
+
+            self.database = database.database.Database()
+            self.database.set_application(self)
             # add to global session
             global_session.database = self.database
 
@@ -517,6 +523,14 @@ def empty_database(directory, connection_string = None):
     app = Application(directory, options)
     app.initialise_database()
     return app
+
+def delete_database(directory, connection_string = None):
+    import database.util as util
+    options = util.Holder(connection_string = connection_string,
+                          quiet = False)
+    app = Application(directory, options)
+    app.delete_database()
+
 
 
 def mkdir_p(path):

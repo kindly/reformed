@@ -798,7 +798,7 @@ class MultipleSaveSet(object):
 
         self.data = data
 
-    def save(self):
+    def save(self, validate = True):
 
         save_sets = []
 
@@ -830,7 +830,7 @@ class MultipleSaveSet(object):
 
         errors = {}
         for num, save_set in enumerate(save_sets):
-            error = save_set.save(False)
+            error = save_set.save(False, validate = validate)
             if error:
                 errors[num] = (error, save_set.original_values)
         try:
@@ -912,7 +912,7 @@ class FlatFileSaveSet(object):
 
         return (num, islice(generator, 0, num))
 
-    def load_chunk(self, chunk):
+    def load_chunk(self, chunk, validate = True):
 
         try:
             start, first_generator = self.get_first_generator(chunk)
@@ -934,7 +934,7 @@ class FlatFileSaveSet(object):
         range = (range_start, range_end)
 
         try:
-            save_set_errors = save_set.save()
+            save_set_errors = save_set.save(validate = validate)
         except sa.orm.exc.ConcurrentModificationError, e:
             return ChunkStatus(range, "locking error", error = e)
         except Exception, e:
@@ -949,11 +949,10 @@ class FlatFileSaveSet(object):
         return ChunkStatus(range, "validation error", error_lines)
 
 
-    def load(self):
+    def load(self, validate = True):
 
         for chunk in self.csv_file.chunks:
-            status = self.load_chunk(chunk)
-            print status
+            status = self.load_chunk(chunk, validate = validate)
             self.chunk_status.append(status)
 
         return self.chunk_status

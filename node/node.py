@@ -175,13 +175,12 @@ class Node(object):
             try:
                 session = r.Session()
                 result = r.search_single_data("bookmarks",
-                                         "user_id = ? and  _core_id = ?",
-                                         session = session,
-                                         fields = ['_core_entity.title',  'entity_table', '_core_id', 'accessed_date'],
-                                         values = [user_id, node_token.bookmark["_core_id"]])
+                                         {"user_id" : user_id,
+                                          "_core_id" : node_token.bookmark["_core_id"]},
+                                         fields = ['entity_table', '_core_id'],
+                                         )
+
                 result["accessed_date"] = util.convert_value(datetime.datetime.now())
-                # update
-                # FIXME does this try to write to _core_entity?
                 util.load_local_data(r, result)
             except custom_exceptions.SingleResultError:
                 result = {"__table": "bookmarks",
@@ -196,11 +195,11 @@ class Node(object):
         else:
             # anonymous user
             result = {"_core_id": node_token.bookmark["_core_id"],
-                      "title": node_token.get_title(),
                       "entity_table": node_token.bookmark["table_name"],
                       "accessed_date": util.convert_value(datetime.datetime.now())}
 
         # update bookmark output to front-end
+        result["title"] = node_token.get_title()
         node_token.bookmark = result
 
 

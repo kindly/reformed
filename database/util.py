@@ -1,6 +1,8 @@
 import datetime
 import decimal
 import os
+import time
+import errno
 
 import formencode as fe
 
@@ -598,3 +600,187 @@ def get_table_from_instance(instance, database):
 
     return database.tables[instance.__class__.__name__]
 
+## {{{ http://code.activestate.com/recipes/576669/ (r18)
+## Raymond Hettingers proporsal to go in 2.7
+from collections import MutableMapping
+
+class OrderedDict(dict, MutableMapping):
+
+    # Methods with direct access to underlying attributes
+
+    def __init__(self, *args, **kwds):
+        if len(args) > 1:
+            raise TypeError('expected at 1 argument, got %d', len(args))
+        if not hasattr(self, '_keys'):
+            self._keys = []
+        self.update(*args, **kwds)
+
+    def clear(self):
+        del self._keys[:]
+        dict.clear(self)
+
+    def __setitem__(self, key, value):
+        if key not in self:
+            self._keys.append(key)
+        dict.__setitem__(self, key, value)
+
+    def __delitem__(self, key):
+        dict.__delitem__(self, key)
+        self._keys.remove(key)
+
+    def __iter__(self):
+        return iter(self._keys)
+
+    def __reversed__(self):
+        return reversed(self._keys)
+
+    def popitem(self):
+        if not self:
+            raise KeyError
+        key = self._keys.pop()
+        value = dict.pop(self, key)
+        return key, value
+
+    def __reduce__(self):
+        items = [[k, self[k]] for k in self]
+        inst_dict = vars(self).copy()
+        inst_dict.pop('_keys', None)
+        return (self.__class__, (items,), inst_dict)
+
+    # Methods with indirect access via the above methods
+
+    setdefault = MutableMapping.setdefault
+    update = MutableMapping.update
+    pop = MutableMapping.pop
+    keys = MutableMapping.keys
+    values = MutableMapping.values
+    items = MutableMapping.items
+
+    def __repr__(self):
+        pairs = ', '.join(map('%r: %r'.__mod__, self.items()))
+        return '%s({%s})' % (self.__class__.__name__, pairs)
+
+    def copy(self):
+        return self.__class__(self)
+
+    @classmethod
+    def fromkeys(cls, iterable, value=None):
+        d = cls()
+        for key in iterable:
+            d[key] = value
+        return d
+## end of http://code.activestate.com/recipes/576669/ }}}
+
+
+
+## From Evan Fosmark found on http://www.evanfosmark.com/2009/01/cross-platform-file-locking-support-in-python/
+
+class FileLockException(Exception):
+    pass
+
+class FileLock(object):
+    """ A file locking mechanism that has context-manager support so
+        you can use it in a with statement. This should be relatively cross
+        compatible as it doesn't rely on msvcrt or fcntl for the locking.
+    """
+
+    def __init__(self, file_name, timeout=10, delay=.05):
+        """ Prepare the file locker. Specify the file to lock and optionally
+            the maximum timeout and the delay between each attempt to lock.
+        """
+        self.is_locked = False
+        self.lockfile = file_name + ".lock"
+        self.file_name = file_name
+        self.timeout = timeout
+        self.delay = delay
+
+
+    def acquire(self):
+        """ Acquire the lock, if possible. If the lock is in use, it check again
+            every `wait` seconds. It does this until it either gets the lock or
+            exceeds `timeout` number of seconds, in which case it throws
+            an exception.
+        """
+        start_time = time.time()
+        while True:
+            try:
+                self.fd = os.open(self.lockfile, os.O_CREAT|os.O_EXCL|os.O_RDWR)
+                break;
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    raise
+                if (time.time() - start_time) >= self.timeout:
+                    raise FileLockException("Timeout occured.")
+                time.sleep(self.delay)
+        self.is_locked = True
+
+
+    def release(self):
+        """ Get rid of the lock by deleting the lockfile.
+            When working in a `with` statement, this gets automatically
+            called at the end.
+        """
+        if self.is_locked:
+            os.close(self.fd)
+            os.unlink(self.lockfile)
+            self.is_locked = False
+
+
+    def __enter__(self):
+        """ Activated when used in the with statement.
+            Should automatically acquire a lock to be used in the with block.
+        """
+        if not self.is_locked:
+            self.acquire()
+        return self
+
+
+    def __exit__(self, type, value, traceback):
+        """ Activated at the end of the with statement.
+            It automatically releases the lock if it isn't locked.
+        """
+        if self.is_locked:
+            self.release()
+
+    def __del__(self):
+        """ Make sure that the FileLock instance doesn't leave a lockfile
+            lying around.
+        """
+        self.release()
+###
+
+class SchemaLock(FileLock):
+
+    def __init__(self, database, timeout=10, delay=.05):
+
+        self.database = database
+        self.schema_path = database.get_file_path()
+        self.uuid_path = database.get_file_path(True)
+
+        self.is_locked = False
+        self.lockfile = self.schema_path + ".lock"
+        self.timeout = timeout
+        self.delay = delay
+        self.export_uuid = False
+
+    def export(self, uuid = False):
+        if uuid:
+            self.database.code_repr_export(self.uuid_path)
+            self.export_uuid = True
+        else:
+            self.database.code_repr_export(self.schema_path)
+
+    def __enter__(self):
+        if not self.is_locked:
+            self.acquire()
+
+        return self
+
+    def __exit__(self, type, value, traceback):
+        """ Activated at the end of the with statement.
+            It automatically releases the lock if it isn't locked.
+        """
+        if self.is_locked:
+            self.release()
+        if not traceback and self.export_uuid:
+            os.rename(self.uuid_path, self.uuid_path[:-3] + "-complete.py")

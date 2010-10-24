@@ -29,9 +29,7 @@ class Action(PersistBaseClass):
 
     def __new__(cls, *arg, **kw):
         obj = PersistBaseClass.__new__(cls, *arg, **kw)
-        obj.event_id = None
-        if "event_id" in kw:
-            obj.event_id = kw.pop("event_id")
+        obj.event_id = kw.pop("event_id", None)
         return obj
 
     def __call__(self, action_state):
@@ -40,6 +38,25 @@ class Action(PersistBaseClass):
         logger.info(action_state)
         self.run(action_state)
 
+    def code_repr(self):
+
+        kw_display = ""
+        arg_display = ""
+        extra = ""
+
+        if self._args:
+            arg_list = ["%s" % repr(i) for i in self._args]
+            arg_display = ", ".join(arg_list)
+            extra = ", "
+        if self._kw:
+            kw_list = ["%s = %s" % (i[0], repr(i[1])) for i in self._kw.items()]
+            kw_display = extra + ", ".join(sorted(kw_list))
+
+        
+        return "%s(%s%s)" % (self._class_name,
+                             arg_display, kw_display) 
+        
+            
 class AddRow(Action):
 
     def __init__(self, related_table, pre_flush = True, **kw):
@@ -63,7 +80,12 @@ class AddRow(Action):
 
         new_obj = database[self.related_table].sa_class()
 
+        print table.events
+        print getattr(object, path[0])
+
         setattr(object, path[0], new_obj)
+
+        print getattr(object, path[0])
         session.add_no_validate(new_obj)
 
 

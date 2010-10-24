@@ -23,9 +23,6 @@
 ##	This file contains the classes that hold information about database
 ##  fields such as name,type, indexes and constraints.
 
-import sqlalchemy as sa
-import transaction
-
 import util
 import custom_exceptions
 
@@ -433,7 +430,7 @@ class Field(object):
         obj.length = kw.get("length", None)
         ## ignore length if empty string
         if not obj.length:
-            kw.pop("length", None)
+            kw.get("length", None)
         else:
             obj.length = int(obj.length)
         obj.many_side_not_null = kw.get("many_side_not_null", True)
@@ -452,6 +449,22 @@ class Field(object):
         obj.generator = kw.get("generator", None)
 
         return obj
+
+    def code_repr(self):
+
+        class_name = self.__class__.__name__
+        kw_display = ""
+        arg_display = ""
+
+        if self.args:
+            arg_list = ["%s" % repr(i) for i in self.args]
+            arg_display = ", " + ", ".join(arg_list)
+        if self.kw:
+            kw_list = ["%s = %s" % (i[0], repr(i[1])) for i in self.kw.items()]
+            kw_display = ", " + ", ".join(sorted(kw_list))
+        
+        return "%s('%s'%s%s)" % (class_name, self.name, arg_display, kw_display) 
+
 
     def __eq__(self, other):
         if (self.__class__.__name__ == other.__class__.__name__
@@ -476,30 +489,14 @@ class Field(object):
 
     def set_kw(self, key, value):
 
-        application = self.table.database.application
-        zodb = application.aquire_zodb()
-
         if key not in self.all_updatable_kw:
             raise ValueError("%s not allowed to be added or modified" % key)
 
-        connection = zodb.open()
-
-        root = connection.root()
-        field_params = root["tables"][self.table.name]["fields"][self.name]["params"]
-        try:
-            field_params[key] = value
+        database = self.table.database
+        with util.SchemaLock(database) as file_lock:
+            self.kw[key] = value
             setattr(self, key, value)
-        except Exception, e:
-            transaction.abort()
-            zodb.close()
-            raise
-        else:
-            transaction.commit()
-        finally:
-            connection.close()
-
-        zodb.close()
-        application.get_zodb(True)
+            file_lock.export()
 
 
     def diff(self, other):
@@ -610,7 +607,17 @@ class Field(object):
     def _set_parent(self, table):
 
         self.check_table(table)
+        max_field_id = table.max_field_id
+        if not self.field_id:
+            new_id = table.max_field_id + 1
+            table.max_field_id = new_id
+            self.kw["field_id"] = new_id
+            self.field_id = new_id
+        else:
+            table.max_field_id = max(table.max_field_id, self.field_id)
+
         table.fields[self.name] = self
+        table.field_list.append(self)
         if not table.persisted:
             table.field_order.append(self.name)
         table.add_relations()

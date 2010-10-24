@@ -15,7 +15,7 @@ import formencode as fe
 import yaml
 import os
 import logging
-import database.user_tables
+import template.user_tables
 from database.resultset import ResultSet
 from database.events import Event
 import database.actions as actions
@@ -255,6 +255,8 @@ class test_donkey(object):
 
         cls.set_up_inserts()
 
+
+
     @classmethod
     def set_up_inserts(cls):
 
@@ -350,6 +352,7 @@ class test_donkey(object):
         cls.application.release_all()
 
 class test_basic_input(test_donkey):
+
 
     def test_donkey_input(self):
 
@@ -833,16 +836,6 @@ class test_basic_input(test_donkey):
         self.Donkey.set_option("people.over_18_id", "cat", "internal")
 
         assert self.Donkey["people"].fields["over_18_id"].category == "internal"
-
-
-        connection = self.Donkey.zodb.open()
-        root = connection.root()
-
-        people = root["tables"]["people"]
-
-        assert people["params"]["default_node"] == "people.people"
-        assert people["fields"]["over_18_id"]["params"]["cat"] == "internal"
-
 
 
     def test_hashed_password(self):

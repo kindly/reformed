@@ -26,6 +26,8 @@
 
 import logging
 from collections import defaultdict
+import os
+import datetime
 
 import sqlalchemy as sa
 import networkx as nx
@@ -36,8 +38,11 @@ import custom_exceptions
 import search
 import resultset
 import tables
-from util import split_table_fields
+from util import split_table_fields, SchemaLock
 from fields import ForeignKey, Integer
+from sqlalchemy import MetaData, create_engine
+from sqlalchemy.orm import sessionmaker
+from util import OrderedDict
 import fields as field_types
 import sessionwrapper
 import validate_database
@@ -48,43 +53,68 @@ log = logging.getLogger('rebase.application.database')
 
 class Database(object):
 
-    def __init__(self, application):
+    def __init__(self, *tables, **kw):
 
         log.info("initialising database")
         self.status = "updating"
 
-        self.application = application
-        self.metadata = application.metadata
-        self.engine = application.engine
-        self._Session = application.Session
-        self.logging_tables = application.logging_tables
-        self.quiet = application.quiet
+        self.kw = kw
+        self.metadata = None
 
+        self.connection_string = kw.get("connection_string", None)
+        if self.connection_string:
+            self.engine = create_engine(self.connection_string)
+            self.metadata = MetaData()
+            self.metadata.bind = self.engine
+            self._Session = sessionmaker(bind=self.engine, autoflush = False)
+            self.Session = sessionwrapper.SessionClass(self._Session, self)
 
-        self.zodb = self.application.zodb
-        self.application_folder = self.application.application_folder
+        self.logging_tables = kw.get("logging_tables", None)
+        self.quiet = kw.get("quiet", None)
 
-        self.metadata.bind = self.engine
-        self.Session = sessionwrapper.SessionClass(self._Session, self)
-        # update the application Session
-        self.application.Session = self.Session
+        self.application = kw.get("application", None)
+        if self.application:
+            self.set_application(self.application)
+
+        self.max_table_id = 0
+        self.max_event_id = 0
 
         self.persisted = False
         self.graph = None
-        self.fields_to_persist = []
         self.relations = []
 
-        self.tables = {}
+        self.tables = OrderedDict()
 
         self.search_actions = {}
         self.search_names = {}
         self.search_ids = {}
 
+        for table in tables:
+            self.add_table(table)
+
+    def set_application(self, application):
+
+        self.application = application
+        if not self.connection_string:
+            self.metadata = application.metadata
+            self.engine = application.engine
+            self._Session = application.Session
+            self.Session = sessionwrapper.SessionClass(self._Session, self)
+
+        if self.logging_tables is not None:
+            self.logging_tables = self.application.logging_tables
+        if self.quiet is not None:
+            self.quiet = self.application.quiet
+
+        self.application_folder = self.application.application_folder
+        self.zodb = self.application.zodb
         self.zodb_tables_init()
+        self.application.Session = self.Session
 
-        self.load_from_persist()
-
+        with SchemaLock(self) as file_lock:
+            self.load_from_persist()
         self.status = "active"
+
 
     def zodb_tables_init(self):
         zodb = self.application.aquire_zodb()
@@ -139,44 +169,28 @@ class Database(object):
         else:
             table_to_rename = self.tables[table]
 
-        connection = self.zodb.open()
-        root = connection.root()
-        persisted_tables = root["tables"]
-
-        try:
-
+        with SchemaLock(self) as file_lock:
             for relations in table_to_rename.tables_with_relations.values():
                 for rel in relations:
                     if rel.other == table_to_rename.name:
                         field = rel.parent
-                        persisted_field = persisted_tables[field.table.name]["fields"][field.name]
-                        persisted_field["args"][0] = new_name
+                        field.args = [new_name] + list(field.args[1:])
 
-            persisted_table = persisted_tables.pop(table_to_rename.name)
-            persisted_tables[new_name] = persisted_table
+            table_to_rename.name = new_name
+            file_lock.export(uuid = True)
             table_to_rename.sa_table.rename(new_name)
-
-        except Exception, e:
-            transaction.abort()
-            raise
-        else:
-            transaction.commit()
+            file_lock.export()
             self.load_from_persist(True)
-        finally:
-            connection.close()
 
         if table_to_rename.logged:
             self.rename_table("_log_%s" % table_to_rename.name, "_log_%s" % new_name, session)
 
     def drop_table(self, table):
 
-        connection = self.zodb.open()
-        root = connection.root()
-        persisted_tables = root["tables"]
-
-        try:
+        with SchemaLock(self) as file_lock:
             if isinstance(table, tables.Table):
                 table_to_drop = table
+
             else:
                 table_to_drop = self.tables[table]
 
@@ -188,21 +202,15 @@ class Database(object):
             for relations in table_to_drop.tables_with_relations.itervalues():
                 for relation in relations:
                     field = relation.parent
-                    persisted_tables[field.table.name]["fields"].pop(field.name)
-                    persisted_tables[field.table.name]["field_order"].remove(field.name)
+                    field.table.fields.pop(field.name)
+                    field.table.field_list.remove(field)
 
-            persisted_tables.pop(table_to_drop.name)
+            self.tables.pop(table_to_drop.name)
 
+            file_lock.export(uuid = True)
             table_to_drop.sa_table.drop()
-
-        except Exception, e:
-            transaction.abort()
-            raise
-        else:
-            transaction.commit()
+            file_lock.export()
             self.load_from_persist(True)
-        finally:
-            connection.close()
 
         if table_to_drop.logged:
             self.drop_table(self.tables["_log_" + table_to_drop.name])
@@ -265,6 +273,7 @@ class Database(object):
         table._add_field_no_persist(relation)
 
 
+
         ##add title events
 
         if table.title_field:
@@ -299,93 +308,114 @@ class Database(object):
     def persist(self):
 
         self.status = "updating"
-        zodb = self.application.aquire_zodb()
 
-        connection = zodb.open()
-        try:
+        for table in self.tables.values():
+            if not self.logging_tables:
+                ## FIXME should look at better place to set this
+                table.kw["logged"] = False
+                table.logged = False
+            if table.logged and "_log_%s" % table.name not in self.tables.iterkeys() :
+                self.add_table(self.logged_table(table))
 
-            ## add logging tables
-            for table in self.tables.values():
-                if not self.logging_tables:
-                    ## FIXME should look at better place to set this
-                    table.kw["logged"] = False
-                    table.logged = False
-                if table.logged and "_log_%s" % table.name not in self.tables.iterkeys() :
-                    self.add_table(self.logged_table(table))
+        for table in self.tables.itervalues():
+            table.add_foreign_key_columns()
 
-            for table in self.tables.itervalues():
-                if not table.persisted:
-                    table.persist(connection)
+        self.update_sa(True)
 
-            for field in self.fields_to_persist:
-                field.table._persist_extra_field(field, connection)
-
-            for table in self.tables.itervalues():
-                table.persist_foreign_key_columns(connection)
-
-            for table in self.tables.itervalues():
-                if not table.persisted:
-                    table.set_field_order(connection)
-
-            self.update_sa(True)
+        with SchemaLock(self) as file_lock:
+            file_lock.export(uuid = True)
             self.metadata.create_all(self.engine)
-        except Exception, e:
-            transaction.abort()
-            raise
+            self.persisted = True
+            file_lock.export()
+            self.load_from_persist(True)
+
+    def get_file_path(self, uuid_name = False):
+
+        uuid = datetime.datetime.now().isoformat().\
+                replace(":", "-").replace(".", "-")
+        if uuid_name:
+            file_name = "generated_schema-%s.py" % uuid
         else:
-            transaction.commit()
-        finally:
-            connection.close()
+            file_name = "generated_schema.py"
 
+        file_path = os.path.join(
+            self.application.application_folder,
+            "_schema",
+            file_name
+        )
+        return file_path
 
-        self.fields_to_persist = []
+    def code_repr_load(self):
+
+        import _schema.generated_schema as sch
+        sch = reload(sch)
+        database = sch.database
+        database.clear_sa()
+        for table in database.tables.values():
+            table.database = self
+            self.add_table(table)
+            table.persisted = True
+
+        self.max_table_id = database.max_table_id
+        self.max_event_id = database.max_event_id
+
         self.persisted = True
 
-        self.status = "updating"
 
-        zodb.close()
-        self.application.get_zodb(True)
+    def code_repr_export(self, file_path):
 
-        self.load_from_persist(True)
+        try:
+            os.remove(file_path)
+            os.remove(file_path+"c")
+        except OSError:
+            pass
+
+        out_file = open(file_path, "w")
+
+        output = [
+            "from database.database import Database",
+            "from database.tables import Table",
+            "from database.fields import *",
+            "from database.database import table, entity, relation",
+            "from database.events import Event",
+            "from database.actions import *",
+            "",
+            "",
+            "database = Database(",
+            "",
+            "",
+        ]
+
+        for table in sorted(self.tables.values(),
+                            key = lambda x:x.table_id):
+            output.append(table.code_repr() + ",")
+
+        kw_display = ""
+        if self.kw:
+            kw_list = ["%s = %s" % (i[0], repr(i[1])) for i in self.kw.items()]
+            kw_display = ", ".join(sorted(kw_list))
+
+        output.append(kw_display)
+        output.append(")")
+
+        out_file.write("\n".join(output))
+        out_file.close()
+
+        return file_path
 
 
     def load_from_persist(self, restart = False):
 
-        connection = self.application.zodb.open()
-
-        if connection:
-            self.tables = {}
-            self.clear_sa()
-            root = connection.root()
-            for table_name, table in root["tables"].iteritems():
-                fields = []
-                for field_name, field in table["fields"].iteritems():
-                    field_cls = getattr(field_types, field["type"])
-                    fields.append(field_cls(field_name,
-                                            *field["args"],
-                                            **field["params"]))
-
-                rtable = tables.Table(table_name,
-                                            *fields,
-                                            field_order = list(table["field_order"]),
-                                            persisted = True,
-                                            **table["params"])
-
-                for event_type in table["events"]:
-                    action_list = []
-                    for class_name, args, kw in table["events"][event_type]:
-                        ##FIXME find a better way of finding the classes
-                        action_class = getattr(actions, class_name)
-                        action_list.append(action_class(*args, **kw))
-                    event = Event(event_type, *action_list)
-                    event._set_parent(rtable)
-
-                self.add_table(rtable)
-
-
+        self.clear_sa()
+        self.tables = OrderedDict()
+        try:
+            self.code_repr_load()
+        except ImportError:
+            return
+        self.add_relations()
         self.update_sa()
         self.validate_database()
-        connection.close()
+
 
     def add_relations(self):     #not property for optimisation
         self.relations = []
@@ -425,10 +455,8 @@ class Database(object):
             for table in self.tables.itervalues():
                 for column in table.columns.iterkeys():
                     getattr(table.sa_class, column).impl.active_history = True
+                table.columns_cache = table.columns
             for table in self.tables.itervalues():
-                for field in table.fields.itervalues():
-                    if hasattr(field, "event"):
-                        field.event.add_event(self)
                 table.make_schema_dict()
             ## put valid_info tables into info_table
             for table in self.tables.itervalues():
@@ -448,7 +476,8 @@ class Database(object):
 
     def clear_sa(self):
         sa.orm.clear_mappers()
-        self.metadata.clear()
+        if self.metadata:
+            self.metadata.clear()
         for table in self.tables.itervalues():
             table.foriegn_key_columns_current = None
             table.mapper = None
@@ -461,8 +490,8 @@ class Database(object):
                                 delete = [],
                                 change = [])
             table.schema_dict = None
-            table.valid_info_tables = []
             table.valid_core_types = []
+            table.columns_cache = None
 
         self.graph = None
         self.search_actions = {}
@@ -570,14 +599,18 @@ class Database(object):
 
     def search_single_data(self, table_name, *args, **kw):
 
-        result = self.search(table_name, *args, limit = 2, **kw)
-        data = result.results
+        try:
+            session = self.Session()
+            result = self.search(table_name, *args,
+                                 limit = 2, session = session, **kw)
+            data = result.results
 
-        if not data or len(data) == 2:
-            raise custom_exceptions.SingleResultError("one result not found")
+            if not data or len(data) == 2:
+                raise custom_exceptions.SingleResultError("one result not found")
 
-        return result.data[0]
-
+            return result.data[0]
+        finally:
+            session.close()
 
     def logged_table(self, logged_table):
 
@@ -667,25 +700,25 @@ def table(name, database, *args, **kw):
     if name in database.tables:
         print '<%s> exists will not create' % name
         return
-    database.add_table(tables.Table(name, *args, quiet = database.quiet, **kw))
+    database.add_table(tables.Table(name, *args,  **kw))
 
 def entity(name, database, *args, **kw):
     """helper to add entity to database args and keywords same as Table definition"""
     if name in database.tables:
         print '<%s> exists will not create' % name
         return
-    database.add_entity(tables.Table(name, *args, quiet = database.quiet, **kw))
+    database.add_entity(tables.Table(name, *args,  **kw))
 
 def relation(name, database, *args, **kw):
     """helper to add entity to database args and keywords same as Table definition"""
     if name in database.tables:
         print '<%s> exists will not create' % name
         return
-    database.add_relation_table(tables.Table(name, *args, quiet = database.quiet, **kw))
+    database.add_relation_table(tables.Table(name, *args,  **kw))
 
 def info_table(name, database, *args, **kw):
     """helper to add entity to database args and keywords same as Table definition"""
     if name in database.tables:
         print '<%s> exists will not create' % name
         return
-    database.add_info_table(tables.Table(name, *args, quiet = database.quiet, **kw))
+    database.add_info_table(tables.Table(name, *args,  **kw))

@@ -100,7 +100,7 @@ class CsvFile(object):
         self.file_headings = None
         self.skip_lines = skip_lines
         self.format = format
-        self.headings_type = {}
+        self.headings_type = OrderedDict()
         self.headings = []
         self.dialect = dialect
         self.encoding = encoding
@@ -262,6 +262,8 @@ class CsvFile(object):
             max_length = 0
 
             for num, line in enumerate(csv_reader):
+                if len(line) != len(self.headings):
+                    continue
                 value = line[col]
                 max_length = max(max_length, len(value))
                 if not value:
