@@ -504,15 +504,19 @@ REBASE.Interface = function (){
         $('#logo').append($logo);
     }
 
-    function add_user_bar(){
-        $user_bar = $('<div id="user_bar"></div>');
-        // search box
+    function search_box(){
         var html = [];
         html.push('<form action="" onclick="$.Util.Event_Delegator(\'clear\');" onsubmit="return search_box();" style="display:inline">');
         html.push('<input type="text" name="search" id="search" />');
         html.push('<input type="submit" name="search_button" id="search_button" value="search"/>');
         html.push('</form>');
-        $user_bar.append(html.join(''));
+        return html.join('');
+    }
+
+
+    function add_user_bar(){
+        $user_bar = $('<div id="user_bar"></div>');
+        // search box
         // ajax info
         $user_bar.append('<span id="ajax_info"><img src="busy.gif" /> Loading ...</span>');
         // login info
@@ -542,6 +546,7 @@ REBASE.Interface = function (){
 
     function add_side(){
         $side.empty();
+        $side.append(search_box());
         $side.append(make_resizer());
         $side.append('<div id="bookmarks"></div>');
     }
