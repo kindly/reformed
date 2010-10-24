@@ -395,35 +395,41 @@ REBASE.Bookmark = function (){
 
 REBASE.User = function (){
 
+    var user_data = {};
+
     function change_user_bar(){
         // update the user bar with the correct user info
         // log in/out options etc.
-        var app_data = REBASE.application_data;
         var html;
-        if (app_data.__user_id === 0){
+        if (!user_data.user_id){
             html = '<a href="#" onclick="node_load(\'d@user.User:login\',this);return false;">Log in</a>';
         } else {
             var impersonate = '';
-            if (app_data.__real_user_id && app_data.__real_user_id != app_data.__user_id){
-                impersonate = ' <a href="#" onclick="node_load(\'@user.Impersonate:revert\',this);return false;">revert to ' + app_data.__real_username + '</a>';
+            if (user_data.real_user_id && user_data.real_user_id != user_data.user_id){
+                impersonate = ' <a href="#" onclick="node_load(\'@user.Impersonate:revert\',this);return false;">revert to ' + user_data.real_username + '</a>';
             }
-            html = app_data.__username + ' <a href="#" onclick="node_load(\'@user.User:logout\',this);return false;">Log out</a>' + impersonate;
+            html = user_data.user_name + ' <a href="#" onclick="node_load(\'@user.User:logout\',this);return false;">Log out</a>' + impersonate;
         }
         $('#user_login').html(html);
     }
 
-    function update_user(user_data){
+    function update_user(data){
         // if we have new user data then update the application data
-        if (user_data){
-            var app_data = REBASE.application_data;
-            app_data.__user_id = user_data.id;
-            app_data.__username = user_data.name;
-            if (user_data.real_user_id){
-                app_data.__real_user_id = user_data.real_user_id;
+        if (data){
+            user_data.user_id = data.user_id;
+            user_data.user_name = data.user_name;
+            if (data.real_user_id){
+                user_data.real_user_id = data.real_user_id;
+            } else {
+                user_data.real_user_id = null;
             }
-            if (user_data.real_user_name){
-                app_data.__real_username = user_data.real_user_name;
+            if (data.real_user_name){
+                user_data.real_username = data.real_user_name;
+            } else {
+                user_data.real_username = null;
             }
+        } else {
+            user_data = {};
         }
         change_user_bar();
     }
@@ -862,6 +868,9 @@ REBASE.Functions = function (){
         REBASE.Interface.make_menu(data);
     };
 
+    functions.update_user = function (data){
+            REBASE.User.update(data);
+    }
     // exported functions
     return {
         'call' : function (fn, data){
@@ -1292,11 +1301,6 @@ REBASE.Job = function(){
         var sent_node_data = packet.node_data;
         if (sent_node_data){
             REBASE.Node.set_node_data(packet.node, sent_node_data);
-        }
-
-        var user = packet.user;
-        if (user){
-            REBASE.User.update(user);
         }
 
         var bookmark = packet.bookmark;
