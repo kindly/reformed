@@ -411,9 +411,9 @@ class NodeToken(object):
                 # we have logged in so we want our bookmarks
                 data = self._bookmark_list(user_id)
                 self.add_extra_response_function('load_bookmarks', data)
-                # user data
-                data = self._user_data(user_id)
-                self.add_extra_response_function('update_user', data)
+            # user data
+            data = self._user_data(user_id)
+            self.add_extra_response_function('update_user', data)
 
 
         if global_session.session['reset']:
