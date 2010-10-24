@@ -213,6 +213,10 @@ REBASE.Form = function (){
         // focus the element and
         // if select select all.
 
+        // return if no element provided
+        if (!$input.length){
+            return;
+        }
         // If the element is not in view then don't focus.
         var page_height = $(window).height();
         var element_bottom = $input.offset().top + $input.outerHeight();
@@ -715,7 +719,7 @@ REBASE.Dialog = function (){
         }
         show_dialog($dialog_box, title, function (){show_waiting();});
         // focus first enabled input
-        REBASE.Form.focus($dialog_box.find(':input:enabled').first());
+        REBASE.Form.focus($dialog_box.find(':input:enabled:first'));
         is_open = true;
     }
 
@@ -1693,7 +1697,7 @@ REBASE.Layout = function(){
                 layout = layout_data;
                 create_layout();
                 // focus first enabled input
-                REBASE.Form.focus($(root).find(':input:enabled').first());
+                REBASE.Form.focus($(root).find(':input:enabled:first'));
             } else {
                 // Update the layout forms
                 layout.layout_forms = layout_data.layout_forms;
