@@ -362,16 +362,20 @@ class NodeToken(object):
         if node_data:
             self.set_node_data(node_data)
 
-    def add_paging(self, form_name, count, limit, offset, base_link):
+    def add_paging(self, form, count, limit, offset, base_link):
         """Add paging info to form data"""
         # check we have data for this form
-        if form_name not in self._out:
-            self._out[form_name] = {}
+        if form.name not in self._out:
+            self._out[form.name] = {}
+        paging_data = dict(row_count = count,
+                           limit = limit,
+                           offset = offset,
+                           base_link = base_link)
 
-        self._out[form_name]['paging'] = dict(row_count = count,
-                                             limit = limit,
-                                             offset = offset,
-                                             base_link = base_link)
+        if form.form_type == 'results':
+            self._layout['paging'] = paging_data
+        else:
+            self._out[form.name]['paging'] = paging_data
 
     def output(self):
         """Build the output data to be sent to the front end."""

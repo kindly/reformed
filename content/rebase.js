@@ -458,17 +458,27 @@ REBASE.User = function (){
 REBASE.Interface = function (){
 
     var $interface_layout;
+    var $main_layout;
     var $side;
     var $user_area;
     var $user_bar;
     var $logo;
     var $menu;
 
+    function resize_main_pane(){
+        // due to floats we have to measure the header
+        var size = $('#header').outerHeight(true);
+        $main_layout.sizePane('north', size);
+    }
+
     function resize_north_pane(){
         // due to floats we have to measure the user bar items
         var size = $user_bar.outerHeight(true) + $menu.outerHeight(true);
         $interface_layout.sizePane('north', size);
         $logo.height(size - 10);
+        if ($main_layout !== undefined){
+            resize_main_pane();
+        }
     }
 
     function make_menu(menu){
@@ -580,12 +590,16 @@ REBASE.Interface = function (){
         // the main div layout
         var $main_pane = $('#main_pane');
         $main_pane.append('<div class="ui-layout-center"><div id="main" /></div>');
-        $main_pane.append('<div class="ui-layout-north" id="layout_header">HEADER</div>');
+        $main_pane.append('<div class="ui-layout-north" id="layout_header"><div id="header" /></div>');
         $main_layout = $main_pane.layout({defaults: layout_defaults, north : layout_north});
     }
+
     return {
         'init' : function (){
             init();
+        },
+        'resize_main_pane': function (){
+            resize_main_pane();
         },
         'resize_north_pane': function (){
             resize_north_pane();
@@ -1546,17 +1560,27 @@ REBASE.Layout = function(){
     var $forms = {};
 
     var layout_title;
+    var layout_paging;
     var $header;
     var $footer;
 
 
     function set_layout_title_and_footer(){
+        $header = $('#header');
+        var header = [];
         if (layout_title){
-            $header = $('#layout_header');
-            $header.text(layout_title);
+            header.push(layout_title);
         }
+        if (layout_paging){
+            header.push(REBASE.Form.make_paging(layout_paging));
+        }
+        $header.empty();
+        $header.append(header.join(''));
+
         var footer = 'footer';
         $footer.text(footer);
+
+        REBASE.Interface.resize_main_pane();
     }
 
     function make_form(form_name){
@@ -1696,6 +1720,7 @@ REBASE.Layout = function(){
         // Store the form data.
         forms = REBASE.FormProcessor.process(packet.data, packet.node);
         layout_title = layout_data.layout_title;
+        layout_paging = layout_data.paging;
 
         if (layout_data.layout_dialog){
             REBASE.Dialog.dialog(layout_data.layout_title, forms[layout_data.layout_dialog]);

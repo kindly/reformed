@@ -64,7 +64,7 @@ div {
     padding-right:25px;
 }
 
-#user_area {
+#user_area, #header {
     float:left;
 }
 #user_bar {
