@@ -362,16 +362,20 @@ class NodeToken(object):
         if node_data:
             self.set_node_data(node_data)
 
-    def add_paging(self, form_name, count, limit, offset, base_link):
+    def add_paging(self, form, count, limit, offset, base_link):
         """Add paging info to form data"""
         # check we have data for this form
-        if form_name not in self._out:
-            self._out[form_name] = {}
+        if form.name not in self._out:
+            self._out[form.name] = {}
+        paging_data = dict(row_count = count,
+                           limit = limit,
+                           offset = offset,
+                           base_link = base_link)
 
-        self._out[form_name]['paging'] = dict(row_count = count,
-                                             limit = limit,
-                                             offset = offset,
-                                             base_link = base_link)
+        if form.form_type == 'results':
+            self._layout['paging'] = paging_data
+        else:
+            self._out[form.name]['paging'] = paging_data
 
     def output(self):
         """Build the output data to be sent to the front end."""
@@ -386,7 +390,6 @@ class NodeToken(object):
                 'node': self.node_name,
                 'title' : self._title,
                 'link' : self._link,
-                'user' : self.user,
                 'bookmark' : self.bookmark,
                 'layout' : layout,
                 'node_data' : self._output_node_data,
@@ -396,11 +399,6 @@ class NodeToken(object):
         # application data
         if self.request_application_data:
             data = global_session.sys_info
-            data['__user_id'] = user_id
-            data['__username'] = global_session.session['username']
-            if global_session.session['username']:
-                data['__real_user_id'] = global_session.session['real_user_id']
-                data['__real_user_name'] = global_session.session['real_username']
             self.add_extra_response_function('application_data', data)
             refresh_frontend = True
         else:
@@ -413,6 +411,10 @@ class NodeToken(object):
                 # we have logged in so we want our bookmarks
                 data = self._bookmark_list(user_id)
                 self.add_extra_response_function('load_bookmarks', data)
+                # user data
+                data = self._user_data(user_id)
+                self.add_extra_response_function('update_user', data)
+
 
         if global_session.session['reset']:
             self.add_extra_response_function('clear_form_cache')
@@ -428,6 +430,14 @@ class NodeToken(object):
         #self._added_responses.append(dict(type = 'node', data = dict(action = action, data = data)))
         response = dict(action = 'function', function = function, data = data)
         self._added_responses.append(response)
+
+    def _user_data(self, user_id):
+        data = dict(user_id = user_id,
+                    user_name = global_session.session['username'])
+        if global_session.session['real_username']:
+            data['real_user_id'] = global_session.session['real_user_id']
+            data['real_user_name'] = global_session.session['real_username']
+        return data
 
     def _bookmark_list(self, user_id, limit = 100):
 
