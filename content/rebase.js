@@ -522,7 +522,7 @@ REBASE.Interface = function (){
 
     function search_box(){
         var html = [];
-        html.push('<form action="" onclick="$.Util.Event_Delegator(\'clear\');" onsubmit="return search_box();" style="display:inline">');
+        html.push('<form action="" onclick="$.Util.Event_Delegator(\'clear\');" onsubmit="return REBASE.Utils.search_box();" style="display:inline">');
         html.push('<input type="text" name="search" id="search" />');
         html.push('<input type="submit" name="search_button" id="search_button" value="search"/>');
         html.push('</form>');
@@ -926,10 +926,19 @@ REBASE.Utils = function (){
         return output.join('\n');
     }
 
+    function search_box(){
+        var node = 'test.Search?q=' + $('#search').val();
+        node_load(node);
+        return false;
+    }
+
     // exported functions
     return {
         'treeview_hash' : function (data, css_class){
             return treeview_hash(data, css_class);
+        },
+        'search_box' : function (){
+            return search_box();
         }
     };
 }();
