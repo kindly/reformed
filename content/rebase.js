@@ -860,31 +860,17 @@ REBASE.Functions = function (){
 
     functions.debug_form_info = debug_form_info;
     functions.debug_html = debug_html;
+    functions.load_bookmarks = REBASE.Bookmark.process;
+    functions.clear_form_cache = REBASE.FormProcessor.clear_form_cache;
+    functions.make_menu = REBASE.Interface.make_menu;
+    functions.update_user = REBASE.User.update;
 
     // application data
     functions.application_data = function (data){
         REBASE.application_data = data;
-        REBASE.User.update();
     };
 
-    // bookmarks
-    functions.load_bookmarks = function (data){
-        REBASE.Bookmark.process(data);
-    };
 
-    // Clear form cache.
-    functions.clear_form_cache = function (){
-        REBASE.FormProcessor.clear_form_cache();
-    };
-
-    // Make menu.
-    functions.make_menu = function (data){
-        REBASE.Interface.make_menu(data);
-    };
-
-    functions.update_user = function (data){
-            REBASE.User.update(data);
-    }
     // exported functions
     return {
         'call' : function (fn, data){
