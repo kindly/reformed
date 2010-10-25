@@ -1020,7 +1020,7 @@ REBASE.Utils = function (){
     }
 
     function search_box(){
-        var node = 'test.Search?q=' + $('#search').val();
+        var node = 'search.Search?q=' + $('#search').val();
         node_load(node);
         return false;
     }
