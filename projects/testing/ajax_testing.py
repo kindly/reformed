@@ -38,7 +38,7 @@ if __name__ == "__main__":
                process = True,
                quiet = True)
     a.setup_function(bar)
-    a.test_function(foo, count = 25)
+    a.test_function(foo, count = 5)
     a.start()
 
 

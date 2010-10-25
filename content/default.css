@@ -886,6 +886,24 @@ div.f_message_title {
     display:none;
 }
 
+div.history_sent {
+    border:1px solid green;
+    background-color:lightgreen;
+    font-family:monospace;
+    margin-top:20px;
+}
+
+div.history_received {
+    border:1px solid blue;
+    background-color:lightskyblue;
+    font-family:monospace;
+}
+
+div.history_data {
+    background-color:white;
+    font-size:0.7em;
+    font-family:monospace;
+}
 
 
 

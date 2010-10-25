@@ -40,6 +40,8 @@ def initialise():
     predefine.user_group(u'Users', u'User', u'General user accounts', permissions = ['Login'])
 
 
+def make_menu(node_manager):
+    node_manager.add_menu(dict(menu = 'Admin', title = 'History', function = 'debug_history'))
 
 class User(TableNode):
 

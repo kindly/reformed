@@ -8,7 +8,7 @@ import sys
 from optparse import OptionParser
 
 # settings
-image_directory = '/stuff/reformed_images'
+image_directory = '~/git/reformed/reformed_images'
 
 flicker_api_key = 'fbad3a2cc12fb075d561aa5c0e59160c'
 flicker_secret = '421df03390636152'
@@ -122,6 +122,6 @@ def clear_image_dir():
 
 #clear_image_dir()
 #get_images(10)
-get_images(200, group = 'Portrait Classics')
+get_images(300, group = 'Portrait Classics')
 #get_images(100, category = 'women', group = 'Female Face ~CloseUps')
 

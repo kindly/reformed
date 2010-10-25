@@ -34,6 +34,7 @@ var CONFIG = {
     FORM_PAGING_SIZE : 5,
     FORM_FOCUS_SELECT_ALL : true,
     BOOKMARKS_SHOW_MAX : 100,
+    JOB_HISTORY : true,
     BOOKMARK_ARRAY_MAX : 100,
     DIALOG_BORDER_HEIGHT : 150,
     DIALOG_BORDER_WIDTH : 150,
@@ -900,10 +901,51 @@ REBASE.Functions = function (){
         REBASE.Dialog.dialog('HTML', '<textarea class="debug"><html xmlns="http://www.w3.org/1999/xhtml">' + info + '</html></textarea>', true);
     }
 
+    function debug_history(){
+        /* Output job history */
+        var info = [];
+        var sent;
+        var received;
+        var history = REBASE.Job.history();
+
+        function make_action(data){
+
+            switch (data.action){
+                case 'function':
+                    return '<div>Function: ' + data['function'] + '</div>';
+                default:
+                    return '<div>' + data.action + ' : ' + data['function'] + '</div>';
+            }
+        }
+
+
+        for (var i = history.length - 1; i >= 0; i--){
+            sent = history[i][0];
+            received = history[i][2];
+            info.push('<div class="history_sent">');
+            if (info.command){
+                info.push('<div>' + sent.node + ' : ' + sent.command + '</div>');
+            } else {
+                info.push('<div>' + sent.node + '</div>');
+            }
+            info.push('<div class="history_data">' + $.toJSON(sent) + '</div>');
+            info.push('</div>');
+            for (var j = 0; j < received.length; j++){
+                info.push('<div class="history_received">')
+                if (received[j].action){
+                    info.push(make_action(received[j]));
+                }
+                info.push('<div class="history_data">' + $.toJSON(received[j]) + '</div>');
+                info.push('</div>');
+            }
+        }
+        REBASE.Dialog.dialog('History', info.join(''), true);
+    }
     // FUNCTIONS
 
     functions.debug_form_info = debug_form_info;
     functions.debug_html = debug_html;
+    functions.debug_history = debug_history;
 
     function init(){
         functions.load_bookmarks = REBASE.Bookmark.process;
@@ -1328,6 +1370,7 @@ REBASE.Job = function(){
 
     var outstanding_requests = 0;
     var status_timer;
+    var history = []
 
     function loading_show(){
         $('#ajax_info').show();
@@ -1437,10 +1480,14 @@ REBASE.Job = function(){
         }
     }
 
-    function process_return(return_data, sent_data){
+    function process_return(return_data, sent_data, request){
         var i;
         var n;
         outstanding_requests--;
+        // stash history
+        if (CONFIG.JOB_HISTORY){
+            history.push([request, sent_data, return_data]);
+        }
         if (outstanding_requests === 0){
             loading_hide();
         }
@@ -1458,7 +1505,7 @@ REBASE.Job = function(){
 		var body = $.toJSON(request);
 		$.post("/ajax", {body: body},
 		  function(return_data){
-			 process_return(return_data, sent_data);
+			 process_return(return_data, sent_data, request);
 		  }, "json");
         outstanding_requests++;
         loading_show();
@@ -1467,6 +1514,9 @@ REBASE.Job = function(){
     return {
         'add' : function (request, data){
             add(request, data);
+        },
+        'history' : function (){
+            return history;
         }
     };
 }();

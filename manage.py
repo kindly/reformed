@@ -128,7 +128,7 @@ def upload_files(options):
     print 'uploading images'
 
     # get image data
-    image_directory = options.image_directory
+    image_directory = '/home/toby/git/reformed/reformed_images' #options.image_directory
 
     items_per_dir = options.num_upload_files
 
