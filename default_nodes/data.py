@@ -26,7 +26,7 @@ from node.page_item import *
 from web.global_session import global_session
 
 def make_menu(node_manager):
-    node_manager.add_menu(dict(name = 'Data', menu = 'Admin', title = 'Data', node = None))
+    node_manager.add_menu(dict(name = 'Data', menu = 'Admin', title = 'Data'))
 
 class DataGenerate(JobNode):
 
