@@ -14,6 +14,7 @@ def get_result(parser, string, transform = lambda x:unicode(x)):
             break
     if result:
         return (result, transform(result))
+    return None, None
 
 
 def postcode(string):
