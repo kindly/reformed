@@ -64,9 +64,13 @@ div {
     padding-right:25px;
 }
 
-
+#user_area, #header {
+    float:left;
+}
 #user_bar {
-    background-color:transparent
+    background-color:transparent;
+    float:left;
+    clear:left;
 }
 
 #resizer {

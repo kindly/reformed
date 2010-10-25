@@ -67,6 +67,7 @@ def profile(file):
     import cProfile
     cProfile.runctx( command, globals(), locals(), filename="dataload.profile" )
 
+# FIXME broken
 def load():
     print "loading data"
     import load
@@ -157,7 +158,7 @@ def upload_files(options):
     count = 0
     for (category, file_path, file_name) in item_list:
         file_handle = open(file_path)
-        fileupload.save_file(file_handle, file_name, '', category, application)
+        web.fileupload.save_file(file_handle, file_name, '', category, application)
         # status info
         count += 1
         sys.stdout.write(chr(8) * len(out))
@@ -166,8 +167,8 @@ def upload_files(options):
         sys.stdout.flush()
     print
 
-def delete():
-    application.delete_database()
+def delete(purge_files = True):
+    application.delete_database(purge_files = purge_files)
 
 def dump():
     print 'dumping data'
@@ -345,6 +346,8 @@ if __name__ == "__main__":
                       help="output system information")
     parser.add_option("--profile", dest = "profile", action="store_true",
                       help="profile data loading")
+    parser.add_option("--refresh", dest = "refresh", action="store_true",
+                      help="recreate the database but keep uploads")
     (options, args) = parser.parse_args()
 
     application = None
@@ -406,4 +409,8 @@ if __name__ == "__main__":
         delete()
         create()
         load()
-
+    if options.refresh:
+        application.extract_table('upload')
+        delete(purge_files = False)
+        create()
+        application.import_file('upload')

@@ -528,7 +528,7 @@ class Form(object):
 
         # add the paging info
         base_link = '@%s:_update?form=%s&q=%s%s' % (node_token.node_name, self.name, query, link_id)
-        node_token.add_paging(self.name,
+        node_token.add_paging(self,
                               count = results.row_count,
                               limit = limit,
                               offset = offset,
@@ -677,7 +677,7 @@ class Form(object):
         node[self.name].create_form_data(node_token, data)
 
         # add the paging info
-        node_token.add_paging(self.name,
+        node_token.add_paging(self,
                               count = results.row_count,
                               limit = limit,
                               offset = offset,
