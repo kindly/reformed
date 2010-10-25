@@ -180,9 +180,6 @@ def undump():
     print 'undumping data'
     load_json_from_file('data/users.json', application.database, 'user')
 
-def index_database():
-    application.initialise_index()
-
 def output_sys_info():
 
     # import web so that all the system variariables get registered

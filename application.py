@@ -276,6 +276,7 @@ class Application(object):
 
             self.get_bookmark_data()
             self.predefine = predefine.Predefine(self)
+            self.initialise_index()
 
 
     def create_database(self):
@@ -446,20 +447,21 @@ class Application(object):
 
     def initialise_index(self):
 
-        self.initialise_database()
-        self.make_index_schema()
+        ##FIXME all databases should have search pending
+        if "search_pending" in self.database.tables:
 
-        index_location = os.path.join(self.application_folder, 'index')
-        mkdir_p(index_location)
+            index_location = os.path.join(self.application_folder, 'index')
+            mkdir_p(index_location)
 
-        all_files = glob.glob(index_location + "/*.*")
+            all_files = glob.glob(index_location + "/*.*")
 
-        if not all_files:
-            self.text_index = create_in(index_location, self.schema)
-        else:
-            self.text_index = open_dir(index_location)
+            if not all_files:
+                self.text_index = create_in(index_location, self.schema)
+                self.make_index_schema()
+            else:
+                self.text_index = open_dir(index_location)
 
-        full_text_index.index_database(self)
+            full_text_index.index_database(self)
 
 
 
