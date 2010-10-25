@@ -2,7 +2,7 @@ import pyparsing
 from pyparsing import Word, nums, Regex, Optional
 from dateutil.parser import parse
 
-def get_result(parser, string, transform = lambda x:x):
+def get_result(parser, string, transform = lambda x:unicode(x)):
 
     parsed = parser.scanString(string)
 
@@ -66,7 +66,7 @@ def email(string):
         return string
     email = Regex(r"(?P<user>[A-Za-z0-9._%+-]+)@(?P<hostname>[A-Za-z0-9.-]+)\.(?P<domain>[A-Za-z]{2,4})")
 
-    return get_result(email, string, lambda x:x.lower() )
+    return get_result(email, string)
 
 
 def date(string, dayfirst = True):
