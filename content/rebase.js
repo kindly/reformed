@@ -515,7 +515,7 @@ REBASE.Interface = function (){
 
     function resize_north_pane(){
         // due to floats we have to measure the user bar items
-        var size = $user_bar.outerHeight(true) + $menu.outerHeight(true);
+        var size = $user_area.outerHeight(true);
         $interface_layout.sizePane('north', size);
         $logo.height(size - 10);
         if ($main_layout !== undefined){
