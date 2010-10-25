@@ -314,8 +314,7 @@ class Application(object):
     def logging_setup(self):
 
         self.log_dir = os.path.join(self.application_folder, "log")
-        if not os.path.exists(self.log_dir):
-            os.makedirs(self.log_dir)
+        mkdir_p(self.log_dir)
 
         self.create_logger("database", "rebase.application.database")
         self.create_logger("application")
@@ -449,7 +448,9 @@ class Application(object):
 
         self.initialise_database()
         self.make_index_schema()
+
         index_location = os.path.join(self.application_folder, 'index')
+        mkdir_p(index_location)
 
         all_files = glob.glob(index_location + "/*.*")
 
