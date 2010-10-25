@@ -518,6 +518,8 @@ REBASE.Interface = function (){
         var size = $user_area.outerHeight(true);
         $interface_layout.sizePane('north', size);
         $logo.height(size - 10);
+        var width = $(window).width() - $logo.width() - 60;
+        $user_area.width(width);
         if ($main_layout !== undefined){
             resize_main_pane();
         }
@@ -575,8 +577,6 @@ REBASE.Interface = function (){
     function add_user_bar(){
         $user_bar = $('<div id="user_bar"></div>');
         // search box
-        // ajax info
-        $user_bar.append('<span id="ajax_info"><img src="busy.gif" /> Loading ...</span>');
         // login info
         $user_bar.append('<span id="user_login" style="float:right;">user login</span>');
         $user_area.append($user_bar);
@@ -588,6 +588,8 @@ REBASE.Interface = function (){
         var $menu_bar = $('<div id="menu_bar">');
         $menu_bar.append($menu);
         $user_area.append($menu_bar);
+        // ajax info
+        $user_area.append('<span id="ajax_info"><img src="busy.gif" /> Loading ...</span>');
     }
 
     function make_resizer(){
