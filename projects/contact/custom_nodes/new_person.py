@@ -27,30 +27,12 @@ class NewPerson(Node):
         layout('spacer'),
 
         ##FIXME data is not passed to evaluate duplicate properely
-        button_box([['add', 'f@new_person.EvaluateDuplicate'],
+        button_box([['add', 'fu@$:process'],
                     ['cancel', 'BACK'],]
                    ),
         params =  {"form_type": "normal"},
         volitile = True
     )
-
-    def make_menu(self, node_manager):
-        node_manager.add_menu(dict(menu = 'people', title = 'new person', node = '$'))
-
-    def call(self, node_token):
-        data = dict(__message = "Add new person.", )
-        self['main'].show(node_token, data)
-
-##FIXME this does not be here
-class Redirect(Node):
-
-    def call(self, node_token):
-
-        data = node_token['main'].data
-        node_token.redirect("new_person.EvaluateDuplicate", data)
-
-class EvaluateDuplicate(Node):
-
     list = form(
         result_link('__name', label = "title"),
         info('summary', data_type = 'info'),
@@ -58,25 +40,39 @@ class EvaluateDuplicate(Node):
         layout_title = "results",
     )
 
-    def call(self, node_token):
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(menu = 'people', title = 'new person', node = '$'))
 
-        print node_token.__dict__
-        data = node_token['list'].data
-        #node_token.redirect('new_person.MakeContact::', node_data = data)
+    def call(self, node_token):
+        if node_token.command == "process":
+            self.process(node_token)
+            return
+        data = dict(__message = "Add new person.", )
+        self['main'].show(node_token, data)
+
+    def process(self, node_token):
+
+        data = node_token['main'].data
         results = self.get_results(data)
 
         if results:
-            data = {'__array' : results}
-            self["list"].create_form_data(node_token, data)
-            node_token.form(self)
-            #node_token.set_layout("listing", [["list"]])
-            data['__buttons'] = [['add new', 'd@new?%s:'],
-                                 ['cancel', 'BACK']]
+            ##FIXME there should be a better way to do this
+            node_token.set_layout("listing", [["list"]])
+            self.show_list(node_token, results)
+        else:
+            node_token.next_node("new_person.MakeContact", data)
 
-            data['__message'] = "These are the potential duplicates"
-            #node_token.general_error(str(self.get_results(data)))
-        #if not_results:
-        #node_token.next_node('f:new_person.MakeContact', node_data = data, command = 'next')
+
+    def show_list(self, node_token, results):
+
+        data = {'__array' : results}
+        self["list"].create_form_data(node_token, data)
+        node_token.form(self)
+        #node_token.set_layout("listing", [["list"]])
+        data['__buttons'] = [['add new', '@new_person.MakeContact'],
+                             ['cancel', 'BACK']]
+
+        data['__message'] = "These are the potential duplicates"
 
     def run_full_text_search(self, data):
 
