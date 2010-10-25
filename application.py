@@ -515,6 +515,13 @@ class Application(object):
         file_loader.load()
 
 
+    def import_sample_data(self, sample_dir = 'sample'):
+        path = os.path.join(self.application_folder, sample_dir, '*.csv')
+        files = glob.glob(path)
+        for file in files:
+            (head, tail) = os.path.split(file)
+            (root, ext) = os.path.splitext(tail)
+            self.import_file(root, filename = file)
 
 
 def empty_database(directory, connection_string = None):
