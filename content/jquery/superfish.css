@@ -30,7 +30,7 @@
 .sf-menu li:hover ul,
 .sf-menu li.sfHover ul {
 	left:			0;
-	top:			2.5em; /* match top ul list item height */
+	top:			1.9em; /* match top ul list item height */
 	z-index:		99;
 }
 ul.sf-menu li:hover li ul,
@@ -54,32 +54,36 @@ ul.sf-menu li li li.sfHover ul {
 
 /*** DEMO SKIN ***/
 .sf-menu {
-	float:			left;
-	margin-bottom:	1em;
+    float:			left;
+    margin-bottom:	1em;
 }
 .sf-menu a {
 	border-left:	1px solid #fff;
 	border-top:		1px solid #CFDEFF;
-	padding: 		.75em 1em;
+	padding: 		.4em 1em;
 	text-decoration:none;
 }
-.sf-menu a, .sf-menu a:visited  { /* visited pseudo selector so IE6 applies text colour*/
-	color:			#13a;
-}
+/*.sf-menu a, .sf-menu a:visited  { [> visited pseudo selector so IE6 applies text colour<]*/
+	/*color:			#13a;*/
+/*}*/
 .sf-menu li {
-	background:		#BDD2FF;
+	/*background:		#BBB;*/
+    -moz-background-size:100% 100%;
+    -webkit-background-size:100% 100%;
+    background-image:url("../grad.png");
+    color:#333
 }
-.sf-menu li li {
-	background:		#AABDE6;
-}
-.sf-menu li li li {
-	background:		#9AAEDB;
-}
-.sf-menu li:hover, .sf-menu li.sfHover,
-.sf-menu a:focus, .sf-menu a:hover, .sf-menu a:active {
-	background:		#CFDEFF;
-	outline:		0;
-}
+/*.sf-menu li li {*/
+	/*background:		#AABDE6;*/
+/*}*/
+/*.sf-menu li li li {*/
+	/*background:		#9AAEDB;*/
+/*}*/
+/*.sf-menu li:hover, .sf-menu li.sfHover,*/
+/*.sf-menu a:focus, .sf-menu a:hover, .sf-menu a:active {*/
+	/*background:		#CFDEFF;*/
+	/*outline:		0;*/
+/*}*/
 
 /*** arrows **/
 .sf-menu a.sf-with-ul {
@@ -95,7 +99,7 @@ ul.sf-menu li li li.sfHover ul {
 	height:			10px;
 	text-indent: 	-999em;
 	overflow:		hidden;
-	background:		url('../images/arrows-ffffff.png') no-repeat -10px -100px; /* 8-bit indexed alpha png. IE6 gets solid image only */
+	background:		url('../arrows-ffffff.png') no-repeat -10px -100px; /* 8-bit indexed alpha png. IE6 gets solid image only */
 }
 a > .sf-sub-indicator {  /* give all except IE6 the correct values */
 	top:			.8em;

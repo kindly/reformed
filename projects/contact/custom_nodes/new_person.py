@@ -1,4 +1,5 @@
 from pprint import pprint
+from collections import defaultdict
 
 import whoosh.analysis
 from whoosh.query import Term, Or, And, Phrase
@@ -25,6 +26,7 @@ class NewPerson(Node):
         layout('spacer'),
         layout('spacer'),
 
+        ##FIXME data is not passed to evaluate duplicate properely
         button_box([['add', 'f@new_person.EvaluateDuplicate'],
                     ['cancel', 'BACK'],]
                    ),
@@ -36,15 +38,43 @@ class NewPerson(Node):
         node_manager.add_menu(dict(menu = 'people', title = 'new person', node = '$'))
 
     def call(self, node_token):
-        data = dict(__message = "Add new person.", name = "fred" )
+        data = dict(__message = "Add new person.", )
         self['main'].show(node_token, data)
+
+##FIXME this does not be here
+class Redirect(Node):
+
+    def call(self, node_token):
+
+        data = node_token['main'].data
+        node_token.redirect("new_person.EvaluateDuplicate", data)
 
 class EvaluateDuplicate(Node):
 
+    list = form(
+        result_link('__name', label = "title"),
+        info('summary', data_type = 'info'),
+        form_type = "results",
+        layout_title = "results",
+    )
+
     def call(self, node_token):
-        data = node_token['main'].data
+
+        print node_token.__dict__
+        data = node_token['list'].data
         #node_token.redirect('new_person.MakeContact::', node_data = data)
-        node_token.general_error(str(self.get_results(data)))
+        results = self.get_results(data)
+
+        if results:
+            data = {'__array' : results}
+            self["list"].create_form_data(node_token, data)
+            node_token.form(self)
+            #node_token.set_layout("listing", [["list"]])
+            data['__buttons'] = [['add new', 'd@new?%s:'],
+                                 ['cancel', 'BACK']]
+
+            data['__message'] = "These are the potential duplicates"
+            #node_token.general_error(str(self.get_results(data)))
         #if not_results:
         #node_token.next_node('f:new_person.MakeContact', node_data = data, command = 'next')
 
@@ -56,6 +86,8 @@ class EvaluateDuplicate(Node):
         sn = r.search_names
         terms = []
 
+
+        ##FIXME what if there if there is not name or data
         names = data["name"]
         ana = whoosh.analysis.StandardAnalyzer()
         communication = data["communication"]
@@ -65,13 +97,11 @@ class EvaluateDuplicate(Node):
         postcode = parsers.postcode(communication)
         dob = parsers.date(communication)
 
-        print postcode
-
         email_terms = []
 
         if names:
             terms.append(Phrase(sn["name"], names))
-            for token in ana(names):
+            for token in ana(unicode(names)):
                 terms.append(Term(sn["name"], token.text))
 
         if email:
@@ -87,9 +117,10 @@ class EvaluateDuplicate(Node):
         if postcode:
             terms.append(Term(sn["postcode"], postcode[1], boost = 2))
 
-        query = Or(terms)
+        if not terms:
+            return []
 
-        print query
+        query = Or(terms)
 
         result = searcher.search(query)
 
@@ -101,18 +132,12 @@ class EvaluateDuplicate(Node):
 
         ana = whoosh.analysis.StandardAnalyzer()
 
-        if field == "name":
-            for token in ana(value):
-                if token.text in data["name"]:
-                    return True
+        for token in ana(value):
+            if token.text in data["name"] and field == "name":
+                return True
+            if token.text in data["communication"] and field != "name":
+                return True
 
-        if field == "email":
-            for token in ana(value):
-                if token.text in data["communication"]:
-                    return True
-
-        if value in data["communication"]:
-            return True
 
     def get_results(self, data):
 
@@ -126,36 +151,32 @@ class EvaluateDuplicate(Node):
 
         results = r.search("search_info",
                            query,
-                           order_by = "_core_id")
+                           )
 
         current_core_id = None
 
-        current_result = {}
-
-        result_lookup = {}
+        result_lookup = defaultdict(dict)
 
         for result in results:
             result_core_id = result.get("_core_id")
-            if current_core_id != result_core_id and current_core_id:
-                current_result["_core_id"] = current_core_id
-                result_lookup[current_core_id] = current_result
-                current_result = {}
-                current_core_id = result_core_id
-            else:
-                current_core_id = result_core_id
-
             value = result.get("value")
             field = si[str(result.get("field"))]
+            if field == "name":
+                result_lookup[result_core_id]["__name"] = value
 
             if self.match_results(data, field, value):
-                current_result[field] = value
-        else:
-            current_result["_core_id"] = current_core_id
-            result_lookup[result_core_id] = current_result
+                result_lookup[result_core_id][field] = value
 
         ordered_results = []
         for core_id in core_ids:
-            ordered_results.append(result_lookup[int(core_id)])
+            result_dict = result_lookup[int(core_id)]
+            summary = "matches \n\n" + "\n".join(["%s: %s" % (k, v)
+                                               for (k, v) in result_dict.items()
+                                               if not k == "__name"])
+            result_dict["__id"] = core_id
+            result_dict["summary"] = summary
+            result_dict['result_url'] = '%s:edit?id=%s' % (self.name, core_id)
+            ordered_results.append(result_dict)
 
 
         return ordered_results
