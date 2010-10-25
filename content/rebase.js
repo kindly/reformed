@@ -515,9 +515,11 @@ REBASE.Interface = function (){
 
     function resize_north_pane(){
         // due to floats we have to measure the user bar items
-        var size = $user_bar.outerHeight(true) + $menu.outerHeight(true);
+        var size = $user_area.outerHeight(true);
         $interface_layout.sizePane('north', size);
         $logo.height(size - 10);
+        var width = $(window).width() - $logo.width() - 60;
+        $user_area.width(width);
         if ($main_layout !== undefined){
             resize_main_pane();
         }
@@ -575,8 +577,6 @@ REBASE.Interface = function (){
     function add_user_bar(){
         $user_bar = $('<div id="user_bar"></div>');
         // search box
-        // ajax info
-        $user_bar.append('<span id="ajax_info"><img src="busy.gif" /> Loading ...</span>');
         // login info
         $user_bar.append('<span id="user_login" style="float:right;">user login</span>');
         $user_area.append($user_bar);
@@ -588,6 +588,8 @@ REBASE.Interface = function (){
         var $menu_bar = $('<div id="menu_bar">');
         $menu_bar.append($menu);
         $user_area.append($menu_bar);
+        // ajax info
+        $user_area.append('<span id="ajax_info"><img src="busy.gif" /> Loading ...</span>');
     }
 
     function make_resizer(){
@@ -1114,6 +1116,10 @@ REBASE.Node = function (){
                             return decode_error('Error getting form data.');
                         }
                         break;
+                    case 'u':
+                        // Update url and send any form data via url too.
+                        flags.update = true;
+                        break;
                     default:
                         return decode_error('Invalid flag in node string\n' + node_string);
                 }
@@ -1156,6 +1162,11 @@ REBASE.Node = function (){
         // if target form but no data the send empty data
         if (target_form && !decode.form_data.length){
             decode.form_data.push({form: target_form, data: {}});
+        }
+        // this is a node string with form data requesting
+        // an update so rewrite the node and return it
+        if (flags.update && decode.form_data.length == 1){
+            decode.node_string = decode.node + ':' + decode.command + '?' + $.param(decode.form_data[0].data);
         }
         // sanity checks
         if (decode.secure && flags.update){

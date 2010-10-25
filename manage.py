@@ -70,8 +70,10 @@ def profile(file):
 # FIXME broken
 def load():
     print "loading data"
-    import load
-    load.load(application)
+    if options.load_directory:
+        application.import_sample_data(sample_dir = options.load_directory)
+    else:
+        application.import_sample_data()
 
 def generate_data():
     print 'generating data'
@@ -294,8 +296,11 @@ if __name__ == "__main__":
                       action="store", dest="num_upload_files", default = 100,
                       type = 'int', help="number of images to upload per directory")
     parser.add_option("-l", "--load",
-                      action="store_true", dest="table_load",
-                      help="load all tables")
+                      action="store_true", dest="load_data",
+                      help="load data")
+    parser.add_option("--loaddir",
+                      action="store", dest="load_directory",
+                      help="directory to look for *.csv data files")
     parser.add_option("--loadfile",
                       action="store_true", dest="load",
                       help="load the data, use -f to change the file (default data.csv)")
@@ -394,7 +399,7 @@ if __name__ == "__main__":
         profile(options.load_file)
     if options.upload_files:
         upload_files(options)
-    if options.table_load:
+    if options.load_data:
         load()
     if options.run:
         run(options.host, options.port, options.ssl, options.ssl_cert, options.no_job_scheduler)

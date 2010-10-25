@@ -506,17 +506,24 @@ class Application(object):
             self.extract_table(table, output_dir = output_dir)
 
 
-    def import_file(self, table, filename = None):
+    def import_file(self, table, filename = None, input_dir = 'output'):
         self.initialise_database()
         database = self.database
         if not filename:
             filename = '%s.csv' % table
-        path = os.path.join(self.application_folder, 'output', filename)
+        path = os.path.join(self.application_folder, input_dir, filename)
 
         file_loader = FlatFileSaveSet(database, path = path, table = table)
         file_loader.load()
 
 
+    def import_sample_data(self, sample_dir = 'sample'):
+        path = os.path.join(self.application_folder, sample_dir, '*.csv')
+        files = glob.glob(path)
+        for file in files:
+            (head, tail) = os.path.split(file)
+            (root, ext) = os.path.splitext(tail)
+            self.import_file(root, filename = file)
 
 
 def empty_database(directory, connection_string = None):

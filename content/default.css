@@ -64,13 +64,17 @@ div {
     padding-right:25px;
 }
 
-#user_area, #header {
+#user_area {
+    float:left;
+    width:800px;
+}
+#header {
     float:left;
 }
 #user_bar {
     background-color:transparent;
-    float:left;
-    clear:left;
+    float:right;
+    clear:both;
 }
 
 #resizer {
@@ -873,6 +877,7 @@ div.f_message_title {
 }
 
 #ajax_info {
+    float:right;
     margin-left:25px;
     background-color:yellow;
     color:#336;
