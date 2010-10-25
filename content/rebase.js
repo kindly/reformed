@@ -1489,7 +1489,7 @@ REBASE.Job = function(){
         if (CONFIG.JOB_HISTORY){
             history.push([request, sent_data, return_data]);
             // stop history growing too big.
-            while(history.length > JOB_HISTORY_SIZE){
+            while(history.length > CONFIG.JOB_HISTORY_SIZE){
                 history.shift();
             }
         }
