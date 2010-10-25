@@ -294,8 +294,7 @@ class NodeToken(object):
         # Append any url_data to the node if needed
         if url_data:
             link_data = urllib.urlencode(url_data)
-            while node_string.count(':') < 2:
-                node_string += ':'
+            node_string += '?'
             node_string += link_data
         # if this is not a special command make it an update node
         self._set_action('redirect', link = node_string, node_data = node_data)
