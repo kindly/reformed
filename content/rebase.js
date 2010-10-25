@@ -67,7 +67,7 @@ REBASE.init = function(){
     $.fx.off = CONFIG.DISABLE_FX;
     /* helper function */
     node_load = REBASE.Node.load_node;
-
+    // function to call when url is updated.
     $.address.change(REBASE.Node.load_page);
     // if no node info is available go to the login node
     // FIXME this needs fixing with a default node
@@ -680,7 +680,7 @@ REBASE.Dialog = function (){
     var error_is_open = false;
     var dialog_queue = [];
     var error_queue = [];
-    var process_html = REBASE.Form.process_html;
+    var process_html;
 
     function setup(){
         var options = {autoOpen: false, width: 'auto', modal: true};
@@ -832,7 +832,11 @@ REBASE.Dialog = function (){
         }
     }
 
-    setup();
+
+    function init(){
+        process_html = REBASE.Form.process_html;
+        setup();
+    }
 
     // exported functions
     return {
@@ -850,6 +854,9 @@ REBASE.Dialog = function (){
         },
         'confirm_action_return' : function(result){
             confirm_action_return(result);
+        },
+        'init' : function(){
+            init();
         }
     };
 }();
