@@ -859,9 +859,9 @@ REBASE.Dialog = function (){
  *           ('>
  *           /))@@@@@.
  *          /@"@@@@@()@
- *         .@@()@@()@@@@    FUNCTIONS
+ *         .@@()@@()@@@@    DEBUG
  *         @@@O@@@@()@@@
- *         @()@@\@@@()@@    Remote functions called by the backend.
+ *         @()@@\@@@()@@    Debug functions.
  *          @()@||@@@@@'
  *           '@@||@@@'
  *        jgs   ||
@@ -869,21 +869,7 @@ REBASE.Dialog = function (){
  */
 
 
-REBASE.Functions = function (){
-
-    // hash of functions available
-    var functions = {};
-
-    function call(fn, data){
-        /* calls function if it exists */
-        var f = functions[fn];
-        if (f){
-            f(data);
-        } else {
-            REBASE.Dialog.dialog('Error', '<pre>Function `' + fn + '` is not available.</pre>');
-            console_log('ERROR: function `' + fn + '` not available');
-        }
-    }
+REBASE.Debug = function (){
 
     function debug_form_info(){
         /* Output the current form cache information */
@@ -942,13 +928,56 @@ REBASE.Functions = function (){
         }
         REBASE.Dialog.dialog('History', info.join(''), true);
     }
+
+    return {
+        'debug_form_info' : function (){
+            return debug_form_info();
+        },
+        'debug_html' : function (){
+            return debug_html();
+        },
+        'debug_history' : function (){
+            return debug_history();
+        }
+    }
+}();
+
+
+/*
+ *           ('>
+ *           /))@@@@@.
+ *          /@"@@@@@()@
+ *         .@@()@@()@@@@    FUNCTIONS
+ *         @@@O@@@@()@@@
+ *         @()@@\@@@()@@    Remote functions called by the backend.
+ *          @()@||@@@@@'
+ *           '@@||@@@'
+ *        jgs   ||
+ *       ^^^^^^^^^^^^^^^^^
+ */
+
+
+REBASE.Functions = function (){
+
+    // hash of functions available
+    var functions = {};
+
+    function call(fn, data){
+        /* calls function if it exists */
+        var f = functions[fn];
+        if (f){
+            f(data);
+        } else {
+            REBASE.Dialog.dialog('Error', '<pre>Function `' + fn + '` is not available.</pre>');
+            console_log('ERROR: function `' + fn + '` not available');
+        }
+    }
+
     // FUNCTIONS
-
-    functions.debug_form_info = debug_form_info;
-    functions.debug_html = debug_html;
-    functions.debug_history = debug_history;
-
     function init(){
+        functions.debug_form_info = REBASE.Debug.debug_form_info;
+        functions.debug_html = REBASE.Debug.debug_html;
+        functions.debug_history = REBASE.Debug.debug_history;
         functions.load_bookmarks = REBASE.Bookmark.process;
         functions.clear_form_cache = REBASE.FormProcessor.clear_form_cache;
         functions.make_menu = REBASE.Interface.make_menu;
