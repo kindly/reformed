@@ -472,7 +472,9 @@ class NodeToken(object):
                 if 'function' in item:
                     menu_item['function'] = item['function']
                 if 'sub' in item:
-                    menu_item['sub'] = build_items(item['sub'])
+                    sub_items = build_items(item['sub'])
+                    if sub_items:
+                        menu_item['sub'] = sub_items
                 output.append(menu_item)
             return output
 

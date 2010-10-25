@@ -1141,6 +1141,14 @@ REBASE.Node = function (){
         decode.secure = (decode.command && decode.command.substring(0,1) == '_');
 
         decode.node_data = global_node_data;
+        // add any current querystring data into the node data
+        // but not overwritting
+        var query_data = convert_url_string_to_hash($.address.queryString())
+        for (key in query_data){
+            if (decode.node_data[key] === undefined){
+                decode.node_data[key] = query_data[key];
+            }
+        }
         // url data converted to a hash
         if (part_url){
             var url_data = convert_url_string_to_hash(part_url);
