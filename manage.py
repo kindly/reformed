@@ -385,8 +385,6 @@ if __name__ == "__main__":
         application.initialise_database()
         database = application.database
         code.interact(local=locals())
-    if options.index:
-        index_database()
     if options.generate:
         generate_data()
     if options.create:

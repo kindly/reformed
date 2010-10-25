@@ -17,6 +17,16 @@ application = global_session.application
 def make_menu(node_manager):
     node_manager.add_menu(dict(name = 'people', title = 'people'))
 
+def parse_communication(communication):
+
+    email = parsers.email(communication)[1]
+    phone_number = parsers.phonenumber(communication)[1]
+    postcode = parsers.postcode(communication)[1]
+    dob = parsers.date(communication)[1]
+
+    return locals()
+
+
 class NewPerson(Node):
 
     main = form(
@@ -82,36 +92,35 @@ class NewPerson(Node):
         sn = r.search_names
         terms = []
 
-
         ##FIXME what if there if there is not name or data
         names = data["name"]
         ana = whoosh.analysis.StandardAnalyzer()
         communication = data["communication"]
 
-        email = parsers.email(communication)
-        phone_number = parsers.phonenumber(communication)
-        postcode = parsers.postcode(communication)
-        dob = parsers.date(communication)
+        comms = parse_communication(communication)
+        email = comms["email"]
+        phone_number = comms["phone_number"]
+        dob = comms["dob"]
+        postcode = comms["postcode"]
 
         email_terms = []
-
         if names:
             terms.append(Phrase(sn["name"], names))
             for token in ana(unicode(names)):
                 terms.append(Term(sn["name"], token.text))
 
         if email:
-            email_terms = [token.text for token in ana(email[1])]
+            email_terms = [token.text for token in ana(email)]
             for email_term in email_terms:
                 terms.append(Term(sn["email"], email_term))
             terms.append(Phrase(sn["email"], email_terms, boost = 2))
 
         if phone_number:
-            terms.append(Term(sn["number"], phone_number[1], boost = 2))
+            terms.append(Term(sn["number"], phone_number, boost = 2))
         if dob:
-            terms.append(Term(sn["dob"], dob[1], boost = 2))
+            terms.append(Term(sn["dob"], dob, boost = 2))
         if postcode:
-            terms.append(Term(sn["postcode"], postcode[1], boost = 2))
+            terms.append(Term(sn["postcode"], postcode, boost = 2))
 
         if not terms:
             return []
@@ -198,9 +207,20 @@ class MakeContact(Node):
 
     def call(self, node_token):
         # retrieve the posted data to populate the form
-        data = node_token.get_node_data().data
-        data['__message'] = "Enter details"
-        self["main"].show(node_token, data)
+        data = node_token["main"]
+        new_data = dict()
+
+        new_data["name"] = data.get("name")
+
+        communication = data.get("communication")
+
+        if communication:
+            comms = parse_communication(communication)
+            new_data["email.email"] = comms["email"]
+
+
+        new_data['__message'] = "Enter details"
+        self["main"].show(node_token, new_data)
 
 class SaveContact(MakeContact):
 
