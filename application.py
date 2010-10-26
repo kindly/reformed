@@ -450,6 +450,7 @@ class Application(object):
         ##FIXME all databases should have search pending
         if "search_pending" in self.database.tables:
 
+            self.make_index_schema()
             index_location = os.path.join(self.application_folder, 'index')
             mkdir_p(index_location)
 
