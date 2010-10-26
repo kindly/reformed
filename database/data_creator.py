@@ -1,6 +1,7 @@
 import random
 import re
 import datetime
+import os.path
 
 import sqlalchemy as sa
 from formencode import Invalid
@@ -8,15 +9,16 @@ from formencode import Invalid
 
 class MarkovText(object):
 
-    def __init__(self):
+    def __init__(self, data_dir):
         self.cache = {}
+        self.data_dir = data_dir
 
-        self.parse_file('util/generator_data/alice.txt')
+        self.parse_file('alice.txt')
 
-    def parse_file(self, file):
+    def parse_file(self, file_name):
         """parse textfile and generate chains"""
 
-        f = open(file)
+        f = open(os.path.join(self.data_dir, file_name))
         content = f.read()
         f.close()
 
@@ -125,10 +127,11 @@ class DataGenerator(object):
 
         # text data_types
         self.text_data_types = ['Text', 'Email']
-
+        self.data_dir = None
 
     def initialise(self, application):
         self.application = application
+        self.data_dir = os.path.join(self.application.root_folder, 'util/generator_data')
         if not self.word_lists:
             self.create_word_lists()
         if not self.postcodes:
@@ -147,7 +150,7 @@ class DataGenerator(object):
                  'road_names']
 
         for list in lists:
-            f = open('util/generator_data/%s' % list)
+            f = open(os.path.join(self.data_dir, list))
             self.word_lists[list] = f.read().split('\n')
             f.close()
 
@@ -166,7 +169,7 @@ class DataGenerator(object):
         # read postcode file and create hash
         # of towns for the base code
 
-        f = open('util/generator_data/postcodes')
+        f = open(os.path.join(self.data_dir, 'postcodes'))
         lines = f.read().split('\n')
         for line in lines:
             if line:
@@ -456,7 +459,7 @@ class DataGenerator(object):
 
     def make_text(self, length = 250):
         if not self.textmaker:
-            self.textmaker = MarkovText()
+            self.textmaker = MarkovText(self.data_dir)
         return self.textmaker.text(random.randint(0, length))
 
 
