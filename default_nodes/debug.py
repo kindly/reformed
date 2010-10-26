@@ -19,7 +19,7 @@
 ##   Copyright (c) 2008-2010 Toby Dacre & David Raznick
 ##
 
-
+import os.path
 
 from node.node import JobNode, Node
 from node.form import form
@@ -31,3 +31,12 @@ def make_menu(node_manager):
     node_manager.add_menu(dict(menu = 'Debug', title = 'History', function = 'debug_history'))
     node_manager.add_menu(dict(menu = 'Debug', title = 'Form info', function = 'debug_form_info'))
     node_manager.add_menu(dict(menu = 'Debug', title = 'HTML', function = 'debug_html'))
+    node_manager.add_menu(dict(menu = 'Debug', title = 'Test drive', function = 'debug_test_drive_next'))
+    node_manager.add_menu(dict(menu = 'Debug', title = 'Test drive2', node = 'debug.TestFile'))
+
+class TestFile(Node):
+
+    def call(self, node_token):
+        f = open(os.path.join(global_session.application.application_folder, 'testfile.json'))
+        data = f.read()
+        node_token.function('debug_test_drive_script', data)
