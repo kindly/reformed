@@ -27,9 +27,6 @@ r = global_session.database
 application = global_session.application
 
 def make_menu(node_manager):
-    node_manager.add_menu(dict(name = 'Debug', menu = 'Admin', title = 'Debug', node = None))
-    node_manager.add_menu(dict(menu = 'Debug', title = 'Form Data', function = 'debug_form_info'))
-    node_manager.add_menu(dict(menu = 'Debug', title = 'HTML', function = 'debug_html'))
     node_manager.add_menu(dict(name = 'Test', title = 'Test', node = None, index = 2))
 
 class Node1(Node):
@@ -282,25 +279,6 @@ class DataLoader(JobNode):
 
 
 
-
-class Search(TableNode):
-
-
-    listing = form(
-        result_link('title', data_type = 'link', css = 'form_title'),
-        info('summary', data_type = 'info'),
-        form_type = "results",
-
-    )
-
-
-    def call(self, node_token, limit = 20):
-        where = "_core_entity.title like ?"
-        node_data = node_token.get_node_data()
-        query = node_data.get('q', '')
-        limit = node_data.get_data_int('l', limit)
-        values = ['%%%s%%' % query]
-        self['listing'].list(node_token, limit, where = where, values = values)
 
 
 class Auto(AutoFormPlus):
