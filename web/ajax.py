@@ -70,6 +70,7 @@ class Sample(object):
         """ Return the next sample"""
         if not self.sample_set:
             self.get_sample()
+        # FIXME fails if no data
         return self.sample_set.pop()
 
 
@@ -181,6 +182,9 @@ class Worker(object):
         self.process = kw.get('process', False)
         self.quiet = kw.get('quiet', False)
         self.verbose = kw.get('verbose', False)
+
+        self.testfile = kw.get('testfile', False)
+        self.test_output = []
 
         self.fake_server = kw.get('fake_server', False)
 
@@ -300,6 +304,8 @@ class Worker(object):
         """ Make a node request to the web application. """
         req = dict(node = node_name, command = command)
         req.update(kw)
+        if self.testfile:
+            self.test_output.append(req)
         data = json.dumps(req, separators=(',',':'))
         start = time.time()
         response = self.request(data)
@@ -356,6 +362,10 @@ class Worker(object):
             cProfile.run('a.run()', 'ajax.profile')
         else:
             self.run()
+        if self.testfile:
+            f = open(self.testfile, 'w+')
+            f.write(json.dumps(self.test_output))
+            f.close()
 
 
 
