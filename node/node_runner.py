@@ -159,6 +159,7 @@ class NodeToken(object):
         self._link = None
 
         self._action = None
+        self._function = None
         self._output_node_data = {}
         self.bookmark = None
         self.user = None
@@ -307,10 +308,9 @@ class NodeToken(object):
         """ Helper function send status data to front end. """
         self._set_action('status', data = data)
 
-#   DISABLED for now
-#    def function(self, function_name, data = None):
-#        """ Helper function send status data to front end. """
-#        self._set_action('function', function_name = function_name, data = packet)
+    def function(self, function_name, data = None):
+        """ Helper function send status data to front end. """
+        self._set_action('function', function_name = function_name, data = data)
 
     def forbidden(self):
         """ Helper function send forbidden error to front end. """
@@ -347,6 +347,9 @@ class NodeToken(object):
         layout_title = kw.get('layout_title')
         if layout_title:
             self._layout['layout_title'] = layout_title
+        function_name = kw.get('function_name')
+        if function_name:
+            self._function = function_name
         dialog = kw.get('dialog')
         if dialog:
             # TODO make sure we only allow one dialog.
@@ -389,6 +392,7 @@ class NodeToken(object):
                 'node': self.node_name,
                 'title' : self._title,
                 'link' : self._link,
+                'function' : self._function,
                 'bookmark' : self.bookmark,
                 'layout' : layout,
                 'node_data' : self._output_node_data,
