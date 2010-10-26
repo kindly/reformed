@@ -878,6 +878,8 @@ REBASE.Dialog = function (){
 
 REBASE.Debug = function (){
 
+    var test_script = [];
+
     function debug_form_info(){
         /* Output the current form cache information */
         var info = REBASE.FormProcessor.debug_form_info();
@@ -936,6 +938,23 @@ REBASE.Debug = function (){
         REBASE.Dialog.dialog('History', info.join(''), true);
     }
 
+    function debug_test_drive_script(data){
+        test_script = $.parseJSON(data);
+        debug_test_drive_next();
+    }
+
+    function debug_test_drive_next(){
+        if (test_script.length){
+            var test_job = test_script.shift();
+            REBASE.Job.add(test_job, null, debug_test_drive_next);
+        }
+    }
+
+    function debug_test_drive(){
+        var test_string = '{"node_string": "new_person.People:edit?__id=14", "form_data": [], "command": "edit", "node": "new_person.People", "flags": {"update": true}, "secure": false, "node_data": {"q": "", "l": "20", "o": "0", "__id": "14"}}';
+        REBASE.Job.add($.parseJSON(test_string));
+    }
+
     return {
         'debug_form_info' : function (){
             return debug_form_info();
@@ -945,6 +964,15 @@ REBASE.Debug = function (){
         },
         'debug_history' : function (){
             return debug_history();
+        },
+        'debug_test_drive' : function (){
+            return debug_test_drive();
+        },
+        'debug_test_drive_script' : function (data){
+            return debug_test_drive_script(data);
+        },
+        'debug_test_drive_next' : function (){
+            return debug_test_drive_next();
         }
     }
 }();
@@ -985,6 +1013,9 @@ REBASE.Functions = function (){
         functions.debug_form_info = REBASE.Debug.debug_form_info;
         functions.debug_html = REBASE.Debug.debug_html;
         functions.debug_history = REBASE.Debug.debug_history;
+        functions.debug_test_drive = REBASE.Debug.debug_test_drive;
+        functions.debug_test_drive_script = REBASE.Debug.debug_test_drive_script;
+        functions.debug_test_drive_next = REBASE.Debug.debug_test_drive_next;
         functions.load_bookmarks = REBASE.Bookmark.process;
         functions.clear_form_cache = REBASE.FormProcessor.clear_form_cache;
         functions.make_menu = REBASE.Interface.make_menu;
