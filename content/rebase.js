@@ -1517,7 +1517,7 @@ REBASE.Job = function(){
         }
     }
 
-    function process_return(return_data, sent_data, request){
+    function process_return(return_data, sent_data, request, callback){
         var i;
         var n;
         outstanding_requests--;
@@ -1539,22 +1539,25 @@ REBASE.Job = function(){
         } else {
             REBASE.Dialog.dialog('Application Error', 'No data was returned.\n\nThe application may not be running.');
         }
+        if (callback){
+            callback();
+        }
     }
 
-	function add(request, sent_data){
+	function add(request, sent_data, callback){
 		// this is where we make the ajax request
 		var body = $.toJSON(request);
 		$.post("/ajax", {body: body},
 		  function(return_data){
-			 process_return(return_data, sent_data, request);
+			 process_return(return_data, sent_data, request, callback);
 		  }, "json");
         outstanding_requests++;
         loading_show();
 	}
 
     return {
-        'add' : function (request, data){
-            add(request, data);
+        'add' : function (request, data, callback){
+            add(request, data, callback);
         },
         'history' : function (){
             return history;
