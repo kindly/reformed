@@ -37,8 +37,8 @@ var CONFIG = {
     JOB_HISTORY : true,
     JOB_HISTORY_SIZE : 50,
     BOOKMARK_ARRAY_MAX : 100,
-    DIALOG_BORDER_HEIGHT : 150,
-    DIALOG_BORDER_WIDTH : 150,
+    DIALOG_BORDER_HEIGHT : 50,
+    DIALOG_BORDER_WIDTH : 50,
     // FIXME these numbers are magic
     // should be calculated
     DIALOG_CHROME_HEIGHT : 75,
