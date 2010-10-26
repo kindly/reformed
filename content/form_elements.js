@@ -49,13 +49,20 @@ REBASE.FormControls = function(){
     var id_counter = 0;
     var id_name;
 
-    var HTML_Encode_Clear = REBASE.Form.HTML_Encode_Clear;
-    var make_item_class = REBASE.Form.make_item_class;
-    var process_html = REBASE.Form.process_html;
-    var is_update_node = REBASE.Node.is_update_node;
+    var HTML_Encode_Clear;
+    var make_item_class;
+    var process_html;
+    var is_update_node;
 
     var build_node_link = $.Util.build_node_link;
     var build_node_link_href = $.Util.build_node_link_href;
+
+    function init(){
+        HTML_Encode_Clear = REBASE.Form.HTML_Encode_Clear;
+        make_item_class = REBASE.Form.make_item_class;
+        process_html = REBASE.Form.process_html;
+        is_update_node = REBASE.Node.is_update_node;
+    }
 
     function add_label(item){
         // basic label
@@ -507,6 +514,9 @@ REBASE.FormControls = function(){
         },
         'set_data' : function(data){
             local_row_data = data;
+        },
+        'init' : function(){
+            init();
         }
     };
 }();
