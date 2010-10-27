@@ -909,8 +909,10 @@ REBASE.Debug = function (){
             switch (data.action){
                 case 'function':
                     return '<div>Function: ' + data['function'] + '</div>';
+                case 'redirect':
+                    return '<div>Redirect: ' + data.data + '</div>';
                 default:
-                    return '<div>' + data.action + ' : ' + data['function'] + '</div>';
+                    return '<div>' + data.action + '</div>';
             }
         }
 
