@@ -1498,7 +1498,7 @@ REBASE.Job = function(){
         var data;
         switch (packet.action){
             case 'redirect':
-                var link = packet.link;
+                var link = packet.data;
                 if (link){
                     REBASE.Node.load_node(link);
                 }

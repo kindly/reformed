@@ -156,7 +156,6 @@ class NodeToken(object):
         # title sets the title of the page
         self._title = None
         self._layout_title = None
-        self._link = None
 
         self._action = None
         self._function = None
@@ -298,11 +297,11 @@ class NodeToken(object):
             node_string += '?'
             node_string += link_data
         # if this is not a special command make it an update node
-        self._set_action('redirect', link = node_string, node_data = node_data)
+        self._set_action('redirect', data = node_string, node_data = node_data)
 
     def redirect_back(self):
         """ Helper function direct the front end to go back in the history. """
-        self._set_action('redirect', link = 'BACK')
+        self._set_action('redirect', data = 'BACK')
 
     def status(self, data):
         """ Helper function send status data to front end. """
@@ -338,9 +337,6 @@ class NodeToken(object):
         if self._action and not(action == self._action and action == 'form'):
             raise Exception('Action has already been set for this NodeToken')
         self._action = action
-        link = kw.get('link')
-        if link:
-            self._link = link
         title = kw.get('title')
         if title:
             self._title = title
@@ -391,7 +387,6 @@ class NodeToken(object):
         info = {'action': self._action,
                 'node': self.node_name,
                 'title' : self._title,
-                'link' : self._link,
                 'function' : self._function,
                 'bookmark' : self.bookmark,
                 'layout' : layout,
