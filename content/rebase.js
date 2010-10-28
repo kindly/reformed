@@ -1094,6 +1094,14 @@ REBASE.Utils = function (){
         return false;
     }
 
+    function HTML_encode(arg) {
+        // replace & " < > with html entity
+        if (typeof arg != 'string'){
+            return '';
+        }
+        return arg.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
     // exported functions
     return {
         'treeview_hash' : function (data, css_class){
@@ -1101,6 +1109,9 @@ REBASE.Utils = function (){
         },
         'search_box' : function (){
             return search_box();
+        },
+        'HTML_encode' : function (arg){
+            return HTML_encode(arg);
         }
     };
 }();
