@@ -540,7 +540,7 @@ REBASE.Interface = function (){
                     html.push('<a onclick="node_load(\'' + item.node + '\');$(\'#menu\').hideSuperfishUl();" >');
                 } else {
                     if (item['function']) {
-                        html.push('<a onclick="REBASE.Functions.call(\'' + item['function'] + '\');$(\'#menu\').hideSuperfishUl();" >');
+                        html.push('<a onclick="$(\'#menu\').hideSuperfishUl();REBASE.Functions.call(\'' + item['function'] + '\');" >');
                     } else {
                         html.push('<a onclick="return false;" >');
                     }
