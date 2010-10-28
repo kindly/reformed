@@ -879,6 +879,7 @@ REBASE.Dialog = function (){
 REBASE.Debug = function (){
 
     var test_script = [];
+    var HTML_encode;
 
     function debug_form_info(){
         /* Output the current form cache information */
@@ -902,17 +903,29 @@ REBASE.Debug = function (){
         var info = [];
         var sent;
         var received;
+        var json;
         var history = REBASE.Job.history();
 
-        function make_action(data){
-
+        function make_action(data, len){
+            var out;
+            len = ' (' + len + ')';
             switch (data.action){
+                case 'form':
+                    out = '<div>Form' + len + '</div>';
+                    out += '<div class="history_extra">';
+                    for (var key in data.data){
+                        out += '<div>' + key + '</div>';
+                    }
+                    out += '</div>';
+                    return out;
                 case 'function':
-                    return '<div>Function: ' + data['function'] + '</div>';
+                    out = '<div>Function: ' + data['function'] + len +'</div>';
+                    out += '<div class="history_extra">' + REBASE.Utils.treeview_hash(data.data, '') + '</div>';
+                    return out;
                 case 'redirect':
-                    return '<div>Redirect: ' + data.data + '</div>';
+                    return '<div>Redirect: ' + data.data + len + '</div>';
                 default:
-                    return '<div>' + data.action + '</div>';
+                    return '<div>' + data.action + len + '</div>';
             }
         }
 
@@ -926,14 +939,15 @@ REBASE.Debug = function (){
             } else {
                 info.push('<div>' + sent.node + '</div>');
             }
-            info.push('<div class="history_data">' + $.toJSON(sent) + '</div>');
+            info.push('<div class="history_data">' + HTML_encode($.toJSON(sent)) + '</div>');
             info.push('</div>');
             for (var j = 0; j < received.length; j++){
                 info.push('<div class="history_received">')
+                json = HTML_encode($.toJSON(received[j]));
                 if (received[j].action){
-                    info.push(make_action(received[j]));
+                    info.push(make_action(received[j], json.length));
                 }
-                info.push('<div class="history_data">' + $.toJSON(received[j]) + '</div>');
+                info.push('<div class="history_data">' + json + '</div>');
                 info.push('</div>');
             }
         }
@@ -950,6 +964,10 @@ REBASE.Debug = function (){
             var test_job = test_script.shift();
             REBASE.Job.add(test_job, null, debug_test_drive_next);
         }
+    }
+
+    function init(){
+        HTML_encode = REBASE.Utils.HTML_encode;
     }
 
     function debug_test_drive(){
@@ -975,6 +993,9 @@ REBASE.Debug = function (){
         },
         'debug_test_drive_next' : function (){
             return debug_test_drive_next();
+        },
+        'init' : function (){
+            return init();
         }
     }
 }();
