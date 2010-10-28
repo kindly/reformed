@@ -443,7 +443,7 @@ class NodeToken(object):
         session = r.Session()
         bookmarks = r.search("bookmarks",
                              "user_id = ?",
-                             fields = ['_core_entity.title', 'entity_table', '_core_id', 'accessed_date'],
+                             fields = ['_core_entity.title', 'entity_table', '_core_id'],
                              values = [user_id],
                              order_by = "accessed_date",
                              keep_all = False,
