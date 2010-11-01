@@ -1087,9 +1087,9 @@ div.record_info > div {
 ul.sf-menu {
     margin-bottom:0;
 }
-.sf-sub-indicator {
-    background-image:url("../arrows-ffffff.png") !important;
-}
+/*.sf-sub-indicator {*/
+    /*background-image:url("../arrows-ffffff.png") !important;*/
+/*}*/
 .sf-shadow ul {
     background-image:url('../shadow.png') !important;
 }

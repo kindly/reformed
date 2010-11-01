@@ -259,6 +259,7 @@ def run(host, port, ssl, ssl_cert, no_job_scheduler):
             server = httpserver.CherryPyWSGIServer(
                     (host, int(port)), web_application,
                     server_name='rebase')
+            application.web_server = server
             if ssl:
                 try:
                     server.ssl_certificate = '%s.cert' % ssl_cert

@@ -80,6 +80,7 @@ class Application(object):
         self.metadata = None
         self.Session = None
 
+        self.web_server = None
         self.job_scheduler = None
         self.scheduler_thread = None
         self.manager_thread = None
@@ -570,5 +571,7 @@ class ManagerThread(threading.Thread):
                 self.application.database.status = "terminated"
                 if self.application.job_scheduler:
                     self.application.job_scheduler.stop()
+                if self.application.web_server:
+                    self.application.web_server.stop()
                 break
             time.sleep(0.1)
