@@ -34,7 +34,6 @@ var CONFIG = {
     FORM_PAGING_SIZE : 5,
     FORM_FOCUS_SELECT_ALL : true,
     BOOKMARKS_SHOW_MAX : 100,
-    JOB_HISTORY : true,
     JOB_HISTORY_SIZE : 50,
     BOOKMARK_ARRAY_MAX : 100,
     DIALOG_BORDER_HEIGHT : 50,
@@ -1587,8 +1586,8 @@ REBASE.Job = function(){
         var n;
         outstanding_requests--;
         // stash history
-        if (CONFIG.JOB_HISTORY){
-            history.push([request, sent_data, return_data]);
+        if (CONFIG.JOB_HISTORY_SIZE){
+            history.push($.extend(true, [], [request, sent_data, return_data]));
             // stop history growing too big.
             while(history.length > CONFIG.JOB_HISTORY_SIZE){
                 history.shift();
