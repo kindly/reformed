@@ -79,7 +79,7 @@ REBASE.init = function(){
     // function to call when url is updated.
     $.address.change(REBASE.Node.load_page);
     // resize event callback
-    $(window).resize(REBASE.Interface.resize_north_pane);
+    $(window).resize(REBASE.Interface.resize_interface);
     // if no node info is available go to the login node
     // FIXME this needs fixing with a default node
     // also if you are auto logged in etc
@@ -504,7 +504,7 @@ REBASE.User = function (){
  */
 
 REBASE.Interface = function (){
-
+    var interface_active = false;
     var $interface_layout;
     var $main_layout;
     var $side;
@@ -520,6 +520,7 @@ REBASE.Interface = function (){
     }
 
     function resize_north_pane(){
+        $('#layout').height($(window).height());
         // due to floats we have to measure the user bar items
         var size = $user_area.outerHeight(true);
         $interface_layout.sizePane('north', size);
@@ -532,6 +533,9 @@ REBASE.Interface = function (){
     }
 
     function make_menu(menu){
+        if (!interface_active){
+            make_interface();
+        }
         // Build the menu.
         function build(data){
             var i;
@@ -617,9 +621,9 @@ REBASE.Interface = function (){
         $side.append('<div id="bookmarks"></div>');
     }
 
-    function init(){
+    function make_interface(){
         /* initialise the layout */
-        var $body = $('body');
+        var $body = $('#layout');
         $body.append('<div class="ui-layout-center" id="main_pane" ></div>');
         $body.append('<div class="ui-layout-west" id="left"><div id="side" /></div>');
         $body.append('<div class="ui-layout-north"><div id="logo" /><div id="user_area" /></div>');
@@ -642,16 +646,26 @@ REBASE.Interface = function (){
         $main_pane.append('<div class="ui-layout-center"><div id="main" /></div>');
         $main_pane.append('<div class="ui-layout-north" id="layout_header"><div id="header" /></div>');
         $main_layout = $main_pane.layout({defaults: layout_defaults, north : layout_north});
+        interface_active = true;
+    }
+
+    function init(){
+        /* initialise the layout */
+        $('body').append('<div id="layout" />');
+        $('#layout').height($(window).height());
     }
 
     return {
         'init' : function (){
             init();
         },
+        'make_interface' : function (){
+            make_interface();
+        },
         'resize_main_pane': function (){
             resize_main_pane();
         },
-        'resize_north_pane': function (){
+        'resize_interface': function (){
             resize_north_pane();
         },
         'make_menu': function (menu_data){
