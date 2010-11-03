@@ -1158,14 +1158,28 @@ REBASE.Node = function (){
 
 
     /* Private functions. */
+    function convert_hash_to_url(arg){
+        // convert a single level hash into a url string
+        // it is encoded as a URI Component but using @ instead
+        // of % for encoding to stop some decoding issues
+        out = [];
+        for (var key in arg){
+            out.push(key + '=' + encodeURIComponent(arg[key]));
+        }
+        return out.join('&').replace(/%/g, '@');
+    }
 
-    function convert_url_string_to_hash(arg){
+    function convert_url_string_to_hash(arg, decode){
         /*
          *  convert string to a hash
          *  input:  "a=1&b=2"
          *  output  {a:1, b:2}
+         *  if decode specified then decode using our @xx style coding
          */
         var out = {};
+        if (arg === undefined){
+            return out;
+        }
         var args = arg.split('&');
         var x;
         var s;
@@ -1173,11 +1187,43 @@ REBASE.Node = function (){
             x = args[i];
             s = x.split('=');
             if (s.length == 2){
-                out[s[0]] = s[1];
+                if (decode){
+                    out[s[0]] = decodeURIComponent(s[1].replace(/@/g, '%'));
+                } else {
+                    out[s[0]] = s[1];
+                }
             }
+        }
+
+        return out;
+    }
+
+    function split_n(arg, seperator, n){
+        // split arg into n parts
+        // the last part will contain all extra bits of arg
+        // if not enough data then undefined for that array element.
+        //
+        // eg split_n('abc;def;ghi', ';', 2) => ['abc', 'def;ghi']
+        //    split_n('abc;def', ';', 3) => ['abc', 'def', undefined]
+        var parts = arg.split(seperator);
+        var out = [];
+        n--;
+        while (n && parts.length > 0){
+            out.push(parts.shift());
+            n--;
+        }
+        while (n){
+            out.push(undefined);
+            n--;
+        }
+        if (parts.length){
+            out.push(parts.join(seperator));
+        } else {
+            out.push(undefined);
         }
         return out;
     }
+
 
     function decode_node_string(node_string, item, target_form){
         /*
@@ -1202,7 +1248,7 @@ REBASE.Node = function (){
 
         // chop up the string
         // url string
-        var split = node_string.split('?', 2);
+        var split = split_n(node_string, '?', 2);
         var part_url = split[1];
         // command
         split = split[0].split(':');
@@ -1286,7 +1332,8 @@ REBASE.Node = function (){
         decode.node_data = global_node_data;
         // add any current querystring data into the node data
         // but not overwritting
-        var query_data = convert_url_string_to_hash($.address.queryString())
+        var query_part = split_n($.address.value(), '?', 2)[1];
+        var query_data = convert_url_string_to_hash(query_part, true)
         for (key in query_data){
             if (decode.node_data[key] === undefined){
                 decode.node_data[key] = query_data[key];
@@ -1294,7 +1341,7 @@ REBASE.Node = function (){
         }
         // url data converted to a hash
         if (part_url){
-            var url_data = convert_url_string_to_hash(part_url);
+            var url_data = convert_url_string_to_hash(part_url, true);
             if (target_form){
                 decode.form_data.push({form : target_form, data : url_data});
             } else if (url_data.form){
@@ -1317,7 +1364,7 @@ REBASE.Node = function (){
         // this is a node string with form data requesting
         // an update so rewrite the node and return it
         if (flags.update && decode.form_data.length == 1){
-            decode.node_string = decode.node + ':' + decode.command + '?' + $.param(decode.form_data[0].data);
+            decode.node_string = decode.node + ':' + decode.command + '?' + convert_hash_to_url(decode.form_data[0].data);
         }
         // sanity checks
         if (decode.secure && flags.update){
