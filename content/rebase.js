@@ -576,7 +576,7 @@ REBASE.Interface = function (){
 
     function search_box(){
         var html = [];
-        html.push('<form action="" onclick="$.Util.Event_Delegator(\'clear\');" onsubmit="return REBASE.Utils.search_box();" style="display:inline">');
+        html.push('<form action="" onclick="$.Util.Event_Delegator(\'clear\');" onsubmit="REBASE.Utils.search_box();return false;" style="display:inline">');
         html.push('<input type="text" name="search" id="search" />');
         html.push('<input type="submit" name="search_button" id="search_button" value="search"/>');
         html.push('</form>');
