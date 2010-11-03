@@ -62,25 +62,30 @@ var REBASE = {};
  */
 
 REBASE.init = function(){
+    /* This function is called when the page
+     * is fully loaded.
+     */
+
     // turn off any jquery animations
     $.fx.off = CONFIG.DISABLE_FX;
+    // find any REBASE init functions and call them
+    for(var key in REBASE){
+        if (REBASE[key].init){
+            REBASE[key].init();
+        }
+    }
     /* helper function */
     node_load = REBASE.Node.load_node;
     // function to call when url is updated.
     $.address.change(REBASE.Node.load_page);
+    // resize event callback
+    $(window).resize(REBASE.Interface.resize_north_pane);
     // if no node info is available go to the login node
     // FIXME this needs fixing with a default node
     // also if you are auto logged in etc
     var url = $.address.value();
     if (url == '/'){
         node_load('user.User:login');
-    }
-
-    // find any REBASE init functions and call them
-    for(var key in REBASE){
-        if (REBASE[key].init){
-            REBASE[key].init();
-        }
     }
 }
 
