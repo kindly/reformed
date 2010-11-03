@@ -513,15 +513,17 @@ REBASE.Interface = function (){
     var $logo;
     var $menu;
     var $window;
+    var $header_div;
+    var $layout_holder;
 
     function resize_main_pane(){
         // due to floats we have to measure the header
-        var size = $('#header').outerHeight(true);
+        var size = $header_div.outerHeight(true);
         $main_layout.sizePane('north', size);
     }
 
     function resize_north_pane(){
-        $('#layout').height($window.height());
+        $layout_holder.height($window.height());
         // due to floats we have to measure the user bar items
         var size = $user_area.outerHeight(true);
         $interface_layout.sizePane('north', size);
@@ -647,13 +649,15 @@ REBASE.Interface = function (){
         $main_pane.append('<div class="ui-layout-center"><div id="main" /></div>');
         $main_pane.append('<div class="ui-layout-north" id="layout_header"><div id="header" /></div>');
         $main_layout = $main_pane.layout({defaults: layout_defaults, north : layout_north});
+        $header_div = $('#header');
         interface_active = true;
     }
 
     function init(){
         $window = $(window);
         /* initialise the layout */
-        $('body').append('<div id="layout" />');
+        $layout_holder = $('<div id="layout" />');
+        $('body').append($layout_holder);
         $('#layout').height($window.height());
     }
 
