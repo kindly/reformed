@@ -504,6 +504,7 @@ REBASE.User = function (){
  */
 
 REBASE.Interface = function (){
+
     var interface_active = false;
     var $interface_layout;
     var $main_layout;
@@ -626,10 +627,9 @@ REBASE.Interface = function (){
 
     function make_interface(){
         /* initialise the layout */
-        var $body = $('#layout');
-        $body.append('<div class="ui-layout-center" id="main_pane" ></div>');
-        $body.append('<div class="ui-layout-west" id="left"><div id="side" /></div>');
-        $body.append('<div class="ui-layout-north"><div id="logo" /><div id="user_area" /></div>');
+        $layout_holder.append('<div class="ui-layout-center" id="main_pane" ></div>');
+        $layout_holder.append('<div class="ui-layout-west" id="left"><div id="side" /></div>');
+        $layout_holder.append('<div class="ui-layout-north"><div id="logo" /><div id="user_area" /></div>');
         $side = $('#side');
         $user_area = $('#user_area');
 
@@ -642,7 +642,7 @@ REBASE.Interface = function (){
         var layout_defaults = {spacing_open:3, spacing_close:6, padding:0, applyDefaultStyles:true};
         var layout_north = {resizable:true, closable: false, slidable:false, spacing_open:0};
 
-        $interface_layout = $body.layout({defaults: layout_defaults, north : layout_north});
+        $interface_layout = $layout_holder.layout({defaults: layout_defaults, north : layout_north});
         resize_north_pane();
         // the main div layout
         var $main_pane = $('#main_pane');
