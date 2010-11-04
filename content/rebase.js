@@ -1744,12 +1744,6 @@ REBASE.FormProcessor = function(){
             if (!field.control){
                 field.control = 'normal';
             }
-            // get out the thumb field if one exists
-            // makes life easier later on
-            // TODO do we still use this?
-            if (field.control == 'thumb'){
-                form_data.thumb = field;
-            }
         }
         return form_data;
     }
