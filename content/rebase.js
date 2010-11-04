@@ -1850,15 +1850,20 @@ REBASE.Layout = function(){
     var $header;
     var $footer;
 
+    var make_paging;
+    var resize_main_pane;
+    var dialog;
+    var dialog_close;
+    var form_focus;
+    var process_form_data;
 
     function set_layout_title_and_footer(){
-        $header = $('#header');
         var header = [];
         if (layout_title){
             header.push(layout_title);
         }
         if (layout_paging){
-            header.push(REBASE.Form.make_paging(layout_paging));
+            header.push(make_paging(layout_paging));
         }
         $header.empty();
         $header.append(header.join(''));
@@ -1866,7 +1871,7 @@ REBASE.Layout = function(){
         var footer = 'footer';
         $footer.text(footer);
 
-        REBASE.Interface.resize_main_pane();
+        resize_main_pane();
     }
 
     function make_form(form_name){
@@ -2004,20 +2009,20 @@ REBASE.Layout = function(){
         // retrieve layout data
         var layout_data = packet.layout;
         // Store the form data.
-        forms = REBASE.FormProcessor.process(packet.data, packet.node);
+        forms = process_form_data(packet.data, packet.node);
         layout_title = layout_data.layout_title;
         layout_paging = layout_data.paging;
 
         if (layout_data.layout_dialog){
-            REBASE.Dialog.dialog(layout_data.layout_title, forms[layout_data.layout_dialog]);
+            dialog(layout_data.layout_title, forms[layout_data.layout_dialog]);
         } else {
-            REBASE.Dialog.close();
+            dialog_close();
             if (layout_data.layout_type){
                 // Layout has changed so update our stored data.
                 layout = layout_data;
                 create_layout();
                 // focus first enabled input
-                REBASE.Form.focus($(root).find(':input:enabled:first'));
+                form_focus($(root).find(':input:enabled:first'));
             } else {
                 // Update the layout forms
                 layout.layout_forms = layout_data.layout_forms;
@@ -2025,6 +2030,17 @@ REBASE.Layout = function(){
             }
         }
     }
+
+    function init(){
+        $header = $('#header');
+        make_paging = REBASE.Form.make_paging;
+        resize_main_pane = REBASE.Interface.resize_main_pane;
+        dialog = REBASE.Dialog.dialog;
+        dialog_close = REBASE.Dialog.close;
+        form_focus = REBASE.Form.focus;
+        process_form_data = REBASE.FormProcessor.process;
+    }
+
     // exported functions
     return {
         'update_layout' : function (packet){
@@ -2033,6 +2049,9 @@ REBASE.Layout = function(){
         },
         'get_layout_id' : function (){
             return layout_id;
+        },
+        'init' : function (){
+            init();
         }
     };
 }();
