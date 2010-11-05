@@ -1850,7 +1850,6 @@ REBASE.Layout = function(){
     var layout_title;
     var layout_paging;
     var $header;
-    var $footer;
 
     var make_paging;
     var resize_main_pane;
@@ -1869,9 +1868,6 @@ REBASE.Layout = function(){
         }
         $header.empty();
         $header.append(header.join(''));
-
-        var footer = 'footer';
-        $footer.text(footer);
 
         resize_main_pane();
     }
@@ -1965,8 +1961,6 @@ REBASE.Layout = function(){
                     console_log('UNKNOWN LAYOUT: ' + layout.layout_type);
                     break;
             }
-            $footer = $('<div class="LAYOUT_FOOTER"></div>');
-            $layout.append($footer);
             return $layout;
         }
 

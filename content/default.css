@@ -1061,7 +1061,7 @@ div.record_info > div {
 
 }
 
-.LAYOUT_HEADER, .LAYOUT_FOOTER{
+.LAYOUT_HEADER{
     float:left;
     clear: both;
     width: 100%;
