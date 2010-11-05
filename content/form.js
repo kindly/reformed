@@ -572,15 +572,6 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
                 item = {layout : 'listing_start'};
                 add_layout_item(item, $builder, builder_depth);
             }
-            // FIXME this needs to be something different __thumb?
-            if (form_data.thumb){
-                img_value = local_row_data[form_data.thumb.name];
-                item = {control : 'image', css: 'img_large', size: 'l'};
-                var $thumb = REBASE.FormControls.build(ro, item, img_value);
-                $thumb = $('<div class="RECORD_IMG">').append($thumb);
-                $builder[builder_depth].append($thumb);
-                form_controls_hash[form_data.thumb.name] = $thumb;
-            }
 
             for (var i = 0; i < num_fields; i++){
                 item = form_data.fields[i];
