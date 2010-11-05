@@ -470,10 +470,6 @@ REBASE.FormControls = function(){
                     $div.append(control_build_functions[control][ro](item, value));
                 }
             } else {
-                // dirty hack to stop thumb showing as unknown control
-                if (control == 'thumb'){
-                    return '';
-                }
                 $div.append('UNKNOWN: ' + item.control);
             }
         return $div;
