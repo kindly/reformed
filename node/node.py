@@ -366,7 +366,7 @@ class JobNode(Node):
 
 class AutoForm(TableNode):
 
-    def __init__(self, node_name):
+    def __init__(self, node_name = None):
         super(AutoForm, self).__init__(node_name)
 
         rtable = r[self.table]
@@ -390,9 +390,10 @@ class AutoForm(TableNode):
             else:
                 fields.append(input(field.name, **extra_info))
 
-        main = form(*fields, table = self.table, params = self.form_params, volatile = True)
+        main = form(*fields, table = self.table, volatile = True)
         # add this to the available forms
         self._available_forms['main'] = main
+        self._non_result_forms['main'] = main
 
 
 class AutoFormPlus(TableNode):
