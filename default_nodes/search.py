@@ -18,7 +18,7 @@
 ##   Copyright (c) 2008-2010 Toby Dacre & David Raznick
 ##
 
-from node.node import TableNode
+from node.node import TableNode, Node, AutoForm
 from node.form import form
 from node.page_item import *
 
@@ -42,3 +42,27 @@ class Search(TableNode):
         limit = node_data.get_data_int('l', limit)
         values = ['%%%s%%' % query]
         self['listing'].list(node_token, limit, where = where, values = values)
+
+class Page(Node):
+    main = form(
+        info('body'),
+        read_only = True,
+    )
+
+    def call(self, node_token):
+        page = node_token.get_node_data().get('page')
+        query = {"page": page}
+
+        data = r.search("page",
+                           query,
+                           ).data
+        print data
+        if not data:
+            data = [dict(body = '**Sorry**, no page found')]
+        self['main'].show(node_token, data[0])
+
+class EditPage(AutoForm):
+    table = "page"
+
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(menu = 'Admin', title = 'Pages', node = '$:list'))
