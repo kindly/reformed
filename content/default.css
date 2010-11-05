@@ -937,6 +937,7 @@ div.record_info > div {
     width: 128px;
     height: 128px;
     background-color: #FFF;
+    border: 1px solid #999;
 }
 
 
