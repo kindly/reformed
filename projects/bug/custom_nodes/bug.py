@@ -46,6 +46,9 @@ class Ticket(TableNode):
     list_title = 'ticket %s'
 
 
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(name = 'Ticket', title = 'Ticket', node ='$:new'))
+
 class ListTicket(TableNode):
 
     main = form(
