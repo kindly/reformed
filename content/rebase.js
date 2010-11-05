@@ -965,14 +965,16 @@ REBASE.Debug = function (){
             }
             info.push('<div class="history_data">' + HTML_encode($.toJSON(sent)) + '</div>');
             info.push('</div>');
-            for (var j = 0; j < received.length; j++){
-                info.push('<div class="history_received">')
-                json = HTML_encode($.toJSON(received[j]));
-                if (received[j].action){
-                    info.push(make_action(received[j], json.length));
+            if (received){
+                for (var j = 0; j < received.length; j++){
+                    info.push('<div class="history_received">')
+                    json = HTML_encode($.toJSON(received[j]));
+                    if (received[j].action){
+                        info.push(make_action(received[j], json.length));
+                    }
+                    info.push('<div class="history_data">' + json + '</div>');
+                    info.push('</div>');
                 }
-                info.push('<div class="history_data">' + json + '</div>');
-                info.push('</div>');
             }
         }
         REBASE.Dialog.dialog('History', info.join(''), true);
