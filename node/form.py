@@ -605,7 +605,7 @@ class Form(object):
         if not table:
             where = kw.pop('where', {"id": (">", 0)})
         elif r[table].entity:
-            where = dict(type = table),
+            where = dict(type = table)
 
         if where:
             results = r.search('_core',
