@@ -598,22 +598,20 @@ class Form(object):
         ##FIXME do we need these separated?
 
         session = r.Session()
+        values = kw.pop('values', None)
+
+        where = None
 
         if not table:
             where = kw.pop('where', {"id": (">", 0)})
-            values = kw.pop('values', None)
-            results = r.search('_core_entity',
+        elif r[table].entity:
+            where = dict(type = table),
+
+        if where:
+            results = r.search('_core',
+                               extra_inner = ["primary_entity._core_entity"],
                                where = where,
                                values = values,
-                               limit = limit,
-                               session = session,
-                               offset = offset,
-                               count = True)
-
-        elif r[table].entity:
-            results = r.search('_core',
-                               where = dict(type = table),
-                               extra_inner = ["primary_entity._core_entity"],
                                limit = limit,
                                session = session,
                                offset = offset,
@@ -634,11 +632,11 @@ class Form(object):
         if not table:
             for result in results:
                 row = {}
-                row['title'] = result.get('title')
-                row['entity'] = result.get('table')
+                row['title'] = result.get('primary_entity._core_entity.title')
+                row['entity'] = result.get('type')
                 row['__id'] = result.get('id')
-                row['thumb'] = result.get('thumb')
-                row['summary'] = result.get('summary')
+                row['thumb'] = result.get('primary_entity._core_entity.thumb')
+                row['summary'] = result.get('primary_entity._core_entity.summary')
                 row['actions'] = None
                 out.append(row)
 

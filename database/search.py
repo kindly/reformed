@@ -752,7 +752,9 @@ class Expression(object):
 
         self.table_class = self.search.name_to_alias[table]
 
-        rtable = self.search.database[table]
+        database = self.search.database
+
+        rtable = database[self.search.aliased_name_path[table].table]
 
         if self.field == "id":
             self.type = sa.Integer

@@ -36,7 +36,7 @@ class Search(TableNode):
 
 
     def call(self, node_token, limit = 20):
-        where = "_core_entity.title like ?"
+        where = "primary_entity._core_entity.title like ?"
         node_data = node_token.get_node_data()
         query = node_data.get('q', '')
         limit = node_data.get_data_int('l', limit)
