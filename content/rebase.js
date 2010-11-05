@@ -85,7 +85,7 @@ REBASE.init = function(){
     // also if you are auto logged in etc
     var url = $.address.value();
     if (url == '/'){
-        node_load('user.User:login');
+        node_load('search.Page?page=default');
     }
 }
 
@@ -574,7 +574,7 @@ REBASE.Interface = function (){
     }
 
     function add_logo(){
-        $logo = $('<img id="logo_image" src="logo.png" />');
+        $logo = $('<img id="logo_image" src="logo.png" onclick="node_load(\'search.Page?page=default\')" />');
         $('#logo').append($logo);
     }
 
