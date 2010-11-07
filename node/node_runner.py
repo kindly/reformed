@@ -458,9 +458,7 @@ class NodeToken(object):
         def build_items(items):
             # checks the permissions
             output = []
-            # TODO we should just sort the menu when it's created.
-            # sort by index, alpha
-            for item in sorted(sorted(items, key = itemgetter('title')), key = itemgetter('index')):
+            for item in items:
                 if not authenticate.check_permission(item.get('permissions')):
                     continue
                 menu_item = {}
@@ -624,8 +622,15 @@ class NodeManager(object):
         # Check menu build completed
         if self.menu_pending:
             print 'Warning: Orphaned menu items wanting', self.menu_pending.keys()
+        # sort menu
+        self.menu = self.sort_menu_items(self.menu)
 
-
+    def sort_menu_items(self, items):
+        sorted_items = sorted(sorted(items, key = itemgetter('title')), key = itemgetter('index'))
+        for item in sorted_items:
+            if 'sub' in item:
+                item['sub'] = self.sort_menu_items(item['sub'])
+        return sorted_items
 
     def add_menu(self, data):
 
