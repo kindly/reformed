@@ -763,14 +763,17 @@ REBASE.Dialog = function (){
         }
     }
 
-    function error(error_msg){
+    function error(title, error_msg){
         // replace \n
         error_msg = error_msg.replace(/\n/g, '<br />');
+        if (!title){
+            title = 'Error';
+        }
         // Show error if non showing, else queue.
         if (!error_is_open){
-            open_error(error_msg);
+            open_error(title, error_msg);
         } else {
-            error_queue.push(error_msg);
+            error_queue.push([title, error_msg]);
         }
     }
 
@@ -788,7 +791,7 @@ REBASE.Dialog = function (){
         // show any queued errors then dialogs.
         if (error_queue.length){
             var request = error_queue.shift();
-            open_error(request);
+            open_error(request[0], request[1]);
         } else {
             error_is_open = false;
             // show any waiting dialogs
@@ -818,11 +821,11 @@ REBASE.Dialog = function (){
         is_open = true;
     }
 
-    function open_error(error_msg){
+    function open_error(title, error_msg){
         // Show the error dialog.
         $error_dialog_box.html(error_msg);
         error_is_open = true;
-        show_dialog($error_dialog_box, 'Error', function (){show_waiting_error();});
+        show_dialog($error_dialog_box, title, function (){show_waiting_error();});
     }
 
     function close(){
@@ -867,8 +870,8 @@ REBASE.Dialog = function (){
         'dialog' : function (title, data, no_processing){
             dialog(title, data, no_processing);
         },
-        'error' : function (error_msg){
-            error(error_msg);
+        'error' : function (title, error_msg){
+            error(title, error_msg);
         },
         'close' : function(){
             close();
@@ -1261,7 +1264,7 @@ REBASE.Node = function (){
         console_log('node: ' + node_string);
 
         function decode_error(error_msg){
-            REBASE.Dialog.error(error_msg);
+            REBASE.Dialog.error('Decode error', error_msg);
             return false;
         }
 
@@ -1636,15 +1639,15 @@ REBASE.Job = function(){
                 if (!error_title){
                     error_title = 'Error';
                 }
-                REBASE.Dialog.dialog(error_title, message);
+                REBASE.Dialog.error(error_title, message);
                 break;
             case 'message':
                 message = packet.data;
-                REBASE.Dialog.dialog('Message', message);
+                REBASE.Dialog.error('Message', message);
                 break;
             case 'forbidden':
                 message = 'You do not have the permissions to perform this action.';
-                REBASE.Dialog.dialog('Forbidden', message);
+                REBASE.Dialog.error('Forbidden', message);
                 break;
             case 'status':
                 job_processor_status(packet.data, packet.node, root);
