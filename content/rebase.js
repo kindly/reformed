@@ -754,9 +754,9 @@ REBASE.Dialog = function (){
     }
 
     function dialog(title, data, no_processing){
-        // If no dialog/error is showing, show dialog.
+        // If no error is showing, show dialog.
         // Otherwise put it in a queue.
-        if (!is_open && !error_is_open){
+        if (!error_is_open){
             open(title, data, no_processing);
         } else {
             dialog_queue.push([title, data, no_processing]);
