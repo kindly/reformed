@@ -443,7 +443,8 @@ class Form(object):
             node_data = None
 
 
-        node_token.form(self, title = form_title, layout_title = layout_title, node_data = node_data)
+        node_token.form(self, title = form_title, node_data = node_data)
+        node_token.set_layout_title(layout_title)
 
         # hack to stop null bookmarks
         if is_main_form and _core_id:
@@ -685,7 +686,8 @@ class Form(object):
         total_pages = results.row_count/limit + 1
         title = 'listing page %s of %s' % (current_page, total_pages)
 
-        node_token.form(self, title = title, layout_title = self.layout_title, clear_node_data = True)
+        node_token.form(self, title = title, clear_node_data = True)
+        node_token.set_layout_title(self.layout_title)
 
 
     def create_form_data(self, node_token, data=None, read_only=False):

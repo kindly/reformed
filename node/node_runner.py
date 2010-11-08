@@ -319,7 +319,7 @@ class NodeToken(object):
         """ Helper function set action to form. """
         if self._flags.get('dialog'):
             if not 'layout_title' in kw or not kw['layout_title']:
-                kw['layout_title'] = form.layout_title
+                self.set_layout_title = form.layout_title
             self._set_action('dialog', dialog = form.name, **kw)
         else:
             self._set_action('form', **kw)
@@ -332,6 +332,13 @@ class NodeToken(object):
         """ Helper function send error to front end. """
         self._set_action('message', data = message)
 
+    def set_layout_title(self, title):
+        if 'layout_title' in self._layout:
+            raise Exception('Layout title has already been set for this NodeToken')
+        self._layout['layout_title'] = title
+
+
+
     def _set_action(self, action, **kw):
         """ Set the action for the node token. """
         if self._action and not(action == self._action and action == 'form'):
@@ -340,9 +347,6 @@ class NodeToken(object):
         title = kw.get('title')
         if title:
             self._title = title
-        layout_title = kw.get('layout_title')
-        if layout_title:
-            self._layout['layout_title'] = layout_title
         function_name = kw.get('function_name')
         if function_name:
             self._function = function_name
