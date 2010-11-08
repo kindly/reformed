@@ -506,7 +506,7 @@ class NodeToken(object):
 class NodeManager(object):
 
     """NodeManager imports and stores nodes form
-    <app_root>/<app>/custom_nodes and <app_root>/nodes.
+    <app_root>/<app>/custom_nodes and <app_root>/default_nodes.
     If a node with the same name has already been imported any new node
     with the same name will be ignored.
 
