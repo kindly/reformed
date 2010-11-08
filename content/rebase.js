@@ -1862,6 +1862,9 @@ REBASE.Layout = function(){
     var process_form_data;
 
     function set_layout_title_and_footer(){
+        if (!$header){
+            $header = $('#header');
+        }
         var header = [];
         if (layout_title){
             header.push(layout_title);
@@ -2031,7 +2034,6 @@ REBASE.Layout = function(){
     }
 
     function init(){
-        $header = $('#header');
         make_paging = REBASE.Form.make_paging;
         resize_main_pane = REBASE.Interface.resize_main_pane;
         dialog = REBASE.Dialog.dialog;
