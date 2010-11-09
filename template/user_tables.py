@@ -128,11 +128,13 @@ def initialise(application):
 ## application user tables
 
 
-    table("page",database,
+    entity("page",database,
         Text("page", length = 50, mandatory = True),
         Text("title", length = 200, mandatory = True),
         Text("body", length = 8000),
-        table_type = "system"
+        default_node = 'search.Page',
+        title_field = "title",
+        table_type = "system",
     )
 
     entity('upload', database,

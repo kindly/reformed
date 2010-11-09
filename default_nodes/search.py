@@ -50,8 +50,14 @@ class Page(Node):
     )
 
     def call(self, node_token):
-        page = node_token.get_node_data().get('page')
-        query = {"page": page}
+        node_data = node_token.get_node_data()
+        page = node_data.get('page')
+        if page:
+            query = {"page": page}
+        else:
+            core_id = node_data.get('__id')
+            if core_id:
+                query = {"_core_id": core_id}
 
         data = r.search("page",
                            query,
@@ -59,9 +65,28 @@ class Page(Node):
         print data
         if not data:
             data = [dict(body = '**Sorry**, no page found')]
+            title = 'Page not found'
+        else:
+            title = data[0].get('title')
         self['main'].show(node_token, data[0])
+        node_token.set_layout_title(title)
+
+        if data:
+            node_token.bookmark = dict(
+                table_name = 'page',
+                _core_id = data[0].get('_core_id')
+            )
 
 class EditPage(AutoForm):
+
+    listing = form(
+        result_link('title'),
+        result_link_list([['Edit', '$:edit'],
+                            ['Delete', '$:_delete'],]),
+        form_type = "results",
+        layout_title = "results",
+    )
+
     table = "page"
 
     def make_menu(self, node_manager):
