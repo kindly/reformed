@@ -77,16 +77,22 @@ class Page(Node):
                 _core_id = data[0].get('_core_id')
             )
 
-class EditPage(AutoForm):
+class EditPage(TableNode):
 
     listing = form(
         result_link('title'),
         result_link_list([['Edit', '$:edit'],
-                            ['Delete', '$:_delete'],]),
+                            ['Delete', '@$:_delete'],]),
         form_type = "results",
         layout_title = "results",
     )
 
+    main = form(
+        input('page'),
+        input('title'),
+        wmd('body'),
+        table = "page", #FIXME should get this from the node
+    )
     table = "page"
 
     def make_menu(self, node_manager):
