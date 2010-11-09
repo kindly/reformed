@@ -483,7 +483,7 @@ class NodeToken(object):
 
 
     def get_title(self):
-        return self._title
+        return self._layout['layout_title']
 
     def check_next_node(self):
         """ Is there a next node to visit. """

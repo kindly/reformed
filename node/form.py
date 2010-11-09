@@ -450,7 +450,6 @@ class Form(object):
         if is_main_form and _core_id:
             node_token.bookmark = dict(
                 table_name = table,
-                title = form_title,
                 _core_id = _core_id
             )
 
