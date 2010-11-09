@@ -1075,7 +1075,7 @@ div.record_info > div {
     position:relative;
     width:100%;
 }
-
+/* FIXME move this into the menu css */
 .ui-layout-pane {
     padding:0 !important;
 
