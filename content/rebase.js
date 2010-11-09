@@ -31,6 +31,7 @@ var node_load;
 
 var CONFIG = {
     DISABLE_FX : true,
+    DEBUG : true,
     FORM_PAGING_SIZE : 5,
     FORM_FOCUS_SELECT_ALL : true,
     BOOKMARKS_SHOW_MAX : 100,

@@ -668,7 +668,7 @@ function console_log(obj, data){
      * If data is supplied it will be converted to JSON
      * and output appended to obj which should be a string.
      */
-    if (typeof console == "object"){
+    if (CONFIG.DEBUG && typeof console == "object"){
         if (data === undefined){
             console.log(obj);
         } else {
