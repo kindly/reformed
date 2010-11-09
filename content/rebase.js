@@ -1478,6 +1478,7 @@ REBASE.Node = function (){
             $.address.value() != '/' + decode.node_string){
 
             // Sets the address which then forces a page load.
+            console_log('change url', decode.node_string);
             $.address.value(decode.node_string);
             return;
         }
