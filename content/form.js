@@ -628,8 +628,7 @@ $.InputForm = function(input, form_data, row_data, extra_defaults){
         // form buttons
         if (row_data.__buttons){
             item = { buttons : row_data.__buttons, control: 'button_box'};
-            value = $.Util.get_item_value(item, row_data);
-            $control = REBASE.FormControls.build(true, item, value);
+            $control = REBASE.FormControls.build(true, item);
             $builder[builder_depth].append($control);
         }
         // second paging bar
