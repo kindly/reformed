@@ -1867,6 +1867,7 @@ REBASE.Layout = function(){
     var $forms = {};
 
     var layout_title;
+    var layout_buttons;
     var layout_paging;
     var $header;
 
@@ -1877,20 +1878,27 @@ REBASE.Layout = function(){
     var form_focus;
     var process_form_data;
 
+    function make_buttons(button_data){
+        item = { buttons : button_data, control: 'button_box'};
+        $control = REBASE.FormControls.build(true, item);
+        return $control;
+    }
+
     function set_layout_title_and_footer(){
         if (!$header){
             $header = $('#header');
         }
+        $header.empty();
         var header = [];
         if (layout_title){
-            header.push(layout_title);
+            $header.append('<h1>' + layout_title + '</h1>');
+        }
+        if (layout_buttons){
+            $header.append(make_buttons(layout_buttons));
         }
         if (layout_paging){
-            header.push(make_paging(layout_paging));
+            $header.append(make_paging(layout_paging));
         }
-        $header.empty();
-        $header.append(header.join(''));
-
         resize_main_pane();
     }
 
@@ -2029,6 +2037,7 @@ REBASE.Layout = function(){
         // Store the form data.
         forms = process_form_data(packet.data, packet.node);
         layout_title = layout_data.layout_title;
+        layout_buttons = layout_data.layout_buttons;
         layout_paging = layout_data.paging;
 
         if (layout_data.layout_dialog){
@@ -2066,6 +2075,9 @@ REBASE.Layout = function(){
         },
         'get_layout_id' : function (){
             return layout_id;
+        },
+        'get_forms' : function (){
+            return $forms;
         },
         'init' : function (){
             init();
