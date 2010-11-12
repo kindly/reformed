@@ -1326,10 +1326,24 @@ REBASE.Node = function (){
                         flags.form_data = true;
                         // get any form data
                         var $obj = $(item);
+                        var forms = [];
                         $obj = $obj.parents('div.INPUT_FORM');
-                        var form_data = $obj.data('command')('get_form_data');
+                        if ($obj.length){
+                            // just one form
+                            forms.push($obj);
+                        } else {
+                            // all forms
+                            var forms_hash = REBASE.Layout.get_forms();
+                            for (var key in forms_hash){
+                                forms.push(forms_hash[key].children())
+                            }
+                        }
+                        var form_data = {};
+                        for (var i = 0; i < forms.length; i++){
+                            $.extend(form_data, forms[i].data('command')('get_form_data'));
+                        }
                         // set the form data
-                        if (form_data){
+                        if (forms.length){
                             decode.form_data.push(form_data);
                         } else {
                             // an error occurred on the form so we don't want to continue.
