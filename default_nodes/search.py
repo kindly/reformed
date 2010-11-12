@@ -70,6 +70,7 @@ class Page(Node):
             title = data[0].get('title')
         self['main'].show(node_token, data[0])
         node_token.set_layout_title(title)
+        node_token.set_layout_buttons([['Edit', 'search.EditPage:edit']])
 
         if data:
             node_token.bookmark = dict(
