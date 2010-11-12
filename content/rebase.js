@@ -643,8 +643,9 @@ REBASE.Interface = function (){
         // set options for the panes
         var layout_defaults = {spacing_open:3, spacing_close:6, padding:0, applyDefaultStyles:true};
         var layout_north = {resizable:true, closable: false, slidable:false, spacing_open:0};
+        var layout_west = {onresize : resize_main_pane, onopen : resize_main_pane, onclose : resize_main_pane};
 
-        $interface_layout = $layout_holder.layout({defaults: layout_defaults, north : layout_north, west :{onresize : resize_main_pane}});
+        $interface_layout = $layout_holder.layout({defaults: layout_defaults, north : layout_north, west : layout_west});
         resize_north_pane();
         // the main div layout
         var $main_pane = $('#main_pane');
