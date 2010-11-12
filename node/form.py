@@ -421,15 +421,13 @@ class Form(object):
             session.close()
 
         if self.form_buttons:
-            data_out['__buttons'] = self.form_buttons
+            buttons = self.form_buttons
         elif '__buttons' not in data_out:
-            data_out['__buttons'] = [['save %s' % self.table, 'f@%s:_save' % node_token.node_name],
+            buttons = [['save %s' % self.table, 'f@%s:_save' % node_token.node_name],
                                      ['delete %s' % self.table, '@%s:_delete' % node_token.node_name],
                                      ['cancel', 'BACK']]
 
 
-        if '__message' not in data_out:
-            data_out['__message'] = "Hello, edit %s" % title
 
 
     #    if join_field:
@@ -443,13 +441,18 @@ class Form(object):
             node_data = None
 
 
-        node_token.form(self, title = form_title, layout_title = layout_title, node_data = node_data)
-
+        node_token.form(self, title = form_title, node_data = node_data)
+        if is_main_form:
+            node_token.set_layout_title(layout_title)
+            node_token.set_layout_buttons(buttons)
+        else:
+            data_out['__buttons'] = buttons
+            if '__message' not in data_out:
+                data_out['__message'] = "Hello, edit %s" % title
         # hack to stop null bookmarks
         if is_main_form and _core_id:
             node_token.bookmark = dict(
                 table_name = table,
-                title = form_title,
                 _core_id = _core_id
             )
 
@@ -605,7 +608,7 @@ class Form(object):
         if not table:
             where = kw.pop('where', {"id": (">", 0)})
         elif r[table].entity:
-            where = dict(type = table),
+            where = dict(type = table)
 
         if where:
             results = r.search('_core',
@@ -667,10 +670,12 @@ class Form(object):
 
         encoded_data = urllib.urlencode(node.extra_data)
 
-        data['__buttons'] = [['add new %s' % table, 'd@%s:new?%s:' % (node_token.node_name, encoded_data)],
-                             ['cancel', 'BACK']]
+        buttons = [['add new %s' % table, 'd@%s:new?%s' % (node_token.node_name, encoded_data)],
+                   ['cancel', 'BACK']]
 
-        data['__message'] = "These are the current %s(s)." % table
+        #data['__buttons'] = buttons
+
+        #data['__message'] = "These are the current %s(s)." % table
 
         node[self.name].create_form_data(node_token, data)
 
@@ -685,7 +690,9 @@ class Form(object):
         total_pages = results.row_count/limit + 1
         title = 'listing page %s of %s' % (current_page, total_pages)
 
-        node_token.form(self, title = title, layout_title = self.layout_title, clear_node_data = True)
+        node_token.form(self, clear_node_data = True)
+        node_token.set_layout_title(title)
+        node_token.set_layout_buttons(buttons)
 
 
     def create_form_data(self, node_token, data=None, read_only=False):

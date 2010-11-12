@@ -1231,6 +1231,6 @@ class ConvertPassword(AttributeExtension):
         if state.dict.get("_from_load"):
             return value
 
-        return fshp.crypt(value)
+        return unicode(fshp.crypt(value))
 
 
