@@ -69,14 +69,14 @@ class Page(Node):
         else:
             title = data[0].get('title')
             node_token.set_layout_buttons([['Edit', 'search.EditPage:edit?__id=%s' % data[0].get('_core_id')]])
-        self['main'].show(node_token, data[0])
-        node_token.set_layout_title(title)
-
-        if data:
+            # set bookmark
             node_token.bookmark = dict(
                 table_name = 'page',
                 _core_id = data[0].get('_core_id')
             )
+        self['main'].show(node_token, data[0])
+        node_token.set_layout_title(title)
+
 
 class EditPage(TableNode):
 
