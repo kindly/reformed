@@ -214,8 +214,11 @@ class SaveNew(object):
             else:
                 self.session.commit()
         elif all_errors:
-            for save_item in self.save_items.itervalues():
-                save_item.expunge()
+            for path, save_item in self.save_items.iteritems():
+                #dont expunge the parents object
+                if not self.parent_save_set or path:
+                    save_item.expunge()
+
             if self.core:
                 self.session.session.delete(self.core)
             self.all_errors = all_errors
