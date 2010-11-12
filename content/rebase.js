@@ -962,7 +962,7 @@ REBASE.Debug = function (){
             sent = history[i][0];
             received = history[i][2];
             info.push('<div class="history_sent">');
-            if (info.command){
+            if (sent.command){
                 info.push('<div>' + sent.node + ' : ' + sent.command + '</div>');
             } else {
                 info.push('<div>' + sent.node + '</div>');
