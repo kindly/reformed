@@ -457,7 +457,7 @@ class UpdateCommunicationInfo(Action):
         query = {
             "communication._core_id": core_id,
             "communication.defaulted_date": ("<>", None),
-            "communication.active": 1,
+            "communication.active": True,
         }
 
 
