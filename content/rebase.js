@@ -522,6 +522,7 @@ REBASE.Interface = function (){
         // due to floats we have to measure the header
         var size = $header_div.outerHeight(true);
         $main_layout.sizePane('north', size);
+        $main_layout.resizeAll();
     }
 
     function resize_north_pane(){
@@ -643,7 +644,7 @@ REBASE.Interface = function (){
         var layout_defaults = {spacing_open:3, spacing_close:6, padding:0, applyDefaultStyles:true};
         var layout_north = {resizable:true, closable: false, slidable:false, spacing_open:0};
 
-        $interface_layout = $layout_holder.layout({defaults: layout_defaults, north : layout_north});
+        $interface_layout = $layout_holder.layout({defaults: layout_defaults, north : layout_north, west :{onresize : resize_main_pane}});
         resize_north_pane();
         // the main div layout
         var $main_pane = $('#main_pane');
