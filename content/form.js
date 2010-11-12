@@ -830,8 +830,10 @@ $.Grid2 = function(input, form_data, row_data, extra_defaults){
 
         function build_data(){
             var html = [];
-            for (var i = 0; i < row_data.length; i++){
-                html.push(build_data_row(row_data[i]));
+            if (row_data){
+                for (var i = 0; i < row_data.length; i++){
+                    html.push(build_data_row(row_data[i]));
+                }
             }
             // add empty rows to make correct number
             for (; i < NUM_TABLE_ROWS; i++){
