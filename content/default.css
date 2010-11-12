@@ -70,6 +70,12 @@ div {
 }
 #header {
     float:left;
+    background-color:#515151;
+    color:#F6F6F6;
+    width:100%;
+}
+#header a{
+    color:#F6F6F6;
 }
 #user_bar {
     background-color:transparent;
