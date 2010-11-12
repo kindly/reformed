@@ -337,6 +337,11 @@ class NodeToken(object):
             raise Exception('Layout title has already been set for this NodeToken')
         self._layout['layout_title'] = title
 
+    def set_layout_buttons(self, buttons):
+        if 'layout_buttons' in self._layout:
+            raise Exception('Layout buttons has already been set for this NodeToken')
+        self._layout['layout_buttons'] = buttons
+
 
 
     def _set_action(self, action, **kw):
