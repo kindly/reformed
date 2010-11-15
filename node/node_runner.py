@@ -56,6 +56,14 @@ class NodeToken(object):
                 self.data = data['data']
                 self.form = data['form']
 
+        def __getitem__(self, key):
+            if key in self.data:
+                return self.data.get(key)
+            elif key in self.node_data:
+                return self.node_data.get(key)
+            else:
+                raise KeyError("%s is not in form data" % key)
+
         def get(self, key, default = None):
             """ Get method
             Will try to get from form the form data first
@@ -104,6 +112,7 @@ class NodeToken(object):
         self.process_data()
         self.auto_login_cookie = None
         self._added_responses = []
+        self._validation_errors = {}
 
 
     def reset(self):
@@ -220,6 +229,10 @@ class NodeToken(object):
             # Build list of form names too.
             self.form_token_list.append(row['form'])
 
+    def set_node(self, node):
+        self.node = node
+        #TODO can we kill this
+        self.node_name = node.name
 
     def form_tokens(self):
         """returns the form tokens if we have more than one"""
@@ -235,7 +248,6 @@ class NodeToken(object):
 
         self._clear_node_data = True
         self._output_node_data = node_data
-
 
     def output_form_data(self, form_name, output):
         """Helper function to add form data to the node token for a form"""
@@ -437,6 +449,12 @@ class NodeToken(object):
         #self._added_responses.append(dict(type = 'node', data = dict(action = action, data = data)))
         response = dict(action = 'function', function = function, data = data)
         self._added_responses.append(response)
+
+    def add_validation_error(self, form_name, error):
+        self._validation_errors[form_name] = error
+
+    def get_validation_errors(self):
+        return self._validation_errors
 
     def _user_data(self, user_id):
         data = dict(user_id = user_id,
@@ -766,14 +784,16 @@ class NodeRunner(object):
         # node_class = self.node_manager[node_name]
         node = self.node_manager.get_node_instance(node_name)
         # pass the current node to the node token
-        node_token.node = node
-        node_token.node_name = node.name
+        node_token.set_node(node)
+        #node_token.node = node
+        #node_token.node_name = node.name
 
         # the user cannot perform this action
         if not node.check_permissions():
             authenticate.forbidden(node_token)
         else:
             node.initialise(node_token)
+            node.validate_returned_data(node_token)
             node.call(node_token)
             node.finalise(node_token)
             node.finish_node_processing(node_token)

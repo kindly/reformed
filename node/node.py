@@ -203,7 +203,13 @@ class Node(object):
         node_token.bookmark = result
 
 
+    def validate_returned_data(self, node_token):
 
+        for form_name in node_token.form_token_list:
+            form = self[form_name]
+            errors = form.validate_returned_data(node_token)
+            if errors:
+                node_token.add_validation_error(form_name, errors)
 
     def validate_data(self, data, field, validator):
         try:

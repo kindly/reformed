@@ -49,6 +49,7 @@ from fields import Modified, ModifiedBySession, Integer
 import fields
 from util import get_paths, make_local_tables, create_table_path_list, create_table_path
 from util import OrderedDict, SchemaLock
+from validator import validator, validation_rules
 
 log = logging.getLogger('rebase.application.database')
 
@@ -1058,46 +1059,7 @@ class Table(object):
     @property
     def schema_info(self):
 
-        schema = {}
-
-        for key, value in self.schema_dict.iteritems():
-            if key == "chained_validators":
-                continue
-            if not isinstance(value, All):
-                continue
-            all_info = []
-
-
-            for validator in value.validators:
-                validator_info = {}
-
-                validator_info["type"] = validator.__class__.__name__
-
-                for name, attrib in validator.__dict__.iteritems():
-                    if name in ('declarative_count', 'inputEncoding', 'outputEncoding'):
-                        continue
-                    if name.startswith("_"):
-                        continue
-                    validator_info[name] = attrib
-
-                all_info.append(validator_info)
-
-            schema[key] = all_info
-
-        return schema
-
-
-    @property
-    def validation_schema(self):
-        """Gathers all the validation dictionarys from all the Field Objects
-        and a makes a formencode Schema out of them"""
-        if self.schema:
-            return self.schema
-        self.schema = formencode.Schema(allow_extra_fields = True,
-                                 ignore_key_missing = True,
-                                 **self.schema_dict)
-
-        return self.schema
+        return validation_rules(self.schema_dict)
 
     def validate(self, instance, session):
         """this validates an instance of sa_class with the schema defined
@@ -1105,6 +1067,7 @@ class Table(object):
 
         validation_dict = {}
         for name in self.schema_dict.iterkeys():
+            ##TODO should this be here
             if name == "chained_validators":
                 continue
             validation_dict[name] = getattr(instance, name)
@@ -1113,8 +1076,7 @@ class Table(object):
         if not self.validated:
             return {}
 
-        return self.validation_schema.to_python(validation_dict, instance)
-
+        return validator(validation_dict, self.schema_dict)
 
 
 class ChangedAttributes(AttributeExtension):

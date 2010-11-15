@@ -19,6 +19,7 @@
 ##
 
 from formencode import validators
+from formencode.validators import UnicodeString
 
 import database.search
 from node.node import TableNode, Node
@@ -47,13 +48,13 @@ class User(TableNode):
     main = form(
         layout('column_start'),
         input('name'),
-        input('login_name', label = 'login name:'),
+        input('login_name', label = 'login name:', validation = UnicodeString),
         checkbox('active'),
         input('email'),
         layout('column_next'),
         layout('box_start'),
-        password('password'),
-        password('password2'),
+        password('password', validation = UnicodeString),
+        password('password2', validation = UnicodeString),
         layout('box_end'),
         layout('column_end'),
         layout('hr'),
@@ -94,9 +95,9 @@ class User(TableNode):
     )
     change_my_password = form(
         layout('box_start'),
-        password('oldpassword'),
-        password('newpassword'),
-        password('newpassword2'),
+        password('oldpassword', validation = UnicodeString),
+        password('newpassword', validation = UnicodeString),
+        password('newpassword2', validation = UnicodeString),
         buttons('about_me',
                [['Save Changes', 'user.User:_save_password_change'],
                ['cancel', 'BACK']]),
@@ -106,16 +107,16 @@ class User(TableNode):
 
     change_other_password_form = form(
         layout('box_start'),
-        password('newpassword'),
-        password('newpassword2'),
+        password('newpassword', validation = UnicodeString),
+        password('newpassword2', validation = UnicodeString),
         layout('box_end'),
         params = {"form_type": "action"}
     )
 
     login_form = form(
         layout('box_start'),
-        input('login_name', label = 'username:'),
-        password('password'),
+        input('login_name', label = 'username:', validation = UnicodeString),
+        password('password', validation = UnicodeString),
         checkbox('remember_me', label = 'remember me'),
         button('f@user.User:login', label = 'Log in'),
         layout('box_end'),
@@ -125,21 +126,9 @@ class User(TableNode):
         params = {"form_type": "action"}
     )
 
-    login_validations = [
-        ['login_name', validators.UnicodeString],
-        ['password', validators.UnicodeString]
-    ]
-
-    change_password_validators = [
-
-        ['oldpassword', validators.UnicodeString],
-        ['newpassword', validators.UnicodeString],
-        ['newpassword2', validators.UnicodeString]
-    ]
-
     about_me_form = form(
         layout('box_start'),
-        input('login_name', label = 'username:'),
+        input('login_name', label = 'username:', validation = UnicodeString),
         textarea('about_me', css = "large"),
         layout('box_end'),
 
@@ -198,8 +187,10 @@ class User(TableNode):
     def check_login(self, node_token):
         message = node_token['login'].pop('message')
         fail_message = '# Login failed\n\nuser name or password incorrect, try again.'
-        vdata = self.validate_data_full(node_token['login_form'].data, self.login_validations)
-        if vdata['login_name'] and vdata['password']:
+        vdata = node_token['login_form']
+
+
+        if not node_token.get_validation_errors() and vdata.get('login_name') and vdata.get('password'):
             (message, data) = authenticate.check_login(vdata['login_name'], vdata['password'])
             # if data is returned then the login was a success
             if data:
@@ -207,6 +198,7 @@ class User(TableNode):
                 return
         if not message:
             message = 'Welcome to %s<br /> enter your login details to continue' % global_session.sys_info['name']
+        print message
         self.show_login_form(node_token, message)
 
     def show_login_form(self, node_token, message = None):
@@ -234,8 +226,12 @@ class User(TableNode):
         self["change_my_password"].show(node_token, data)
 
     def save_change_password(self, node_token):
-        vdata = self.validate_data_full(node_token.data, self.change_password_validators)
-        if vdata['newpassword'] != vdata['newpassword2']:
+        #vdata = node_token.data
+        #errors = self["change_my_password"].validate(vdata)
+        if node_token.errors:
+            return
+        ##FIXME check for legth or stregth of password
+        if vdata.get('newpassword') != vdata.get('newpassword2'):
             # new password not confirmed
             self.change_password(node_token, 'new password does not match')
         else:
@@ -267,17 +263,18 @@ class User(TableNode):
         self["change_other_password_form"].show(node_token, data)
 
     def save_change_other_password(self, node_token):
-        data = node_token['change_other_password_form']
-        vdata = self.validate_data_full(data, self.change_password_validators)
-        if vdata['newpassword'] != vdata['newpassword2']:
+        vdata = node_token['change_other_password_form']
+        if node_token.get_validation_errors():
+            return
+        if vdata.get('newpassword') != vdata.get('newpassword2'):
             # new password not confirmed
             self.change_other_password(node_token, 'new password does not match')
         else:
-            core_id = data.get_data_int('__id')
+            core_id = vdata.get_data_int('__id')
             where = '_core_id=%s' % core_id #FIXME insecure
             user = r.search_single_data("user", where = where, fields = ['name'])['name']
 
-            self._set_password(core_id, vdata['newpassword'])
+            self._set_password(core_id, vdata.get('newpassword'))
             data = "Password for user %s has been updated." % user
             node_token.message(data)
 

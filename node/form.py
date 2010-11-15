@@ -20,12 +20,15 @@
 import urllib
 
 import sqlalchemy
+import formencode
 
 from web.global_session import global_session
 import database.util as util
 import custom_exceptions
 from database.saveset import SaveItem, SaveNew
 from page_item import FormItemFactory
+from database.validator import validator
+import database.validators as validators
 
 r = global_session.database
 
@@ -70,6 +73,9 @@ class Form(object):
         self.form_items = []
         self.form_item_name_list = []
 
+        self._schema_dict = {}
+        self.extra_validators = {}
+
         # Set to True if any form items are declared non thread safe
         # forms can be specifically made volatile by adding it as a keyword
         # useful for auto forms etc
@@ -101,12 +107,55 @@ class Form(object):
                     self.volatile = True
                     self.version = 0
                 self.form_items.append(form_item_instance)
-                if form_item_instance.name:
-                    self.form_item_name_list.append(form_item_instance.name)
+                name = form_item_instance.name
+                if name:
+                    self.form_item_name_list.append(name)
                 if hasattr(form_item_instance, "extra_fields"):
                     self.form_item_name_list.extend(form_item_instance.extra_fields)
+                if form_item_instance.validation and name:
+                    self.extra_validators[name] = form_item_instance.validation
             else:
                 raise Exception('Item is not FormItemFactory')
+
+    def get_schema_validators(self, node_token):
+
+        schema_validators = {}
+        for form_item_name in self.form_item_name_list:
+            table_name = self.table
+            edge = r[table_name].get_edge_from_field(form_item_name)
+            if edge:
+                table_name = edge.table
+            field_name = form_item_name.split(".")[-1]
+            schema_item = r[table_name].schema_dict.get(field_name)
+            if schema_item:
+                schema_validators[form_item_name] = schema_item
+        return schema_validators
+
+    def get_validation_schema(self, node_token):
+
+        if self._schema_dict:
+            return self._schema_dict
+        else:
+            schema_dict = {}
+            if self.table:
+                schema_dict = self.get_schema_validators(node_token)
+            for name, validator in self.extra_validators.iteritems():
+                if name not in schema_dict:
+                    schema_dict[name] = validators.All()
+                schema_dict[name].validators.append(validator)
+            self._schema_dict = schema_dict
+            return schema_dict
+
+    def validate_returned_data(self, node_token):
+
+        validation_schema = self.get_validation_schema(node_token)
+        errors = {}
+        try:
+            validator(node_token[self.name], validation_schema)
+        except formencode.Invalid, e:
+            for key, value in e.error_dict.items():
+                errors[key] = value.msg
+        return errors
 
     def set_name(self, name):
         # don't like want to kill TD

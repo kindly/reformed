@@ -137,9 +137,9 @@ class FormControl(FormItem):
             # no database field
             pass
 
-        if self.validation:
+        if self.validation and isinstance(self.validation, basestring):
             if 'validation' in params:
-                 params["validation"].append(self.validation)
+                params["validation"].append(self.validation)
             else:
                 params["validation"] = [self.validation]
 
@@ -447,7 +447,7 @@ class Dropdown(FormControl):
             # no database field
             pass
 
-        if self.validation:
+        if self.validation and isinstance(self.validation, basestring):
             if 'validation' in params:
                  params["validation"].append(self.validation)
             else:
