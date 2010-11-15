@@ -458,16 +458,24 @@ REBASE.FormControls = function(){
         var $div = $('<div class="f_control_holder"/>');
         var $div2;
             if (control_build_functions[control]){
+                var $control = control_build_functions[control][ro](item, value);
                 // the extra div is to help with styling
                 // specifically padding etc
                 // but some controls eg images do not want this
+                // also don't show descriptions if read only
                 if (!control_build_functions[control][2]){
-                    $div2 = $('<div class="f_sub" >' + form_description(item) + '</div>');
-                    $div2.append(control_build_functions[control][ro](item, value));
+                    if (!readonly){
+                        $div2 = $('<div class="f_sub" >' + form_description(item) + '</div>');
+                        $div2.append($control);
+                    } else {
+                        $div2 = $control;
+                    }
                     $div.append($div2);
                 } else {
-                    $div.append(form_description(item));
-                    $div.append(control_build_functions[control][ro](item, value));
+                    if (!readonly){
+                        $div.append(form_description(item));
+                    }
+                    $div.append($control);
                 }
             } else {
                 $div.append('UNKNOWN: ' + item.control);
