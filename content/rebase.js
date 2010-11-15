@@ -22,7 +22,7 @@
 */
 
 // JSLint directives
-/*global window setTimeout*/
+/*global window document setTimeout*/
 /*global $ REBASE console_log Showdown*/
 
 var node_load;
@@ -43,7 +43,7 @@ var CONFIG = {
     // should be calculated
     DIALOG_CHROME_HEIGHT : 75,
     DIALOG_CHROME_WIDTH : 35
-}
+};
 
 var REBASE = {};
 
@@ -83,7 +83,7 @@ REBASE.init = function(){
             REBASE[key].init();
         }
     }
-}
+};
 
 
 /*
@@ -270,7 +270,7 @@ REBASE.Form = function (){
         var value = $input.val();
         if (value){
             var length = value.length;
-            var start
+            var start;
             if (CONFIG.FORM_FOCUS_SELECT_ALL){
                 start = 0;
             } else {
@@ -330,7 +330,7 @@ REBASE.Bookmark = function (){
     function bookmark_add(bookmark){
         // create the bookmark view link
         if (bookmark.entity_id === null){
-            alert('null bookmark');
+            console_log('null bookmark');
         }
         // stop null bookmarks
         if (!bookmark.title){
@@ -676,6 +676,7 @@ REBASE.Dialog = function (){
     var dialog_decode;
     var $dialog_box;
     var $system_dialog_box;
+    var $error_dialog_box;
     var is_open = false;
     var error_is_open = false;
     var dialog_queue = [];
@@ -707,7 +708,7 @@ REBASE.Dialog = function (){
         $dialog.dialog('destroy');
         var options = {width: 'auto', height: 'auto', modal: true, title: title};
         if (close_fn){
-            options['close'] = close_fn;
+            options.close = close_fn;
         }
         $dialog.dialog(options);
         var $container = $dialog.parent();
@@ -739,6 +740,25 @@ REBASE.Dialog = function (){
         }
     }
 
+    function show_waiting_error(){
+        // show any queued errors then dialogs.
+        if (error_queue.length){
+            var request = error_queue.shift();
+            open_error(request);
+        } else {
+            error_is_open = false;
+            // show any waiting dialogs
+            show_waiting();
+        }
+    }
+
+    function open_error(error_msg){
+        // Show the error dialog.
+        $error_dialog_box.html(error_msg);
+        error_is_open = true;
+        show_dialog($error_dialog_box, 'Error', function (){show_waiting_error();});
+    }
+
     function error(error_msg){
         // replace \n
         error_msg = error_msg.replace(/\n/g, '<br />');
@@ -757,18 +777,6 @@ REBASE.Dialog = function (){
             open(request[0], request[1], request[2]);
         } else {
             is_open = false;
-        }
-    }
-
-    function show_waiting_error(){
-        // show any queued errors then dialogs.
-        if (error_queue.length){
-            var request = error_queue.shift();
-            open_error(request);
-        } else {
-            error_is_open = false;
-            // show any waiting dialogs
-            show_waiting();
         }
     }
 
@@ -792,13 +800,6 @@ REBASE.Dialog = function (){
         // focus first enabled input
         REBASE.Form.focus($dialog_box.find(':input:enabled:first'));
         is_open = true;
-    }
-
-    function open_error(error_msg){
-        // Show the error dialog.
-        $error_dialog_box.html(error_msg);
-        error_is_open = true;
-        show_dialog($error_dialog_box, 'Error', function (){show_waiting_error();});
     }
 
     function close(){
@@ -942,7 +943,7 @@ REBASE.Debug = function (){
             info.push('<div class="history_data">' + HTML_encode($.toJSON(sent)) + '</div>');
             info.push('</div>');
             for (var j = 0; j < received.length; j++){
-                info.push('<div class="history_received">')
+                info.push('<div class="history_received">');
                 json = HTML_encode($.toJSON(received[j]));
                 if (received[j].action){
                     info.push(make_action(received[j], json.length));
@@ -954,16 +955,16 @@ REBASE.Debug = function (){
         REBASE.Dialog.dialog('History', info.join(''), true);
     }
 
-    function debug_test_drive_script(data){
-        test_script = $.parseJSON(data);
-        debug_test_drive_next();
-    }
-
     function debug_test_drive_next(){
         if (test_script.length){
             var test_job = test_script.shift();
             REBASE.Job.add(test_job, null, debug_test_drive_next);
         }
+    }
+
+    function debug_test_drive_script(data){
+        test_script = $.parseJSON(data);
+        debug_test_drive_next();
     }
 
     function init(){
@@ -997,7 +998,7 @@ REBASE.Debug = function (){
         'init' : function (){
             return init();
         }
-    }
+    };
 }();
 
 
@@ -1287,7 +1288,8 @@ REBASE.Node = function (){
         decode.node_data = global_node_data;
         // add any current querystring data into the node data
         // but not overwritting
-        var query_data = convert_url_string_to_hash($.address.queryString())
+        var key;
+        var query_data = convert_url_string_to_hash($.address.queryString());
         for (key in query_data){
             if (decode.node_data[key] === undefined){
                 decode.node_data[key] = query_data[key];
@@ -1472,7 +1474,7 @@ REBASE.Job = function(){
 
     var outstanding_requests = 0;
     var status_timer;
-    var history = []
+    var history = [];
 
     function loading_show(){
         $('#ajax_info').show();
