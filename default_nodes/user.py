@@ -329,6 +329,7 @@ class User(TableNode):
 
 class UserGroup(TableNode):
 
+    register_node = dict(table = 'user_group', title = 'User Group', cat_node = '$:list')
     main = form(
         layout("box_start"),
         info('groupname'),
