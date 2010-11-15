@@ -347,9 +347,9 @@ REBASE.Bookmark = function (){
         }
         var table_data = REBASE.application_data.bookmarks[bookmark.entity_table];
         if (table_data){
-            bookmark.bookmark = table_data.node.replace('&', '&amp;') + ':edit?__id=' + bookmark._core_id;
+            bookmark.bookmark = table_data.node.replace('&', '&amp;') + ':view?__id=' + bookmark._core_id;
         } else {
-            bookmark.bookmark = 'test.Auto:edit?__id=' + bookmark._core_id + '&amp;table=' + bookmark.entity_table;
+            bookmark.bookmark = 'test.Auto:view?__id=' + bookmark._core_id + '&amp;table=' + bookmark.entity_table;
         }
         // remove the item if already in the list
         for (var i = 0, n = bookmark_array.length; i < n; i++){
@@ -390,8 +390,16 @@ REBASE.Bookmark = function (){
         html = '<ol class = "bookmark">';
         for(i = 0; i < categories.length; i++){
             category = categories[i];
+            var cat_info = REBASE.application_data.bookmarks[category];
             html += '<li class ="bookmark-title bookmark-category-' + category + '">';
-            html += category;
+            if (cat_info && cat_info.cat_node){
+                html += '<span onclick="node_load(\'' + cat_info.cat_node + '\')">';
+                html += cat_info.title;
+            } else {
+                html += '<span>';
+                html += category;
+            }
+            html += '</span>';
             html += '<ol class ="bookmark-items">';
             html += category_items[category].join('\n');
             html += '</ol>';
