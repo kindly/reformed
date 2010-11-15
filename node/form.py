@@ -150,8 +150,12 @@ class Form(object):
 
         validation_schema = self.get_validation_schema(node_token)
         errors = {}
+        validator_state = util.Holder(table = form.table,
+                                      database = r,
+                                      node_token = node_token)
         try:
-            validator(node_token[self.name], validation_schema)
+            validator(node_token[self.name], validation_schema,
+                      state = validator_state)
         except formencode.Invalid, e:
             for key, value in e.error_dict.items():
                 errors[key] = value.msg

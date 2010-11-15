@@ -17,6 +17,8 @@ root_dir = os.path.normpath(root_dir)
 class Holder(object):
     def __init__(self, **kw):
         self.__dict__ = kw
+    def __getattr__(self, value):
+        return
 
 
 def get_dir(file = None, extra_path = None):

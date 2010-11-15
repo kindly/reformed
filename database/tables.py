@@ -48,7 +48,7 @@ from validators import All, UnicodeString, RequireIfMissing
 from fields import Modified, ModifiedBySession, Integer
 import fields
 from util import get_paths, make_local_tables, create_table_path_list, create_table_path
-from util import OrderedDict, SchemaLock
+from util import OrderedDict, SchemaLock, Holder
 from validator import validator, validation_rules
 
 log = logging.getLogger('rebase.application.database')
@@ -1076,7 +1076,10 @@ class Table(object):
         if not self.validated:
             return {}
 
-        return validator(validation_dict, self.schema_dict)
+        state = Holder(database = self.database,
+                       table = self.name)
+
+        return validator(validation_dict, self.schema_dict, state)
 
 
 class ChangedAttributes(AttributeExtension):

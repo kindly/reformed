@@ -1,7 +1,7 @@
 import formencode
 from validators import All
 
-def validator(data, schema_dict):
+def validator(data, schema_dict, state = None):
 
     schema = formencode.Schema(allow_extra_fields = True,
                              ignore_key_missing = True,
@@ -14,7 +14,7 @@ def validator(data, schema_dict):
         value = data.get(key)
         data_to_validate[key] = value
 
-    return schema.to_python(data_to_validate)
+    return schema.to_python(data_to_validate, state)
 
 def validation_rules(schema_dict):
 

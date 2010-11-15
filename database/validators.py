@@ -52,7 +52,8 @@ class CheckNoTwoNulls(FormValidator):
 
     def validate_python(self, field_dict, obj):
 
-        table = obj._table
+        database = obj.database
+        table = database[obj.table]
 
         edge = table.local_tables[self.many_to_one_table]
 
@@ -132,24 +133,27 @@ class CheckInField(FancyValidator):
         'invalid': _("field %(field)s can not have value %(value)s"),
         }
 
-    def validate_python(self, value, obj):
+    def validate_python(self, value, state):
+
+        database = state.database
+        session = database.Session()
+        try:
+            self.table, self.field = self.target.split(".")
+
+            target_class = database.tables[self.table].sa_class
+            target_field = getattr(target_class, self.field)
+            if self.filter_field:
+                filter_field = getattr(target_class, self.filter_field)
+                results = session.query(target_field).filter(filter_field == u"%s" % self.filter_value).all()
+            else:
+                results = session.query(getattr(target_class, self.field)).all()
 
 
-        session = obj._session
-        database = obj._table.database
-        self.table, self.field = self.target.split(".")
+            if value and (value,) not in results:
+                raise Invalid(self.message("invalid", obj, field = self.field, value = value), value, obj)
+        finally:
+            session.close()
 
-        target_class = database.tables[self.table].sa_class
-        target_field = getattr(target_class, self.field)
-        if self.filter_field:
-            filter_field = getattr(target_class, self.filter_field)
-            results = session.query(target_field).filter(filter_field == u"%s" % self.filter_value).all()
-        else:
-            results = session.query(getattr(target_class, self.field)).all()
-
-
-        if value and (value,) not in results:
-            raise Invalid(self.message("invalid", obj, field = self.field, value = value), value, obj)
 
 
 
