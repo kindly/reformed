@@ -132,8 +132,7 @@ REBASE.Form = function (){
 
             if (active){
                 link = base + (offset * limit);
-                html.push( '<a ' + make_href(link) + 'onclick="node_load(\''
-                    link +'\');return false;">' + description + '</a> ');
+                html.push( '<a ' + make_href(link) + 'onclick="node_load(\'' + link +'\');return false;">' + description + '</a> ');
             } else {
                 html.push( description + ' ');
             }
