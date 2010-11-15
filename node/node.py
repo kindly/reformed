@@ -260,7 +260,7 @@ class TableNode(Node):
 
     def setup_commands(self):
         commands = {}
-     #   commands['view'] = dict(command = 'view')
+        commands['view'] = dict(command = 'view')
         commands['list'] = dict(command = 'list')
         commands['edit'] = dict(command = 'edit')
         commands['_save'] = dict(command = 'save')
@@ -275,10 +275,13 @@ class TableNode(Node):
             form = self[form_name]
             form.list(node_token, limit)
 
-    def edit(self, node_token):
+    def view(self, node_token):
+        self.edit(node_token, read_only = True)
+
+    def edit(self, node_token, read_only = False):
         # process each of the forms
         for form_name in self.get_form_name_list_from_layout():
-            self[form_name].view(node_token, read_only = False)
+            self[form_name].view(node_token, read_only = read_only)
         # add the layout information
         if  self.form_layout:
             node_token.set_layout(self.layout_type, self.form_layout)

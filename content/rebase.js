@@ -22,7 +22,7 @@
 */
 
 // JSLint directives
-/*global window setTimeout*/
+/*global window document setTimeout*/
 /*global $ REBASE console_log Showdown*/
 
 var node_load;
@@ -43,7 +43,7 @@ var CONFIG = {
     // should be calculated
     DIALOG_CHROME_HEIGHT : 75,
     DIALOG_CHROME_WIDTH : 35
-}
+};
 
 var REBASE = {};
 
@@ -88,7 +88,7 @@ REBASE.init = function(){
     if (url == '/'){
         node_load('search.Page?page=default');
     }
-}
+};
 
 
 /*
@@ -132,8 +132,7 @@ REBASE.Form = function (){
 
             if (active){
                 link = base + (offset * limit);
-                html.push( '<a ' + make_href(link) + 'onclick="node_load(\'' +
-                    link +'\');return false;">' + description + '</a> ');
+                html.push( '<a ' + make_href(link) + 'onclick="node_load(\'' + link +'\');return false;">' + description + '</a> ');
             } else {
                 html.push( description + ' ');
             }
@@ -275,7 +274,7 @@ REBASE.Form = function (){
         var value = $input.val();
         if (value){
             var length = value.length;
-            var start
+            var start;
             if (CONFIG.FORM_FOCUS_SELECT_ALL){
                 start = 0;
             } else {
@@ -335,7 +334,7 @@ REBASE.Bookmark = function (){
     function bookmark_add(bookmark){
         // create the bookmark view link
         if (bookmark.entity_id === null){
-            alert('null bookmark');
+            console_log('null bookmark');
         }
         // stop null bookmarks
         if (!bookmark.title){
@@ -347,9 +346,9 @@ REBASE.Bookmark = function (){
         }
         var table_data = REBASE.application_data.bookmarks[bookmark.entity_table];
         if (table_data){
-            bookmark.bookmark = table_data.node.replace('&', '&amp;') + ':edit?__id=' + bookmark._core_id;
+            bookmark.bookmark = table_data.node.replace('&', '&amp;') + ':view?__id=' + bookmark._core_id;
         } else {
-            bookmark.bookmark = 'test.Auto:edit?__id=' + bookmark._core_id + '&amp;table=' + bookmark.entity_table;
+            bookmark.bookmark = 'test.Auto:view?__id=' + bookmark._core_id + '&amp;table=' + bookmark.entity_table;
         }
         // remove the item if already in the list
         for (var i = 0, n = bookmark_array.length; i < n; i++){
@@ -390,8 +389,16 @@ REBASE.Bookmark = function (){
         html = '<ol class = "bookmark">';
         for(i = 0; i < categories.length; i++){
             category = categories[i];
+            var cat_info = REBASE.application_data.bookmarks[category];
             html += '<li class ="bookmark-title bookmark-category-' + category + '">';
-            html += category;
+            if (cat_info && cat_info.cat_node){
+                html += '<span onclick="node_load(\'' + cat_info.cat_node + '\')">';
+                html += cat_info.title;
+            } else {
+                html += '<span>';
+                html += category;
+            }
+            html += '</span>';
             html += '<ol class ="bookmark-items">';
             html += category_items[category].join('\n');
             html += '</ol>';
@@ -522,6 +529,7 @@ REBASE.Interface = function (){
         // due to floats we have to measure the header
         var size = $header_div.outerHeight(true);
         $main_layout.sizePane('north', size);
+        $main_layout.resizeAll();
     }
 
     function resize_north_pane(){
@@ -640,10 +648,11 @@ REBASE.Interface = function (){
         add_logo();
 
         // set options for the panes
-        var layout_defaults = {spacing_open:3, spacing_close:6, padding:0, applyDefaultStyles:true};
+        var layout_defaults = {spacing_open:6, spacing_close:6, padding:0, applyDefaultStyles:true};
         var layout_north = {resizable:true, closable: false, slidable:false, spacing_open:0};
+        var layout_west = {onresize : resize_main_pane, onopen : resize_main_pane, onclose : resize_main_pane};
 
-        $interface_layout = $layout_holder.layout({defaults: layout_defaults, north : layout_north});
+        $interface_layout = $layout_holder.layout({defaults: layout_defaults, north : layout_north, west : layout_west});
         resize_north_pane();
         // the main div layout
         var $main_pane = $('#main_pane');
@@ -701,6 +710,7 @@ REBASE.Dialog = function (){
     var dialog_decode;
     var $dialog_box;
     var $system_dialog_box;
+    var $error_dialog_box;
     var is_open = false;
     var error_is_open = false;
     var dialog_queue = [];
@@ -732,7 +742,7 @@ REBASE.Dialog = function (){
         $dialog.dialog('destroy');
         var options = {width: 'auto', height: 'auto', modal: true, title: title};
         if (close_fn){
-            options['close'] = close_fn;
+            options.close = close_fn;
         }
         $dialog.dialog(options);
         var $container = $dialog.parent();
@@ -764,6 +774,7 @@ REBASE.Dialog = function (){
         }
     }
 
+
     function error(title, error_msg){
         // replace \n
         error_msg = error_msg.replace(/\n/g, '<br />');
@@ -787,6 +798,7 @@ REBASE.Dialog = function (){
             is_open = false;
         }
     }
+
 
     function show_waiting_error(){
         // show any queued errors then dialogs.
@@ -969,6 +981,7 @@ REBASE.Debug = function (){
             }
             info.push('<div class="history_data">' + HTML_encode($.toJSON(sent)) + '</div>');
             info.push('</div>');
+
             if (received){
                 for (var j = 0; j < received.length; j++){
                     info.push('<div class="history_received">')
@@ -984,16 +997,16 @@ REBASE.Debug = function (){
         REBASE.Dialog.dialog('History', info.join(''), true);
     }
 
-    function debug_test_drive_script(data){
-        test_script = $.parseJSON(data);
-        debug_test_drive_next();
-    }
-
     function debug_test_drive_next(){
         if (test_script.length){
             var test_job = test_script.shift();
             REBASE.Job.add(test_job, null, debug_test_drive_next);
         }
+    }
+
+    function debug_test_drive_script(data){
+        test_script = $.parseJSON(data);
+        debug_test_drive_next();
     }
 
     function init(){
@@ -1027,7 +1040,7 @@ REBASE.Debug = function (){
         'init' : function (){
             return init();
         }
-    }
+    };
 }();
 
 
@@ -1377,6 +1390,7 @@ REBASE.Node = function (){
         decode.node_data = global_node_data;
         // add any current querystring data into the node data
         // but not overwritting
+
         var query_part = split_n($.address.value(), '?', 2)[1];
         var query_data = convert_url_string_to_hash(query_part, true)
         for (key in query_data){
@@ -1564,7 +1578,7 @@ REBASE.Job = function(){
 
     var outstanding_requests = 0;
     var status_timer;
-    var history = []
+    var history = [];
 
     function loading_show(){
         $('#ajax_info').show();

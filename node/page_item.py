@@ -219,46 +219,6 @@ class ActionItem(FormControl):
         # do not save
         pass
 
-class SubForm(FormItem):
-
-
-    def custom_page_item_structure(self, node_token, data):
-
-        subform = self.form.node[self.name]
-
-        params = subform.create_form_data(node_token, read_only = subform.read_only)
-
-        params['form']['table_name'] =  subform.table
-        params['form']['parent_id'] =  subform.parent_id
-        params['form']['child_id'] =  subform.child_id
-
-        params['name'] = self.name
-        params['control'] = 'subform'
-        params['title'] = self.label
-
-        return params
-
-    def custom_control_display(self, node_token, result, data, session):
-
-        subform = self.form.node[self.name]
-        data[self.name] = subform.load_subform(node_token, result, data, session)
-
-    def custom_control_save(self, node_token, save_item, data, session):
-
-        subform = self.form.node[self.name]
-
-        subform_rtable = r[subform.table]
-
-        path = subform_rtable.table_path[self.form.table].path
-        self.relation = subform_rtable.table_path[self.form.table].relation
-
-        relation_attr = path[0]
-
-        subform_data = data.get(self.name)
-
-        for row in subform_data:
-            form.save_row(row, session, object, relation_attr)
-
 
 
 class Layout(FormItem):
@@ -835,12 +795,6 @@ def text(text, **kw):
     kw['text'] = text
     kw['layout'] = 'text'
     return FormItemFactory('text', Layout, **kw)
-
-
-def subform(name, **kw):
-    kw['data_type'] = 'subform'
-    kw['name'] = name
-    return FormItemFactory('subform', SubForm, **kw)
 
 
 def codegroup(name, **kw):

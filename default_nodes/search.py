@@ -44,6 +44,7 @@ class Search(TableNode):
         self['listing'].list(node_token, limit, where = where, values = values)
 
 class Page(Node):
+    register_node = dict(table = 'page', title = 'Page', cat_node = 'search.EditPage:list')
     main = form(
         info('body'),
         read_only = True,

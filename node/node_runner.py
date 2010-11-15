@@ -418,6 +418,8 @@ class NodeToken(object):
         # application data
         if self.request_application_data:
             data = global_session.sys_info
+            # overwrite the bookmarks data
+            data['bookmarks'] = self.application.node_manager._registered_entity
             self.add_extra_response_function('application_data', data)
             refresh_frontend = True
         else:
@@ -549,6 +551,9 @@ class NodeManager(object):
         self.menu = []
         self.menu_pending = {}
         self.menu_lookup = {}
+        # nodes for bookmarks
+        self._registered_entity = {}
+
         self.current_node = None
 
         self.get_nodes()
@@ -646,11 +651,19 @@ class NodeManager(object):
                         if hasattr(item, 'make_menu'):
                             self.current_node = node_title
                             item().make_menu(self)
+                        if hasattr(item, 'register_node'):
+                            self.register_entity_node(node_title, **item.register_node)
+
         # Check menu build completed
         if self.menu_pending:
             print 'Warning: Orphaned menu items wanting', self.menu_pending.keys()
         # sort menu
         self.menu = self.sort_menu_items(self.menu)
+
+    def register_entity_node(self, node_name, table = '', **kw):
+        if 'cat_node' in kw:
+            kw['cat_node'] = kw['cat_node'].replace('$', self.current_node)
+        self._registered_entity[table] = dict(node = node_name, **kw)
 
     def sort_menu_items(self, items):
         sorted_items = sorted(sorted(items, key = itemgetter('title')), key = itemgetter('index'))

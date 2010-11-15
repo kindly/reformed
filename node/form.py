@@ -214,16 +214,18 @@ class Form(object):
         data_out = {}
 
         if self.form_buttons:
-            data_out['__buttons'] = self.form_buttons
+            buttons = self.form_buttons
         else:
-            data_out['__buttons'] = [['add %s' % self.table, 'f@%s:_save' % node_token.node_name],
+            buttons = [['add %s' % self.table, 'f@%s:_save' % node_token.node_name],
                                  ['cancel', 'CLOSE']]
-        data_out['__message'] = "Hello, add new %s" % self.table
+        message = "Hello, add new %s" % self.table
 
         # update the node that the form is associated with
         self.create_form_data(node_token, data_out)
 
         node_token.form(self)
+        node_token.set_layout_title(message)
+        node_token.set_layout_buttons(buttons)
 
 
 
@@ -472,7 +474,10 @@ class Form(object):
         if self.form_buttons:
             buttons = self.form_buttons
         elif '__buttons' not in data_out:
-            buttons = [['save %s' % self.table, 'f@%s:_save' % node_token.node_name],
+            if read_only:
+                buttons = [['edit %s' % self.table, '%s:edit' % node_token.node_name]]
+            else:
+                buttons = [['save %s' % self.table, 'f@%s:_save' % node_token.node_name],
                                      ['delete %s' % self.table, '@%s:_delete' % node_token.node_name],
                                      ['cancel', 'BACK']]
 
@@ -719,7 +724,7 @@ class Form(object):
 
         encoded_data = urllib.urlencode(node.extra_data)
 
-        buttons = [['add new %s' % table, 'd@%s:new?%s' % (node_token.node_name, encoded_data)],
+        buttons = [['add new %s' % table, '@%s:new?%s' % (node_token.node_name, encoded_data)],
                    ['cancel', 'BACK']]
 
         #data['__buttons'] = buttons
