@@ -62,8 +62,6 @@ class ListTicket(TableNode):
         layout('box_end'),
         button('bug.Ticket:edit:{id}' ,label = 'edit', permissions = ['logged_in']),
         layout('hr'),
-        subform('old_comments'),
-        subform('comment'),
         buttons("view", False),
 
         table = "ticket",
