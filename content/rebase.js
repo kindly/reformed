@@ -31,10 +31,10 @@ var node_load;
 
 var CONFIG = {
     DISABLE_FX : true,
+    DEBUG : true,
     FORM_PAGING_SIZE : 5,
     FORM_FOCUS_SELECT_ALL : true,
     BOOKMARKS_SHOW_MAX : 100,
-    JOB_HISTORY : true,
     JOB_HISTORY_SIZE : 50,
     BOOKMARK_ARRAY_MAX : 100,
     DIALOG_BORDER_HEIGHT : 50,
@@ -63,25 +63,30 @@ var REBASE = {};
  */
 
 REBASE.init = function(){
+    /* This function is called when the page
+     * is fully loaded.
+     */
+
     // turn off any jquery animations
     $.fx.off = CONFIG.DISABLE_FX;
-    /* helper function */
-    node_load = REBASE.Node.load_node;
-    // function to call when url is updated.
-    $.address.change(REBASE.Node.load_page);
-    // if no node info is available go to the login node
-    // FIXME this needs fixing with a default node
-    // also if you are auto logged in etc
-    var url = $.address.value();
-    if (url == '/'){
-        node_load('user.User:login');
-    }
-
     // find any REBASE init functions and call them
     for(var key in REBASE){
         if (REBASE[key].init){
             REBASE[key].init();
         }
+    }
+    /* helper function */
+    node_load = REBASE.Node.load_node;
+    // function to call when url is updated.
+    $.address.change(REBASE.Node.load_page);
+    // resize event callback
+    $(window).resize(REBASE.Interface.resize_interface);
+    // if no node info is available go to the login node
+    // FIXME this needs fixing with a default node
+    // also if you are auto logged in etc
+    var url = $.address.value();
+    if (url == '/'){
+        node_load('search.Page?page=default');
     }
 };
 
@@ -342,9 +347,9 @@ REBASE.Bookmark = function (){
         }
         var table_data = REBASE.application_data.bookmarks[bookmark.entity_table];
         if (table_data){
-            bookmark.bookmark = table_data.node.replace('&', '&amp;') + ':edit?__id=' + bookmark._core_id;
+            bookmark.bookmark = table_data.node.replace('&', '&amp;') + ':view?__id=' + bookmark._core_id;
         } else {
-            bookmark.bookmark = 'test.Auto:edit?__id=' + bookmark._core_id + '&amp;table=' + bookmark.entity_table;
+            bookmark.bookmark = 'test.Auto:view?__id=' + bookmark._core_id + '&amp;table=' + bookmark.entity_table;
         }
         // remove the item if already in the list
         for (var i = 0, n = bookmark_array.length; i < n; i++){
@@ -385,8 +390,16 @@ REBASE.Bookmark = function (){
         html = '<ol class = "bookmark">';
         for(i = 0; i < categories.length; i++){
             category = categories[i];
+            var cat_info = REBASE.application_data.bookmarks[category];
             html += '<li class ="bookmark-title bookmark-category-' + category + '">';
-            html += category;
+            if (cat_info && cat_info.cat_node){
+                html += '<span onclick="node_load(\'' + cat_info.cat_node + '\')">';
+                html += cat_info.title;
+            } else {
+                html += '<span>';
+                html += category;
+            }
+            html += '</span>';
             html += '<ol class ="bookmark-items">';
             html += category_items[category].join('\n');
             html += '</ol>';
@@ -501,6 +514,7 @@ REBASE.User = function (){
 
 REBASE.Interface = function (){
 
+    var interface_active = false;
     var $interface_layout;
     var $main_layout;
     var $side;
@@ -508,19 +522,24 @@ REBASE.Interface = function (){
     var $user_bar;
     var $logo;
     var $menu;
+    var $window;
+    var $header_div;
+    var $layout_holder;
 
     function resize_main_pane(){
         // due to floats we have to measure the header
-        var size = $('#header').outerHeight(true);
+        var size = $header_div.outerHeight(true);
         $main_layout.sizePane('north', size);
+        $main_layout.resizeAll();
     }
 
     function resize_north_pane(){
+        $layout_holder.height($window.height());
         // due to floats we have to measure the user bar items
         var size = $user_area.outerHeight(true);
         $interface_layout.sizePane('north', size);
         $logo.height(size - 10);
-        var width = $(window).width() - $logo.width() - 60;
+        var width = $window.width() - $logo.width() - 60;
         $user_area.width(width);
         if ($main_layout !== undefined){
             resize_main_pane();
@@ -528,6 +547,9 @@ REBASE.Interface = function (){
     }
 
     function make_menu(menu){
+        if (!interface_active){
+            make_interface();
+        }
         // Build the menu.
         function build(data){
             var i;
@@ -562,13 +584,13 @@ REBASE.Interface = function (){
     }
 
     function add_logo(){
-        $logo = $('<img id="logo_image" src="logo.png" />');
+        $logo = $('<img id="logo_image" src="logo.png" onclick="node_load(\'search.Page?page=default\')" />');
         $('#logo').append($logo);
     }
 
     function search_box(){
         var html = [];
-        html.push('<form action="" onclick="$.Util.Event_Delegator(\'clear\');" onsubmit="return REBASE.Utils.search_box();" style="display:inline">');
+        html.push('<form action="" onclick="$.Util.Event_Delegator(\'clear\');" onsubmit="REBASE.Utils.search_box();return false;" style="display:inline">');
         html.push('<input type="text" name="search" id="search" />');
         html.push('<input type="submit" name="search_button" id="search_button" value="search"/>');
         html.push('</form>');
@@ -613,12 +635,11 @@ REBASE.Interface = function (){
         $side.append('<div id="bookmarks"></div>');
     }
 
-    function init(){
+    function make_interface(){
         /* initialise the layout */
-        var $body = $('body');
-        $body.append('<div class="ui-layout-center" id="main_pane" ></div>');
-        $body.append('<div class="ui-layout-west" id="left"><div id="side" /></div>');
-        $body.append('<div class="ui-layout-north"><div id="logo" /><div id="user_area" /></div>');
+        $layout_holder.append('<div class="ui-layout-center" id="main_pane" ></div>');
+        $layout_holder.append('<div class="ui-layout-west" id="left"><div id="side" /></div>');
+        $layout_holder.append('<div class="ui-layout-north"><div id="logo" /><div id="user_area" /></div>');
         $side = $('#side');
         $user_area = $('#user_area');
 
@@ -628,26 +649,40 @@ REBASE.Interface = function (){
         add_logo();
 
         // set options for the panes
-        var layout_defaults = {spacing_open:3, spacing_close:6, padding:0, applyDefaultStyles:true};
+        var layout_defaults = {spacing_open:6, spacing_close:6, padding:0, applyDefaultStyles:true};
         var layout_north = {resizable:true, closable: false, slidable:false, spacing_open:0};
+        var layout_west = {onresize : resize_main_pane, onopen : resize_main_pane, onclose : resize_main_pane};
 
-        $interface_layout = $body.layout({defaults: layout_defaults, north : layout_north});
+        $interface_layout = $layout_holder.layout({defaults: layout_defaults, north : layout_north, west : layout_west});
         resize_north_pane();
         // the main div layout
         var $main_pane = $('#main_pane');
         $main_pane.append('<div class="ui-layout-center"><div id="main" /></div>');
         $main_pane.append('<div class="ui-layout-north" id="layout_header"><div id="header" /></div>');
         $main_layout = $main_pane.layout({defaults: layout_defaults, north : layout_north});
+        $header_div = $('#header');
+        interface_active = true;
+    }
+
+    function init(){
+        $window = $(window);
+        /* initialise the layout */
+        $layout_holder = $('<div id="layout" />');
+        $('body').append($layout_holder);
+        $('#layout').height($window.height());
     }
 
     return {
         'init' : function (){
             init();
         },
+        'make_interface' : function (){
+            make_interface();
+        },
         'resize_main_pane': function (){
             resize_main_pane();
         },
-        'resize_north_pane': function (){
+        'resize_interface': function (){
             resize_north_pane();
         },
         'make_menu': function (menu_data){
@@ -731,42 +766,27 @@ REBASE.Dialog = function (){
     }
 
     function dialog(title, data, no_processing){
-        // If no dialog/error is showing, show dialog.
+        // If no error is showing, show dialog.
         // Otherwise put it in a queue.
-        if (!is_open && !error_is_open){
+        if (!error_is_open){
             open(title, data, no_processing);
         } else {
             dialog_queue.push([title, data, no_processing]);
         }
     }
 
-    function show_waiting_error(){
-        // show any queued errors then dialogs.
-        if (error_queue.length){
-            var request = error_queue.shift();
-            open_error(request);
-        } else {
-            error_is_open = false;
-            // show any waiting dialogs
-            show_waiting();
-        }
-    }
 
-    function open_error(error_msg){
-        // Show the error dialog.
-        $error_dialog_box.html(error_msg);
-        error_is_open = true;
-        show_dialog($error_dialog_box, 'Error', function (){show_waiting_error();});
-    }
-
-    function error(error_msg){
+    function error(title, error_msg){
         // replace \n
         error_msg = error_msg.replace(/\n/g, '<br />');
+        if (!title){
+            title = 'Error';
+        }
         // Show error if non showing, else queue.
         if (!error_is_open){
-            open_error(error_msg);
+            open_error(title, error_msg);
         } else {
-            error_queue.push(error_msg);
+            error_queue.push([title, error_msg]);
         }
     }
 
@@ -777,6 +797,19 @@ REBASE.Dialog = function (){
             open(request[0], request[1], request[2]);
         } else {
             is_open = false;
+        }
+    }
+
+
+    function show_waiting_error(){
+        // show any queued errors then dialogs.
+        if (error_queue.length){
+            var request = error_queue.shift();
+            open_error(request[0], request[1]);
+        } else {
+            error_is_open = false;
+            // show any waiting dialogs
+            show_waiting();
         }
     }
 
@@ -800,6 +833,13 @@ REBASE.Dialog = function (){
         // focus first enabled input
         REBASE.Form.focus($dialog_box.find(':input:enabled:first'));
         is_open = true;
+    }
+
+    function open_error(title, error_msg){
+        // Show the error dialog.
+        $error_dialog_box.html(error_msg);
+        error_is_open = true;
+        show_dialog($error_dialog_box, title, function (){show_waiting_error();});
     }
 
     function close(){
@@ -844,8 +884,8 @@ REBASE.Dialog = function (){
         'dialog' : function (title, data, no_processing){
             dialog(title, data, no_processing);
         },
-        'error' : function (error_msg){
-            error(error_msg);
+        'error' : function (title, error_msg){
+            error(title, error_msg);
         },
         'close' : function(){
             close();
@@ -935,21 +975,24 @@ REBASE.Debug = function (){
             sent = history[i][0];
             received = history[i][2];
             info.push('<div class="history_sent">');
-            if (info.command){
+            if (sent.command){
                 info.push('<div>' + sent.node + ' : ' + sent.command + '</div>');
             } else {
                 info.push('<div>' + sent.node + '</div>');
             }
             info.push('<div class="history_data">' + HTML_encode($.toJSON(sent)) + '</div>');
             info.push('</div>');
-            for (var j = 0; j < received.length; j++){
-                info.push('<div class="history_received">');
-                json = HTML_encode($.toJSON(received[j]));
-                if (received[j].action){
-                    info.push(make_action(received[j], json.length));
+
+            if (received){
+                for (var j = 0; j < received.length; j++){
+                    info.push('<div class="history_received">')
+                    json = HTML_encode($.toJSON(received[j]));
+                    if (received[j].action){
+                        info.push(make_action(received[j], json.length));
+                    }
+                    info.push('<div class="history_data">' + json + '</div>');
+                    info.push('</div>');
                 }
-                info.push('<div class="history_data">' + json + '</div>');
-                info.push('</div>');
             }
         }
         REBASE.Dialog.dialog('History', info.join(''), true);
@@ -1160,14 +1203,28 @@ REBASE.Node = function (){
 
 
     /* Private functions. */
+    function convert_hash_to_url(arg){
+        // convert a single level hash into a url string
+        // it is encoded as a URI Component but using @ instead
+        // of % for encoding to stop some decoding issues
+        out = [];
+        for (var key in arg){
+            out.push(key + '=' + encodeURIComponent(arg[key]));
+        }
+        return out.join('&').replace(/%/g, '@');
+    }
 
-    function convert_url_string_to_hash(arg){
+    function convert_url_string_to_hash(arg, decode){
         /*
          *  convert string to a hash
          *  input:  "a=1&b=2"
          *  output  {a:1, b:2}
+         *  if decode specified then decode using our @xx style coding
          */
         var out = {};
+        if (arg === undefined){
+            return out;
+        }
         var args = arg.split('&');
         var x;
         var s;
@@ -1175,11 +1232,43 @@ REBASE.Node = function (){
             x = args[i];
             s = x.split('=');
             if (s.length == 2){
-                out[s[0]] = s[1];
+                if (decode){
+                    out[s[0]] = decodeURIComponent(s[1].replace(/@/g, '%'));
+                } else {
+                    out[s[0]] = s[1];
+                }
             }
+        }
+
+        return out;
+    }
+
+    function split_n(arg, seperator, n){
+        // split arg into n parts
+        // the last part will contain all extra bits of arg
+        // if not enough data then undefined for that array element.
+        //
+        // eg split_n('abc;def;ghi', ';', 2) => ['abc', 'def;ghi']
+        //    split_n('abc;def', ';', 3) => ['abc', 'def', undefined]
+        var parts = arg.split(seperator);
+        var out = [];
+        n--;
+        while (n && parts.length > 0){
+            out.push(parts.shift());
+            n--;
+        }
+        while (n){
+            out.push(undefined);
+            n--;
+        }
+        if (parts.length){
+            out.push(parts.join(seperator));
+        } else {
+            out.push(undefined);
         }
         return out;
     }
+
 
     function decode_node_string(node_string, item, target_form){
         /*
@@ -1190,7 +1279,7 @@ REBASE.Node = function (){
         console_log('node: ' + node_string);
 
         function decode_error(error_msg){
-            REBASE.Dialog.error(error_msg);
+            REBASE.Dialog.error('Decode error', error_msg);
             return false;
         }
 
@@ -1204,7 +1293,7 @@ REBASE.Node = function (){
 
         // chop up the string
         // url string
-        var split = node_string.split('?', 2);
+        var split = split_n(node_string, '?', 2);
         var part_url = split[1];
         // command
         split = split[0].split(':');
@@ -1251,10 +1340,24 @@ REBASE.Node = function (){
                         flags.form_data = true;
                         // get any form data
                         var $obj = $(item);
+                        var forms = [];
                         $obj = $obj.parents('div.INPUT_FORM');
-                        var form_data = $obj.data('command')('get_form_data');
+                        if ($obj.length){
+                            // just one form
+                            forms.push($obj);
+                        } else {
+                            // all forms
+                            var forms_hash = REBASE.Layout.get_forms();
+                            for (var key in forms_hash){
+                                forms.push(forms_hash[key].children())
+                            }
+                        }
+                        var form_data = {};
+                        for (var i = 0; i < forms.length; i++){
+                            $.extend(form_data, forms[i].data('command')('get_form_data'));
+                        }
                         // set the form data
-                        if (form_data){
+                        if (forms.length){
                             decode.form_data.push(form_data);
                         } else {
                             // an error occurred on the form so we don't want to continue.
@@ -1288,8 +1391,9 @@ REBASE.Node = function (){
         decode.node_data = global_node_data;
         // add any current querystring data into the node data
         // but not overwritting
-        var key;
-        var query_data = convert_url_string_to_hash($.address.queryString());
+
+        var query_part = split_n($.address.value(), '?', 2)[1];
+        var query_data = convert_url_string_to_hash(query_part, true)
         for (key in query_data){
             if (decode.node_data[key] === undefined){
                 decode.node_data[key] = query_data[key];
@@ -1297,7 +1401,7 @@ REBASE.Node = function (){
         }
         // url data converted to a hash
         if (part_url){
-            var url_data = convert_url_string_to_hash(part_url);
+            var url_data = convert_url_string_to_hash(part_url, true);
             if (target_form){
                 decode.form_data.push({form : target_form, data : url_data});
             } else if (url_data.form){
@@ -1320,7 +1424,7 @@ REBASE.Node = function (){
         // this is a node string with form data requesting
         // an update so rewrite the node and return it
         if (flags.update && decode.form_data.length == 1){
-            decode.node_string = decode.node + ':' + decode.command + '?' + $.param(decode.form_data[0].data);
+            decode.node_string = decode.node + ':' + decode.command + '?' + convert_hash_to_url(decode.form_data[0].data);
         }
         // sanity checks
         if (decode.secure && flags.update){
@@ -1404,6 +1508,7 @@ REBASE.Node = function (){
             $.address.value() != '/' + decode.node_string){
 
             // Sets the address which then forces a page load.
+            console_log('change url', decode.node_string);
             $.address.value(decode.node_string);
             return;
         }
@@ -1565,15 +1670,15 @@ REBASE.Job = function(){
                 if (!error_title){
                     error_title = 'Error';
                 }
-                REBASE.Dialog.dialog(error_title, message);
+                REBASE.Dialog.error(error_title, message);
                 break;
             case 'message':
                 message = packet.data;
-                REBASE.Dialog.dialog('Message', message);
+                REBASE.Dialog.error('Message', message);
                 break;
             case 'forbidden':
                 message = 'You do not have the permissions to perform this action.';
-                REBASE.Dialog.dialog('Forbidden', message);
+                REBASE.Dialog.error('Forbidden', message);
                 break;
             case 'status':
                 job_processor_status(packet.data, packet.node, root);
@@ -1589,8 +1694,8 @@ REBASE.Job = function(){
         var n;
         outstanding_requests--;
         // stash history
-        if (CONFIG.JOB_HISTORY){
-            history.push([request, sent_data, return_data]);
+        if (CONFIG.JOB_HISTORY_SIZE){
+            history.push($.extend(true, [], [request, sent_data, return_data]));
             // stop history growing too big.
             while(history.length > CONFIG.JOB_HISTORY_SIZE){
                 history.shift();
@@ -1674,12 +1779,6 @@ REBASE.FormProcessor = function(){
             }
             if (!field.control){
                 field.control = 'normal';
-            }
-            // get out the thumb field if one exists
-            // makes life easier later on
-            // TODO do we still use this?
-            if (field.control == 'thumb'){
-                form_data.thumb = field;
             }
         }
         return form_data;
@@ -1783,27 +1882,39 @@ REBASE.Layout = function(){
     var $forms = {};
 
     var layout_title;
+    var layout_buttons;
     var layout_paging;
     var $header;
-    var $footer;
 
+    var make_paging;
+    var resize_main_pane;
+    var dialog;
+    var dialog_close;
+    var form_focus;
+    var process_form_data;
+
+    function make_buttons(button_data){
+        item = { buttons : button_data, control: 'button_box'};
+        $control = REBASE.FormControls.build(true, item);
+        return $control;
+    }
 
     function set_layout_title_and_footer(){
-        $header = $('#header');
-        var header = [];
-        if (layout_title){
-            header.push(layout_title);
-        }
-        if (layout_paging){
-            header.push(REBASE.Form.make_paging(layout_paging));
+        if (!$header){
+            $header = $('#header');
         }
         $header.empty();
-        $header.append(header.join(''));
-
-        var footer = 'footer';
-        $footer.text(footer);
-
-        REBASE.Interface.resize_main_pane();
+        var header = [];
+        if (layout_title){
+            $header.append('<h1>' + layout_title + '</h1>');
+        }
+        if (layout_buttons){
+            $header.append(make_buttons(layout_buttons));
+        }
+        if (layout_paging){
+            $header.append(make_paging(layout_paging));
+        }
+        resize_main_pane();
     }
 
     function make_form(form_name){
@@ -1895,8 +2006,6 @@ REBASE.Layout = function(){
                     console_log('UNKNOWN LAYOUT: ' + layout.layout_type);
                     break;
             }
-            $footer = $('<div class="LAYOUT_FOOTER"></div>');
-            $layout.append($footer);
             return $layout;
         }
 
@@ -1941,20 +2050,21 @@ REBASE.Layout = function(){
         // retrieve layout data
         var layout_data = packet.layout;
         // Store the form data.
-        forms = REBASE.FormProcessor.process(packet.data, packet.node);
+        forms = process_form_data(packet.data, packet.node);
         layout_title = layout_data.layout_title;
+        layout_buttons = layout_data.layout_buttons;
         layout_paging = layout_data.paging;
 
         if (layout_data.layout_dialog){
-            REBASE.Dialog.dialog(layout_data.layout_title, forms[layout_data.layout_dialog]);
+            dialog(layout_data.layout_title, forms[layout_data.layout_dialog]);
         } else {
-            REBASE.Dialog.close();
+            dialog_close();
             if (layout_data.layout_type){
                 // Layout has changed so update our stored data.
                 layout = layout_data;
                 create_layout();
                 // focus first enabled input
-                REBASE.Form.focus($(root).find(':input:enabled:first'));
+                form_focus($(root).find(':input:enabled:first'));
             } else {
                 // Update the layout forms
                 layout.layout_forms = layout_data.layout_forms;
@@ -1962,6 +2072,16 @@ REBASE.Layout = function(){
             }
         }
     }
+
+    function init(){
+        make_paging = REBASE.Form.make_paging;
+        resize_main_pane = REBASE.Interface.resize_main_pane;
+        dialog = REBASE.Dialog.dialog;
+        dialog_close = REBASE.Dialog.close;
+        form_focus = REBASE.Form.focus;
+        process_form_data = REBASE.FormProcessor.process;
+    }
+
     // exported functions
     return {
         'update_layout' : function (packet){
@@ -1970,6 +2090,12 @@ REBASE.Layout = function(){
         },
         'get_layout_id' : function (){
             return layout_id;
+        },
+        'get_forms' : function (){
+            return $forms;
+        },
+        'init' : function (){
+            init();
         }
     };
 }();

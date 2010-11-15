@@ -48,7 +48,6 @@ class Table(node.TableNode):
         textarea('summary'),
         input('entity'),
         input('logged'),
-        #subform('fields'),
         params = {'title' : 'Table', 'noautosave' : True}
 
     )

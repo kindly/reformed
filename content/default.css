@@ -70,6 +70,12 @@ div {
 }
 #header {
     float:left;
+    background-color:#515151;
+    color:#F6F6F6;
+    width:100%;
+}
+#header a{
+    color:#F6F6F6;
 }
 #user_bar {
     background-color:transparent;
@@ -937,6 +943,7 @@ div.record_info > div {
     width: 128px;
     height: 128px;
     background-color: #FFF;
+    border: 1px solid #999;
 }
 
 
@@ -1061,7 +1068,7 @@ div.record_info > div {
 
 }
 
-.LAYOUT_HEADER, .LAYOUT_FOOTER{
+.LAYOUT_HEADER{
     float:left;
     clear: both;
     width: 100%;
@@ -1074,7 +1081,7 @@ div.record_info > div {
     position:relative;
     width:100%;
 }
-
+/* FIXME move this into the menu css */
 .ui-layout-pane {
     padding:0 !important;
 

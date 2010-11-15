@@ -319,7 +319,7 @@ class NodeToken(object):
         """ Helper function set action to form. """
         if self._flags.get('dialog'):
             if not 'layout_title' in kw or not kw['layout_title']:
-                kw['layout_title'] = form.layout_title
+                self.set_layout_title = form.layout_title
             self._set_action('dialog', dialog = form.name, **kw)
         else:
             self._set_action('form', **kw)
@@ -332,6 +332,18 @@ class NodeToken(object):
         """ Helper function send error to front end. """
         self._set_action('message', data = message)
 
+    def set_layout_title(self, title):
+        if 'layout_title' in self._layout:
+            raise Exception('Layout title has already been set for this NodeToken')
+        self._layout['layout_title'] = title
+
+    def set_layout_buttons(self, buttons):
+        if 'layout_buttons' in self._layout:
+            raise Exception('Layout buttons has already been set for this NodeToken')
+        self._layout['layout_buttons'] = buttons
+
+
+
     def _set_action(self, action, **kw):
         """ Set the action for the node token. """
         if self._action and not(action == self._action and action == 'form'):
@@ -340,9 +352,6 @@ class NodeToken(object):
         title = kw.get('title')
         if title:
             self._title = title
-        layout_title = kw.get('layout_title')
-        if layout_title:
-            self._layout['layout_title'] = layout_title
         function_name = kw.get('function_name')
         if function_name:
             self._function = function_name
@@ -397,6 +406,8 @@ class NodeToken(object):
         # application data
         if self.request_application_data:
             data = global_session.sys_info
+            # overwrite the bookmarks data
+            data['bookmarks'] = self.application.node_manager._registered_entity
             self.add_extra_response_function('application_data', data)
             refresh_frontend = True
         else:
@@ -458,9 +469,7 @@ class NodeToken(object):
         def build_items(items):
             # checks the permissions
             output = []
-            # TODO we should just sort the menu when it's created.
-            # sort by index, alpha
-            for item in sorted(sorted(items, key = itemgetter('title')), key = itemgetter('index')):
+            for item in items:
                 if not authenticate.check_permission(item.get('permissions')):
                     continue
                 menu_item = {}
@@ -481,7 +490,7 @@ class NodeToken(object):
 
 
     def get_title(self):
-        return self._title
+        return self._layout['layout_title']
 
     def check_next_node(self):
         """ Is there a next node to visit. """
@@ -508,7 +517,7 @@ class NodeToken(object):
 class NodeManager(object):
 
     """NodeManager imports and stores nodes form
-    <app_root>/<app>/custom_nodes and <app_root>/nodes.
+    <app_root>/<app>/custom_nodes and <app_root>/default_nodes.
     If a node with the same name has already been imported any new node
     with the same name will be ignored.
 
@@ -524,6 +533,9 @@ class NodeManager(object):
         self.menu = []
         self.menu_pending = {}
         self.menu_lookup = {}
+        # nodes for bookmarks
+        self._registered_entity = {}
+
         self.current_node = None
 
         self.get_nodes()
@@ -621,11 +633,26 @@ class NodeManager(object):
                         if hasattr(item, 'make_menu'):
                             self.current_node = node_title
                             item().make_menu(self)
+                        if hasattr(item, 'register_node'):
+                            self.register_entity_node(node_title, **item.register_node)
+
         # Check menu build completed
         if self.menu_pending:
             print 'Warning: Orphaned menu items wanting', self.menu_pending.keys()
+        # sort menu
+        self.menu = self.sort_menu_items(self.menu)
 
+    def register_entity_node(self, node_name, table = '', **kw):
+        if 'cat_node' in kw:
+            kw['cat_node'] = kw['cat_node'].replace('$', self.current_node)
+        self._registered_entity[table] = dict(node = node_name, **kw)
 
+    def sort_menu_items(self, items):
+        sorted_items = sorted(sorted(items, key = itemgetter('title')), key = itemgetter('index'))
+        for item in sorted_items:
+            if 'sub' in item:
+                item['sub'] = self.sort_menu_items(item['sub'])
+        return sorted_items
 
     def add_menu(self, data):
 

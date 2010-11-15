@@ -535,7 +535,8 @@ class FormItemFactory(object):
 
                             Password = [Password, 'password'],
                             Image = [FormControl, 'image'],
-                            Thumb = [FormControl, 'thumb'],
+                            # FIXME depreciate
+                            Thumb = [FormControl, 'image'],
                             #FIXME
                             Money = [FormControl, 'textbox'],
                             CreatedBy = None,
@@ -742,9 +743,11 @@ def image(name, **kw):
     return FormItemFactory('image', FormControl, **kw)
 
 
+# FIXME depreciate
 def thumb(name, **kw):
+    print "DEPRECIATION WARING - thumb"
     kw['name'] = name
-    return FormItemFactory('thumb', FormControl, **kw)
+    return FormItemFactory('image', FormControl, **kw)
 
 
 

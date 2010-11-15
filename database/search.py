@@ -753,8 +753,12 @@ class Expression(object):
         self.table_class = self.search.name_to_alias[table]
 
         database = self.search.database
-
-        rtable = database[self.search.aliased_name_path[table].table]
+        # FIXME This hack gets the search working again but
+        # should be fixed further back in the code
+        if self.search.aliased_name_path[table] == 'root':
+            rtable = database[table]
+        else:
+            rtable = database[self.search.aliased_name_path[table].table]
 
         if self.field == "id":
             self.type = sa.Integer

@@ -89,7 +89,7 @@ class User(TableNode):
         layout('spacer'),
 
         table = "user",
-        params =  {"form_type": "action"},
+        params =  {"form_type": "input"},
         title_field = 'name'
     )
     change_my_password = form(
@@ -174,6 +174,7 @@ class User(TableNode):
         commands['_save'] = dict(command = 'save')
         commands['new'] = dict(command = 'new')
         commands['edit'] = dict(command = 'edit')
+        commands['view'] = dict(command = 'view')
         commands['about_me'] = dict(command = 'about_me', permissions = ['LoggedIn'])
         commands['_save_about_me'] = dict(command = 'save_about_me', permissions = ['LoggedIn'])
         commands['change_password'] = dict(command = 'change_password', permissions = ['LoggedIn'])
@@ -189,7 +190,8 @@ class User(TableNode):
         self["user"].view(node_token, read_only = False)
 
     def view(self, node_token, read_only=True):
-        self["user"].view(node_token, read_only)
+        self.layout_main_form = 'user'
+        self["user"].view(node_token, read_only = read_only)
 
     def new(self, node_token):
         self["main"].new(node_token)
@@ -329,8 +331,8 @@ class User(TableNode):
 
 class UserGroup(TableNode):
 
+    register_node = dict(table = 'user_group', title = 'User Group', cat_node = '$:list')
     main = form(
-        layout("box_start"),
         info('groupname'),
         input('groupname', description = 'The name of the user group'),
         input('name', description = 'The name of the user group'),
@@ -341,8 +343,6 @@ class UserGroup(TableNode):
         layout("box_start"),
         codegroup("p1", code_table = 'permission', code_desc_field = 'description', label = 'General Permissions', filter = 'access_level = 0'),
         codegroup("p2", code_table = 'permission', code_desc_field = 'description', label = 'Admin Permissions', filter = 'access_level > 0', permissions = ['SysAdmin']),
-        layout("box_end"),
-        layout("spacer"),
 
         table = "user_group",
         form_type = "input",
@@ -383,10 +383,11 @@ class UserAdmin(TableNode):
         user_groups = database.search.Search(r, 'user_group', session).search().count()
         permissions = database.search.Search(r, 'permission', session).search().count()
         data = {'users' : users, "user_groups" : user_groups , "permissions" : permissions }
-        data['__message'] = "User Admin"
-        data['__buttons'] = [['cancel', 'BACK']]
+#        data['__message'] = "User Admin"
+#        data['__buttons'] = [['cancel', 'BACK']]
         self["main"].create_form_data(node_token, data)
         node_token.form(self.name, title = "main")
+        node_token.set_layout_title('User Admin')
 #        r.set_option('user_group', 'default_node', 'user.UserGroup')
 #        r.set_option('user', 'default_node', 'user.User')
 

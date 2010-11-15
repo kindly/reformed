@@ -124,84 +124,12 @@ $.Util.intbox_change = function(obj){
 };
 
 $.Util.clone_hash_shallow = function (arg){
+    // FIXME not used but usefull
     var new_hash = {};
     for (var item in arg){
         new_hash[item] = arg[item];
     }
     return new_hash;
-};
-
-$.Util.control_setup = function($control, field){
-    // add any events needed by the control
-    // but start by removing any existing bound events
-    $control.unbind();
-    switch (field.data_type){
-        case 'Integer':
-            $control.change($.Util.intbox_change);
-            $control.keydown($.Util.intbox_key);
-            break;
-        case 'DateTime':
-        case 'Date':
-            $control.keydown($.Util.datebox_key);
-            break;
-    }
-    if (field.control == 'dropdown'){
-        $control.autocomplete(field.autocomplete, {'dropdown':true});
-    }
-};
-
-$.Util.control_takedown = function($control, field){
-    // add any events needed by the control
-    // but start by removing any existing bound events
-    if (field.control == 'dropdown'){
-        $control.unautocomplete();
-    }
-    $control.unbind();
-};
-
-$.Util.make_editable = function($item, field){
-    // make the selected item an editable control
-    // and return the new control
-    var value = $item.html();
-    if ($item.hasClass('null')){
-        value = '';
-    }
-    if (value == '&nbsp;'){
-        value = '';
-    }
-    $item.html('<input type="text" value="' + value + '" />');
-    var $control = $item.find('input');
-    $.Util.control_setup($control, field);
-    $control.select();
-    return $control;
-};
-
-$.Util.make_normal = function($item, field){
-    // return the item to it's normal state
-    // and return it's value
-    var $control = $item.find('input');
-    $.Util.control_takedown($control, field);
-    var value = $control.val().trim();
-    // check for nulls
-    if (value === ''){
-       if ($item.hasClass('null')){
-           value = null;
-       }
-    }
-    var cleaned = $.Util.clean_value(value, field);
-    // output
-    if (cleaned.value === null){
-        cleaned.update_value = '[NULL]';
-        $item.addClass('null');
-    } else {
-        $item.removeClass('null');
-    }
-    if (cleaned.update_value === ''){
-        $item.html('&nbsp;');
-    } else {
-        $item.text(cleaned.update_value);
-    }
-    return cleaned.value;
 };
 
 $.Util.build_node_link_href = function (data, base_link){
@@ -609,7 +537,7 @@ $.Util.selectStyleSheet = function (type, value){
     }
 
     update();
-    REBASE.Interface.resize_north_pane()
+    REBASE.Interface.resize_interface()
 };
 
 $.Util.HTML_Encode = function (arg) {
@@ -740,7 +668,7 @@ function console_log(obj, data){
      * If data is supplied it will be converted to JSON
      * and output appended to obj which should be a string.
      */
-    if (typeof console == "object"){
+    if (CONFIG.DEBUG && typeof console == "object"){
         if (data === undefined){
             console.log(obj);
         } else {

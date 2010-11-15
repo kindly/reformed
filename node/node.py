@@ -254,7 +254,7 @@ class TableNode(Node):
 
     def setup_commands(self):
         commands = {}
-     #   commands['view'] = dict(command = 'view')
+        commands['view'] = dict(command = 'view')
         commands['list'] = dict(command = 'list')
         commands['edit'] = dict(command = 'edit')
         commands['_save'] = dict(command = 'save')
@@ -269,10 +269,13 @@ class TableNode(Node):
             form = self[form_name]
             form.list(node_token, limit)
 
-    def edit(self, node_token):
+    def view(self, node_token):
+        self.edit(node_token, read_only = True)
+
+    def edit(self, node_token, read_only = False):
         # process each of the forms
         for form_name in self.get_form_name_list_from_layout():
-            self[form_name].view(node_token, read_only = False)
+            self[form_name].view(node_token, read_only = read_only)
         # add the layout information
         if  self.form_layout:
             node_token.set_layout(self.layout_type, self.form_layout)
@@ -366,7 +369,7 @@ class JobNode(Node):
 
 class AutoForm(TableNode):
 
-    def __init__(self, node_name):
+    def __init__(self, node_name = None):
         super(AutoForm, self).__init__(node_name)
 
         rtable = r[self.table]
@@ -390,9 +393,10 @@ class AutoForm(TableNode):
             else:
                 fields.append(input(field.name, **extra_info))
 
-        main = form(*fields, table = self.table, params = self.form_params, volatile = True)
+        main = form(*fields, table = self.table, volatile = True)
         # add this to the available forms
         self._available_forms['main'] = main
+        self._non_result_forms['main'] = main
 
 
 class AutoFormPlus(TableNode):

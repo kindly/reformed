@@ -54,14 +54,16 @@ REBASE.FormControls = function(){
     var process_html;
     var is_update_node;
 
-    var build_node_link = $.Util.build_node_link;
-    var build_node_link_href = $.Util.build_node_link_href;
+    var build_node_link;
+    var build_node_link_href;
 
     function init(){
         HTML_Encode_Clear = REBASE.Form.HTML_Encode_Clear;
         make_item_class = REBASE.Form.make_item_class;
         process_html = REBASE.Form.process_html;
         is_update_node = REBASE.Node.is_update_node;
+        build_node_link = $.Util.build_node_link;
+        build_node_link_href = $.Util.build_node_link_href;
     }
 
     function add_label(item){
@@ -456,22 +458,26 @@ REBASE.FormControls = function(){
         var $div = $('<div class="f_control_holder"/>');
         var $div2;
             if (control_build_functions[control]){
+                var $control = control_build_functions[control][ro](item, value);
                 // the extra div is to help with styling
                 // specifically padding etc
                 // but some controls eg images do not want this
+                // also don't show descriptions if read only
                 if (!control_build_functions[control][2]){
-                    $div2 = $('<div class="f_sub" >' + form_description(item) + '</div>');
-                    $div2.append(control_build_functions[control][ro](item, value));
+                    if (!readonly){
+                        $div2 = $('<div class="f_sub" >' + form_description(item) + '</div>');
+                        $div2.append($control);
+                    } else {
+                        $div2 = $control;
+                    }
                     $div.append($div2);
                 } else {
-                    $div.append(form_description(item));
-                    $div.append(control_build_functions[control][ro](item, value));
+                    if (!readonly){
+                        $div.append(form_description(item));
+                    }
+                    $div.append($control);
                 }
             } else {
-                // dirty hack to stop thumb showing as unknown control
-                if (control == 'thumb'){
-                    return '';
-                }
                 $div.append('UNKNOWN: ' + item.control);
             }
         return $div;

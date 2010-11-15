@@ -1232,5 +1232,3 @@ class ConvertPassword(AttributeExtension):
             return value
 
         return fshp.crypt(value).decode("utf-8")
-
-
