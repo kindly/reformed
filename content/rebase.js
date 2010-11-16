@@ -984,7 +984,7 @@ REBASE.Debug = function (){
 
             if (received){
                 for (var j = 0; j < received.length; j++){
-                    info.push('<div class="history_received">')
+                    info.push('<div class="history_received">');
                     json = HTML_encode($.toJSON(received[j]));
                     if (received[j].action){
                         info.push(make_action(received[j], json.length));
@@ -1206,7 +1206,7 @@ REBASE.Node = function (){
         // convert a single level hash into a url string
         // it is encoded as a URI Component but using @ instead
         // of % for encoding to stop some decoding issues
-        out = [];
+        var out = [];
         for (var key in arg){
             out.push(key + '=' + encodeURIComponent(arg[key]));
         }
@@ -1317,10 +1317,11 @@ REBASE.Node = function (){
         // FLAGS
         // The flags are used to indicate
         // the actions that the node call should perform.
+        var i;
         var flags = {};
         if (part_flags){
             split = part_flags.split('');
-            for (var i = 0; i < split.length; i++){
+            for (i = 0; i < split.length; i++){
                 switch (split[i]){
                     case 'a':
                         // authenticate
@@ -1348,11 +1349,11 @@ REBASE.Node = function (){
                             // all forms
                             var forms_hash = REBASE.Layout.get_forms();
                             for (var key in forms_hash){
-                                forms.push(forms_hash[key].children())
+                                forms.push(forms_hash[key].children());
                             }
                         }
                         var form_data = {};
-                        for (var i = 0; i < forms.length; i++){
+                        for (i = 0; i < forms.length; i++){
                             $.extend(form_data, forms[i].data('command')('get_form_data'));
                         }
                         // set the form data
@@ -1392,7 +1393,7 @@ REBASE.Node = function (){
         // but not overwritting
 
         var query_part = split_n($.address.value(), '?', 2)[1];
-        var query_data = convert_url_string_to_hash(query_part, true)
+        var query_data = convert_url_string_to_hash(query_part, true);
         for (key in query_data){
             if (decode.node_data[key] === undefined){
                 decode.node_data[key] = query_data[key];
@@ -1893,8 +1894,8 @@ REBASE.Layout = function(){
     var process_form_data;
 
     function make_buttons(button_data){
-        item = { buttons : button_data, control: 'button_box'};
-        $control = REBASE.FormControls.build(true, item);
+        var item = { buttons : button_data, control: 'button_box'};
+        var $control = REBASE.FormControls.build(true, item);
         return $control;
     }
 
