@@ -281,6 +281,12 @@ class Application(object):
 
 
     def create_database(self):
+
+        self._schema_dir = os.path.join(self.application_folder, "_schema")
+        mkdir_p(self._schema_dir)
+        init_path = os.path.join(self._schema_dir, "__init__.py")
+        if not os.path.exists(init_path):
+            open(init_path, "w").close()
         self.initialise_database()
         print 'creating database structure'
         ##FIXME should use user tables in specific project
