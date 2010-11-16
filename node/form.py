@@ -150,7 +150,7 @@ class Form(object):
 
         validation_schema = self.get_validation_schema(node_token)
         errors = {}
-        validator_state = util.Holder(table = form.table,
+        validator_state = util.Holder(table = self.table,
                                       database = r,
                                       node_token = node_token)
         try:
