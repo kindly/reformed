@@ -101,7 +101,7 @@ class NodeToken(object):
     def __init__(self, data, application):
 
         self.application = application
-        self.reset()
+        self.reset_hard()
 
         self.command = data.pop('command', None)
         self.form_cache = data.pop('form_cache', None)
@@ -111,14 +111,18 @@ class NodeToken(object):
         self._data = data
         self.process_data()
         self.auto_login_cookie = None
-        self._added_responses = []
-        self._validation_errors = {}
+        self.last_node = None
 
 
-    def reset(self):
+
+
+    def reset_hard(self):
         """ Clear all NodeToken data. """
 
-        self.last_node = None
+        self._added_responses = []
+        self._extra_responses = []
+        self._validation_errors = {}
+
         self.first_call = False
         # The command type will be set to 'layout' or 'node' in process_data()
         self.command_type = None
@@ -142,8 +146,6 @@ class NodeToken(object):
         # side cached forms.
         self.form_cache = None
 
-        # output stuff
-        self._out = {}
 
         # self._layout holds layout information if needed
         # keys are
@@ -160,16 +162,24 @@ class NodeToken(object):
         # 'layout_forms'
         # any returned form that should be shown as a dialog.
         # 'layout_dialog' any form to use as a dialog.
-        self._layout = {}
-
         # title sets the title of the page
         self._title = None
         self._layout_title = None
+        self._layout = {}
+        self.bookmark = None
+
+
+        self.reset()
+
+    def reset(self):
+        """ Clear general NodeToken data. This is used when we have an action change
+        at this point we effectively create a new output ability"""
+        # output stuff
+        self._out = {}
 
         self._action = None
         self._function = None
         self._output_node_data = {}
-        self.bookmark = None
         self.user = None
 
         self._next_node = None
@@ -272,8 +282,7 @@ class NodeToken(object):
 
     def set_layout(self, layout_type, form_layout):
         """ Helper function to set layout. """
-        if 'layout_type' in self._layout:
-            raise Exception('NodeToken layout type already set')
+        # FIXME we might need to check for layout changes and throw exception
         self._layout['layout_type'] = layout_type
         self._layout['form_layout'] = form_layout
         self._clear_node_data = True
@@ -359,7 +368,9 @@ class NodeToken(object):
     def _set_action(self, action, **kw):
         """ Set the action for the node token. """
         if self._action and not(action == self._action and action == 'form'):
-            raise Exception('Action has already been set for this NodeToken')
+            self.update_output()
+            self.reset()
+            #raise Exception('Action has already been set for this NodeToken')
         self._action = action
         title = kw.get('title')
         if title:
@@ -397,22 +408,7 @@ class NodeToken(object):
             self._out[form.name]['paging'] = paging_data
 
     def output(self):
-        """Build the output data to be sent to the front end."""
-
-        layout = self._get_layout()
-        # By default we will return the same node data
-        # unless it is updated elsewhere
-        if not self._clear_node_data:
-            self._output_node_data  = self._node_data.data
-
-        info = {'action': self._action,
-                'node': self.node_name,
-                'title' : self._title,
-                'function' : self._function,
-                'bookmark' : self.bookmark,
-                'layout' : layout,
-                'node_data' : self._output_node_data,
-                'data' : self._out}
+        self.update_output(final = True)
 
         user_id = global_session.session['user_id']
         # application data
@@ -442,15 +438,39 @@ class NodeToken(object):
             global_session.session['reset'] = False
             global_session.session.persist()
 
+        return self._extra_responses + self._added_responses
+
+    def update_output(self, final = False):
+        """Build the output data to be sent to the front end."""
+        layout = self._get_layout()
+        # By default we will return the same node data
+        # unless it is updated elsewhere
+        if not self._clear_node_data:
+            self._output_node_data  = self._node_data.data
+
+        info = {'action': self._action,
+                'node': self.node_name,
+                'title' : self._title,
+                'function' : self._function,
+                'bookmark' : self.bookmark,
+                'layout' : layout,
+                'node_data' : self._output_node_data,
+                'data' : self._out}
+        # remove the bookmark if not the final output
+        # this stops duplicates
+        if not final:
+            del info['bookmark']
+
+
+
         self._added_responses.append(info)
       #  log.debug('returned data\n%s\n----- end of node processing -----' %
       #            pprint.pformat(self._added_responses))
-        return self._added_responses
 
     def add_extra_response_function(self, function, data = None):
         #self._added_responses.append(dict(type = 'node', data = dict(action = action, data = data)))
         response = dict(action = 'function', function = function, data = data)
-        self._added_responses.append(response)
+        self._extra_responses.append(response)
 
     def add_validation_error(self, form_name, error):
         self._validation_errors[form_name] = error
@@ -523,7 +543,7 @@ class NodeToken(object):
         data = self._next_data
 
         # clear the node token
-        self.reset()
+        self.reset_hard()
 
         self.command_type = 'node'
         self._node_data  = self.FormToken(data)
