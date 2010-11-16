@@ -192,6 +192,8 @@ class MakeContact(Node):
 
     main = form(
         input('name', label = 'Name'),
+        input('dob', label = 'DOB'),
+        input('email.email', label = 'Email'),
         input('email.email', label = 'Email'),
         input('note.note', label = 'Note'),
         button_box([['save', 'f@new_person.SaveContact:_'],
@@ -268,14 +270,25 @@ class DataGenerate(JobNode):
 
 class People(TableNode):
 
+    register_node = dict(table = 'people', title = 'People', cat_node = 'new_person.People:list')
+
     main = form(
         input('name'),
         input('dob'),
-        thumb('image'),
         table = "people",
         params =  {"form_type": "normal"},
         title_field = 'name',
     )
+
+    phone = form(
+        input('number'),
+        table = "telephone",
+        params =  {"form_type": "list"},
+        title_field = 'name',
+    )
+
+    layout_type = "entity"
+    form_layout = [[],[],['main','phone']]
 
     table = "people"
 
