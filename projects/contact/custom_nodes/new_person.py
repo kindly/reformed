@@ -8,6 +8,7 @@ from node.node import Node, TableNode, AutoForm, JobNode, AutoFormPlus
 from node.form import form
 from node.page_item import *
 import database.parsers as parsers
+import database.util as util
 
 from web.global_session import global_session
 
@@ -17,12 +18,14 @@ application = global_session.application
 def make_menu(node_manager):
     node_manager.add_menu(dict(name = 'people', title = 'people'))
 
-def parse_communication(communication):
+def parse_communication(communication, display = False):
 
-    email = parsers.email(communication)[1]
-    phone_number = parsers.phonenumber(communication)[1]
-    postcode = parsers.postcode(communication)[1]
-    dob = parsers.date(communication)[1]
+    index = 0 if display else 1
+
+    email = parsers.email(communication)[index]
+    phone_number = parsers.phonenumber(communication)[index]
+    postcode = parsers.postcode(communication)[index]
+    dob = parsers.date(communication)[index]
 
     return locals()
 
@@ -43,6 +46,21 @@ class NewPerson(Node):
         params =  {"form_type": "normal"},
         volitile = True
     )
+
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(menu = 'people', title = 'new person', node = '$'))
+
+    def call(self, node_token):
+        data = node_token["main"].data
+        if node_token.command == "process":
+            node_token.redirect("new_person.ProcessResults", data)
+            return
+        data = dict(__message = "Add new person.", )
+        self['main'].show(node_token, data)
+
+
+class ProcessResults(Node):
+
     list = form(
         result_link('__name', label = "title"),
         info('summary', data_type = 'info'),
@@ -50,19 +68,9 @@ class NewPerson(Node):
         layout_title = "results",
     )
 
-    def make_menu(self, node_manager):
-        node_manager.add_menu(dict(menu = 'people', title = 'new person', node = '$'))
-
     def call(self, node_token):
-        if node_token.command == "process":
-            self.process(node_token)
-            return
-        data = dict(__message = "Add new person.", )
-        self['main'].show(node_token, data)
 
-    def process(self, node_token):
-
-        data = node_token['main'].data
+        data = node_token.get_node_data().data
         results = self.get_results(data)
 
         if results:
@@ -124,6 +132,8 @@ class NewPerson(Node):
 
         if not terms:
             return []
+
+        print terms
 
         query = Or(terms)
 
@@ -193,13 +203,20 @@ class MakeContact(Node):
     main = form(
         input('name', label = 'Name'),
         input('dob', label = 'DOB'),
+        input('telephone.number', label = 'Phone Number'),
         input('email.email', label = 'Email'),
-        input('email.email', label = 'Email'),
+        input('address.address_line_1', label = 'Address'),
+        input('address.address_line_2', label = 'Address'),
+        input('address.address_line_3', label = 'Address'),
+        input('address.address_line_4', label = 'Address'),
+        input('address.postcode', label = 'Postcode'),
+        input('address.town', label = 'Town'),
+        input('address.country', lable = 'address'),
         input('note.note', label = 'Note'),
         button_box([['save', 'f@new_person.SaveContact:_'],
                     ['cancel', 'BACK'],]
                    ),
-        params =  {"form_type": "normal"},
+        form_type = "normal",
         table = "people",
         title_field = 'name',
         save_redirect = 'new_person.People:edit',
@@ -209,7 +226,8 @@ class MakeContact(Node):
 
     def call(self, node_token):
         # retrieve the posted data to populate the form
-        data = node_token["main"]
+        data = node_token.get_node_data()
+        print data
         new_data = dict()
 
         new_data["name"] = data.get("name")
@@ -217,8 +235,11 @@ class MakeContact(Node):
         communication = data.get("communication")
 
         if communication:
-            comms = parse_communication(communication)
+            comms = parse_communication(communication, display = True)
             new_data["email.email"] = comms["email"]
+            new_data["address.postcode"] = comms["postcode"]
+            new_data["telephone.number"] = comms["phone_number"]
+            new_data["dob"] = util.convert_value(comms["dob"])
 
 
         new_data['__message'] = "Enter details"
@@ -274,17 +295,41 @@ class People(TableNode):
 
     main = form(
         input('name'),
+        input('salutation'),
+        input('prefered_name'),
+        input('alterative_name'),
         input('dob'),
+        input('gender'),
+        input('source'),
+        input('DOB'),
         table = "people",
-        params =  {"form_type": "normal"},
-        title_field = 'name',
+        form_type = "input",
+        title_field = 'name'
     )
 
+    ##Sort
     phone = form(
         input('number'),
-        table = "telephone",
-        params =  {"form_type": "list"},
+        grid_link('id', label = 'edit', field = 'id', base_link = 'd@$:_update?', target_form = 'phone_new'),
+        grid_link('id', label = 'delete', field = 'id', base_link = '@$:_delete?', target_form = 'phone_new'),
+        read_only = True,
+        form_type = 'grid',
         title_field = 'name',
+        table = "telephone",
+        form_buttons = [['new phone', 'd@$:new', 'phone_new']],
+    )
+
+
+    phone_new = form(
+        input('number', label = 'number'),
+      #  button('l:test.People:_save:', title = 'save'),
+        form_type = "input",
+        table = "telephone",
+        save_update = 'phone',
+        title_field = 'number',
+        form_buttons = [['save', 'f@$:_save'],
+                        ['cancel', 'CLOSE']],
+        layout_title = 'Phone number',
     )
 
     layout_type = "entity"
@@ -292,3 +337,5 @@ class People(TableNode):
 
     table = "people"
 
+    def make_menu(self, node_manager):
+        node_manager.add_menu(dict(menu = 'people', title = 'list person', node = '$:list'))
