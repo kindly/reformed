@@ -222,13 +222,17 @@ class Form(object):
         else:
             buttons = [['add %s' % self.table, 'f@%s:_save' % node_token.node_name],
                                  ['cancel', 'CLOSE']]
+
+
         message = "Hello, add new %s" % self.table
 
         # update the node that the form is associated with
+        data_out['__buttons'] = buttons
         self.create_form_data(node_token, data_out)
 
         node_token.form(self)
-        node_token.set_layout_title(message)
+        #node_token.set_layout_title(message)
+
         node_token.set_layout_buttons(buttons)
 
 
@@ -243,7 +247,8 @@ class Form(object):
         node."""
         data = node_token[self.name]
 
-        id = data.get('id')
+        #FIXME this is here to make sure it does not get the id from the node_data
+        id = data.data.get('id')
         root = data.get('__root')
 
         if id:
@@ -277,17 +282,6 @@ class Form(object):
             form_item.save_page_item(node_token, save_set, data, session)
 
         errors = save_set.save()
-
-        # FIXME get errors working again :)
-####        errors = {}
-####        try:
-####            session.save_or_update(obj)
-####        except formencode.Invalid, e:
-####            print "failed to save\n%s" % e.msg
-####            for key, value in e.error_dict.items():
-####                errors[key] = value.msg
-####            errors[root] = errors
-
 
         return (save_set, errors)
 
@@ -575,6 +569,7 @@ class Form(object):
 
         if self.form_buttons:
             buttons = self.form_buttons
+        ## These buttons do not work and I do not think there is a need for default buttons
         else:
             buttons = [['add %s' % self.table, '%s:_add:' % node_token.node_name],
                        ['delete %s' % self.table, '%s:_delete:' % node_token.node_name],
