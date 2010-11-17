@@ -63,17 +63,20 @@ def index_database(application):
     for core_id, value, field in search_info:
         field_type = lookup[field][1].index_type
         if field_type == 'datetime':
-            value = parse(value)
+            if value:
+                value = parse(value)
+        if field_type in ('text', 'keyword'):
+            old_value = current_kw.get(str(field))
+            if old_value:
+                value = value + " " + old_value
+        if value:
+            current_kw[str(field)] = value
+
         if current_core <> core_id:
             if current_kw:
                 writer.update_document(**current_kw)
                 current_core = core_id
                 current_kw = dict(core_id = unicode(current_core))
-        if field_type in ('text', 'keyword'):
-            old_value = current_kw.get(str(field))
-            if old_value:
-                value = value + " " + old_value
-        current_kw[str(field)] = value
     else:
         if current_kw:
             writer.update_document(**current_kw)
