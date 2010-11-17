@@ -140,6 +140,7 @@ def process_node(environ, start_response):
         error = 'The requested node `%s` does not exist.' % node_interface.node_name
         return throw_error(environ, start_response, 'Node Error', 'Node not found', error)
     except:
+        log.error("\n" + traceback.format_exc())
         error = '<pre>%s</pre>' % traceback.format_exc()
         return throw_error(environ, start_response, 'Application Error', 'Application error', error)
 
