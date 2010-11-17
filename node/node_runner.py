@@ -340,7 +340,7 @@ class NodeToken(object):
         """ Helper function set action to form. """
         if self._flags.get('dialog'):
             if not 'layout_title' in kw or not kw['layout_title']:
-                self.set_layout_title = form.layout_title
+                self.set_layout_title(form.layout_title)
             self._set_action('dialog', dialog = form.name, **kw)
         else:
             self._set_action('form', **kw)
