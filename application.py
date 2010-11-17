@@ -331,7 +331,8 @@ class Application(object):
         self.create_logger("web")
         self.create_logger("actions", logger_level = 'ERROR')
         self.create_logger("rebase", "rebase", log_name = True)
-        self.create_logger("rebase", "rebase", log_name = True, handler_level = 'ERROR')
+        self.create_logger("rebase", "rebase", log_name = True,
+                           handler_level = 'ERROR', error_logger = True)
 
         self.create_logger("zodb", "ZODB.FileStorage")
         self.create_logger("sql", "sqlalchemy.engine", logger_level = 'ERROR')
