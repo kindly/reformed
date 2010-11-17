@@ -107,7 +107,7 @@ class SaveNew(object):
             core_id_key = ((), "_core_id")
             core_id_field = self.path_to_defined_name.get(core_id_key)
             if core_id_field:
-                self.core_id = self.path_to_value(core_id_key)
+                self.core_id = self.path_to_value[core_id_key]
                 obj = self.get_obj_from_field(self.core_id)
             else:
                 obj = self.database.get_instance(self.table)
