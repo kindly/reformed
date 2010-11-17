@@ -24,7 +24,7 @@ do
     shift
 done
 
-if [ "$hflag" == "yes" ]; then
+if [ "$hflag" = "yes" ]; then
   echo "Usage: install_packages [options]"
   echo "Install the python dependencies for rebase."
   echo "  -h, --help       This small usage guide"
@@ -33,7 +33,11 @@ if [ "$hflag" == "yes" ]; then
 fi
 
 # Make sure only root can run our script
-if [[ $EUID -ne 0 ]]; then
+echo "$UID"
+
+exit 1
+
+if [ $EUID -ne 0 ]; then
    echo "This script must be run as root" 1>&2
    exit 1
 fi
@@ -42,11 +46,11 @@ fi
 type -P pip &>/dev/null || { echo "pip python package not found please install and run again" >&2; exit 1; }
 
 # do pip install of packages
-echo "installing pythond dependencies this may take some time"
+echo "installing python dependencies this may take some time"
 while read line
 do
   echo -n $line
-  if [ "$vflag" == "yes" ]; then
+  if [ "$vflag" = "yes" ]; then
     pip install $line 
   else
     pip install -q $line 
