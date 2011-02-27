@@ -16,7 +16,8 @@ class UTF8Recoder:
         return self
 
     def next(self):
-        result = self.reader.readline().encode("utf-8")
+        result = self.reader.readline().decode("utf-8")
+        result = result.encode("utf-8")
         return result
 
 class UnicodeReader:
@@ -492,7 +493,7 @@ if __name__ == "__main__":
 1;b;21012000
 1;c;01012000"""
 
-    csvfile = CsvFile(buffer = input, format = {"delimiter" : ";"})
+    csvfile = CsvFile("wee.txt", format = {"delimiter" : ";"})
     csvfile.get_dialect()
     csvfile.get_headings()
     csvfile.parse_headings()

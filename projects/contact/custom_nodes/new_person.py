@@ -211,11 +211,8 @@ class MakeContact(Node):
         input('address.address_line_4', label = 'Address'),
         input('address.postcode', label = 'Postcode'),
         input('address.town', label = 'Town'),
-        input('address.country', lable = 'address'),
+        input('address.country', label = 'address'),
         input('note.note', label = 'Note'),
-        button_box([['save', 'f@new_person.SaveContact:_'],
-                    ['cancel', 'BACK'],]
-                   ),
         form_type = "normal",
         table = "people",
         title_field = 'name',
@@ -230,6 +227,10 @@ class MakeContact(Node):
         print data
         new_data = dict()
 
+        node_token.set_layout_buttons([['save', 'f@new_person.SaveContact:_'],
+                                   ['cancel', 'BACK'],]
+                                )
+
         new_data["name"] = data.get("name")
 
         communication = data.get("communication")
@@ -242,7 +243,7 @@ class MakeContact(Node):
             new_data["dob"] = util.convert_value(comms["dob"])
 
 
-        new_data['__message'] = "Enter details"
+        node_token.set_layout_title("Enter details")
         self["main"].show(node_token, new_data)
 
 class SaveContact(MakeContact):
@@ -299,9 +300,8 @@ class People(TableNode):
         input('prefered_name'),
         input('alterative_name'),
         input('dob'),
-        input('gender'),
-        input('source'),
-        input('DOB'),
+        #input('gender'),
+        #input('source'),
         table = "people",
         form_type = "input",
         title_field = 'name'
@@ -333,7 +333,8 @@ class People(TableNode):
     )
 
     layout_type = "entity"
-    form_layout = [[],[],['main','phone']]
+    layout_main_form = "main"
+    form_layout = [[],[],['main',"phone"]]
 
     table = "people"
 

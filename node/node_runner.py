@@ -826,7 +826,7 @@ class NodeRunner(object):
             authenticate.forbidden(node_token)
         else:
             node.initialise(node_token)
-            node.validate_returned_data(node_token)
+            #node.validate_returned_data(node_token)
             node.call(node_token)
             node.finalise(node_token)
             node.finish_node_processing(node_token)

@@ -167,41 +167,6 @@ class Form(object):
         self.name = name
 
 
-    def load_subform(self, node_token, parent_result, data, session):
-        # TD wtf how can be called load subform when returns data?
-        # can we get a better name for this?
-        # get_subform_data()?
-
-        node = self.node
-        data_out = {}
-        table = self.table
-        tables = util.split_table_fields(self.form_item_name_list, table).keys()
-
-        parent_value = data.get(self.parent_id)
-        where = "%s=?" % self.child_id
-
-        result = r.search(self.table, where, session = session,
-                          tables = tables, values = [parent_value])
-
-        out = []
-
-        for counter in range(0, len(result.results)):
-            result.current_row = counter
-            data_out = {}
-            for field in util.INTERNAL_FIELDS:
-                try:
-                    data_out[field] = result.get(field)
-                except AttributeError:
-                    extra_field = None
-
-            for form_item in self.form_items:
-                form_item.display_page_item(node_token, result, data_out, session)
-
-            out.append(data_out)
-
-        return out
-
-
     def show(self, node_token, data = None, **kw):
         """display form on front end including data if supplied"""
 
